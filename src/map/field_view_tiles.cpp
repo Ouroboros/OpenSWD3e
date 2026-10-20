@@ -423,77 +423,68 @@ void FieldView::DrawTiles8Scrolled(int)
     this->DrawTileGridScrolled(TileSet{true});
 }
 
-// swd3e.exe 0x004157B0: for each drawing order 0..30 the first overlay of that order over the camera, clipped to the
-// part of its area on screen and placed by its parallax (8: fixed to the map)
+// swd3e.exe 0x004157B0: every overlay over the camera in the order of the list (swd32 drew the first of each drawing
+// order 0..30 instead), clipped to the part of its area on screen and placed by its parallax (8: fixed to the map)
 void FieldView::DrawOverlays()
 {
     Game& owner = this->game;
     Painter& painter = owner.painter;
     const Field& field = owner.field;
 
-    for (int order = 0; order < MapOverlay::Orders; ++order)
+    for (const MapOverlay* overlay = field.overlays.get(); overlay != nullptr; overlay = overlay->next.get())
     {
-        for (const MapOverlay* overlay = field.overlays.get(); overlay != nullptr; overlay = overlay->next.get())
+        const int areaLeft = overlay->left;
+        const int areaTop = overlay->top;
+        const int areaRight = overlay->right + MapHeader::TileSize;
+        const int areaBottom = overlay->bottom + MapHeader::TileSize;
+        const int left = std::max(field.cameraLeft, areaLeft);
+        const int top = std::max(field.cameraTop, areaTop);
+        const int right = std::min(field.cameraRight, areaRight);
+        const int bottom = std::min(field.cameraBottom, areaBottom);
+
+        if (left >= right || top >= bottom)
         {
-            if (overlay->kind != order)
-            {
-                continue;
-            }
-
-            const int areaLeft = overlay->left;
-            const int areaTop = overlay->top;
-            const int areaRight = overlay->right + MapHeader::TileSize;
-            const int areaBottom = overlay->bottom + MapHeader::TileSize;
-            const int left = std::max(field.cameraLeft, areaLeft);
-            const int top = std::max(field.cameraTop, areaTop);
-            const int right = std::min(field.cameraRight, areaRight);
-            const int bottom = std::min(field.cameraBottom, areaBottom);
-
-            if (left >= right || top >= bottom)
-            {
-                continue;
-            }
-
-            const int clipLeft = left - field.cameraLeft;
-            const int clipTop = top - field.cameraTop;
-            painter.SetClip(clipLeft, clipTop, right - field.cameraLeft, bottom - field.cameraTop);
-            int offsetX = 0;
-
-            if (overlay->parallaxX == MapOverlay::FixedToMap)
-            {
-                offsetX = field.cameraLeft >= areaLeft ? field.cameraLeft - areaLeft : 0;
-            }
-            else
-            {
-                offsetX = overlay->parallaxX * (field.cameraRight - areaLeft) / MapOverlay::ParallaxUnit;
-
-                if (field.cameraLeft < areaLeft)
-                {
-                    offsetX += clipLeft;
-                }
-            }
-
-            int offsetY = 0;
-
-            if (overlay->parallaxY == MapOverlay::FixedToMap)
-            {
-                offsetY = field.cameraTop >= areaTop ? field.cameraTop - areaTop : 0;
-            }
-            else
-            {
-                offsetY = overlay->parallaxY * (field.cameraBottom - areaTop) / MapOverlay::ParallaxUnit;
-
-                if (field.cameraTop < areaTop)
-                {
-                    offsetY += clipTop;
-                }
-            }
-
-            painter.SetSource(overlay->picture.data());
-            painter.DrawPicture(clipLeft - offsetX, clipTop - offsetY, overlay->width, overlay->height, Painter::Copy);
-            painter.SetClipClamped(0, 0, field.viewWidth, field.viewHeight);
-            break;
+            continue;
         }
+
+        const int clipLeft = left - field.cameraLeft;
+        const int clipTop = top - field.cameraTop;
+        painter.SetClip(clipLeft, clipTop, right - field.cameraLeft, bottom - field.cameraTop);
+        int offsetX = 0;
+
+        if (overlay->parallaxX == MapOverlay::FixedToMap)
+        {
+            offsetX = field.cameraLeft >= areaLeft ? field.cameraLeft - areaLeft : 0;
+        }
+        else
+        {
+            offsetX = overlay->parallaxX * (field.cameraRight - areaLeft) / MapOverlay::ParallaxUnit;
+
+            if (field.cameraLeft < areaLeft)
+            {
+                offsetX += clipLeft;
+            }
+        }
+
+        int offsetY = 0;
+
+        if (overlay->parallaxY == MapOverlay::FixedToMap)
+        {
+            offsetY = field.cameraTop >= areaTop ? field.cameraTop - areaTop : 0;
+        }
+        else
+        {
+            offsetY = overlay->parallaxY * (field.cameraBottom - areaTop) / MapOverlay::ParallaxUnit;
+
+            if (field.cameraTop < areaTop)
+            {
+                offsetY += clipTop;
+            }
+        }
+
+        painter.SetSource(overlay->picture.data());
+        painter.DrawPicture(clipLeft - offsetX, clipTop - offsetY, overlay->width, overlay->height, Painter::Copy);
+        painter.SetClipClamped(0, 0, field.viewWidth, field.viewHeight);
     }
 }
 

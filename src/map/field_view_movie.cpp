@@ -288,8 +288,9 @@ int FieldView::UpdateMovie()
         }
         else
         {
+            // swd3e clears the screen here where swd32 cleared the black-screen flag before the repaint.
             film.active = 0;
-            owner.scene.screenFlags &= ~Scene::BlackScreen;
+            std::memset(screen, 0, kScreenBytes);
             this->Paint();
             owner.scene.screenFlags |= Scene::BlackScreen;
             film.active = active;

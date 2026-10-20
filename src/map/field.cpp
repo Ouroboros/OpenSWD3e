@@ -244,9 +244,8 @@ void Field::InsertRole(Role& role, int layer)
 Role* Field::RemoveRole(u16 id, int layer, int row, int keep)
 {
     std::vector<Role*>& lists = this->rows[static_cast<std::size_t>(layer)];
-    int at = row;
 
-    for (; at < this->state.map.height; ++at)
+    for (int at = row; at < this->state.map.height; ++at)
     {
         const auto index = static_cast<std::size_t>(at + Field::RowMargin);
 
@@ -301,10 +300,43 @@ Role* Field::RemoveRole(u16 id, int layer, int row, int keep)
         return nullptr;
     }
 
-    // 0x00411530 LABEL_10: the rows searched to the map's height without the role (not when `row` starts beyond it).
-    if (at == this->state.map.height)
+    // swd3e drops swd32's report of a role not found.
+    return nullptr;
+}
+
+// swd3e.exe 0x00411830: `role` unlinked from the row of its y (y / 16, rounded towards zero) of `layer`; the role when
+// it was there, otherwise nullptr
+Role* Field::UnlinkRole(Role& role, int layer)
+{
+    std::vector<Role*>& lists = this->rows[static_cast<std::size_t>(layer)];
+    const auto index = static_cast<std::size_t>(role.y / MapHeader::TileSize + Field::RowMargin);
+
+    if (index >= lists.size())
     {
-        DebugLog(u8"更新角色串列 找不到角色(%d)/[%d] ", static_cast<i32>(id), layer);
+        return nullptr;
+    }
+
+    Role*& head = lists[index];
+    Role* previous = nullptr;
+
+    for (Role* current = head; current != nullptr; previous = current, current = current->next)
+    {
+        if (current != &role)
+        {
+            continue;
+        }
+
+        if (previous != nullptr)
+        {
+            previous->next = current->next;
+        }
+        else
+        {
+            head = current->next;
+        }
+
+        current->next = nullptr;
+        return current;
     }
 
     return nullptr;

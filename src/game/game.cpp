@@ -1039,7 +1039,11 @@ void Game::NewGame()
     // The original reports the page pointer with the values of the button pointer.
     if (!setPointer(scene.pointerPageRole, Scene::PagePointer))
     {
-        logPointer(u8"Act Err(Misc:Init:Mouse:nPage)", scene.pointerButtonRole);
+        logPointer(
+            u8"Act Err(Misc:Init:Mouse:n"
+            u8"Page)",
+            scene.pointerButtonRole
+        );
     }
 
     scene.timerDigits = ActState{};

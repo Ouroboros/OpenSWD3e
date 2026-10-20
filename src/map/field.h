@@ -36,12 +36,11 @@ struct MapRegion
 // A picture laid over the map (0x20 bytes, the list at 0x004AB2F4): its RLE picture and placement.
 struct MapOverlay
 {
-    static constexpr int Orders = 0x1F;        // the drawing orders 0..30
     static constexpr u16 FixedToMap = 8;       // a parallax that moves with the map
     static constexpr int ParallaxUnit = 0x10;  // other parallaxes are in sixteenths of the camera's distance
 
     std::vector<u8> picture;           // +0x00 a 16-bit RLE picture
-    u16 kind = 0;                      // +0x04 the drawing order (0..30)
+    u16 kind = 0;                      // +0x04 swd32's drawing order (0..30); swd3e draws in list order (0x004157B0)
     u16 width = 0;                     // +0x06
     u16 height = 0;                    // +0x08
     u16 left = 0;                      // +0x0A map pixels of the area it shows in
@@ -90,6 +89,7 @@ public:
     void ResetRows();
     void InsertRole(Role& role, int layer);
     Role* RemoveRole(u16 id, int layer, int row, int keep);
+    Role* UnlinkRole(Role& role, int layer);
     bool LoadUnitPicture(u32 unit, Picture& picture);
     bool LoadMapPicture(int unit, Picture& picture) override;
     void CenterCamera();
