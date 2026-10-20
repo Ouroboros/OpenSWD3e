@@ -1,0 +1,46 @@
+swd3e 0x00401780 sub_401780 <- swd32 0x00401C70 sub_401C70; method=callers reusable=no: the code differs
+same=127 offset=5 constant=1 global=0 code=0 inserted=17 deleted=21
++ swd3e only: push    ebp
++ swd3e only: push    edi
++ swd3e only: shl     ecx, 2
++ swd3e only: push    ecx
+~ offset   swd32: mov     [esp+24h+var_C], eax                     swd3e: mov     [esp+30h+var_C], eax
+- swd32 only: push    ebp
+- swd32 only: lea     eax, ds:800h[ecx*4]
+- swd32 only: push    edi
+- swd32 only: push    eax
+- swd32 only: mov     cx, [esi+2]
++ swd3e only: mov     ax, [esi+2]
++ swd3e only: mov     [ebx+2], ax
++ swd3e only: mov     cx, [esi+4]
+~ offset   swd32: mov     [ebx+2], cx                              swd3e: mov     [ebx+4], cx
+- swd32 only: mov     dx, [esi+4]
+- swd32 only: mov     [ebx+4], dx
+- swd32 only: mov     ax, [esi]
+- swd32 only: mov     [ebx], ax
+- swd32 only: mov     cx, [esi+6]
+- swd32 only: and     ecx, 8010h
++ swd3e only: mov     dx, [esi]
++ swd3e only: mov     [ebx], dx
++ swd3e only: mov     ax, [esi+6]
++ swd3e only: and     eax, 8010h
+- swd32 only: or      ecx, 10h
++ swd3e only: or      al, 10h
+- swd32 only: mov     [ebx+6], cx
++ swd3e only: mov     [ebx+6], ax
+- swd32 only: mov     dx, [esi+2]
++ swd3e only: mov     cx, [esi+2]
+- swd32 only: mov     [edi], dx
++ swd3e only: mov     [edi], cx
+- swd32 only: mov     esi, [esp+2Ch+arg_0]
++ swd3e only: mov     edx, [esp+2Ch+arg_0]
+- swd32 only: mov     edx, [esi+8]
+- swd32 only: push    edx
+- swd32 only: call    sub_4885A0
+- swd32 only: mov     eax, [esi]
++ swd3e only: mov     eax, [edx]
+~ offset   swd32: mov     [esp+3Ch+var_18], eax                    swd3e: mov     [esp+38h+var_18], eax
+~ offset   swd32: mov     eax, [esp+3Ch+arg_0]                     swd3e: mov     eax, [esp+38h+arg_0]
+~ offset   swd32: mov     ecx, [esp+3Ch+var_18]                    swd3e: mov     ecx, [esp+38h+var_18]
+~ constant swd32: add     esp, 10h                                 swd3e: add     esp, 0Ch
+- swd32 only: mov     dword ptr [eax+8], 0

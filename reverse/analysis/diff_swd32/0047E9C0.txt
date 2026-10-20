@@ -1,0 +1,17 @@
+swd3e 0x0047E9C0 sub_47E9C0 <- swd32 0x0046E730 sub_46E730; method=callers reusable=no: the code differs
+same=70 offset=7 constant=2 global=0 code=0 inserted=5 deleted=1
+~ offset   swd32: lea     eax, [ebx+0D50h]                         swd3e: lea     eax, [ebx+0FC4h]
++ swd3e only: mov     dword ptr [ebx+3040h], 1
+~ offset   swd32: lea     edi, [ebx+0D70h]                         swd3e: lea     edi, [ebx+0FE4h]
+~ offset   swd32: mov     [ebx+2AA0h], eax                         swd3e: mov     [ebx+2FE0h], eax
+~ constant swd32: mov     ecx, 0Eh                                 swd3e: mov     ecx, 0Fh
+~ offset   swd32: mov     [ebx+2A93h], cl                          swd3e: mov     [ebx+2FC5h], cl
+~ offset   swd32: mov     [ebx+2A0Ch], dx                          swd3e: mov     [ebx+2F28h], dx
+~ constant swd32: push    0DEh                                     swd3e: push    10Bh
+~ offset   swd32: mov     dword ptr [ebx+2AB8h], 0                 swd3e: mov     dword ptr [ebx+2FF8h], 0
+- swd32 only: jz      short loc_46E83E
++ swd3e only: jnz     short loc_47EAD8
++ swd3e only: mov     ecx, [ebx+4]
++ swd3e only: cmp     word ptr [ecx+4], 0
++ swd3e only: jnz     short loc_47EAE2
+~ offset   swd32: mov     dword ptr [ebx+2AB8h], 1                 swd3e: mov     dword ptr [ebx+2FF8h], 1

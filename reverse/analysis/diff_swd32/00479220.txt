@@ -1,0 +1,67 @@
+swd3e 0x00479220 sub_479220 <- swd32 0x004698E0 sub_4698E0; method=calls reusable=no: the code differs
+same=33 offset=1 constant=2 global=0 code=3 inserted=56 deleted=3
++ swd3e only: mov     eax, dword_577A80
++ swd3e only: test    eax, eax
++ swd3e only: jg      locret_479352
+~ constant swd32: push    24h                                      swd3e: push    28h
+~ constant swd32: mov     ecx, 9                                   swd3e: mov     ecx, 0Ah
+~ offset   swd32: mov     [esi+20h], eax                           swd3e: mov     [esi+24h], eax
+- swd32 only: mov     edx, [esi+18h]
++ swd3e only: mov     edi, [esi+18h]
+- swd32 only: or      edx, eax
++ swd3e only: or      edi, eax
+- swd32 only: mov     [esi+18h], edx
++ swd3e only: mov     [esi+18h], edi
++ swd3e only: mov     ecx, edi
+~ code     swd32: jz      short loc_46993F                         swd3e: jz      short loc_47928E
++ swd3e only: test    ecx, 1000000h
++ swd3e only: jz      short loc_4792A7
++ swd3e only: mov     edx, dword_577A7C
++ swd3e only: mov     edi, [esi+8]
++ swd3e only: shl     edx, 5
++ swd3e only: add     edi, edx
++ swd3e only: mov     [esi+8], edi
++ swd3e only: test    cl, 2
++ swd3e only: jz      short loc_4792B2
++ swd3e only: inc     dword_577A7C
++ swd3e only: test    eax, 2000000h
++ swd3e only: jz      short loc_4792BF
++ swd3e only: inc     dword_577A80
++ swd3e only: mov     edx, [esi+24h]
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     edi, 0FFFFFFFEh
++ swd3e only: mov     al, [edx+ecx]
++ swd3e only: test    al, al
++ swd3e only: jz      short loc_4792EB
++ swd3e only: cmp     al, 24h
++ swd3e only: jnz     short loc_4792E2
++ swd3e only: mov     eax, [esi+0Ch]
++ swd3e only: mov     word ptr [esi+20h], 1
++ swd3e only: add     eax, edi
++ swd3e only: mov     [esi+0Ch], eax
++ swd3e only: inc     ecx
++ swd3e only: cmp     ecx, 0FFh
++ swd3e only: jl      short loc_4792C9
++ swd3e only: push    1Fh
++ swd3e only: push    1Fh
++ swd3e only: push    1Fh
++ swd3e only: call    sub_4277A0
++ swd3e only: push    17h
++ swd3e only: push    1Dh
++ swd3e only: push    1Fh
++ swd3e only: mov     word_577A74, ax
++ swd3e only: call    sub_4277A0
++ swd3e only: push    0
++ swd3e only: push    11h
++ swd3e only: push    1Fh
++ swd3e only: mov     word_577A76, ax
++ swd3e only: call    sub_4277A0
++ swd3e only: push    0
++ swd3e only: push    0
++ swd3e only: push    1Fh
++ swd3e only: mov     word_577A78, ax
++ swd3e only: call    sub_4277A0
++ swd3e only: mov     word_577A7A, ax
++ swd3e only: add     esp, 30h
+~ code     swd32: jz      short loc_469955                         swd3e: jz      short loc_479348
+~ code     swd32: jnz     short loc_46994D                         swd3e: jnz     short loc_479340

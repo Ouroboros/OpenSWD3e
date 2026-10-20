@@ -1,0 +1,117 @@
+swd3e 0x00480F30 sub_480F30 <- swd32 0x004705C0 sub_4705C0; method=callers reusable=no: the code differs
+same=78 offset=26 constant=4 global=0 code=5 inserted=49 deleted=31
++ swd3e only: mov     eax, [esp+4+arg_0]
+- swd32 only: mov     ebx, [esp+8+arg_0]
+- swd32 only: test    ebx, ebx
++ swd3e only: test    eax, eax
+- swd32 only: mov     ebx, 10h
++ swd3e only: mov     [esp+10h+arg_0], 10h
+- swd32 only: cmp     ebx, 1
++ swd3e only: cmp     eax, 1
+- swd32 only: mov     ebx, 0Ch
++ swd3e only: mov     [esp+10h+arg_0], 0Ch
+- swd32 only: cmp     ebx, 2
++ swd3e only: cmp     eax, 2
+- swd32 only: mov     ebx, 1001h
++ swd3e only: mov     [esp+10h+arg_0], 1001h
+~ offset   swd32: or      byte ptr [esi+2A87h], 80h                swd3e: or      byte ptr [esi+2FB1h], 80h
+~ constant swd32: mov     ebp, 1Ch                                 swd3e: mov     ebp, 11h
+~ offset   swd32: or      byte ptr [esi+2A87h], 2                  swd3e: or      byte ptr [esi+2FB1h], 2
+~ constant swd32: mov     ebp, 1Fh                                 swd3e: mov     ebp, 14h
++ swd3e only: lea     ebx, [esi+1004h]
+- swd32 only: lea     edi, [esi+0D90h]
+~ constant swd32: mov     ecx, 0Ah                                 swd3e: mov     ecx, 0Bh
++ swd3e only: mov     edi, ebx
+~ offset   swd32: mov     eax, [esi+2EC0h]                         swd3e: mov     eax, [esi+3450h]
+~ offset   swd32: mov     [esi+2EC0h], eax                         swd3e: mov     [esi+3450h], eax
+- swd32 only: test    [eax+2Ch], ebx
++ swd3e only: mov     ecx, [esp+10h+arg_0]
++ swd3e only: mov     edx, [eax+2Ch]
++ swd3e only: test    ecx, edx
+~ constant swd32: cmp     ebp, 1Ch                                 swd3e: cmp     ebp, 11h
+- swd32 only: mov     cx, [eax+5Eh]
+- swd32 only: cmp     cx, 1Bh
+- swd32 only: jb      short loc_470684
+- swd32 only: cmp     cx, 1Eh
+- swd32 only: ja      short loc_470684
++ swd3e only: cmp     [eax+62h], bp
++ swd3e only: jnz     short loc_480FFB
+~ offset   swd32: cmp     word ptr [eax+5Eh], 1Fh                  swd3e: cmp     word ptr [eax+62h], 14h
++ swd3e only: mov     edx, [esp+10h+var_4]
+~ offset   swd32: mov     ecx, [esp+10h+var_4]                     swd3e: mov     ecx, [esp+10h+arg_8]
++ swd3e only: cmp     edx, ecx
++ swd3e only: jnz     short loc_480FC0
+~ offset   swd32: mov     edx, [esp+10h+arg_8]                     swd3e: mov     edx, [esp+10h+arg_C]
+- swd32 only: cmp     ecx, edx
+- swd32 only: jnz     short loc_470645
+- swd32 only: xor     edx, edx
+- swd32 only: mov     dx, [eax+5Ch]
+- swd32 only: mov     eax, [esp+10h+arg_C]
+- swd32 only: mov     [eax], edx
+- swd32 only: mov     ecx, [esi+2EC0h]
+- swd32 only: lea     eax, [esi+0D90h]
+- swd32 only: mov     dx, [ecx+4Ah]
+- swd32 only: push    edx
+- swd32 only: push    eax
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     cx, [eax+60h]
++ swd3e only: mov     [edx], ecx
++ swd3e only: mov     eax, [esi+3450h]
++ swd3e only: mov     cx, [eax+4Ah]
++ swd3e only: push    ecx
++ swd3e only: push    ebx
++ swd3e only: mov     edx, [esi+4]
++ swd3e only: add     esp, 8
++ swd3e only: mov     ax, [edx+14h]
++ swd3e only: cmp     ax, 32h
++ swd3e only: jb      short loc_48106A
++ swd3e only: mov     cx, [esi+101Ch]
++ swd3e only: and     eax, 0FFFFh
++ swd3e only: mov     edx, ecx
++ swd3e only: sub     eax, 32h
++ swd3e only: and     edx, 0FFFFh
++ swd3e only: imul    eax, edx
++ swd3e only: mov     edx, eax
++ swd3e only: mov     eax, 51EB851Fh
++ swd3e only: imul    edx
++ swd3e only: sar     edx, 5
++ swd3e only: mov     eax, edx
++ swd3e only: shr     eax, 1Fh
++ swd3e only: add     edx, eax
++ swd3e only: add     edx, ecx
++ swd3e only: mov     [esi+101Ch], dx
+~ offset   swd32: lea     eax, [esi+2630h]                         swd3e: lea     eax, [esi+2B38h]
+- swd32 only: add     esp, 8
+~ offset   swd32: mov     ecx, [esi+2EC0h]                         swd3e: mov     ecx, [esi+3450h]
+~ offset   swd32: test    [esi+2A86h], cx                          swd3e: test    [esi+2FB0h], cx
+~ code     swd32: jz      short loc_470711                         swd3e: jz      short loc_4810C5
+~ offset   swd32: mov     edx, [esi+2EC0h]                         swd3e: mov     edx, [esi+3450h]
+~ offset   swd32: mov     [esi+2A8Ah], ax                          swd3e: mov     [esi+2FB4h], ax
+~ offset   swd32: mov     ax, [edx+5Ch]                            swd3e: mov     ax, [edx+60h]
+~ offset   swd32: mov     [esi+2F16h], ax                          swd3e: mov     [esi+34A6h], ax
+~ offset   swd32: mov     [esi+2F18h], ax                          swd3e: mov     [esi+34A8h], ax
+~ offset   swd32: mov     eax, [esi+2EC0h]                         swd3e: mov     eax, [esi+3450h]
+~ code     swd32: jnz     short loc_47073F                         swd3e: jnz     short loc_4810F3
+~ offset   swd32: mov     [esi+29A6h], dx                          swd3e: mov     [esi+2EB6h], dx
+~ offset   swd32: mov     [esi+29A8h], dx                          swd3e: mov     [esi+2EB8h], dx
+~ offset   swd32: mov     [esi+29AAh], dx                          swd3e: mov     [esi+2EBAh], dx
+~ offset   swd32: mov     eax, [esi+2EC0h]                         swd3e: mov     eax, [esi+3450h]
+~ offset   swd32: mov     byte ptr [esi+2A9Eh], 0                  swd3e: mov     byte ptr [esi+2FD0h], 0
+~ code     swd32: jz      short loc_47077E                         swd3e: jz      short loc_481132
+~ offset   swd32: mov     byte ptr [esi+2A9Eh], 1                  swd3e: mov     byte ptr [esi+2FD0h], 1
+~ offset   swd32: mov     [esi+29A6h], dx                          swd3e: mov     [esi+2EB6h], dx
+~ offset   swd32: mov     [esi+29A8h], cx                          swd3e: mov     [esi+2EB8h], cx
+~ offset   swd32: mov     [esi+29AAh], ax                          swd3e: mov     [esi+2EBAh], ax
+- swd32 only: test    bl, 8
++ swd3e only: mov     al, byte ptr [esp+10h+arg_0]
++ swd3e only: test    al, 8
+~ code     swd32: jz      short loc_47079A                         swd3e: jz      short loc_481151
+~ offset   swd32: mov     ecx, [esi+2EC0h]                         swd3e: mov     ecx, [esi+3450h]
+~ code     swd32: jz      short loc_47079A                         swd3e: jz      short loc_481151
+- swd32 only: shr     bl, 4
+- swd32 only: and     bl, 1
+- swd32 only: xor     ax, ax
++ swd3e only: shr     al, 4
++ swd3e only: and     al, 1
+- swd32 only: mov     al, bl
++ swd3e only: movzx   ax, al

@@ -1,0 +1,736 @@
+#pragma once
+
+#include <array>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "config/config.h"
+#include "core/types.h"
+#include "item/item_list.h"
+#include "menu/menu_list.h"
+#include "org/object_record.h"
+#include "party/party.h"
+#include "res/act_state.h"
+
+namespace swd3e
+{
+
+class Game;
+class Menu;
+class TextFont;
+class TextInput;
+
+// A role tab of the menus (0x1C bytes, four of them at 0x004A6A38): the role shown (0xFFFF: none), the box and the
+// three animations of the tab with their actions.
+struct MenuTab
+{
+    u16 role = 0;         // +0x00
+    u16 unk02 = 0;        // +0x02
+    u16 unk04 = 0;        // +0x04
+    u16 x = 0;            // +0x06
+    u16 y = 0;            // +0x08
+    u16 unk0A = 0;        // +0x0A
+    u16 state = 0;        // +0x0C 1, 2 for the selected tab
+    u16 stateCopy = 0;    // +0x0E
+    u16 frameAct = 0;     // +0x10
+    u16 frameAction = 0;  // +0x12
+    u16 iconAct = 0;      // +0x14
+    u16 iconAction = 0;   // +0x16
+    u16 nameAct = 0;      // +0x18
+    u16 nameAction = 0;   // +0x1A
+};
+
+// The bestiary (role page 0x11; 0x004FC90C..0x004FCA80): the monsters of mon.dat 1..500 by category, with what the
+// party knows of each from how many it defeated.
+struct Bestiary
+{
+    static constexpr int Monsters = 0x1F4;
+    static constexpr int Categories = 0xC;
+    static constexpr std::size_t Listed = 0x40;
+    static constexpr int Rows = 0xF;
+    static constexpr std::size_t Lines = 0x10;
+
+    ItemNode monster;                              // 0x0050B3C4 the monster chosen
+    std::array<i8, Monsters + 1> categories = {};  // 0x0050B524 by monster id (-1: none)
+    std::array<u8, Monsters + 1> defeated = {};    // 0x0050B528 by monster id
+    std::array<i8, Listed> known = {};             // 0x0050B3DC the defeats of each monster listed
+    std::array<std::string, Lines> lines;          // 0x0050B3E0 the lines of the monster chosen
+    std::array<std::string, Listed> names;         // the names of the monsters listed (empty: not defeated)
+    std::array<u32, Listed> ids = {};              // 0x0050B3C8 the monsters listed, ended by 0
+    std::size_t firstShown = 0;                    // 0x0050B3CC the first listed shown (a pointer in the original)
+    i32 top = 0;                                   // 0x0050B3B8
+    i32 category = 0;                              // 0x0050B3BC the tab chosen
+    i32 shown = 0;                                 // 0x0050B3C0
+    i32 stamina = 0;                               // 0x0050B3D0
+    i32 row = 0;                                   // 0x0050B3D4
+    i32 spirit = 0;                                // 0x0050B3D8
+    i32 count = 0;                                 // 0x0050B420 the monsters listed
+    u16 scrollArrows = 0;                          // 0x0050B52C
+};
+
+// The altar page (role page 0x10; 0x004FCA88..0x004FCD20): two objects of the party in the two slots give two
+// results, one at each altar; the altar chosen makes its result with a morph of the pictures.
+struct AltarPage
+{
+    static constexpr int Objects = 0x4B0;
+    static constexpr int Rows = 0x10;
+    static constexpr std::size_t MorphColumns = 0x78;
+    static constexpr std::size_t MorphRows = 0xDC;
+
+    ItemNode resultEast;             // swd32 0x004FCA88
+    ItemNode resultWest;             // swd32 0x004FCBA0
+    ItemNode slotA;                  // 0x0050B660
+    ItemNode slotB;                  // 0x0050B714
+    std::vector<i32> categories;     // swd32 0x004FCAC4 by object id
+    std::vector<i32> levels;         // swd32 0x004FCAB0
+    std::vector<u32> kinds;          // swd32 0x004FCA90
+    std::vector<i32> altars;         // swd32 0x004FCACC 1: never the east result, 2: never the west one
+    ItemLink objects;                // 0x0050B590 the objects of the tab, moved out of the inventory
+    ItemNode* firstShown = nullptr;  // 0x0050B7D0
+    i32 count = 0;                   // 0x0050B584
+    i32 top = 0;                     // 0x0050B57C
+    i32 row = 0;                     // 0x0050B658
+    i32 shown = 0;                   // 0x0050B64C
+    i32 tab = 0;                     // 0x0050B588 0..2
+    i32 slot = 0;                    // 0x0050B560 the slot an object goes into
+    i32 stage = 0;                   // 0x0050B7E0
+    i32 chosen = 0;                  // swd32 0x004FCA8C 0: the east altar, 1: the west one
+    u32 tooHigh = 0;                 // swd32 0x004FCAAC bit 0: the east result, bit 1: the west one
+    i32 hover = 0;                   // swd32 0x004FCAD4 the pointer is on "執行"
+    i32 counter = 0;                 // swd32 0x004FCAB4 the morph
+    i32 phase = 0;                   // 0x0050B574
+    u16 scrollArrows = 0;            // swd32 0x004FCAA4
+    std::array<i16, 4> vitals = {};  // swd32 0x004FCD14 the spirit and stamina of the east result, then of the west one
+    std::vector<i16> columnsA;       // swd32 0x004FCD08 the morph's offsets
+    std::vector<i16> columnsB;       // swd32 0x004FCB9C
+    std::vector<i16> rowsA;          // swd32 0x004FCAA0
+    std::vector<i16> rowsB;          // swd32 0x004FCD0C
+    std::vector<u16> frame;          // 0x0050B7DC the pictures of the morph
+    std::vector<u16> result;         // 0x0050B644
+    std::vector<u16> pictureA;       // 0x0050B544
+    std::vector<u16> pictureB;       // 0x0050B540
+};
+
+bool AltarTabTakes(const ItemNode& node, int tab);
+std::u8string_view CategoryName(u16 category);
+
+// The figures of a role on the equipment page (0x14 dwords): the vitals and maxima, the attributes, the word at
+// +0x20, the two equipment bonuses, then the slot's extra figures (percent, proficiency, fame).
+using EquipStats = std::array<i32, 0x14>;
+
+// The equipment page (role page 0xC; 0x004FCD28..0x004FCF90): the eleven slots of a role and the inventory's objects
+// that fit the slot chosen, with the stats each would give.
+struct EquipPage
+{
+    ItemLink takenOff;                           // swd32 0x004FCE20 where an object of another kind taken off goes
+    ItemNode* inventoryHead = nullptr;           // swd32 0x004FCED8 the inventory's first node when opened
+    i32 openedAt = 0;                            // swd32 0x004FCD28 Menu::frames when opened
+    i32 slide = 0;                               // swd32 0x004FCD2C the page slides in
+    i32 unk4FCD30 = 0;                           // swd32 0x004FCD30
+    i32 shown = 0;                               // swd32 0x004FCD34
+    i32 slot = 0;                                // swd32 0x004FCD38 0..10
+    i32 row = 0;                                 // swd32 0x004FCD3C
+    i32 listX = 0;                               // swd32 0x004FCD40
+    i32 listY = 0;                               // swd32 0x004FCD44
+    void (Menu::*savedBeforeFrame)() = nullptr;  // swd32 0x004FCD48
+    RoleRecord worn;                             // 0x0050B80C the record the stats are computed in
+    // swd32 0x004FCD54 0: the slots, 1: the list, 5: a description, 0xF: refused
+    i32 stage = 0;
+    ItemNode* described = nullptr;               // swd32 0x004FCD58
+    i32 unk4FCD5C = 0;                           // swd32 0x004FCD5C
+    ItemNode* firstShown = nullptr;              // swd32 0x004FCD64
+    u16 scrollArrows = 0;                        // swd32 0x004FCD68
+    ItemLink objects;                            // 0x0050B830 the objects that fit the slot
+    i32 top = 0;                                 // swd32 0x004FCF88
+    std::array<EquipStats, Party::Roles + 1> stats =
+        {};                 // swd32 0x004FCF8C the four roles, then the role with the object tried
+    i32 count = 0;          // swd32 0x004FCF90
+    i32 previousStage = 0;  // swd32 0x004FCED0 the stage a description returns to
+};
+
+// The skills page (role page 0xD; 0x004FCF98..0x004FD080): a role's skills of one tab in two columns, used on the
+// party or on one role; the town and exit warps.
+struct SkillsPage
+{
+    ItemLink list;                   // swd32 0x004FCFC0 the skills of the tab, moved out of the role's list
+    ItemNode* firstShown = nullptr;  // 0x0050BB0C
+    i32 top = 0;                     // swd32 0x004FCF98
+    i32 roles = 0;                   // swd32 0x004FCF9C the party roles
+    i32 shown = 0;                   // 0x0050BAEC at most 24
+    i32 buttonOffset = 0;            // swd32 0x004FCFA4 -1 while the description button is pressed
+    i32 tab = 0;                     // swd32 0x004FCFA8
+    i32 target = 0;                  // 0x0050BAF8 the role a skill is used on
+    i32 tabs = 0;                    // 0x0050BAFC the tabs of the target role (3..5)
+    i32 descriptionSlide = 0;        // swd32 0x004FCFB4
+    i32 count = 0;                   // swd32 0x004FCFB8
+    i32 row = 0;                     // swd32 0x004FD070
+    i32 shownTabs = 0;               // swd32 0x004FD074 always 3
+    i32 stage = 0;                   // swd32 0x004FD078
+    i32 descriptionTop = 0;          // swd32 0x004FD07C
+    u16 scrollArrows = 0;            // swd32 0x004FD080 the list's (bits 0..7) and the towns' (bits 8..15)
+    SkillScript skill;               // 0x004D3F98 the skill loaded last
+};
+
+// A town of the town warp (0x004FB8D0 holds them, six bytes and the name).
+struct MenuTown
+{
+    u16 map = 0;
+    u16 x = 0;
+    u16 y = 0;
+    std::string name;
+};
+
+// The status page (role page 0xE; 0x004FD2D8 and 0x004FD2DC): a role's record with its equipment.
+struct StatusPage
+{
+    RoleRecord bonus;  // swd32 0x004FD2D8 what the equipment gives
+    RoleRecord total;  // swd32 0x004FD2DC the record with it
+};
+
+// The system tab (role page 0xF; 0x004FD2E0..0x004FD3A8): save, load, the notes, the settings with the key setup, quit.
+struct OptionsPage
+{
+    i32 entry = 0;     // 0x0050BE7C the tab: save, load, notes, settings, quit
+    i32 stage = 0;     // 0x0050BE64 0: the tabs, 1: a tab opened, 2: confirming, 5..7: the key setup, 8: display
+    i32 row = 0;       // 0x0050BE78 the row of the settings or of the quit box
+    i32 locked = 0;    // 0x0050BF14 the quit fade runs
+    i32 choice = 0;    // 0x0050BF10 the confirmation's choice, then the fade's frames from 0x1E
+    i32 quitKind = 0;  // swd32 0x004FD2EC 1: end the game, 2: restart
+    i32 keyRow = 0;    // 0x0050BE5C the key row (0x10..0x12: the buttons)
+    std::array<i32, Config::Keys> keys = {};  // swd32 0x004FD324 the keys being set
+    i32 heldKey = 0;                          // swd32 0x004FD314 a key down since the last one taken
+    // swd32 0x004FD2E8 the key a swap took from another row (kept, never read)
+    i32 swappedKey = 0;
+    std::vector<u16> notes;                   // 0x0050BE84 the numbers of the notes
+    i32 noteCount = 0;                        // 0x0050BE8C
+    i32 noteTop = 0;                          // 0x0050BE60
+    i32 notesShown = 0;                       // 0x0050BE88
+    i32 noteRow = 0;                          // 0x0050BE50 (kept, never read)
+    std::size_t noteAt = 0;                   // 0x0050BE68 (kept, never read)
+    u32 arrows = 0;          // 0x0050BE4C frames the scroll arrows stay pressed (bits 0..3 up, 4..7 down)
+    i32 sampleLength = 0;    // swd32 0x004FD300 characters of the speed sample shown
+    i32 textSpeedShown = 0;  // swd32 0x004FD304
+    i32 sampleDelay = 0;     // swd32 0x004FD308
+    i32 displayRow = 0;      // the rebuild's display setup (stage 8): the row chosen
+};
+
+// The items page (role page 0xB; 0x004FD088..0x004FD164): the inventory of one category with its counts, used, sorted
+// or discarded.
+struct InventoryPage
+{
+    static constexpr i32 Unk4FC3D0 = 0x60;
+    static constexpr i32 Unk4FC3DC = 2;
+    static constexpr u16 FirstRowNumber = 0x64;
+
+    i32 openedAt = 0;         // swd32 0x004FD088 the frame before the page opened
+    i32 category = 0;         // 0x0050BBEC 0..6
+    i32 unk4FD160 = 0;        // 0x0050BCC4 (only cleared)
+    i32 roles = 0;            // swd32 0x004FD09C the party roles
+    i32 target = 0;           // swd32 0x004FD0A0 the role an object is used on
+    i32 followers = 0;        // swd32 0x004FD090 the followers that can be called
+    i32 followerRow = 0;      // swd32 0x004FD0A4
+    i32 followerPresent = 0;  // swd32 0x004FD154 the follower chosen is called
+    i32 discardChoice = 0;    // swd32 0x004FD144 0: yes, 1: no
+    i32 unk4FD148 = 0;        // swd32 0x004FD148 the top of the role box below its first row, the follower box's choice
+    i32 glow = 0;             // swd32 0x004FD14C the mode tab drawn raised (0x23..0x26 after sorting)
+    u16 arrows = 0;           // swd32 0x004FD158 frames the arrows stay pressed: the list's (bits 0..7), the towns'
+    u16 unk4FD1F0 = 0;        // 0x0050BD58 (only cleared)
+    i32 unk4FC3D0 = 0;        // swd32 0x004FC3D0 (only set)
+    i32 unk4FC3D4 = 0;        // swd32 0x004FC3D4
+    i32 unk4FC3DC = 0;        // swd32 0x004FC3DC
+    std::array<u16, 14> rowNumbers = {};  // swd32 0x004A6A00 the rows shown numbered from 100, ended by 0 (never read)
+};
+
+// The edges of a list's scroll bar as last drawn (DrawScrollBar), read by the clicks.
+struct MenuScrollBar
+{
+    i32 top = 0;          // +0x00
+    i32 thumbBottom = 0;  // +0x04
+    i32 thumbTop = 0;     // +0x08
+    i32 bottom = 0;       // +0x0C
+};
+
+// The menus (the state at 0x004FB000..0x004FDFFF): a page installs the handlers of the frame, the keys and the drawing,
+// which the frame dispatches. Handler slots are kept separately: some pages leave a slot of the page before them.
+class Menu
+{
+public:
+    using Handler = void (Menu::*)();
+
+    // The code of the system page (the title and the settings).
+    static constexpr u16 SystemPage = 0xEA60;
+    // The modes of the system page (Open on SystemPage).
+    static constexpr int TitleMode = 0;
+    static constexpr int GameModeA = 1;
+    static constexpr int GameModeB = 2;
+    static constexpr int NameEntryMode = 3;
+
+    // The role pages: `page` counts from FirstRolePage as the mode counts from FirstPageMode in PageModeStep steps.
+    static constexpr u16 FirstRolePage = 0xB;
+    static constexpr u16 EquipmentPage = 0xC;
+    static constexpr u16 UnkPageF = 0xF;    // drawn without sliding while the pages are swapped (flag 0x49)
+    static constexpr u16 UnkPage11 = 0x11;  // drawn without the title and the tabs
+    static constexpr std::size_t Pages = 0x12;
+    static constexpr int FirstPageMode = 0x1E;
+    static constexpr int PageModeStep = 6;
+    static constexpr int EquipmentMode = FirstPageMode + PageModeStep;
+    // The codes the role pages are opened with.
+    static constexpr u16 MainCode = 1;          // the gold is shown and the title glows in
+    static constexpr u16 PageCode = 2;          // a role page open
+    static constexpr u16 SubpageCodes = 0x1F4;  // codes from here slide the tabs out on the first page
+    static constexpr u16 NoTab = 5;             // `roleTab`: no tab raised
+    static constexpr u16 NoRole = 0xFFFF;       // MenuTab::role
+    static constexpr u16 PlainTab = 1;          // MenuTab::state
+    static constexpr u16 RaisedTab = 2;
+    static constexpr i8 InitialTabGlow = 12;
+    // `Game::menuMode`: where the save slots were opened from.
+    static constexpr int NoSlotsMode = 0;
+    static constexpr int KeySaveMode = 1;     // F12 or Ctrl+S on the map
+    static constexpr int KeyLoadMode = 2;     // Ctrl+L on the map
+    static constexpr int TitleLoadMode = 3;   // loading from the title or the launcher
+    static constexpr int ScriptSaveMode = 4;  // talk command SaveMenu
+    static constexpr int ItemSaveMode = 5;    // the items page (0x004485F0)
+    static constexpr int Tabs = 4;
+    // swd32.exe 0x004A6A38 (unmatched in swd3e): the tabs as the executable holds them.
+    static constexpr std::array<MenuTab, Tabs> InitialTabs = {{
+        {0, 0x17, 0x16, 0xB4, 0x6D, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
+        {0, 0x17, 0x82, 0xB4, 0xE0, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
+        {0, 0x17, 0xE7, 0xB4, 0x153, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
+        {0, 0x17, 0x150, 0xB4, 0x1C6, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
+    }};
+
+    explicit Menu(Game& game);
+    ~Menu();
+    Menu(const Menu&) = delete;
+    Menu& operator=(const Menu&) = delete;
+
+    void InitActs();
+    void Run();
+    void Open(int menuMode, u16 menuCode);
+    void BuildTabs(int selected);
+    void SetPage(int menuCode);
+    void Dispatch();
+    void ReadMouse();
+    void Present();
+    void DrawBox(int x, int y, int width, int height, int mode, int red, int green, int blue);
+    void DrawPageTitle();
+    void DrawRoleTabs(int offset);
+    void ItemsAfterSave(int saved);
+    void DrawScrollBar(int x, int y, int height, int arrows, float from, float to, MenuScrollBar& bar);
+
+    // The rebuild's continuous motion of the menus and the shop (deviations.md): the values a frame steps that move a
+    // picture (the slides, the growing boxes) or change a glow or a tint. A frame decides each step; the frames painted
+    // between it and the next run its drawing again from the state it started from, each value shown that far along
+    // its step.
+    enum MovingValue : std::size_t
+    {
+        SlideValue = 0,                        // Menu::slide
+        EquipSlideValue,                       // EquipPage::slide
+        DescriptionTopValue,                   // Menu::descriptionTop
+        SkillsDescriptionValue,                // SkillsPage::descriptionTop
+        ItemsGrowValue,                        // the frames the items page's boxes have grown, in GrowSteps
+        TitleGlowValue,                        // Menu::titleGlow
+        TabGlowValue,                          // Menu::tabGlow, a value for each tab
+        FaceSlideValue = TabGlowValue + Tabs,  // BattleState::faceSlides, a value for each role
+        MovingValues = FaceSlideValue + Party::Roles,
+    };
+
+    static constexpr i32 GrowSteps = 0x100;  // ItemsGrowValue: the parts of a frame of growth
+
+    // A frame steps value `which` from `from` to `to`, having drawn `drawn`: the frames painted until the next frame
+    // show it moving there over the frame interval from where it is shown now.
+    void Move(std::size_t which, i32 drawn, i32 from, i32 to);
+    // Where value `which` is shown when the frame drew `value`: that value in a frame; between frames how far its step
+    // has gone (the value drawn when it took no step).
+    i32 Shown(std::size_t which, i32 value) const;
+    // The same unrounded (a glow drawn between two translucency levels).
+    double ShownFine(std::size_t which, i32 value) const;
+    // The drawing of the menu frame (the main menu or the shop) starts: the state it reads and the screen under it are
+    // kept; its end: whether the frames between it and the next can paint it again.
+    void KeepFrame();
+    void FrameDrawn();
+    // The drawing of the frame changes what cannot be put back (`replayable` false): it is not painted again.
+    void KeepFrameFrom(bool replayable);
+    // The menu frame painted again on the 640 x 480 `target` with its values where they are now; false when the frame
+    // drawn stays shown (no step under way).
+    bool PaintBetween(Pixel* target);
+    bool Replaying() const;
+    void LogTotals() const;
+
+    // The bestiary (role page 0x11).
+    void BestiaryEnter();
+    void BestiaryLeave();
+    void BestiaryFrame();
+    void BestiaryMoved(u16 arrows);
+    void BestiaryShowFrom(int top);
+    void BestiaryDown();
+    void BestiaryUp();
+    void BestiaryPageDown();
+    void BestiaryPageUp();
+    void BestiaryLeft();
+    void BestiaryRight();
+    void BestiaryShift();
+    void BestiaryCancel();
+    void BestiaryDraw();
+    void BestiaryList(int category);
+    void BestiaryCountShown();
+    void DrawBestiaryRow(int index, int row, Pixel color, bool chosen);
+    void BestiaryChoose(u32 id);
+    std::string KnownValue(std::u8string_view label, int known, int needed, int value, int most);
+    void BestiaryLines(int index);
+    void DrawBestiaryTabs();
+
+    // The altar page (role page 0x10).
+    void AltarEnter();
+    void AltarLeave();
+    void AltarFillTab();
+    void AltarReturnObjects();
+    void AltarTakeObjects(ItemLink& source, int tab);
+    void AltarSortObjects();
+    void AltarPick();
+    void AltarPut(ItemNode& slot, int index);
+    bool AltarCombine();
+    void AltarMoved(u16 arrows);
+    void AltarChooseEast(bool soundFirst);
+    void AltarChooseWest();
+    void AltarDown();
+    void AltarUp();
+    void AltarPageDown();
+    void AltarPageUp();
+    void AltarTabChanged();
+    void AltarLeft();
+    void AltarRight();
+    void AltarSwitch(u16 slotSound);
+    void AltarShift();
+    void AltarEnd();
+    void AltarSelect();
+    void AltarSpend();
+    void AltarCancel();
+    void AltarFrame();
+    void AltarDraw();
+    void AltarDrawList(Pixel color);
+    void AltarDrawResults(Pixel color);
+    void AltarDrawResult(const ItemNode& result, std::u8string_view title, int x, int y, u32 flags);
+    void AltarPrepareMorph();
+    void AltarMorph();
+    void AltarFinishMorph();
+    void AltarResultVitals();
+
+    // The equipment page (role page 0xC).
+    void EquipEnter();
+    void EquipLeave();
+    void EquipDescribeSlot();
+    void EquipDescribeRow();
+    ItemNode* EquipSlotNode();
+    void EquipTake(ItemLink& source, int slot);
+    void EquipCountShown();
+    void EquipFillList();
+    void EquipReturn();
+    void EquipComputeStats();
+    const ItemNode* EquipTried();
+    void EquipRoleStats(int role, EquipStats& stats);
+    void EquipTryStats(int role, int slot, EquipStats& stats, const ItemNode* tried);
+    void EquipStatsOf(EquipStats& stats);
+    void EquipExtraStats(const ItemNode* tried, EquipStats& stats);
+    void EquipSwapVitals(const ItemNode& added, const ItemNode& removed);
+    void EquipListMoved(u16 arrows);
+    void EquipSlotMoved();
+    void EquipDown();
+    void EquipUp();
+    void EquipPageDown();
+    void EquipPageUp();
+    void EquipLeft();
+    void EquipRight();
+    void EquipShift();
+    void EquipSelect();
+    void EquipPutOn();
+    void EquipCancel();
+    void EquipFrame();
+    void EquipDraw();
+    void EquipDrawSlots(int x, int y, int slide, int width, int chosen);
+    void EquipDrawPicture(u16 file, u16 picture, int x, int y);
+    void EquipDrawStats(int slot, int role);
+    void DrawDescriptionBox(std::string_view text);
+
+    // The skills page (role page 0xD).
+    void SkillsEnter();
+    void SkillsLeave();
+    void SkillsDescribe();
+    void SkillsTake(ItemLink& source, int tab);
+    void SkillsCountShown();
+    void SkillsFillList();
+    void SkillsReturn();
+    void SkillsCountTabs();
+    void SkillsMoved(u16 arrows, bool sound);
+    int SkillsNextRole(int role, int step) const;
+    void SkillsDown();
+    void SkillsUp();
+    void SkillsPageDown();
+    void SkillsPageUp();
+    void SkillsOtherColumn(u16 arrows);
+    void SkillsLeft();
+    void SkillsRight();
+    void SkillsShift();
+    void SkillsEnd();
+    void SkillsSelect();
+    void SkillsCancel();
+    void SkillsFrame();
+    void SkillsDraw();
+    void SkillsDrawTowns(Pixel color);
+    std::size_t FindExitWarp(int map) const;
+    void ListTowns();
+    int SkillsShownTabs(int role) const;
+    void Warp(u16 map, u16 x, u16 y, i16 event);
+
+    // The status page (role page 0xE).
+    void StatusEnter();
+    void StatusLeave();
+    void StatusCompute();
+    void StatusFrame();
+    void StatusNext();
+    void StatusPrevious();
+    void StatusCancel();
+    void StatusDrawBonus(int bonus, int x, int y, int value);
+    void StatusDraw();
+
+    // The system tab (role page 0xF).
+    // The key slot of each row of the key setup (swd32.exe 0x004A7210).
+    static constexpr std::array<u16, 16> KeyRowSlots = {4, 6, 3, 5, 0xC, 1, 9, 0, 0xA, 2, 0x13, 7, 8, 0x10, 0x11, 0x12};
+    void OptionsEnter();
+    void CountNotes();
+    void FindNote(int index);
+    void DrawNote(int index, int x, int y);
+    void OptionsFrame();
+    void OptionsDown();
+    void OptionsUp();
+    void OptionsPageDown();
+    void OptionsPageUp();
+    void OptionsLeft();
+    void OptionsRight();
+    void OptionsSelect();
+    void OptionsCancel();
+    void OptionsDrawSettings(Pixel color);
+    void OptionsDrawKeys(Pixel color);
+    void OptionsDrawDisplay(Pixel color);
+    // The rebuild's settings rows of choices (deviations.md): an on/off row's choices (Big5), and the left of
+    // each of `choices` drawn with `font` from `left`, kChoiceGap apart, with the right of the last.
+    static std::vector<std::string> OnOffChoices();
+    static std::vector<int> ChoiceLefts(const std::vector<std::string>& choices, const TextFont& font, int left);
+    Config::Settings CurrentSettings() const;
+    void StoreChangedSettings();
+    void OptionsSetLauncher(bool shown);
+    std::vector<std::string> OptionsDisplayChoices(i32 row, i32& chosen) const;
+    void OptionsChooseDisplay(i32 row, i32 choice);
+    void OptionsStepDisplay(i32 row, bool up, bool wrap);
+    void OptionsDraw();
+
+    // The items page (role page 0xB).
+    void ItemsDescribe();
+    void ItemsFit();
+    void ItemsMoved(u16 arrows);
+    void ItemsEnter();
+    void ItemsLeave();
+    void ItemsFrame();
+    void ItemsDown();
+    void ItemsUp();
+    void ItemsPageDown();
+    void ItemsPageUp();
+    void ItemsCategory(int step);
+    void ItemsLeft();
+    void ItemsRight();
+    void ItemsShift();
+    void ItemsEnd();
+    void ItemsFreeTowns();
+    void ItemsUse(ItemNode& node);
+    void ItemsSelect();
+    void ItemsCancel();
+    void ItemsDrawNotice(Pixel color);
+    void ItemsDrawFollowers(Pixel color, std::string& line);
+    void ItemsDrawTowns(Pixel color);
+    void ItemsDraw();
+    void ItemsCountShown();
+    void ItemsTake(int category);
+    void ItemsFill();
+    void ItemsReturn();
+    bool ItemsCallFollower();
+    void ItemsSave();
+
+    // The main page (the titles of the role pages) and the role page tables.
+    void ShowPageBackground(int page);
+    void FillPageTables();
+    void MainFrame();
+    void MainLeft();
+    void MainRight();
+    void MainSelect();
+    void MainCancel();
+    void MainDraw();
+    void OptionsLeave();
+    bool DrawNameEntry();
+    void ActOnEntry();
+    void DrawSettings();
+    // The rebuild's display setup on the title page (deviations.md).
+    void DrawDisplaySettings();
+    void DrawSystemChoices(i32 row, const std::vector<std::string>& choices, i32 chosen, bool counts);
+    void DisplaySettingsMouse();
+    void SettingsMoveSound();
+
+    // The system page (the title in mode 0, the settings).
+    void SystemEnter();
+    void SystemFrame();
+    void SystemDown();
+    void SystemUp();
+    void SystemLast();
+    void SystemFirst();
+    void SystemLeft();
+    void SystemRight();
+    void SystemEnd();
+    void SystemSelect();
+    void SystemCancel();
+    void SystemDraw();
+
+    void Nothing();
+
+    // The handler slots.
+    Handler beforeFrame = nullptr;               // 0x0050A118 (none: not called)
+    Handler frame = &Menu::Nothing;              // 0x0050B018
+    Handler down = &Menu::Nothing;               // 0x0050B2C4
+    Handler up = &Menu::Nothing;                 // 0x0050AE9C
+    Handler pageDown = &Menu::Nothing;           // 0x0050A8D4
+    Handler pageUp = &Menu::Nothing;             // 0x0050A35C
+    Handler left = &Menu::Nothing;               // 0x0050A414
+    Handler right = &Menu::Nothing;              // 0x0050B21C
+    Handler cancel = &Menu::Nothing;             // 0x0050B2D4
+    Handler shift = &Menu::Nothing;              // 0x0050B2D8
+    Handler end = &Menu::Nothing;                // 0x0050A8D8
+    Handler select = &Menu::Nothing;             // 0x0050AD6C
+    Handler draw = &Menu::Nothing;               // swd32 0x004FBEC8
+    std::array<Handler, Pages> enterTable = {};  // swd32 0x004FC8B0 the role pages opened (entries 0xB..0x11)
+    std::array<Handler, Pages> leaveTable = {};  // swd32 0x004FB884 left
+    std::array<Handler, Pages> drawTable = {};   // swd32 0x004FBF54 drawn
+
+    u16 code = 0;                  // swd32 0x004FC900 the code the menu was opened with
+    u16 page = 0;                  // swd32 0x004FC3C4 (low word) the page index
+    u16 mode = 0;                  // swd32 0x004FB8A8
+    u16 unk4FC200 = 0;             // swd32 0x004FC200
+    u16 unk4FBAB8 = 0;             // swd32 0x004FBAB8
+    u16 roleTab = 0;               // swd32 0x004FBECC (low word) the role tab raised (the equipment page's role)
+    // swd32 0x004FC82C bit 0: the menu opened on the equipment, left back to the item choice
+    u16 openedOnEquipment = 0;
+    u16 unk4A6AA8 = 0;             // swd32 0x004A6AA8
+    i32 tint = 0;                  // 0x0050ACBC a screen tint while non-zero
+    i32 frames = 0;                // swd32 0x004FC784
+    u32 flags = 0;                 // swd32 0x004FBED8
+    i32 pointerX = 0;              // swd32 0x004FBAC4 the pointer of the last frame
+    i32 pointerY = 0;              // swd32 0x004FBED0
+    i32 escapeDelay = 0;           // 0x0050B3B4 frames before RightControl acts as Escape again
+    u32 clicks = 0;                // 0x0050A1C8 bits 0..1: a left click (single, double), bits 2..3: a right click
+    i32 slide = 0;                 // swd32 0x004FC3C8
+    i32 lastPage = FirstRolePage;  // swd32 0x004A6AB0
+    i32 titleGlow = 0;             // swd32 0x004FC780
+    // swd32 0x004A6AAC
+    std::array<i8, Tabs> tabGlow = {InitialTabGlow, InitialTabGlow, InitialTabGlow, InitialTabGlow};
+    // swd32 0x004A6A38
+    std::array<MenuTab, Tabs> tabs = InitialTabs;
+
+    ActState background;               // 0x0050A2A0
+    ActState hitPointBar;              // swd32 0x004FB810 the bars of the role tabs
+    ActState downArrowAct;             // swd32 0x004FB8D8 the down arrow of the lists (the shop's minus button)
+    ActState upArrowAct;               // swd32 0x004FBA18 the up arrow of the lists (the shop's plus button)
+    std::array<ActState, Tabs> items;  // swd32 0x004FBFA0 the four entries of a page
+    ActState titleAct;                 // swd32 0x004FBEE0 the title of the page, lit and glowing
+    ActState face;                     // swd32 0x004FC208 the face of the name entry
+    ActState barTrackAct;              // swd32 0x004FC328 the track of the scroll bars, repeated down
+    ActState spiritBar;                // swd32 0x004FC450
+    ActState staminaBar;               // swd32 0x004FC518
+    ActState gauge;                    // swd32 0x004FC650 a step of the settings bars
+    ActState barThumbAct;              // swd32 0x004FC6E8 their thumb
+    ActState titleArrowAct;            // swd32 0x004FC790 the arrow beside the title
+    ActState tabsPanelAct;             // swd32 0x004FC840 the panel of the tabs (the shop's frame)
+
+    // The system page (0x004FD29C..0x004FD2D4).
+    i32 systemClick = 0;           // swd32 0x004FD29C 1: the confirm button clicked, 2: a right click
+    i32 nameReply = 0;             // swd32 0x004FD2A0 frames of the face's reply to a name
+    i32 textSpeedShown = 0;        // swd32 0x004FD2A4
+    i32 systemState = 0;           // 0x0050BE18 1: the title entries, 2: chosen (5: the settings, 100: in game)
+    std::vector<u16> savedScreen;  // swd32 0x004FD2B0 the frame under the page in game
+    i32 systemCursor = 0;          // 0x0050BE20 the title entry
+    std::array<i32, 4> glow = {};  // swd32 0x004FD2B8 the glow of the four entries
+    i32 systemRow = 0;             // 0x0050BE34 the settings row, the fade and name entry steps otherwise
+    std::optional<Config::Settings> storedSettings;  // StoreChangedSettings: what the settings page last wrote
+    i32 sampleLength = 0;                            // swd32 0x004FD2CC characters of the text speed sample shown
+    std::vector<u8> enteredNames;                    // swd32 0x004FD2D0 the two names typed (0x20 bytes)
+    i32 sampleDelay = 0;                             // swd32 0x004FD2D4
+
+    // The items page.
+    MenuList itemList;        // 0x0050BBE4 (see MenuList)
+    MenuScrollBar scrollBar;  // 0x0050AEA0
+    Bestiary bestiary;
+    AltarPage altar;
+    EquipPage equip;
+    SkillsPage skills;
+    StatusPage status;
+    std::vector<MenuTown> towns;  // 0x0050A1EC (its count at 0x004FC834)
+    i32 townTop = 0;              // swd32 0x004FBED4
+    i32 townRow = 0;              // swd32 0x004FC510
+    i32 townShown = 0;            // swd32 0x004FB8D4
+    MenuScrollBar townBar;        // swd32 0x004FC500
+    MenuScrollBar unk4FBAB4;      // swd32 0x004FBAB4 a second bar of the equipment list (only drawn)
+    i32 descriptionSlide = 0;     // 0x0050B014 the description box slides (up while positive)
+    i32 descriptionTop = 0x1E0;   // 0x0050B2CC its top
+    i32 buttonPress = 0;          // swd32 0x004FC904 -1 while the description button is pressed
+    ActState buttonAct;           // swd32 0x004FD0A8 the description button (the skills page's button)
+    ItemLink itemObjects;         // 0x0050BD50 the objects of the items page
+    ItemLink savedInventory;      // swd32 0x004FD15C the inventory kept while the items page saves
+    ItemLink savedItems;          // swd32 0x004FD140 `itemObjects` kept with it
+    std::string description;      // swd32 0x004FC2A0 the description of the chosen object
+    OptionsPage options;
+    InventoryPage itemsPage;
+
+private:
+    // A step of a moving value: from `from` to `to` over `length` milliseconds from `start` (the time of game frame
+    // `frame`), the frame having drawn `drawn`.
+    struct ValueMotion
+    {
+        double from = 0.0;
+        i32 to = 0;
+        i32 drawn = 0;
+        u32 start = 0;
+        i32 length = 1;
+        u32 frame = 0;
+    };
+
+    struct FrameState;
+
+    void Call(Handler handler);
+    // The menu frame drawn from Present: the page over its background, the tabs, the gold, the pointer, the tint and
+    // the notices; false when the page closed the menu.
+    bool PaintPage(bool replay);
+    void Replay(Pixel* target, u32 now, bool exact, i32 pointerX, i32 pointerY);
+    double ValueAt(const ValueMotion& motion, u32 now) const;
+    bool Moving(u32 now) const;
+    void SaveFrame(FrameState& kept) const;
+    void LoadFrame(const FrameState& kept);
+
+    std::array<ValueMotion, MovingValues> motions = {};
+    std::unique_ptr<FrameState> frameBefore;  // the state the frame's drawing started from
+    std::unique_ptr<FrameState> frameAfter;   // the state it left (put back after a painting between)
+    std::vector<Pixel> frameBase;             // the screen under the frame's drawing
+    std::vector<Pixel> frameShown;            // the frame drawn
+    bool frameKept = false;
+    bool frameReplayable = false;
+    u32 frameKeptAt = 0;  // Game::gameFrames of the frame kept
+    bool frameChecked = false;
+    bool replaying = false;
+    bool replayExact = false;  // the values shown as the frame drew them
+    // The frames kept to be painted again, those whose drawing run again did not give them, the paintings between.
+    u32 framesKept = 0;
+    u32 framesMismatched = 0;
+    u32 framesPainted = 0;
+    u32 replayNow = 0;
+
+    Game& game;
+};
+
+}  // namespace swd3e

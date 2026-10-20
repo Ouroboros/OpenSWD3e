@@ -1,0 +1,69 @@
+swd3e 0x0043EEB0 sub_43EEB0 <- swd32 0x0043A380 sub_43A380; method=anchor reusable=no: the code differs
+same=20 offset=0 constant=0 global=0 code=1 inserted=26 deleted=40
+- swd32 only: mov     ebp, [esp+8+arg_0]
++ swd3e only: xor     esi, esi
++ swd3e only: mov     eax, 0FFFFh
+- swd32 only: xor     eax, eax
+- swd32 only: xor     edi, edi
++ swd3e only: xor     ebx, ebx
++ swd3e only: mov     word_4BE5DE, si
++ swd3e only: mov     word_4BE5FA, si
++ swd3e only: mov     word_4BE616, si
++ swd3e only: mov     word_4BE632, si
++ swd3e only: mov     word_4BE636, si
++ swd3e only: mov     word_4BE634, si
++ swd3e only: mov     word_4BE61A, si
++ swd3e only: mov     word_4BE618, si
++ swd3e only: mov     word_4BE5FE, si
++ swd3e only: mov     word_4BE5FC, si
++ swd3e only: mov     word_4BE5E2, si
++ swd3e only: mov     word_4BE5E0, si
+- swd32 only: mov     word_4A6A70, ax
+- swd32 only: mov     word_4A6A96, ax
+- swd32 only: mov     word_4A6A8C, ax
+- swd32 only: mov     word_4A6A9A, ax
+- swd32 only: mov     word_4A6A98, ax
+- swd32 only: mov     word_4A6A7E, ax
+- swd32 only: mov     word_4A6A7C, ax
+- swd32 only: mov     word_4A6A62, ax
+- swd32 only: mov     word_4A6A60, ax
+- swd32 only: mov     word_4A6A46, ax
+- swd32 only: mov     word_4A6A44, ax
+- swd32 only: mov     word_4A6AA8, 0FFFFh
+- swd32 only: xor     ebx, ebx
+- swd32 only: mov     esi, offset word_4A6A38
+- swd32 only: lea     eax, [edi+1Eh]
+- swd32 only: mov     word ptr [esi], 0FFFFh
+- swd32 only: push    eax
++ swd3e only: xor     ebp, ebp
++ swd3e only: mov     edi, offset word_4BE5D4
++ swd3e only: push    ebx
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_43A442
+- swd32 only: lea     eax, [ebx+8]
+- swd32 only: mov     [esi], di
+- swd32 only: mov     [esi+1Ah], ax
+- swd32 only: mov     [esi+16h], ax
+- swd32 only: mov     [esi+12h], ax
+- swd32 only: mov     eax, 1
+- swd32 only: mov     [esi+0Ch], ax
+- swd32 only: cmp     ebx, ebp
+- swd32 only: mov     [esi+0Eh], ax
+- swd32 only: jnz     short loc_43A441
+- swd32 only: mov     eax, 2
+- swd32 only: mov     [esi+0Ch], ax
+- swd32 only: mov     [esi+0Eh], ax
++ swd3e only: cmp     eax, esi
++ swd3e only: jl      short loc_43EF4A
++ swd3e only: mov     [edi], ax
++ swd3e only: inc     ebp
++ swd3e only: add     edi, 1Ch
+- swd32 only: add     esi, 1Ch
+- swd32 only: inc     edi
+- swd32 only: cmp     esi, offset word_4A6AA8
++ swd3e only: cmp     ebx, 3
+~ code     swd32: jl      short loc_43A3FC                         swd3e: jl      short loc_43EF36
+- swd32 only: lea     eax, ds:0[ebx*8]
++ swd3e only: lea     eax, ds:0[ebp*8]
+- swd32 only: sub     eax, ebx
++ swd3e only: sub     eax, ebp

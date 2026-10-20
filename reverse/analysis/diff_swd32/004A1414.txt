@@ -1,0 +1,2 @@
+swd3e 0x004A1414 sub_4A1414 <- swd32 0x00489A40 sub_489A40; method=hash reusable=yes
+same=9 offset=0 constant=0 global=0 code=0 inserted=0 deleted=0

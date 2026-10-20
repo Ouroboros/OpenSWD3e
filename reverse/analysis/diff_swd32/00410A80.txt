@@ -1,0 +1,396 @@
+swd3e 0x00410A80 sub_410A80 <- swd32 0x00410730 sub_410730; method=callers reusable=no: the code differs
+same=213 offset=70 constant=0 global=0 code=0 inserted=164 deleted=160
++ swd3e only: mov     [esp+218h+var_1FD], ecx
++ swd3e only: mov     [esp+218h+var_1F7], edx
++ swd3e only: mov     [esp+218h+var_1F9], cl
++ swd3e only: mov     ecx, dword_4B12B4
++ swd3e only: mov     [esp+218h+var_1F3], dx
++ swd3e only: mov     [esp+218h+var_1F0], ecx
++ swd3e only: mov     [esp+218h+var_1F1], dl
++ swd3e only: mov     dl, byte_4B12B8
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     [esp+218h+var_1EC], dl
++ swd3e only: mov     [esp+218h+var_1EB], cx
++ swd3e only: xor     edx, edx
++ swd3e only: mov     [esp+218h+var_1E9], cl
+~ offset   swd32: mov     [esp+218h+var_1F7], edx                  swd3e: mov     [esp+218h+var_1E7], edx
+~ offset   swd32: mov     [esp+218h+var_1FD], ecx                  swd3e: mov     [esp+218h+var_1DF], ecx
+~ offset   swd32: mov     [esp+218h+var_1F3], dx                   swd3e: mov     [esp+218h+var_1E3], dx
++ swd3e only: mov     [esp+218h+var_1DB], cx
++ swd3e only: mov     [esp+218h+var_1E1], dl
+~ offset   swd32: mov     [esp+218h+var_1F9], cl                   swd3e: mov     [esp+218h+var_1D9], cl
++ swd3e only: mov     [esp+218h+var_1D7], edx
++ swd3e only: mov     [esp+218h+var_1CF], ecx
++ swd3e only: mov     [esp+218h+var_1D3], dx
++ swd3e only: mov     [esp+218h+var_1CB], cx
+~ offset   swd32: mov     [esp+218h+var_1F1], dl                   swd3e: mov     [esp+218h+var_1D1], dl
++ swd3e only: mov     [esp+218h+var_1C9], cl
++ swd3e only: mov     [esp+218h+var_1C7], edx
+~ offset   swd32: mov     [esp+218h+var_1EF], ecx                  swd3e: mov     [esp+218h+var_1BF], ecx
++ swd3e only: mov     [esp+218h+var_1C3], dx
++ swd3e only: mov     [esp+218h+var_1BB], cx
++ swd3e only: mov     [esp+218h+var_1C1], dl
++ swd3e only: mov     [esp+218h+var_1B9], cl
+~ offset   swd32: mov     [esp+218h+var_1E7], edx                  swd3e: mov     [esp+218h+var_1B7], edx
++ swd3e only: mov     [esp+218h+var_1AF], ecx
++ swd3e only: mov     [esp+218h+var_1B3], dx
+~ offset   swd32: mov     [esp+218h+var_1EB], cx                   swd3e: mov     [esp+218h+var_1AB], cx
+- swd32 only: mov     [esp+218h+var_1E3], dx
+- swd32 only: mov     [esp+218h+var_1E9], cl
+- swd32 only: mov     [esp+218h+var_1E1], dl
+- swd32 only: mov     [esp+218h+var_1DF], ecx
+- swd32 only: mov     [esp+218h+var_1D7], edx
+- swd32 only: mov     [esp+218h+var_1DB], cx
+- swd32 only: mov     [esp+218h+var_1D3], dx
+- swd32 only: mov     [esp+218h+var_1D9], cl
+- swd32 only: mov     [esp+218h+var_1D1], dl
+- swd32 only: mov     [esp+218h+var_1CF], ecx
+- swd32 only: mov     [esp+218h+var_1C7], edx
+- swd32 only: mov     [esp+218h+var_1CB], cx
+- swd32 only: mov     [esp+218h+var_1C3], dx
+- swd32 only: mov     [esp+218h+var_1C9], cl
+- swd32 only: mov     [esp+218h+var_1C1], dl
+- swd32 only: mov     [esp+218h+var_1BF], ecx
+- swd32 only: mov     [esp+218h+var_1B7], edx
+- swd32 only: mov     [esp+218h+var_1BB], cx
+- swd32 only: mov     [esp+218h+var_1B3], dx
+- swd32 only: mov     [esp+218h+var_1B9], cl
+- swd32 only: mov     [esp+218h+var_1AF], ecx
++ swd3e only: mov     [esp+218h+var_1A9], cl
++ swd3e only: mov     cx, word_4B12B0
+~ offset   swd32: mov     [esp+218h+var_1AB], cx                   swd3e: mov     [esp+218h+var_1A4], cx
+- swd32 only: mov     [esp+218h+var_1A9], cl
+- swd32 only: mov     [esp+218h+var_1A0], edx
+- swd32 only: xor     edx, edx
+- swd32 only: mov     [esp+218h+var_1A4], cx
+- swd32 only: mov     cx, word_4A027C
+- swd32 only: mov     [esp+218h+var_197], edx
+- swd32 only: mov     [esp+218h+var_19C], cx
+- swd32 only: mov     [esp+218h+var_193], dx
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     [esp+218h+var_191], dl
+- swd32 only: mov     [esp+218h+var_18F], ecx
+~ offset   swd32: mov     [esp+218h+var_187], edx                  swd3e: mov     [esp+218h+var_1A0], edx
+~ offset   swd32: mov     [esp+218h+var_18B], cx                   swd3e: mov     [esp+218h+var_19C], cx
++ swd3e only: xor     edx, edx
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     [esp+218h+var_197], edx
++ swd3e only: mov     [esp+218h+var_18F], ecx
+~ offset   swd32: mov     [esp+218h+var_183], dx                   swd3e: mov     [esp+218h+var_193], dx
++ swd3e only: mov     [esp+218h+var_18B], cx
++ swd3e only: mov     [esp+218h+var_191], dl
+- swd32 only: mov     [esp+218h+var_181], dl
++ swd3e only: mov     [esp+218h+var_187], edx
+- swd32 only: mov     [esp+218h+var_177], edx
++ swd3e only: mov     [esp+218h+var_183], dx
+- swd32 only: mov     [esp+218h+var_173], dx
+- swd32 only: mov     [esp+218h+var_1F8], al
+~ offset   swd32: mov     [esp+218h+var_1F0], al                   swd3e: mov     [esp+218h+var_1F8], al
++ swd3e only: mov     [esp+218h+var_181], dl
++ swd3e only: mov     [esp+218h+var_180], al
++ swd3e only: mov     [esp+218h+var_179], cl
++ swd3e only: mov     [esp+218h+var_177], edx
++ swd3e only: mov     [esp+218h+var_16F], ecx
++ swd3e only: mov     [esp+218h+var_173], dx
++ swd3e only: mov     [esp+218h+var_16B], cx
++ swd3e only: mov     [esp+218h+var_171], dl
++ swd3e only: mov     [esp+218h+var_169], cl
++ swd3e only: mov     [esp+218h+var_167], edx
++ swd3e only: mov     [esp+218h+var_15F], ecx
++ swd3e only: mov     [esp+218h+var_163], dx
++ swd3e only: mov     [esp+218h+var_15B], cx
++ swd3e only: mov     [esp+218h+var_161], dl
++ swd3e only: mov     [esp+218h+var_159], cl
++ swd3e only: mov     [esp+218h+var_157], edx
++ swd3e only: mov     [esp+218h+var_14F], ecx
++ swd3e only: mov     [esp+218h+var_153], dx
++ swd3e only: mov     [esp+218h+var_14B], cx
++ swd3e only: mov     [esp+218h+var_151], dl
++ swd3e only: mov     [esp+218h+var_149], cl
++ swd3e only: mov     [esp+218h+var_147], edx
++ swd3e only: mov     [esp+218h+var_13F], ecx
++ swd3e only: mov     [esp+218h+var_143], dx
++ swd3e only: mov     [esp+218h+var_13B], cx
++ swd3e only: mov     [esp+218h+var_141], dl
++ swd3e only: mov     [esp+218h+var_139], cl
++ swd3e only: mov     [esp+218h+var_137], edx
++ swd3e only: mov     [esp+218h+var_12F], ecx
++ swd3e only: mov     [esp+218h+var_133], dx
++ swd3e only: mov     [esp+218h+var_12B], cx
++ swd3e only: mov     [esp+218h+var_131], dl
++ swd3e only: mov     [esp+218h+var_129], cl
++ swd3e only: mov     [esp+218h+var_127], edx
++ swd3e only: mov     [esp+218h+var_11F], ecx
++ swd3e only: mov     [esp+218h+var_123], dx
++ swd3e only: mov     [esp+218h+var_11B], cx
++ swd3e only: mov     [esp+218h+var_121], dl
++ swd3e only: mov     [esp+218h+var_119], cl
++ swd3e only: mov     [esp+218h+var_117], edx
++ swd3e only: mov     [esp+218h+var_10F], ecx
++ swd3e only: mov     [esp+218h+var_113], dx
++ swd3e only: mov     [esp+218h+var_10B], cx
++ swd3e only: mov     [esp+218h+var_111], dl
++ swd3e only: mov     [esp+218h+var_109], cl
++ swd3e only: mov     [esp+218h+var_107], edx
++ swd3e only: mov     [esp+218h+var_FF], ecx
++ swd3e only: mov     [esp+218h+var_103], dx
++ swd3e only: mov     [esp+218h+var_FB], cx
++ swd3e only: mov     [esp+218h+var_101], dl
++ swd3e only: mov     [esp+218h+var_F9], cl
++ swd3e only: mov     [esp+218h+var_F7], edx
++ swd3e only: mov     [esp+218h+var_EF], ecx
++ swd3e only: mov     [esp+218h+var_F3], dx
++ swd3e only: mov     [esp+218h+var_EB], cx
++ swd3e only: mov     [esp+218h+var_F1], dl
++ swd3e only: mov     [esp+218h+var_E9], cl
++ swd3e only: mov     [esp+218h+var_E7], edx
++ swd3e only: mov     [esp+218h+var_DF], ecx
++ swd3e only: mov     [esp+218h+var_E3], dx
++ swd3e only: mov     [esp+218h+var_DB], cx
++ swd3e only: mov     [esp+218h+var_178], al
++ swd3e only: mov     [esp+218h+var_170], al
++ swd3e only: mov     [esp+218h+var_168], al
++ swd3e only: mov     [esp+218h+var_160], al
++ swd3e only: mov     [esp+218h+var_158], al
++ swd3e only: mov     [esp+218h+var_150], al
++ swd3e only: mov     [esp+218h+var_148], al
++ swd3e only: mov     [esp+218h+var_140], al
++ swd3e only: mov     [esp+218h+var_138], al
++ swd3e only: mov     [esp+218h+var_130], al
++ swd3e only: mov     [esp+218h+var_128], al
++ swd3e only: mov     [esp+218h+var_120], al
++ swd3e only: mov     [esp+218h+var_118], al
++ swd3e only: mov     [esp+218h+var_110], al
++ swd3e only: mov     [esp+218h+var_108], al
++ swd3e only: mov     [esp+218h+var_100], al
++ swd3e only: mov     [esp+218h+var_F8], al
++ swd3e only: mov     [esp+218h+var_F0], al
++ swd3e only: mov     [esp+218h+var_E8], al
++ swd3e only: mov     [esp+218h+var_E1], dl
+~ offset   swd32: mov     [esp+218h+var_180], al                   swd3e: mov     [esp+218h+var_E0], al
+~ offset   swd32: mov     [esp+218h+var_179], cl                   swd3e: mov     [esp+218h+var_D9], cl
+~ offset   swd32: mov     [esp+218h+var_178], al                   swd3e: mov     [esp+218h+var_D8], al
++ swd3e only: mov     [esp+218h+var_D7], edx
++ swd3e only: mov     [esp+218h+var_CF], ecx
++ swd3e only: mov     [esp+218h+var_D3], dx
++ swd3e only: mov     [esp+218h+var_CB], cx
+~ offset   swd32: mov     [esp+218h+var_171], dl                   swd3e: mov     [esp+218h+var_D1], dl
++ swd3e only: mov     [esp+218h+var_C9], cl
++ swd3e only: mov     [esp+218h+var_C7], edx
+~ offset   swd32: mov     [esp+218h+var_16F], ecx                  swd3e: mov     [esp+218h+var_BF], ecx
++ swd3e only: mov     [esp+218h+var_C3], dx
++ swd3e only: mov     [esp+218h+var_BB], cx
++ swd3e only: mov     [esp+218h+var_C1], dl
++ swd3e only: mov     [esp+218h+var_B9], cl
+~ offset   swd32: mov     [esp+218h+var_167], edx                  swd3e: mov     [esp+218h+var_B7], edx
++ swd3e only: mov     [esp+218h+var_AF], ecx
++ swd3e only: mov     [esp+218h+var_B3], dx
+~ offset   swd32: mov     [esp+218h+var_16B], cx                   swd3e: mov     [esp+218h+var_AB], cx
++ swd3e only: mov     [esp+218h+var_B1], dl
++ swd3e only: mov     [esp+218h+var_A9], cl
++ swd3e only: mov     [esp+218h+var_A7], edx
++ swd3e only: mov     [esp+218h+var_9F], ecx
+~ offset   swd32: mov     [esp+218h+var_163], dx                   swd3e: mov     [esp+218h+var_A3], dx
++ swd3e only: mov     [esp+218h+var_9B], cx
++ swd3e only: mov     [esp+218h+var_A1], dl
+~ offset   swd32: mov     [esp+218h+var_169], cl                   swd3e: mov     [esp+218h+var_99], cl
++ swd3e only: mov     [esp+218h+var_97], edx
++ swd3e only: mov     [esp+218h+var_8F], ecx
++ swd3e only: mov     [esp+218h+var_93], dx
++ swd3e only: mov     [esp+218h+var_8B], cx
+~ offset   swd32: mov     [esp+218h+var_161], dl                   swd3e: mov     [esp+218h+var_91], dl
++ swd3e only: mov     [esp+218h+var_89], cl
++ swd3e only: mov     [esp+218h+var_87], edx
+~ offset   swd32: mov     [esp+218h+var_15F], ecx                  swd3e: mov     [esp+218h+var_7F], ecx
++ swd3e only: mov     [esp+218h+var_83], dx
++ swd3e only: mov     [esp+218h+var_7B], cx
++ swd3e only: mov     [esp+218h+var_81], dl
++ swd3e only: mov     [esp+218h+var_79], cl
+~ offset   swd32: mov     [esp+218h+var_157], edx                  swd3e: mov     [esp+218h+var_77], edx
++ swd3e only: mov     [esp+218h+var_6F], ecx
++ swd3e only: mov     [esp+218h+var_73], dx
+~ offset   swd32: mov     [esp+218h+var_15B], cx                   swd3e: mov     [esp+218h+var_6B], cx
++ swd3e only: mov     [esp+218h+var_71], dl
++ swd3e only: mov     [esp+218h+var_69], cl
++ swd3e only: mov     [esp+218h+var_67], edx
++ swd3e only: mov     [esp+218h+var_5F], ecx
+~ offset   swd32: mov     [esp+218h+var_153], dx                   swd3e: mov     [esp+218h+var_63], dx
++ swd3e only: mov     [esp+218h+var_5B], cx
++ swd3e only: mov     [esp+218h+var_61], dl
+~ offset   swd32: mov     [esp+218h+var_159], cl                   swd3e: mov     [esp+218h+var_59], cl
++ swd3e only: mov     [esp+218h+var_57], edx
++ swd3e only: mov     [esp+218h+var_4F], ecx
++ swd3e only: mov     [esp+218h+var_53], dx
++ swd3e only: mov     [esp+218h+var_4B], cx
+~ offset   swd32: mov     [esp+218h+var_151], dl                   swd3e: mov     [esp+218h+var_51], dl
++ swd3e only: mov     [esp+218h+var_49], cl
++ swd3e only: mov     [esp+218h+var_47], edx
+~ offset   swd32: mov     [esp+218h+var_14F], ecx                  swd3e: mov     [esp+218h+var_3F], ecx
+- swd32 only: mov     [esp+218h+var_147], edx
++ swd3e only: mov     [esp+218h+var_43], dx
+~ offset   swd32: mov     [esp+218h+var_14B], cx                   swd3e: mov     [esp+218h+var_3B], cx
+- swd32 only: mov     [esp+218h+var_143], dx
+- swd32 only: mov     [esp+218h+var_149], cl
+~ offset   swd32: mov     [esp+218h+var_141], dl                   swd3e: mov     [esp+218h+var_41], dl
+- swd32 only: mov     [esp+218h+var_13F], ecx
+- swd32 only: mov     [esp+218h+var_137], edx
+- swd32 only: mov     [esp+218h+var_13B], cx
+- swd32 only: mov     [esp+218h+var_133], dx
+- swd32 only: mov     [esp+218h+var_139], cl
+- swd32 only: mov     [esp+218h+var_131], dl
+- swd32 only: mov     [esp+218h+var_12F], ecx
+- swd32 only: mov     [esp+218h+var_127], edx
+- swd32 only: mov     [esp+218h+var_12B], cx
+- swd32 only: mov     [esp+218h+var_123], dx
+- swd32 only: mov     [esp+218h+var_129], cl
+- swd32 only: mov     [esp+218h+var_121], dl
+- swd32 only: mov     [esp+218h+var_11F], ecx
+- swd32 only: mov     [esp+218h+var_117], edx
+- swd32 only: mov     [esp+218h+var_11B], cx
+- swd32 only: mov     [esp+218h+var_113], dx
+- swd32 only: mov     [esp+218h+var_119], cl
+- swd32 only: mov     [esp+218h+var_111], dl
+- swd32 only: mov     [esp+218h+var_10F], ecx
+- swd32 only: mov     [esp+218h+var_107], edx
+- swd32 only: mov     [esp+218h+var_10B], cx
+- swd32 only: mov     [esp+218h+var_103], dx
+- swd32 only: mov     [esp+218h+var_109], cl
+- swd32 only: mov     [esp+218h+var_101], dl
+- swd32 only: mov     [esp+218h+var_FF], ecx
+- swd32 only: mov     [esp+218h+var_F7], edx
+- swd32 only: mov     [esp+218h+var_FB], cx
+- swd32 only: mov     [esp+218h+var_F3], dx
+- swd32 only: mov     [esp+218h+var_F9], cl
+- swd32 only: mov     [esp+218h+var_F1], dl
+- swd32 only: mov     [esp+218h+var_EF], ecx
+- swd32 only: mov     [esp+218h+var_E7], edx
+- swd32 only: mov     [esp+218h+var_EB], cx
+- swd32 only: mov     [esp+218h+var_E3], dx
+- swd32 only: mov     [esp+218h+var_E9], cl
+- swd32 only: mov     [esp+218h+var_E1], dl
+- swd32 only: mov     [esp+218h+var_DF], ecx
+- swd32 only: mov     [esp+218h+var_D7], edx
+- swd32 only: mov     [esp+218h+var_DB], cx
+- swd32 only: mov     [esp+218h+var_D3], dx
+~ offset   swd32: mov     [esp+218h+var_170], al                   swd3e: mov     [esp+218h+var_D0], al
+~ offset   swd32: mov     [esp+218h+var_168], al                   swd3e: mov     [esp+218h+var_C8], al
+~ offset   swd32: mov     [esp+218h+var_160], al                   swd3e: mov     [esp+218h+var_C0], al
+~ offset   swd32: mov     [esp+218h+var_158], al                   swd3e: mov     [esp+218h+var_B8], al
+~ offset   swd32: mov     [esp+218h+var_150], al                   swd3e: mov     [esp+218h+var_B0], al
+~ offset   swd32: mov     [esp+218h+var_148], al                   swd3e: mov     [esp+218h+var_A8], al
+~ offset   swd32: mov     [esp+218h+var_140], al                   swd3e: mov     [esp+218h+var_A0], al
+~ offset   swd32: mov     [esp+218h+var_138], al                   swd3e: mov     [esp+218h+var_98], al
+~ offset   swd32: mov     [esp+218h+var_130], al                   swd3e: mov     [esp+218h+var_90], al
+~ offset   swd32: mov     [esp+218h+var_128], al                   swd3e: mov     [esp+218h+var_88], al
+~ offset   swd32: mov     [esp+218h+var_120], al                   swd3e: mov     [esp+218h+var_80], al
+~ offset   swd32: mov     [esp+218h+var_118], al                   swd3e: mov     [esp+218h+var_78], al
+~ offset   swd32: mov     [esp+218h+var_110], al                   swd3e: mov     [esp+218h+var_70], al
+~ offset   swd32: mov     [esp+218h+var_108], al                   swd3e: mov     [esp+218h+var_68], al
+~ offset   swd32: mov     [esp+218h+var_100], al                   swd3e: mov     [esp+218h+var_60], al
+~ offset   swd32: mov     [esp+218h+var_F8], al                    swd3e: mov     [esp+218h+var_58], al
+~ offset   swd32: mov     [esp+218h+var_F0], al                    swd3e: mov     [esp+218h+var_50], al
+~ offset   swd32: mov     [esp+218h+var_E8], al                    swd3e: mov     [esp+218h+var_48], al
+~ offset   swd32: mov     [esp+218h+var_E0], al                    swd3e: mov     [esp+218h+var_40], al
+~ offset   swd32: mov     [esp+218h+var_D9], cl                    swd3e: mov     [esp+218h+var_39], cl
+~ offset   swd32: mov     [esp+218h+var_D8], al                    swd3e: mov     [esp+218h+var_38], al
++ swd3e only: mov     [esp+218h+var_37], edx
++ swd3e only: mov     [esp+218h+var_33], dx
++ swd3e only: mov     [esp+218h+var_2F], ecx
+~ offset   swd32: mov     [esp+218h+var_D1], dl                    swd3e: mov     [esp+218h+var_31], dl
+- swd32 only: mov     [esp+218h+var_D0], al
+- swd32 only: mov     [esp+218h+var_CF], ecx
+~ offset   swd32: mov     [esp+218h+var_C7], edx                   swd3e: mov     [esp+218h+var_27], edx
+~ offset   swd32: mov     [esp+218h+var_CB], cx                    swd3e: mov     [esp+218h+var_2B], cx
+~ offset   swd32: mov     [esp+218h+var_C3], dx                    swd3e: mov     [esp+218h+var_23], dx
+~ offset   swd32: mov     [esp+218h+var_C9], cl                    swd3e: mov     [esp+218h+var_29], cl
+~ offset   swd32: mov     [esp+218h+var_C1], dl                    swd3e: mov     [esp+218h+var_21], dl
+~ offset   swd32: mov     [esp+218h+var_BF], ecx                   swd3e: mov     [esp+218h+var_1F], ecx
+~ offset   swd32: mov     [esp+218h+var_B7], edx                   swd3e: mov     [esp+218h+var_17], edx
+~ offset   swd32: mov     [esp+218h+var_BB], cx                    swd3e: mov     [esp+218h+var_1B], cx
+~ offset   swd32: mov     [esp+218h+var_B3], dx                    swd3e: mov     [esp+218h+var_13], dx
+~ offset   swd32: mov     [esp+218h+var_B9], cl                    swd3e: mov     [esp+218h+var_19], cl
+~ offset   swd32: mov     [esp+218h+var_B1], dl                    swd3e: mov     [esp+218h+var_11], dl
+~ offset   swd32: mov     [esp+218h+var_AF], ecx                   swd3e: mov     [esp+218h+var_F], ecx
+~ offset   swd32: mov     [esp+218h+var_A7], edx                   swd3e: mov     [esp+218h+var_7], edx
+~ offset   swd32: mov     [esp+218h+var_AB], cx                    swd3e: mov     [esp+218h+var_B], cx
+~ offset   swd32: mov     [esp+218h+var_A3], dx                    swd3e: mov     [esp+218h+var_3], dx
+- swd32 only: mov     [esp+218h+var_A9], cl
+- swd32 only: mov     [esp+218h+var_A1], dl
+- swd32 only: mov     [esp+218h+var_9F], ecx
+- swd32 only: mov     [esp+218h+var_97], edx
+- swd32 only: mov     [esp+218h+var_9B], cx
+- swd32 only: mov     [esp+218h+var_93], dx
+- swd32 only: mov     [esp+218h+var_99], cl
+- swd32 only: mov     [esp+218h+var_91], dl
+- swd32 only: mov     [esp+218h+var_8F], ecx
+- swd32 only: mov     [esp+218h+var_87], edx
+- swd32 only: mov     [esp+218h+var_8B], cx
+- swd32 only: mov     [esp+218h+var_83], dx
+- swd32 only: mov     [esp+218h+var_89], cl
+- swd32 only: mov     [esp+218h+var_81], dl
+- swd32 only: mov     [esp+218h+var_7F], ecx
+- swd32 only: mov     [esp+218h+var_77], edx
+- swd32 only: mov     [esp+218h+var_7B], cx
+- swd32 only: mov     [esp+218h+var_73], dx
+- swd32 only: mov     [esp+218h+var_79], cl
+- swd32 only: mov     [esp+218h+var_71], dl
+- swd32 only: mov     [esp+218h+var_6F], ecx
+- swd32 only: mov     [esp+218h+var_67], edx
+- swd32 only: mov     [esp+218h+var_6B], cx
+- swd32 only: mov     [esp+218h+var_63], dx
+- swd32 only: mov     [esp+218h+var_69], cl
+- swd32 only: mov     [esp+218h+var_61], dl
+- swd32 only: mov     [esp+218h+var_5F], ecx
+- swd32 only: mov     [esp+218h+var_57], edx
+- swd32 only: mov     [esp+218h+var_5B], cx
+- swd32 only: mov     [esp+218h+var_53], dx
+- swd32 only: mov     [esp+218h+var_59], cl
+- swd32 only: mov     [esp+218h+var_51], dl
+- swd32 only: mov     [esp+218h+var_4F], ecx
+- swd32 only: mov     [esp+218h+var_47], edx
+- swd32 only: mov     [esp+218h+var_4B], cx
+- swd32 only: mov     [esp+218h+var_43], dx
+- swd32 only: mov     [esp+218h+var_49], cl
+- swd32 only: mov     [esp+218h+var_41], dl
+- swd32 only: mov     [esp+218h+var_3F], ecx
+- swd32 only: mov     [esp+218h+var_37], edx
+- swd32 only: mov     [esp+218h+var_3B], cx
+- swd32 only: mov     [esp+218h+var_33], dx
+- swd32 only: mov     [esp+218h+var_39], cl
+~ offset   swd32: mov     [esp+218h+var_C8], al                    swd3e: mov     [esp+218h+var_30], al
+- swd32 only: mov     [esp+218h+var_C0], al
+- swd32 only: mov     [esp+218h+var_B8], al
+- swd32 only: mov     [esp+218h+var_B0], al
+- swd32 only: mov     [esp+218h+var_A8], al
+- swd32 only: mov     [esp+218h+var_A0], al
+- swd32 only: mov     [esp+218h+var_98], al
+- swd32 only: mov     [esp+218h+var_90], al
+- swd32 only: mov     [esp+218h+var_88], al
+- swd32 only: mov     [esp+218h+var_80], al
+- swd32 only: mov     [esp+218h+var_78], al
+- swd32 only: mov     [esp+218h+var_70], al
+- swd32 only: mov     [esp+218h+var_68], al
+- swd32 only: mov     [esp+218h+var_60], al
+- swd32 only: mov     [esp+218h+var_58], al
+- swd32 only: mov     [esp+218h+var_50], al
+- swd32 only: mov     [esp+218h+var_48], al
+- swd32 only: mov     [esp+218h+var_40], al
+- swd32 only: mov     [esp+218h+var_38], al
+- swd32 only: mov     [esp+218h+var_31], dl
+- swd32 only: mov     [esp+218h+var_30], al
+- swd32 only: mov     [esp+218h+var_2F], ecx
+- swd32 only: mov     [esp+218h+var_27], edx
+- swd32 only: mov     [esp+218h+var_2B], cx
+- swd32 only: mov     [esp+218h+var_23], dx
+- swd32 only: mov     [esp+218h+var_29], cl
+- swd32 only: mov     [esp+218h+var_21], dl
+- swd32 only: mov     [esp+218h+var_1F], ecx
+- swd32 only: mov     [esp+218h+var_17], edx
+- swd32 only: mov     [esp+218h+var_1B], cx
+- swd32 only: mov     [esp+218h+var_13], dx
+- swd32 only: mov     [esp+218h+var_19], cl
+- swd32 only: mov     [esp+218h+var_11], dl
+- swd32 only: mov     [esp+218h+var_F], ecx
+- swd32 only: mov     [esp+218h+var_7], edx
+- swd32 only: mov     [esp+218h+var_B], cx
+- swd32 only: mov     [esp+218h+var_3], dx

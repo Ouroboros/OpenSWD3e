@@ -1,0 +1,66 @@
+swd3e 0x00466310 sub_466310 <- swd32 0x0045BD90 sub_45BD90; method=callers reusable=no: the code differs
+same=162 offset=0 constant=2 global=0 code=0 inserted=30 deleted=32
+- swd32 only: mov     ax, word_4A7638
++ swd3e only: mov     ax, word ptr dword_4BF1DC+2
+- swd32 only: mov     word_4A7638, ax
++ swd3e only: mov     word ptr dword_4BF1DC+2, ax
+- swd32 only: mov     word_4A7638, ax
++ swd3e only: mov     word ptr dword_4BF1DC+2, ax
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     eax, ecx
+- swd32 only: shl     eax, 6
+- swd32 only: sub     eax, ecx
+- swd32 only: shl     eax, 4
+- swd32 only: sub     eax, ecx
++ swd3e only: xor     eax, eax
++ swd3e only: lea     ecx, ds:0[eax*8]
++ swd3e only: sub     ecx, eax
++ swd3e only: lea     ecx, [ecx+ecx*2]
++ swd3e only: lea     ecx, [eax+ecx*8]
++ swd3e only: lea     edx, [ecx+ecx*4]
+- swd32 only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+edx*4]
+- swd32 only: mov     eax, dword_53BCE4
++ swd3e only: mov     ecx, dword_576FA4
+- swd32 only: movsx   ecx, di
+- swd32 only: cmp     ecx, eax
++ swd3e only: movsx   eax, di
++ swd3e only: cmp     eax, ecx
+- swd32 only: lea     ecx, [eax+eax*2]
++ swd3e only: mov     ecx, eax
+~ constant swd32: shl     ecx, 3                                   swd3e: shl     ecx, 7
+- swd32 only: sub     ecx, eax
++ swd3e only: add     ecx, eax
+- swd32 only: lea     ecx, [ecx+ecx*2]
+- swd32 only: lea     ecx, [ecx+ecx*4]
++ swd3e only: lea     eax, [eax+eax*2]
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     eax, ecx
+- swd32 only: shl     eax, 6
+- swd32 only: sub     eax, ecx
+- swd32 only: shl     eax, 4
+- swd32 only: sub     eax, ecx
++ swd3e only: xor     eax, eax
++ swd3e only: lea     ecx, ds:0[eax*8]
++ swd3e only: sub     ecx, eax
++ swd3e only: lea     ecx, [ecx+ecx*2]
++ swd3e only: lea     ecx, [eax+ecx*8]
++ swd3e only: lea     edx, [ecx+ecx*4]
+- swd32 only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+edx*4]
+- swd32 only: mov     eax, dword_53BCE4
++ swd3e only: mov     ecx, dword_576FA4
+- swd32 only: movsx   ecx, di
+- swd32 only: cmp     ecx, eax
++ swd3e only: movsx   eax, di
++ swd3e only: cmp     eax, ecx
+- swd32 only: lea     ecx, [eax+eax*2]
++ swd3e only: mov     ecx, eax
+~ constant swd32: shl     ecx, 3                                   swd3e: shl     ecx, 7
+- swd32 only: sub     ecx, eax
++ swd3e only: add     ecx, eax
+- swd32 only: lea     ecx, [ecx+ecx*2]
+- swd32 only: lea     ecx, [ecx+ecx*4]
++ swd3e only: lea     eax, [eax+eax*2]
+- swd32 only: mov     word_4A7638, 1A4h
++ swd3e only: mov     word ptr dword_4BF1DC+2, 1A4h

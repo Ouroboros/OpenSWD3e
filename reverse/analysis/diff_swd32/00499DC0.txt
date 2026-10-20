@@ -1,0 +1,15 @@
+swd3e 0x00499DC0 sub_499DC0 <- swd32 0x00482DA0 sub_482DA0; method=callers reusable=no: the code differs
+same=57 offset=9 constant=2 global=0 code=0 inserted=2 deleted=0
++ swd3e only: cmp     [esi+3044h], eax
++ swd3e only: jz      loc_499EA3
+~ offset   swd32: cmp     [esi+2B00h], eax                         swd3e: cmp     [esi+3048h], eax
+~ offset   swd32: cmp     [esi+2B04h], eax                         swd3e: cmp     [esi+304Ch], eax
+~ offset   swd32: mov     dword ptr [eax], 38h                     swd3e: mov     dword ptr [eax], 30h
+~ constant swd32: cmp     ebp, 38h                                 swd3e: cmp     ebp, 30h
+~ offset   swd32: mov     dword ptr [ebx], 38h                     swd3e: mov     dword ptr [ebx], 30h
+~ offset   swd32: mov     eax, [esi+26B0h]                         swd3e: mov     eax, [esi+2BB8h]
+~ offset   swd32: add     [esi+26B0h], edi                         swd3e: add     [esi+2BB8h], edi
+~ offset   swd32: mov     dword ptr [esi+26B0h], 0                 swd3e: mov     dword ptr [esi+2BB8h], 0
+~ offset   swd32: cmp     dword ptr [esi], 38h                     swd3e: cmp     dword ptr [esi], 30h
+~ offset   swd32: mov     dword ptr [esi], 38h                     swd3e: mov     dword ptr [esi], 30h
+~ constant swd32: push    0BCh                                     swd3e: push    2FDh

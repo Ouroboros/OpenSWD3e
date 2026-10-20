@@ -1,0 +1,22 @@
+swd3e 0x00442920 sub_442920 <- swd32 0x0043D050 sub_43D050; method=anchor reusable=no: the code differs
+same=232 offset=11 constant=4 global=0 code=0 inserted=3 deleted=2
+- swd32 only: movsx   edx, byte ptr [eax+ecx]
++ swd3e only: movsx   eax, byte ptr [eax+ecx]
++ swd3e only: lea     edx, [eax+eax*4]
+~ offset   swd32: lea     eax, ds:49E370h[edx*8]                   swd3e: lea     eax, ds:4AF94Ch[edx*2]
+~ offset   swd32: mov     dx, [eax+60h]                            swd3e: mov     dx, [eax+64h]
+- swd32 only: movsx   edx, word ptr [ecx+70h]
++ swd3e only: mov     edx, [ecx+74h]
+~ offset   swd32: mov     dx, [eax+62h]                            swd3e: mov     dx, [eax+66h]
+~ offset   swd32: mov     dx, [eax+64h]                            swd3e: mov     dx, [eax+68h]
+~ offset   swd32: mov     dx, [eax+66h]                            swd3e: mov     dx, [eax+6Ah]
+~ constant swd32: push    0B0h                                     swd3e: push    0B4h
+~ constant swd32: mov     ecx, 2Ch                                 swd3e: mov     ecx, 2Dh
+~ offset   swd32: mov     ax, [edx+72h]                            swd3e: mov     ax, [edx+78h]
+~ offset   swd32: mov     ecx, [ebx+0ACh]                          swd3e: mov     ecx, [ebx+0B0h]
+~ constant swd32: mov     ecx, 2Ch                                 swd3e: mov     ecx, 2Dh
+~ offset   swd32: mov     ax, [edx+76h]                            swd3e: mov     ax, [edx+7Ch]
+~ offset   swd32: mov     edx, [ebx+0ACh]                          swd3e: mov     edx, [ebx+0B0h]
+~ constant swd32: mov     ecx, 2Ch                                 swd3e: mov     ecx, 2Dh
+~ offset   swd32: mov     ax, [eax+7Ah]                            swd3e: mov     ax, [eax+80h]
+~ offset   swd32: mov     ecx, [ebx+0ACh]                          swd3e: mov     ecx, [ebx+0B0h]

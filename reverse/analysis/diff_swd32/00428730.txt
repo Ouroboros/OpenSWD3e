@@ -1,0 +1,3 @@
+swd3e 0x00428730 sub_428730 <- swd32 0x00424910 sub_424910; method=neighbours reusable=no: the code differs
+same=6 offset=0 constant=0 global=0 code=0 inserted=1 deleted=0
++ swd3e only: call    sub_429790

@@ -1,0 +1,17 @@
+swd3e 0x004288B0 sub_4288B0 <- swd32 0x00424B90 sub_424B90; method=anchor reusable=no: the code differs
+same=238 offset=0 constant=3 global=0 code=0 inserted=11 deleted=1
+~ constant swd32: push    168h                                     swd3e: push    0F0h
+~ constant swd32: push    1E0h                                     swd3e: push    140h
+- swd32 only: push    eax
++ swd3e only: mov     ecx, eax
++ swd3e only: shl     ecx, 7
++ swd3e only: sub     ecx, eax
++ swd3e only: mov     eax, 2E8BA2E9h
++ swd3e only: imul    ecx
++ swd3e only: sar     edx, 1
++ swd3e only: mov     eax, edx
++ swd3e only: mov     ecx, offset unk_578A70
++ swd3e only: shr     eax, 1Fh
++ swd3e only: add     edx, eax
++ swd3e only: push    edx
+~ constant swd32: add     esp, 8                                   swd3e: add     esp, 4

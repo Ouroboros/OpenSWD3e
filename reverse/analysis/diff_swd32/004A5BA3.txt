@@ -1,0 +1,19 @@
+swd3e 0x004A5BA3 sub_4A5BA3 <- swd32 0x00491930 sub_491930; method=calls reusable=no: the code differs
+same=10 offset=0 constant=0 global=0 code=0 inserted=8 deleted=9
+- swd32 only: push    ebp
+- swd32 only: mov     ebp, esp
+- swd32 only: cmp     dword_53D1B0, 1
++ swd3e only: mov     eax, dword_579ABC
++ swd3e only: cmp     eax, 1
+- swd32 only: cmp     dword_53D1B0, 0
++ swd3e only: test    eax, eax
+- swd32 only: add     esp, 4
+- swd32 only: cmp     dword_53D2F8, 0
++ swd3e only: mov     eax, dword_579C00
++ swd3e only: pop     ecx
++ swd3e only: test    eax, eax
+- swd32 only: call    dword_53D2F8
++ swd3e only: call    eax
+- swd32 only: add     esp, 4
+- swd32 only: pop     ebp
++ swd3e only: pop     ecx

@@ -1,0 +1,7 @@
+swd3e 0x0049B680 sub_49B680 <- swd32 0x00484500 sub_484500; method=similarity reusable=no: the code differs
+same=20 offset=3 constant=0 global=0 code=0 inserted=1 deleted=1
+~ offset   swd32: cmp     dword ptr [ecx+2AA0h], 1                 swd3e: cmp     dword ptr [ecx+2FE0h], 1
+- swd32 only: movsx   eax, word ptr [edx+64h]
++ swd3e only: mov     eax, [edx+68h]
+~ offset   swd32: mov     eax, [ecx+26B4h]                         swd3e: mov     eax, [ecx+2BBCh]
+~ offset   swd32: mov     edx, [ecx+4Ch]                           swd3e: mov     edx, [ecx+50h]

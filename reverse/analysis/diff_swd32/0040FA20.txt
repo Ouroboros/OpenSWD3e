@@ -1,0 +1,29 @@
+swd3e 0x0040FA20 sub_40FA20 <- swd32 0x0040F6D0 sub_40F6D0; method=anchor reusable=no: the code differs
+same=101 offset=2 constant=2 global=0 code=0 inserted=12 deleted=11
+- swd32 only: mov     ebp, [esp+4+arg_0]
++ swd3e only: mov     ebp, dword ptr [esp+4+arg_0]
+~ offset   swd32: lea     eax, [ebp+ebp*2+0]                       swd3e: lea     eax, [ebp+ebp*8+0]
++ swd3e only: lea     eax, [ebp+eax*2+0]
+~ offset   swd32: lea     esi, [eax+eax*8]                         swd3e: lea     esi, [eax+eax*2]
+~ constant swd32: shl     esi, 3                                   swd3e: shl     esi, 2
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word_4AD490[edi]
+- swd32 only: cmp     eax, ebp
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     cx, word_4C6C88[edi]
++ swd3e only: cmp     ecx, ebp
+- swd32 only: lea     ecx, unk_4BABA8[esi]
+- swd32 only: push    ecx
++ swd3e only: lea     edx, unk_4D3FC8[esi]
++ swd3e only: push    edx
+- swd32 only: mov     dx, word_4AD492[edi]
+- swd32 only: and     edx, 7FFFh
+- swd32 only: mov     al, byte_4AD4AC[edx+edi]
+- swd32 only: mov     byte ptr [esp+10h+arg_0], al
++ swd3e only: mov     ax, word_4C6C8A[edi]
++ swd3e only: and     eax, 7FFFh
++ swd3e only: mov     cl, byte_4C6CA4[eax+edi]
+- swd32 only: mov     ecx, [esp+10h+arg_0]
++ swd3e only: mov     [esp+10h+arg_0], cl
++ swd3e only: mov     ecx, dword ptr [esp+10h+arg_0]
+~ constant swd32: cmp     ebp, 100h                                swd3e: cmp     ebp, 12Ch

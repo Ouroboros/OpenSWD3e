@@ -1,0 +1,5 @@
+swd3e 0x004776B0 sub_4776B0 <- swd32 0x00468930 sub_468930; method=shape reusable=no: the code differs
+same=114 offset=0 constant=1 global=2 code=0 inserted=0 deleted=0
+~ constant swd32: shl     edx, 4                                   swd3e: shl     edx, 5
+~ global   swd32: add     edx, offset String                       swd3e: add     edx, offset byte_50ECB4
+~ global   swd32: mov     dword_4FC5B0, 233Bh                      swd3e: mov     dword_50AF70, 2396h

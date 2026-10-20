@@ -1,0 +1,6 @@
+swd3e 0x00442D50 sub_442D50 <- swd32 0x0043D470 sub_43D470; method=shape reusable=no: the code differs
+same=64 offset=0 constant=4 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: push    1DEh                                     swd3e: push    4Eh
+~ constant swd32: cmp     esi, 0Bh                                 swd3e: cmp     esi, 0Ah
+~ constant swd32: push    2439h                                    swd3e: push    2346h
+~ constant swd32: push    243Ah                                    swd3e: push    2362h

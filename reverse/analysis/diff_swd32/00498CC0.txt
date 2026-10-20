@@ -1,0 +1,3 @@
+swd3e 0x00498CC0 sub_498CC0 <- swd32 0x00481FC0 sub_481FC0; method=similarity reusable=no: the code differs
+same=4 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     al, [ecx+26D0h]                          swd3e: mov     al, [ecx+2BD8h]

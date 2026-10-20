@@ -1,0 +1,44 @@
+swd3e 0x00481460 sub_481460 <- swd32 0x00470A10 sub_470A10; method=calls reusable=no: the code differs
+same=34 offset=3 constant=11 global=0 code=12 inserted=16 deleted=0
++ swd3e only: jnz     short loc_481474
++ swd3e only: mov     esi, 10h
++ swd3e only: jmp     short loc_4814BA
++ swd3e only: cmp     esi, 1
+~ code     swd32: jnz     short loc_470A24                         swd3e: jnz     short loc_481480
+~ constant swd32: mov     esi, 10h                                 swd3e: mov     esi, 0Ch
+~ constant swd32: cmp     esi, 1                                   swd3e: cmp     esi, 2
+~ code     swd32: jnz     short loc_470A30                         swd3e: jnz     short loc_48148C
+~ constant swd32: mov     esi, 0Ch                                 swd3e: mov     esi, 1001h
+~ constant swd32: cmp     esi, 2                                   swd3e: cmp     esi, 3
+~ code     swd32: jnz     short loc_470A3C                         swd3e: jnz     short loc_481498
+~ constant swd32: mov     esi, 1001h                               swd3e: mov     esi, 800h
+~ constant swd32: cmp     esi, 3                                   swd3e: cmp     esi, 4
+~ code     swd32: jnz     short loc_470A48                         swd3e: jnz     short loc_4814A4
+~ constant swd32: mov     esi, 800h                                swd3e: mov     esi, 2000h
+~ constant swd32: cmp     esi, 4                                   swd3e: cmp     esi, 5
+~ code     swd32: jnz     short loc_470A54                         swd3e: jnz     short loc_4814B0
+~ constant swd32: mov     esi, 2000h                               swd3e: mov     esi, 8000000h
+~ constant swd32: cmp     esi, 5                                   swd3e: cmp     esi, 6
+~ constant swd32: mov     esi, 8000000h                            swd3e: mov     esi, 2
+~ offset   swd32: mov     eax, [edi+2EC8h]                         swd3e: mov     eax, [edi+3458h]
+~ offset   swd32: mov     [edi+2EC8h], eax                         swd3e: mov     [edi+3458h], eax
+~ code     swd32: jz      short loc_470AB8                         swd3e: jz      short loc_481534
+~ code     swd32: jz      short loc_470A9F                         swd3e: jz      short loc_48151B
++ swd3e only: cmp     esi, 2
++ swd3e only: jnz     short loc_4814FC
++ swd3e only: movsx   edx, word ptr [eax+0Ah]
++ swd3e only: xor     ebp, ebp
++ swd3e only: mov     bp, [eax+6]
++ swd3e only: movsx   eax, word ptr [eax+8]
++ swd3e only: sub     edx, ebp
++ swd3e only: add     edx, eax
++ swd3e only: test    edx, edx
++ swd3e only: jle     short loc_4814C5
++ swd3e only: inc     word ptr [ecx]
++ swd3e only: jmp     short loc_4814C5
+~ code     swd32: jz      short loc_470A9F                         swd3e: jz      short loc_48151B
+~ code     swd32: jle     short loc_470A9F                         swd3e: jle     short loc_48151B
+~ code     swd32: jnz     short loc_470A69                         swd3e: jnz     short loc_4814C5
+~ offset   swd32: mov     edx, [edi+2EC8h]                         swd3e: mov     edx, [edi+3458h]
+~ code     swd32: jz      short loc_470A69                         swd3e: jz      short loc_4814C5
+~ code     swd32: jmp     short loc_470A69                         swd3e: jmp     short loc_4814C5

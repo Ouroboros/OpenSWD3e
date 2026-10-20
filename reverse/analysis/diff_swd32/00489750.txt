@@ -1,0 +1,46 @@
+swd3e 0x00489750 sub_489750 <- swd32 0x00476A80 sub_476A80; method=calls reusable=no: the code differs
+same=208 offset=10 constant=2 global=0 code=0 inserted=30 deleted=2
++ swd3e only: push    ebp
+~ constant swd32: mov     ebx, 1000h                               swd3e: mov     ebx, 8000h
++ swd3e only: mov     ebp, 20000h
+~ constant swd32: cmp     edx, 19h                                 swd3e: cmp     edx, 1Fh
+~ offset   swd32: jmp     ds:jpt_476BDF[edx*4]                     swd3e: jmp     ds:jpt_4898B5[edx*4]
+~ offset   swd32: mov     [eax+24h], dl                            swd3e: mov     [eax+2Ah], dl
+~ offset   swd32: mov     [eax+18h], dx                            swd3e: mov     [eax+1Ah], dx
+~ offset   swd32: mov     [eax+18h], dx                            swd3e: mov     [eax+1Ah], dx
+~ offset   swd32: mov     [eax+1Eh], dx                            swd3e: mov     [eax+20h], dx
+- swd32 only: or      byte ptr [eax+1Fh], 80h
++ swd3e only: or      [eax+20h], bx
++ swd3e only: test    ebp, edx
++ swd3e only: jz      def_4898B5
++ swd3e only: or      [eax+4], ebp
+~ offset   swd32: mov     [eax+1Ch], dx                            swd3e: mov     [eax+1Eh], dx
+~ offset   swd32: mov     [eax+1Ah], dx                            swd3e: mov     [eax+1Ch], dx
+- swd32 only: or      edx, ebx
++ swd3e only: or      dh, 10h
+~ offset   swd32: mov     [eax+20h], dx                            swd3e: mov     [eax+22h], dx
+~ offset   swd32: mov     [eax+24h], dl                            swd3e: mov     [eax+2Ah], dl
++ swd3e only: mov     dx, [ecx]
++ swd3e only: add     ecx, edi
++ swd3e only: mov     [eax+26h], dx
+~ offset   swd32: mov     [eax+22h], dx                            swd3e: mov     [eax+28h], dx
++ swd3e only: mov     dx, [ecx]
++ swd3e only: add     ecx, edi
++ swd3e only: mov     [eax+18h], dx
++ swd3e only: jmp     def_4898B5
++ swd3e only: or      [eax+4], ebx
++ swd3e only: jmp     def_4898B5
++ swd3e only: or      dword ptr [eax+4], 10000h
++ swd3e only: jmp     def_4898B5
++ swd3e only: or      dword ptr [eax+4], 40000h
++ swd3e only: jmp     def_4898B5
++ swd3e only: or      dword ptr [eax+4], 80000h
++ swd3e only: jmp     def_4898B5
++ swd3e only: mov     edx, [eax+4]
++ swd3e only: or      edx, 100000h
++ swd3e only: mov     [eax+4], edx
++ swd3e only: mov     dx, [ecx]
++ swd3e only: mov     [eax+24h], dx
++ swd3e only: add     ecx, edi
++ swd3e only: jmp     def_4898B5
++ swd3e only: pop     ebp

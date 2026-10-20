@@ -1,0 +1,10 @@
+swd3e 0x00495C10 sub_495C10 <- swd32 0x0047F920 sub_47F920; method=calls reusable=no: the code differs
+same=1 offset=0 constant=0 global=0 code=0 inserted=4 deleted=4
+- swd32 only: test    byte ptr [ecx+26D0h], 40h
+- swd32 only: mov     eax, 1
+- swd32 only: jnz     short locret_47F934
+- swd32 only: mov     eax, [ecx+2AD0h]
++ swd3e only: xor     eax, eax
++ swd3e only: mov     al, [ecx+2BD8h]
++ swd3e only: shr     eax, 6
++ swd3e only: and     eax, 1

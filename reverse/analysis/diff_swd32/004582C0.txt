@@ -1,0 +1,15 @@
+swd3e 0x004582C0 sub_4582C0 <- swd32 0x00450BD0 sub_450BD0; method=callers reusable=no: the code differs
+same=28 offset=0 constant=1 global=0 code=4 inserted=1 deleted=7
+- swd32 only: sub     eax, 0
+- swd32 only: jz      short loc_450BE8
+- swd32 only: dec     eax
++ swd3e only: test    eax, eax
+~ code     swd32: jnz     short loc_450C09                         swd3e: jnz     short loc_4582E9
+- swd32 only: push    2358h
+- swd32 only: jmp     short loc_450BF2
+- swd32 only: mov     edx, [esp+arg_4]
+- swd32 only: push    edx
+~ constant swd32: push    2359h                                    swd3e: push    2370h
+~ code     swd32: jmp     short loc_450C0E                         swd3e: jmp     short loc_4582EE
+~ code     swd32: jnz     short loc_450C1F                         swd3e: jnz     short loc_4582FF
+~ code     swd32: jmp     short loc_450C21                         swd3e: jmp     short loc_458301

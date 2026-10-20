@@ -1,0 +1,64 @@
+swd3e 0x0049D1A0 sub_49D1A0 <- swd32 0x004854B0 sub_4854B0; method=callers reusable=no: the code differs
+same=88 offset=12 constant=3 global=0 code=12 inserted=22 deleted=13
+- swd32 only: sub     esp, 8
++ swd3e only: push    ecx
+~ offset   swd32: mov     eax, [ebp+430h]                          swd3e: mov     eax, [ebp+438h]
+~ offset   swd32: mov     eax, [ebp+42Ch]                          swd3e: mov     eax, [ebp+434h]
+~ offset   swd32: mov     ecx, [ebp+42Ch]                          swd3e: mov     ecx, [ebp+434h]
+- swd32 only: add     esp, 8
++ swd3e only: pop     ecx
+~ offset   swd32: lea     edx, [ebp+428h]                          swd3e: lea     edx, [ebp+430h]
+- swd32 only: mov     [esp+0Ch+var_4], edx
+~ constant swd32: cmp     eax, 2                                   swd3e: cmp     eax, 3
+~ constant swd32: cmp     eax, 3                                   swd3e: cmp     eax, 4
++ swd3e only: jz      short loc_49D224
++ swd3e only: dec     eax
++ swd3e only: mov     [ebp+14h], ecx
++ swd3e only: jmp     short loc_49D22C
+~ offset   swd32: mov     [ebp+14h], ecx                           swd3e: mov     [ebp+1Ch], ecx
+~ offset   swd32: mov     [ebp+1Ch], ecx                           swd3e: mov     [ebp+24h], ecx
++ swd3e only: jz      short loc_49D27A
++ swd3e only: dec     eax
+~ code     swd32: jz      short loc_485569                         swd3e: jz      short loc_49D25C
+~ code     swd32: jnz     loc_485605                               swd3e: jnz     loc_49D304
+~ code     swd32: jge     loc_485605                               swd3e: jge     loc_49D304
+~ offset   swd32: lea     esi, [ebp+eax*4+43Ch]                    swd3e: lea     esi, [ebp+eax*4+444h]
+~ code     swd32: jmp     short loc_485585                         swd3e: jmp     short loc_49D292
+~ code     swd32: jge     loc_485605                               swd3e: jge     loc_49D304
++ swd3e only: lea     eax, [eax+eax*4]
++ swd3e only: lea     esi, [ebp+eax*4+46Ch]
++ swd3e only: lea     eax, [ebp+20h]
++ swd3e only: jmp     short loc_49D292
++ swd3e only: mov     eax, [ebp+24h]
++ swd3e only: lea     ebx, [ebp+24h]
++ swd3e only: cmp     eax, 2
++ swd3e only: jge     short loc_49D304
+~ offset   swd32: lea     esi, [ebp+eax*4+464h]                    swd3e: lea     esi, [ebp+eax*4+494h]
+~ offset   swd32: lea     eax, [ebp+20h]                           swd3e: lea     eax, [ebp+28h]
+~ code     swd32: jz      short loc_485605                         swd3e: jz      short loc_49D304
+~ code     swd32: jz      short loc_4855EA                         swd3e: jz      short loc_49D2E9
+~ offset   swd32: mov     ecx, [ebp+430h]                          swd3e: mov     ecx, [ebp+438h]
+~ code     swd32: jz      short loc_4855C4                         swd3e: jz      short loc_49D2D1
+~ code     swd32: jnz     short loc_4855EA                         swd3e: jnz     short loc_49D2E9
+~ offset   swd32: mov     ecx, [ebp+24h]                           swd3e: mov     ecx, [ebp+2Ch]
+~ offset   swd32: mov     edx, [ebp+42Ch]                          swd3e: mov     edx, [ebp+434h]
+~ code     swd32: jmp     short loc_4855EA                         swd3e: jmp     short loc_49D2E9
++ swd3e only: mov     ecx, [ebp+2Ch]
++ swd3e only: mov     edx, [ebp+434h]
+~ constant swd32: push    0                                        swd3e: push    1
+- swd32 only: call    ds:MessageBeep
+- swd32 only: mov     eax, [ebp+24h]
+- swd32 only: mov     edx, [esp+14h+var_4]
+- swd32 only: mov     ecx, [ebp+42Ch]
+- swd32 only: push    1
+- swd32 only: push    eax
+- swd32 only: mov     eax, [edx]
++ swd3e only: push    edx
+- swd32 only: mov     edx, [esp+14h+var_8]
++ swd3e only: mov     eax, [esp+10h+var_4]
+- swd32 only: mov     eax, [edx]
++ swd3e only: mov     eax, [eax]
+~ code     swd32: jnz     short loc_485605                         swd3e: jnz     short loc_49D304
+~ code     swd32: jl      short loc_485605                         swd3e: jl      short loc_49D304
+- swd32 only: add     esp, 8
++ swd3e only: pop     ecx

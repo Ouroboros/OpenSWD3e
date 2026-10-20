@@ -1,0 +1,136 @@
+swd3e 0x00491690 sub_491690 <- swd32 0x0047D350 sub_47D350; method=calls reusable=no: the code differs
+same=45 offset=88 constant=9 global=0 code=0 inserted=30 deleted=7
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: lea     edi, [esi+2A0h]                          swd3e: lea     edi, [esi+2B4h]
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: lea     edi, [esi+338h]                          swd3e: lea     edi, [esi+358h]
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: lea     edi, [esi+3D0h]                          swd3e: lea     edi, [esi+3FCh]
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: lea     edi, [esi+468h]                          swd3e: lea     edi, [esi+4A0h]
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: lea     edi, [esi+500h]                          swd3e: lea     edi, [esi+544h]
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: lea     edi, [esi+598h]                          swd3e: lea     edi, [esi+5E8h]
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: lea     edi, [esi+0C20h]                         swd3e: lea     edi, [esi+0CF4h]
+~ constant swd32: mov     ecx, 130h                                swd3e: mov     ecx, 148h
+~ offset   swd32: lea     edi, [esi+630h]                          swd3e: lea     edi, [esi+68Ch]
+~ offset   swd32: lea     edi, [esi+0D50h]                         swd3e: lea     edi, [esi+0FC4h]
+~ constant swd32: mov     ecx, 0Ah                                 swd3e: mov     ecx, 0Bh
+~ offset   swd32: lea     edi, [esi+0D90h]                         swd3e: lea     edi, [esi+1004h]
+~ offset   swd32: lea     edi, [esi+295Ah]                         swd3e: lea     edi, [esi+2E66h]
+~ offset   swd32: lea     edi, [esi+29C4h]                         swd3e: lea     edi, [esi+2EE0h]
+~ offset   swd32: lea     edi, [esi+0FCCh]                         swd3e: lea     edi, [esi+1314h]
+~ offset   swd32: lea     edi, [esi+283Ch]                         swd3e: lea     edi, [esi+2D48h]
++ swd3e only: lea     ecx, [esi+2B38h]
++ swd3e only: push    edi
++ swd3e only: mov     [ecx], eax
++ swd3e only: mov     [ecx+4], eax
++ swd3e only: mov     [ecx+8], eax
++ swd3e only: mov     [ecx+0Ch], eax
+- swd32 only: push    edi
+~ offset   swd32: mov     eax, [esi+2AA0h]                         swd3e: mov     eax, [esi+2FE0h]
+- swd32 only: lea     ecx, [esi+2A56h]
+- swd32 only: or      eax, 0FFFFFFFFh
+- swd32 only: mov     [ecx], eax
+- swd32 only: mov     [ecx+4], eax
+- swd32 only: mov     [ecx+8], eax
+- swd32 only: mov     [ecx+0Ch], eax
++ swd3e only: lea     eax, [esi+2F72h]
++ swd3e only: or      edx, 0FFFFFFFFh
++ swd3e only: mov     byte_5785EE, bl
++ swd3e only: mov     [eax], edx
++ swd3e only: mov     [eax+4], edx
++ swd3e only: mov     [eax+8], edx
++ swd3e only: mov     [eax+0Ch], edx
+~ offset   swd32: mov     word ptr [esi+29A2h], 0FFFFh             swd3e: mov     word ptr [esi+2EAEh], 0FFFFh
+~ offset   swd32: mov     dword ptr [esi+2668h], 0Fh               swd3e: mov     dword ptr [esi+2B70h], 0Fh
+~ offset   swd32: mov     [esi+266Ch], edi                         swd3e: mov     [esi+2B74h], edi
+~ offset   swd32: mov     word ptr [esi+2A68h], 2                  swd3e: mov     word ptr [esi+2F84h], 2
+~ offset   swd32: mov     word ptr [esi+2A6Ah], 18h                swd3e: mov     word ptr [esi+2F86h], 18h
+~ offset   swd32: mov     [esi+2954h], bx                          swd3e: mov     [esi+2E60h], bx
+~ offset   swd32: mov     [esi+2660h], ebx                         swd3e: mov     [esi+2B68h], ebx
+~ offset   swd32: mov     [esi+2664h], ebx                         swd3e: mov     [esi+2B6Ch], ebx
+~ offset   swd32: mov     [esi+26D0h], bx                          swd3e: mov     [esi+2BD8h], bx
+~ offset   swd32: mov     [esi+26C0h], ebx                         swd3e: mov     [esi+2BC8h], ebx
+~ offset   swd32: mov     [esi+26D2h], bx                          swd3e: mov     [esi+2BDCh], bx
+~ offset   swd32: mov     [esi+2958h], bx                          swd3e: mov     [esi+2E64h], bx
+~ offset   swd32: mov     [esi+2A0Eh], bx                          swd3e: mov     [esi+2F2Ah], bx
+~ offset   swd32: mov     [esi+29A4h], bx                          swd3e: mov     [esi+2EB0h], bx
+~ offset   swd32: mov     [esi+2A0Ch], bx                          swd3e: mov     [esi+2F28h], bx
+~ offset   swd32: mov     [esi+2A12h], bx                          swd3e: mov     [esi+2F2Eh], bx
+~ offset   swd32: mov     [esi+2A14h], bx                          swd3e: mov     [esi+2F30h], bx
+~ offset   swd32: mov     [esi+2A66h], bx                          swd3e: mov     [esi+2F82h], bx
+~ offset   swd32: mov     [esi+2A6Ch], bx                          swd3e: mov     [esi+2F88h], bx
+~ offset   swd32: mov     [esi+2A6Eh], bx                          swd3e: mov     [esi+2F8Ah], bx
+~ offset   swd32: mov     [esi+2A72h], bx                          swd3e: mov     [esi+2F8Eh], bx
+~ offset   swd32: mov     [esi+2A74h], bx                          swd3e: mov     [esi+2F90h], bx
+~ offset   swd32: mov     [esi+2A78h], bx                          swd3e: mov     [esi+2F94h], bx
+~ offset   swd32: mov     [esi+2A7Ah], bx                          swd3e: mov     [esi+2F96h], bx
+~ offset   swd32: mov     [esi+2A7Ch], bx                          swd3e: mov     [esi+2F98h], bx
+~ offset   swd32: mov     [esi+2A80h], bx                          swd3e: mov     [esi+2F9Ch], bx
+~ offset   swd32: mov     [esi+2A7Eh], bx                          swd3e: mov     [esi+2F9Ah], bx
+~ offset   swd32: mov     [esi+2A82h], bx                          swd3e: mov     [esi+2F9Eh], bx
+~ offset   swd32: mov     [esi+26B8h], ebx                         swd3e: mov     [esi+2BC0h], ebx
+~ offset   swd32: mov     [esi+2A9Ch], bl                          swd3e: mov     [esi+2FCEh], bl
+~ offset   swd32: mov     [esi+2A92h], bl                          swd3e: mov     [esi+2FC4h], bl
+~ offset   swd32: mov     [esi+2A93h], bl                          swd3e: mov     [esi+2FC5h], bl
+~ offset   swd32: mov     [esi+2A94h], bl                          swd3e: mov     [esi+2FC6h], bl
+~ offset   swd32: mov     [esi+2A95h], bl                          swd3e: mov     [esi+2FC7h], bl
+~ offset   swd32: mov     [esi+2A86h], bx                          swd3e: mov     [esi+2FB0h], bx
+~ offset   swd32: mov     [esi+2A97h], bl                          swd3e: mov     [esi+2FC9h], bl
+~ offset   swd32: mov     [esi+2A98h], bl                          swd3e: mov     [esi+2FCAh], bl
+~ offset   swd32: mov     [esi+2A99h], bl                          swd3e: mov     [esi+2FCBh], bl
+~ offset   swd32: mov     [esi+2A9Ah], bl                          swd3e: mov     [esi+2FCCh], bl
+~ offset   swd32: mov     [esi+2A84h], bx                          swd3e: mov     [esi+2FA6h], bx
+~ offset   swd32: mov     [esi+26C8h], ebx                         swd3e: mov     [esi+2BD0h], ebx
+~ offset   swd32: mov     [esi+26CCh], ebx                         swd3e: mov     [esi+2BD4h], ebx
++ swd3e only: mov     [esi+2BE8h], bx
++ swd3e only: mov     [esi+2FD3h], bl
++ swd3e only: mov     [esi+2FD5h], bl
++ swd3e only: mov     [esi+2FD6h], bl
++ swd3e only: mov     [esi+2FD7h], bl
++ swd3e only: mov     [esi+2FD8h], bl
++ swd3e only: mov     [esi+2FDCh], bl
++ swd3e only: mov     [esi+2FD4h], bl
++ swd3e only: mov     [esi+2FA0h], bx
++ swd3e only: mov     [esi+2EB4h], bx
++ swd3e only: mov     [esi+2FD9h], bl
++ swd3e only: mov     [esi+2FDAh], bl
+~ offset   swd32: mov     [esi+2AA0h], ebx                         swd3e: mov     [esi+2FE0h], ebx
+~ offset   swd32: mov     [esi+2AA4h], ebx                         swd3e: mov     [esi+2FE4h], ebx
+~ offset   swd32: mov     [esi+2AA8h], ebx                         swd3e: mov     [esi+2FE8h], ebx
+~ offset   swd32: mov     [esi+2AACh], ebx                         swd3e: mov     [esi+2FECh], ebx
+~ offset   swd32: mov     [esi+2AB0h], ebx                         swd3e: mov     [esi+2FF0h], ebx
+~ offset   swd32: mov     [esi+2AB4h], ebx                         swd3e: mov     [esi+2FF4h], ebx
+~ offset   swd32: mov     [esi+2AB8h], ebx                         swd3e: mov     [esi+2FF8h], ebx
+~ offset   swd32: mov     [esi+2AC0h], ebx                         swd3e: mov     [esi+3000h], ebx
+~ offset   swd32: mov     [esi+2AC4h], ebx                         swd3e: mov     [esi+3004h], ebx
+~ offset   swd32: mov     [esi+2AC8h], ebx                         swd3e: mov     [esi+3008h], ebx
+~ offset   swd32: mov     [esi+267Ch], ebx                         swd3e: mov     [esi+2B84h], ebx
+~ offset   swd32: mov     [esi+2AD0h], ebx                         swd3e: mov     [esi+3010h], ebx
+~ offset   swd32: mov     [esi+2AD4h], ebx                         swd3e: mov     [esi+3014h], ebx
+~ offset   swd32: mov     [esi+2AD8h], ebx                         swd3e: mov     [esi+3018h], ebx
+~ offset   swd32: mov     [esi+2ADCh], ebx                         swd3e: mov     [esi+301Ch], ebx
+~ offset   swd32: mov     [esi+2AE0h], ebx                         swd3e: mov     [esi+3020h], ebx
+~ offset   swd32: mov     [esi+2A8Ch], bx                          swd3e: mov     [esi+2FB6h], bx
+~ offset   swd32: mov     [esi+2AE4h], ebx                         swd3e: mov     [esi+3024h], ebx
+~ offset   swd32: mov     [esi+2AE8h], ebx                         swd3e: mov     [esi+3028h], ebx
+~ offset   swd32: mov     [esi+2AECh], ebx                         swd3e: mov     [esi+3038h], ebx
+~ offset   swd32: mov     [esi+2AF0h], ebx                         swd3e: mov     [esi+302Ch], ebx
+~ offset   swd32: mov     [esi+2AF4h], ebx                         swd3e: mov     [esi+3030h], ebx
+~ offset   swd32: mov     [esi+2ABCh], ebx                         swd3e: mov     [esi+3034h], ebx
+~ offset   swd32: mov     [esi+2ACCh], ebx                         swd3e: mov     [esi+2FFCh], ebx
+~ offset   swd32: mov     [esi+2AF8h], ebx                         swd3e: mov     [esi+300Ch], ebx
+~ offset   swd32: mov     [esi+2AFCh], ebx                         swd3e: mov     [esi+303Ch], ebx
+~ offset   swd32: mov     [esi+2B00h], ebx                         swd3e: mov     [esi+3040h], ebx
+~ offset   swd32: mov     [esi+2B04h], ebx                         swd3e: mov     [esi+3044h], ebx
+~ offset   swd32: mov     [esi+2B08h], ebx                         swd3e: mov     [esi+3048h], ebx
+~ offset   swd32: mov     [esi+2B0Ch], ebx                         swd3e: mov     [esi+304Ch], ebx
++ swd3e only: mov     [esi+2BDAh], bx
++ swd3e only: mov     [esi+3050h], ebx
++ swd3e only: mov     [esi+3054h], ebx
++ swd3e only: mov     [esi+3068h], ebx
++ swd3e only: mov     [esi+3060h], ebx
+~ offset   swd32: mov     [esi+2B20h], ebx                         swd3e: mov     [esi+3070h], ebx

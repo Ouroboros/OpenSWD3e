@@ -1,0 +1,4 @@
+swd3e 0x0048B500 sub_48B500 <- swd32 0x00478600 sub_478600; method=shape reusable=no: the code differs
+same=5 offset=2 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     ax, [ecx+0D66h]                          swd3e: mov     ax, [ecx+0FDAh]
+~ offset   swd32: mov     ax, [ecx+0D68h]                          swd3e: mov     ax, [ecx+0FDCh]

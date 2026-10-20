@@ -1,0 +1,13 @@
+swd3e 0x0049A970 sub_49A970 <- swd32 0x00483840 sub_483840; method=similarity reusable=no: the code differs
+same=5 offset=2 constant=2 global=0 code=0 inserted=6 deleted=1
+~ offset   swd32: mov     dl, [ecx+0D9Ch]                          swd3e: mov     dl, [ecx+1010h]
+- swd32 only: mov     edx, [esp+arg_0]
++ swd3e only: mov     dx, [ecx+102Ah]
++ swd3e only: push    esi
++ swd3e only: mov     esi, [esp+4+arg_0]
++ swd3e only: mov     [esi], dx
++ swd3e only: mov     edx, [esp+4+arg_4]
+~ offset   swd32: mov     cx, [ecx+0DB2h]                          swd3e: mov     cx, [ecx+102Ch]
++ swd3e only: pop     esi
+~ constant swd32: retn    4                                        swd3e: retn    8
+~ constant swd32: retn    4                                        swd3e: retn    8

@@ -1,0 +1,19 @@
+swd3e 0x00449780 sub_449780 <- swd32 0x004858D0 sub_4858D0; method=similarity reusable=no: the code differs
+same=5 offset=0 constant=1 global=0 code=0 inserted=9 deleted=7
+- swd32 only: sub     eax, 2
+- swd32 only: jnz     short locret_485902
++ swd3e only: mov     ecx, [esp+arg_0]
+~ constant swd32: push    64h                                      swd3e: push    0
+- swd32 only: mov     ecx, offset unk_4C9288
++ swd3e only: mov     dword_4ED9BC, eax
++ swd3e only: mov     eax, [esp+4+arg_4]
++ swd3e only: push    0
++ swd3e only: push    78h
++ swd3e only: push    78h
++ swd3e only: push    eax
++ swd3e only: push    ecx
+- swd32 only: cmp     al, 1
+- swd32 only: jnz     short locret_485902
+- swd32 only: mov     dword_4B7380, 0
+- swd32 only: mov     dword_4B7378, 0
++ swd3e only: add     esp, 18h

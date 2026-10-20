@@ -1,0 +1,3 @@
+swd3e 0x00491C40 sub_491C40 <- swd32 0x0047D880 sub_47D880; method=similarity reusable=no: the code differs
+same=4 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     eax, [ecx+0D94h]                         swd3e: mov     eax, [ecx+1008h]

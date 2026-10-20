@@ -1,0 +1,26 @@
+swd3e 0x004518C0 sub_4518C0 <- swd32 0x00448CA0 sub_448CA0; method=callers reusable=no: the code differs
+same=51 offset=1 constant=1 global=0 code=3 inserted=11 deleted=8
+~ constant swd32: cmp     eax, 5                                   swd3e: cmp     eax, 4
+~ offset   swd32: jmp     ds:jpt_448CC3[eax*4]                     swd3e: jmp     ds:jpt_4518E3[eax*4]
+~ code     swd32: jg      short loc_448CE0                         swd3e: jg      short loc_451900
+~ code     swd32: jg      short loc_448D02                         swd3e: jg      short loc_451922
+- swd32 only: push    eax
++ swd3e only: mov     ecx, eax
++ swd3e only: shl     ecx, 7
++ swd3e only: sub     ecx, eax
++ swd3e only: mov     eax, 2E8BA2E9h
++ swd3e only: imul    ecx
++ swd3e only: sar     edx, 1
++ swd3e only: mov     eax, edx
++ swd3e only: mov     ecx, offset unk_578A70
++ swd3e only: shr     eax, 1Fh
++ swd3e only: add     edx, eax
++ swd3e only: push    edx
+- swd32 only: add     esp, 4
+~ code     swd32: jle     short loc_448D4E                         swd3e: jle     short loc_451987
+- swd32 only: mov     eax, dword_4FD2B4
+- swd32 only: dec     eax
+- swd32 only: mov     dword_4FD2B4, eax
+- swd32 only: jns     short def_448CC3
+- swd32 only: mov     dword_4FD2B4, 0
+- swd32 only: retn

@@ -1,0 +1,14 @@
+swd3e 0x0040D560 sub_40D560 <- swd32 0x0040D200 sub_40D200; method=anchor reusable=no: the code differs
+same=115 offset=6 constant=5 global=0 code=0 inserted=1 deleted=0
+~ constant swd32: sub     esp, 0DCh                                swd3e: sub     esp, 0E8h
+~ constant swd32: mov     ecx, 36h                                 swd3e: mov     ecx, 39h
++ swd3e only: push    8080h
+~ offset   swd32: mov     ecx, [esp+0F0h+arg_4]                    swd3e: mov     ecx, [esp+100h+arg_4]
+~ offset   swd32: mov     eax, [esp+0F8h+var_BC+2]                 swd3e: mov     eax, [esp+108h+var_C8+2]
+~ offset   swd32: mov     edx, [esp+0FCh+arg_0]                    swd3e: mov     edx, [esp+10Ch+arg_0]
+~ offset   swd32: mov     eax, [esp+100h+var_64]                   swd3e: mov     eax, [esp+110h+var_70]
+~ offset   swd32: mov     ecx, [esp+104h+var_90]                   swd3e: mov     ecx, [esp+114h+var_9C]
+~ offset   swd32: mov     edx, [esp+108h+var_98]                   swd3e: mov     edx, [esp+118h+var_A4]
+~ constant swd32: add     esp, 2Ch                                 swd3e: add     esp, 30h
+~ constant swd32: add     eax, 0D8h                                swd3e: add     eax, 0E4h
+~ constant swd32: add     esp, 0DCh                                swd3e: add     esp, 0E8h

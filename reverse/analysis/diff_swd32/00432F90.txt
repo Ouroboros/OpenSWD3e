@@ -1,0 +1,10 @@
+swd3e 0x00432F90 sub_432F90 <- swd32 0x0042E280 sub_42E280; method=anchor reusable=no: the code differs
+same=120 offset=1 constant=0 global=0 code=0 inserted=4 deleted=3
+~ offset   swd32: lea     eax, [ebp+ebp*2+0]                       swd3e: lea     eax, [ebp+ebp*8+0]
++ swd3e only: lea     eax, [ebp+eax*2+0]
++ swd3e only: lea     ecx, [eax+eax*2]
++ swd3e only: mov     eax, offset byte_4C6CA3
++ swd3e only: lea     edi, ds:4D3FC8h[ecx*4]
+- swd32 only: lea     eax, [eax+eax*8]
+- swd32 only: lea     edi, ds:4BABA8h[eax*8]
+- swd32 only: mov     eax, offset byte_4AD4AB

@@ -1,0 +1,35 @@
+swd3e 0x00490FF0 sub_490FF0 <- swd32 0x0047CEC0 sub_47CEC0; method=calls reusable=no: the code differs
+same=4 offset=4 constant=1 global=0 code=1 inserted=25 deleted=2
++ swd3e only: jnz     loc_49108B
++ swd3e only: mov     ax, [ecx+2F98h]
++ swd3e only: mov     edx, eax
++ swd3e only: and     edx, 0FFFFh
++ swd3e only: cmp     word ptr [ecx+edx*2+2EE0h], 2389h
+~ code     swd32: jnz     short loc_47CEEC                         swd3e: jnz     short loc_491067
+- swd32 only: inc     word ptr [ecx+2A7Ch]
++ swd3e only: test    dword ptr [ecx+2BC8h], 20000h
++ swd3e only: jz      short loc_491042
++ swd3e only: mov     dl, [ecx+2FD6h]
++ swd3e only: test    dl, dl
++ swd3e only: jnz     short loc_491042
+~ offset   swd32: cmp     word ptr [ecx+2A7Ch], 23h                swd3e: cmp     word ptr [ecx+2FA6h], 0
+- swd32 only: mov     [ecx+2AD8h], eax
++ swd3e only: jnz     short loc_491042
++ swd3e only: push    0
++ swd3e only: call    sub_49B9D0
++ swd3e only: retn    4
++ swd3e only: test    byte ptr [ecx+2BD0h], 8
++ swd3e only: jz      short loc_491067
++ swd3e only: mov     dl, [ecx+2FD1h]
++ swd3e only: mov     dword ptr [ecx+306Ch], 0
++ swd3e only: cmp     dl, 0FFh
++ swd3e only: jz      short loc_491067
++ swd3e only: mov     byte ptr [ecx+2FD1h], 2
++ swd3e only: inc     eax
++ swd3e only: mov     dword ptr [ecx+3018h], 1
++ swd3e only: cmp     ax, 23h
++ swd3e only: mov     [ecx+2F98h], ax
+~ constant swd32: jb      short locret_47CEF9                      swd3e: jb      short locret_491098
+~ offset   swd32: mov     word ptr [ecx+2A7Ch], 22h                swd3e: mov     word ptr [ecx+2F98h], 22h
+~ offset   swd32: dec     word ptr [ecx+2A7Ch]                     swd3e: dec     word ptr [ecx+2F98h]
+~ offset   swd32: mov     [ecx+2AD8h], eax                         swd3e: mov     [ecx+3018h], eax

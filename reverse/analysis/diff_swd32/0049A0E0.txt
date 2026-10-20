@@ -1,0 +1,37 @@
+swd3e 0x0049A0E0 sub_49A0E0 <- swd32 0x004830A0 sub_4830A0; method=callers reusable=no: the code differs
+same=67 offset=6 constant=1 global=0 code=1 inserted=19 deleted=8
+- swd32 only: mov     ebp, [esp+0Ch+arg_0]
++ swd3e only: mov     esi, [esp+10h+arg_0]
++ swd3e only: xor     ebp, ebp
+- swd32 only: mov     [esp+14h+var_4], 0
+- swd32 only: cmp     word ptr [ebp+4], 0
+- swd32 only: mov     esi, ebp
++ swd3e only: cmp     [esi+4], bp
+- swd32 only: mov     esi, [ebp+0]
++ swd3e only: mov     esi, [esi]
+~ offset   swd32: lea     edi, [ecx+19Ch]                          swd3e: lea     edi, [ecx+1A8h]
+~ offset   swd32: mov     [esp+14h+arg_0], 2                       swd3e: mov     [esp+14h+var_4], 2
+~ offset   swd32: mov     cx, [edi+0Ch]                            swd3e: mov     cx, [edi+10h]
++ swd3e only: movsx   eax, word ptr [edi+4]
++ swd3e only: mov     edx, [esp+14h+arg_4]
++ swd3e only: and     edx, 0FFFFh
++ swd3e only: cmp     eax, edx
++ swd3e only: jnz     loc_49A200
+- swd32 only: mov     [esp+14h+var_4], 1
++ swd3e only: mov     ebp, 1
+~ offset   swd32: mov     ax, [edi+0Ch]                            swd3e: mov     ax, [edi+10h]
+- swd32 only: inc     word ptr [ebp+4]
++ swd3e only: mov     ax, [edi]
++ swd3e only: test    ax, ax
++ swd3e only: jnz     short loc_49A1F8
++ swd3e only: mov     [esi+6], ax
++ swd3e only: mov     word ptr [esi+8], 64h
++ swd3e only: mov     word ptr [esi+0Ah], 1
++ swd3e only: mov     eax, [esp+14h+arg_0]
++ swd3e only: inc     word ptr [eax+4]
+~ offset   swd32: mov     eax, [esp+14h+arg_0]                     swd3e: mov     eax, [esp+14h+var_4]
+~ constant swd32: add     edi, 0A4h                                swd3e: add     edi, 0A8h
+~ offset   swd32: mov     [esp+14h+arg_0], eax                     swd3e: mov     [esp+14h+var_4], eax
+~ code     swd32: jnz     loc_4830CF                               swd3e: jnz     loc_49A105
+- swd32 only: mov     eax, [esp+14h+var_4]
++ swd3e only: mov     eax, ebp

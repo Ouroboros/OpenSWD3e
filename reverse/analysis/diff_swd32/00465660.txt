@@ -1,0 +1,6 @@
+swd3e 0x00465660 sub_465660 <- swd32 0x0045B190 sub_45B190; method=shape reusable=no: the code differs
+same=71 offset=1 constant=3 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: cmp     eax, 12h                                 swd3e: cmp     eax, 1Eh
+~ constant swd32: mov     eax, 8                                   swd3e: mov     eax, 14h
+~ offset   swd32: lea     ebx, [edx+8]                             swd3e: lea     ebx, [edx+14h]
+~ constant swd32: mov     ecx, 12h                                 swd3e: mov     ecx, 1Eh

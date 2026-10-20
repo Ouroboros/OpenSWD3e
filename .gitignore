@@ -17,3 +17,7 @@
 *.$$$
 __pycache__/
 *.pyc
+.pi
+/third_party/fonts/
+/third_party/asset/
+/reverse/analysis/casm/

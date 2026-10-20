@@ -1,0 +1,3 @@
+swd3e 0x00401950 sub_401950 <- swd32 0x00401E50 sub_401E50; method=shape reusable=no: the code differs
+same=139 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: lea     edx, [eax+eax+400h]                      swd3e: lea     edx, [eax+eax+1000h]

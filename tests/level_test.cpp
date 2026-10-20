@@ -1,0 +1,71 @@
+#include <cstdio>
+#include <string>
+
+#include "game_data.h"
+#include "org/database.h"
+#include "org/level.h"
+#include "party/party.h"
+#include "recording_reporter.h"
+#include "test.h"
+
+namespace
+{
+
+constexpr int kFirstLevelScript = 2;  // entry 1 of the table is not a level script
+constexpr int kLastLevel = 20;
+constexpr swd3e::u16 kNoSkill = 0x8000;  // a skill id with bit 15 set
+
+}  // namespace
+
+TEST_CASE("level: level.dat raises a party role and teaches skills once")
+{
+    if (swd3etest::ReadGameFile("LEVEL.DAT").empty() || swd3etest::ReadGameFile("MON.DAT").empty())
+    {
+        std::printf("  (level.dat or mon.dat not found, skipped)\n");
+        return;
+    }
+
+    const std::u8string directory = swd3etest::GameDirectory() + u8"/";
+    swd3e::Database database(directory);
+    swd3e::Party party;
+
+    for (auto& head : party.skills)
+    {
+        head = swd3e::NewEmptyItem();
+    }
+
+    swd3e::LearnedSkill last;
+    swd3etest::RecordingReporter reporter;
+    int learnedAny = 0;
+
+    // Entry 1 of the table is not a level script in the game data (its first word is not 0).
+    for (int level = kFirstLevelScript; level <= kLastLevel; ++level)
+    {
+        swd3e::RoleRecord& role = party.roles[0];
+        int learned = 0;
+        CHECK(swd3e::LevelUp(role, 1, level, learned, party, database, last, reporter));
+        CHECK_EQ(role.level, level);
+        CHECK(role.maxHitPoints > 0);
+        CHECK_EQ(role.hitPoints, role.maxHitPoints);
+        CHECK_EQ(role.spirit, role.maxSpirit);
+        CHECK_EQ(role.stamina, role.maxStamina);
+        swd3e::u32 experience = 0;
+        CHECK(database.LoadLevelEntry(1, level, experience));
+        CHECK_EQ(static_cast<swd3e::u32>(role.experience), experience);
+        learnedAny += learned;
+    }
+
+    std::printf("  levels with a new skill: %d\n", learnedAny);
+    const swd3e::ItemNode* first = party.skills[0]->next.get();
+
+    if (first != nullptr)
+    {
+        CHECK_EQ(swd3e::LearnSkill(0, static_cast<swd3e::i16>(first->id), party, database, last, reporter), 0);
+    }
+
+    CHECK_EQ(swd3e::LearnSkill(1, static_cast<swd3e::i16>(kNoSkill), party, database, last, reporter), 1);
+    CHECK(party.skills[1]->next == nullptr);
+    CHECK(reporter.messages.empty());
+    swd3e::LearnSkill(1, 0, party, database, last, reporter);
+    CHECK_EQ(reporter.messages.size(), 1u);
+}

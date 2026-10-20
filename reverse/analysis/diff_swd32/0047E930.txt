@@ -1,0 +1,22 @@
+swd3e 0x0047E930 sub_47E930 <- swd32 0x0046E6A0 sub_46E6A0; method=calls reusable=no: the code differs
+same=8 offset=15 constant=3 global=0 code=0 inserted=2 deleted=0
+~ constant swd32: mov     ecx, 0BEh                                swd3e: mov     ecx, 0CDh
+~ offset   swd32: lea     edi, [edx+2BC8h]                         swd3e: lea     edi, [edx+311Ch]
++ swd3e only: mov     [edx+34AEh], ax
+~ offset   swd32: mov     [edx+2F1Eh], ax                          swd3e: mov     [edx+34B0h], ax
+~ offset   swd32: mov     [edx+2F20h], ax                          swd3e: mov     [edx+34B2h], ax
+~ offset   swd32: mov     [edx+2F22h], ax                          swd3e: mov     [edx+2EB2h], ax
+~ offset   swd32: mov     [edx+2F0Ch], eax                         swd3e: mov     [edx+349Ch], eax
+~ offset   swd32: mov     [edx+2F10h], ax                          swd3e: mov     [edx+34A0h], ax
+~ offset   swd32: mov     [edx+2F12h], ax                          swd3e: mov     [edx+34A2h], ax
+~ offset   swd32: mov     [edx+2F1Ch], ax                          swd3e: mov     [edx+34ACh], ax
+~ offset   swd32: mov     [edx+2F1Ah], ax                          swd3e: mov     [edx+34AAh], ax
+~ offset   swd32: mov     [edx+2F24h], ax                          swd3e: mov     [edx+34B4h], ax
+~ offset   swd32: mov     [edx+2F14h], ax                          swd3e: mov     [edx+34A4h], ax
+~ offset   swd32: mov     [edx+2F18h], ax                          swd3e: mov     [edx+34A8h], ax
+~ offset   swd32: mov     [edx+2F16h], ax                          swd3e: mov     [edx+34A6h], ax
++ swd3e only: mov     [edx+3040h], eax
+~ constant swd32: mov     ecx, 4Ch                                 swd3e: mov     ecx, 52h
+~ offset   swd32: lea     edi, [edx+0AF0h]                         swd3e: lea     edi, [edx+0BACh]
+~ constant swd32: mov     ecx, 29h                                 swd3e: mov     ecx, 2Ah
+~ offset   swd32: lea     edi, [edx+2B24h]                         swd3e: lea     edi, [edx+3074h]

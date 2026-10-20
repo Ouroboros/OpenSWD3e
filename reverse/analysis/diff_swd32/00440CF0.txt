@@ -1,0 +1,80 @@
+swd3e 0x00440CF0 sub_440CF0 <- swd32 0x0043B480 sub_43B480; method=callers reusable=no: the code differs
+same=115 offset=0 constant=1 global=7 code=1 inserted=29 deleted=40
+- swd32 only: mov     ax, word_4FB8A8
+- swd32 only: cmp     ax, 1Eh
+- swd32 only: jb      short loc_43B518
+- swd32 only: cmp     ax, 20h
+- swd32 only: ja      short loc_43B518
++ swd3e only: mov     eax, dword_50A1C4
++ swd3e only: cmp     eax, 1Eh
++ swd3e only: jl      short loc_440D85
++ swd3e only: cmp     eax, 20h
++ swd3e only: jg      short loc_440D85
+- swd32 only: cmp     ax, 24h
+- swd32 only: jb      short loc_43B59D
+- swd32 only: cmp     ax, 29h
+- swd32 only: ja      short loc_43B59D
++ swd3e only: cmp     eax, 24h
++ swd3e only: jl      short loc_440E08
++ swd3e only: cmp     eax, 29h
++ swd3e only: jg      short loc_440E08
+- swd32 only: cmp     ax, 2Ah
+- swd32 only: jb      short loc_43B622
+- swd32 only: cmp     ax, 2Eh
+- swd32 only: ja      short loc_43B622
++ swd3e only: cmp     eax, 2Ah
++ swd3e only: jl      short loc_440E8B
++ swd3e only: cmp     eax, 2Eh
++ swd3e only: jg      short loc_440E8B
+- swd32 only: cmp     ax, 30h
+- swd32 only: jb      short loc_43B69D
+- swd32 only: cmp     ax, 34h
+- swd32 only: ja      short loc_43B69D
++ swd3e only: cmp     eax, 30h
++ swd3e only: jl      short loc_440F04
++ swd3e only: cmp     eax, 34h
++ swd3e only: jg      short loc_440F04
+~ global   swd32: mov     dword_4FBAC0, offset sub_44A1D0          swd3e: mov     dword_50A414, offset loc_4437A0
+~ global   swd32: mov     dword_4FBF78, offset nullsub_1           swd3e: mov     dword_50A8D4, offset loc_443660
+~ global   swd32: mov     dword_4FC3C0, offset nullsub_1           swd3e: mov     dword_50AD6C, offset loc_443990
+- swd32 only: cmp     ax, 36h
+- swd32 only: jb      loc_43B732
+- swd32 only: cmp     ax, 3Ah
+- swd32 only: ja      loc_43B732
+- swd32 only: push    49h
+- swd32 only: call    sub_40DC50
+- swd32 only: add     esp, 4
+- swd32 only: test    eax, eax
+- swd32 only: jnz     loc_43B758
++ swd3e only: cmp     eax, 36h
++ swd3e only: jl      short loc_440F7D
++ swd3e only: cmp     eax, 3Ah
++ swd3e only: jg      short loc_440F7D
+- swd32 only: cmp     ax, 3Ch
+- swd32 only: jb      loc_43B7D1
+- swd32 only: cmp     ax, 3Eh
+- swd32 only: ja      loc_43B7D1
+- swd32 only: push    49h
+- swd32 only: call    sub_40DC50
+- swd32 only: add     esp, 4
+- swd32 only: test    eax, eax
+- swd32 only: jnz     loc_43B6C3
+- swd32 only: mov     dword_4FC64C, offset sub_43DA30
++ swd3e only: cmp     eax, 3Ch
++ swd3e only: jl      short loc_440FF6
++ swd3e only: cmp     eax, 3Eh
++ swd3e only: jg      short loc_440FF6
+- swd32 only: cmp     ax, 42h
+- swd32 only: jb      locret_43B977
+- swd32 only: cmp     ax, 47h
+- swd32 only: ja      locret_43B977
++ swd3e only: cmp     eax, 42h
++ swd3e only: jl      locret_44119A
++ swd3e only: cmp     eax, 47h
++ swd3e only: jg      locret_44119A
+~ global   swd32: mov     dword_4FBAC0, offset sub_43C6E0          swd3e: mov     dword_50A414, offset loc_441FA0
+~ global   swd32: mov     dword_4FBF78, offset sub_43C600          swd3e: mov     dword_50A8D4, offset loc_441EC0
+~ global   swd32: mov     dword_4FC83C, offset sub_43C7E0          swd3e: mov     dword_50B2D8, offset loc_4420A0
+~ global   swd32: mov     dword_4FC838, offset sub_43C800          swd3e: mov     dword_50B2D4, offset loc_4420C0
+~ code     swd32: jnz     loc_43B8E5                               swd3e: jnz     loc_441108
+~ constant swd32: jnz     locret_43B977                            swd3e: jnz     locret_44119A

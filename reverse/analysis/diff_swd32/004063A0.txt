@@ -1,0 +1,8 @@
+swd3e 0x004063A0 sub_4063A0 <- swd32 0x00406580 sub_406580; method=anchor reusable=no: the code differs
+same=112 offset=1 constant=0 global=0 code=0 inserted=3 deleted=2
+~ offset   swd32: lea     eax, [ebx+ebx*2]                         swd3e: lea     eax, [ebx+ebx*8]
+- swd32 only: lea     eax, [eax+eax*8]
++ swd3e only: lea     eax, [ebx+eax*2]
++ swd3e only: lea     ecx, [eax+eax*2]
++ swd3e only: lea     ebp, ds:4D3FC8h[ecx*4]
+- swd32 only: lea     ebp, ds:4BABA8h[eax*8]

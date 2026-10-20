@@ -1,0 +1,27 @@
+swd3e 0x00485DD0 sub_485DD0 <- swd32 0x00474E60 sub_474E60; method=callers reusable=no: the code differs
+same=73 offset=20 constant=2 global=0 code=0 inserted=1 deleted=2
+~ offset   swd32: mov     cx, [esi+2A0Ch]                          swd3e: mov     cx, [esi+2F28h]
+~ offset   swd32: mov     dx, [esi+2A8Ah]                          swd3e: mov     dx, [esi+2FB4h]
+~ offset   swd32: lea     ebp, [esi+0AF0h]                         swd3e: lea     ebp, [esi+0BACh]
+- swd32 only: add     ecx, 5DCh
++ swd3e only: mov     [esp+14h+var_4], eax
+~ offset   swd32: mov     ecx, [esi+267Ch]                         swd3e: mov     ecx, [esi+2B84h]
+- swd32 only: mov     [esp+14h+var_4], eax
+~ offset   swd32: mov     dword ptr [esi+2AACh], 1                 swd3e: mov     dword ptr [esi+2FECh], 1
+~ offset   swd32: mov     [esi+0AF8h], edx                         swd3e: mov     [esi+0BB4h], edx
+~ offset   swd32: cmp     dword ptr [esi+267Ch], 1                 swd3e: cmp     dword ptr [esi+2B84h], 1
+~ offset   swd32: mov     edx, [esi+0AF8h]                         swd3e: mov     edx, [esi+0BB4h]
+~ offset   swd32: mov     [esi+0AF8h], edx                         swd3e: mov     [esi+0BB4h], edx
+~ offset   swd32: mov     ecx, [esi+267Ch]                         swd3e: mov     ecx, [esi+2B84h]
+~ offset   swd32: mov     ecx, [esi+0AF8h]                         swd3e: mov     ecx, [esi+0BB4h]
+~ offset   swd32: or      byte ptr [esi+0D9Ch], 8                  swd3e: or      byte ptr [esi+1010h], 8
+~ offset   swd32: mov     [esi+0AF8h], ecx                         swd3e: mov     [esi+0BB4h], ecx
+~ offset   swd32: mov     dword ptr [esi+267Ch], 3                 swd3e: mov     dword ptr [esi+2B84h], 3
+~ offset   swd32: cmp     dword ptr [esi+0B7Ch], 1                 swd3e: cmp     dword ptr [esi+0C44h], 1
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: inc     dword ptr [esi+267Ch]                    swd3e: inc     dword ptr [esi+2B84h]
+~ offset   swd32: test    byte ptr [esi+0B4Ah], 8                  swd3e: test    byte ptr [esi+0C06h], 8
+~ offset   swd32: mov     word ptr [esi+0B4Ah], 0                  swd3e: mov     word ptr [esi+0C06h], 0
+~ offset   swd32: cmp     dword ptr [esi+267Ch], 3                 swd3e: cmp     dword ptr [esi+2B84h], 3
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: mov     dword ptr [esi+267Ch], 0                 swd3e: mov     dword ptr [esi+2B84h], 0

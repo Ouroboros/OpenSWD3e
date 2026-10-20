@@ -1,0 +1,13 @@
+swd3e 0x0040AEC0 sub_40AEC0 <- swd32 0x0040AB50 sub_40AB50; method=anchor reusable=no: the code differs
+same=112 offset=0 constant=0 global=0 code=5 inserted=0 deleted=6
+- swd32 only: push    2711h
+- swd32 only: mov     ecx, offset unk_4AB870
+- swd32 only: call    sub_437DF0
+- swd32 only: test    eax, eax
+- swd32 only: jz      loc_40AD04
+~ code     swd32: jnz     short loc_40ABDE                         swd3e: jnz     short loc_40AF32
+- swd32 only: call    sub_485710
+~ code     swd32: jnz     short loc_40AB9A                         swd3e: jnz     short loc_40AEEE
+~ code     swd32: jnz     short loc_40ACBE                         swd3e: jnz     short loc_40B012
+~ code     swd32: jz      short loc_40ACFA                         swd3e: jz      short loc_40B04E
+~ code     swd32: jmp     short loc_40ACBE                         swd3e: jmp     short loc_40B012

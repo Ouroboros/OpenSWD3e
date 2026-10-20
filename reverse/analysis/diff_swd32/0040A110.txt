@@ -1,0 +1,10 @@
+swd3e 0x0040A110 sub_40A110 <- swd32 0x004014C0 sub_4014C0; method=calls reusable=no: the code differs
+same=1 offset=0 constant=0 global=0 code=1 inserted=7 deleted=0
+~ code     swd32: jmp     sub_436F70                               swd3e: jmp     loc_43BA30
++ swd3e only: mov     eax, ecx
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     [eax+104h], ecx
++ swd3e only: mov     [eax+108h], ecx
++ swd3e only: mov     [eax+100h], ecx
++ swd3e only: mov     dword ptr [eax+114h], 0Ah
++ swd3e only: retn

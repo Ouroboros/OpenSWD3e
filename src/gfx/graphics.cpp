@@ -1,0 +1,428 @@
+#include "gfx/graphics.h"
+
+#include <algorithm>
+#include <climits>
+
+#include "platform/display.h"
+#include "platform/message_box.h"
+#include "platform/surface.h"
+
+namespace swd3e
+{
+
+namespace
+{
+
+// DirectDraw results the error dialog names.
+constexpr u32 kGenericError = 0x80004005u;
+constexpr u32 kUnsupportedMode = 0x8876024Eu;
+// The video memory the device reports (the original asks the driver for texture memory).
+constexpr u32 kVideoMemory = 64u << 20;
+constexpr int kDisplayBits = 16;
+constexpr u32 kGreen6 = 0x7E0;  // the channel masks with six bits: green, blue, red
+constexpr u32 kBlue6 = 0x3F;
+constexpr u32 kRed6 = 0xFC00;
+constexpr int kFormat556 = 1;  // pixelFormat: the channel with six bits
+constexpr int kFormat565 = 2;
+constexpr int kFormat655 = 3;
+
+}  // namespace
+
+// swd3e.exe 0x004360C0: a message box naming the DirectDraw result (nothing for an unknown one). The original
+// returns a leftover value that no caller reads.
+void ShowDeviceError(ErrorReporter& errors, std::u8string_view caption, u32 result)
+{
+    std::u8string_view text;
+
+    switch (result)
+    {
+        case 0x88760232u:
+            text = u8"DDERR_DIRECTDRAWALREADYCREATED ";
+            break;
+
+        case 0x88760233u:
+            text = u8"DDERR_NODIRECTDRAWHW ";
+            break;
+
+        case 0x88760234u:
+            text = u8"DDERR_PRIMARYSURFACEALREADYEXISTS  ";
+            break;
+
+        case 0x88760235u:
+            text = u8"DDERR_NOEMULATION  ";
+            break;
+
+        case 0x88760238u:
+            text = u8"DDERR_NOCLIPPERATTACHED  ";
+            break;
+
+        case 0x8876023Au:
+            text = u8"DDERR_HWNDSUBCLASSED  ";
+            break;
+
+        case 0x8876023Bu:
+            text = u8"DDERR_HWNDALREADYSET  ";
+            break;
+
+        case 0x88760245u:
+            text = u8"DDERR_EXCLUSIVEMODEALREADYSET  ";
+            break;
+
+        case 0x8876024Eu:
+            text = u8"DDERR_UNSUPPORTEDMODE  ";
+            break;
+
+        case 0x88760250u:
+            text = u8"DDERR_INVALIDSURFACETYPE  ";
+            break;
+
+        case 0x88760231u:
+            text = u8"DDERR_INVALIDDIRECTDRAWGUID ";
+            break;
+
+        case 0x88760082u:
+            text = u8"DDERR_INVALIDOBJECT  ";
+            break;
+
+        case 0x887600D4u:
+            text = u8"DDERR_NOCOOPERATIVELEVELSET  ";
+            break;
+
+        case 0x887600E1u:
+            text = u8"DDERR_NOEXCLUSIVEMODE ";
+            break;
+
+        case 0x887600E6u:
+            text = u8"DDERR_NOFLIPHW ";
+            break;
+
+        case 0x8876017Cu:
+            text = u8"DDERR_OUTOFVIDEOMEMORY   ";
+            break;
+
+        case 0x8876006Eu:
+            text = u8"DDERR_INVALIDCLIPLIST ";
+            break;
+
+        case 0x8876005Fu:
+            text = u8"DDERR_INCOMPATIBLEPRIMARY  ";
+            break;
+
+        case 0x88760064u:
+            text = u8"DDERR_INVALIDCAPS ";
+            break;
+
+        case 0x80070057u:
+            text = u8"DDERR_INVALIDPARAMS  ";
+            break;
+
+        case 0x80004005u:
+            text = u8"DDERR_GENERIC ";
+            break;
+
+        case 0x8007000Eu:
+            text = u8"DDERR_OUTOFMEMORY ";
+            break;
+
+        default:
+            break;
+    }
+
+    if (!text.empty())
+    {
+        errors.ShowError(caption, text);
+    }
+}
+
+// swd3e.exe 0x0043C020: no device and no surfaces
+Graphics::Graphics(Display& display, ErrorReporter& errors)
+    : display(display),
+      errors(errors)
+{
+}
+
+Graphics::~Graphics() = default;
+
+int Graphics::Width() const
+{
+    return this->width;
+}
+
+int Graphics::Height() const
+{
+    return this->height;
+}
+
+// swd3e.exe 0x0043C030: kWindowed uses the normal cooperative level, any other mode exclusive full screen
+bool Graphics::Init(int mode, int width, int height, int bitsPerPixel)
+{
+    this->width = width;
+    this->height = height;
+
+    if (!this->CreateDevice())
+    {
+        return false;
+    }
+
+    if (!this->SetCooperativeLevel(mode == Graphics::Windowed ? Graphics::Normal : Graphics::Exclusive))
+    {
+        return false;
+    }
+
+    if (!this->SetDisplayMode(width, height, bitsPerPixel))
+    {
+        return false;
+    }
+
+    if (!this->CreateSurfaces())
+    {
+        return false;
+    }
+
+    this->DetectPixelFormat();
+    return true;
+}
+
+// swd3e.exe 0x0043C0D0: DirectDrawCreate and the IDirectDraw4 interface
+bool Graphics::CreateDevice()
+{
+    this->device = true;
+    return true;
+}
+
+// swd3e.exe 0x0043C140
+bool Graphics::SetCooperativeLevel(u32 flags)
+{
+    this->cooperativeFlags = flags;
+    return true;
+}
+
+// swd3e.exe 0x0043C190: the game window shows 16-bit pixels only; any other depth fails like an unsupported mode
+bool Graphics::SetDisplayMode(int width, int height, int bitsPerPixel)
+{
+    if (bitsPerPixel != kDisplayBits)
+    {
+        ShowDeviceError(this->errors, u8"DirectDraw SetDisplayMode Error!!", kUnsupportedMode);
+        this->device = false;
+        return false;
+    }
+
+    this->width = width;
+    this->height = height;
+    this->bitsPerPixel = bitsPerPixel;
+    return true;
+}
+
+// swd3e.exe 0x0043C1E0: the clipper of the primary surface (the window clips presentation here)
+bool Graphics::CreateClipper()
+{
+    return true;
+}
+
+// swd3e.exe 0x0043C290: the primary surface; in windowed mode also a back buffer of the desktop size (the size of the
+// logical screen here). Records pitch (bytes) and height of both, the primary twice when there is no back buffer.
+bool Graphics::CreateSurfaces()
+{
+    this->QueryVideoMemory();
+
+    if (this->cooperativeFlags == Graphics::Normal)
+    {
+        this->primary = std::make_unique<Surface>(Display::Width, Display::Height);
+
+        if (!this->CreateClipper())
+        {
+            return false;
+        }
+
+        this->width = Display::Width;
+        this->height = Display::Height;
+        this->back = this->CreateOffscreen(Display::Width, Display::Height);
+        this->primaryPitch = this->primary->Width() * static_cast<int>(sizeof(Pixel));
+        this->primaryHeight = this->primary->Height();
+        this->backPitch = this->back->Width() * static_cast<int>(sizeof(Pixel));
+        this->backHeight = this->back->Height();
+        return true;
+    }
+
+    if (this->width <= 0 || this->height <= 0)
+    {
+        ShowDeviceError(this->errors, u8"DirectDraw Create Primary Surface Error!!", kGenericError);
+        this->device = false;
+        return false;
+    }
+
+    this->primary = std::make_unique<Surface>(this->width, this->height);
+
+    if (!this->CreateClipper())
+    {
+        return false;
+    }
+
+    this->primaryPitch = this->primary->Width() * static_cast<int>(sizeof(Pixel));
+    this->primaryHeight = this->primary->Height();
+    this->backPitch = this->primaryPitch;
+    this->backHeight = this->primaryHeight;
+    return true;
+}
+
+// swd3e.exe 0x0043C510: the display mode returns with the device in the original
+bool Graphics::ReleaseSurfaces()
+{
+    if (!this->device)
+    {
+        return false;
+    }
+
+    this->third.reset();
+    this->back.reset();
+    this->primary.reset();
+    return true;
+}
+
+// swd3e.exe 0x0043C590: the remaining reference count of the device
+u32 Graphics::ReleaseDevice()
+{
+    this->device = false;
+    return 0;
+}
+
+// swd3e.exe 0x0043C5A0: full screen flips the primary surface after the vertical blank; windowed copies the back
+// buffer to the primary surface first. The window shows the primary surface.
+bool Graphics::Present()
+{
+    if (this->primary == nullptr)
+    {
+        return true;
+    }
+
+    if ((this->cooperativeFlags & Graphics::FullScreenFlag) == 0 && this->back != nullptr)
+    {
+        std::copy_n(
+            this->back->Pixels(),
+            static_cast<std::size_t>(this->back->Width()) * this->back->Height(),
+            this->primary->Pixels()
+        );
+    }
+
+    this->display.Present(*this->primary);
+    return true;
+}
+
+// swd3e.exe 0x0043C620: a system memory surface; its bytes count as video memory used
+std::unique_ptr<Surface> Graphics::CreateOffscreen(int width, int height)
+{
+    this->videoMemoryUsed += static_cast<u32>(height * width) * (this->BitDepth() / CHAR_BIT);
+    return std::make_unique<Surface>(width, height);
+}
+
+// swd3e.exe 0x0043C700: filled with the clear colour (a colour-fill blit)
+void Graphics::ClearSurface(Surface& surface)
+{
+    surface.Fill(static_cast<Pixel>(this->clearColor));
+}
+
+void Graphics::SetClearColor(u32 color)
+{
+    this->clearColor = color;
+}
+
+// swd3e.exe 0x0043C840: the depth of the display mode
+u32 Graphics::BitDepth() const
+{
+    return kDisplayBits;
+}
+
+// swd3e.exe 0x0043C880
+bool Graphics::QueryVideoMemory()
+{
+    this->videoMemoryTotal = kVideoMemory;
+    this->videoMemoryFree = kVideoMemory - this->videoMemoryUsed;
+    return true;
+}
+
+// swd3e.exe 0x0043C8B0
+Surface* Graphics::GetSurface(SurfaceId id)
+{
+    switch (id)
+    {
+        case SurfaceId::Primary:
+            return this->primary.get();
+
+        case SurfaceId::Back:
+            return this->back.get();
+
+        case SurfaceId::Third:
+            return this->third.get();
+    }
+
+    return nullptr;
+}
+
+// swd3e.exe 0x0043C8E0: the device (the IDirectDraw4 interface in the original)
+Graphics& Graphics::Device()
+{
+    return *this;
+}
+
+// IDirectDraw4::GetGDISurface: the surface GDI draws on, the primary one.
+Surface* Graphics::GdiSurface()
+{
+    return this->primary.get();
+}
+
+// swd3e.exe 0x0043C8F0: classifies the masks of the primary surface; returns the green mask
+u32 Graphics::DetectPixelFormat()
+{
+    this->pixelFormat = 0;
+
+    if (Surface::GreenMask == kGreen6)
+    {
+        this->pixelFormat = kFormat565;
+    }
+
+    if (Surface::BlueMask == kBlue6)
+    {
+        this->pixelFormat = kFormat556;
+    }
+
+    if (Surface::RedMask == kRed6)
+    {
+        this->pixelFormat = kFormat655;
+    }
+
+    return Surface::GreenMask;
+}
+
+// swd3e.exe 0x0043C970: pitch in bytes
+i32 Graphics::BackSize(i32& pitch, i32& height) const
+{
+    pitch = this->backPitch;
+    height = this->backHeight;
+    return this->backHeight;
+}
+
+// swd3e.exe 0x0043C6C0: filled with the device colour of `color`
+void FillSurfaceColor(Surface& surface, ColorRef color)
+{
+    surface.Fill(static_cast<Pixel>(MatchSurfaceColor(surface, color)));
+}
+
+// swd3e.exe 0x0043C740: the device colour of `color` as GDI writes it at (0, 0), read back and the pixel restored;
+// CLR_INVALID gives the current top-left pixel
+u32 MatchSurfaceColor(Surface& surface, ColorRef color)
+{
+    Pixel* corner = surface.Pixels();
+
+    if (color == kInvalidColor)
+    {
+        return *corner;
+    }
+
+    const Pixel saved = *corner;
+    *corner = DevicePixel(color);
+    const u32 result = *corner;
+    *corner = saved;
+    return result;
+}
+
+}  // namespace swd3e

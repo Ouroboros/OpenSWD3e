@@ -1,0 +1,10 @@
+swd3e 0x0043E900 sub_43E900 <- swd32 0x00439DE0 sub_439DE0; method=callers reusable=no: the code differs
+same=79 offset=0 constant=1 global=3 code=0 inserted=4 deleted=0
++ swd3e only: push    offset dword_50AF70
++ swd3e only: call    sub_40DF70
+~ constant swd32: add     esp, 0Ch                                 swd3e: add     esp, 10h
++ swd3e only: mov     dword_50AB98, esi
++ swd3e only: mov     dword_50A128, 4
+~ global   swd32: mov     dword_4FB818, 4                          swd3e: mov     dword_50AE00, 5
+~ global   swd32: mov     dword_4FC458, 5                          swd3e: mov     dword_50AED0, 6
+~ global   swd32: mov     dword_4FC520, 6                          swd3e: mov     dword_50B028, 51h

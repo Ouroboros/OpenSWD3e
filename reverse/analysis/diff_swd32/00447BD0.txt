@@ -1,0 +1,47 @@
+swd3e 0x00447BD0 sub_447BD0 <- swd32 0x00442CA0 sub_442CA0; method=callers reusable=no: the code differs
+same=35 offset=0 constant=1 global=0 code=7 inserted=21 deleted=16
+- swd32 only: mov     dword ptr [esi+44h], 0FFFFFFFFh
+- swd32 only: mov     eax, dword_4FCD38
+- swd32 only: test    eax, eax
++ swd3e only: lea     eax, [esi+44h]
++ swd3e only: or      ecx, 0FFFFFFFFh
++ swd3e only: test    edi, edi
++ swd3e only: mov     [eax], ecx
++ swd3e only: mov     [esi+48h], ecx
++ swd3e only: mov     [esi+4Ch], ecx
++ swd3e only: jz      loc_447C99
++ swd3e only: mov     ecx, dword_50B7F8
++ swd3e only: test    ecx, ecx
+~ code     swd32: jnz     short loc_442CDA                         swd3e: jnz     short loc_447C22
+- swd32 only: mov     ax, [edi+4]
+- swd32 only: cmp     ax, 0FFDCh
+- swd32 only: jz      short loc_442CDA
++ swd3e only: mov     cx, [edi+4]
++ swd3e only: cmp     cx, 0FFDCh
++ swd3e only: jz      loc_447C99
++ swd3e only: lea     edx, [esi+50h]
++ swd3e only: push    edx
++ swd3e only: push    ecx
++ swd3e only: mov     ecx, dword_50B7F8
+~ constant swd32: add     esp, 8                                   swd3e: add     esp, 10h
+- swd32 only: and     eax, 0FFFFh
+- swd32 only: mov     [esi+44h], eax
+- swd32 only: mov     dword ptr [esi+48h], 0FFFFFFFFh
+- swd32 only: mov     eax, dword_4FCD38
+- swd32 only: cmp     eax, 7
++ swd3e only: cmp     ecx, 7
+~ code     swd32: jz      short loc_442CF0                         swd3e: jz      short loc_447C2C
+- swd32 only: cmp     eax, 8
++ swd3e only: cmp     ecx, 8
+~ code     swd32: jnz     short loc_442D2D                         swd3e: jnz     short loc_447C6F
+~ code     swd32: jz      short loc_442D2D                         swd3e: jz      short loc_447C6F
+- swd32 only: mov     dword ptr [esi+4Ch], 0FFFFFFFFh
+- swd32 only: mov     eax, dword_4FCD38
+- swd32 only: cmp     eax, 9
++ swd3e only: mov     ecx, dword_50B7F8
++ swd3e only: cmp     ecx, 9
+~ code     swd32: jz      short loc_442D43                         swd3e: jz      short loc_447C79
+- swd32 only: cmp     eax, 0Ah
++ swd3e only: cmp     ecx, 0Ah
+~ code     swd32: jnz     short loc_442D63                         swd3e: jnz     short loc_447C99
+~ code     swd32: jz      short loc_442D63                         swd3e: jz      short loc_447C99

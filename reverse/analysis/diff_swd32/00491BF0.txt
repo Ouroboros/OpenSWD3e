@@ -1,0 +1,4 @@
+swd3e 0x00491BF0 sub_491BF0 <- swd32 0x0047D830 sub_47D830; method=shape reusable=no: the code differs
+same=6 offset=2 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: and     [ecx+26D0h], dx                          swd3e: and     [ecx+2BD8h], dx
+~ offset   swd32: mov     dword ptr [ecx+2AF0h], 0                 swd3e: mov     dword ptr [ecx+3030h], 0

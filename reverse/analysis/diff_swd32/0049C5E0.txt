@@ -1,0 +1,7 @@
+swd3e 0x0049C5E0 sub_49C5E0 <- swd32 0x004846F0 sub_4846F0; method=anchor reusable=no: the code differs
+same=8 offset=0 constant=0 global=0 code=0 inserted=2 deleted=3
+- swd32 only: neg     eax
+- swd32 only: sbb     eax, eax
+- swd32 only: neg     eax
++ swd3e only: test    eax, eax
++ swd3e only: setnz   al

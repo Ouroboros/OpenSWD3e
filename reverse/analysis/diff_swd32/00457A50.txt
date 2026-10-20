@@ -1,0 +1,9 @@
+swd3e 0x00457A50 sub_457A50 <- swd32 0x00450400 sub_450400; method=callers reusable=no: the code differs
+same=40 offset=2 constant=1 global=0 code=0 inserted=4 deleted=0
+~ offset   swd32: lea     ecx, [eax+eax*8]                         swd3e: lea     ecx, [eax+eax*4]
+~ offset   swd32: lea     esi, [eax+ecx*2]                         swd3e: lea     esi, [eax+ecx*8]
+~ constant swd32: shl     esi, 3                                   swd3e: shl     esi, 2
++ swd3e only: mov     dword_4ED9BC, ecx
++ swd3e only: mov     ecx, 0FFFFFFFCh
++ swd3e only: mov     dword_4EC178, ecx
++ swd3e only: mov     dword_4EC180, ecx

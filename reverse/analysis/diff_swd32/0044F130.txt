@@ -1,0 +1,34 @@
+swd3e 0x0044F130 sub_44F130 <- swd32 0x004466A0 sub_4466A0; method=callers reusable=no: the code differs
+same=7 offset=0 constant=0 global=1 code=2 inserted=18 deleted=11
+- swd32 only: mov     ax, word_4FC900
+- swd32 only: cmp     ax, 1F4h
+- swd32 only: jb      short loc_4466B1
++ swd3e only: mov     eax, dword_50B3AC
++ swd3e only: cmp     eax, 1F4h
++ swd3e only: jl      short loc_44F141
+~ code     swd32: jmp     sub_43C7E0                               swd3e: jmp     loc_4420A0
+- swd32 only: cmp     ax, 2
++ swd3e only: cmp     eax, 2
+~ code     swd32: jnz     short loc_4466E4                         swd3e: jnz     short loc_44F170
+- swd32 only: mov     ax, word_4FB8A8
+- swd32 only: inc     ax
+- swd32 only: cmp     ax, 20h
+- swd32 only: mov     word_4FB8A8, ax
+- swd32 only: jbe     short loc_4466D4
++ swd3e only: mov     eax, dword_50A1C4
++ swd3e only: inc     eax
++ swd3e only: cmp     eax, 20h
++ swd3e only: mov     dword_50A1C4, eax
++ swd3e only: jle     short loc_44F160
+~ global   swd32: mov     word_4FB8A8, 1Eh                         swd3e: mov     dword_50A1C4, 1Eh
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     cx, word_4FB8A8
++ swd3e only: mov     ecx, dword_50A1C4
++ swd3e only: and     ecx, 0FFFFh
++ swd3e only: call    sub_442020
++ swd3e only: mov     eax, dword_4C4F0C
++ swd3e only: push    eax
++ swd3e only: push    2Eh
++ swd3e only: call    sub_427040
++ swd3e only: add     esp, 8
++ swd3e only: retn

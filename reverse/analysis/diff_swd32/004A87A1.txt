@@ -1,0 +1,54 @@
+swd3e 0x004A87A1 sub_4A87A1 <- swd32 0x00496B30 sub_496B30; method=calls reusable=no: the code differs
+same=4 offset=0 constant=0 global=0 code=3 inserted=19 deleted=30
+- swd32 only: push    ebp
+- swd32 only: mov     ebp, esp
+- swd32 only: push    ecx
+- swd32 only: mov     eax, [ebp+arg_0]
+- swd32 only: mov     dword_53D15C, eax
+- swd32 only: mov     [ebp+var_4], 0
+- swd32 only: jmp     short loc_496B4E
+- swd32 only: mov     ecx, [ebp+var_4]
+- swd32 only: add     ecx, 1
+- swd32 only: mov     [ebp+var_4], ecx
+- swd32 only: cmp     [ebp+var_4], 2Dh
+- swd32 only: jnb     short loc_496B77
+- swd32 only: mov     edx, [ebp+var_4]
+- swd32 only: mov     eax, [ebp+arg_0]
+- swd32 only: cmp     eax, dword_4A8CF0[edx*8]
+- swd32 only: jnz     short loc_496B75
+- swd32 only: mov     ecx, [ebp+var_4]
+- swd32 only: mov     edx, dword_4A8CF4[ecx*8]
+- swd32 only: mov     dword_53D158, edx
+- swd32 only: jmp     short loc_496BB7
+- swd32 only: jmp     short loc_496B45
+- swd32 only: cmp     [ebp+arg_0], 13h
++ swd3e only: mov     ecx, [esp+arg_0]
++ swd3e only: xor     edx, edx
++ swd3e only: mov     dword_579A6C, ecx
++ swd3e only: mov     eax, offset dword_4C0E60
++ swd3e only: cmp     ecx, [eax]
++ swd3e only: jz      short loc_4A87D6
++ swd3e only: add     eax, 8
++ swd3e only: inc     edx
++ swd3e only: cmp     eax, offset unk_4C0FC8
++ swd3e only: jl      short loc_4A87B2
++ swd3e only: cmp     ecx, 13h
+~ code     swd32: jb      short loc_496B8F                         swd3e: jb      short loc_4A87E3
+- swd32 only: cmp     [ebp+arg_0], 24h
++ swd3e only: cmp     ecx, 24h
+~ code     swd32: ja      short loc_496B8F                         swd3e: ja      short loc_4A87E3
+- swd32 only: jmp     short loc_496BB7
+- swd32 only: cmp     [ebp+arg_0], 0BCh
++ swd3e only: retn
++ swd3e only: mov     eax, dword_4C0E64[edx*8]
++ swd3e only: mov     dword_579A68, eax
++ swd3e only: retn
++ swd3e only: cmp     ecx, 0BCh
+~ code     swd32: jb      short loc_496BAD                         swd3e: jb      short loc_4A87FD
+- swd32 only: cmp     [ebp+arg_0], 0CAh
+- swd32 only: ja      short loc_496BAD
++ swd3e only: cmp     ecx, 0CAh
+- swd32 only: jmp     short loc_496BB7
++ swd3e only: jbe     short locret_4A8807
+- swd32 only: mov     esp, ebp
+- swd32 only: pop     ebp

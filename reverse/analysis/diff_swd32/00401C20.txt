@@ -1,0 +1,12 @@
+swd3e 0x00401C20 sub_401C20 <- swd32 0x00402120 sub_402120; method=shape reusable=no: the code differs
+same=29 offset=7 constant=3 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     ecx, [eax+30h]                           swd3e: mov     ecx, [eax+28h]
+~ constant swd32: push    60h                                      swd3e: push    58h
+~ constant swd32: mov     ecx, 18h                                 swd3e: mov     ecx, 16h
+~ offset   swd32: mov     eax, [ecx+30h]                           swd3e: mov     eax, [ecx+28h]
+~ offset   swd32: mov     [edx+30h], eax                           swd3e: mov     [edx+28h], eax
+~ offset   swd32: mov     [ecx+30h], edx                           swd3e: mov     [ecx+28h], edx
+~ offset   swd32: mov     edx, [eax+30h]                           swd3e: mov     edx, [eax+28h]
+~ offset   swd32: mov     ecx, [edx+30h]                           swd3e: mov     ecx, [edx+28h]
+~ offset   swd32: mov     [eax+30h], ecx                           swd3e: mov     [eax+28h], ecx
+~ constant swd32: mov     ecx, 18h                                 swd3e: mov     ecx, 16h

@@ -1,0 +1,1184 @@
+a_address	b_address	method	reusable	a_insns	b_insns	changed	offset	constant	global	code	inserted	deleted
+0x00401000	0x004014F0	similarity	no: the code differs	371	378	292	66	2	0	23	97	104
+0x004014B0	0x004019A0	calls	no: the code differs	163	163	41	1	0	0	0	20	20
+0x00401680	0x00401B70	hash	yes	81	81	0	0	0	0	0	0	0
+0x00401780	0x00401C70	callers	no: the code differs	150	154	44	5	1	0	0	17	21
+0x00401950	0x00401E50	shape	no: the code differs	140	140	1	1	0	0	0	0	0
+0x00401B30	0x00402030	shape	no: the code differs	35	35	8	4	4	0	0	0	0
+0x00401BC0	0x004020C0	shape	no: the code differs	24	24	4	4	0	0	0	0	0
+0x00401C20	0x00402120	shape	no: the code differs	39	39	10	7	3	0	0	0	0
+0x00401CA0	0x004021A0	shape	no: the code differs	12	12	3	3	0	0	0	0	0
+0x00401CD0	0x004021D0	shape	no: the code differs	18	18	3	3	0	0	0	0	0
+0x00401D00	0x00402200	shape	no: the code differs	12	12	2	2	0	0	0	0	0
+0x00401D30	0x00402230	anchor	no: the code differs	112	116	89	9	0	0	0	38	42
+0x00401E80	0x00402390	shape	no: the code differs	15	15	2	2	0	0	0	0	0
+0x00401EB0	0x004023C0	hash	yes	7	7	0	0	0	0	0	0	0
+0x00401ED0	0x004023E0	shape	no: the code differs	14	14	1	1	0	0	0	0	0
+0x00401F00	0x00402410	shape	no: the code differs	26	26	5	5	0	0	0	0	0
+0x00401F40	0x00402450	callers	no: the code differs	88	79	24	11	0	0	2	10	1
+0x00402020	0x00402520	shape	no: the code differs	19	19	6	6	0	0	0	0	0
+0x00402060	0x00402560	callers	no: the code differs	135	135	35	17	0	0	0	9	9
+0x00402180	0x00402690	calls	no: the code differs	281	276	338	12	0	0	19	156	151
+0x00402460	0x00402940	shape	no: the code differs	12	12	3	3	0	0	0	0	0
+0x00402480	0x00402960	shape	no: the code differs	12	12	3	3	0	0	0	0	0
+0x004024A0	0x00402980	shape	no: the code differs	26	26	7	7	0	0	0	0	0
+0x004024E0	0x004029C0	callers	no: the code differs	76	76	41	15	2	0	0	12	12
+0x004025B0	0x00402A90	shape	no: the code differs	18	18	2	2	0	0	0	0	0
+0x004025E0	0x00402AC0	shape	no: the code differs	12	12	1	1	0	0	0	0	0
+0x00402600	0x00402AE0	shape	no: the code differs	371	371	68	68	0	0	0	0	0
+0x00402A90	0x00402F70	calls	no: the code differs	3	3	1	1	0	0	0	0	0
+0x00402AA0	0x00402F80	anchor	no: the code differs	1360	1224	690	34	21	1	178	296	160
+0x00403DC0	0x004040B0	hash	yes	333	333	0	0	0	0	0	0	0
+0x00404220	0x00404510	hash	yes	89	89	0	0	0	0	0	0	0
+0x00404320	0x00404610	callers	no: the code differs	451	450	18	1	0	0	0	9	8
+0x00404920	0x00404C00	callers	no: the code differs	305	304	21	0	0	0	0	11	10
+0x00404CF0	0x00404FD0	shape	no: the code differs	74	74	2	0	2	0	0	0	0
+0x00404DD0	0x004050B0	callers	no: the code differs	16	15	9	0	0	0	0	5	4
+0x00404E00	0x004050E0	hash	yes	189	189	0	0	0	0	0	0	0
+0x004050E0	0x004053C0	calls	no: the code differs	39	36	9	1	1	0	0	5	2
+0x00405150	0x00405430	shape	no: the code differs	70	70	1	0	1	0	0	0	0
+0x00405220	0x00405500	callers	no: the code differs	1164	1085	472	17	16	0	70	224	145
+0x004061B0	0x00406390	anchor	no: the code differs	153	152	95	11	3	0	0	41	40
+0x004063A0	0x00406580	anchor	no: the code differs	116	115	6	1	0	0	0	3	2
+0x00406530	0x00406710	neighbours	no: the code differs	26	25	13	0	0	0	0	7	6
+0x00406590	0x00406770	anchor	no: the code differs	148	147	25	0	0	0	0	13	12
+0x00406780	0x00406960	anchor	no: the code differs	296	294	94	19	5	0	0	36	34
+0x00406B50	0x00406D30	hash	yes	52	52	0	0	0	0	0	0	0
+0x00406C20	0x00406E00	hash	yes	8	8	0	0	0	0	0	0	0
+0x00406C50	0x00406E30	hash	yes	29	29	0	0	0	0	0	0	0
+0x00406CD0	0x00406EB0	hash	yes	50	50	0	0	0	0	0	0	0
+0x00406D90	0x00406F70	hash	yes	86	86	0	0	0	0	0	0	0
+0x00406EC0	0x004070A0	anchor	no: the code differs	1942	1922	471	42	22	2	81	172	152
+0x00408B40	0x00408CF0	hash	yes	36	36	0	0	0	0	0	0	0
+0x00408BC0	0x00408D70	hash	yes	82	82	0	0	0	0	0	0	0
+0x00408CC0	0x00408E70	anchor	no: the code differs	467	455	347	10	14	2	15	159	147
+0x00409320	0x004094A0	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	49	49	0	0	0	0	0	0	0
+0x004093C0	0x00409540	hash	no: callee 0x00451210 unmatched or matched elsewhere	40	40	0	0	0	0	0	0	0
+0x00409480	0x00409600	shape	no: the code differs	275	275	16	10	6	0	0	0	0
+0x00409840	0x004099C0	neighbours	no: the code differs	40	23	38	2	1	0	0	26	9
+0x004098C0	0x00409A10	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	108	108	0	0	0	0	0	0	0
+0x00409A30	0x00409B80	shape	no: the code differs	41	41	3	2	1	0	0	0	0
+0x00409AC0	0x00409C10	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	66	66	0	0	0	0	0	0	0
+0x00409B90	0x00409CE0	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	68	68	0	0	0	0	0	0	0
+0x00409C80	0x00409DD0	anchor	no: the code differs	67	68	3	0	0	0	0	1	2
+0x00409DE0	0x00401190	hash	yes	9	9	0	0	0	0	0	0	0
+0x00409E00	0x004011B0	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00409E10	0x004011C0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409E20	0x004011D0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409E30	0x004011E0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409E40	0x004011F0	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00409E50	0x00401200	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409E60	0x00401210	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409E70	0x00401220	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409E80	0x00401230	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00409E90	0x00401240	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409EA0	0x00401250	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409EB0	0x00401260	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409EC0	0x00401270	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00409ED0	0x00401280	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409EE0	0x00401290	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409EF0	0x004012A0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409F00	0x004012B0	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00409F10	0x004012C0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409F20	0x004012D0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409F30	0x004012E0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409F40	0x004012F0	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00409F50	0x00401300	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409F60	0x00401310	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409F70	0x00401320	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409F80	0x00401330	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00409F90	0x00401340	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409FA0	0x00401350	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409FB0	0x00401360	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409FC0	0x00401370	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00409FD0	0x00401380	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409FE0	0x00401390	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00409FF0	0x004013A0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A000	0x004013B0	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x0040A010	0x004013C0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A020	0x004013D0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A030	0x004013E0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A040	0x004013F0	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x0040A050	0x00401400	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A060	0x00401410	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A070	0x00401420	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A080	0x00401430	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x0040A090	0x00401440	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A0A0	0x00401450	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A0B0	0x00401460	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A0C0	0x00401470	neighbours	no: the code differs	4	4	0	0	0	0	0	0	0
+0x0040A0D0	0x00401480	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A0E0	0x00401490	neighbours	no: the code differs	1	1	0	0	0	0	0	0	0
+0x0040A0F0	0x004014A0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A100	0x004014B0	neighbours	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0040A110	0x004014C0	calls	no: the code differs	9	2	8	0	0	0	1	7	0
+0x0040A140	0x00409EC0	anchor	no: the code differs	192	173	133	12	3	0	15	61	42
+0x0040A380	0x0040A0D0	anchor	no: the code differs	294	314	185	0	1	0	8	78	98
+0x0040A7B0	0x0040A570	anchor	no: the code differs	451	366	163	2	5	1	22	109	24
+0x0040AEC0	0x0040AB50	anchor	no: the code differs	117	123	11	0	0	0	5	0	6
+0x0040B370	0x0040AFF0	anchor	no: the code differs	590	585	55	8	4	0	12	18	13
+0x0040BB90	0x0040B7F0	callers	no: the code differs	225	196	143	17	2	0	25	64	35
+0x0040BEA0	0x0040BAA0	hash	yes	55	55	0	0	0	0	0	0	0
+0x0040BF20	0x0040BB20	hash	yes	13	13	0	0	0	0	0	0	0
+0x0040BF50	0x0040BB50	hash	yes	359	359	0	0	0	0	0	0	0
+0x0040C420	0x0040C020	shape	no: the code differs	18	18	1	0	1	0	0	0	0
+0x0040C460	0x0040C060	anchor	no: the code differs	32	30	34	2	0	0	0	17	15
+0x0040C4D0	0x0040C0D0	hash	yes	14	14	0	0	0	0	0	0	0
+0x0040C500	0x0040C100	hash	yes	16	16	0	0	0	0	0	0	0
+0x0040C570	0x0040C130	anchor	no: the code differs	798	861	587	19	21	2	54	214	277
+0x0040D3B0	0x0040D060	hash	yes	30	30	0	0	0	0	0	0	0
+0x0040D410	0x0040D0C0	calls	no: the code differs	42	41	9	0	0	0	0	5	4
+0x0040D4C0	0x0040D160	hash	yes	44	44	0	0	0	0	0	0	0
+0x0040D560	0x0040D200	anchor	no: the code differs	127	126	12	6	5	0	0	1	0
+0x0040D720	0x0040D3C0	shape	no: the code differs	49	49	1	0	1	0	0	0	0
+0x0040D7C0	0x0040D460	anchor	no: the code differs	70	66	5	0	1	0	0	4	0
+0x0040D8D0	0x0040D560	shape	no: the code differs	55	55	1	0	1	0	0	0	0
+0x0040D980	0x0040D610	callers	no: the code differs	114	112	11	1	2	0	0	5	3
+0x0040DB00	0x0040D790	anchor	no: the code differs	181	178	38	4	3	0	0	17	14
+0x0040DD50	0x0040D9E0	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	40	40	0	0	0	0	0	0	0
+0x0040DDD0	0x0040DA60	callers	no: the code differs	83	82	7	0	0	0	0	4	3
+0x0040DEB0	0x0040DB40	hash	yes	9	9	0	0	0	0	0	0	0
+0x0040DED0	0x0040DB60	hash	yes	33	33	0	0	0	0	0	0	0
+0x0040DF30	0x0040DBC0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	21	21	0	0	0	0	0	0	0
+0x0040DF70	0x0040DC00	shape	no: the code differs	12	12	1	1	0	0	0	0	0
+0x0040DFA0	0x0040DC30	hash	yes	11	11	0	0	0	0	0	0	0
+0x0040DFC0	0x0040DC50	hash	yes	11	11	0	0	0	0	0	0	0
+0x0040DFF0	0x0040DC80	hash	yes	10	10	0	0	0	0	0	0	0
+0x0040E020	0x0040DCB0	hash	yes	14	14	0	0	0	0	0	0	0
+0x0040E050	0x0040DCE0	hash	yes	12	12	0	0	0	0	0	0	0
+0x0040E080	0x0040DD10	similarity	no: the code differs	3	3	0	0	0	0	0	0	0
+0x0040E090	0x0040DD20	hash	yes	4	4	0	0	0	0	0	0	0
+0x0040E0A0	0x0040DD30	hash	yes	3	3	0	0	0	0	0	0	0
+0x0040E0B0	0x0040DD40	hash	yes	7	7	0	0	0	0	0	0	0
+0x0040E0D0	0x0040DD60	neighbours	no: the code differs	68	64	5	1	0	0	0	4	0
+0x0040E1C0	0x0040DE50	hash	yes	165	165	0	0	0	0	0	0	0
+0x0040E3A0	0x0040E030	calls	no: the code differs	24	23	13	0	0	0	0	7	6
+0x0040E3F0	0x0040E080	hash	yes	18	18	0	0	0	0	0	0	0
+0x0040E420	0x0040E0B0	anchor	no: the code differs	778	745	156	4	27	6	0	76	43
+0x0040EF60	0x0040EBF0	shape	no: the code differs	49	49	1	1	0	0	0	0	0
+0x0040EFF0	0x0040EC80	hash	yes	22	22	0	0	0	0	0	0	0
+0x0040F030	0x0040ECC0	shape	no: the code differs	53	53	1	1	0	0	0	0	0
+0x0040F0D0	0x0040ED60	callers	no: the code differs	164	170	24	1	5	0	0	6	12
+0x0040F310	0x0040EFD0	hash	yes	39	39	0	0	0	0	0	0	0
+0x0040F380	0x0040F040	hash	no: callee 0x0040C530 unmatched or matched elsewhere	80	80	0	0	0	0	0	0	0
+0x0040F4A0	0x0040F160	callers	no: the code differs	71	72	1	0	0	0	0	0	1
+0x0040F5C0	0x0040F280	hash	no: callee 0x0040C530 unmatched or matched elsewhere	62	62	0	0	0	0	0	0	0
+0x0040F680	0x0040F340	hash	yes	40	40	0	0	0	0	0	0	0
+0x0040F6F0	0x0040F3B0	shape	no: the code differs	32	32	3	0	3	0	0	0	0
+0x0040F750	0x0040F410	shape	no: the code differs	79	79	5	5	0	0	0	0	0
+0x0040F840	0x0040F500	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	20	20	0	0	0	0	0	0	0
+0x0040F880	0x0040F540	calls	no: the code differs	12	12	1	1	0	0	0	0	0
+0x0040F8B0	0x0040F570	calls	no: the code differs	12	12	1	1	0	0	0	0	0
+0x0040F8E0	0x0040F5A0	calls	no: the code differs	23	20	4	0	1	0	0	3	0
+0x0040F930	0x0040F5E0	shape	no: the code differs	23	23	2	2	0	0	0	0	0
+0x0040F980	0x0040F630	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	24	24	0	0	0	0	0	0	0
+0x0040F9C0	0x0040F670	hash	yes	6	6	0	0	0	0	0	0	0
+0x0040F9E0	0x0040F690	hash	no: callee 0x004A1A36 unmatched or matched elsewhere	19	19	0	0	0	0	0	0	0
+0x0040FA20	0x0040F6D0	anchor	no: the code differs	117	116	27	2	2	0	0	12	11
+0x0040FBE0	0x0040F890	shape	no: the code differs	923	923	10	0	4	6	0	0	0
+0x00410710	0x004103C0	hash	yes	57	57	0	0	0	0	0	0	0
+0x004107E0	0x00410490	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	115	115	0	0	0	0	0	0	0
+0x00410950	0x00410600	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	102	102	0	0	0	0	0	0	0
+0x00410A80	0x00410730	callers	no: the code differs	447	443	394	70	0	0	0	164	160
+0x00411390	0x00411030	calls	no: the code differs	154	154	190	5	1	0	0	92	92
+0x004115D0	0x004112B0	calls	no: the code differs	104	100	117	9	0	0	0	56	52
+0x00411790	0x00411490	hash	yes	72	72	0	0	0	0	0	0	0
+0x00411890	0x00411530	callers	no: the code differs	89	98	21	0	0	0	4	4	13
+0x00411970	0x00411620	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	58	58	0	0	0	0	0	0	0
+0x00411A50	0x00411700	anchor	no: the code differs	96	87	29	3	3	0	4	14	5
+0x00411B50	0x004117F0	callers	no: the code differs	64	67	39	1	3	0	0	16	19
+0x00411C10	0x00411C90	hash	yes	35	35	0	0	0	0	0	0	0
+0x00411C80	0x00411D00	hash	yes	30	30	0	0	0	0	0	0	0
+0x00411D10	0x00411D90	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	58	58	0	0	0	0	0	0	0
+0x00411DA0	0x00411E20	hash	yes	84	84	0	0	0	0	0	0	0
+0x00411E80	0x00411F00	hash	yes	38	38	0	0	0	0	0	0	0
+0x00411F10	0x00411F90	calls	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00411F20	0x00411FA0	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	63	63	0	0	0	0	0	0	0
+0x004126A0	0x004120B0	callers	no: the code differs	623	606	219	8	5	0	13	105	88
+0x00412F60	0x00412930	callers	no: the code differs	183	192	29	0	2	0	10	4	13
+0x004131F0	0x00412BE0	hash	yes	104	104	0	0	0	0	0	0	0
+0x00413340	0x00412D30	hash	yes	374	374	0	0	0	0	0	0	0
+0x00413830	0x00413220	hash	yes	105	105	0	0	0	0	0	0	0
+0x00413980	0x00413370	hash	yes	379	379	0	0	0	0	0	0	0
+0x00413E80	0x00413870	callers	no: the code differs	61	61	2	0	0	0	0	1	1
+0x00413F20	0x00413910	callers	no: the code differs	371	292	311	16	6	0	10	179	100
+0x004143B0	0x00413CA0	callers	no: the code differs	151	156	53	1	1	0	0	23	28
+0x004145A0	0x00413FE0	callers	no: the code differs	445	422	238	9	8	0	0	122	99
+0x00414B70	0x00414570	hash	yes	35	35	0	0	0	0	0	0	0
+0x00414BF0	0x004145F0	neighbours	no: the code differs	74	86	119	2	3	0	0	51	63
+0x00414CC0	0x004146F0	hash	yes	57	57	0	0	0	0	0	0	0
+0x00414DB0	0x004147E0	shape	no: the code differs	90	90	7	7	0	0	0	0	0
+0x00414EC0	0x004148F0	similarity	no: the code differs	36	38	2	0	0	0	0	0	2
+0x00414F70	0x004149B0	hash	no: callee 0x0040C530 unmatched or matched elsewhere	107	107	0	0	0	0	0	0	0
+0x00415120	0x00414B60	shape	no: the code differs	115	115	17	17	0	0	0	0	0
+0x004152A0	0x00414CE0	shape	no: the code differs	99	99	21	21	0	0	0	0	0
+0x00415410	0x00414E50	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	288	288	0	0	0	0	0	0	0
+0x004157B0	0x004151F0	anchor	no: the code differs	143	158	115	26	2	0	10	31	46
+0x00415960	0x004153D0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	65	65	0	0	0	0	0	0	0
+0x00415A30	0x004154A0	callers	no: the code differs	244	245	61	0	0	0	0	30	31
+0x00415D50	0x004157D0	hash	yes	91	91	0	0	0	0	0	0	0
+0x00415E40	0x004158C0	callers	no: the code differs	193	200	21	0	0	0	0	7	14
+0x004160E0	0x00415B70	shape	no: the code differs	223	223	1	0	0	1	0	0	0
+0x00416450	0x00415EE0	callers	no: the code differs	213	212	79	5	1	0	0	37	36
+0x00416730	0x004161C0	shape	no: the code differs	165	165	1	0	1	0	0	0	0
+0x00416930	0x004163C0	callers	no: the code differs	136	136	4	0	0	0	0	2	2
+0x00416B00	0x00416590	hash	yes	150	150	0	0	0	0	0	0	0
+0x00416D20	0x004167B0	shape	no: the code differs	267	267	1	1	0	0	0	0	0
+0x004170A0	0x00416B30	hash	yes	120	120	0	0	0	0	0	0	0
+0x00417230	0x00416CC0	hash	no: callee 0x004A1A36 unmatched or matched elsewhere	39	39	0	0	0	0	0	0	0
+0x00417510	0x00416D30	callers	no: the code differs	24	28	28	0	0	0	0	12	16
+0x00417570	0x00416D90	calls	no: the code differs	64	56	8	0	0	0	0	8	0
+0x00417740	0x00416F10	hash	yes	28	28	0	0	0	0	0	0	0
+0x00417790	0x00416F60	hash	yes	7	7	0	0	0	0	0	0	0
+0x004177B0	0x00416F80	hash	yes	33	33	0	0	0	0	0	0	0
+0x00417820	0x00416FF0	hash	yes	30	30	0	0	0	0	0	0	0
+0x004179D0	0x00417050	hash	yes	62	62	0	0	0	0	0	0	0
+0x00417A60	0x004170E0	calls	no: the code differs	298	277	106	1	1	0	37	44	23
+0x00417E90	0x004174D0	hash	yes	35	35	0	0	0	0	0	0	0
+0x00417EF0	0x00417530	hash	yes	42	42	0	0	0	0	0	0	0
+0x00417F70	0x004175B0	hash	yes	54	54	0	0	0	0	0	0	0
+0x00418010	0x00417650	hash	yes	44	44	0	0	0	0	0	0	0
+0x00418090	0x004176D0	hash	yes	85	85	0	0	0	0	0	0	0
+0x00418190	0x004177D0	hash	yes	37	37	0	0	0	0	0	0	0
+0x00418200	0x00417840	hash	yes	92	92	0	0	0	0	0	0	0
+0x00418310	0x00417950	hash	yes	340	340	0	0	0	0	0	0	0
+0x004187A0	0x00417DE0	hash	yes	33	33	0	0	0	0	0	0	0
+0x00418800	0x00417E40	hash	yes	41	41	0	0	0	0	0	0	0
+0x00418880	0x00417EC0	hash	yes	344	344	0	0	0	0	0	0	0
+0x00418D10	0x00418350	hash	yes	195	195	0	0	0	0	0	0	0
+0x00418F80	0x004185C0	hash	yes	207	207	0	0	0	0	0	0	0
+0x00419200	0x00418840	hash	yes	468	468	0	0	0	0	0	0	0
+0x00419870	0x00418EB0	hash	yes	492	492	0	0	0	0	0	0	0
+0x00419F30	0x00419570	hash	yes	1086	1086	0	0	0	0	0	0	0
+0x0041AD70	0x0041A3B0	hash	yes	1134	1134	0	0	0	0	0	0	0
+0x0041BC40	0x0041B280	hash	yes	274	274	0	0	0	0	0	0	0
+0x0041BFE0	0x0041B620	hash	yes	291	291	0	0	0	0	0	0	0
+0x0041C3B0	0x0041B9F0	hash	yes	1430	1430	0	0	0	0	0	0	0
+0x0041D6B0	0x0041CCF0	hash	yes	249	249	0	0	0	0	0	0	0
+0x0041D9D0	0x0041D010	hash	yes	264	264	0	0	0	0	0	0	0
+0x0041DD00	0x0041D340	hash	yes	1404	1404	0	0	0	0	0	0	0
+0x0041EF80	0x0041E5C0	hash	yes	1447	1447	0	0	0	0	0	0	0
+0x00420290	0x0041F8D0	hash	yes	412	412	0	0	0	0	0	0	0
+0x00420860	0x0041FEA0	hash	yes	433	433	0	0	0	0	0	0	0
+0x00420E50	0x00420490	hash	yes	69	69	0	0	0	0	0	0	0
+0x00420F20	0x00420560	hash	yes	61	61	0	0	0	0	0	0	0
+0x00420FC0	0x00420600	hash	yes	90	90	0	0	0	0	0	0	0
+0x004210B0	0x004206F0	hash	yes	90	90	0	0	0	0	0	0	0
+0x004211A0	0x004207E0	hash	yes	64	64	0	0	0	0	0	0	0
+0x00421290	0x004208D0	hash	yes	341	341	0	0	0	0	0	0	0
+0x00421730	0x00420D70	hash	yes	356	356	0	0	0	0	0	0	0
+0x00421BF0	0x00421230	hash	yes	241	241	0	0	0	0	0	0	0
+0x00421F00	0x00421540	hash	yes	254	254	0	0	0	0	0	0	0
+0x00422210	0x00421850	hash	yes	273	273	0	0	0	0	0	0	0
+0x004225A0	0x00421BE0	hash	yes	290	290	0	0	0	0	0	0	0
+0x00422970	0x00421FB0	hash	yes	42	42	0	0	0	0	0	0	0
+0x004229F0	0x00422030	hash	yes	250	250	0	0	0	0	0	0	0
+0x00422D60	0x004223A0	hash	yes	262	262	0	0	0	0	0	0	0
+0x004230F0	0x00422730	hash	yes	200	200	0	0	0	0	0	0	0
+0x00423380	0x004229C0	hash	yes	210	210	0	0	0	0	0	0	0
+0x00427040	0x00485610	calls	no: the code differs	18	19	1	0	0	0	0	0	1
+0x00427080	0x00485F30	anchor	no: the code differs	60	58	7	0	0	0	5	2	0
+0x00427090	0x00485650	calls	no: the code differs	7	8	3	0	0	0	0	1	2
+0x004270B0	0x00485750	callers	no: the code differs	74	71	15	1	1	0	0	8	5
+0x004271A0	0x004233D0	hash	yes	10	10	0	0	0	0	0	0	0
+0x004271D0	0x00423400	hash	no: callee 0x0040C560 unmatched or matched elsewhere	268	268	0	0	0	0	0	0	0
+0x00427680	0x004238B0	calls	no: the code differs	7	7	0	0	0	0	0	0	0
+0x004276A0	0x004238D0	calls	no: the code differs	7	7	0	0	0	0	0	0	0
+0x004276C0	0x004238F0	hash	yes	15	15	0	0	0	0	0	0	0
+0x004276F0	0x00423920	hash	yes	21	21	0	0	0	0	0	0	0
+0x00427720	0x00423950	hash	yes	21	21	0	0	0	0	0	0	0
+0x00427760	0x00423990	hash	yes	21	21	0	0	0	0	0	0	0
+0x004277A0	0x004239D0	hash	yes	21	21	0	0	0	0	0	0	0
+0x004277E0	0x00423A10	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	75	75	0	0	0	0	0	0	0
+0x004278C0	0x00423AF0	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	268	268	0	0	0	0	0	0	0
+0x00427BD0	0x00423E00	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	137	137	0	0	0	0	0	0	0
+0x00427D80	0x00423FB0	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	245	245	0	0	0	0	0	0	0
+0x00428080	0x004242B0	anchor	no: the code differs	49	48	7	0	1	0	1	3	2
+0x00428100	0x00424330	hash	yes	22	22	0	0	0	0	0	0	0
+0x00428160	0x00424390	hash	yes	17	17	0	0	0	0	0	0	0
+0x00428210	0x00424440	anchor	no: the code differs	388	377	87	1	26	0	17	27	16
+0x00428730	0x00424910	neighbours	no: the code differs	7	6	1	0	0	0	0	1	0
+0x00428750	0x00424930	anchor	no: the code differs	91	91	0	0	0	0	0	0	0
+0x004288B0	0x00424B90	anchor	no: the code differs	252	242	15	0	3	0	0	11	1
+0x00428C20	0x00424EF0	anchor	no: the code differs	80	85	29	0	0	0	0	12	17
+0x00428D60	0x00425040	anchor	no: the code differs	54	57	11	1	1	0	0	3	6
+0x00428E60	0x00425150	hash	yes	22	22	0	0	0	0	0	0	0
+0x00428EC0	0x004251B0	anchor	no: the code differs	192	184	8	0	0	0	0	8	0
+0x004291B0	0x00425570	shape	no: the code differs	278	278	1	1	0	0	0	0	0
+0x00429520	0x004258E0	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	68	68	0	0	0	0	0	0	0
+0x004295F0	0x004259B0	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	60	60	0	0	0	0	0	0	0
+0x004296B0	0x00425A70	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	67	67	0	0	0	0	0	0	0
+0x00429780	0x00425B40	hash	yes	2	2	0	0	0	0	0	0	0
+0x00429B10	0x00425B50	shape	no: the code differs	42	42	3	0	3	0	0	0	0
+0x00429C00	0x00426820	hash	yes	12	12	0	0	0	0	0	0	0
+0x00429C20	0x00426840	anchor	no: the code differs	391	408	176	3	0	0	0	78	95
+0x0042A180	0x00426DF0	callers	no: the code differs	327	213	220	38	2	0	6	144	30
+0x0042A620	0x004270F0	anchor	no: the code differs	22	22	22	0	0	0	0	11	11
+0x0042A670	0x00427140	anchor	no: the code differs	98	103	8	1	0	0	0	1	6
+0x0042B480	0x004272C0	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0042B490	0x004272D0	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0042B4A0	0x004272E0	callers	no: the code differs	4	4	0	0	0	0	0	0	0
+0x0042B4B0	0x004272F0	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x0042B4C0	0x00427300	anchor	no: the code differs	452	448	80	13	1	0	0	35	31
+0x0042BAF0	0x00427920	callers	no: the code differs	7114	6296	5524	294	116	1	591	2670	1852
+0x00432630	0x0042D920	anchor	no: the code differs	135	134	17	6	4	0	0	4	3
+0x00432800	0x0042DAF0	anchor	no: the code differs	517	521	295	20	2	0	37	116	120
+0x00432F90	0x0042E280	anchor	no: the code differs	125	124	8	1	0	0	0	4	3
+0x00433140	0x0042E430	neighbours	no: the code differs	17	20	10	1	0	0	0	3	6
+0x00433190	0x0042E480	anchor	no: the code differs	75	78	7	0	0	0	0	2	5
+0x004332A0	0x0042E5A0	callers	no: the code differs	134	132	62	4	0	0	0	30	28
+0x00433440	0x0042E740	hash	yes	24	24	0	0	0	0	0	0	0
+0x00433490	0x0042E790	calls	no: the code differs	71	52	63	8	0	0	2	36	17
+0x00433720	0x0042E850	hash	yes	437	437	0	0	0	0	0	0	0
+0x00433C10	0x0042ED40	anchor	no: the code differs	1541	1527	153	8	2	0	31	63	49
+0x00435080	0x00430180	hash	yes	59	59	0	0	0	0	0	0	0
+0x00435130	0x00430230	hash	yes	60	60	0	0	0	0	0	0	0
+0x004351F0	0x004302F0	hash	no: callee 0x004A19E5 unmatched or matched elsewhere	24	24	0	0	0	0	0	0	0
+0x00435250	0x00430350	hash	yes	34	34	0	0	0	0	0	0	0
+0x004352D0	0x004303D0	callers	no: the code differs	198	211	166	13	0	0	0	70	83
+0x00435590	0x004306C0	calls	no: the code differs	180	167	179	22	4	0	0	83	70
+0x004357C0	0x004308C0	hash	yes	216	216	0	0	0	0	0	0	0
+0x00435A60	0x00430B60	hash	yes	38	38	0	0	0	0	0	0	0
+0x00435AE0	0x00430BE0	hash	yes	55	55	0	0	0	0	0	0	0
+0x00435B60	0x00430C60	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	46	46	0	0	0	0	0	0	0
+0x00435BF0	0x00430CF0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	0	0	0	0	0	0	0
+0x00435C10	0x00430D10	hash	yes	25	25	0	0	0	0	0	0	0
+0x00435C50	0x00430D50	hash	yes	17	17	0	0	0	0	0	0	0
+0x00435C80	0x00430D80	shape	no: the code differs	102	102	1	1	0	0	0	0	0
+0x00435DB0	0x00430EB0	shape	no: the code differs	106	106	1	1	0	0	0	0	0
+0x00435EF0	0x00430FF0	hash	yes	131	131	0	0	0	0	0	0	0
+0x00436050	0x00431150	hash	yes	41	41	0	0	0	0	0	0	0
+0x004360C0	0x004311C0	hash	yes	206	206	0	0	0	0	0	0	0
+0x004364C0	0x004315C0	calls	no: the code differs	3	3	0	0	0	0	0	0	0
+0x004366B0	0x00431960	callers	no: the code differs	31	47	28	0	0	0	0	6	22
+0x00436720	0x004315D0	calls	no: the code differs	26	102	90	0	0	0	2	6	82
+0x004367E0	0x00431A20	hash	yes	9	9	0	0	0	0	0	0	0
+0x00436950	0x00431DF0	calls	no: the code differs	52	57	44	1	0	0	0	19	24
+0x004369F0	0x00431EA0	similarity	no: the code differs	61	65	12	0	2	0	0	3	7
+0x00436AC0	0x00431F80	calls	no: the code differs	39	43	23	0	1	0	0	9	13
+0x00436B40	0x00432010	calls	no: the code differs	3	3	0	0	0	0	0	0	0
+0x00436B50	0x00432020	hash	yes	15	15	0	0	0	0	0	0	0
+0x00436C80	0x004321E0	calls	no: the code differs	733	555	690	55	38	0	23	376	198
+0x004377B0	0x00432A50	callers	no: the code differs	96	96	11	0	0	0	1	5	5
+0x00437C50	0x00432EE0	shape	no: the code differs	56	56	1	0	1	0	0	0	0
+0x00437D10	0x00432FA0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	35	35	0	0	0	0	0	0	0
+0x00437D80	0x00433010	anchor	no: the code differs	33	28	11	0	0	0	0	8	3
+0x00437F30	0x00433190	similarity	no: the code differs	48	50	44	0	0	0	0	21	23
+0x00437FC0	0x00433220	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	27	27	0	0	0	0	0	0	0
+0x00438020	0x00433270	hash	yes	15	15	0	0	0	0	0	0	0
+0x00438050	0x004332A0	anchor	no: the code differs	42	47	73	1	1	0	0	33	38
+0x00438560	0x00433AA0	hash	yes	114	114	0	0	0	0	0	0	0
+0x004386B0	0x00433BF0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	20	20	0	0	0	0	0	0	0
+0x00438700	0x00433C40	hash	yes	84	84	0	0	0	0	0	0	0
+0x00438830	0x00433D70	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	19	19	0	0	0	0	0	0	0
+0x00438880	0x00433DC0	hash	yes	34	34	0	0	0	0	0	0	0
+0x004388E0	0x00433E20	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	36	36	0	0	0	0	0	0	0
+0x00438950	0x00433E90	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	36	36	0	0	0	0	0	0	0
+0x004389C0	0x00433F00	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	0	0	0	0	0	0	0
+0x004389F0	0x00433F30	hash	yes	21	21	0	0	0	0	0	0	0
+0x00438A30	0x00433F70	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	307	307	0	0	0	0	0	0	0
+0x00438DA0	0x004342E0	hash	yes	39	39	0	0	0	0	0	0	0
+0x00438E10	0x00434350	hash	yes	84	84	0	0	0	0	0	0	0
+0x00438EE0	0x00434420	hash	yes	81	81	0	0	0	0	0	0	0
+0x00438FA0	0x004344E0	hash	yes	195	195	0	0	0	0	0	0	0
+0x00439250	0x00434790	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	509	509	0	0	0	0	0	0	0
+0x00439890	0x00434DD0	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	249	249	0	0	0	0	0	0	0
+0x00439BA0	0x004350E0	hash	yes	28	28	0	0	0	0	0	0	0
+0x00439BF0	0x00435130	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	14	14	0	0	0	0	0	0	0
+0x00439C20	0x00435160	hash	yes	48	48	0	0	0	0	0	0	0
+0x00439CB0	0x004351F0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	23	23	0	0	0	0	0	0	0
+0x00439D00	0x00435240	hash	yes	37	37	0	0	0	0	0	0	0
+0x00439D80	0x004352C0	hash	yes	11	11	0	0	0	0	0	0	0
+0x00439DA0	0x004352E0	hash	yes	86	86	0	0	0	0	0	0	0
+0x00439E80	0x004353C0	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	29	29	0	0	0	0	0	0	0
+0x00439ED0	0x00435410	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	0	0	0	0	0	0	0
+0x00439EF0	0x00435430	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	53	53	0	0	0	0	0	0	0
+0x00439F90	0x004354D0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	0	0	0	0	0	0	0
+0x00439FC0	0x00435500	hash	yes	51	51	0	0	0	0	0	0	0
+0x0043A070	0x004355B0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	45	45	0	0	0	0	0	0	0
+0x0043A0E0	0x00435620	hash	yes	9	9	0	0	0	0	0	0	0
+0x0043A110	0x00435650	hash	yes	3	3	0	0	0	0	0	0	0
+0x0043A120	0x00435660	hash	yes	3	3	0	0	0	0	0	0	0
+0x0043A130	0x00435670	hash	yes	3	3	0	0	0	0	0	0	0
+0x0043A140	0x00435680	hash	yes	176	176	0	0	0	0	0	0	0
+0x0043A380	0x004358C0	hash	yes	174	174	0	0	0	0	0	0	0
+0x0043A5B0	0x00435AF0	hash	yes	201	201	0	0	0	0	0	0	0
+0x0043A840	0x00435D80	hash	yes	212	212	0	0	0	0	0	0	0
+0x0043AAF0	0x00436030	hash	yes	282	282	0	0	0	0	0	0	0
+0x0043AED0	0x00436410	hash	yes	298	298	0	0	0	0	0	0	0
+0x0043B300	0x00436840	hash	yes	52	52	0	0	0	0	0	0	0
+0x0043B390	0x004368D0	hash	yes	61	61	0	0	0	0	0	0	0
+0x0043B440	0x00436980	hash	yes	24	24	0	0	0	0	0	0	0
+0x0043B480	0x004369C0	hash	yes	95	95	0	0	0	0	0	0	0
+0x0043B590	0x00436AD0	hash	yes	343	343	0	0	0	0	0	0	0
+0x0043B960	0x00436EA0	shape	no: the code differs	77	77	1	1	0	0	0	0	0
+0x0043BA60	0x00436FA0	callers	no: the code differs	1	1	0	0	0	0	0	0	0
+0x0043BA70	0x00436FB0	hash	yes	272	272	0	0	0	0	0	0	0
+0x0043BD70	0x004372B0	hash	yes	8	8	0	0	0	0	0	0	0
+0x0043BD90	0x004372D0	hash	yes	4	4	0	0	0	0	0	0	0
+0x0043BDA0	0x004372E0	hash	yes	8	8	0	0	0	0	0	0	0
+0x0043BDC0	0x00437300	hash	yes	3	3	0	0	0	0	0	0	0
+0x0043BDD0	0x00437310	hash	yes	88	88	0	0	0	0	0	0	0
+0x0043BEF0	0x00437430	hash	yes	50	50	0	0	0	0	0	0	0
+0x0043BF80	0x004374C0	hash	yes	8	8	0	0	0	0	0	0	0
+0x0043BFA0	0x004374E0	hash	yes	34	34	0	0	0	0	0	0	0
+0x0043C020	0x00437560	hash	yes	6	6	0	0	0	0	0	0	0
+0x0043C030	0x00437570	hash	yes	66	66	0	0	0	0	0	0	0
+0x0043C0D0	0x00437610	hash	yes	41	41	0	0	0	0	0	0	0
+0x0043C140	0x00437680	hash	yes	34	34	0	0	0	0	0	0	0
+0x0043C190	0x004376D0	hash	yes	32	32	0	0	0	0	0	0	0
+0x0043C1E0	0x00437720	hash	yes	75	75	0	0	0	0	0	0	0
+0x0043C290	0x004377D0	shape	no: the code differs	233	233	2	2	0	0	0	0	0
+0x0043C510	0x00437A50	hash	yes	55	55	0	0	0	0	0	0	0
+0x0043C590	0x00437AD0	hash	yes	7	7	0	0	0	0	0	0	0
+0x0043C5A0	0x00437AE0	hash	yes	52	52	0	0	0	0	0	0	0
+0x0043C620	0x00437B60	hash	yes	47	47	0	0	0	0	0	0	0
+0x0043C6C0	0x00437C00	hash	yes	21	21	0	0	0	0	0	0	0
+0x0043C700	0x00437C40	hash	yes	16	16	0	0	0	0	0	0	0
+0x0043C740	0x00437C80	hash	yes	99	99	0	0	0	0	0	0	0
+0x0043C840	0x00437D80	hash	yes	19	19	0	0	0	0	0	0	0
+0x0043C880	0x00437DC0	hash	yes	20	20	0	0	0	0	0	0	0
+0x0043C8B0	0x00437DF0	hash	yes	15	15	0	0	0	0	0	0	0
+0x0043C8E0	0x00437E20	hash	yes	2	2	0	0	0	0	0	0	0
+0x0043C8F0	0x00437E30	hash	yes	25	25	0	0	0	0	0	0	0
+0x0043C970	0x00437E90	hash	yes	7	7	0	0	0	0	0	0	0
+0x0043C990	0x00437EB0	hash	yes	24	24	0	0	0	0	0	0	0
+0x0043C9D0	0x00437EF0	hash	yes	28	28	0	0	0	0	0	0	0
+0x0043CA20	0x00437F40	hash	yes	19	19	0	0	0	0	0	0	0
+0x0043CA70	0x00437F90	hash	yes	39	39	0	0	0	0	0	0	0
+0x0043CAE0	0x00438000	hash	yes	13	13	0	0	0	0	0	0	0
+0x0043CB10	0x00438030	hash	no: callee 0x004A1A36 unmatched or matched elsewhere	49	49	0	0	0	0	0	0	0
+0x0043CB90	0x004380B0	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	54	54	0	0	0	0	0	0	0
+0x0043CC30	0x00438150	hash	no: callee 0x004A1A36 unmatched or matched elsewhere	55	55	0	0	0	0	0	0	0
+0x0043CCC0	0x004381E0	hash	yes	35	35	0	0	0	0	0	0	0
+0x0043CD10	0x00438230	hash	yes	29	29	0	0	0	0	0	0	0
+0x0043CD70	0x00438290	hash	yes	28	28	0	0	0	0	0	0	0
+0x0043CDC0	0x004382E0	hash	yes	28	28	0	0	0	0	0	0	0
+0x0043CE20	0x00438340	hash	yes	9	9	0	0	0	0	0	0	0
+0x0043CE40	0x00438360	hash	yes	8	8	0	0	0	0	0	0	0
+0x0043CE60	0x00438380	anchor	no: the code differs	39	39	0	0	0	0	0	0	0
+0x0043CEC0	0x004383E0	calls	no: the code differs	39	39	0	0	0	0	0	0	0
+0x0043CF20	0x00438440	hash	yes	37	37	0	0	0	0	0	0	0
+0x0043CF80	0x004384B0	hash	yes	6	6	0	0	0	0	0	0	0
+0x0043CF90	0x004384C0	hash	yes	6	6	0	0	0	0	0	0	0
+0x0043CFA0	0x004384D0	hash	yes	29	29	0	0	0	0	0	0	0
+0x0043CFF0	0x00438520	hash	yes	27	27	0	0	0	0	0	0	0
+0x0043D040	0x00438570	hash	yes	14	14	0	0	0	0	0	0	0
+0x0043D070	0x004385A0	hash	yes	5	5	0	0	0	0	0	0	0
+0x0043D080	0x004385B0	hash	yes	5	5	0	0	0	0	0	0	0
+0x0043D090	0x004385C0	hash	yes	22	22	0	0	0	0	0	0	0
+0x0043D0D0	0x00438600	hash	yes	5	5	0	0	0	0	0	0	0
+0x0043D0E0	0x00438610	hash	yes	5	5	0	0	0	0	0	0	0
+0x0043D0F0	0x00438620	hash	yes	11	11	0	0	0	0	0	0	0
+0x0043D110	0x00438640	hash	yes	2	2	0	0	0	0	0	0	0
+0x0043D120	0x00438650	shape	no: the code differs	51	51	7	7	0	0	0	0	0
+0x0043D1B0	0x004386E0	shape	no: the code differs	91	91	10	9	1	0	0	0	0
+0x0043D2D0	0x00438800	shape	no: the code differs	24	24	4	4	0	0	0	0	0
+0x0043D310	0x00438840	shape	no: the code differs	28	28	2	2	0	0	0	0	0
+0x0043D350	0x00438880	anchor	no: the code differs	116	117	5	4	0	0	0	0	1
+0x0043D470	0x004389A0	shape	no: the code differs	11	11	1	0	1	0	0	0	0
+0x0043D4A0	0x004389D0	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	50	50	0	0	0	0	0	0	0
+0x0043D530	0x00438A60	hash	yes	2	2	0	0	0	0	0	0	0
+0x0043D540	0x00438A70	hash	no: callee 0x004A1A36 unmatched or matched elsewhere	5	5	0	0	0	0	0	0	0
+0x0043D550	0x00438A80	hash	yes	29	29	0	0	0	0	0	0	0
+0x0043D590	0x00438AC0	hash	yes	2	2	0	0	0	0	0	0	0
+0x0043D5A0	0x00438AD0	hash	yes	2	2	0	0	0	0	0	0	0
+0x0043D5B0	0x00438AE0	hash	yes	2	2	0	0	0	0	0	0	0
+0x0043D5C0	0x00438AF0	hash	yes	41	41	0	0	0	0	0	0	0
+0x0043D620	0x00438B50	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	200	200	0	0	0	0	0	0	0
+0x0043D890	0x00438DC0	hash	yes	3	3	0	0	0	0	0	0	0
+0x0043D8A0	0x00438DD0	hash	yes	2	2	0	0	0	0	0	0	0
+0x0043D8B0	0x00438DE0	hash	yes	15	15	0	0	0	0	0	0	0
+0x0043D8E0	0x00438E10	hash	yes	24	24	0	0	0	0	0	0	0
+0x0043D920	0x00438E50	hash	no: callee 0x004A1AD0 unmatched or matched elsewhere	111	111	0	0	0	0	0	0	0
+0x0043DA30	0x00438F60	hash	yes	29	29	0	0	0	0	0	0	0
+0x0043DAB0	0x00485910	similarity	no: the code differs	7	7	10	0	0	0	0	5	5
+0x0043DAC0	0x00438FA0	hash	yes	36	36	0	0	0	0	0	0	0
+0x0043DB40	0x00439020	hash	yes	17	17	0	0	0	0	0	0	0
+0x0043DB90	0x00439070	hash	yes	33	33	0	0	0	0	0	0	0
+0x0043DC10	0x004390F0	hash	yes	7	7	0	0	0	0	0	0	0
+0x0043DC30	0x00439110	calls	no: the code differs	3	3	0	0	0	0	0	0	0
+0x0043DC40	0x00439120	similarity	no: the code differs	98	98	0	0	0	0	0	0	0
+0x0043DD30	0x00439210	similarity	no: the code differs	301	301	1	1	0	0	0	0	0
+0x0043E0A0	0x00439580	calls	no: the code differs	98	98	0	0	0	0	0	0	0
+0x0043E190	0x00439670	calls	no: the code differs	301	301	1	1	0	0	0	0	0
+0x0043E500	0x004399E0	hash	yes	248	248	0	0	0	0	0	0	0
+0x0043E740	0x00439C20	hash	yes	182	182	0	0	0	0	0	0	0
+0x0043E900	0x00439DE0	callers	no: the code differs	87	83	8	0	1	3	0	4	0
+0x0043EB10	0x00439FD0	callers	no: the code differs	148	147	18	0	4	1	0	7	6
+0x0043EDE0	0x0043A2A0	neighbours	no: the code differs	53	55	25	1	0	0	0	11	13
+0x0043EEB0	0x0043A380	anchor	no: the code differs	47	61	67	0	0	0	1	26	40
+0x0043EF70	0x0043A470	hash	yes	121	121	0	0	0	0	0	0	0
+0x004405E0	0x0043AE40	anchor	no: the code differs	187	186	44	3	0	0	0	21	20
+0x00440830	0x0043B080	hash	no: callee 0x0040C530 unmatched or matched elsewhere	51	51	0	0	0	0	0	0	0
+0x00440980	0x0043B110	hash	yes	311	311	0	0	0	0	0	0	0
+0x00440CF0	0x0043B480	callers	no: the code differs	153	164	78	0	1	7	1	29	40
+0x004411A0	0x0043B980	hash	yes	10	10	0	0	0	0	0	0	0
+0x004411C0	0x0043B9A0	hash	yes	13	13	0	0	0	0	0	0	0
+0x004411E0	0x0043B9C0	hash	yes	9	9	0	0	0	0	0	0	0
+0x00441200	0x0043B9E0	calls	no: the code differs	34	26	21	0	0	0	3	13	5
+0x00441270	0x0043BA40	hash	yes	26	26	0	0	0	0	0	0	0
+0x004412E0	0x0043BAB0	hash	yes	46	46	0	0	0	0	0	0	0
+0x00441370	0x0043BB40	hash	yes	27	27	0	0	0	0	0	0	0
+0x004413B0	0x0043BB80	hash	yes	29	29	0	0	0	0	0	0	0
+0x004413F0	0x0043BBC0	hash	yes	13	13	0	0	0	0	0	0	0
+0x00441410	0x0043BBE0	hash	yes	57	57	0	0	0	0	0	0	0
+0x00441490	0x0043BC60	hash	yes	16	16	0	0	0	0	0	0	0
+0x004414C0	0x0043BC90	hash	yes	17	17	0	0	0	0	0	0	0
+0x004414F0	0x0043BCC0	hash	yes	70	70	0	0	0	0	0	0	0
+0x004415A0	0x0043BD70	hash	yes	56	56	0	0	0	0	0	0	0
+0x00441670	0x0043BE40	hash	yes	24	24	0	0	0	0	0	0	0
+0x004416C0	0x0043BE90	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	83	83	0	0	0	0	0	0	0
+0x004417F0	0x0043BFC0	calls	no: the code differs	56	54	24	1	1	0	0	12	10
+0x004418D0	0x0043C090	hash	yes	20	20	0	0	0	0	0	0	0
+0x00441990	0x0043C0D0	shape	no: the code differs	134	134	7	3	3	1	0	0	0
+0x00441C80	0x0043C3C0	callers	no: the code differs	193	101	104	0	0	0	12	92	0
+0x00441DE0	0x0043C520	callers	no: the code differs	29	29	0	0	0	0	0	0	0
+0x00441E50	0x0043C590	callers	no: the code differs	29	29	0	0	0	0	0	0	0
+0x00441F30	0x0043C670	callers	no: the code differs	29	29	0	0	0	0	0	0	0
+0x00442020	0x0043C760	shape	no: the code differs	31	31	2	0	2	0	0	0	0
+0x004420E0	0x0043C820	callers	no: the code differs	122	122	5	0	0	1	0	2	2
+0x00442280	0x0043C9C0	anchor	no: the code differs	134	134	8	4	2	0	0	1	1
+0x00442490	0x0043CBD0	hash	yes	13	13	0	0	0	0	0	0	0
+0x004424C0	0x0043CC00	hash	yes	12	12	0	0	0	0	0	0	0
+0x004424E0	0x0043CC20	shape	no: the code differs	202	202	1	1	0	0	0	0	0
+0x004427B0	0x0043CEF0	shape	no: the code differs	96	96	16	15	1	0	0	0	0
+0x00442920	0x0043D050	anchor	no: the code differs	250	249	20	11	4	0	0	3	2
+0x00442C50	0x0043D370	hash	yes	103	103	0	0	0	0	0	0	0
+0x00442D50	0x0043D470	shape	no: the code differs	68	68	4	0	4	0	0	0	0
+0x00442E10	0x0043D530	callers	no: the code differs	198	197	78	4	15	1	5	27	26
+0x004432E0	0x0043DA30	callers	no: the code differs	427	207	444	0	5	1	26	316	96
+0x00443520	0x0043DD20	callers	no: the code differs	36	49	35	0	1	1	0	10	23
+0x004435C0	0x0043DED0	callers	no: the code differs	36	49	35	0	1	1	0	10	23
+0x00443700	0x0043DFA0	neighbours	no: the code differs	36	55	41	0	1	1	0	10	29
+0x00443840	0x0043E080	callers	no: the code differs	35	53	32	0	1	1	0	6	24
+0x00443CB0	0x0043E3D0	callers	no: the code differs	311	221	286	2	6	1	11	178	88
+0x00444450	0x0043F000	hash	yes	25	25	0	0	0	0	0	0	0
+0x004444D0	0x0043F080	shape	no: the code differs	23	23	1	1	0	0	0	0	0
+0x00444520	0x0043F0D0	hash	no: callee 0x00444950 unmatched or matched elsewhere	60	60	0	0	0	0	0	0	0
+0x004445B0	0x0043F160	shape	no: the code differs	41	41	3	0	3	0	0	0	0
+0x004449B0	0x0043F880	hash	yes	49	49	0	0	0	0	0	0	0
+0x00444A70	0x0043F940	shape	no: the code differs	93	93	8	7	1	0	0	0	0
+0x00444BA0	0x0043FA70	anchor	no: the code differs	247	268	130	4	1	2	0	51	72
+0x00444EC0	0x0043FDE0	neighbours	no: the code differs	146	195	76	9	0	1	3	7	56
+0x004450E0	0x004400A0	callers	no: the code differs	285	297	27	2	1	0	2	5	17
+0x004454E0	0x004404D0	neighbours	no: the code differs	50	58	98	0	0	0	0	45	53
+0x004455D0	0x004405C0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	24	24	0	0	0	0	0	0	0
+0x00445800	0x004407F0	callers	no: the code differs	242	243	150	0	3	0	6	70	71
+0x00445B20	0x00440B20	callers	no: the code differs	63	62	14	0	1	0	0	7	6
+0x00445C20	0x00440C20	callers	no: the code differs	62	61	14	0	1	0	0	7	6
+0x00445D20	0x00440D20	callers	no: the code differs	58	57	14	0	1	0	0	7	6
+0x00445E10	0x00440E10	callers	no: the code differs	58	57	14	0	1	0	0	7	6
+0x00445F00	0x00440F00	callers	no: the code differs	44	43	6	0	1	0	0	3	2
+0x00445FB0	0x00440FB0	callers	no: the code differs	45	44	6	0	1	0	0	3	2
+0x00446060	0x00441060	neighbours	no: the code differs	42	68	51	0	1	0	0	12	38
+0x00446120	0x00441160	anchor	no: the code differs	310	278	285	0	9	1	9	149	117
+0x004465D0	0x00441590	callers	no: the code differs	81	42	75	0	1	0	1	56	17
+0x004466C0	0x00441680	callers	no: the code differs	513	629	408	6	19	2	1	132	248
+0x00446E40	0x00441F70	calls	no: the code differs	67	65	8	0	0	0	0	5	3
+0x00446F30	0x00442050	callers	no: the code differs	52	38	29	0	0	0	1	21	7
+0x00446FD0	0x004420F0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	18	18	0	0	0	0	0	0	0
+0x00447010	0x00442130	callers	no: the code differs	357	346	93	2	11	1	0	45	34
+0x004474D0	0x004425C0	anchor	no: the code differs	258	255	31	2	8	1	1	11	8
+0x00447880	0x00442960	hash	yes	23	23	0	0	0	0	0	0	0
+0x004478D0	0x004429B0	neighbours	no: the code differs	45	40	15	0	6	0	0	7	2
+0x00447970	0x00442A40	callers	no: the code differs	31	29	6	0	0	0	0	4	2
+0x004479D0	0x00442AA0	callers	no: the code differs	33	31	12	1	1	0	0	6	4
+0x00447A40	0x00442B10	callers	no: the code differs	57	55	15	3	2	0	0	6	4
+0x00447AF0	0x00442BC0	hash	yes	53	53	0	0	0	0	0	0	0
+0x00447BD0	0x00442CA0	callers	no: the code differs	64	59	45	0	1	0	7	21	16
+0x00449780	0x004858D0	similarity	no: the code differs	15	13	17	0	1	0	0	9	7
+0x0044BAC0	0x00442F40	callers	no: the code differs	312	367	270	0	2	0	51	81	136
+0x0044C090	0x00443450	callers	no: the code differs	76	74	73	0	2	2	1	35	33
+0x0044C1B0	0x00443670	callers	no: the code differs	120	96	82	0	0	0	0	53	29
+0x0044C350	0x00443570	callers	no: the code differs	84	67	71	0	2	0	0	43	26
+0x0044C4A0	0x004438E0	callers	no: the code differs	65	56	30	0	0	0	1	19	10
+0x0044C590	0x004439A0	callers	no: the code differs	67	55	31	0	0	0	1	21	9
+0x0044C680	0x00443A60	neighbours	no: the code differs	48	71	49	0	1	1	0	12	35
+0x0044C750	0x00443B70	callers	no: the code differs	19	25	6	0	0	0	0	0	6
+0x0044C7A0	0x00443BD0	callers	no: the code differs	428	433	426	1	12	0	18	195	200
+0x0044CDC0	0x004441A0	callers	no: the code differs	50	47	25	0	0	0	0	14	11
+0x0044CED0	0x004442B0	callers	no: the code differs	769	781	548	30	20	0	38	224	236
+0x0044D940	0x00444DB0	neighbours	no: the code differs	58	62	45	0	0	0	1	20	24
+0x0044D9D0	0x00444E50	hash	yes	13	13	0	0	0	0	0	0	0
+0x0044DC10	0x00444F60	hash	yes	18	18	0	0	0	0	0	0	0
+0x0044DF20	0x0044A250	callers	no: the code differs	10	10	10	0	0	0	0	5	5
+0x0044E080	0x004455A0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	13	13	0	0	0	0	0	0	0
+0x0044E0C0	0x004455E0	callers	no: the code differs	482	493	235	0	8	3	45	84	95
+0x0044E760	0x00445C90	callers	no: the code differs	100	106	77	0	0	1	0	35	41
+0x0044E950	0x00445E90	callers	no: the code differs	95	102	83	0	0	1	1	37	44
+0x0044EB30	0x00446090	callers	no: the code differs	118	95	92	1	2	1	1	55	32
+0x0044ECE0	0x00446260	callers	no: the code differs	85	94	50	0	0	1	0	20	29
+0x0044EE90	0x00446420	callers	no: the code differs	106	76	78	0	0	1	9	49	19
+0x0044EFC0	0x00446550	callers	no: the code differs	73	73	35	0	0	1	0	17	17
+0x0044F100	0x00446680	neighbours	no: the code differs	14	7	15	0	0	1	1	10	3
+0x0044F130	0x004466A0	callers	no: the code differs	28	21	32	0	0	1	2	18	11
+0x0044F190	0x00446700	callers	no: the code differs	610	616	256	4	13	12	11	105	111
+0x0044FA60	0x00446FE0	callers	no: the code differs	70	66	54	0	0	3	11	22	18
+0x0044FB70	0x00447100	callers	no: the code differs	1091	1042	486	11	4	12	16	246	197
+0x00450B10	0x00448020	shape	no: the code differs	173	173	6	4	2	0	0	0	0
+0x00450D20	0x00448230	callers	no: the code differs	70	45	27	1	0	0	1	25	0
+0x00450DD0	0x004482E0	shape	no: the code differs	42	42	2	2	0	0	0	0	0
+0x00450E50	0x00448360	callers	no: the code differs	214	198	178	10	16	0	0	84	68
+0x004510F0	0x004485F0	neighbours	no: the code differs	18	13	6	0	1	0	0	5	0
+0x00451160	0x00448650	calls	no: the code differs	37	36	11	0	2	0	0	5	4
+0x004513D0	0x00448840	callers	no: the code differs	270	233	176	0	12	0	31	85	48
+0x004517D0	0x00448BB0	shape	no: the code differs	19	19	1	0	1	0	0	0	0
+0x00451820	0x00448C00	hash	yes	17	17	0	0	0	0	0	0	0
+0x00451860	0x00448C40	shape	no: the code differs	9	9	1	0	0	1	0	0	0
+0x00451890	0x00448C70	hash	yes	9	9	0	0	0	0	0	0	0
+0x004518C0	0x00448CA0	callers	no: the code differs	67	64	24	1	1	0	3	11	8
+0x004519C0	0x00448DA0	callers	no: the code differs	68	66	27	1	2	1	3	11	9
+0x00451B30	0x00448EB0	hash	yes	10	10	0	0	0	0	0	0	0
+0x00451D30	0x00449050	hash	yes	28	28	0	0	0	0	0	0	0
+0x00451DA0	0x004490C0	callers	no: the code differs	678	741	454	2	18	9	62	150	213
+0x00452890	0x0044AF30	callers	no: the code differs	52	52	2	0	0	0	0	1	1
+0x00452970	0x0044B010	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	25	25	0	0	0	0	0	0	0
+0x004529D0	0x0044B070	callers	no: the code differs	358	364	40	0	2	1	3	14	20
+0x00452EA0	0x0044B560	shape	no: the code differs	94	94	2	0	1	1	0	0	0
+0x00453020	0x0044B6E0	hash	yes	87	87	0	0	0	0	0	0	0
+0x00453180	0x0044B840	shape	no: the code differs	53	53	1	0	0	1	0	0	0
+0x00453270	0x0044B930	hash	yes	63	63	0	0	0	0	0	0	0
+0x00453360	0x0044BA20	callers	no: the code differs	110	107	29	1	1	0	4	13	10
+0x00453510	0x0044BBD0	callers	no: the code differs	106	110	45	1	1	0	3	18	22
+0x004536D0	0x0044BDA0	callers	no: the code differs	194	208	28	0	0	0	0	7	21
+0x004539C0	0x0044C0E0	callers	no: the code differs	23	24	4	0	0	1	0	1	2
+0x00453A40	0x0044C160	callers	no: the code differs	1004	1013	175	0	4	0	44	59	68
+0x004548D0	0x0044D010	hash	yes	15	15	0	0	0	0	0	0	0
+0x00454910	0x0044D050	hash	yes	12	12	0	0	0	0	0	0	0
+0x00454970	0x0044D2D0	shape	no: the code differs	184	184	4	2	2	0	0	0	0
+0x00454B80	0x0044D4E0	hash	yes	21	21	0	0	0	0	0	0	0
+0x00454BC0	0x0044D520	shape	no: the code differs	44	44	5	3	2	0	0	0	0
+0x00454C40	0x0044D5A0	shape	no: the code differs	20	20	1	1	0	0	0	0	0
+0x00454C70	0x0044D5D0	shape	no: the code differs	22	22	2	0	2	0	0	0	0
+0x00454CC0	0x0044D620	hash	yes	16	16	0	0	0	0	0	0	0
+0x00454CF0	0x0044D650	hash	yes	17	17	0	0	0	0	0	0	0
+0x00454D20	0x0044D680	hash	yes	14	14	0	0	0	0	0	0	0
+0x00454D50	0x0044D6B0	hash	yes	15	15	0	0	0	0	0	0	0
+0x00454D80	0x0044D6E0	shape	no: the code differs	167	167	4	2	2	0	0	0	0
+0x00454FC0	0x0044D920	neighbours	no: the code differs	65	64	2	0	1	0	0	1	0
+0x004550E0	0x0044DA40	shape	no: the code differs	22	22	1	0	1	0	0	0	0
+0x00455140	0x0044DAA0	neighbours	no: the code differs	57	47	54	0	0	4	0	30	20
+0x00455240	0x0044DBC0	hash	yes	204	204	0	0	0	0	0	0	0
+0x00455580	0x0044DF00	hash	yes	63	63	0	0	0	0	0	0	0
+0x00455670	0x0044DFF0	hash	yes	57	57	0	0	0	0	0	0	0
+0x00455740	0x0044E0C0	hash	yes	57	57	0	0	0	0	0	0	0
+0x00455830	0x0044E1B0	hash	yes	44	44	0	0	0	0	0	0	0
+0x004558E0	0x0044E260	hash	yes	56	56	0	0	0	0	0	0	0
+0x004559B0	0x0044E330	hash	yes	110	110	0	0	0	0	0	0	0
+0x00455B20	0x0044E4A0	shape	no: the code differs	351	351	3	1	2	0	0	0	0
+0x00456050	0x0044E9D0	hash	yes	30	30	0	0	0	0	0	0	0
+0x004560E0	0x0044EA60	callers	no: the code differs	862	892	333	6	5	5	39	124	154
+0x00456D80	0x0044F770	hash	yes	34	34	0	0	0	0	0	0	0
+0x00456DE0	0x0044F7D0	hash	yes	13	13	0	0	0	0	0	0	0
+0x00456E10	0x0044F800	hash	yes	79	79	0	0	0	0	0	0	0
+0x00456EF0	0x0044F8E0	shape	no: the code differs	17	17	1	1	0	0	0	0	0
+0x00456F30	0x0044F920	hash	yes	90	90	0	0	0	0	0	0	0
+0x00457050	0x0044FA40	hash	yes	71	71	0	0	0	0	0	0	0
+0x00457100	0x0044FAF0	shape	no: the code differs	148	148	58	52	5	1	0	0	0
+0x00457340	0x0044FD30	anchor	no: the code differs	215	195	285	5	7	2	1	145	125
+0x004575E0	0x0044FF90	hash	yes	14	14	0	0	0	0	0	0	0
+0x00457610	0x0044FFC0	hash	yes	8	8	0	0	0	0	0	0	0
+0x00457630	0x0044FFE0	hash	yes	235	235	0	0	0	0	0	0	0
+0x004578C0	0x00450270	hash	yes	22	22	0	0	0	0	0	0	0
+0x00457900	0x004502B0	shape	no: the code differs	102	102	7	4	3	0	0	0	0
+0x00457A50	0x00450400	callers	no: the code differs	47	43	7	2	1	0	0	4	0
+0x00457B00	0x00450490	hash	yes	26	26	0	0	0	0	0	0	0
+0x00457B50	0x004504E0	hash	yes	24	24	0	0	0	0	0	0	0
+0x00457BA0	0x00450530	hash	yes	49	49	0	0	0	0	0	0	0
+0x00457C20	0x004505B0	hash	yes	50	50	0	0	0	0	0	0	0
+0x00457CA0	0x00450630	hash	yes	48	48	0	0	0	0	0	0	0
+0x00457D20	0x004506B0	shape	no: the code differs	83	83	12	9	3	0	0	0	0
+0x00457E10	0x004507A0	hash	yes	72	72	0	0	0	0	0	0	0
+0x00457F70	0x00450900	hash	yes	65	65	0	0	0	0	0	0	0
+0x00458040	0x004509D0	shape	no: the code differs	38	38	3	2	1	0	0	0	0
+0x004580C0	0x00450A50	hash	yes	15	15	0	0	0	0	0	0	0
+0x004580F0	0x00450A80	hash	yes	58	58	0	0	0	0	0	0	0
+0x004581B0	0x00450B40	shape	no: the code differs	7	7	1	0	1	0	0	0	0
+0x004581D0	0x00450B60	hash	yes	31	31	0	0	0	0	0	0	0
+0x004582C0	0x00450BD0	callers	no: the code differs	34	40	13	0	1	0	4	1	7
+0x00458330	0x00450C50	shape	no: the code differs	245	245	3	0	3	0	0	0	0
+0x00458670	0x00450F90	neighbours	no: the code differs	247	93	248	0	3	2	5	196	42
+0x00458A00	0x00451100	shape	no: the code differs	140	140	3	0	3	0	0	0	0
+0x00459640	0x00451540	callers	no: the code differs	47	45	39	5	0	0	0	18	16
+0x004596E0	0x004515E0	callers	no: the code differs	116	114	56	4	2	0	0	26	24
+0x00459830	0x00451730	neighbours	no: the code differs	25	36	25	3	2	0	1	4	15
+0x00459880	0x004517A0	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00459890	0x004517B0	callers	no: the code differs	7	7	1	0	1	0	0	0	0
+0x004598B0	0x004517D0	callers	no: the code differs	4	4	0	0	0	0	0	0	0
+0x004598C0	0x004517E0	callers	no: the code differs	6	6	1	0	1	0	0	0	0
+0x004598E0	0x00451800	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x004598F0	0x00451810	callers	no: the code differs	7	7	2	0	2	0	0	0	0
+0x00459910	0x00451830	callers	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00459920	0x00451840	callers	no: the code differs	6	6	2	0	2	0	0	0	0
+0x00459940	0x004518A0	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00459950	0x004518B0	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00459960	0x004518C0	callers	no: the code differs	4	4	0	0	0	0	0	0	0
+0x00459970	0x004518D0	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00459980	0x004518E0	callers	no: the code differs	1	1	0	0	0	0	0	0	0
+0x00459990	0x004518F0	hash	yes	4	4	0	0	0	0	0	0	0
+0x004599A0	0x00451900	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x004599B0	0x00451910	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x004599C0	0x00451920	callers	no: the code differs	4	4	0	0	0	0	0	0	0
+0x004599D0	0x00451930	callers	no: the code differs	2	2	0	0	0	0	0	0	0
+0x00459AE0	0x00451A20	shape	no: the code differs	29	29	2	0	2	0	0	0	0
+0x00459B50	0x00451A90	hash	yes	23	23	0	0	0	0	0	0	0
+0x00459BA0	0x00451AE0	hash	yes	14	14	0	0	0	0	0	0	0
+0x00459BD0	0x00451B10	anchor	no: the code differs	957	808	974	15	35	18	35	510	361
+0x0045AAD0	0x004527E0	neighbours	no: the code differs	719	624	631	12	25	0	9	340	245
+0x0045B490	0x004530A0	anchor	no: the code differs	106	117	72	2	2	0	3	27	38
+0x0045B5C0	0x00453200	anchor	no: the code differs	206	241	211	0	5	0	19	76	111
+0x0045FA80	0x00456680	anchor	no: the code differs	1655	1070	1675	14	13	1	116	1058	473
+0x004612D0	0x004576A0	calls	no: the code differs	1371	815	1614	6	18	0	42	1052	496
+0x004626D0	0x004582B0	neighbours	no: the code differs	787	762	869	38	11	1	40	402	377
+0x004632B0	0x00458DE0	callers	no: the code differs	812	816	875	25	17	0	85	372	376
+0x00463ED0	0x004599B0	callers	no: the code differs	169	173	126	4	9	0	11	49	53
+0x00464110	0x00459BF0	neighbours	no: the code differs	89	82	133	4	1	0	1	67	60
+0x00464240	0x00459D10	callers	no: the code differs	814	823	696	23	62	1	73	264	273
+0x00464E70	0x0045A980	callers	no: the code differs	26	39	42	1	0	0	2	13	26
+0x00465460	0x0045ADF0	callers	no: the code differs	87	117	62	0	2	0	0	15	45
+0x004655B0	0x0045B0E0	shape	no: the code differs	58	58	6	0	6	0	0	0	0
+0x00465660	0x0045B190	shape	no: the code differs	75	75	4	1	3	0	0	0	0
+0x00465750	0x0045B280	callers	no: the code differs	240	240	37	5	10	0	0	11	11
+0x00465A70	0x0045B5A0	shape	no: the code differs	20	20	1	0	1	0	0	0	0
+0x00465AB0	0x0045B5E0	shape	no: the code differs	30	30	2	0	2	0	0	0	0
+0x00465B00	0x0045B630	neighbours	no: the code differs	384	343	176	0	16	0	1	100	59
+0x00466290	0x0045BD10	hash	yes	32	32	0	0	0	0	0	0	0
+0x00466310	0x0045BD90	callers	no: the code differs	194	196	64	0	2	0	0	30	32
+0x004665A0	0x0045C010	neighbours	no: the code differs	1385	1197	1543	7	29	3	52	820	632
+0x004679E0	0x0045D180	shape	no: the code differs	75	75	2	0	2	0	0	0	0
+0x00467AB0	0x0045D250	hash	yes	26	26	0	0	0	0	0	0	0
+0x00467B00	0x0045D2A0	hash	yes	34	34	0	0	0	0	0	0	0
+0x00467B50	0x0045D2F0	hash	yes	57	57	0	0	0	0	0	0	0
+0x00467C40	0x0045D3E0	calls	no: the code differs	38	41	49	2	0	0	0	22	25
+0x00467CF0	0x0045D490	neighbours	no: the code differs	98	144	116	1	0	0	3	33	79
+0x00467E50	0x0045D690	callers	no: the code differs	145	134	98	5	3	0	1	50	39
+0x00468480	0x0045D8F0	anchor	no: the code differs	493	435	414	0	21	1	34	208	150
+0x00468B20	0x0045DEE0	callers	no: the code differs	542	460	251	3	15	0	1	157	75
+0x004692E0	0x0045E580	callers	no: the code differs	76	51	57	0	0	0	0	41	16
+0x00469410	0x0045E660	shape	no: the code differs	92	92	1	0	1	0	0	0	0
+0x004695B0	0x0045E7D0	hash	yes	144	144	0	0	0	0	0	0	0
+0x004697A0	0x0045E9C0	hash	yes	29	29	0	0	0	0	0	0	0
+0x00469810	0x0045EA30	shape	no: the code differs	17	17	2	0	2	0	0	0	0
+0x00469860	0x0045EA80	callers	no: the code differs	43	43	14	0	0	0	0	7	7
+0x00469930	0x0045EB40	neighbours	no: the code differs	175	93	188	4	3	0	3	130	48
+0x00469BA0	0x0045EC60	hash	yes	4	4	0	0	0	0	0	0	0
+0x00469BC0	0x0045EC80	similarity	no: the code differs	128	108	32	0	2	0	4	23	3
+0x0046AA00	0x0045EDF0	similarity	no: the code differs	58	37	61	1	0	0	3	39	18
+0x0046AAE0	0x0045EE70	similarity	no: the code differs	105	97	34	0	0	0	10	16	8
+0x0046AC40	0x0045EFB0	shape	no: the code differs	38	38	1	0	1	0	0	0	0
+0x0046ACB0	0x0045F020	callers	no: the code differs	68	68	19	0	3	0	0	8	8
+0x0046B210	0x0045F0F0	calls	no: the code differs	30	25	29	0	0	0	0	17	12
+0x0046B260	0x0045F130	hash	yes	42	42	0	0	0	0	0	0	0
+0x0046B2E0	0x0045F1B0	anchor	no: the code differs	89	90	8	0	1	0	0	3	4
+0x0046B3D0	0x0045F2A0	callers	no: the code differs	779	655	649	0	2	5	72	347	223
+0x0046BFB0	0x0045FC60	callers	no: the code differs	1319	1165	1042	14	42	0	128	506	352
+0x0046D180	0x00460C40	neighbours	no: the code differs	700	410	705	8	11	1	19	478	188
+0x0046DB70	0x00461240	neighbours	no: the code differs	769	460	711	6	12	0	26	488	179
+0x0046E630	0x00461900	callers	no: the code differs	104	81	60	0	0	0	9	37	14
+0x0046E820	0x00461A30	callers	no: the code differs	142	112	149	0	0	3	8	84	54
+0x0046EAC0	0x00461C10	callers	no: the code differs	319	258	363	3	7	1	15	199	138
+0x0046F100	0x004620D0	callers	no: the code differs	168	157	81	1	1	0	10	40	29
+0x0046F380	0x00462320	hash	yes	30	30	0	0	0	0	0	0	0
+0x0046F400	0x004623A0	hash	yes	30	30	0	0	0	0	0	0	0
+0x0046F480	0x00462420	calls	no: the code differs	53	52	37	0	0	0	0	19	18
+0x0046F530	0x004624C0	calls	no: the code differs	30	30	14	0	0	0	0	7	7
+0x0046F590	0x00462510	neighbours	no: the code differs	120	70	104	0	0	0	8	73	23
+0x0046F760	0x00462630	neighbours	no: the code differs	121	66	120	0	1	1	7	83	28
+0x0046F920	0x00462740	anchor	no: the code differs	2202	1655	1866	26	11	1	87	1144	597
+0x00472C60	0x00464DA0	hash	yes	7	7	0	0	0	0	0	0	0
+0x00472C90	0x00464DD0	hash	yes	43	43	0	0	0	0	0	0	0
+0x00472D00	0x00464E40	hash	yes	35	35	0	0	0	0	0	0	0
+0x00473270	0x00465170	shape	no: the code differs	25	25	1	1	0	0	0	0	0
+0x00473880	0x00465480	shape	no: the code differs	87	87	4	0	3	1	0	0	0
+0x004739B0	0x004655B0	anchor	no: the code differs	317	307	307	7	1	0	5	152	142
+0x00473E10	0x004659C0	neighbours	no: the code differs	413	337	335	20	4	1	8	189	113
+0x004743C0	0x00465E50	anchor	no: the code differs	238	238	98	0	1	1	0	48	48
+0x00474AF0	0x00466190	anchor	no: the code differs	260	260	131	1	1	1	0	64	64
+0x00475680	0x00466950	anchor	no: the code differs	215	217	263	10	8	1	0	121	123
+0x00475940	0x00466C00	anchor	no: the code differs	245	247	189	1	3	0	1	91	93
+0x00475CB0	0x00466F70	neighbours	no: the code differs	394	560	504	4	3	2	13	158	324
+0x00476200	0x00467710	neighbours	no: the code differs	294	249	235	0	4	2	8	133	88
+0x00476650	0x00467AC0	callers	no: the code differs	99	99	9	1	1	1	0	3	3
+0x004767D0	0x00467C50	callers	no: the code differs	165	153	56	6	6	0	6	25	13
+0x004776B0	0x00468930	shape	no: the code differs	117	117	3	0	1	2	0	0	0
+0x00477850	0x00468AD0	shape	no: the code differs	125	125	3	0	1	2	0	0	0
+0x00477A00	0x00468C80	callers	no: the code differs	150	144	109	1	2	0	4	54	48
+0x00478070	0x00469080	shape	no: the code differs	115	115	1	0	0	1	0	0	0
+0x00478210	0x00469220	shape	no: the code differs	68	68	1	0	0	1	0	0	0
+0x00478330	0x00469340	shape	no: the code differs	103	103	1	0	0	1	0	0	0
+0x00478590	0x00469620	hash	yes	14	14	0	0	0	0	0	0	0
+0x00479220	0x004698E0	calls	no: the code differs	95	42	65	1	2	0	3	56	3
+0x00479820	0x00444F00	similarity	no: the code differs	16	24	17	0	0	0	1	4	12
+0x00479860	0x00469D20	anchor	no: the code differs	4994	4669	3235	61	97	1	205	1598	1273
+0x0047E270	0x0046E0B0	anchor	no: the code differs	92	91	1	0	0	0	0	1	0
+0x0047E3A0	0x0046E1E0	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	40	40	0	0	0	0	0	0	0
+0x0047E6D0	0x0046E4D0	callers	no: the code differs	23	23	0	0	0	0	0	0	0
+0x0047E720	0x0046E520	neighbours	no: the code differs	148	118	192	0	1	0	5	108	78
+0x0047E930	0x0046E6A0	calls	no: the code differs	28	26	20	15	3	0	0	2	0
+0x0047E9C0	0x0046E730	callers	no: the code differs	84	80	15	7	2	0	0	5	1
+0x0047EAF0	0x0046E850	similarity	no: the code differs	4	4	2	2	0	0	0	0	0
+0x0047F210	0x0046EE60	shape	no: the code differs	126	126	22	19	3	0	0	0	0
+0x0047F3E0	0x0046F030	callers	no: the code differs	149	146	102	15	2	0	4	42	39
+0x0047F5C0	0x0046F1F0	callers	no: the code differs	254	226	105	49	1	0	13	35	7
+0x0047FA00	0x0046F5B0	neighbours	no: the code differs	114	87	65	11	3	0	10	34	7
+0x0047FB90	0x0046F6E0	callers	no: the code differs	110	104	67	0	2	0	1	35	29
+0x0047FF60	0x0046F850	shape	no: the code differs	39	39	4	3	1	0	0	0	0
+0x0047FFD0	0x0046F8C0	neighbours	no: the code differs	500	386	463	101	8	0	34	217	103
+0x004807B0	0x0046FF00	callers	no: the code differs	70	58	24	10	0	0	2	12	0
+0x004808C0	0x0046FFE0	calls	no: the code differs	3	3	2	2	0	0	0	0	0
+0x004808D0	0x0046FFF0	callers	no: the code differs	158	103	164	19	1	0	15	92	37
+0x00480B10	0x00470180	calls	no: the code differs	112	111	49	13	9	0	4	12	11
+0x00480C60	0x004702E0	calls	no: the code differs	50	53	13	3	3	0	0	2	5
+0x00480CF0	0x00470380	anchor	no: the code differs	162	164	23	15	0	0	0	3	5
+0x00480F30	0x004705C0	callers	no: the code differs	162	144	115	26	4	0	5	49	31
+0x00481170	0x004707B0	callers	no: the code differs	35	29	21	9	2	0	0	8	2
+0x00481200	0x00470820	shape	no: the code differs	29	29	6	6	0	0	0	0	0
+0x00481270	0x00470890	shape	no: the code differs	11	11	2	2	0	0	0	0	0
+0x004812A0	0x004708C0	shape	no: the code differs	14	14	6	5	1	0	0	0	0
+0x004812E0	0x00470900	calls	no: the code differs	3	3	2	2	0	0	0	0	0
+0x004812F0	0x00470910	callers	no: the code differs	120	86	88	3	7	0	10	51	17
+0x00481460	0x00470A10	calls	no: the code differs	76	60	42	3	11	0	12	16	0
+0x00481540	0x00470AC0	callers	no: the code differs	278	244	168	36	1	0	23	71	37
+0x004818E0	0x00470E20	calls	no: the code differs	141	100	91	15	0	0	19	49	8
+0x00481AB0	0x00470F70	shape	no: the code differs	36	36	3	3	0	0	0	0	0
+0x00481B20	0x00470FE0	shape	no: the code differs	51	51	5	5	0	0	0	0	0
+0x00481BC0	0x00471080	shape	no: the code differs	25	25	2	2	0	0	0	0	0
+0x00481C10	0x004710D0	shape	no: the code differs	104	104	33	31	2	0	0	0	0
+0x00481DB0	0x00471270	shape	no: the code differs	159	159	51	40	11	0	0	0	0
+0x00481FF0	0x004714B0	callers	no: the code differs	51	51	2	0	0	0	0	1	1
+0x00482080	0x00471540	callers	no: the code differs	203	191	157	28	3	0	4	67	55
+0x00482350	0x004717D0	similarity	no: the code differs	4	4	1	1	0	0	0	0	0
+0x00482360	0x004717E0	neighbours	no: the code differs	4	4	1	1	0	0	0	0	0
+0x00482370	0x004717F0	callers	no: the code differs	205	204	49	47	1	0	0	1	0
+0x00482650	0x00471AD0	callers	no: the code differs	188	187	42	40	1	0	0	1	0
+0x004828E0	0x00471D60	callers	no: the code differs	161	160	51	46	2	0	0	2	1
+0x00482B40	0x00471FC0	callers	no: the code differs	145	144	49	46	0	0	0	2	1
+0x00482D70	0x004721F0	callers	no: the code differs	170	167	42	34	1	0	0	5	2
+0x00482FC0	0x00472430	shape	no: the code differs	49	49	6	6	0	0	0	0	0
+0x00483060	0x004724D0	callers	no: the code differs	155	154	51	43	1	0	0	4	3
+0x004832A0	0x00472710	hash	yes	5	5	0	0	0	0	0	0	0
+0x004832C0	0x00472730	callers	no: the code differs	184	165	49	2	0	0	10	28	9
+0x00483490	0x004728D0	calls	no: the code differs	5	5	1	1	0	0	0	0	0
+0x004834A0	0x004728E0	callers	no: the code differs	245	244	89	56	2	0	0	16	15
+0x00483830	0x00472C70	shape	no: the code differs	30	30	3	3	0	0	0	0	0
+0x00483B70	0x00472CE0	callers	no: the code differs	243	226	181	47	5	0	8	69	52
+0x00483ED0	0x00473010	callers	no: the code differs	121	104	72	27	2	0	0	30	13
+0x004840A0	0x004731A0	callers	no: the code differs	280	277	151	55	5	0	0	47	44
+0x004844B0	0x004735B0	callers	no: the code differs	424	417	163	109	7	0	0	27	20
+0x00484B20	0x00473C10	callers	no: the code differs	602	601	228	204	7	0	0	9	8
+0x004854B0	0x004745B0	callers	no: the code differs	370	339	262	105	6	0	8	87	56
+0x00485AD0	0x00474B60	hash	yes	22	22	0	0	0	0	0	0	0
+0x00485B10	0x00474BA0	callers	no: the code differs	187	187	58	46	2	0	0	5	5
+0x00485DD0	0x00474E60	callers	no: the code differs	96	97	25	20	2	0	0	1	2
+0x00485F30	0x00474FC0	callers	no: the code differs	74	72	25	6	0	0	7	7	5
+0x00486030	0x004750C0	shape	no: the code differs	37	37	18	17	1	0	0	0	0
+0x004860D0	0x00475180	shape	no: the code differs	18	18	2	2	0	0	0	0	0
+0x00486110	0x004751C0	callers	no: the code differs	261	255	121	57	10	0	0	30	24
+0x00487BF0	0x00475590	callers	no: the code differs	23	23	0	0	0	0	0	0	0
+0x00488BB0	0x00476160	shape	no: the code differs	32	32	8	8	0	0	0	0	0
+0x00488C20	0x004761D0	shape	no: the code differs	39	39	10	9	1	0	0	0	0
+0x00488CA0	0x00476250	shape	no: the code differs	45	45	11	10	1	0	0	0	0
+0x00488D40	0x004762F0	shape	no: the code differs	17	17	3	3	0	0	0	0	0
+0x00488F50	0x004763D0	callers	no: the code differs	155	158	62	42	1	0	0	8	11
+0x00489180	0x00476780	shape	no: the code differs	80	80	9	9	0	0	0	0	0
+0x00489260	0x00476860	shape	no: the code differs	41	41	4	4	0	0	0	0	0
+0x004892D0	0x004768D0	shape	no: the code differs	15	15	2	1	1	0	0	0	0
+0x00489300	0x00476900	shape	no: the code differs	7	7	2	2	0	0	0	0	0
+0x00489350	0x004769A0	shape	no: the code differs	31	31	6	6	0	0	0	0	0
+0x004893C0	0x00476A10	shape	no: the code differs	21	21	4	4	0	0	0	0	0
+0x00489410	0x00476A60	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	0	0	0	0	0	0	0
+0x00489750	0x00476A80	calls	no: the code differs	250	222	44	10	2	0	0	30	2
+0x00489B00	0x00476DB0	calls	no: the code differs	340	332	281	27	17	0	19	113	105
+0x0048A010	0x00477290	shape	no: the code differs	123	123	7	3	4	0	0	0	0
+0x0048A180	0x00477400	shape	no: the code differs	196	196	3	0	3	0	0	0	0
+0x0048A420	0x004776A0	hash	yes	25	25	0	0	0	0	0	0	0
+0x0048A470	0x004776F0	hash	yes	8	8	0	0	0	0	0	0	0
+0x0048A490	0x00477710	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	43	43	0	0	0	0	0	0	0
+0x0048A500	0x00477780	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	45	45	0	0	0	0	0	0	0
+0x0048A580	0x00477800	hash	yes	12	12	0	0	0	0	0	0	0
+0x0048A5B0	0x00477830	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	72	72	0	0	0	0	0	0	0
+0x0048A6A0	0x00477920	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	67	67	0	0	0	0	0	0	0
+0x0048A770	0x004779F0	hash	yes	13	13	0	0	0	0	0	0	0
+0x0048A810	0x00477A20	callers	no: the code differs	87	82	44	13	0	0	0	18	13
+0x0048A930	0x00477B40	hash	yes	39	39	0	0	0	0	0	0	0
+0x0048A9C0	0x00477BD0	shape	no: the code differs	68	68	3	0	3	0	0	0	0
+0x0048AA80	0x00477C90	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	224	224	0	0	0	0	0	0	0
+0x0048AD00	0x00477F10	hash	no: callee 0x0043DA70 unmatched or matched elsewhere	182	182	0	0	0	0	0	0	0
+0x0048AF00	0x00478110	hash	no: callee 0x0043DAB0 unmatched or matched elsewhere	78	78	0	0	0	0	0	0	0
+0x0048B010	0x00478220	shape	no: the code differs	11	11	2	2	0	0	0	0	0
+0x0048B040	0x00478250	neighbours	no: the code differs	36	35	20	18	1	0	0	1	0
+0x0048B100	0x00478300	shape	no: the code differs	11	11	2	2	0	0	0	0	0
+0x0048B130	0x00478330	neighbours	no: the code differs	3	3	1	1	0	0	0	0	0
+0x0048B140	0x00478340	shape	no: the code differs	10	10	1	1	0	0	0	0	0
+0x0048B1C0	0x00478370	shape	no: the code differs	3	3	1	1	0	0	0	0	0
+0x0048B1D0	0x00478380	neighbours	no: the code differs	28	14	20	1	3	0	0	15	1
+0x0048B230	0x004783B0	shape	no: the code differs	16	16	5	5	0	0	0	0	0
+0x0048B3A0	0x004784A0	shape	no: the code differs	68	68	15	12	3	0	0	0	0
+0x0048B4A0	0x004785A0	shape	no: the code differs	5	5	2	2	0	0	0	0	0
+0x0048B4C0	0x004785C0	shape	no: the code differs	13	13	4	4	0	0	0	0	0
+0x0048B500	0x00478600	shape	no: the code differs	7	7	2	2	0	0	0	0	0
+0x0048B520	0x00478620	shape	no: the code differs	29	29	6	5	1	0	0	0	0
+0x0048B570	0x00478670	hash	yes	12	12	0	0	0	0	0	0	0
+0x0048B590	0x00478690	neighbours	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048B5A0	0x004786A0	neighbours	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048B5B0	0x004786B0	similarity	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048B5C0	0x004786C0	neighbours	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048B5D0	0x004786D0	neighbours	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048B5E0	0x004786E0	calls	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048B5F0	0x004786F0	shape	no: the code differs	8	8	2	1	1	0	0	0	0
+0x0048B610	0x00478710	calls	no: the code differs	31	25	22	5	6	0	3	7	1
+0x0048B680	0x00478770	shape	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048B720	0x004787C0	shape	no: the code differs	3	3	1	1	0	0	0	0	0
+0x0048B730	0x004787D0	calls	no: the code differs	5	5	2	2	0	0	0	0	0
+0x0048B750	0x004787F0	shape	no: the code differs	15	15	5	5	0	0	0	0	0
+0x0048BA10	0x00478AC0	shape	no: the code differs	3	3	2	2	0	0	0	0	0
+0x0048BA30	0x00478B20	shape	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048BA40	0x00478B30	shape	no: the code differs	2	2	1	1	0	0	0	0	0
+0x0048F390	0x0047BA80	callers	no: the code differs	501	502	645	63	4	0	23	277	278
+0x0048FE60	0x0047C1F0	shape	no: the code differs	303	303	38	32	6	0	0	0	0
+0x00490390	0x0047C690	shape	no: the code differs	4	4	2	2	0	0	0	0	0
+0x004903B0	0x0047C6B0	callers	no: the code differs	231	192	140	52	2	0	17	54	15
+0x004906F0	0x0047C950	neighbours	no: the code differs	225	203	239	36	3	0	10	106	84
+0x00490A30	0x0047CC40	neighbours	no: the code differs	3	3	1	1	0	0	0	0	0
+0x00490A40	0x0047CC50	neighbours	no: the code differs	3	3	1	1	0	0	0	0	0
+0x00490A50	0x0047CC60	shape	no: the code differs	60	60	20	20	0	0	0	0	0
+0x00490F90	0x0047CE70	shape	no: the code differs	3	3	1	1	0	0	0	0	0
+0x00490FA0	0x0047CE80	similarity	no: the code differs	8	8	2	2	0	0	0	0	0
+0x00490FC0	0x0047CEA0	neighbours	no: the code differs	4	4	1	1	0	0	0	0	0
+0x00490FD0	0x0047CEB0	neighbours	no: the code differs	8	5	8	1	0	0	0	5	2
+0x00490FF0	0x0047CEC0	calls	no: the code differs	35	12	33	4	1	0	1	25	2
+0x004910A0	0x0047CF00	calls	no: the code differs	5	5	2	2	0	0	0	0	0
+0x004910C0	0x0047CF20	callers	no: the code differs	219	232	166	52	1	0	0	50	63
+0x00491690	0x0047D350	calls	no: the code differs	172	149	134	88	9	0	0	30	7
+0x00491A00	0x0047D640	calls	no: the code differs	101	97	76	16	4	0	0	30	26
+0x00491B90	0x0047D7D0	shape	no: the code differs	5	5	3	3	0	0	0	0	0
+0x00491BB0	0x0047D7F0	shape	no: the code differs	6	6	2	2	0	0	0	0	0
+0x00491BD0	0x0047D810	shape	no: the code differs	6	6	2	2	0	0	0	0	0
+0x00491BF0	0x0047D830	shape	no: the code differs	8	8	2	2	0	0	0	0	0
+0x00491C20	0x0047D860	neighbours	no: the code differs	3	3	1	1	0	0	0	0	0
+0x00491C30	0x0047D870	neighbours	no: the code differs	3	3	1	1	0	0	0	0	0
+0x00491C40	0x0047D880	similarity	no: the code differs	5	5	1	1	0	0	0	0	0
+0x00491C60	0x0047D8A0	calls	no: the code differs	4	4	1	1	0	0	0	0	0
+0x00491C70	0x0047D8B0	shape	no: the code differs	7	7	1	1	0	0	0	0	0
+0x00491C90	0x0047D8D0	shape	no: the code differs	4	4	1	1	0	0	0	0	0
+0x00491D60	0x0047D950	similarity	no: the code differs	49	52	14	1	0	0	0	5	8
+0x00491E10	0x0047DA10	shape	no: the code differs	36	36	4	4	0	0	0	0	0
+0x00491E90	0x0047DA90	shape	no: the code differs	8	8	2	2	0	0	0	0	0
+0x00493D50	0x0047E580	similarity	no: the code differs	16	17	4	3	0	0	0	0	1
+0x00493E20	0x0047E5C0	shape	no: the code differs	37	37	8	6	2	0	0	0	0
+0x00494770	0x0047E880	similarity	no: the code differs	64	64	37	7	0	0	0	15	15
+0x00495330	0x0047F150	calls	no: the code differs	251	145	243	14	0	0	21	157	51
+0x00495670	0x0047F380	shape	no: the code differs	7	7	3	3	0	0	0	0	0
+0x00495690	0x0047F3A0	shape	no: the code differs	4	4	2	2	0	0	0	0	0
+0x004956B0	0x0047F3C0	shape	no: the code differs	106	106	37	36	1	0	0	0	0
+0x00495870	0x0047F580	shape	no: the code differs	97	97	32	32	0	0	0	0	0
+0x00495A00	0x0047F710	shape	no: the code differs	128	128	31	31	0	0	0	0	0
+0x00495BF0	0x0047F900	neighbours	no: the code differs	3	3	1	1	0	0	0	0	0
+0x00495C00	0x0047F910	neighbours	no: the code differs	2	2	1	1	0	0	0	0	0
+0x00495C10	0x0047F920	calls	no: the code differs	5	5	8	0	0	0	0	4	4
+0x00495C20	0x0047F940	calls	no: the code differs	278	225	313	31	7	0	10	159	106
+0x00495FF0	0x0047FC40	callers	no: the code differs	373	340	358	36	1	0	18	168	135
+0x00496510	0x004800F0	calls	no: the code differs	47	45	18	11	3	0	0	3	1
+0x004965D0	0x004801A0	shape	no: the code differs	28	28	11	11	0	0	0	0	0
+0x00496650	0x00480220	callers	no: the code differs	863	588	979	64	4	0	48	569	294
+0x00497350	0x00480AE0	callers	no: the code differs	185	167	104	43	4	0	9	33	15
+0x004975E0	0x00480D40	callers	no: the code differs	127	125	35	30	3	0	0	2	0
+0x00497790	0x00480EE0	similarity	no: the code differs	121	106	65	6	0	0	2	36	21
+0x00497900	0x00481010	neighbours	no: the code differs	913	755	1041	47	11	0	35	553	395
+0x00498560	0x00481A40	neighbours	no: the code differs	527	407	441	23	10	0	38	245	125
+0x00498CB0	0x00481FB0	similarity	no: the code differs	5	5	1	1	0	0	0	0	0
+0x00498CC0	0x00481FC0	similarity	no: the code differs	5	5	1	1	0	0	0	0	0
+0x00498CE0	0x00481FD0	shape	no: the code differs	26	26	6	6	0	0	0	0	0
+0x00498DF0	0x004820A0	shape	no: the code differs	182	182	6	5	0	1	0	0	0
+0x00499060	0x00482310	callers	no: the code differs	472	371	488	55	3	0	25	253	152
+0x00499760	0x00482840	calls	no: the code differs	436	391	516	11	3	0	21	263	218
+0x00499DC0	0x00482DA0	callers	no: the code differs	70	68	13	9	2	0	0	2	0
+0x00499EB0	0x00482E80	shape	no: the code differs	6	6	1	1	0	0	0	0	0
+0x00499EC0	0x00482E90	shape	no: the code differs	17	17	2	2	0	0	0	0	0
+0x00499EF0	0x00482EC0	shape	no: the code differs	20	20	3	3	0	0	0	0	0
+0x00499F40	0x00482F10	callers	no: the code differs	29	28	13	3	1	0	0	5	4
+0x00499FA0	0x00482F70	calls	no: the code differs	30	23	17	1	1	0	0	11	4
+0x0049A000	0x00482FC0	shape	no: the code differs	53	53	6	6	0	0	0	0	0
+0x0049A0E0	0x004830A0	callers	no: the code differs	94	83	35	6	1	0	1	19	8
+0x0049A220	0x004831C0	callers	no: the code differs	392	358	345	72	2	0	13	146	112
+0x0049A830	0x00483700	shape	no: the code differs	79	79	18	18	0	0	0	0	0
+0x0049A950	0x00483820	neighbours	no: the code differs	5	8	7	1	1	0	0	1	4
+0x0049A970	0x00483840	similarity	no: the code differs	15	10	11	2	2	0	0	6	1
+0x0049A9C0	0x00483870	calls	no: the code differs	11	11	1	1	0	0	0	0	0
+0x0049A9F0	0x004838A0	calls	no: the code differs	11	11	1	1	0	0	0	0	0
+0x0049AA60	0x004838D0	callers	no: the code differs	174	171	45	38	0	0	0	5	2
+0x0049ACC0	0x00483B30	callers	no: the code differs	176	173	50	41	0	0	0	6	3
+0x0049AF40	0x00483DB0	callers	no: the code differs	156	153	37	30	0	0	0	5	2
+0x0049B160	0x00483FD0	neighbours	no: the code differs	3	3	1	1	0	0	0	0	0
+0x0049B170	0x00483FE0	neighbours	no: the code differs	3	3	1	1	0	0	0	0	0
+0x0049B180	0x00483FF0	shape	no: the code differs	10	10	4	4	0	0	0	0	0
+0x0049B1B0	0x00484020	callers	no: the code differs	94	96	81	21	0	0	0	29	31
+0x0049B330	0x004841B0	shape	no: the code differs	33	33	5	5	0	0	0	0	0
+0x0049B3B0	0x00484230	callers	no: the code differs	196	193	53	46	0	0	0	5	2
+0x0049B680	0x00484500	similarity	no: the code differs	24	24	5	3	0	0	0	1	1
+0x0049C440	0x00484550	hash	yes	18	18	0	0	0	0	0	0	0
+0x0049C480	0x00484590	hash	yes	4	4	0	0	0	0	0	0	0
+0x0049C490	0x004845A0	anchor	no: the code differs	51	48	28	0	1	0	0	15	12
+0x0049C520	0x00484620	hash	yes	14	14	0	0	0	0	0	0	0
+0x0049C5E0	0x004846F0	anchor	no: the code differs	10	11	5	0	0	0	0	2	3
+0x0049C890	0x004846D0	similarity	no: the code differs	17	11	8	0	1	0	1	6	0
+0x0049C8F0	0x004010D0	calls	no: the code differs	11	2	10	0	0	0	1	9	0
+0x0049C920	0x00484DC0	callers	no: the code differs	1	1	0	0	0	0	0	0	0
+0x0049C930	0x00484ED0	callers	no: the code differs	52	55	3	0	0	0	0	0	3
+0x0049C9B0	0x004866A0	hash	yes	3	3	0	0	0	0	0	0	0
+0x0049C9C0	0x004866B0	hash	yes	3	3	0	0	0	0	0	0	0
+0x0049CA10	0x00484F60	anchor	no: the code differs	195	197	50	0	0	0	8	20	22
+0x0049CD00	0x00485290	hash	yes	12	12	0	0	0	0	0	0	0
+0x0049CD30	0x004852C0	hash	yes	10	10	0	0	0	0	0	0	0
+0x0049CD60	0x00486A30	hash	yes	7	7	0	0	0	0	0	0	0
+0x0049CD80	0x004852F0	hash	yes	31	31	0	0	0	0	0	0	0
+0x0049CE40	0x00485330	similarity	no: the code differs	1	1	0	0	0	0	0	0	0
+0x0049D000	0x00485460	anchor	no: the code differs	38	34	11	2	0	0	5	4	0
+0x0049D1A0	0x004854B0	callers	no: the code differs	137	128	62	12	3	0	12	22	13
+0x0049D3B0	0x00480AD0	hash	yes	2	2	0	0	0	0	0	0	0
+0x0049D430	0x00485960	callers	no: the code differs	23	23	0	0	0	0	0	0	0
+0x0049D480	0x004859B0	hash	yes	202	202	0	0	0	0	0	0	0
+0x0049D6F0	0x00485C20	hash	yes	56	56	0	0	0	0	0	0	0
+0x0049D790	0x00485CC0	hash	yes	3	3	0	0	0	0	0	0	0
+0x0049D7A0	0x00485CD0	hash	yes	3	3	0	0	0	0	0	0	0
+0x0049D7B0	0x00485CE0	hash	yes	156	156	0	0	0	0	0	0	0
+0x0049D960	0x00485E90	hash	yes	57	57	0	0	0	0	0	0	0
+0x0049DAB0	0x00485FE0	hash	yes	32	32	0	0	0	0	0	0	0
+0x0049DB00	0x00486030	hash	yes	33	33	0	0	0	0	0	0	0
+0x0049DB50	0x00486080	hash	yes	73	73	0	0	0	0	0	0	0
+0x0049DC30	0x00486160	hash	yes	10	10	0	0	0	0	0	0	0
+0x0049DC60	0x00486190	hash	yes	7	7	0	0	0	0	0	0	0
+0x0049DC80	0x004861B0	hash	yes	9	9	0	0	0	0	0	0	0
+0x0049DCA0	0x004861D0	hash	yes	27	27	0	0	0	0	0	0	0
+0x0049DCE0	0x00486210	hash	yes	34	34	0	0	0	0	0	0	0
+0x0049DD30	0x00486260	hash	yes	9	9	0	0	0	0	0	0	0
+0x0049DD50	0x00486280	hash	yes	10	10	0	0	0	0	0	0	0
+0x0049DD70	0x004862A0	hash	yes	2	2	0	0	0	0	0	0	0
+0x0049DD80	0x004862B0	hash	yes	130	130	0	0	0	0	0	0	0
+0x0049DF00	0x00486430	hash	yes	32	32	0	0	0	0	0	0	0
+0x0049DF60	0x00486490	hash	yes	80	80	0	0	0	0	0	0	0
+0x0049E060	0x00401110	calls	no: the code differs	11	2	10	0	0	0	1	9	0
+0x0049E0B0	0x004865A0	callers	no: the code differs	1	1	0	0	0	0	0	0	0
+0x0049E0C0	0x004865B0	hash	yes	31	31	0	0	0	0	0	0	0
+0x0049E120	0x00486610	anchor	no: the code differs	57	56	61	0	0	0	0	31	30
+0x0049E1B0	0x004866C0	hash	yes	42	42	0	0	0	0	0	0	0
+0x0049E220	0x00486730	hash	yes	132	132	0	0	0	0	0	0	0
+0x0049E350	0x00486860	anchor	no: the code differs	48	48	0	0	0	0	0	0	0
+0x0049E3D0	0x004868E0	calls	no: the code differs	15	9	11	0	1	0	0	8	2
+0x0049E400	0x00486900	anchor	no: the code differs	80	89	62	3	0	0	2	24	33
+0x0049E4F0	0x00486A10	hash	yes	6	6	0	0	0	0	0	0	0
+0x0049E530	0x00486A50	hash	yes	9	9	0	0	0	0	0	0	0
+0x0049E550	0x00486A70	hash	yes	27	27	0	0	0	0	0	0	0
+0x004A0030	0x00486AB0	anchor	no: the code differs	1	1	0	0	0	0	0	0	0
+0x004A1058	0x00487AD8	anchor	no: the code differs	1	1	0	0	0	0	0	0	0
+0x004A105E	0x00487ADE	anchor	no: the code differs	1	1	0	0	0	0	0	0	0
+0x004A10E8	0x00489654	hash	yes	15	15	0	0	0	0	0	0	0
+0x004A110F	0x00489680	similarity	no: the code differs	22	23	3	0	0	0	0	1	2
+0x004A1143	0x004896C0	calls	no: the code differs	4	4	0	0	0	0	0	0	0
+0x004A114A	0x004896D0	similarity	no: the code differs	4	4	0	0	0	0	0	0	0
+0x004A1151	0x004896E0	calls	no: the code differs	29	32	23	0	0	0	0	10	13
+0x004A11A0	0x00489740	calls	no: the code differs	27	31	22	3	1	0	0	7	11
+0x004A11D6	0x00489780	neighbours	no: the code differs	26	36	36	1	1	0	0	12	22
+0x004A122A	0x004897F0	neighbours	no: the code differs	16	30	26	0	0	0	0	6	20
+0x004A124F	0x00489830	callers	no: the code differs	56	57	41	2	0	0	0	19	20
+0x004A1303	0x00489900	callers	no: the code differs	47	53	49	1	0	0	0	21	27
+0x004A1378	0x00489990	calls	no: the code differs	51	57	49	3	0	0	0	20	26
+0x004A13F4	0x00489A20	hash	yes	18	18	0	0	0	0	0	0	0
+0x004A1414	0x00489A40	hash	yes	9	9	0	0	0	0	0	0	0
+0x004A1436	0x00489A62	hash	yes	33	33	0	0	0	0	0	0	0
+0x004A149E	0x00489ACA	hash	yes	10	10	0	0	0	0	0	0	0
+0x004A14C1	0x00489AED	hash	no: callee 0x004A14D4 unmatched or matched elsewhere	4	4	0	0	0	0	0	0	0
+0x004A14CA	0x00489AF6	hash	yes	10	10	0	0	0	0	0	0	0
+0x004A14E2	0x00489B10	neighbours	no: the code differs	3	6	5	0	0	0	0	1	4
+0x004A14EC	0x00489B20	neighbours	no: the code differs	7	11	4	0	0	0	0	0	4
+0x004A150A	0x00489B50	neighbours	no: the code differs	8	10	4	2	0	0	0	0	2
+0x004A151B	0x00489B70	anchor	no: the code differs	75	103	144	3	1	0	2	55	83
+0x004A16B0	0x00489EB0	calls	no: the code differs	270	269	10	0	1	0	0	5	4
+0x004A1A50	0x0048A6C0	hash	no: callee 0x004A3976 unmatched or matched elsewhere	66	66	0	0	0	0	0	0	0
+0x004A1B52	0x0048B390	anchor	no: the code differs	21	29	40	0	0	0	0	16	24
+0x004A1B81	0x0048A1F0	calls	no: the code differs	94	107	165	0	1	1	0	75	88
+0x004A1C50	0x0048A330	calls	no: the code differs	12	15	15	0	1	1	0	5	8
+0x004A1C7D	0x0048A370	neighbours	no: the code differs	6	10	6	0	0	0	0	1	5
+0x004A1C8E	0x0048A390	neighbours	no: the code differs	6	10	6	0	0	0	0	1	5
+0x004A1C9F	0x0048A3B0	anchor	no: the code differs	49	59	77	0	0	0	3	32	42
+0x004A1D38	0x0048A490	calls	no: the code differs	12	16	20	0	0	0	0	8	12
+0x004A1D52	0x0048B1C0	anchor	no: the code differs	115	156	209	0	3	0	5	80	121
+0x004A1E72	0x0048A4C0	calls	no: the code differs	44	52	53	0	0	0	3	21	29
+0x004A1EF4	0x0048A560	calls	no: the code differs	42	54	50	0	0	0	0	19	31
+0x004A1F74	0x0048A610	calls	no: the code differs	35	42	25	0	0	0	0	9	16
+0x004A1FE8	0x00496960	calls	no: the code differs	59	88	129	0	1	0	5	47	76
+0x004A20A7	0x0048A740	anchor	no: the code differs	78	98	83	0	1	0	0	31	51
+0x004A219D	0x0048A8A0	callers	no: the code differs	10	14	10	0	0	0	0	3	7
+0x004A21C2	0x0048A8D0	anchor	no: the code differs	9	13	8	0	0	0	0	2	6
+0x004A21F8	0x0048D1B0	calls	no: the code differs	24	30	37	6	1	0	0	12	18
+0x004A2236	0x0048D210	anchor	no: the code differs	13	22	17	0	0	0	0	4	13
+0x004A235D	0x0048D470	anchor	no: the code differs	115	157	242	1	1	0	0	99	141
+0x004A2624	0x0048D930	callers	no: the code differs	29	40	49	0	1	0	1	18	29
+0x004A2675	0x0048D990	calls	no: the code differs	18	19	28	0	1	0	0	13	14
+0x004A269A	0x0048D9C0	calls	no: the code differs	61	88	126	1	1	0	3	47	74
+0x004A2735	0x0048DAB0	calls	no: the code differs	146	219	324	3	3	0	5	120	193
+0x004A28DC	0x0048DD50	neighbours	no: the code differs	67	106	135	1	0	0	3	46	85
+0x004A2984	0x0048DE70	calls	no: the code differs	42	69	93	0	0	0	2	32	59
+0x004A2DF4	0x0048E540	calls	no: the code differs	39	46	39	0	0	0	0	16	23
+0x004A2E5B	0x0048E5D0	neighbours	no: the code differs	15	27	38	0	0	0	0	13	25
+0x004A2E80	0x0048E620	hash	yes	34	34	0	0	0	0	0	0	0
+0x004A2ECC	0x0048E670	calls	no: the code differs	37	37	38	0	0	0	2	18	18
+0x004A2F78	0x0048E790	calls	no: the code differs	65	75	110	5	1	0	4	45	55
+0x004A3970	0x00490A10	hash	yes	89	89	0	0	0	0	0	0	0
+0x004A3A47	0x0048B440	anchor	no: the code differs	20	25	22	0	0	0	1	8	13
+0x004A3A83	0x0048B490	calls	no: the code differs	15	20	22	0	0	1	0	8	13
+0x004A3AC1	0x0048B4F0	calls	no: the code differs	14	29	32	0	0	0	1	8	23
+0x004A3AEC	0x0048B5B0	anchor	no: the code differs	264	453	638	13	4	3	7	211	400
+0x004A3E17	0x0048BB80	neighbours	no: the code differs	275	427	664	6	1	0	11	247	399
+0x004A4120	0x0048C0C0	anchor	no: the code differs	53	78	105	0	1	0	1	39	64
+0x004A41D1	0x0048C1D0	anchor	no: the code differs	85	149	206	3	4	0	3	66	130
+0x004A46AD	0x0048FAE0	anchor	no: the code differs	258	425	591	12	11	0	15	193	360
+0x004A4E0D	0x00490750	similarity	no: the code differs	36	51	34	1	0	0	0	9	24
+0x004A4F20	0x004923E0	calls	no: the code differs	270	268	39	8	0	0	17	8	6
+0x004A5260	0x00490924	hash	yes	73	73	0	0	0	0	0	0	0
+0x004A531D	0x004909E1	hash	yes	11	11	0	0	0	0	0	0	0
+0x004A5338	0x0048D0D0	calls	no: the code differs	46	58	65	3	0	0	0	25	37
+0x004A53B0	0x00497390	hash	yes	19	19	0	0	0	0	0	0	0
+0x004A53E4	0x00490AD0	anchor	no: the code differs	89	110	165	2	0	7	13	61	82
+0x004A5679	0x00490EF0	calls	no: the code differs	62	69	92	3	1	0	1	40	47
+0x004A5712	0x00490FD0	neighbours	no: the code differs	187	360	525	7	0	0	3	171	344
+0x004A58C6	0x00491400	anchor	no: the code differs	132	173	286	0	0	0	3	121	162
+0x004A5BA3	0x00491930	calls	no: the code differs	18	19	17	0	0	0	0	8	9
+0x004A5BDC	0x00491980	anchor	no: the code differs	100	131	183	0	5	0	3	72	103
+0x004A6350	0x00491DE0	hash	no: callee 0x004A63C1 unmatched or matched elsewhere	3	3	0	0	0	0	0	0	0
+0x004A6360	0x00491DF0	hash	yes	84	84	0	0	0	0	0	0	0
+0x004A64B7	0x00493540	calls	no: the code differs	34	32	35	1	0	0	0	18	16
+0x004A65E0	0x0048A930	hash	yes	40	40	0	0	0	0	0	0	0
+0x004A6640	0x00491C60	hash	yes	44	44	0	0	0	0	0	0	0
+0x004A6728	0x004937E0	anchor	no: the code differs	12	16	20	0	0	0	0	8	12
+0x004A6744	0x00493810	neighbours	no: the code differs	12	16	20	0	0	0	0	8	12
+0x004A6760	0x00493840	anchor	no: the code differs	11	14	17	0	0	0	0	7	10
+0x004A6780	0x00493870	hash	yes	56	56	0	0	0	0	0	0	0
+0x004A681B	0x00493920	calls	no: the code differs	5	12	9	0	0	0	0	1	8
+0x004A6830	0x00493950	anchor	no: the code differs	196	251	391	0	1	0	9	163	218
+0x004A6A8E	0x00493CD0	neighbours	no: the code differs	149	246	348	0	3	0	4	122	219
+0x004A6C3A	0x00493FD0	neighbours	no: the code differs	101	145	215	4	1	0	2	82	126
+0x004A6D7A	0x004941D0	anchor	no: the code differs	51	69	105	0	0	1	0	43	61
+0x004A70A0	0x00494710	hash	yes	43	43	0	0	0	0	0	0	0
+0x004A7110	0x00494780	hash	yes	44	44	0	0	0	0	0	0	0
+0x004A736A	0x00492720	anchor	no: the code differs	123	148	169	3	0	0	5	68	93
+0x004A74F5	0x00494B60	anchor	no: the code differs	135	217	317	1	1	0	7	113	195
+0x004A768E	0x00494E60	anchor	no: the code differs	15	21	24	0	0	0	2	8	14
+0x004A76D8	0x00494EC0	neighbours	no: the code differs	19	26	39	0	4	0	0	14	21
+0x004A770B	0x00494F40	neighbours	no: the code differs	17	29	44	0	0	0	0	16	28
+0x004A7734	0x00494FC0	anchor	no: the code differs	124	175	249	5	6	0	13	87	138
+0x004A78D5	0x00492220	anchor	no: the code differs	50	54	88	0	0	0	0	42	46
+0x004A7960	0x004922E0	hash	yes	109	109	0	0	0	0	0	0	0
+0x004A7A5E	0x00495300	anchor	no: the code differs	193	263	354	3	1	0	8	136	206
+0x004A831F	0x00496440	anchor	no: the code differs	232	386	530	23	3	0	6	172	326
+0x004A8724	0x00496A60	calls	no: the code differs	51	69	93	0	0	0	9	33	51
+0x004A87A1	0x00496B30	calls	no: the code differs	26	37	52	0	0	0	3	19	30
+0x004A8808	0x00496BC0	anchor	no: the code differs	45	58	76	0	1	1	1	30	43
+0x004A8882	0x00496C90	neighbours	no: the code differs	16	26	29	0	0	1	0	9	19
+0x004A88BF	0x00496CF0	anchor	no: the code differs	26	50	49	0	0	0	3	11	35
+0x004A8970	0x00491FD0	hash	yes	17	17	0	0	0	0	0	0	0
+0x004A8C3B	0x004973D0	calls	no: the code differs	24	32	34	0	0	1	1	12	20
+0x004A8C7A	0x00497420	calls	no: the code differs	58	66	111	0	3	0	2	49	57
+0x004A8CE8	0x004974D0	anchor	no: the code differs	66	74	105	0	3	0	6	44	52
+0x004A9328	0x00497FC6	anchor	no: the code differs	1	1	0	0	0	0	0	0	0

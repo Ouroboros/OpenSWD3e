@@ -1,0 +1,9 @@
+swd3e 0x0043D120 sub_43D120 <- swd32 0x00438650 sub_438650; method=shape reusable=no: the code differs
+same=44 offset=7 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     [esi+8], edi                             swd3e: mov     [esi+0Ch], edi
+~ offset   swd32: mov     [esi+4], edi                             swd3e: mov     [esi+8], edi
+~ offset   swd32: mov     [esi+0Ch], edi                           swd3e: mov     [esi+10h], edi
+~ offset   swd32: mov     [esi+10h], edi                           swd3e: mov     [esi+14h], edi
+~ offset   swd32: lea     eax, [esi+20h]                           swd3e: lea     eax, [esi+28h]
+~ offset   swd32: mov     edx, [esi+220h]                          swd3e: mov     edx, [esi+228h]
+~ offset   swd32: mov     [esi+220h], eax                          swd3e: mov     [esi+228h], eax

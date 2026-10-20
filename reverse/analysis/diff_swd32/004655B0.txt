@@ -1,0 +1,8 @@
+swd3e 0x004655B0 sub_4655B0 <- swd32 0x0045B0E0 sub_45B0E0; method=shape reusable=no: the code differs
+same=52 offset=0 constant=6 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: mov     ecx, 12h                                 swd3e: mov     ecx, 1Eh
+~ constant swd32: mov     ecx, 12h                                 swd3e: mov     ecx, 1Eh
+~ constant swd32: add     edi, 2B28h                               swd3e: add     edi, 3078h
+~ constant swd32: mov     esi, 8                                   swd3e: mov     esi, 14h
+~ constant swd32: add     ecx, 8                                   swd3e: add     ecx, 14h
+~ constant swd32: add     edi, 2F34h                               swd3e: add     edi, 34D4h

@@ -1,0 +1,6 @@
+swd3e 0x004539C0 sub_4539C0 <- swd32 0x0044C0E0 sub_44C0E0; method=callers reusable=no: the code differs
+same=21 offset=0 constant=0 global=1 code=0 inserted=1 deleted=2
+~ global   swd32: dec     word_4FC900                              swd3e: dec     dword_50B3AC
+- swd32 only: xor     edx, edx
+- swd32 only: mov     dx, word_4FC900
++ swd3e only: mov     edx, dword_50B3AC

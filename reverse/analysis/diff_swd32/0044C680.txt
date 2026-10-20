@@ -1,0 +1,51 @@
+swd3e 0x0044C680 sub_44C680 <- swd32 0x00443A60 sub_443A60; method=neighbours reusable=no: the code differs
+same=34 offset=0 constant=1 global=1 code=0 inserted=12 deleted=35
+- swd32 only: push    esi
++ swd3e only: inc     dword_50BBC8
+- swd32 only: mov     ax, word ptr dword_4FBECC
++ swd3e only: mov     ecx, eax
++ swd3e only: mov     eax, dword_50BBC8
++ swd3e only: cdq
++ swd3e only: idiv    ecx
++ swd3e only: mov     dword_50BBC8, edx
++ swd3e only: call    sub_44DB90
+~ global   swd32: mov     edx, 0FFFFh                              swd3e: mov     edx, dword_50BBC8
+- swd32 only: inc     ax
+- swd32 only: and     eax, edx
+- swd32 only: and     eax, 80000003h
+- swd32 only: jns     short loc_443A8E
+- swd32 only: dec     eax
+- swd32 only: or      eax, 0FFFFFFFCh
+- swd32 only: inc     eax
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     word ptr dword_4FBECC, ax
+- swd32 only: mov     cx, ax
+- swd32 only: lea     esi, ds:0[ecx*8]
+- swd32 only: sub     esi, ecx
+- swd32 only: cmp     word_4A6A38[esi*4], dx
+- swd32 only: jnz     short loc_443ADA
+- swd32 only: inc     ax
+- swd32 only: and     eax, edx
+- swd32 only: and     eax, 80000003h
+- swd32 only: jns     short loc_443ABC
+- swd32 only: dec     eax
+- swd32 only: or      eax, 0FFFFFFFCh
+- swd32 only: inc     eax
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     cx, ax
+- swd32 only: lea     esi, ds:0[ecx*8]
+- swd32 only: sub     esi, ecx
+- swd32 only: cmp     word_4A6A38[esi*4], dx
+- swd32 only: jz      short loc_443AAC
+- swd32 only: mov     word ptr dword_4FBECC, ax
++ swd3e only: mov     dword_50A820, edx
++ swd3e only: call    sub_441980
++ swd3e only: cmp     dword_50A820, eax
++ swd3e only: jl      short loc_44C6D0
++ swd3e only: mov     dword_50A820, 0
+- swd32 only: call    sub_444FB0
+- swd32 only: mov     edx, dword_4AB784
+- swd32 only: mov     dword_4FD074, eax
+- swd32 only: push    edx
+~ constant swd32: add     esp, 44h                                 swd3e: add     esp, 40h
+- swd32 only: pop     esi

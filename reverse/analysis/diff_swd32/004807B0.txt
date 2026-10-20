@@ -1,0 +1,26 @@
+swd3e 0x004807B0 sub_4807B0 <- swd32 0x0046FF00 sub_46FF00; method=callers reusable=no: the code differs
+same=46 offset=10 constant=0 global=0 code=2 inserted=12 deleted=0
+~ offset   swd32: cmp     [esi+2B00h], ebx                         swd3e: cmp     [esi+3044h], ebx
+~ offset   swd32: cmp     [esi+2B04h], ebx                         swd3e: cmp     [esi+3048h], ebx
+~ offset   swd32: mov     eax, [esi+26CCh]                         swd3e: mov     eax, [esi+2BD4h]
++ swd3e only: cmp     word ptr [esi+2EB2h], 0
++ swd3e only: jg      loc_4808AE
++ swd3e only: call    sub_498CD0
++ swd3e only: cmp     eax, ebx
++ swd3e only: jz      loc_4808AE
+~ offset   swd32: mov     ax, [esi+0D64h]                          swd3e: mov     ax, [esi+0FD8h]
+~ offset   swd32: test    [esi+26C8h], bl                          swd3e: test    [esi+2BD0h], bl
++ swd3e only: jz      short loc_480824
++ swd3e only: mov     [esi+34CAh], bl
++ swd3e only: mov     eax, ebx
++ swd3e only: pop     esi
++ swd3e only: pop     ebx
++ swd3e only: retn
++ swd3e only: test    dword ptr [esi+2BC8h], 40000h
+~ code     swd32: jz      short loc_46FF59                         swd3e: jz      short loc_48083B
+~ offset   swd32: mov     [esi+2F30h], bl                          swd3e: mov     [esi+34CAh], bl
+~ code     swd32: jb      short loc_46FF92                         swd3e: jb      short loc_480874
+~ offset   swd32: mov     [esi+2F30h], bl                          swd3e: mov     [esi+34CAh], bl
+~ offset   swd32: mov     ax, [esi+0D64h]                          swd3e: mov     ax, [esi+0FD8h]
+~ offset   swd32: mov     [esi+2F30h], bl                          swd3e: mov     [esi+34CAh], bl
+~ offset   swd32: mov     cx, [esi+0D64h]                          swd3e: mov     cx, [esi+0FD8h]

@@ -1,0 +1,215 @@
+#include "game/game_state.h"
+
+#include "game/direction.h"
+
+namespace swd3e
+{
+
+// swd3e.exe 0x0040DEB0
+int ClickRegions::Count() const
+{
+    return static_cast<int>(this->regions.size());
+}
+
+// swd3e.exe 0x0040DED0: the index of the first region strictly containing the pointer (the count when none does)
+int ClickRegions::Find(int pointerX, int pointerY, ClickRegion*& found)
+{
+    int index = 0;
+    found = nullptr;
+
+    for (ClickRegion& region : this->regions)
+    {
+        if (static_cast<u32>(pointerX) > region.left && static_cast<u32>(pointerX) < region.right &&
+            static_cast<u32>(pointerY) > region.top && static_cast<u32>(pointerY) < region.bottom)
+        {
+            found = &region;
+            break;
+        }
+
+        ++index;
+    }
+
+    return index;
+}
+
+// swd3e.exe 0x0040DF30
+void ClickRegions::Free()
+{
+    this->regions.clear();
+    this->flags = 0;
+    this->state = {};
+}
+
+// swd3e.exe 0x0040DFC0
+bool GameState::GameFlag(int flag) const
+{
+    return (this->flags[static_cast<std::size_t>(flag >> GameState::FlagByteShift)] &
+            GameState::BitMasks[flag & GameState::FlagBitMask]) != 0;
+}
+
+// swd3e.exe 0x0040DFF0
+u8 GameState::SetGameFlag(int flag)
+{
+    u8& byte = this->flags[static_cast<std::size_t>(flag >> GameState::FlagByteShift)];
+    byte = static_cast<u8>(byte | GameState::BitMasks[flag & GameState::FlagBitMask]);
+    return byte;
+}
+
+// swd3e.exe 0x0040E020
+u8 GameState::ClearGameFlag(int flag)
+{
+    u8& byte = this->flags[static_cast<std::size_t>(flag >> GameState::FlagByteShift)];
+    byte = static_cast<u8>(byte & static_cast<u8>(~GameState::BitMasks[flag & GameState::FlagBitMask]));
+    return byte;
+}
+
+// swd3e.exe 0x0040E050
+u8 GameState::SetGameFlagTo(int flag, int value)
+{
+    return value == 1 ? this->SetGameFlag(flag) : this->ClearGameFlag(flag);
+}
+
+// swd3e.exe 0x0040E080
+void GameState::SetWalkSpeed(int speed)
+{
+    this->walkSpeed = speed;
+}
+
+// swd3e.exe 0x0040E090: always 1
+int GameState::SetFrameInterval(int value)
+{
+    this->frameInterval = value;
+    return 1;
+}
+
+// swd3e.exe 0x0040E0A0
+void GameState::ClearFrameInterval()
+{
+    this->frameInterval = 0;
+}
+
+// swd3e.exe 0x0040E3A0: the direction code from the centre of the controlled role towards (x, y)
+int GameState::DirectionToPlayer(int x, int y) const
+{
+    const Role& role = this->Player();
+    i32 distance = 0;
+    const int angle = AngleBetween(
+        role.x + MapHeader::TileSize / 2 * role.act.width,
+        role.y + MapHeader::TileSize / 2 * role.act.height,
+        x,
+        y,
+        distance
+    );
+    return AngleToDirection(angle);
+}
+
+Role& GameState::Player()
+{
+    return this->roles[static_cast<std::size_t>(this->playerRole)];
+}
+
+const Role& GameState::Player() const
+{
+    return this->roles[static_cast<std::size_t>(this->playerRole)];
+}
+
+// swd3e.exe 0x0040E0B0
+void MoveRecord::Clear()
+{
+    this->role = MoveRecord::NoRole;
+    this->step = MoveRecord::Unused;
+    this->x = MoveRecord::Unused;
+    this->y = MoveRecord::Unused;
+    this->nextRole = MoveRecord::NoRole;
+    this->unk0A = MoveRecord::Unused;
+    this->nextX = MoveRecord::Unused;
+    this->nextY = MoveRecord::Unused;
+    this->act = -1;
+    this->action = -1;
+    this->direction = -1;
+    this->stepX = -1;
+    this->stepY = -1;
+    this->blockedTries = MoveRecord::UnusedByte;
+    this->mode = MoveRecord::UnusedByte;
+    this->directions.fill(MoveRecord::EndOfPath);
+}
+
+// swd3e.exe 0x00429B10: frees the map buffers and the roles' buffers, clears the roles, fills the leader with 0xFF and
+// clears the move records
+void GameState::ClearWorld()
+{
+    this->map = MapHeader{};
+    this->roleCount = 0;
+
+    for (Role& role : this->roles)
+    {
+        role = Role{};
+    }
+
+    this->leader = Role{};
+    this->leader.FillUnused();
+
+    for (MoveRecord& move : this->moves)
+    {
+        move.Clear();
+    }
+}
+
+// swd3e.exe 0x0040F6F0: the buffers of the roles in use freed, every role cleared with its action playback reset
+void GameState::ClearRoles()
+{
+    for (int index = 0; index <= this->roleCount && index < GameState::Roles; ++index)
+    {
+        this->roles[static_cast<std::size_t>(index)].label.reset();
+    }
+
+    for (Role& role : this->roles)
+    {
+        role = Role{};
+        ResetPlayback(role.act);
+    }
+}
+
+// swd3e.exe 0x0040C420: the first role in use with `id` that is not hidden (flag 0x10000000); 0xFFFFFFFF when none
+u32 GameState::FindRole(u16 id) const
+{
+    if (this->roleCount == 0)
+    {
+        return GameState::NotFound;
+    }
+
+    u32 index = 0;
+
+    while (this->roles[index].id != id || (this->roles[index].flags & Role::Removed) != 0)
+    {
+        if (++index >= static_cast<u32>(this->roleCount) || index >= this->roles.size())
+        {
+            return GameState::NotFound;
+        }
+    }
+
+    return index;
+}
+
+// swd3e.exe 0x0040C500
+bool GameState::FindRole(u16 id, u32& index) const
+{
+    index = this->FindRole(id);
+    return index != GameState::NotFound;
+}
+
+// swd3e.exe 0x0040C4D0: id 0xFFFE stands for the controlled role
+bool GameState::FindRoleOrPlayer(u16 id, u32& index) const
+{
+    index = 0;
+
+    if (id != GameState::PlayerId)
+    {
+        return this->FindRole(id, index);
+    }
+
+    index = static_cast<u32>(this->playerRole);
+    return true;
+}
+
+}  // namespace swd3e

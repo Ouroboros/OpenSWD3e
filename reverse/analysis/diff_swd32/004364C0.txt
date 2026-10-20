@@ -1,0 +1,2 @@
+swd3e 0x004364C0 sub_4364C0 <- swd32 0x004315C0 sub_4315C0; method=calls reusable=no: the code differs
+same=3 offset=0 constant=0 global=0 code=0 inserted=0 deleted=0

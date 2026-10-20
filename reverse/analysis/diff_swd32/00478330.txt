@@ -1,0 +1,3 @@
+swd3e 0x00478330 sub_478330 <- swd32 0x00469340 sub_469340; method=shape reusable=no: the code differs
+same=102 offset=0 constant=0 global=1 code=0 inserted=0 deleted=0
+~ global   swd32: mov     dword_4FC5B0, 233Bh                      swd3e: mov     dword_50AF70, 2396h

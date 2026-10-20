@@ -1,0 +1,19 @@
+swd3e 0x00499FA0 sub_499FA0 <- swd32 0x00482F70 sub_482F70; method=calls reusable=no: the code differs
+same=17 offset=1 constant=1 global=0 code=0 inserted=11 deleted=4
+~ offset   swd32: lea     edx, [ecx+1A0h]                          swd3e: lea     edx, [ecx+1ACh]
+~ constant swd32: add     edx, 0A4h                                swd3e: add     edx, 0A8h
+- swd32 only: lea     edx, [eax+eax*4]
++ swd3e only: lea     edx, ds:0[eax*8]
++ swd3e only: sub     edx, eax
++ swd3e only: lea     eax, [edx+edx*2]
++ swd3e only: cmp     word ptr [ecx+eax*8+1ACh], 28h
++ swd3e only: lea     eax, [ecx+eax*8]
++ swd3e only: jnz     short loc_499FEE
++ swd3e only: mov     edx, [ecx+2BD0h]
++ swd3e only: test    dh, 1
++ swd3e only: jnz     short loc_499FC1
++ swd3e only: mov     ax, [eax+1A4h]
++ swd3e only: and     eax, 3FFFh
+- swd32 only: lea     eax, [eax+edx*8]
+- swd32 only: mov     ax, [ecx+eax*4+198h]
+- swd32 only: and     eax, 3FFFh

@@ -1,0 +1,25 @@
+swd3e 0x00436AC0 sub_436AC0 <- swd32 0x00431F80 sub_431F80; method=calls reusable=no: the code differs
+same=29 offset=0 constant=1 global=0 code=0 inserted=9 deleted=13
+- swd32 only: mov     edi, offset word_4DACE0
++ swd3e only: mov     esi, offset word_4F4B5C
+- swd32 only: mov     dword ptr [ebx], 0
+- swd32 only: mov     esi, [eax+4]
++ swd3e only: mov     edi, [eax+4]
+- swd32 only: mov     eax, [edx+10h]
+- swd32 only: push    eax
+- swd32 only: call    sub_4885A0
+- swd32 only: mov     ecx, dword_4DACDC
+- swd32 only: push    ecx
++ swd3e only: push    edx
+~ constant swd32: add     esp, 10h                                 swd3e: add     esp, 0Ch
+- swd32 only: dec     word ptr [edi]
+- swd32 only: mov     eax, esi
+- swd32 only: test    esi, esi
++ swd3e only: dec     word ptr [esi]
++ swd3e only: mov     eax, edi
++ swd3e only: test    edi, edi
++ swd3e only: mov     dword ptr [ebx], 0
++ swd3e only: add     esi, 2
+- swd32 only: add     edi, 2
+- swd32 only: cmp     ebx, offset unk_4CF98C
++ swd3e only: cmp     esi, offset dword_4F4B7C

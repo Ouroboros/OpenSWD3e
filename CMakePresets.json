@@ -3,21 +3,40 @@
   "configurePresets": [
     {
       "name": "linux",
-      "displayName": "Linux (WSL, LLVM)",
+      "displayName": "Linux x64 (WSL, clang, static)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/linux",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-linux-x64-clang.cmake",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
       "name": "windows",
-      "displayName": "Windows (clang-cl cross, LLVM)",
+      "displayName": "Windows x64 (clang-cl cross from WSL)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/windows",
-      "toolchainFile": "${sourceDir}/cmake/windows-clang-cl.cmake",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-windows-x64-clang-cl.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "linux-i386",
+      "displayName": "Linux i386 (WSL, clang, static)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/linux-i386",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-linux-i386-clang.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "windows-x86",
+      "displayName": "Windows x86 (clang-cl cross from WSL)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/windows-x86",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-windows-x86-clang-cl.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
@@ -25,6 +44,12 @@
   ],
   "buildPresets": [
     { "name": "linux", "configurePreset": "linux" },
-    { "name": "windows", "configurePreset": "windows" }
+    { "name": "windows", "configurePreset": "windows" },
+    { "name": "linux-i386", "configurePreset": "linux-i386" },
+    { "name": "windows-x86", "configurePreset": "windows-x86" }
+  ],
+  "testPresets": [
+    { "name": "linux", "configurePreset": "linux", "output": { "outputOnFailure": true } },
+    { "name": "linux-i386", "configurePreset": "linux-i386", "output": { "outputOnFailure": true } }
   ]
 }

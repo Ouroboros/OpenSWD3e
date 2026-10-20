@@ -1,0 +1,12 @@
+swd3e 0x0040FBE0 DialogFunc <- swd32 0x0040F890 DialogFunc; method=shape reusable=no: the code differs
+same=913 offset=0 constant=4 global=6 code=0 inserted=0 deleted=0
+~ constant swd32: cmp     eax, 5DDh                                swd3e: cmp     eax, 1771h
+~ constant swd32: cmp     eax, 7D0h                                swd3e: cmp     eax, 1964h
+~ constant swd32: push    offset String                            swd3e: push    offset hInstance
+~ global   swd32: push    offset byte_49E158                       swd3e: push    offset dword_4E4DD0
+~ global   swd32: push    offset unk_49E168                        swd3e: push    offset unk_4E4DF0
+~ global   swd32: push    offset unk_49E178                        swd3e: push    offset unk_4E4E10
+~ constant swd32: push    offset String                            swd3e: push    offset hInstance
+~ global   swd32: push    offset byte_49E158                       swd3e: push    offset dword_4E4DD0
+~ global   swd32: push    offset unk_49E168                        swd3e: push    offset unk_4E4DF0
+~ global   swd32: push    offset unk_49E178                        swd3e: push    offset unk_4E4E10

@@ -1,0 +1,51 @@
+swd3e 0x004832C0 sub_4832C0 <- swd32 0x00472730 sub_472730; method=callers reusable=no: the code differs
+same=144 offset=2 constant=0 global=0 code=10 inserted=28 deleted=9
++ swd3e only: cmp     word ptr [esi+34BCh], 0
++ swd3e only: jz      short loc_483332
++ swd3e only: mov     dx, [esi+34BAh]
++ swd3e only: cmp     dx, [edi+56h]
++ swd3e only: jnz     short loc_483332
++ swd3e only: push    0Ah
++ swd3e only: call    sub_43DB90
++ swd3e only: xor     ecx, ecx
++ swd3e only: add     esp, 4
++ swd3e only: mov     cx, [esi+34BCh]
++ swd3e only: xor     edx, edx
++ swd3e only: cmp     eax, ecx
++ swd3e only: pop     edi
++ swd3e only: setl    dl
++ swd3e only: pop     esi
++ swd3e only: mov     eax, edx
++ swd3e only: pop     ebx
++ swd3e only: pop     ecx
++ swd3e only: retn    4
+~ offset   swd32: cmp     word ptr [edi+52h], 15h                  swd3e: cmp     word ptr [edi+56h], 0Ah
+- swd32 only: mov     edx, [esi]
+- swd32 only: xor     eax, eax
+- swd32 only: mov     al, [edx+2Ch]
+- swd32 only: mov     esi, eax
++ swd3e only: mov     eax, [esi]
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     cl, [eax+2Ch]
+~ offset   swd32: mov     ax, [edi+54h]                            swd3e: mov     ax, [edi+58h]
++ swd3e only: mov     esi, ecx
+~ code     swd32: jl      short loc_4727A2                         swd3e: jl      short loc_48336C
+~ code     swd32: jl      short loc_4727CD                         swd3e: jl      short loc_483397
+~ code     swd32: jg      short loc_4727CD                         swd3e: jg      short loc_483397
+- swd32 only: xor     ecx, ecx
++ swd3e only: mov     ecx, [esp+10h+var_4]
+- swd32 only: mov     edx, [esp+0Ch+var_4]
++ swd3e only: xor     edx, edx
+- swd32 only: cmp     edx, eax
++ swd3e only: cmp     ecx, eax
+- swd32 only: setle   cl
+- swd32 only: mov     eax, ecx
++ swd3e only: setle   dl
++ swd3e only: mov     eax, edx
+~ code     swd32: jl      short loc_472818                         swd3e: jl      short loc_4833E2
+~ code     swd32: jge     short loc_472818                         swd3e: jge     short loc_4833E2
+~ code     swd32: jg      short loc_4727FD                         swd3e: jg      short loc_4833C7
+~ code     swd32: jge     short loc_47286C                         swd3e: jge     short loc_483436
+~ code     swd32: jl      short loc_47286C                         swd3e: jl      short loc_483436
+~ code     swd32: jg      short loc_472848                         swd3e: jg      short loc_483412
+~ code     swd32: jg      short loc_47289B                         swd3e: jg      short loc_483465

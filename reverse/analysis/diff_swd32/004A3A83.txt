@@ -1,0 +1,24 @@
+swd3e 0x004A3A83 sub_4A3A83 <- swd32 0x0048B490 sub_48B490; method=calls reusable=no: the code differs
+same=6 offset=0 constant=0 global=1 code=0 inserted=8 deleted=13
+- swd32 only: push    ebp
+- swd32 only: mov     ebp, esp
+- swd32 only: mov     eax, hHeap
+- swd32 only: push    eax
++ swd3e only: push    hHeap
++ swd3e only: test    eax, eax
+- swd32 only: cmp     lp, 0
+- swd32 only: xor     eax, eax
+- swd32 only: jmp     short loc_48B4E7
+- swd32 only: mov     ecx, lp
+- swd32 only: mov     dword_53E7AC, ecx
++ swd3e only: retn
++ swd3e only: and     dword_57B0B0, 0
++ swd3e only: and     dword_57B0B4, 0
++ swd3e only: push    1
++ swd3e only: mov     dword_57B0AC, eax
+~ global   swd32: mov     dword_53E7B0, 0                          swd3e: mov     dword_57B0A4, 10h
+- swd32 only: mov     dword_53E7B4, 0
+- swd32 only: mov     dword_53E7A4, 10h
+- swd32 only: mov     eax, 1
+- swd32 only: pop     ebp
++ swd3e only: pop     eax

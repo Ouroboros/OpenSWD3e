@@ -1,0 +1,36 @@
+swd3e 0x0046AAE0 sub_46AAE0 <- swd32 0x0045EE70 sub_45EE70; method=similarity reusable=no: the code differs
+same=79 offset=0 constant=0 global=0 code=10 inserted=16 deleted=8
++ swd3e only: push    edi
+- swd32 only: push    edi
++ swd3e only: mov     ecx, offset dword_537E10
++ swd3e only: mov     esi, [esp+10h+arg_4]
++ swd3e only: mov     edx, [ecx]
++ swd3e only: cmp     edx, esi
++ swd3e only: jz      loc_46AC38
++ swd3e only: add     ecx, 1Ch
++ swd3e only: cmp     ecx, offset dword_538158
++ swd3e only: jl      short loc_46AAED
+~ code     swd32: jz      short loc_45EE92                         swd3e: jz      short loc_46AB20
+~ code     swd32: jl      short loc_45EE7F                         swd3e: jl      short loc_46AB0D
+~ code     swd32: jmp     short loc_45EE94                         swd3e: jmp     short loc_46AB22
+~ code     swd32: jnz     loc_45EF61                               swd3e: jnz     loc_46ABEF
+~ code     swd32: jz      short loc_45EED6                         swd3e: jz      short loc_46AB68
+~ code     swd32: jl      short loc_45EED8                         swd3e: jl      short loc_46AB6A
+~ code     swd32: jnz     short loc_45EEC3                         swd3e: jnz     short loc_46AB51
++ swd3e only: mov     esi, [esp+10h+arg_4]
+~ code     swd32: jmp     short loc_45EED8                         swd3e: jmp     short loc_46AB6A
+- swd32 only: mov     ecx, [esp+10h+arg_4]
++ swd3e only: lea     ecx, [esi+esi*4-64h]
+- swd32 only: mov     dword_524788[eax], ecx
+- swd32 only: lea     ecx, [ecx+ecx*4-28h]
++ swd3e only: mov     dword_537E10[eax], esi
+~ code     swd32: jl      short loc_45EF8D                         swd3e: jl      short loc_46AC1F
+~ code     swd32: jnz     short loc_45EF7C                         swd3e: jnz     short loc_46AC0A
+- swd32 only: mov     edx, [esp+10h+arg_4]
++ swd3e only: mov     esi, [esp+10h+arg_4]
++ swd3e only: shl     eax, 2
++ swd3e only: mov     dword_537E10[eax], esi
++ swd3e only: mov     word_537E18[eax], bp
+- swd32 only: shl     eax, 2
+- swd32 only: mov     dword_524788[eax], edx
+- swd32 only: mov     word_524790[eax], bp

@@ -1,0 +1,119 @@
+swd3e 0x004115D0 sub_4115D0 <- swd32 0x004112B0 sub_4112B0; method=calls reusable=no: the code differs
+same=39 offset=9 constant=0 global=0 code=0 inserted=56 deleted=52
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+eax*4]
++ swd3e only: movsx   eax, word_4C4F1C[eax*4]
++ swd3e only: retn
++ swd3e only: mov     eax, [esp+arg_4]
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     ecx, [eax+eax*4]
+~ offset   swd32: movsx   eax, word_4AB794[ecx*8]                  swd3e: movsx   eax, word_4C4F1E[ecx*4]
+- swd32 only: lea     edx, ds:0[eax*8]
+- swd32 only: sub     edx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     edx, [eax+eax*4]
+~ offset   swd32: movsx   eax, word_4AB796[edx*8]                  swd3e: movsx   eax, word_4C4F20[edx*4]
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+eax*4]
++ swd3e only: movsx   eax, word_4C4F22[eax*4]
++ swd3e only: retn
++ swd3e only: mov     eax, [esp+arg_4]
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     ecx, [eax+eax*4]
+~ offset   swd32: movsx   eax, word_4AB798[ecx*8]                  swd3e: movsx   eax, word_4C4F24[ecx*4]
+- swd32 only: lea     edx, ds:0[eax*8]
+- swd32 only: sub     edx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     edx, [eax+eax*4]
+~ offset   swd32: movsx   eax, word_4AB79A[edx*8]                  swd3e: movsx   eax, word_4C4F26[edx*4]
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
+- swd32 only: movsx   eax, word_4AB79C[ecx*8]
++ swd3e only: xor     ecx, ecx
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+eax*4]
++ swd3e only: mov     cx, word_4C4F28[eax*4]
++ swd3e only: mov     eax, ecx
+- swd32 only: lea     edx, ds:0[eax*8]
+- swd32 only: sub     edx, eax
+- swd32 only: movsx   eax, word_4AB79E[edx*8]
+- swd32 only: retn
+- swd32 only: mov     eax, [esp+arg_4]
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word_4AB7A0[ecx*8]
+- swd32 only: retn
+- swd32 only: mov     eax, [esp+arg_4]
+- swd32 only: lea     edx, ds:0[eax*8]
+- swd32 only: sub     edx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     edx, [eax+eax*4]
+~ offset   swd32: mov     ax, word_4AB7A2[edx*8]                   swd3e: mov     ax, word_4C4F2A[edx*4]
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word_4AB7A4[ecx*8]
++ swd3e only: xor     ecx, ecx
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+eax*4]
++ swd3e only: mov     cx, word_4C4F2C[eax*4]
++ swd3e only: mov     eax, ecx
+- swd32 only: lea     edx, ds:0[eax*8]
+- swd32 only: sub     edx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     edx, [eax+eax*4]
+~ offset   swd32: mov     ax, word_4AB7A6[edx*8]                   swd3e: mov     ax, word_4C4F2E[edx*4]
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word_4AB7A8[ecx*8]
++ swd3e only: xor     ecx, ecx
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+eax*4]
++ swd3e only: mov     cx, word_4C4F30[eax*4]
++ swd3e only: mov     eax, ecx
+- swd32 only: lea     edx, ds:0[eax*8]
+- swd32 only: sub     edx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     edx, [eax+eax*4]
+~ offset   swd32: mov     ax, word_4AB7AA[edx*8]                   swd3e: mov     ax, word_4C4F32[edx*4]
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word_4AB7AC[ecx*8]
++ swd3e only: xor     ecx, ecx
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+eax*4]
++ swd3e only: mov     cx, word_4C4F34[eax*4]
++ swd3e only: mov     eax, ecx
+- swd32 only: lea     edx, ds:0[eax*8]
+- swd32 only: sub     edx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     edx, [eax+eax*4]
+~ offset   swd32: mov     ax, word_4AB7AE[edx*8]                   swd3e: mov     ax, word_4C4F36[edx*4]
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     eax, [eax+eax*4]
++ swd3e only: mov     eax, dword_4C4F38[eax*4]
++ swd3e only: retn
++ swd3e only: mov     eax, [esp+arg_4]
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     ecx, [eax+eax*4]
+~ offset   swd32: mov     eax, dword_4AB7B0[ecx*8]                 swd3e: mov     eax, dword_4C4F18[ecx*4]
+- swd32 only: lea     edx, ds:0[eax*8]
+- swd32 only: sub     edx, eax
+- swd32 only: mov     eax, dword_4AB790[edx*8]
+- swd32 only: retn
+- swd32 only: mov     eax, [esp+arg_4]
+- swd32 only: lea     ecx, ds:0[eax*8]
+- swd32 only: sub     ecx, eax
++ swd3e only: lea     eax, [eax+eax*2]
++ swd3e only: lea     edx, [eax+eax*4]
+- swd32 only: mov     al, byte ptr dword_4AB7BC[ecx*8]
++ swd3e only: mov     al, byte ptr dword_4C4F44[edx*4]

@@ -1,0 +1,73 @@
+# Test cases copied from swd3-rebuild that still check swd32 data (golden results, saves, swd32.exe bytes).
+# They are skipped (reported [PEND]) until their module is rebuilt for swd3e.exe; the list is empty at the end.
+# act_test.cpp
+act: matches the golden results of the legacy archives and ActRun
+# battle_hud_test.cpp
+battle hud: matches the golden results of the legacy helpers
+# battle_items_test.cpp
+party: the object kinds of the equipment slots match swd32.exe
+# battle_message_test.cpp
+battle message: texts match swd32.exe
+# battle_unit_test.cpp
+battle unit: the shake offsets of a queued act match swd32.exe
+battle role: the swarm offsets match swd32.exe
+battle unit: the hop heights of defeat pose 50 match swd32.exe
+battle unit: the stagger tables match swd32.exe
+battle state: the initial turn and push values match swd32.exe
+battle state: the quake steps match swd32.exe
+battle unit: the damage digit hops match swd32.exe
+battle state: the panel units match swd32.exe
+battle state: the names of the accessory commands match swd32.exe
+battle role: the skill element icons match swd32.exe
+battle role: the cost refusals match swd32.exe
+# cheat_dialog_test.cpp
+cheat dialog: the attribute names match swd32.exe
+# config_test.cpp
+config: channel masks match swd32.exe
+# database_test.cpp
+database: mon.dat objects and skills, level.dat entries match the legacy readers
+# fame_test.cpp
+fame: the fame block of original saves is saved again unchanged
+# field_test.cpp
+field: the first map of a new game from HUGE.lmf
+field: the speed nibbles of the map settings match swd32.exe
+# fight_talk_test.cpp
+fight talk: the initial state matches swd32.exe
+# font_test.cpp
+text font: matches the golden results of the legacy renderer
+# game_init_test.cpp
+game init: text colour tables match swd32.exe
+game init: the object descriptions of maps.dat
+# game_state_test.cpp
+game state: constant tables match swd32.exe
+# input_test.cpp
+controls: the click sequence matches swd32.exe
+# launcher_test.cpp
+launcher: resources of swd32.exe and the hover hotspots
+# lzo_test.cpp
+lzo encoder: recompressing the blocks of original saves gives the same bytes
+# menu_test.cpp
+menu: texts, names and tabs match swd32.exe
+menu: the preview of a saved game
+# painter_golden_test.cpp
+painter: matches the golden hashes of the legacy drawing kernel
+# painter_test.cpp
+painter: wave offsets match swd32.exe
+# path_finder_test.cpp
+path finder: matches the golden results of the legacy path finder
+# projector_test.cpp
+projector: the colour keys are compared unconverted
+projector: the first explosion frame counts the opaque pixels
+projector: matches the golden results of the legacy projector
+# random_test.cpp
+random: initial table and LCG state match swd32.exe
+# rle_test.cpp
+rle: matches the golden hashes of the legacy codec
+# spline_test.cpp
+spline: the basis matches swd32.exe
+# talk_test.cpp
+talk: window shift tables match swd32.exe
+# tsw_test.cpp
+tsw: matches the golden results of the legacy archives
+# ui_draw_test.cpp
+ui drawing: matches the golden results of the legacy boxes and frames

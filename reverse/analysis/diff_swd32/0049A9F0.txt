@@ -1,0 +1,3 @@
+swd3e 0x0049A9F0 sub_49A9F0 <- swd32 0x004838A0 sub_4838A0; method=calls reusable=no: the code differs
+same=10 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: cmp     dword ptr [ecx+2AA0h], 1                 swd3e: cmp     dword ptr [ecx+2FE0h], 1

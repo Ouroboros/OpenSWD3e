@@ -1,0 +1,30 @@
+swd3e 0x00417510 sub_417510 <- swd32 0x00416D30 sub_416D30; method=callers reusable=no: the code differs
+same=12 offset=0 constant=0 global=0 code=0 inserted=12 deleted=16
+- swd32 only: mov     ecx, dword_4A0E78
+- swd32 only: xor     eax, eax
++ swd3e only: mov     eax, dword_4B1E94
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     dword_4EC18C, edx
++ swd3e only: mov     edx, dword_4B1E8C
++ swd3e only: mov     dword_4ED9A8, eax
+- swd32 only: cmp     edx, eax
+- swd32 only: mov     dword_4CD2F8, eax
+- swd32 only: mov     dword_4CD734, eax
+- swd32 only: mov     dword_4CD720, edx
+- swd32 only: jle     short loc_416D81
+- swd32 only: push    esi
+- swd32 only: mov     esi, dword_4A0E74
+- swd32 only: mov     ecx, offset dword_4CC2F8
+- swd32 only: mov     [ecx], eax
+- swd32 only: add     eax, esi
+- swd32 only: add     ecx, 4
+- swd32 only: dec     edx
+- swd32 only: jnz     short loc_416D76
+- swd32 only: pop     esi
++ swd3e only: mov     dword_4ED9C8, ecx
++ swd3e only: mov     eax, offset dword_4E6D64
++ swd3e only: mov     [eax], ecx
++ swd3e only: add     eax, 4
++ swd3e only: add     ecx, edx
++ swd3e only: cmp     eax, offset unk_4E8D64
++ swd3e only: jl      short loc_417551

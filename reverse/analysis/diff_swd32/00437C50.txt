@@ -1,0 +1,3 @@
+swd3e 0x00437C50 sub_437C50 <- swd32 0x00432EE0 sub_432EE0; method=shape reusable=no: the code differs
+same=55 offset=0 constant=1 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: cmp     ax, 0Ah                                  swd3e: cmp     ax, 10h

@@ -1,0 +1,43 @@
+swd3e 0x004024E0 sub_4024E0 <- swd32 0x004029C0 sub_4029C0; method=callers reusable=no: the code differs
+same=47 offset=15 constant=2 global=0 code=0 inserted=12 deleted=12
+~ offset   swd32: mov     eax, [ebx+28h]                           swd3e: mov     eax, [ebx+20h]
+~ offset   swd32: mov     ecx, [ebx+2Ch]                           swd3e: mov     ecx, [ebx+24h]
+- swd32 only: xor     edi, edi
+- swd32 only: lea     esi, [ebx+3Ch]
+- swd32 only: mov     ecx, [esi]
++ swd3e only: mov     esi, offset unk_4AF0B0
++ swd3e only: lea     edi, [ebx+34h]
++ swd3e only: mov     ecx, [edi]
+- swd32 only: fadd    ds:dbl_499378
++ swd3e only: fadd    qword ptr [esi]
+~ offset   swd32: fcom    qword ptr [ecx+28h]                      swd3e: fcom    qword ptr [ecx+20h]
+~ offset   swd32: fst     qword ptr [ecx+28h]                      swd3e: fst     qword ptr [ecx+20h]
+~ offset   swd32: fadd    qword ptr [ecx+20h]                      swd3e: fadd    qword ptr [ecx+18h]
+~ offset   swd32: mov     [ecx+34h], ebx                           swd3e: mov     [ecx+2Ch], ebx
+~ offset   swd32: fstp    qword ptr [ecx+18h]                      swd3e: fstp    qword ptr [ecx+10h]
+- swd32 only: inc     edi
+~ constant swd32: add     esi, 4                                   swd3e: add     esi, 8
+- swd32 only: cmp     edi, 8
++ swd3e only: add     edi, 4
++ swd3e only: cmp     esi, offset unk_4AF0F0
+~ offset   swd32: mov     edx, [ebp+0Ch]                           swd3e: mov     edx, [ebp+10h]
+- swd32 only: xor     edi, edi
+- swd32 only: lea     esi, [ebx+3Ch]
+- swd32 only: mov     ecx, [esi]
++ swd3e only: mov     esi, offset unk_4AF0B0
++ swd3e only: lea     edi, [ebx+34h]
++ swd3e only: mov     ecx, [edi]
+~ offset   swd32: fld     qword ptr [ebx+28h]                      swd3e: fld     qword ptr [ebx+20h]
+- swd32 only: fadd    ds:dbl_499378
++ swd3e only: fadd    qword ptr [esi]
+~ offset   swd32: fcom    qword ptr [ecx+28h]                      swd3e: fcom    qword ptr [ecx+20h]
+~ offset   swd32: fst     qword ptr [ecx+28h]                      swd3e: fst     qword ptr [ecx+20h]
+~ offset   swd32: fadd    qword ptr [ecx+20h]                      swd3e: fadd    qword ptr [ecx+18h]
+~ offset   swd32: mov     [ecx+34h], ebx                           swd3e: mov     [ecx+2Ch], ebx
+~ offset   swd32: fstp    qword ptr [ecx+18h]                      swd3e: fstp    qword ptr [ecx+10h]
+- swd32 only: inc     edi
+~ constant swd32: add     esi, 4                                   swd3e: add     esi, 8
+- swd32 only: cmp     edi, 8
++ swd3e only: add     edi, 4
++ swd3e only: cmp     esi, offset unk_4AF0F0
+~ offset   swd32: mov     eax, [ebp+0Ch]                           swd3e: mov     eax, [ebp+10h]

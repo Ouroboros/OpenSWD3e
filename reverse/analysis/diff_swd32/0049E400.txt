@@ -1,0 +1,64 @@
+swd3e 0x0049E400 sub_49E400 <- swd32 0x00486900 sub_486900; method=anchor reusable=no: the code differs
+same=51 offset=3 constant=0 global=0 code=2 inserted=24 deleted=33
++ swd3e only: push    ebp
+- swd32 only: lea     eax, [edi+410h]
++ swd3e only: lea     ebp, [edi+410h]
+- swd32 only: mov     [esp+0Ch+var_4], eax
+~ offset   swd32: mov     ebx, [esp+10h+var_4]                     swd3e: mov     ebx, [esp+14h+var_4]
+- swd32 only: push    ebp
+- swd32 only: mov     ebp, ds:_AIL_set_stream_volume@8
++ swd3e only: mov     eax, [esi+8]
+~ offset   swd32: mov     ecx, [esi+8]                             swd3e: mov     ecx, [esi+0Ch]
+- swd32 only: mov     eax, [esi+0Ch]
+- swd32 only: sub     eax, ecx
+- swd32 only: mov     ecx, edi
+- swd32 only: mov     [esi+0Ch], eax
++ swd3e only: sub     ecx, eax
++ swd3e only: mov     eax, ecx
++ swd3e only: mov     [esi+0Ch], ecx
++ swd3e only: mov     ecx, edi
+- swd32 only: mov     edx, [esi]
++ swd3e only: mov     ecx, [esi]
+- swd32 only: push    edx
+- swd32 only: call    ebp
++ swd3e only: push    ecx
++ swd3e only: call    ds:_AIL_set_stream_volume@8
+- swd32 only: mov     [esp+14h+var_4], esi
++ swd3e only: mov     ebp, esi
+- swd32 only: pop     ebp
++ swd3e only: pop     esi
+- swd32 only: pop     esi
++ swd3e only: pop     ebp
+- swd32 only: mov     eax, [esi]
+- swd32 only: push    eax
++ swd3e only: mov     edx, [esi]
++ swd3e only: push    edx
+~ offset   swd32: jmp     ds:jpt_486986[ecx*4]                     swd3e: jmp     ds:jpt_49E480[ecx*4]
+- swd32 only: mov     edx, [esi]
+- swd32 only: push    0
+- swd32 only: push    edx
+- swd32 only: call    ebp
+~ code     swd32: jmp     short loc_4869A0                         swd3e: jmp     short loc_49E493
+~ code     swd32: jnz     short loc_48695A                         swd3e: jnz     short loc_49E456
+- swd32 only: mov     eax, [esi]
+- swd32 only: push    0
++ swd3e only: mov     edx, [esi]
++ swd3e only: push    edx
++ swd3e only: call    ds:_AIL_close_stream@4
++ swd3e only: mov     eax, [esi+4]
+- swd32 only: call    ebp
+- swd32 only: mov     ecx, [esi]
+- swd32 only: push    ecx
+- swd32 only: call    ds:_AIL_close_stream@4
+- swd32 only: mov     edx, [esi+4]
+- swd32 only: push    edx
+- swd32 only: mov     eax, [esp+14h+var_4]
+- swd32 only: mov     [eax+14h], ecx
++ swd3e only: mov     [ebp+14h], ecx
+- swd32 only: mov     esi, [eax+14h]
+- swd32 only: jmp     loc_486961
++ swd3e only: mov     esi, [ebp+14h]
++ swd3e only: jmp     short loc_49E45B
++ swd3e only: pop     esi
+- swd32 only: pop     esi
++ swd3e only: pop     ebp

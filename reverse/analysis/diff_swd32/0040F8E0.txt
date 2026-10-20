@@ -1,0 +1,6 @@
+swd3e 0x0040F8E0 sub_40F8E0 <- swd32 0x0040F5A0 sub_40F5A0; method=calls reusable=no: the code differs
+same=19 offset=0 constant=1 global=0 code=0 inserted=3 deleted=0
++ swd3e only: call    sub_43DAB0
++ swd3e only: mov     edx, [esi+44h]
++ swd3e only: push    edx
+~ constant swd32: add     esp, 8                                   swd3e: add     esp, 0Ch

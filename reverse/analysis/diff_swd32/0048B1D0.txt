@@ -1,0 +1,22 @@
+swd3e 0x0048B1D0 sub_48B1D0 <- swd32 0x00478380 sub_478380; method=neighbours reusable=no: the code differs
+same=9 offset=1 constant=3 global=0 code=0 inserted=15 deleted=1
+~ constant swd32: push    9                                        swd3e: push    0Ah
+~ constant swd32: mov     eax, 96h                                 swd3e: mov     eax, 168h
+~ constant swd32: add     eax, 12Ch                                swd3e: add     eax, 32h
+~ offset   swd32: mov     [esi+2A12h], ax                          swd3e: mov     [esi+2F2Eh], ax
++ swd3e only: mov     eax, [esp+4+arg_0]
++ swd3e only: cmp     eax, 1
++ swd3e only: jnz     short loc_48B228
++ swd3e only: mov     eax, [esi+2FE0h]
++ swd3e only: test    eax, eax
++ swd3e only: jnz     short loc_48B217
++ swd3e only: mov     edx, dword_4BEFF8
++ swd3e only: dec     edx
++ swd3e only: mov     [esi+2F2Eh], dx
+- swd32 only: retn
++ swd3e only: retn    4
++ swd3e only: mov     eax, dword_4BEFF8
++ swd3e only: add     eax, 0FFFFFED4h
++ swd3e only: mov     [esi+2F2Eh], ax
++ swd3e only: pop     esi
++ swd3e only: retn    4

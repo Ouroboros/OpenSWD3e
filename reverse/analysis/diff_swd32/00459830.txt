@@ -1,0 +1,27 @@
+swd3e 0x00459830 sub_459830 <- swd32 0x00451730 sub_451730; method=neighbours reusable=no: the code differs
+same=15 offset=3 constant=2 global=0 code=1 inserted=4 deleted=15
+- swd32 only: push    ebp
++ swd3e only: push    ebx
+- swd32 only: mov     ebp, 6
++ swd3e only: mov     ebx, 6
+~ offset   swd32: lea     esi, [edi+9Ch]                           swd3e: lea     esi, [edi+0A8h]
+- swd32 only: mov     eax, [esi]
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_451772
+- swd32 only: mov     eax, [eax]
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_45175D
+- swd32 only: push    eax
+- swd32 only: call    sub_4885A0
+- swd32 only: mov     eax, [esi]
+- swd32 only: add     esp, 4
+- swd32 only: mov     dword ptr [eax], 0
+~ constant swd32: add     esi, 4                                   swd3e: add     esi, 14h
+- swd32 only: dec     ebp
++ swd3e only: dec     ebx
+~ code     swd32: jnz     short loc_451740                         swd3e: jnz     short loc_459840
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ offset   swd32: mov     word ptr [edi+0C0h], 0                   swd3e: mov     word ptr [edi+12Ch], 0
+~ offset   swd32: mov     dword ptr [edi+0BCh], 0                  swd3e: mov     dword ptr [edi+128h], 0
+- swd32 only: pop     ebp
++ swd3e only: pop     ebx

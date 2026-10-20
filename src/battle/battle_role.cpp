@@ -1,0 +1,2398 @@
+#include "battle/battle_role.h"
+
+#include <algorithm>
+#include <array>
+#include <cstring>
+#include <optional>
+#include <string_view>
+
+#include "audio/audio_manager.h"
+#include "battle/battle_message.h"
+#include "battle/battle_role_constants.h"
+#include "battle/battle_services.h"
+#include "battle/battle_state.h"
+#include "battle/smooth/smooth_draw.h"
+#include "battle/smooth/smooth_role.h"
+#include "config/config.h"
+#include "core/assertion.h"
+#include "core/words.h"
+#include "crt/msvc.h"
+#include "draw/painter.h"
+#include "org/database.h"
+#include "org/fame.h"
+#include "pic/rle.h"
+#include "platform/display.h"
+#include "random/random.h"
+#include "res/act_archive.h"
+#include "res/tsw_archive.h"
+#include "text/big5.h"
+
+namespace swd3e
+{
+
+// swd32.exe 0x0046E490 (unmatched in swd3e)
+BattleRole::BattleRole()
+    : ownedRecord(std::make_unique<RoleRecord>())
+{
+    this->battleRecord = this->ownedRecord.get();
+}
+
+// swd3e.exe 0x0047E6D0: the destructor: the role's buffers freed (then the unit's, BattleUnit::~BattleUnit)
+// swd3e.exe EH funclet (tail) of 0x0047E6D0, swd32 0x00498390 (EH unwind: the unit part, by BattleUnit::~BattleUnit)
+// swd3e.exe EH funclet (tail) of 0x0047E6D0, swd32 0x00498398 (EH handler of 0x0046E4D0)
+BattleRole::~BattleRole()
+{
+    this->Release();
+}
+
+// swd3e.exe 0x004860D0: the description of unk2B24 and the battle copy of the role's record freed
+void BattleRole::Release()
+{
+    this->unk2B24.description.reset();
+    this->ownedRecord.reset();
+    this->battleRecord = nullptr;
+}
+
+// swd32.exe 0x0046E870 (unmatched in swd3e)
+void BattleRole::SetSkills(ItemNode* list)
+{
+    this->skills = list;
+    this->skillsHead = list;
+}
+
+// swd3e.exe 0x0047EAF0
+void BattleRole::SetInventory(ItemLink* list)
+{
+    this->inventory = list;
+    this->inventoryNode = nullptr;
+    this->inventoryHead = list;
+}
+
+namespace
+{
+
+constexpr std::string_view kManroleFile = "C:\\cpp\\SWD102e\\manrole.cpp";
+// The source lines the assertions name.
+constexpr u32 kNoActLine = 0xDE;
+constexpr u32 kNoEscortActLine = 0x123;
+constexpr u32 kNoGuestActLine = 0x14E;
+constexpr u32 kNoWeaponActLine = 0x182;
+constexpr std::u8string_view kNoAct = u8"戰鬥角色actNumber為0!!";           // swd32.exe 0x004A7C2C (unmatched in swd3e)
+constexpr std::u8string_view kNoEscortAct = u8"護駕actNumber為0!!";         // swd32.exe 0x004A7C68 (unmatched in swd3e)
+constexpr std::u8string_view kNoGuestAct = u8"Npc角色actNumber為0!!";       // swd32.exe 0x004A7C7C (unmatched in swd3e)
+constexpr std::u8string_view kNoWeaponAct = u8"武器%d號的強攻擊act沒設!!";  // swd32.exe 0x004A7C94 (unmatched in swd3e)
+constexpr i16 kStatLimit = 0x270F;
+
+constexpr u16 kStruckEvasion = 8;
+
+// AttackFrame.
+
+// StartAbsorb: the particles fly into a point beside the role; a picture of kTallPicture rows or more bursts in half
+// its height, a shorter one in its height less kShortBurstCut.
+constexpr u16 kAbsorbLife = 0x14;
+constexpr u16 kAbsorbSpeed = 0x1E;
+constexpr int kAbsorbLeft = 0x32;
+constexpr int kAbsorbDown = 0x28;
+constexpr u16 kTallPicture = 100;
+constexpr u16 kShortBurstCut = 10;
+constexpr u16 kAbsorbDivisor = 0x28;
+
+constexpr u16 kAbsorbFlags = ParticleEffect::WithinRange | ParticleEffect::Mixed;
+
+// ThrowAct.
+
+// GlowAct.
+
+// PoseAtTarget.
+
+// Steal and AttackPose.
+constexpr u16 kNothingToSteal = 25000;  // Steal: the target has no item
+constexpr u16 kStealRoll = 10;          // the roll is 0..9 less one per kStealShare percent of proficiency
+constexpr u16 kStealShare = 25;
+constexpr u16 kSureSteal = 100;  // a proficiency of 100 or more always steals
+
+// BeamSpellFrame: the stages in stage.
+
+// ChargeAttackFrame.
+
+// SwarmSpellFrame.
+
+// BoomerangFrame: the stages in stage.
+
+// LeapSpellFrame: the stages in stage.
+
+// UseSelectedItem: bits of the item's object.
+constexpr u16 kMultiUse = 0x400;  // ObjectData::useKind: the item has uses in the low byte
+constexpr u16 kUsesMask = 0xFF;
+constexpr u32 kKeptKind = 0x80;  // ObjectData::kind: not spent by a use
+constexpr u32 kUnkKind8000000 = 0x8000000;
+constexpr u16 kNoUseAct = 0x2000;  // ObjectData::costBits: the use returns no item
+
+// CancelCommand and AddFury.
+constexpr std::size_t kCancelledNameBytes = 0x10;  // only the start of the skill name is cleared
+constexpr int kFillFury = -1;
+constexpr i32 kFuryFull = 0x38;
+constexpr double kFuryScale = 47.0;  // swd32.exe 0x00499D40 (unmatched in swd3e)
+constexpr u16 kFurySound = 0xBC;
+
+// Regenerate: the gains show 6 frames apart.
+constexpr u16 kRegenerateDelay = 6;
+
+// UseAccessorySkill: the unk26CC bit of each accessory kind (RepeatAttack is kRepeatAttack).
+constexpr u32 kAccessoryBit16 = 0x2;
+constexpr u32 kAccessoryBit17 = 0x4;
+constexpr u32 kAccessoryBit18 = 0x8;
+constexpr u32 kAccessoryBit19 = 0x10;
+constexpr u32 kAccessoryBit1A = 0x20;
+constexpr u32 kAccessoryBit1B = 0x40;
+constexpr u32 kAccessoryBit1D = 0x100;
+constexpr u32 kAccessoryBit1E = 0x200;
+constexpr u16 kAccessoryStep = 5;        // the proficiency steps of an accessory command
+constexpr u16 kDrainStep = 0xC;          // the proficiency the life-drain accessory gains from a drain
+constexpr u32 kCountedKind = 0x8000000;  // ObjectData::kind bit of the objects CountUsableObjects counts
+constexpr u16 kThrownObject = 0x300;
+constexpr u8 kCountedUsers = 5;        // usableBy (low byte) bits 0 and 2
+constexpr u16 kListedObject = 0x2000;  // ObjectData::costBits bit of the objects ListedObject counts
+constexpr u32 kCategory0 = 0x10;       // the kind bits of the list categories (BattleRole::CategoryKinds)
+constexpr u32 kCategory1 = 0xC;
+constexpr u32 kCategory2 = 0x1001;
+constexpr u32 kCategory3 = 0x800;
+constexpr u32 kCategory4 = 0x2000;
+constexpr u32 kCategory5 = 0x8000000;
+constexpr int kSkillCategories = 3;
+constexpr int kListCategories = 4;
+constexpr int kObjectCategories = 6;
+constexpr int kSkillType0 = 0x1C;  // ObjectData::category of the skill types
+constexpr int kSkillType1 = 0x1F;
+constexpr u16 kFirstSkillType = 0x1B;
+constexpr u16 kLastSkillType = 0x1E;
+constexpr u16 kShownObject = 0x8000;  // ListObject flags
+constexpr u16 kCostlyObject = 0x4000;
+constexpr u16 kCostsStamina = 0x4000;  // ObjectData::costBits: the low 14 bits are a stamina cost
+constexpr u16 kCostMask = 0x3FFF;
+constexpr u16 kNoSkill = 0xFFFF;
+constexpr u16 kCostFlag = 0x8000;  // ObjectData::costBits: the low 15 bits are a cost
+constexpr u16 kCostValueMask = 0x7FFF;
+constexpr u16 kFixedCostBit = 0x800;
+constexpr u16 kFixedCost = 1000;
+constexpr double kCounterPercent = 100.0;  // swd32.exe 0x00499D28 (unmatched in swd3e)
+constexpr u16 kNoSkillChosen = 0xFFFF;
+constexpr u16 kHealPercentBit = 0x200;  // ObjectData::useKind: the heals are percentages
+constexpr u32 kOffensiveKind = 8;
+constexpr u16 kItemCostBit = 0x800;  // ObjectData::costBits: the low 11 bits name an object the skill takes
+constexpr u16 kItemCostMask = 0x7FF;
+constexpr int kRefusalX = 0x118;
+constexpr int kRefusalY = 0xA;
+constexpr i16 kRefusalFrames = 0x14;
+constexpr int kRefusalFlags = BattleMessage::BlackBar | BattleMessage::Centered;
+constexpr u16 kRefusedSound = 0x8C;
+constexpr std::size_t kClearedNameBytes = 0x10;
+constexpr std::u8string_view kNoObjectEffect = u8"%d物品特效號碼沒設";  // swd32.exe 0x004A7CDC (unmatched in swd3e)
+constexpr u32 kNoObjectActLine = 0x926;
+constexpr u32 kSeparateKind = 0x800;  // ObjectData::kind: the object plays its own act (UnkCommandFlag1000)
+constexpr u32 kReusableKind = 0x80;   // an object not taken when used
+constexpr u16 kThrownChoice = 2;
+constexpr u16 kOtherThrowChoice = 3;
+constexpr int kUnk1FScale = 4;           // Unk1F: unk29A4 is 4 percent of the proficiency and 1
+constexpr int kAccessoryBaseShare = 10;  // the heals add a tenth of their base
+constexpr int kHalfShare = 5;            // Unk22 / Unk24: the proficiency is halved, less a fifth of that
+constexpr int kSpiritShare = 5;          // Unk23: a fifth of the proficiency
+
+// RollCritical and PrepareCommand.
+constexpr u32 kCriticalAttacks = 8;  // a critical may be rolled after 8 attacks, is sure after roleCount more
+constexpr u32 kCriticalRoll = 10;
+constexpr u16 kCriticalChance = 5;  // a roll above it is critical
+constexpr u16 kWalkCommand = 0xC8;  // command A of a walking attack (its command in command B)
+
+// BeatsLevel: chances out of kLevelRoll.
+constexpr u32 kLevelRoll = 100;
+constexpr u32 kAboveChance = 35;
+constexpr u32 kCloseChance = 70;  // 1..kNearBelow-1 levels below
+constexpr u32 kNearChance = 90;   // kNearBelow..kSureBelow-1 levels below
+constexpr int kNearBelow = 8;
+constexpr int kSureBelow = 13;
+
+// StepBack.
+
+// CanAbsorb.
+constexpr u16 kMaxAbsorbClass = 0x15;   // ObjectData::category
+constexpr int kAbsorbLevelsAbove = 12;  // a target this many levels above the role is never absorbed
+constexpr int kSureAbsorbBelow = 10;
+constexpr int kQuarterAbove = 7;
+constexpr int kFarBelow = 5;
+constexpr int kQuarter = 4;
+constexpr int kThird = 3;
+constexpr u32 kAbsorbRoll = 100;
+constexpr int kFarBelowChance = 80;
+constexpr int kAbsorbChanceBase = 20;
+constexpr int kAbsorbChanceStep = 5;  // less per level above
+constexpr int kBelowChanceStep = 10;  // more per level below
+
+constexpr u16 kCoinArmour = 0x39D;  // 投幣式鎧甲: the gold pays for the hits
+constexpr int kTenths = 10;
+constexpr int kPercent = 100;
+constexpr u32 kAttackRingPercent = 10;  // an attack ring adds 10% of the attack bonus besides its proficiency share
+
+// The value grown by a tenth per point of `scale` (the product kept to 16 bits as the original does).
+i16 Grown(i16 value, i16 scale)
+{
+    return static_cast<i16>(value + static_cast<i16>(scale * value) / kTenths);
+}
+
+}  // namespace
+
+// swd3e.exe 0x0047E930: the battle extras cleared: the words past the unit, the five acts at +0x2BC8, slot acts 8 and
+// 9 and the record at +0x2B24
+void BattleRole::ClearExtras()
+{
+    this->bonusA = 0;
+    this->bonusB = 0;
+    this->bonusC = 0;
+    this->unk2F0C = 0;
+    this->unk2F10 = 0;
+    this->staminaCost = 0;
+    this->unk2F1C = 0;
+    this->weaponId = 0;
+    this->unk2F24 = 0;
+    this->usedItem = 0;
+    this->unk2F18 = 0;
+    this->unk2F16 = 0;
+    this->extraActs.fill(ActState{});
+    this->slotActs[BattleUnit::UnkSlot8] = ActState{};
+    this->slotActs[BattleUnit::UnkSlot9] = ActState{};
+    this->unk2B24 = ObjectRecord{};
+}
+
+// swd3e.exe 0x0047E9C0: a party role entering battle: its record copied into the battle copy (the attack and defence
+// bonuses starting from the attack and defence), its party record kept with its current and maximum values held to
+// 9999, the act from its placement (asserted non-zero), and bit 15 of +0x24 marking it defeated
+void BattleRole::Setup(RoleRecord& record, RoleBattleBlock& block, const UnitPlacement& at, ErrorReporter& reporter)
+{
+    this->ClearExtras();
+    this->placement = at;
+    this->savedPlacement = this->placement;
+    this->kind = at.kind;
+    *this->battleRecord = record;
+    this->roleRecord = &record;
+    this->roleBlock = block.values.data();
+    this->evadeSkill = static_cast<u8>(this->battleRecord->evasion);
+    this->actId = at.actId;
+
+    if (this->actId == 0)
+    {
+        MaintenanceAssert(reporter, kNoAct, 0, kManroleFile, kNoActLine);
+    }
+
+    this->battleRecord->attackBonus = static_cast<u16>(this->battleRecord->strength);
+    this->battleRecord->defenseBonus = static_cast<u16>(this->battleRecord->endurance);
+
+    for (i16* value :
+         {&record.maxHitPoints,
+          &record.hitPoints,
+          &record.maxSpirit,
+          &record.spirit,
+          &record.maxStamina,
+          &record.stamina})
+    {
+        if (*value > kStatLimit)
+        {
+            *value = kStatLimit;
+        }
+    }
+
+    this->defeated = (this->battleRecord->condition & RoleRecord::Defeated) != 0 ? 1 : 0;
+}
+
+// swd32.exe 0x0046E890 (unmatched in swd3e): a summoned escort: its mon.dat object (by the act of its placement,
+// asserted non-zero) gives
+// the attack and defence bonuses, the agility, +0x14, the level byte, the resistances and the hit points of the battle
+// record, which serves as both party and battle record
+void BattleRole::SetupEscort(const UnitPlacement& at, Database& database, ErrorReporter& reporter)
+{
+    this->ownedData = std::make_unique<ObjectRecord>();
+    this->data = this->ownedData.get();
+    database.LoadObject(*this->data, at.actId);
+    Database::FreeDescription(*this->data);
+    this->placement = at;
+    this->savedPlacement = at;
+    this->kind = at.kind;
+    this->actId = at.actId;
+
+    if (this->actId == 0)
+    {
+        MaintenanceAssert(reporter, kNoEscortAct, 0, kManroleFile, kNoEscortActLine);
+    }
+
+    RoleRecord& record = *this->battleRecord;
+    const ObjectData& object = this->data->data;
+    record.attackBonus = object.attack;
+    record.defenseBonus = object.defense;
+    record.agility = static_cast<i16>(object.agility);
+    record.wisdom = static_cast<i16>(object.unk5C);
+    record.evasion = object.battleLevel;
+    std::copy_n(object.resistances.begin(), record.resistances.size(), record.resistances.begin());
+    this->evadeSkill = static_cast<u8>(record.evasion);
+    record.hitPoints = object.hitPoints;
+    record.maxHitPoints = record.hitPoints;
+    this->roleRecord = this->battleRecord;
+    this->weapon.data.skillScript = object.skill;
+}
+
+// swd32.exe 0x0046E9C0 (unmatched in swd3e): a guest fighting with the party: its mon.dat object (by the act of its
+// placement, asserted
+// non-zero) scales the hit points, the bonuses, +0x14, the level and the agility of `base` by tenths, gives its level
+// byte and resistances, and fills the hit points; the record serves as both party and battle record
+void BattleRole::SetupGuest(
+    const UnitPlacement& at,
+    const RoleRecord& base,
+    Database& database,
+    ErrorReporter& reporter
+)
+{
+    this->ownedData = std::make_unique<ObjectRecord>();
+    this->data = this->ownedData.get();
+    database.LoadObject(*this->data, at.actId);
+    Database::FreeDescription(*this->data);
+    this->placement = at;
+    this->savedPlacement = at;
+    this->kind = at.kind;
+    this->actId = at.actId;
+
+    if (this->actId == 0)
+    {
+        MaintenanceAssert(reporter, kNoGuestAct, 0, kManroleFile, kNoGuestActLine);
+    }
+
+    RoleRecord& record = *this->battleRecord;
+    const ObjectData& object = this->data->data;
+    const auto scale = static_cast<i16>(object.attackBonusUp);
+    record.maxHitPoints = Grown(base.maxHitPoints, scale);
+    record.attackBonus = static_cast<u16>(Grown(static_cast<i16>(base.attackBonus), scale));
+    record.defenseBonus = static_cast<u16>(Grown(static_cast<i16>(base.defenseBonus), scale));
+    record.wisdom = Grown(base.wisdom, scale);
+    record.level = static_cast<u8>(base.level + static_cast<i8>(scale * base.level) / kTenths);
+    record.evasion = object.battleLevel;
+    record.agility = static_cast<i16>(base.agility + static_cast<i16>(base.agility * object.agilityUp) / kTenths);
+    std::copy_n(object.resistances.begin(), record.resistances.size(), record.resistances.begin());
+    this->evadeSkill = static_cast<u8>(record.evasion);
+    record.hitPoints = record.maxHitPoints;
+    this->weapon.data.skillScript = object.skill;
+    this->roleRecord = this->battleRecord;
+}
+
+// swd32.exe 0x0046EBB0 (unmatched in swd3e): the sixteen equipment slots add to the battle record: the attack and
+// defence bonuses, the
+// agility, +0x14, +0x18, +0x1E, raised attack and defence, the resistances (not slots 7..10) and, for slots 1..6 of
+// kind 0, the three bonus words. Slot 0 is the weapon (its strong attack act asserted), slots 7 and 8 the
+// accessories; 投幣式鎧甲 makes the gold guard.
+void BattleRole::ApplyEquipment(
+    std::span<const std::unique_ptr<ItemNode>> slots,
+    CounterList& proficiency,
+    ErrorReporter& reporter
+)
+{
+    this->accessories.fill(ObjectRecord{});
+    RoleRecord& record = *this->battleRecord;
+
+    for (std::size_t slot = 0; slot < static_cast<std::size_t>(Party::SlotsPerRole) && slot < slots.size(); ++slot)
+    {
+        if (slots[slot] == nullptr)
+        {
+            continue;
+        }
+
+        const ItemNode& item = *slots[slot];
+        const ObjectData& stats = item.record.data;
+
+        if (slot == BattleRole::WeaponSlot)
+        {
+            this->weapon = item.record;
+            this->weaponId = item.id;
+
+            if (this->weapon.data.unk48 == 0)
+            {
+                MaintenanceAssert(reporter, kNoWeaponAct, item.id, kManroleFile, kNoWeaponActLine);
+            }
+        }
+
+        record.attackBonus = static_cast<u16>(record.attackBonus + stats.attackBonusUp);
+        record.defenseBonus = static_cast<u16>(record.defenseBonus + stats.defenseBonusUp);
+        record.agility = static_cast<i16>(record.agility + stats.agilityUp);
+        record.wisdom = static_cast<i16>(record.wisdom + stats.wisdomUp);
+        record.rapport = static_cast<i16>(record.rapport + stats.rapportUp);
+        record.evasion = static_cast<i16>(record.evasion + stats.evasionUp);
+
+        if (stats.strengthUp != 0)
+        {
+            record.strength = static_cast<i16>(record.strength + stats.strengthUp);
+            record.attackBonus = static_cast<u16>(record.attackBonus + stats.strengthUp);
+        }
+
+        if (stats.enduranceUp != 0)
+        {
+            record.endurance = static_cast<i16>(record.endurance + stats.enduranceUp);
+            record.defenseBonus = static_cast<u16>(record.defenseBonus + stats.enduranceUp);
+        }
+
+        if (slot == BattleRole::FirstAccessorySlot || slot == BattleRole::SecondAccessorySlot)
+        {
+            ObjectRecord& accessory = this->accessories[slot - BattleRole::FirstAccessorySlot];
+            accessory = item.record;
+
+            if (item.id != ItemNode::Empty)
+            {
+                accessory.data.act = item.id;
+            }
+
+            this->ApplyAccessory(accessory, proficiency);
+        }
+        else if (slot != BattleRole::NoResistanceSlotA && slot != BattleRole::NoResistanceSlotB)
+        {
+            for (std::size_t element = 0; element < record.resistances.size(); ++element)
+            {
+                record.resistances[element] = static_cast<u8>(record.resistances[element] + stats.resistances[element]);
+            }
+
+            if (slot < BattleRole::ArmourSlots && stats.useKind == 0)
+            {
+                this->bonusA = static_cast<u16>(this->bonusA + stats.hitPointsUp);
+                this->bonusB = static_cast<u16>(this->bonusB + stats.spiritUp);
+                this->bonusC = static_cast<u16>(this->bonusC + stats.staminaUp);
+            }
+
+            if (item.id == kCoinArmour)
+            {
+                this->goldGuard = 1;
+            }
+        }
+    }
+}
+
+// swd3e.exe 0x0047F3E0: an accessory by its kind: most set their equipment flag; an elemental orb lowers its
+// first resistance by the proficiency of the accessory, an attack ring raises the attack bonus by a tenth and half the
+// proficiency in percent
+void BattleRole::ApplyAccessory(const ObjectRecord& accessory, CounterList& proficiency)
+{
+    RoleRecord& record = *this->battleRecord;
+
+    switch (static_cast<AccessoryKind>(accessory.data.unk48))
+    {
+        case AccessoryKind::Unk32:
+            this->equipmentFlags |= BattleUnit::Unk32;
+            break;
+
+        case AccessoryKind::ElementOrb:
+        {
+            const i16 percent = FindCounterPercent(proficiency, static_cast<i16>(accessory.data.act));
+            std::size_t element = 0;
+
+            while (element < accessory.data.resistances.size() && accessory.data.resistances[element] == 0)
+            {
+                ++element;
+            }
+
+            if (element == accessory.data.resistances.size())
+            {
+                break;
+            }
+
+            const auto scaled = static_cast<i8>(static_cast<u8>(-kTenths * accessory.data.resistances[element]));
+            const auto product = static_cast<i16>(percent * scaled);
+            const auto share = static_cast<u16>(product / kPercent);
+            record.resistances[element] =
+                static_cast<u8>(record.resistances[element] + static_cast<int>(share) / -kTenths);
+            break;
+        }
+
+        case AccessoryKind::AttackRing:
+        {
+            const auto half = static_cast<u16>(
+                static_cast<u16>(FindCounterPercent(proficiency, static_cast<i16>(accessory.data.act))) >> 1
+            );
+            const u16 extra =
+                half != 0 ? static_cast<u16>(half * static_cast<u32>(record.attackBonus) / kPercent) : u16{0};
+            record.attackBonus = static_cast<u16>(
+                record.attackBonus + extra + kAttackRingPercent * static_cast<u32>(record.attackBonus) / kPercent
+            );
+            break;
+        }
+
+        case AccessoryKind::BladeReturn:
+            this->equipmentFlags |= BattleUnit::BladeReturn;
+            break;
+
+        case AccessoryKind::Unk36:
+            this->equipmentFlags |= BattleUnit::Unk36;
+            break;
+
+        case AccessoryKind::SpiritDrain:
+            this->equipmentFlags |= BattleUnit::SpiritDrain;
+            break;
+
+        case AccessoryKind::LifeDrain:
+            this->equipmentFlags |= BattleUnit::LifeDrain;
+            break;
+
+        case AccessoryKind::SpiritFan:
+            this->equipmentFlags |= BattleUnit::SpiritFan;
+            break;
+
+        default:
+            break;
+    }
+}
+
+// swd3e.exe 0x004808C0: the skill list shown from its start
+void BattleRole::ShowAllSkills()
+{
+    this->skills = this->skillsHead;
+}
+
+// swd3e.exe 0x004812E0: the item list shown from its start
+void BattleRole::ShowAllItems()
+{
+    this->inventory = this->inventoryHead;
+    this->inventoryNode = nullptr;
+}
+
+// swd3e.exe 0x00481270: the stamina owed (+0x2F12) taken from the party record, not below 0
+void BattleRole::PayStamina()
+{
+    if (this->staminaCost == 0)
+    {
+        return;
+    }
+
+    this->roleRecord->stamina = static_cast<i16>(this->roleRecord->stamina - this->staminaCost);
+
+    if (this->roleRecord->stamina < 0)
+    {
+        this->roleRecord->stamina = 0;
+    }
+
+    this->staminaCost = 0;
+}
+
+// swd3e.exe 0x004812A0: flag 9 of +0x2A86 and +0x2B0C set, command A from +0x2F18 when set, slot acts 8 and 9 cleared
+void BattleRole::TakeCommand2F18()
+{
+    this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag200);
+    this->unk2B0C = 1;
+
+    if (this->unk2F18 != 0)
+    {
+        this->commandA = this->unk2F18;
+    }
+
+    this->slotActs[BattleUnit::UnkSlot8] = ActState{};
+    this->slotActs[BattleUnit::UnkSlot9] = ActState{};
+}
+
+// swd3e.exe 0x00485F30: a strike of the role on `target`: the weapon's proficiency takes a step (its bonus adds to
+// a hit that does damage), an evadable strike may be evaded (8 in 10 under UnkStatus80) unless the role struck
+// already this turn, and the damage (at most kMaxDamage) adds to the hit's damage and shows on the target
+void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadable)
+{
+    BattleState& battle = services.state;
+    this->slotTint = 0;
+    battle.proficiencyBonus = 0;
+    battle.proficiencyBonus = static_cast<i16>(StepCounterProgress(
+        services.party.fame.lists[Fame::UnkList0],
+        static_cast<i16>(this->weaponId),
+        this->weapon.data.counterMax,
+        this->weapon.data.unk42
+    ));
+    const u16 evasion = (this->status & BattleUnit::UnkStatus80) != 0 ? kStruckEvasion : u16{0};
+
+    if (evadable == 1 && this->evadeRolled == 0 && target.RollEvade(services, evasion) != 0)
+    {
+        this->evadeRolled = 1;
+        return;
+    }
+
+    target.RaiseFlag26B8();
+    battle.lastDamage = 0;
+    i16 spirit = 0;
+    i16 stamina = 0;
+    i32 damage = this->HitDamage(services, target, spirit, stamina);
+    battle.lastDamage = damage;
+
+    if (damage != 0)
+    {
+        damage += battle.proficiencyBonus;
+        battle.lastDamage = damage;
+    }
+
+    if (damage >= kMaxDamage)
+    {
+        damage = kMaxDamage;
+        battle.lastDamage = damage;
+    }
+
+    battle.hitDamage += damage;
+
+    if (damage != -1)
+    {
+        target.SetDamageDigits(services, damage);
+        target.StepTargetCount(1);
+    }
+
+    this->evadeRolled = 1;
+}
+
+// swd3e.exe 0x0047FFD0: one frame of the role's attack on `target`; 1 once it is over. A unit with autoControl and a
+// FadesIn command fades in first; one with guestControl attacks from the middle of the field. The attack act (the
+// critical one, with the weapon's act, while critical) is drawn, and its target bits play the effect in the recoil act,
+// quake the screen, start the follow-up in slotActs[slot] (fading the field by the act's lights), or strike. The
+// follow-up flies to the target (TargetsUnit) or is placed on it and may strike again; once it waits it darkens by 4 a
+// frame. When the attack act waits too, the acts are cleared; without a critical attack an extra attack repeats it, and
+// the recoil tint is left at 1.
+int BattleRole::AttackFrame(BattleServices& services, BattleUnit& target, int slot)
+{
+    smooth::Scene scene;
+    const int result = smooth::RoleFrame(*this).AttackAdvance(services, target, slot, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00481170: item `id` of mon.dat taken as the role's action: its act, its command script (an item without
+// a resistance element takes its +0x34 word as the value) and UnkCommandFlag8000. The original frees the description
+// of the unit's own object (+0x0C) instead of the item's, which it leaks.
+void BattleRole::LoadItemAction(Database& database, u16 id, u32& act)
+{
+    ObjectRecord item;
+    database.LoadObject(item, id);
+
+    // A unit without its object is read through a null pointer in the original.
+    if (this->data != nullptr)
+    {
+        Database::FreeDescription(*this->data);
+    }
+
+    act = item.data.act;
+    this->LoadCommand(database, item.data.skillScript);
+
+    if (this->command.resistance == 0)
+    {
+        this->command.value = static_cast<i16>(item.data.hitPointsUp);
+    }
+
+    this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
+}
+
+// swd3e.exe 0x00481C10: the source unit's idle picture breaks into particles flying into the role (a point 0x32 left
+// of and 0x28 below its act's anchor): the picture is decoded to raw pixels at the source's origin, a tall one (100
+// rows or more) bursting in half its height, a shorter one in its height less 10, mirrored like the source. The
+// projector clips to the screen; the follow-up line, the attack act and the five extra acts are cleared.
+void BattleRole::StartAbsorb(BattleServices& services, BattleUnit& source)
+{
+    u16 sourceX = 0;
+    u16 sourceY = 0;
+    this->absorbSource = source.StepIdleAction(services);
+    source.GetOrigin(sourceX, sourceY);
+    ParticleEffect& effect = this->absorb;
+    effect = ParticleEffect{};
+    this->absorbPixels.clear();
+
+    // A source without its picture is read through a null pointer in the original.
+    if (this->absorbSource == nullptr)
+    {
+        return;
+    }
+
+    const std::optional<RawPicture> raw = RleCodec(services.painter).Decode(this->absorbSource->data);
+
+    if (raw.has_value())
+    {
+        this->absorbPixels.resize(raw->pixels.size() / sizeof(u16));
+        std::memcpy(this->absorbPixels.data(), raw->pixels.data(), this->absorbPixels.size() * sizeof(u16));
+    }
+
+    effect.pixels = this->absorbPixels;
+    effect.width = this->absorbSource->width;
+    effect.height = this->absorbSource->height;
+    effect.x = static_cast<i16>(sourceX) - 1;
+    effect.y = static_cast<i16>(sourceY);
+    effect.lifeBase = kAbsorbLife;
+    effect.speed = kAbsorbSpeed;
+    effect.targetLeft =
+        static_cast<i16>(this->actAnchorX) - static_cast<i16>(this->originX) + this->placement.x - kAbsorbLeft;
+    effect.targetTop = this->placement.y - this->mainAct.y + kAbsorbDown;
+    effect.targetWidth = 1;
+    effect.targetHeight = 1;
+    const u16 height = this->absorbSource->height;
+    effect.bursts = height >= kTallPicture ? static_cast<u16>(height >> 1) : static_cast<u16>(height - kShortBurstCut);
+    effect.divisor = kAbsorbDivisor;
+    effect.tintRed = kAbsorbTint;
+    effect.tintGreen = kAbsorbTint;
+    effect.tintBlue = kAbsorbTint;
+    effect.flags = kAbsorbFlags;
+
+    if (source.Mirrored() == 1)
+    {
+        effect.flags = static_cast<u16>(effect.flags | ParticleEffect::Mirrored);
+    }
+
+    this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag800);
+    services.state.projector.SetScreen(Display::Width, Display::Height);
+    this->throwSteps = 0;
+    this->flight = LineWalker{};
+    this->attackAct = ActState{};
+    this->extraActs.fill(ActState{});
+}
+
+// swd3e.exe 0x00482B40: one frame of extra act `slot` (`id`, `action`) flying from (x, y) into the role's main act
+// anchor, extraSteps[slot] * `steps` line steps a frame (one more each frame). Its sound plays centred; past the
+// role's x less unk2674 it is drawn there for the last time and its steps and the line are cleared.
+void BattleRole::FlyExtraAct(BattleServices& services, i32 id, i32 action, int slot, i16 x, i16 y, int steps)
+{
+    smooth::Scene scene;
+    smooth::RoleFrame(*this).FlyExtraActAdvance(services, id, action, slot, x, y, steps, scene);
+    scene.Show(services);
+}
+
+// swd3e.exe 0x00481DB0: one frame of the absorb; 1 once the picture is gone (its pixels freed, the effect, the extra
+// steps, the follow-up line and the attack act cleared). While bursts are left the sparks fly from a quarter across the
+// picture's remaining top into the role, one more joining every ten frames.
+int BattleRole::AbsorbFrame(BattleServices& services)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).AbsorbFrameAdvance(services, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00482370: one frame of the thrown act (kThrownAct in the attack act) flying from the role's main act
+// anchor to the target's anchor (its draw position when the anchor has a zero coordinate), mirrored by the facing.
+// The flight takes 8 line steps a frame more each frame; once at the target's x it is drawn there, its steps, the line
+// and the attack act are cleared and 1 is returned.
+int BattleRole::ThrowAct(BattleServices& services, const BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).ThrowActAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00482650: one frame of the thrown act flying back (action kCaughtAction, unmirrored, with its own flags)
+// from the target's anchor (its draw position when the anchor has a zero coordinate) into the role's main act anchor,
+// 8 line steps a frame more each frame; once at the role's x it is drawn there, its steps, the line and the attack act
+// are cleared and 1 is returned.
+int BattleRole::CatchAct(BattleServices& services, const BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).CatchActAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x004828E0: one frame of the role's glow act (usedItem, action kGlowAction) drawn additively at (x, y) less
+// its offset, mirrored when the role does not face (the original mirrors on facing 0); 1 once it is over. It brightens
+// by 2 a frame up past kGlowPeak, then dims back to 0 (counting absorbFrames), then sound kGlowEndSound plays and the
+// glow, the attack act and the extra acts are cleared. The original clears the sound of the recoil act instead of this
+// act's.
+int BattleRole::GlowAct(BattleServices& services, int x, int y)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).GlowActAdvance(services, x, y, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00482D70: one frame of the role's pose kTargetPose (in the stand act) at the target's draw position over
+// its shadow; 1 (the stand act cleared, nothing drawn) once the act waits. A facing role mirrors the act once: the
+// mirrored flags with kMirroredOnce go to unknown1C, which keeps the next frames from mirroring the x again. The
+// shadow is fainter with autoControl; the sound pans right of the middle of the screen.
+int BattleRole::PoseAtTarget(BattleServices& services, const BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).PoseAtTargetAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00482FC0: the item stolen from the target (taken from it), 0 when the roll fails, kNothingToSteal when it
+// has none. Below 100 the steal proficiency (of the worn steal accessory, ProficiencyList) lowers a 0..9 roll by one
+// per 25 percent; the roll must stay below the target's steal difficulty.
+u16 BattleRole::Steal(BattleServices& services, const BattleUnit& target)
+{
+    ObjectData& data = target.Data()->data;
+
+    if (data.stealItem == 0)
+    {
+        return kNothingToSteal;
+    }
+
+    this->AccessoryProficiency(
+        static_cast<u16>(AccessoryKind::Steal),
+        services.party.fame.lists[Fame::ProficiencyList]
+    );
+
+    if (this->proficiency < kSureSteal)
+    {
+        const auto roll = static_cast<u16>(services.random.Below(kStealRoll));
+        const int cut = this->proficiency / kStealShare;
+        const u16 value = cut > roll ? u16{0} : static_cast<u16>(roll - cut);
+
+        if (value >= data.stealDifficulty)
+        {
+            return 0;
+        }
+    }
+
+    const u16 item = data.stealItem;
+    data.stealItem = 0;
+    return item;
+}
+
+// swd3e.exe 0x004832A0: always 1 (the target's object is read and not used)
+int BattleRole::CanTarget(const BattleUnit& target)
+{
+    target.Data();
+    return 1;
+}
+
+// swd3e.exe 0x00483060: one frame of the role's attack pose (kAttackAction in the stand act) at its place over its
+// shadow, the sound panned left. The draw takes the act's own x and flags (the mirrored offset and flags it computes
+// for a facing role are kept but not used). It returns the cast act with kHitCast once the act strikes or follows up
+// (the bits cleared), kPoseDone (the act cleared) once it waits, otherwise 0.
+u16 BattleRole::AttackPose(BattleServices& services)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).AttackPoseAdvance(services, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x004832C0: whether the role absorbs the target: only an Absorbable monster (not UnkKind20) of class up to
+// kMaxAbsorbClass, at most 11 levels above the role. Ten levels or more below it always; 7..11 above it at a quarter of
+// its hit points or less; otherwise at a third or less, or by a 0..99 roll: up to 80 for 5..9 levels below, 20 less 5
+// per level above, 20 plus 10 per level below.
+int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) const
+{
+    const ObjectData& data = target.Data()->data;
+    i32 hitPoints = 0;
+    i32 maximum = 0;
+    target.GetHitPoints(hitPoints, maximum);
+
+    if ((data.kind & ObjectData::UnkKind20) != 0 || (data.kind & ObjectData::Absorbable) == 0 ||
+        data.category > kMaxAbsorbClass)
+    {
+        return 0;
+    }
+
+    const int roleLevel = this->battleRecord->level;
+    const int above = data.level - roleLevel;
+
+    if (above >= kAbsorbLevelsAbove)
+    {
+        return 0;
+    }
+
+    const int below = roleLevel - data.level;
+
+    if (below >= kSureAbsorbBelow)
+    {
+        return 1;
+    }
+
+    if (above >= kQuarterAbove && above <= kAbsorbLevelsAbove - 1)
+    {
+        return hitPoints <= maximum / kQuarter ? 1 : 0;
+    }
+
+    auto weakOrRoll = [&](int chance)
+    {
+        if (hitPoints <= maximum / kThird)
+        {
+            return 1;
+        }
+
+        return static_cast<int>(services.random.Below(kAbsorbRoll)) <= chance ? 1 : 0;
+    };
+
+    if (below >= kFarBelow && below < kSureAbsorbBelow)
+    {
+        return weakOrRoll(kFarBelowChance);
+    }
+
+    if (above < kQuarterAbove && above >= 1)
+    {
+        return weakOrRoll(kAbsorbChanceBase - kAbsorbChanceStep * above);
+    }
+
+    if (below >= kFarBelow || below < 0)
+    {
+        return 0;
+    }
+
+    return weakOrRoll(kBelowChanceStep * below + kAbsorbChanceBase);
+}
+
+// swd3e.exe 0x004834A0: one frame of the role's direct attack (pose kForcedAttackAction in the stand act) at its
+// place, the shadow at the target's height. When the act strikes or follows up, the hit lands at once: its damage
+// (at most kMaxDamage, without the proficiency bonus and counted even when no number shows) adds to the hit's damage
+// and shows on the target, and the follow-up act (the cast act) is placed on the target and drawn each frame; 1 (the
+// acts cleared) once the stand act waits after it.
+int BattleRole::DirectAttack(BattleServices& services, BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).DirectAttackAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00483B70: one frame of the role's cast pose (kCastPose in the stand act, its hold left as it is) at its
+// place over its shadow, mirrored by the facing; once the act strikes or follows up (the bits stay set) the spell act
+// `spell` (slot act 0) is drawn on the target each frame, and 1 (both acts cleared) tells that it waits.
+int BattleRole::CastAt(BattleServices& services, const BattleUnit& target, i32 spell)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).CastAtAdvance(services, target, spell, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00483ED0: one frame of the role's magic act (its act + MagicActs, action magicAction, slot act 8) drawn
+// by DrawAction; its target bits play the effect in the recoil act (holding the act) and fade the field by its lights;
+// a follow-up marks the spell cast in BattleState::spellStage. 1 (slot act 8 and the stages cleared) once the battle
+// marks the spell over.
+int BattleRole::MagicFrame(BattleServices& services, const BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).MagicFrameAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x004844B0: one frame of the role's beam spell; 1 once it is over (the four acts cleared). Stage 0 draws
+// the magic act (slot act 8) over its shadow until it follows up; then it glows away (stage bit 1: additive, glowLevel
+// down to kBeamGlowEnd) while the rising act kRiseAct (slot act 9) brightens from slotTint -0x1F above the role
+// (stage bit 2). Stage 4 sends kRiseAct flying (speeding) into the target; on arrival the hit lands (at most
+// kMaxDamage, counted even when no number shows), and stage 0x4000 draws the impact act kImpactAct on the target until
+// it waits. Stage 0x2000 fades the last picture back in with the magic act's flags, 2 a frame up to 0.
+int BattleRole::BeamSpellFrame(BattleServices& services, BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).BeamSpellFrameAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00484B20: one frame of the role's charge attack (magic act in slot act 8 + `slot`, drawn by DrawAction);
+// 1 once it is over (the acts, the trails and the targets cleared, the critical attack ended). When the magic act
+// follows up with bit 8 the role dashes: its picture slides translucent (blue under it) by 10 a frame until the dash
+// is a multiple of kDashLength, the charge act (kChargeAction past magicAction) holding, and a charge hit raises flag
+// 26B8 of the target. Charging, the charge act runs on the target with a trail (trail 1) and its follow-up (the cast
+// act or effectA, slot act 1) mirrored twice; once the charge act waits the role slides back to 0. A strike of the
+// magic act strikes; a follow-up runs the cast act (slot act 0) on the target, drawn with the shadow's palette.
+int BattleRole::ChargeAttackFrame(BattleServices& services, BattleUnit& target, int slot)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).ChargeAttackFrameAdvance(services, target, slot, scene);
+    scene.Show(services);
+    return result;
+}
+
+// The charge part of ChargeAttackFrame (inline in the original): the charge act on the target with trail 1, and its
+// follow-up mirrored twice beside it; 0 when an act ends the frame.
+int BattleRole::ChargeOnTarget(BattleServices& services, BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).ChargeOnTargetAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00485B10: one frame of the role's swarm spell (magic act in slot act 8); 1 once it is over. The magic
+// act's target bits play the effect in the recoil act; once it strikes or follows up, every third frame (glowLevel
+// counting) one more act (the cast act, action unk2F0C; at most 8 queued) flies from a point around the role
+// (SwarmOffsetX / Y) to 0x28 above the target (a UnkAction2 command aims at 0, 0), shaking 0x34 frames, speeding, with
+// a trail, and sound kSwarmSound plays. The queued acts run each frame; when they are all gone and the magic act waits,
+// it ends.
+int BattleRole::SwarmSpellFrame(BattleServices& services, BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).SwarmSpellFrameAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00486110: one frame of the role's boomerang throw (pose kForcedAttackAction in the stand act, its hold
+// left as it is, at its place over its shadow); 1 once it is over. Once the pose strikes or follows up, kBoomerangAct
+// is queued flying (kBoomerangOut steps a frame, no hit) to the target, raising flag 26B8 of the target when it
+// arrives, then back (kBoomerangBack steps after kBoomerangShake frames of shaking), and sound kBoomerangSound plays.
+int BattleRole::BoomerangFrame(BattleServices& services, BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).BoomerangFrameAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00485DD0: one frame of the role's leap spell (magic act in slot act 8, stages in stage); 1 once the
+// battle marks the spell over after stage 3 (the act cleared). Stage 0 draws the magic act; stage 1 the next action on
+// the target; stage 2 the action after that walking home (UnkFlag8 set), stage 3 once home. A waiting act moves on a
+// stage; a follow-up marks the spell cast.
+int BattleRole::LeapSpellFrame(BattleServices& services, BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).LeapSpellFrameAdvance(services, target, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x004818E0: the selected item used up: 0 when none is selected or it is not in the list, otherwise its id
+// (usedItem; 0 for an item with kNoUseAct). A multi-use item (kMultiUse, uses in the low byte) loses a use and is spent
+// only with its last; a spent item that is not kept (kKeptKind without kUnkKind8000000) loses a count (else a pending
+// count) and unk06, and the selection is cleared; an item left with no count is freed from the list. The original
+// then reads the flag of the item before it (of the list head for the first item, past it).
+u16 BattleRole::UseSelectedItem()
+{
+    int place = 0;
+    this->ShowAllItems();
+    ItemNode* const selected = this->selectedItem;
+
+    if (selected == nullptr)
+    {
+        return 0;
+    }
+
+    while (true)
+    {
+        ++place;
+        ItemNode* node = this->inventory->get();
+
+        // The original leaves the shown list at no item when the selected one is not in it.
+        if (node == nullptr)
+        {
+            this->inventory = nullptr;
+            this->inventoryNode = nullptr;
+            return 0;
+        }
+
+        this->inventory = &node->next;
+        this->inventoryNode = node;
+
+        if (node->id == selected->id)
+        {
+            break;
+        }
+    }
+
+    this->inventory = &selected->next;
+    this->inventoryNode = selected;
+    this->usedItem = selected->id;
+    ObjectData& data = selected->record.data;
+    const u16 uses = data.useKind;
+    bool spent = true;
+
+    if ((uses & kMultiUse) != 0 && (uses & kUsesMask) != 0)
+    {
+        data.useKind = static_cast<u16>((uses & ~kUsesMask) | ((uses & kUsesMask) - 1));
+        spent = (uses & kUsesMask) == 1;
+    }
+
+    if (spent && ((data.kind & kKeptKind) == 0 || (data.kind & kUnkKind8000000) != 0))
+    {
+        if (selected->count != 0)
+        {
+            --selected->count;
+        }
+        else if (selected->pending != 0)
+        {
+            --selected->pending;
+        }
+
+        if (selected->unk06 != 0)
+        {
+            --selected->unk06;
+        }
+
+        this->selectedItem = nullptr;
+    }
+
+    ItemNode* flagged = selected;
+
+    if (selected->count == 0 && selected->pending == 0)
+    {
+        std::unique_ptr<ItemNode> rest = std::move(selected->next);
+        this->ShowAllItems();
+        ItemLink* before = this->inventory;
+
+        for (int step = place - 1; step > 0; --step)
+        {
+            before = &(*before)->next;
+        }
+
+        // `before` holds the freed item; the item before it is the one whose flag is read next.
+        *before = std::move(rest);
+        flagged = nullptr;
+
+        if (place - 1 > 0)
+        {
+            ItemLink* previous = this->inventory;
+
+            for (int step = place - 2; step > 0; --step)
+            {
+                previous = &(*previous)->next;
+            }
+
+            flagged = previous->get();
+        }
+
+        this->inventory = before;
+        this->inventoryNode = flagged;
+    }
+
+    // The list head read as an item has no flag here.
+    if (flagged != nullptr && (flagged->record.data.costBits & kNoUseAct) != 0)
+    {
+        return 0;
+    }
+
+    return this->usedItem;
+}
+
+// swd3e.exe 0x00486030: the role's chosen command dropped: the command, the start of the skill name, the stamina
+// owed, the item and the heals cleared; a selected item gives back its reservation (unk06 of the item at the list
+// cursor, which the original reads in the list head when the cursor is there)
+void BattleRole::CancelCommand()
+{
+    this->commandFlags = 0;
+    this->command = UnitCommand{};
+    std::fill_n(this->skillName.begin(), kCancelledNameBytes, '\0');
+    this->unk2F10 = 0;
+    this->staminaCost = 0;
+    this->magicAction = 0;
+    this->unk2F16 = 0;
+    this->unk2F18 = 0;
+    this->restoreHitPoints = 0;
+    this->restoreSpirit = 0;
+    this->restoreStamina = 0;
+    this->unk29A4 = 0;
+    this->usedItem = 0;
+
+    if (this->selectedItem == nullptr)
+    {
+        return;
+    }
+
+    if (this->inventoryNode != nullptr && this->inventoryNode->unk06 != 0)
+    {
+        --this->inventoryNode->unk06;
+    }
+
+    this->selectedItem = nullptr;
+}
+
+// swd3e.exe 0x00499DC0: the fury gauge (roleBlock[0], full at kFuryFull) raised by `damage` taken: -1 fills it, 0
+// empties it; otherwise, below full, by damage / maximum hit points * 47 (a whole hit point or more fills it), the
+// damage carried while that is 0 (with the original's double compare it never is). Full plays kFurySound. Not for a
+// forced unit.
+void BattleRole::AddFury(BattleServices& services, int damage)
+{
+    if (this->autoControl == 1 || this->guestControl == 1)
+    {
+        return;
+    }
+
+    int carried = damage;
+    i32& fury = this->roleBlock[0];
+
+    if (damage == kFillFury)
+    {
+        fury = kFuryFull;
+    }
+    else if (damage == 0)
+    {
+        fury = 0;
+    }
+
+    const i32 before = fury;
+
+    if (before >= kFuryFull || damage <= 0)
+    {
+        return;
+    }
+
+    const int maximum = this->roleRecord->maxHitPoints;
+
+    if (damage < maximum)
+    {
+        if (this->damageCarry > 0)
+        {
+            carried = this->damageCarry + damage;
+            damage += this->damageCarry;
+        }
+
+        const double share = static_cast<double>(damage) / static_cast<double>(maximum) * kFuryScale;
+        fury = before + crt::Ftol(share);
+
+        if (share == 0.0)
+        {
+            this->damageCarry += carried;
+        }
+        else
+        {
+            this->damageCarry = 0;
+        }
+    }
+    else
+    {
+        fury = kFuryFull;
+    }
+
+    if (fury >= kFuryFull)
+    {
+        fury = kFuryFull;
+        services.audio.PlaySound(kFurySound, services.config.soundVolume);
+    }
+}
+
+// swd3e.exe 0x0047F210: the turn's regeneration of a role still up: its armour bonuses (percent of its maxima, at
+// least 1) heal its hit points, spirit and stamina, each shown 6 frames after the one before
+void BattleRole::Regenerate(BattleServices& services)
+{
+    const RoleRecord& record = *this->roleRecord;
+
+    if ((record.condition & RoleRecord::Defeated) != 0)
+    {
+        return;
+    }
+
+    u16 delay = 0;
+
+    auto share = [](u16 bonus, i16 maximum)
+    {
+        const auto value = static_cast<u16>(bonus * maximum / kPercent);
+        return value == 0 ? u16{1} : value;
+    };
+
+    if (this->bonusA != 0)
+    {
+        this->restoreHitPoints = static_cast<u16>(-static_cast<i16>(share(this->bonusA, record.maxHitPoints)));
+        this->Damage(services, static_cast<i16>(this->restoreHitPoints), 0, 0);
+        this->PushTarget(BattleUnit::HealTarget);
+        this->SetDamageDigits(services, static_cast<i16>(this->restoreHitPoints));
+        this->PushTargetAlt(0);
+        this->StepTargetCount(1);
+        delay = kRegenerateDelay;
+        this->restoreHitPoints = 0;
+    }
+
+    if (this->bonusB != 0)
+    {
+        this->restoreSpirit = share(this->bonusB, record.maxSpirit);
+        this->Damage(services, 0, static_cast<i16>(this->restoreSpirit), 0);
+        this->PushTarget(BattleUnit::SpiritGainTarget);
+        this->SetDamageDigits(services, static_cast<i16>(this->restoreSpirit));
+        this->PushTargetAlt(delay);
+        this->StepTargetCount(1);
+        delay = static_cast<u16>(delay + kRegenerateDelay);
+        this->restoreSpirit = 0;
+    }
+
+    if (this->bonusC != 0)
+    {
+        this->restoreStamina = share(this->bonusC, record.maxStamina);
+        this->Damage(services, 0, 0, static_cast<i16>(this->restoreStamina));
+        this->PushTarget(BattleUnit::StaminaGainTarget);
+        this->SetDamageDigits(services, static_cast<i16>(this->restoreStamina));
+        this->PushTargetAlt(delay);
+        this->StepTargetCount(1);
+        this->restoreStamina = 0;
+    }
+}
+
+// swd3e.exe 0x0047F5C0: the command of an accessory of `kind` (the stamina it costs taken first when none is owed):
+// the kind sets its unk26CC bit and becomes command A (some take command B with UnkCommandFlag400, command A 0) and
+// most read the accessory's proficiency into proficiency; Unk1F scales unk29A4, Unk22 / Unk23 / Unk24 a heal of the
+// hit points / spirit / stamina of the battle record. The proficiencies then step by kAccessoryStep.
+void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
+{
+    CounterList& proficiency = services.party.fame.lists[Fame::ProficiencyList];
+
+    if (this->staminaCost == 0)
+    {
+        this->staminaCost = this->AccessoryValue(kind);
+    }
+
+    const RoleRecord& record = *this->battleRecord;
+
+    auto share = [](i16 base, u16 percent)
+    {
+        return static_cast<u16>(base * percent / kPercent + base / kAccessoryBaseShare);
+    };
+
+    switch (static_cast<AccessoryKind>(kind))
+    {
+        case AccessoryKind::RepeatAttack:
+            this->unk26CC |= kRepeatAttack;
+            this->commandA = 1;
+            this->AccessoryProficiency(kind, proficiency);
+            this->StepAccessoryCounters(proficiency, kAccessoryStep);
+            this->extraAttacks = 1;
+            return;
+
+        case AccessoryKind::Unk16:
+            this->commandA = 0;
+            this->unk26CC |= kAccessoryBit16;
+            this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
+            this->commandB = kind;
+            break;
+
+        case AccessoryKind::Steal:
+            this->commandA = kind;
+            this->unk26CC |= kAccessoryBit17;
+            break;
+
+        case AccessoryKind::Unk18:
+            this->unk26CC |= kAccessoryBit18;
+            this->commandA = kind;
+            this->AccessoryProficiency(kind, proficiency);
+            break;
+
+        case AccessoryKind::Unk19:
+            this->commandA = 0;
+            this->unk26CC |= kAccessoryBit19;
+            this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
+            this->commandB = kind;
+            break;
+
+        case AccessoryKind::Unk1A:
+            this->commandA = kind;
+            this->unk26CC |= kAccessoryBit1A;
+            break;
+
+        case AccessoryKind::Unk1B:
+            this->commandA = kind;
+            this->unk26CC |= kAccessoryBit1B;
+            break;
+
+        case AccessoryKind::Unk1C:
+            this->commandA = kind;
+            this->AccessoryProficiency(kind, proficiency);
+            break;
+
+        case AccessoryKind::Unk1D:
+            this->commandA = kind;
+            this->unk26CC |= kAccessoryBit1D;
+            break;
+
+        case AccessoryKind::Unk1E:
+            this->commandA = kind;
+            this->unk26CC |= kAccessoryBit1E;
+            break;
+
+        case AccessoryKind::Unk1F:
+            this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
+            this->commandA = 0;
+            this->commandB = kind;
+            this->AccessoryProficiency(kind, proficiency);
+            this->unk29A4 = static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);
+            break;
+
+        case AccessoryKind::Unk20:
+        case AccessoryKind::Unk21:
+            this->commandA = kind;
+            this->AccessoryProficiency(kind, proficiency);
+            break;
+
+        case AccessoryKind::Unk22:
+            this->AccessoryProficiency(kind, proficiency);
+            this->proficiency = static_cast<u16>((this->proficiency >> 1) - (this->proficiency >> 1) / kHalfShare);
+            this->restoreHitPoints = share(record.maxHitPoints, this->proficiency);
+            break;
+
+        case AccessoryKind::Unk23:
+            this->AccessoryProficiency(kind, proficiency);
+            this->proficiency = static_cast<u16>(this->proficiency / kSpiritShare);
+            this->restoreSpirit = share(record.maxSpirit, this->proficiency);
+            break;
+
+        case AccessoryKind::Unk24:
+            this->AccessoryProficiency(kind, proficiency);
+            this->proficiency = static_cast<u16>((this->proficiency >> 1) - (this->proficiency >> 1) / kHalfShare);
+            this->restoreStamina = share(record.stamina, this->proficiency);
+            break;
+
+        default:
+            return;
+    }
+
+    this->StepAccessoryCounters(proficiency, kAccessoryStep);
+}
+
+// swd3e.exe 0x004807B0: whether the role's next attack is critical (it sets `critical`): never for a forced unit, with
+// an accessory command or for the role that had the last one; always with the Unk32 equipment; after roleCount + 8
+// attacks since the last one; after 8, on a 0..9 roll above 5. A rolled one restarts the count for this role.
+void BattleRole::RollCritical(BattleServices& services)
+{
+    BattleState& battle = services.state;
+
+    if (this->autoControl == 1 || this->guestControl == 1 || this->unk26CC != 0 ||
+        battle.lastCriticalRole == this->placement.actId)
+    {
+        return;
+    }
+
+    if ((this->equipmentFlags & BattleUnit::Unk32) != 0)
+    {
+        this->critical = 1;
+        return;
+    }
+
+    const u32 since = battle.attacksSinceCritical;
+
+    if (since < battle.roleCount + kCriticalAttacks &&
+        (since < kCriticalAttacks || static_cast<u16>(services.random.Below(kCriticalRoll)) <= kCriticalChance))
+    {
+        return;
+    }
+
+    this->critical = 1;
+    battle.attacksSinceCritical = 0;
+    battle.lastCriticalRole = this->placement.actId;
+}
+
+// swd3e.exe 0x004808D0: the role's chosen command prepared. A UnkCommandFlag200 command takes command unk2F18 (a
+// walking one, UnkFlag8 / UnkFlag20, goes to command B with command A kWalkCommand). Otherwise the skill name is
+// cleared, the attack set from the battle record (not for Unk1B), the accessory command applied, the critical rolled,
+// the command loaded from skill 0 (a LifeDrain equipment drains life) and then from the weapon's skill: a walking
+// attack (command 1, Steal or Unk1A, not forced) goes to command B with command A kWalkCommand.
+void BattleRole::PrepareCommand(BattleServices& services, Database& database)
+{
+    if (this->commandA == 0)
+    {
+        return;
+    }
+
+    auto walk = [this]
+    {
+        this->commandB = this->commandA;
+        this->commandA = kWalkCommand;
+    };
+
+    auto walksForward = [this]
+    {
+        const u16 kind = this->commandA;
+        const bool attack = kind == 1 || kind == static_cast<u16>(AccessoryKind::Steal) ||
+                            kind == static_cast<u16>(AccessoryKind::Unk1A);
+        return attack && this->autoControl == 0 && this->guestControl == 0;
+    };
+
+    const u16 walking = UnitCommand::UnkFlag8 | UnitCommand::UnkFlag20;
+
+    if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
+    {
+        this->unk2B0C = 1;
+
+        if (this->unk2F18 != 0)
+        {
+            this->commandA = this->unk2F18;
+        }
+
+        if ((this->command.flags & walking) != 0)
+        {
+            walk();
+        }
+
+        return;
+    }
+
+    std::fill_n(this->skillName.begin(), kCancelledNameBytes, '\0');
+    const u16 kind = this->commandA;
+
+    if (kind != static_cast<u16>(AccessoryKind::Unk1B))
+    {
+        this->unk29A4 = this->battleRecord->attackBonus;
+    }
+
+    this->UseAccessorySkill(services, kind);
+    this->RollCritical(services);
+    this->command = UnitCommand{};
+    this->LoadCommand(database, 0);
+
+    if ((this->equipmentFlags & BattleUnit::LifeDrain) != 0)
+    {
+        this->command.actionFlags |= UnitCommand::DrainsLife;
+    }
+
+    const u16 skill = this->weapon.data.skillScript;
+
+    if (skill != 0)
+    {
+        this->LoadCommand(database, skill);
+
+        if ((this->command.flags & walking) == 0 && this->commandA != static_cast<u16>(AccessoryKind::Steal))
+        {
+            return;
+        }
+
+        if (walksForward())
+        {
+            walk();
+        }
+
+        return;
+    }
+
+    if ((this->command.flags & walking) != 0 && walksForward())
+    {
+        walk();
+    }
+}
+
+// swd3e.exe 0x00481200: the cost of the role's command paid: with UnkCommandFlag8000 the selected item is used up, or
+// the spirit owed (unk2F10) taken (not below 0); then the stamina owed
+void BattleRole::FinishCommand()
+{
+    if ((this->commandFlags & BattleUnit::UnkCommandFlag8000) != 0)
+    {
+        if (this->selectedItem != nullptr)
+        {
+            this->UseSelectedItem();
+            this->selectedItem = nullptr;
+        }
+        else
+        {
+            RoleRecord& record = *this->roleRecord;
+            record.spirit = static_cast<i16>(record.spirit - this->unk2F10);
+
+            if (record.spirit < 0)
+            {
+                record.spirit = 0;
+            }
+        }
+
+        this->unk2F10 = 0;
+    }
+
+    this->PayStamina();
+}
+
+// swd3e.exe 0x00481FF0: whether the role wins a roll against `level` (0 never): above the role's level 35 in 100;
+// 1..7 levels below it 70 in 100, 8..12 below 90 in 100, 13 or more always; the same level never
+int BattleRole::BeatsLevel(BattleServices& services, u16 level) const
+{
+    if (level == 0)
+    {
+        return 0;
+    }
+
+    const int own = this->battleRecord->level;
+
+    if (own < level)
+    {
+        return services.random.Below(kLevelRoll) <= kAboveChance ? 1 : 0;
+    }
+
+    const int below = own - level;
+
+    if (below >= kNearBelow && below < kSureBelow)
+    {
+        return services.random.Below(kLevelRoll) <= kNearChance ? 1 : 0;
+    }
+
+    if (below >= 1 && below < kNearBelow)
+    {
+        return services.random.Below(kLevelRoll) <= kCloseChance ? 1 : 0;
+    }
+
+    return below >= kSureBelow ? 1 : 0;
+}
+
+// swd3e.exe 0x00482080: one frame of the role stepping back (mode 1, 0x10 a frame, with kStepBackSound) or standing
+// back (mode 0) in the recoil act's walk action, mirrored against its facing, fadeLevel counting down from 0xF to 6
+// (mode 1) or 2; 1 once there (the recoil act cleared), or for a defeated role. A held or holding role only counts.
+int BattleRole::StepBack(BattleServices& services, int mode)
+{
+    smooth::Scene scene;
+    const auto result = smooth::RoleFrame(*this).StepBackAdvance(services, mode, scene);
+    scene.Show(services);
+    return result;
+}
+
+// swd3e.exe 0x00483830: with a SpiritDrain accessory worn (its proficiency stepped by kDrainStep), `amount` becomes
+// the share drained: half the proficiency in percent of it, plus 1; 0 without one.
+int BattleRole::DrainShare(BattleServices& services, i32& amount)
+{
+    if ((this->equipmentFlags & BattleUnit::SpiritDrain) == 0)
+    {
+        return 0;
+    }
+
+    CounterList& proficiency = services.party.fame.lists[Fame::ProficiencyList];
+    this->AccessoryProficiency(static_cast<u16>(AccessoryKind::SpiritDrain), proficiency);
+    this->StepAccessoryCounters(proficiency, kDrainStep);
+    this->proficiency = static_cast<u16>(this->proficiency >> 1);
+    amount = amount * this->proficiency / kPercent + 1;
+    return 1;
+}
+
+// swd32.exe 0x00475160 (unmatched in swd3e): the proficiency in percent of the Unk1E accessory (硃砂神筆), kept in
+// proficiency
+u16 BattleRole::Unk1EProficiency(BattleServices& services)
+{
+    this->AccessoryProficiency(
+        static_cast<u16>(AccessoryKind::Unk1E),
+        services.party.fame.lists[Fame::ProficiencyList]
+    );
+    return this->proficiency;
+}
+
+// swd3e.exe 0x00481BC0: `count` set to the objects (count and pending) in the inventory with kind bit kCountedKind,
+// not kThrownObject, usable by roles bit 0 or 2 (usableBy low byte & 5); the walk leaves the shown list at its end
+void BattleRole::CountUsableObjects(u16& count)
+{
+    this->ShowAllItems();
+    count = 0;
+
+    while (ItemNode* const node = this->StepItem())
+    {
+        const ObjectData& data = node->record.data;
+
+        if ((data.kind & kCountedKind) != 0 && node->id != kThrownObject &&
+            (LowByte(data.usableBy) & kCountedUsers) != 0)
+        {
+            count = static_cast<u16>(count + node->count + node->pending);
+        }
+    }
+}
+
+// swd3e.exe 0x00481AB0: the `index`th object of the inventory with unk40 bit kListedObject (the first one at all for
+// 0): its name and its count with the pending ones; 0 past the end
+int BattleRole::ListedObject(int index, std::string& name, u16& count)
+{
+    int listed = 0;
+    ItemNode* node = nullptr;
+    this->ShowAllItems();
+
+    do
+    {
+        node = this->StepItem();
+
+        if (node == nullptr)
+        {
+            return 0;
+        }
+
+        if ((node->record.data.costBits & kListedObject) != 0)
+        {
+            ++listed;
+        }
+    } while (listed != index);
+
+    name = ObjectName(node->record);
+    count = static_cast<u16>(node->count + node->pending);
+    return 1;
+}
+
+// The step of the shown item list to its next item (inline in the original, which keeps the node at +0x2EC8): at
+// the end both are cleared.
+ItemNode* BattleRole::StepItem()
+{
+    ItemNode* const node = this->inventory != nullptr ? this->inventory->get() : nullptr;
+
+    if (node == nullptr)
+    {
+        this->inventory = nullptr;
+        this->inventoryNode = nullptr;
+        return nullptr;
+    }
+
+    this->inventory = &node->next;
+    this->inventoryNode = node;
+    return node;
+}
+
+// The kind bits of the item and skill categories of the battle lists (inline in the original: 0 kCategory0, 1
+// kCategory1, 2 kCategory2, 3 kCategory3, 4 kCategory4, 5 kCategory5; another category is taken as the bits);
+// `categories` limits the switch to its first entries as each function has it.
+u32 BattleRole::CategoryKinds(int category, int categories)
+{
+    static constexpr std::array<u32, 6> kinds = {
+        kCategory0,
+        kCategory1,
+        kCategory2,
+        kCategory3,
+        kCategory4,
+        kCategory5,
+    };
+
+    if (category >= 0 && category < categories)
+    {
+        return kinds[static_cast<std::size_t>(category)];
+    }
+
+    return static_cast<u32>(category);
+}
+
+// The step of the shown skill list to its next skill (inline in the original); nullptr at the end.
+ItemNode* BattleRole::StepSkill()
+{
+    this->skills = this->skills != nullptr ? this->skills->next.get() : nullptr;
+    return this->skills;
+}
+
+// swd3e.exe 0x00480C60: `count` raised by the skills of `category` usable by roles bit 0 or 2: for `type` 0 those
+// with unk52 kFirstSkillType..kLastSkillType, otherwise those with unk52 kSkillType1 (type 1 is that kind; others
+// are taken as themselves, but only kSkillType0 is told apart)
+void BattleRole::CountSkills(int category, int type, u8& count)
+{
+    const u32 kinds = BattleRole::CategoryKinds(category, kSkillCategories);
+    int wanted = type;
+
+    if (type == 0)
+    {
+        wanted = kSkillType0;
+    }
+    else if (type == 1)
+    {
+        wanted = kSkillType1;
+    }
+
+    this->ShowAllSkills();
+
+    while (ItemNode* const node = this->StepSkill())
+    {
+        const ObjectData& data = node->record.data;
+
+        if ((LowByte(data.usableBy) & kCountedUsers) == 0 || (kinds & data.kind) == 0)
+        {
+            continue;
+        }
+
+        if (wanted == kSkillType0)
+        {
+            if (data.category >= kFirstSkillType && data.category <= kLastSkillType)
+            {
+                ++count;
+            }
+        }
+        else if (data.category == kSkillType1)
+        {
+            ++count;
+        }
+    }
+}
+
+// The objects of a node left to use: its count and pending ones less those already taken (unk06).
+int BattleRole::ObjectsLeft(const ItemNode& node)
+{
+    return node.count + node.pending - static_cast<u16>(node.unk06);
+}
+
+// swd3e.exe 0x00481460: `count` raised by the objects of `category` usable by roles bit 0 or 2 with some left, and
+// for category 4 by every object with unk40 bit kListedObject as well
+void BattleRole::CountObjects(int category, u16& count)
+{
+    const u32 kinds = BattleRole::CategoryKinds(category, kObjectCategories);
+    this->ShowAllItems();
+
+    while (ItemNode* const node = this->StepItem())
+    {
+        const ObjectData& data = node->record.data;
+
+        if ((kinds & data.kind) != 0 && (LowByte(data.usableBy) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
+        {
+            ++count;
+        }
+
+        if (kinds == kCategory4 && (data.costBits & kListedObject) != 0)
+        {
+            ++count;
+        }
+    }
+}
+
+// swd3e.exe 0x004812F0: the `index`th object of `category` (0..3) usable by roles bit 0 or 2 with some left: its
+// name, the count left, and `flags` kShownObject, with kCostlyObject when its unk40 cost (with kCostsStamina) is
+// above the role's stamina; 0 (flags 0) past the end. Index 0 takes the first object at all, shown only when it
+// qualifies.
+int BattleRole::ListObject(int category, int index, std::string& name, u16& flags, u16& count)
+{
+    int listed = 0;
+    ItemNode* node = nullptr;
+    this->ShowAllItems();
+    flags = 0;
+    const u32 kinds = BattleRole::CategoryKinds(category, kListCategories);
+
+    do
+    {
+        node = this->StepItem();
+
+        if (node == nullptr)
+        {
+            flags = 0;
+            return 0;
+        }
+
+        const ObjectData& data = node->record.data;
+
+        if ((kinds & data.kind) != 0 && (LowByte(data.usableBy) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
+        {
+            ++listed;
+        }
+    } while (listed != index);
+
+    const ObjectData& data = node->record.data;
+
+    if ((kinds & data.kind) != 0 && (LowByte(data.usableBy) & kCountedUsers) != 0)
+    {
+        name = ObjectName(node->record);
+        count = static_cast<u16>(ObjectsLeft(*node));
+        flags = static_cast<u16>(flags | kShownObject);
+
+        if ((data.costBits & kCostsStamina) != 0 && (data.costBits & kCostMask) > this->roleRecord->stamina)
+        {
+            flags = static_cast<u16>(flags | kCostlyObject);
+        }
+    }
+
+    return 1;
+}
+
+// swd3e.exe 0x00481B20: with `throwable`, the `index`th object of kind bit kCountedKind that is not kThrownObject
+// (it becomes the selected item); without, the first kThrownObject (the index ignored, the selection kept). Its name
+// and count (with the pending ones) when usable by roles bit 0 or 2; 0 past the end. Index 0 takes the first object.
+int BattleRole::ThrowableObject(int throwable, int index, std::string& name, u16& count)
+{
+    int listed = 0;
+    ItemNode* node = nullptr;
+    bool selected = true;
+    this->ShowAllItems();
+
+    do
+    {
+        node = this->StepItem();
+
+        if (node == nullptr)
+        {
+            return 0;
+        }
+
+        if (throwable != 0)
+        {
+            if ((node->record.data.kind & kCountedKind) != 0 && node->id != kThrownObject)
+            {
+                ++listed;
+            }
+        }
+        else if (node->id == kThrownObject)
+        {
+            selected = false;
+            break;
+        }
+    } while (listed != index);
+
+    if (selected)
+    {
+        this->selectedItem = node;
+    }
+
+    if ((LowByte(node->record.data.usableBy) & kCountedUsers) != 0)
+    {
+        name = ObjectName(node->record);
+        count = static_cast<u16>(node->count + node->pending);
+    }
+
+    return 1;
+}
+
+// swd3e.exe 0x00480B10: the `index`th skill of `category` (0..2) usable by roles bit 0 or 2, of `type` 0 (unk52
+// kFirstSkillType..kLastSkillType) or 1 (kSkillType1): its name and `cost` (unk40 with bit 15: the low 15 bits; with
+// kCostsStamina: the low 14 with kShownObject; with kFixedCostBit: kFixedCost; type 1: 1; otherwise kept), and the
+// element icon of its skill script (SkillElements by its resistance). Past the end `cost` and the result are 0xFFFF.
+// Other types give cost 0 and the icon of element 0.
+u16 BattleRole::ListSkill(Database& database, int category, int type, int index, std::string& name, u16& cost)
+{
+    const u32 kinds = BattleRole::CategoryKinds(category, kSkillCategories);
+    int wanted = type;
+
+    if (type == 0)
+    {
+        wanted = kSkillType0;
+    }
+    else if (type == 1)
+    {
+        wanted = kSkillType1;
+    }
+
+    int listed = 0;
+    ItemNode* node = nullptr;
+    this->ShowAllSkills();
+
+    do
+    {
+        node = this->StepSkill();
+
+        if (node == nullptr)
+        {
+            cost = kNoSkill;
+            return kNoSkill;
+        }
+
+        const ObjectData& data = node->record.data;
+
+        if ((kinds & data.kind) == 0 || (LowByte(data.usableBy) & kCountedUsers) == 0)
+        {
+            continue;
+        }
+
+        if (wanted == kSkillType0 ? data.category >= kFirstSkillType && data.category <= kLastSkillType
+                                  : data.category == kSkillType1)
+        {
+            ++listed;
+        }
+    } while (listed != index);
+
+    // The original loads the script into a 16-byte buffer whose next local is read as the element; a script that does
+    // not set it leaves the stack's value there (0 here).
+    SkillScript script;
+
+    if (wanted == kSkillType0 || wanted == kSkillType1)
+    {
+        database.LoadSkill(script, node->record.data.skillScript);
+        name = ObjectName(node->record);
+        const u16 bits = node->record.data.costBits;
+
+        if ((bits & kCostFlag) != 0)
+        {
+            cost = static_cast<u16>(bits & kCostValueMask);
+        }
+
+        if ((bits & kCostsStamina) != 0)
+        {
+            cost = static_cast<u16>((bits & kCostMask) | kShownObject);
+        }
+
+        if ((bits & kFixedCostBit) != 0)
+        {
+            cost = kFixedCost;
+        }
+
+        if (wanted == kSkillType1)
+        {
+            cost = 1;
+        }
+    }
+    else
+    {
+        cost = 0;
+    }
+
+    const auto element = static_cast<std::size_t>(LowWord(script.unk10));
+
+    // The original reads past the table for a larger element.
+    return element < BattleRole::SkillElements.size() ? BattleRole::SkillElements[element] : kNoSkill;
+}
+
+// swd3e.exe 0x0047FA00: the proficiency counters of the two worn accessories (their unk50) stepped by `amount` up to
+// their unk44 in `list` (a done one left), a missing one appended and counted; 1 when either accessory counts. Each
+// search starts at the head of the list, its count compared as an id.
+int BattleRole::StepWornCounters(CounterList& list, u16 amount)
+{
+    int counts = 0;
+
+    for (const ObjectRecord& accessory : this->accessories)
+    {
+        const ObjectData& data = accessory.data;
+        const auto id = static_cast<i16>(data.act);
+
+        if (id == 0)
+        {
+            continue;
+        }
+
+        counts = 1;
+        CounterNode* at = &list;
+
+        while (at->id != id && at->next != nullptr)
+        {
+            at = at->next.get();
+        }
+
+        if (at->id == id)
+        {
+            if (at->done == 0)
+            {
+                at->value = static_cast<u16>(at->value + amount);  // a u16 add (0x0046F60B), then held to unk44
+
+                if (at->value >= data.counterMax)
+                {
+                    at->value = data.counterMax;
+                }
+
+                at->percent = static_cast<u16>(
+                    crt::Ftol(static_cast<double>(at->value) / static_cast<double>(data.counterMax) * kCounterPercent)
+                );
+            }
+
+            continue;
+        }
+
+        at->next = std::make_unique<CounterNode>();
+        at = at->next.get();
+        at->id = id;
+        at->value = amount;
+        at->percent = static_cast<u16>(
+            crt::Ftol(static_cast<double>(amount) / static_cast<double>(data.counterMax) * kCounterPercent)
+        );
+        ++list.id;
+    }
+
+    return counts;
+}
+
+// swd3e.exe 0x00480F30: the `index`th node of the skill list (from 1; the count goes on with every node, so a node
+// after the last counted skill is taken when it is reached) taken as the role's command: type 0 counts unk52
+// kFirstSkillType..kLastSkillType and sets UnkCommandFlag8000, type 1 counts kSkillType1 and sets
+// UnkCommandFlag200, other types count kSkillType1. `act` takes its unk50, the command its skill script (cleared
+// first), the skill name its name; with UnkCommandFlag200 magicAction, unk2F16 and unk2F18 take its unk48, unk50 and
+// unk40. Its unk34..unk38 are the heals when unk3C is 0, and percentages with bit kHealPercentBit. The result is 1
+// for a skill of category 0 or a category with kind bit 8 the skill also has; 0xFFFF without one (or index 0).
+u16 BattleRole::SelectSkill(Database& database, int category, int type, int index, u32& act)
+{
+    const u32 kinds = BattleRole::CategoryKinds(category, kSkillCategories);
+
+    if (index == 0)
+    {
+        return kNoSkillChosen;
+    }
+
+    int wanted = type;
+
+    if (type == 0)
+    {
+        this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
+        wanted = kSkillType0;
+    }
+    else if (type == 1)
+    {
+        this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag200);
+        wanted = kSkillType1;
+    }
+
+    this->command = UnitCommand{};
+    this->ShowAllSkills();
+    int listed = 0;
+
+    while (ItemNode* const node = this->StepSkill())
+    {
+        const ObjectData& data = node->record.data;
+
+        if ((LowByte(data.usableBy) & kCountedUsers) != 0 && (kinds & data.kind) != 0)
+        {
+            const bool counted = wanted == kSkillType0
+                                     ? data.category >= kFirstSkillType && data.category <= kLastSkillType
+                                     : data.category == kSkillType1;
+
+            if (counted)
+            {
+                ++listed;
+            }
+        }
+
+        if (listed != index)
+        {
+            continue;
+        }
+
+        act = data.act;
+        this->LoadCommand(database, data.skillScript);
+        this->skillName = {};
+        const std::string name = ObjectName(node->record);
+        std::copy_n(name.begin(), std::min(name.size(), this->skillName.size() - 1), this->skillName.begin());
+
+        if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
+        {
+            this->magicAction = data.unk48;
+            this->unk2F16 = data.act;
+            this->unk2F18 = data.costBits;
+        }
+
+        if (data.useKind == 0)
+        {
+            this->restoreHitPoints = data.hitPointsUp;
+            this->restoreSpirit = data.spiritUp;
+            this->restoreStamina = data.staminaUp;
+        }
+
+        this->healPercent = 0;
+
+        if ((data.useKind & kHealPercentBit) != 0)
+        {
+            this->healPercent = 1;
+            this->restoreHitPoints = data.hitPointsUp;
+            this->restoreSpirit = data.spiritUp;
+            this->restoreStamina = data.staminaUp;
+        }
+
+        const bool offensive =
+            ((kinds & kOffensiveKind) != 0 && (data.kind & kOffensiveKind) != 0) || (kinds & kCategory0) != 0;
+        return offensive ? 1 : 0;
+    }
+
+    return kNoSkillChosen;
+}
+
+// swd3e.exe 0x00480CF0: whether the role can pay for the `index`th skill of `category` (unk52
+// kFirstSkillType..kLastSkillType; 0 for index 0 or past the end). Its unk40 sets the cost: bit 15 the spirit
+// (unk2F10, no item chosen), kCostsStamina the stamina (unk2F12, no item chosen), kItemCostBit an object (unk2F10 its
+// id, which must be in the inventory with some left: it becomes the chosen item). Costs the skill does not set keep
+// their last values (as in the original). A shortfall shows kNotEnoughItems, kNotEnoughSpirit or kNotEnoughStamina
+// with kRefusedSound when no message is up.
+int BattleRole::CanPaySkill(BattleServices& services, int category, int index)
+{
+    const u32 kinds = BattleRole::CategoryKinds(category, kSkillCategories);
+
+    if (index == 0)
+    {
+        return 0;
+    }
+
+    this->ShowAllSkills();
+    int listed = 0;
+    ItemNode* node = nullptr;
+
+    do
+    {
+        node = this->StepSkill();
+
+        if (node == nullptr)
+        {
+            return 0;
+        }
+
+        const ObjectData& data = node->record.data;
+
+        if ((LowByte(data.usableBy) & kCountedUsers) != 0 && (kinds & data.kind) != 0 &&
+            data.category >= kFirstSkillType && data.category <= kLastSkillType)
+        {
+            ++listed;
+        }
+    } while (listed != index);
+
+    auto refuse = [&services](std::u8string_view text)
+    {
+        if (services.messages.messages != nullptr)
+        {
+            return;
+        }
+
+        services.messages.Add(kRefusalX, kRefusalY, kRefusalFrames, text, kRefusalFlags);
+        services.audio.PlaySound(kRefusedSound, services.config.soundVolume);
+    };
+
+    const u16 cost = node->record.data.costBits;
+
+    if ((cost & kCostFlag) != 0)
+    {
+        this->selectedItem = nullptr;
+        this->unk2F10 = static_cast<u16>(cost & kCostValueMask);
+    }
+
+    if ((cost & kCostsStamina) != 0)
+    {
+        this->selectedItem = nullptr;
+        this->staminaCost = static_cast<u16>(cost & kCostMask);
+    }
+
+    if ((cost & kItemCostBit) != 0)
+    {
+        this->unk2F10 = static_cast<u16>(cost & kItemCostMask);
+        this->ShowAllItems();
+
+        while (true)
+        {
+            ItemNode* const item = this->StepItem();
+
+            if (item == nullptr)
+            {
+                refuse(BattleRole::NotEnoughItems);
+                return 0;
+            }
+
+            if (item->id != this->unk2F10)
+            {
+                continue;
+            }
+
+            if (item->count > 0 || item->pending > 0)
+            {
+                this->selectedItem = item;
+                return 1;
+            }
+
+            refuse(BattleRole::NotEnoughItems);
+            return 0;
+        }
+    }
+
+    this->ShowAllSkills();
+
+    if (this->unk2F10 != 0)
+    {
+        if (this->roleRecord->spirit >= this->unk2F10)
+        {
+            return 1;
+        }
+
+        refuse(BattleRole::NotEnoughSpirit);
+    }
+
+    if (this->staminaCost != 0)
+    {
+        if (this->roleRecord->stamina >= this->staminaCost)
+        {
+            return 1;
+        }
+
+        refuse(BattleRole::NotEnoughStamina);
+    }
+
+    return 0;
+}
+
+// swd3e.exe 0x00481540: the `index`th object of `category` (0..5) usable by roles bit 0 or 2 with some left (category
+// 4 also counts every object with kListedObject) taken as the role's command: the command and the first bytes of the
+// skill name cleared, the used item 0; UnkCommandFlag4000 set and the object chosen. A listed object of category 4
+// loads its unk3E script, unk29A4 its unk24 (1). Otherwise its unk48 script (unk3E without one); a spirit or stamina
+// cost (unk2F10, unk2F12) above the role's gives 0. The heals as SelectSkill; `act` the cast act (a maintenance
+// assert "%d物品特效號碼沒設" with the object's id when it has none); an object of kind kSeparateKind sets
+// UnkCommandFlag1000 with its unk50 as the used item. `kind` 1 for category 0 or a shared kind bit 8; category 5
+// (throwing) 2 for kThrownObject with UnkCommandFlag2000, 3 for another object without it. The object's taken count
+// rises unless it is of kind bit kReusableKind (without kind bit kThrowKind) or of category 3. 0 past the end or for
+// index 0.
+int BattleRole::SelectObject(Database& database, ErrorReporter& reporter, int category, int index, u32& act, u16& kind)
+{
+    const u32 kinds = BattleRole::CategoryKinds(category, kObjectCategories);
+    this->command = UnitCommand{};
+    std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
+    this->usedItem = 0;
+
+    if (index == 0)
+    {
+        return 0;
+    }
+
+    int listed = 0;
+    this->ShowAllItems();
+
+    while (ItemNode* const node = this->StepItem())
+    {
+        const ObjectData& data = node->record.data;
+
+        if ((LowByte(data.usableBy) & kCountedUsers) != 0 && (kinds & data.kind) != 0 && ObjectsLeft(*node) > 0)
+        {
+            ++listed;
+        }
+
+        if (kinds == kCategory4 && (data.costBits & kListedObject) != 0)
+        {
+            ++listed;
+        }
+
+        if (listed != index)
+        {
+            continue;
+        }
+
+        this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag4000);
+        this->selectedItem = node;
+        kind = 0;
+
+        if (kinds == kCategory4 && (data.costBits & kListedObject) != 0)
+        {
+            this->LoadCommand(database, data.skillScript);
+            this->unk29A4 = data.attackBonusUp;
+            return 1;
+        }
+
+        this->LoadCommand(database, data.unk48 != 0 ? data.unk48 : data.skillScript);
+
+        if ((data.costBits & kCostFlag) != 0)
+        {
+            this->unk2F10 = static_cast<u16>(data.costBits & kCostValueMask);
+
+            if (this->unk2F10 > this->roleRecord->spirit)
+            {
+                return 0;
+            }
+        }
+
+        if ((data.costBits & kCostsStamina) != 0)
+        {
+            this->staminaCost = static_cast<u16>(data.costBits & kCostMask);
+
+            if (this->staminaCost > this->roleRecord->stamina)
+            {
+                return 0;
+            }
+        }
+
+        if (data.useKind == 0)
+        {
+            this->restoreHitPoints = data.hitPointsUp;
+            this->restoreSpirit = data.spiritUp;
+            this->restoreStamina = data.staminaUp;
+        }
+
+        this->healPercent = 0;
+
+        if ((data.useKind & kHealPercentBit) != 0)
+        {
+            this->healPercent = 1;
+            this->restoreHitPoints = data.hitPointsUp;
+            this->restoreSpirit = data.spiritUp;
+            this->restoreStamina = data.staminaUp;
+        }
+
+        act = this->command.castAct;
+
+        if (this->command.castAct == 0)
+        {
+            MaintenanceAssert(reporter, kNoObjectEffect, node->id, kManroleFile, kNoObjectActLine);
+        }
+
+        if ((data.kind & kSeparateKind) != 0)
+        {
+            this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag1000);
+            this->usedItem = data.act;
+        }
+
+        if ((kinds & kOffensiveKind) != 0 && (data.kind & kOffensiveKind) != 0)
+        {
+            kind = 1;
+        }
+
+        if ((kinds & kCategory0) != 0)
+        {
+            kind = 1;
+        }
+
+        if (kinds == kCategory5)
+        {
+            this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag2000);
+            kind = kThrownChoice;
+
+            if (node->id != kThrownObject)
+            {
+                kind = kOtherThrowChoice;
+                this->commandFlags = static_cast<u16>(this->commandFlags & ~BattleUnit::UnkCommandFlag2000);
+            }
+        }
+
+        if (((data.kind & kReusableKind) == 0 || (data.kind & kCountedKind) != 0) && kinds != kCategory3)
+        {
+            ++node->unk06;
+        }
+
+        return 1;
+    }
+
+    return 0;
+}
+}  // namespace swd3e

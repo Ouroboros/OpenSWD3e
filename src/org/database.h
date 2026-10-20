@@ -1,0 +1,52 @@
+#pragma once
+
+#include <string>
+#include <string_view>
+
+#include "core/types.h"
+#include "file/file.h"
+#include "org/object_record.h"
+
+namespace swd3e
+{
+
+class ErrorReporter;
+
+// mon.dat (objects and skill scripts) and level.dat (level tables), both kept open once read (org.cpp).
+class Database
+{
+public:
+    static constexpr u32 ScriptBytes = 0x400;
+    static constexpr u16 NameTag = 0x3E8;
+
+    explicit Database(const std::u8string& directory);
+
+    // Where the reports of the database show (the game sets it; without one they go to the log).
+    void SetErrorReporter(ErrorReporter& reporter);
+    ErrorReporter* Errors() const;
+
+    bool LoadSkill(SkillScript& skill, u16 id);
+    bool LoadObject(ObjectRecord& record, u16 id);
+    bool LoadLevelEntry(int group, int index, u32& experience);
+    void CloseFiles();
+    // The level.dat script of (group, index) (also read by the level-up of a party role).
+    bool ReadLevelScript(int group, int index, std::vector<u8>& script);
+    // Frees the description without uncounting it.
+    static void FreeDescription(ObjectRecord& record);
+
+    i32 descriptionBytes = 0;  // swd32 0x0053CF48 bytes held by object descriptions
+    ObjectRecord scratch;      // 0x00578510 an object looked up for its limits
+
+private:
+    File* OpenData(File& file, bool& open, std::string_view name);
+    void ReadScript(File& file, u32 offset, std::vector<u8>& script);
+
+    const std::u8string& directory;
+    ErrorReporter* errors = nullptr;
+    File monFile;            // 0x005785E4
+    File levelFile;          // 0x005785E8
+    bool monOpen = false;    // 0x00578500
+    bool levelOpen = false;  // 0x00578504
+};
+
+}  // namespace swd3e

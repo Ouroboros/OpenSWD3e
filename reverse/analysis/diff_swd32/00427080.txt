@@ -1,0 +1,9 @@
+swd3e 0x00427080 sub_427080 <- swd32 0x00485F30 sub_485F30; method=anchor reusable=no: the code differs
+same=53 offset=0 constant=0 global=0 code=5 inserted=2 deleted=0
++ swd3e only: mov     ecx, offset unk_578F40
++ swd3e only: jmp     loc_49DA00
+~ code     swd32: jnz     loc_485FD9                               swd3e: jnz     loc_49DAA9
+~ code     swd32: jnz     loc_485FD9                               swd3e: jnz     loc_49DAA9
+~ code     swd32: jz      short loc_485FCA                         swd3e: jz      short loc_49DA9A
+~ code     swd32: jnz     short loc_485FB0                         swd3e: jnz     short loc_49DA80
+~ code     swd32: jnz     short loc_485F5C                         swd3e: jnz     short loc_49DA2C

@@ -22,20 +22,20 @@
 
 ## 整体进度
 
-- 当前阶段：初步分析与脚手架已完成，等待用户START GOAL。
-- 已识别函数数：1700（36个初步模块，其中`unknown` 313个）；与swd32配上1183个，可复用369个，未配上517个。
-- 函数总数：待确定（间接调用目标、运行时跳转表、`.rsrc`资源未闭合）。
-- 已实现／总数：0／待确定（已识别1700）。
+- 当前阶段：第2阶段（对齐）基本完成，第3阶段（还原）进行中。
+- 已识别函数数：1700；模块已按swd32配对对齐（`unknown` 152个）。
+- 函数总数：待确定（间接调用目标、运行时跳转表未闭合；`.rsrc`资源已提取至third_party/asset/launcher）。
+- 已实现／总数：807／待确定（已识别1700）。
 - 已验证／总数：0／待确定（已识别1700）。
-- 待实现／待验证：1700／1700（以已识别函数计）。
+- 待实现／待验证：893／1700（以已识别函数计）。
 
 ## 当前工作
 
-IDAT初步分析已完成，工作数据库已保存并通过重开检查（输入哈希一致、`AF_FLIRT`关闭、函数外代码头0），初始函数表、结构概览与swd32函数配对已准备；规则已对齐swd3-rebuild。等待用户START GOAL，尚未开始函数实现与验证。
+以swd3-rebuild提交`6f7214a`为底稿复制源码、测试与构建配置，Linux与Windows构建通过，Linux测试128项通过、43项列为待外传化（tests/pending_swd3e.txt）。res模块（tsw、act档案与动作解释器）已按swd3e汇编重写；CRT全部映射；与swd32代码一致的函数已登记；role模块除ControlPlayer外已按swd3e核对；外传新增的小游戏（src/minigame/，0x0049EFF0起13个函数）已还原。停点：RoleControl::ControlPlayer（0x00402AA0），依赖小游戏、强制遇敌与音乐队列取值（0x0049D3B0）。
 
 ## 下一步
 
-START GOAL后进入第2阶段：先建立构建配置（Windows使用主机`/mnt/c`下的MSVC 14.44与Windows SDK 10.0.26100）、规范脚本、architecture.md与deviations.md；再以`reverse/analysis/export/match_swd32/functions.tsv`把函数表的模块与`source`对齐swd3-rebuild的`src/<模块>/`，从`offsets.tsv`与`globals.tsv`整理结构体与全局变量布局。
+完成ControlPlayer；按依赖自底向上改写剩余已配对函数（codec、gfx、draw、pic、font、audio、map、talk、battle、menu、game），以reverse/analysis/diff_swd32/与decomp_diff.py的差异为线索，其中map的地图载入（0x0042A7D0，HUGE.lmf）与audio的音乐对象（0x00578A70）需整体按swd3e重写；各模块“Act Err”调用改为错误对话框0x0040C530；再从汇编还原未配对函数并确定`unknown`归属。
 
 ## GOAL完成条件
 

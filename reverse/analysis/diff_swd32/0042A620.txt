@@ -1,0 +1,24 @@
+swd3e 0x0042A620 sub_42A620 <- swd32 0x004270F0 sub_4270F0; method=anchor reusable=no: the code differs
+same=11 offset=0 constant=0 global=0 code=0 inserted=11 deleted=11
+- swd32 only: push    esi
+- swd32 only: mov     esi, [esp+4+arg_8]
+- swd32 only: test    esi, esi
++ swd3e only: mov     eax, [esp+arg_8]
++ swd3e only: test    eax, eax
+- swd32 only: pop     esi
+- swd32 only: call    _AIL_serve@0
+- swd32 only: mov     eax, [esp+4+arg_4]
+- swd32 only: lea     ecx, [eax+esi+10h]
+- swd32 only: push    ecx
++ swd3e only: mov     ecx, [esp+arg_C]
++ swd3e only: test    ecx, ecx
++ swd3e only: mov     ecx, [esp+arg_4]
++ swd3e only: lea     edx, [ecx+eax+10h]
++ swd3e only: jnz     short loc_42A64F
++ swd3e only: lea     edx, [ecx+eax+8]
++ swd3e only: push    edx
+- swd32 only: mov     edx, [esp+4+lpBuffer]
++ swd3e only: mov     eax, [esp+lpBuffer]
+- swd32 only: push    edx
++ swd3e only: push    eax
+- swd32 only: pop     esi

@@ -1,0 +1,15 @@
+swd3e 0x00406530 sub_406530 <- swd32 0x00406710 sub_406710; method=neighbours reusable=no: the code differs
+same=19 offset=0 constant=0 global=0 code=0 inserted=7 deleted=6
+- swd32 only: mov     edx, [esp+arg_4]
+- swd32 only: lea     eax, [eax+eax*2]
+- swd32 only: lea     eax, [eax+eax*8]
+- swd32 only: lea     ecx, ds:4BABA8h[eax*8]
+- swd32 only: mov     eax, dword_4ACB94
+- swd32 only: lea     eax, [eax+edx+200h]
++ swd3e only: lea     ecx, [eax+eax*8]
++ swd3e only: lea     eax, [eax+ecx*2]
++ swd3e only: lea     edx, [eax+eax*2]
++ swd3e only: mov     eax, [esp+8+arg_4]
++ swd3e only: lea     ecx, ds:4D3FC8h[edx*4]
++ swd3e only: mov     edx, dword_4C6338
++ swd3e only: lea     eax, [edx+eax+200h]

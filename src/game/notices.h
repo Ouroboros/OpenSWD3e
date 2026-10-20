@@ -1,0 +1,36 @@
+#pragma once
+
+#include <array>
+#include <memory>
+
+#include "core/types.h"
+
+namespace swd3e
+{
+
+class GameState;
+class Painter;
+class TextFont;
+struct TextColors;
+
+// A line shown in the top right corner for a number of frames (0x88 bytes in the original).
+struct Notice
+{
+    i32 frames = 0;                    // +0x00
+    std::array<char, 0x80> text = {};  // +0x04
+    std::unique_ptr<Notice> next;      // +0x84
+};
+
+// The corner notices (the list headed at 0x004B8970; the head is a node of its own and never shown).
+class Notices
+{
+public:
+    static constexpr int HiddenFlag = 0xE;
+
+    // `step` false (a menu frame painted again between frames): drawn without counting their frames down.
+    void Draw(TextFont& font, Painter& painter, const GameState& state, const TextColors& colors, bool step = true);
+
+    Notice head;
+};
+
+}  // namespace swd3e

@@ -1,0 +1,10 @@
+swd3e 0x00417570 sub_417570 <- swd32 0x00416D90 sub_416D90; method=calls reusable=no: the code differs
+same=56 offset=0 constant=0 global=0 code=0 inserted=8 deleted=0
++ swd3e only: mov     dword_4EC398, offset sub_423830
++ swd3e only: mov     dword_4EC3A8, offset sub_423D40
++ swd3e only: mov     dword_4EC3D8, offset sub_424620
++ swd3e only: mov     dword_4EC3E8, offset sub_424E40
++ swd3e only: mov     dword_4EC428, offset sub_425B10
++ swd3e only: mov     dword_4EC438, offset sub_425FF0
++ swd3e only: mov     dword_4EC448, offset sub_4265B0
++ swd3e only: mov     dword_4EC498, offset sub_426C80

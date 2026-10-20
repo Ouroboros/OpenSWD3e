@@ -1,0 +1,106 @@
+swd3e 0x00441C80 sub_441C80 <- swd32 0x0043C3C0 sub_43C3C0; method=callers reusable=no: the code differs
+same=89 offset=0 constant=0 global=0 code=12 inserted=92 deleted=0
+~ code     swd32: jmp     sub_43C7E0                               swd3e: jmp     loc_4420A0
+~ code     swd32: jz      short loc_43C50B                         swd3e: jz      short loc_441DCB
+~ code     swd32: jnb     short loc_43C50B                         swd3e: jnb     short loc_441DCB
+~ code     swd32: jbe     short loc_43C50B                         swd3e: jbe     short loc_441DCB
+~ code     swd32: jge     short loc_43C4C4                         swd3e: jge     short loc_441D84
+~ code     swd32: jle     short loc_43C4C4                         swd3e: jle     short loc_441D84
+~ code     swd32: jge     short loc_43C4DC                         swd3e: jge     short loc_441D9C
+~ code     swd32: jle     short loc_43C4DC                         swd3e: jle     short loc_441D9C
+~ code     swd32: jge     short loc_43C4F6                         swd3e: jge     short loc_441DB6
+~ code     swd32: jle     short loc_43C4F6                         swd3e: jle     short loc_441DB6
+~ code     swd32: jmp     sub_43C600                               swd3e: jmp     loc_441EC0
+~ code     swd32: jmp     sub_43C800                               swd3e: jmp     loc_4420C0
++ swd3e only: mov     eax, dword_50B3C4
++ swd3e only: mov     eax, [eax+0B0h]
++ swd3e only: test    eax, eax
++ swd3e only: jz      short loc_441BD8
++ swd3e only: push    eax
++ swd3e only: call    sub_43DAB0
++ swd3e only: mov     ecx, dword_50B3C4
++ swd3e only: add     esp, 4
++ swd3e only: mov     dword ptr [ecx+0B0h], 0
++ swd3e only: mov     edx, dword_50B3C4
++ swd3e only: push    edx
++ swd3e only: call    sub_43DAB0
++ swd3e only: mov     eax, dword_50B524
++ swd3e only: push    eax
++ swd3e only: call    sub_43DAB0
++ swd3e only: mov     ecx, dword_50B528
++ swd3e only: push    ecx
++ swd3e only: call    sub_43DAB0
++ swd3e only: mov     edx, dword_50B3DC
++ swd3e only: push    edx
++ swd3e only: call    sub_43DAB0
++ swd3e only: add     esp, 10h
++ swd3e only: xor     eax, eax
++ swd3e only: mov     dword_50B420, eax
++ swd3e only: mov     eax, dword_50B3E0[eax*4]
++ swd3e only: push    eax
++ swd3e only: call    sub_43DAB0
++ swd3e only: mov     eax, dword_50B420
++ swd3e only: add     esp, 4
++ swd3e only: inc     eax
++ swd3e only: cmp     eax, 10h
++ swd3e only: mov     dword_50B420, eax
++ swd3e only: jl      short loc_441C11
++ swd3e only: xor     eax, eax
++ swd3e only: mov     dword_50B420, eax
++ swd3e only: mov     ecx, lpString1[eax*4]
++ swd3e only: push    ecx
++ swd3e only: call    sub_43DAB0
++ swd3e only: mov     eax, dword_50B420
++ swd3e only: add     esp, 4
++ swd3e only: inc     eax
++ swd3e only: cmp     eax, 40h
++ swd3e only: mov     dword_50B420, eax
++ swd3e only: jl      short loc_441C38
++ swd3e only: mov     edx, dword_50B3C8
++ swd3e only: push    edx
++ swd3e only: call    sub_43DAB0
++ swd3e only: add     esp, 4
++ swd3e only: mov     dword_50A2A0, 232Ah
++ swd3e only: mov     dword_50A2A8, 43h
++ swd3e only: retn
++ swd3e only: push    0Fh
++ swd3e only: push    offset dword_50B3C0
++ swd3e only: push    offset dword_50B3D4
++ swd3e only: push    offset dword_50B3B8
++ swd3e only: push    offset dword_50B420
++ swd3e only: call    sub_441410
++ swd3e only: mov     eax, dword_50B3C8
++ swd3e only: mov     ecx, dword_50B3B8
++ swd3e only: push    offset dword_50B3CC
++ swd3e only: push    eax
++ swd3e only: push    ecx
++ swd3e only: call    sub_4424C0
++ swd3e only: call    sub_442490
++ swd3e only: mov     edx, dword_50B3D4
++ swd3e only: mov     eax, dword_50B3B8
++ swd3e only: mov     ecx, dword_50B3C8
++ swd3e only: add     eax, edx
++ swd3e only: mov     edx, [ecx+eax*4]
++ swd3e only: push    edx
++ swd3e only: call    sub_4427B0
++ swd3e only: mov     eax, dword_50B52C
++ swd3e only: or      al, 30h
++ swd3e only: mov     dword_50B52C, eax
++ swd3e only: mov     eax, dword_4C4F0C
++ swd3e only: push    eax
++ swd3e only: push    2Eh
++ swd3e only: call    sub_427040
++ swd3e only: add     esp, 2Ch
++ swd3e only: retn
++ swd3e only: call    sub_442020
++ swd3e only: mov     eax, dword_4C4F0C
++ swd3e only: push    eax
++ swd3e only: push    2Eh
++ swd3e only: call    sub_427040
++ swd3e only: add     esp, 8
++ swd3e only: retn
++ swd3e only: cmp     dword_50B3AC, 1F4h
++ swd3e only: jnz     short locret_4420DB
++ swd3e only: mov     dword_50B3AC, 2
++ swd3e only: jmp     loc_441BB0
++ swd3e only: retn

@@ -1,0 +1,41 @@
+swd3e 0x00411B50 sub_411B50 <- swd32 0x004117F0 sub_4117F0; method=callers reusable=no: the code differs
+same=44 offset=1 constant=3 global=0 code=0 inserted=16 deleted=19
+~ constant swd32: push    2354h                                    swd3e: push    2377h
++ swd3e only: mov     ecx, [eax]
+- swd32 only: mov     ecx, 0FFFFFFFEh
++ swd3e only: mov     dx, [eax+0Ch]
++ swd3e only: mov     dword_4ED9BC, ecx
++ swd3e only: sub     edi, edx
++ swd3e only: mov     edx, dword_4E582C
++ swd3e only: mov     dword_4E6D58, edx
++ swd3e only: xor     ecx, ecx
++ swd3e only: mov     cx, [eax+0Eh]
++ swd3e only: xor     edx, edx
+- swd32 only: sub     ecx, edx
+- swd32 only: mov     edx, [eax]
+- swd32 only: add     edi, ecx
+- swd32 only: mov     ecx, dword_4C9A24
+- swd32 only: mov     dword_4CD730, edx
+- swd32 only: mov     dword_4CC2F0, ecx
+- swd32 only: xor     edx, edx
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     dx, [eax+0Eh]
+- swd32 only: mov     cx, [eax+0Ch]
++ swd3e only: push    ecx
+- swd32 only: push    ecx
+~ constant swd32: push    245Eh                                    swd3e: push    2355h
+- swd32 only: mov     edx, [eax]
+- swd32 only: mov     ecx, dword_4C9A24
++ swd3e only: mov     ecx, [eax]
++ swd3e only: mov     edx, dword_4E582C
++ swd3e only: mov     dword_4ED9BC, ecx
+- swd32 only: mov     dword_4CC2F0, ecx
++ swd3e only: xor     ecx, ecx
+- swd32 only: xor     ecx, ecx
++ swd3e only: mov     cx, [eax+0Eh]
+~ offset   swd32: mov     dx, [eax+0Eh]                            swd3e: mov     dx, [eax+0Ch]
+- swd32 only: mov     cx, [eax+0Ch]
++ swd3e only: push    ecx
+- swd32 only: add     ebp, 0FFFFFFF8h
+- swd32 only: push    ecx
+~ constant swd32: add     edi, 0FFFFFFD8h                          swd3e: add     edi, 0FFFFFFE8h

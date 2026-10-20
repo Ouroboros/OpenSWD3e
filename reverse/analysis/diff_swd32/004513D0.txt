@@ -1,0 +1,178 @@
+swd3e 0x004513D0 sub_4513D0 <- swd32 0x00448840 sub_448840; method=callers reusable=no: the code differs
+same=142 offset=0 constant=12 global=0 code=31 inserted=85 deleted=48
+- swd32 only: jnz     short loc_4488C6
+- swd32 only: cmp     dword_4FD2C8, 61h
++ swd3e only: jnz     loc_4514F1
++ swd3e only: mov     edx, dword_50BE34
++ swd3e only: cmp     edx, 61h
+- swd32 only: jnz     short loc_4488A0
++ swd3e only: jnz     loc_4514CB
+- swd32 only: jnz     short loc_4488A0
++ swd3e only: jnz     loc_4514CB
++ swd3e only: mov     ecx, dword_4C2FFC
+~ constant swd32: cmp     eax, 112h                                swd3e: cmp     eax, 148h
+~ code     swd32: jnb     short loc_4488A0                         swd3e: jnb     short loc_451441
+~ constant swd32: cmp     eax, 101h                                swd3e: cmp     eax, 134h
+~ code     swd32: jbe     short loc_4488A0                         swd3e: jbe     short loc_451441
+- swd32 only: mov     eax, dword_4A9924
++ swd3e only: cmp     ecx, 1B6h
++ swd3e only: jnb     short loc_451441
++ swd3e only: cmp     ecx, 178h
++ swd3e only: jbe     short loc_451441
++ swd3e only: mov     dword_50BE08, edi
++ swd3e only: pop     edi
++ swd3e only: pop     esi
++ swd3e only: pop     ebx
++ swd3e only: retn
++ swd3e only: cmp     edx, 64h
++ swd3e only: jge     loc_4514CB
+~ constant swd32: cmp     eax, 198h                                swd3e: cmp     eax, 104h
+~ code     swd32: jnb     short loc_4488A0                         swd3e: jnb     short loc_45149D
+~ constant swd32: cmp     eax, 162h                                swd3e: cmp     eax, 0ECh
+~ code     swd32: jbe     short loc_4488A0                         swd3e: jbe     short loc_45149D
+- swd32 only: mov     dword_4FD29C, edi
++ swd3e only: cmp     ecx, 154h
++ swd3e only: jnb     short loc_451476
++ swd3e only: cmp     ecx, 11Ch
++ swd3e only: jbe     short loc_451476
++ swd3e only: mov     eax, dword_4D0E04
++ swd3e only: mov     dword_4C6620, eax
++ swd3e only: pop     ebx
++ swd3e only: retn
++ swd3e only: cmp     eax, 0ECh
++ swd3e only: jbe     short loc_45149D
++ swd3e only: cmp     ecx, 1AEh
++ swd3e only: jnb     short loc_45149D
++ swd3e only: cmp     ecx, 174h
++ swd3e only: jbe     short loc_45149D
++ swd3e only: mov     ecx, dword_4D3C74
++ swd3e only: pop     edi
++ swd3e only: pop     esi
++ swd3e only: mov     dword_4C6620, ecx
++ swd3e only: pop     ebx
++ swd3e only: retn
++ swd3e only: cmp     eax, 12Eh
++ swd3e only: jnb     short loc_4514CB
++ swd3e only: cmp     eax, 116h
++ swd3e only: jbe     short loc_4514CB
++ swd3e only: cmp     ecx, 1AEh
++ swd3e only: jnb     short loc_4514CB
++ swd3e only: cmp     ecx, 144h
++ swd3e only: jbe     short loc_4514CB
++ swd3e only: mov     edx, dword_4E6B54
++ swd3e only: pop     edi
++ swd3e only: pop     esi
++ swd3e only: mov     dword_4C6620, edx
+~ code     swd32: jnz     loc_4489E7                               swd3e: jnz     loc_451623
++ swd3e only: mov     eax, dword_4C3000
++ swd3e only: cmp     eax, 180h
++ swd3e only: jnb     loc_4517BD
++ swd3e only: cmp     eax, 140h
++ swd3e only: jbe     short loc_451551
+~ constant swd32: cmp     ecx, 0E8h                                swd3e: cmp     ecx, 0C0h
+~ code     swd32: jnb     short loc_44891E                         swd3e: jnb     short loc_451551
+~ constant swd32: cmp     ecx, 0D2h                                swd3e: cmp     ecx, 70h
+- swd32 only: jbe     short loc_44891E
+- swd32 only: mov     eax, dword_4A9924
+- swd32 only: cmp     eax, 104h
+- swd32 only: jnb     short loc_448923
+- swd32 only: cmp     eax, 6Eh
+~ code     swd32: jbe     short loc_448923                         swd3e: jbe     short loc_451551
+~ code     swd32: jz      short loc_448923                         swd3e: jz      short loc_451551
++ swd3e only: mov     eax, dword_4C3000
+- swd32 only: mov     eax, dword_4A9924
++ swd3e only: cmp     eax, 180h
++ swd3e only: jnb     loc_4517BD
++ swd3e only: cmp     eax, 140h
++ swd3e only: jbe     short loc_451593
+~ constant swd32: cmp     ecx, 11Dh                                swd3e: cmp     ecx, 130h
+~ code     swd32: jnb     short loc_44895F                         swd3e: jnb     short loc_451593
+~ constant swd32: cmp     ecx, 107h                                swd3e: cmp     ecx, 0E0h
+- swd32 only: jbe     short loc_44895F
+- swd32 only: cmp     eax, 104h
+- swd32 only: jnb     short loc_44895F
+- swd32 only: cmp     eax, 6Eh
+~ code     swd32: jbe     short loc_44895F                         swd3e: jbe     short loc_451593
+~ code     swd32: jz      short loc_44895F                         swd3e: jz      short loc_451593
++ swd3e only: mov     eax, dword_4C3000
+- swd32 only: mov     eax, dword_4A9924
++ swd3e only: cmp     eax, 180h
++ swd3e only: jnb     loc_4517BD
++ swd3e only: cmp     eax, 140h
++ swd3e only: jbe     short loc_4515D9
+~ constant swd32: cmp     ecx, 156h                                swd3e: cmp     ecx, 1A0h
+~ code     swd32: jnb     short loc_44899F                         swd3e: jnb     short loc_4515D9
+~ constant swd32: cmp     ecx, 140h                                swd3e: cmp     ecx, 150h
+- swd32 only: jbe     short loc_44899F
+- swd32 only: cmp     eax, 104h
+- swd32 only: jnb     short loc_44899F
+- swd32 only: cmp     eax, 6Eh
+~ code     swd32: jbe     short loc_44899F                         swd3e: jbe     short loc_4515D9
+~ code     swd32: jz      short loc_44899F                         swd3e: jz      short loc_4515D9
++ swd3e only: mov     eax, dword_4C3000
+- swd32 only: mov     eax, dword_4A9924
++ swd3e only: cmp     eax, 180h
++ swd3e only: jnb     loc_4517BD
++ swd3e only: cmp     eax, 140h
++ swd3e only: jbe     loc_4517BD
+~ constant swd32: cmp     ecx, 18Fh                                swd3e: cmp     ecx, 210h
+~ constant swd32: cmp     ecx, 179h                                swd3e: cmp     ecx, 1C0h
+- swd32 only: jbe     loc_448BA4
+- swd32 only: cmp     eax, 104h
+- swd32 only: jnb     loc_448BA4
+- swd32 only: cmp     eax, 6Eh
+~ code     swd32: jz      loc_448B96                               swd3e: jz      loc_4517AF
+~ code     swd32: jnb     loc_448B96                               swd3e: jnb     loc_4517AF
+~ code     swd32: jbe     loc_448B96                               swd3e: jbe     loc_4517AF
+~ code     swd32: jnb     short loc_448A69                         swd3e: jnb     short loc_4516A5
+~ code     swd32: jbe     short loc_448A69                         swd3e: jbe     short loc_4516A5
+~ code     swd32: jle     short loc_448A54                         swd3e: jle     short loc_451690
+~ code     swd32: jnb     short loc_448AA6                         swd3e: jnb     short loc_4516FB
+~ code     swd32: jbe     short loc_448AA6                         swd3e: jbe     short loc_4516FB
+~ code     swd32: jle     short loc_448A93                         swd3e: jle     short loc_4516CF
+- swd32 only: push    esi
++ swd3e only: mov     ecx, esi
++ swd3e only: mov     eax, 2E8BA2E9h
++ swd3e only: shl     ecx, 7
++ swd3e only: sub     ecx, esi
++ swd3e only: imul    ecx
++ swd3e only: sar     edx, 1
++ swd3e only: mov     eax, edx
++ swd3e only: mov     ecx, offset unk_578A70
++ swd3e only: shr     eax, 1Fh
++ swd3e only: add     edx, eax
++ swd3e only: push    edx
+- swd32 only: add     esp, 4
+~ code     swd32: jnb     short loc_448AE8                         swd3e: jnb     short loc_45173D
+~ code     swd32: jbe     short loc_448AE8                         swd3e: jbe     short loc_45173D
+~ code     swd32: jle     short loc_448AD4                         swd3e: jle     short loc_451729
+- swd32 only: lea     eax, [esi+esi*4]
++ swd3e only: lea     ecx, [esi+esi*4]
+- swd32 only: lea     ecx, ds:3Ch[eax*8]
+- swd32 only: mov     dword_4B7ACC, ecx
++ swd3e only: lea     edx, ds:3Ch[ecx*8]
++ swd3e only: mov     dword_4D1434, edx
+~ code     swd32: jnb     short loc_448B2C                         swd3e: jnb     short loc_451779
+~ code     swd32: jbe     short loc_448B2C                         swd3e: jbe     short loc_451779
+- swd32 only: jnz     loc_448BA4
++ swd3e only: jnz     short loc_4517BD
+- swd32 only: jz      loc_448BA4
++ swd3e only: jz      short loc_4517BD
+~ code     swd32: jnb     short loc_448B62                         swd3e: jnb     short loc_4517AF
+~ code     swd32: jbe     short loc_448B62                         swd3e: jbe     short loc_4517AF
+~ code     swd32: jle     short loc_448B52                         swd3e: jle     short loc_45179F
+- swd32 only: cmp     eax, 1AFh
+- swd32 only: jnb     short loc_448B96
+- swd32 only: cmp     eax, 190h
+- swd32 only: jbe     short loc_448B96
+- swd32 only: test    esi, 0FFFF0000h
+- swd32 only: mov     dword_4FD2C8, 5
+- swd32 only: jnz     short loc_448BA4
+- swd32 only: cmp     esi, 0Bh
+- swd32 only: jle     short loc_448B8C
+- swd32 only: mov     esi, 0Bh
+- swd32 only: mov     dword_4ACE60, esi
+- swd32 only: pop     edi
+- swd32 only: pop     esi
+- swd32 only: pop     ebx
+- swd32 only: retn

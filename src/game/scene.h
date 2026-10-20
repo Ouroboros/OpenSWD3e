@@ -1,0 +1,453 @@
+#pragma once
+
+#include <array>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <vector>
+
+#include "core/types.h"
+#include "crt/msvc.h"
+#include "game/color_fade.h"
+#include "game/game_state.h"
+#include "res/act_state.h"
+#include "role/role.h"
+
+namespace swd3e
+{
+
+// A talk window (0x4C bytes, the list at 0x004ACF48): its frame and place (growing out of the speaker or a point
+// over four frames), the text with the page shown and the typing position, the colours, the timeout and the name.
+struct TalkWindow
+{
+    // TalkWindow::flags bits, named by how the window drawing (0x0042ED40) and the dialog commands use them.
+    enum Flag : u32
+    {
+        Read = 1,                    // advanced past its last page (waited for by WaitDialogRead)
+        ShowMark = 2,                // the page mark stays until it is read
+        Timed = 8,                   // it advances by itself after its timeout
+        Blocking = 0x10,             // the event waits for it
+        Skippable = 0x20,            // Space skips its typing
+        Fade = 0x40,                 // it fades in and out instead of growing
+        Overlay = 0x80,              // no frame, placed at its own place in colour 5
+        Instant = 0x100,             // its text appears at once
+        Advanced = 0x200,            // a key or a click advanced it this frame
+        NoAdvance = 0x400,           // the keys do not advance it
+        FixedPlace = 0x800,          // it grows from fromX, fromY
+        Choices = 0x2000,            // its text has choices
+        PageFull = 0x4000,           // the page is typed and waits to turn
+        Typed = 0x8000,              // the whole text is typed
+        SpeedSet = 0x20000000,       // the skipping speed is set
+        Skipping = 0x40000000,       // its typing is skipped
+        SkipRequested = 0x80000000,  // Space asked once to skip
+    };
+
+    static constexpr std::size_t Closed = static_cast<std::size_t>(-1);
+    static constexpr u16 NoRole = 0xFFFD;
+    static constexpr u16 NoTimeout = 0xFFFF;  // in `timeout`
+    static constexpr u16 StyleMask = 0xFF;    // in `style`: the style drawn; the page saves its own above
+    static constexpr int SavedStyleShift = 8;
+
+    const ActState* frameAct = nullptr;  // +0x00 its frame picks the window frame
+    const ActState* nameAct = nullptr;   // +0x04 its frame picks the frame of the name plate
+    u32 flags = 0;                       // +0x08
+    u32 timeout = 0;                     // +0x0C tenths of a second (0xFFFF: none)
+    u32 shownAt = 0;                     // +0x10 the time the page was complete
+    u16 openStep = 0;                    // +0x14 0..4
+    u16 role = 0;                        // +0x16 the speaking role (NoRole: the point fromX, fromY)
+    u16 counter = 0;                     // +0x18
+    u16 x = 0;                           // +0x1A screen pixels
+    u16 y = 0;                           // +0x1C
+    u16 fromX = 0;                       // +0x1E
+    u16 fromY = 0;                       // +0x20
+    u16 width = 0;                       // +0x22
+    u16 height = 0;                      // +0x24
+    u16 unk26 = 0;                       // +0x26
+    u16 speed = 0;                       // +0x28 frames per character
+    u16 delay = 0;                       // +0x2A frames to the next character (bit 15: typing)
+    u16 color = 0;                       // +0x2C an index into the text colours
+    u16 shade = 0;                       // +0x2E an index into the shadow colours
+    u16 pageColor = 0;                   // +0x30 the colours at the start of the next page
+    u16 pageShade = 0;                   // +0x32
+    u16 style = 0;                       // +0x34 low byte the text style, high byte the style of the next page
+    u16 unk36 = 0;                       // +0x36
+    std::string text;                    // +0x38 Big5 with % codes, ended by "%Q"
+    std::size_t page = 0;                // +0x3C the start of the page shown (Closed: the window is done)
+    std::size_t typed = 0;               // +0x40 the typing position
+    std::string name;                    // +0x44 the name plate (empty: none)
+    std::unique_ptr<TalkWindow> next;    // +0x48
+};
+
+// An area of the map with its encounters (0x18 bytes; the list starts with a node of its own at 0x004A9A18).
+struct MapTrigger
+{
+    i32 left = 0;                      // +0x00 tiles
+    i32 top = 0;                       // +0x04
+    i32 right = 0;                     // +0x08
+    i32 bottom = 0;                    // +0x0C
+    u32 table = 0;                     // +0x10 an offset into maps.dat
+    std::unique_ptr<MapTrigger> next;  // +0x14
+};
+
+// A bubble rising from a role's place (0x10 bytes): position in 1/16 pixels across, speed and frames left.
+struct RoleMarkNode
+{
+    std::unique_ptr<RoleMarkNode> next;  // +0x00
+    i16 x = 0;                           // +0x04 1/16 pixels
+    i16 y = 0;                           // +0x06
+    i16 stepX = 0;                       // +0x08
+    i16 stepY = 0;                       // +0x0A
+    i16 life = 0;                        // +0x0C
+};
+
+// The bubbles of a role (0x10 bytes, four at 0x004CACE0).
+struct RoleMark
+{
+    static constexpr u16 Emitting = 1;  // in `flags`
+
+    std::unique_ptr<RoleMarkNode> nodes;  // +0x00
+    u16 x = 0;                            // +0x04 the role's place
+    u16 y = 0;                            // +0x06
+    i16 unk08 = 0;                        // +0x08 bubbles start while below 0x18
+    u16 flags = 0;                        // +0x0A
+    u16 role = 0;                         // +0x0C
+    u16 unk0E = 0;                        // +0x0E
+};
+
+// A falling or rising line of the screen (0x18 bytes, the list at 0x004BAB9C): `count` columns from (x, y) whose
+// offsets and lengths the mode moves (high byte of `mode`: 0x80 down, 0x40 up, 0x20 open, 0x10 close, 0x08 still).
+struct ScriptEffect
+{
+    // The bits of `mode`.
+    enum Mode : u16
+    {
+        NumberMask = 0xFF,  // the effect's number (below 0x100)
+        Still = 0x800,
+        Closing = 0x1000,
+        Opening = 0x2000,
+        Rising = 0x4000,
+        Falling = 0x8000,
+        KindMask = 0xFF00,  // what the lines do
+    };
+
+    i16 x = 0;                           // +0x00
+    i16 y = 0;                           // +0x02
+    i16 limit = 0;                       // +0x04
+    i16 count = 0;                       // +0x06
+    u16 mode = 0;                        // +0x08
+    i16 color = 0;                       // +0x0A an index into the text colours
+    std::vector<i16> offsets;            // +0x0C per column
+    std::vector<i16> lengths;            // +0x10 per column
+    std::unique_ptr<ScriptEffect> next;  // +0x14
+};
+
+// An act moving over the map (0xB0 bytes; the lists at 0x004AD3E8 and 0x004BA6E0). Sprites move by (stepX, stepY)
+// until within 32 pixels of the target; the role heads of the second list slide along x towards targetX.
+struct ScriptSprite
+{
+    static constexpr int HeadMargin = 0x78;  // a head starts and is freed this far beside the screen
+    static constexpr i16 HeadPlaced = static_cast<i16>(0x8000);  // `headSpeed`: placed at its target, no slide in
+    static constexpr i16 HeadSpeedMask = 0x7FFF;
+    static constexpr i16 HeadDropSpeed = 0x2710;  // the speed a placed head leaves with (off the screen at once)
+
+    ActState act;                        // +0x00
+    i16 headX = 0;                       // +0x98
+    i16 headSpeed = 0;                   // +0x9A
+    i16 targetX = 0;                     // +0x9C
+    i16 targetY = 0;                     // +0x9E the head's y in the second list
+    float stepX = 0;                     // +0xA0
+    float stepY = 0;                     // +0xA4
+    float x = 0;                         // +0xA8 map pixels
+    float y = 0;                         // +0xAC
+    std::unique_ptr<ScriptSprite> next;  // +0xB0
+};
+
+// An act played at a place of the screen until its script ends (0xA4 bytes; the lists at 0x004B7C70 and
+// 0x004B8968).
+struct ScriptAnimation
+{
+    i16 x = 0;                              // +0x00 screen pixels
+    i16 y = 0;                              // +0x02
+    i32 unk04 = 0;                          // +0x04
+    ActState act;                           // +0x08
+    std::unique_ptr<ScriptAnimation> next;  // +0xA0
+};
+
+// A ripple over the screen (0x2C bytes, the list at 0x004AC9B8): a grid of heights in two pages over a copy of the
+// screen, refracting it until the waves die out.
+struct ScriptObject
+{
+    i32 pitch = 0;                       // +0x00 pixels per line of the screen copy
+    i32 lines = 0;                       // +0x04
+    i32 left = 0;                        // +0x08
+    i32 top = 0;                         // +0x0C
+    i32 gridWidth = 0;                   // +0x10
+    i32 gridHeight = 0;                  // +0x14
+    i32 damping = 0;                     // +0x18 a shift
+    i32 page = 0;                        // +0x1C
+    std::vector<i16> heights;            // +0x20 two pages of gridWidth x gridHeight
+    std::vector<u16> screen;             // +0x24
+    std::unique_ptr<ScriptObject> next;  // +0x28
+
+    ScriptObject() = default;
+    ScriptObject(int pitch, int lines, int left, int top, int gridWidth, int gridHeight);
+    ~ScriptObject();
+    void Splash(int x, int y, int radius, int depth, crt::Random& random);
+    void MoveTo(int x, int y);
+
+    void CopyScreen(std::span<const u16> pixels);
+    void Refract(std::span<u16> pixels) const;
+    bool Step();
+};
+
+// A particle of the weather or the leaves: its place on the map and its speed.
+struct MapParticle
+{
+    static constexpr i32 Unplaced = 0x7FFFFFFF;  // in `x`: a leaf to be placed again
+    static constexpr i32 Filled = 0x0F0F0F0F;    // the 0x0F bytes a new map fills the weather particles with
+
+    i32 x = 0;
+    i32 y = 0;
+    i32 stepX = 0;
+    i32 stepY = 0;
+};
+
+// The shade of a weather particle (0x10 bytes, four at 0x004ACDC0).
+struct WeatherShade
+{
+    i32 tint = 0;        // +0x00
+    i32 unk04 = 0;       // +0x04
+    i32 tintTarget = 0;  // +0x08
+    i32 unk0C = 0;       // +0x0C
+};
+
+// The motion of a weather particle (0x10 bytes, four at 0x004ACE00).
+struct WeatherMotion
+{
+    i32 counter = 0;      // +0x00 frames since the last move
+    i32 action = 0;       // +0x04 the action of act 0x232B
+    i32 speedTarget = 0;  // +0x08
+    i32 speed = 0;        // +0x0C frames between moves
+};
+
+// A streak drawn into the screen (0x10 bytes): the lightning bolts and the fireflies.
+struct Streak
+{
+    i16 x = 0;       // +0x00 1/16 pixels
+    i16 y = 0;       // +0x02 lines
+    i16 slope = 0;   // +0x04 1/16 pixels per line
+    i16 speed = 0;   // +0x06 lines per frame
+    i16 length = 0;  // +0x08 lines
+    i16 life = 0;    // +0x0A
+    i16 phase = 0;   // +0x0C
+    u16 active = 0;  // +0x0E bit 0
+};
+
+// The state of the story scenes that a new game starts from (named by the original's addresses until their readers
+// are restored): the pointer roles, the animations of the screen elements and tables of maps.dat.
+struct Scene
+{
+    static constexpr i16 ShakeEnd = static_cast<i16>(0xCFCF);  // ends the pairs of `shake`
+
+    // `musicCue`: the tune playing in the low byte (1, 2, MusicStopped) and how the two tunes of the scene and of the
+    // story follow each other.
+    enum MusicCue : u32
+    {
+        TrackMask = 0xF,
+        TrackByte = 0xFF,
+        StoryRepeatFirst = 0x10000,  // the first tune plays again (Rep1), else the two alternate (Cyc2)
+        StoryLoops = 0x20000,        // the tunes go on after the second
+        SceneRepeatFirst = 0x40000,
+        SceneLoops = 0x80000,
+        UnkMusic100000 = 0x100000,
+        UnkMusic200000 = 0x200000,  // cleared when a tune starts
+        UnkMusic400000 = 0x400000,
+        StoryMusic = 0x800000,  // the story's tunes play instead of the scene's
+    };
+
+    static constexpr u32 MusicStopped = 3;  // the track after the second tune when the tunes do not loop
+
+    // The slots of `musicTunes`: a fade mode, then the first and second tune, for the scene and for the story.
+    static constexpr std::size_t SceneFade = 0;
+    static constexpr std::size_t SceneFirst = 1;
+    static constexpr std::size_t SceneSecond = 2;
+    static constexpr std::size_t StoryFade = 3;
+    static constexpr std::size_t StoryFirst = 4;
+    static constexpr std::size_t StorySecond = 5;
+    static constexpr std::size_t MusicSlots = 6;
+    static constexpr u32 FadePending = 0x80000000;  // in a fade slot: the mode is still to be set
+    static constexpr u32 FadeModeMask = 0xF;
+    static constexpr i32 NoTune = 0x8000;  // in a tune: none
+
+    // The marks of a pair of tunes (maps.dat table 2 and command ChangeMusic).
+    static constexpr u16 MarksNone = 0x8000;
+    static constexpr u16 MarkRepeatFirst = 0x4000;
+    static constexpr u16 MarkLoops = 0x2000;
+
+    static constexpr i32 EncounterStepMask = 0x7FFFFFFF;  // `encounterSteps` without bit 31
+
+    // The bits of `screenFlags`.
+    enum ScreenFlag : i32
+    {
+        BlackScreen = 1,    // the map is not drawn (talk commands BlackScreen and ChangeMap)
+        CameraHeld = 2,     // the camera does not follow the controlled role
+        SpotlightClip = 4,  // the screen is clipped to the spotlight (no setter is known)
+    };
+
+    // `playerHold`: the controlled role does not move while it is nonzero.
+    static constexpr i32 HoldLocked = 0x8000;     // set by the talk commands that hold it
+    static constexpr i32 HoldCountMask = 0x7FFF;  // the blocking talk windows still open
+    static constexpr u16 WeatherFirstAction = 0x40;
+    static constexpr u16 GlowWeatherActions = 4;   // the weather added to the screen
+    static constexpr u16 ShadeWeatherActions = 8;  // the weather subtracted from it
+    static constexpr int SpotlightRadius = 0xC0;   // half the side of the lit square
+    // The acts of the screen (the system act archive).
+    static constexpr int PointerAct = 0x2329;
+    static constexpr int InterfaceAct = 0x232A;  // the loading screen and the menus
+    static constexpr int EffectAct = 0x232B;
+    static constexpr int TimerAct = 0x232C;
+    // Actions of the pointer act besides the directions 0..7.
+    static constexpr i32 TalkPointer = 9;
+    static constexpr i32 ExaminePointer = 0xA;
+    static constexpr i32 RegionPointer = 0xB;
+    static constexpr i32 ButtonPointer = 0xC;  // also the end act of a battle
+    static constexpr i32 PagePointer = 0xE;
+    static constexpr i32 WaitPointer = 0xF;  // while the wait key is held
+    static constexpr i32 ChoicePointer = 0xD;
+    static constexpr u32 PointerFlags = 0x9000;
+
+    i32 timerEvent = 0;  // 0x004C2A9C the event run when the first timer runs out
+    i32 unk4BAB78 = 0;
+    i32 unk4BAB7C = 0;
+    i32 unk4C97E8 = 0;
+    i32 unk4C97EC = 0;
+    i32 secondTimerFrames = 0;            // 0x004C2FF0 the frames left on the second timer (-1: stopped)
+    i32 returnColumn = 0;                 // swd32 0x004A9930 its tile
+    i32 returnRow = 0;                    // swd32 0x004A9938
+    ActState timerDigits;                 // 0x004C31B0 the digits of the timers
+    std::array<ActState, 4> captionActs;  // swd32 0x004A9120 the name plates of the talk windows
+    ActState loadingPicture;              // swd32 0x004A93E8 the picture of the loading screen
+    u32 unk4A94B0 = 0;
+    i32 unk4AB788 = 0;
+    ActState effectAct;       // 0x004C6290 the act of the weather particles
+    i32 viewWidth = 0;        // swd32 0x004ACBC0
+    i32 viewHeight = 0;       // swd32 0x004ACBC4
+    i32 menuButtonSlide = 0;  // 0x004C6368 how far the system button lies out of the top right (0 to -0x20)
+    i32 menuButtonWait = 0;   // 0x004C636C frames before it slides in
+    Role pointerRole;         // swd32 0x004ACCD8 the mouse pointer (act 0x2329, action 0)
+    i32 unk4ACDB8 = 0;
+    u32 musicCue = 0;                         // swd32 0x004ACDBC MusicCue bits and the tune playing
+    u32 rolesTable = 0;                       // 0x004C65F0 the roles of maps.dat (its table 1)
+    std::array<i16, 0x40> shake = {};         // 0x004C6624 camera offsets of the quake in pairs, ended by ShakeEnd
+    i32 shakeIndex = 0;                       // swd32 0x004B7EB0
+    i32 shakeFrames = 0;                      // swd32 0x004A94A4
+    i32 shakeHold = 0;                        // swd32 0x004AD0D0
+    i32 quakeCameraLeft = 0;                  // swd32 0x004A93E4 the camera before the quake
+    i32 quakeCameraTop = 0;                   // swd32 0x004A992C
+    i32 panAcross = 0;                        // 0x004C30CC the pan still to go across (pixels)
+    i32 panDown = 0;                          // 0x004C2F98 and down
+    i32 panStepX = 0;                         // 0x004C2B54 the step of the pan across
+    i32 panStepY = 0;                         // 0x004C2AA0 and down
+    std::unique_ptr<TalkWindow> talkWindows;  // 0x004C66F8
+    std::array<ActState, 4> leafActs;         // swd32 0x004AD0D8
+    ActState spotlightAct;                    // 0x004C6BD8
+    // Set by the talk's file names (flags 0x4D and 0x4E), up to 0x33 bytes: the message when the town or the exit
+    // warp cannot be used here.
+    std::optional<std::string> noExitWarpText;    // swd32 0x004B74F4
+    std::optional<std::string> noTownWarpText;    // swd32 0x004B751C
+    std::array<i32, MusicSlots> musicTunes = {};  // swd32 0x004B7C74 by MusicSlot
+    // swd32 0x004B9F68 stepped every map frame; a talk command may attach one to a role
+    std::array<ActState, 8> screenActs;
+    ActState menuButtonAct;              // 0x004E4B78 the system button at the top right
+    // swd32 0x004C8BE0 the leader's act kept by the home warp, given back after the pot
+    i32 warpLeaderAct = 0;
+    u16 rolesTableBytes = 0;             // swd32 0x004C8BD4 the bytes of maps.dat's table 1
+    Role pointerButtonRole;              // swd32 0x004C96C8 (action 0xC)
+    std::array<MapParticle, 4> weather = {};  // 0x004E5550 the weather particles (filled with 0x0F bytes)
+    u32 recipesTable = 0;                     // swd32 0x004C97E4 the altar's recipes in maps.dat (its table 0x18)
+    std::array<ActState, 4> dialogFrameActs;  // swd32 0x004CAA78 the frames of the talk windows
+    i32 timerFrames = 0;                      // 0x004E6B50 the frames left on the first timer (-1: stopped)
+    Role pointerPageRole;                     // swd32 0x004CADA0 (action 0xE)
+    // swd32 0x004CAE78 the battle groups, records of 8 words from maps.dat's table 0x12,
+    std::vector<u16> encounterGroups;
+                                       // their count first
+    i32 returnMap = 0;                 // swd32 0x004CAE88 the map to go back to from Field::DemonRefiningPot (0: none)
+
+    // Set by LoadCity (0x0040C130).
+    i32 layerFrames = 0;       // swd32 0x0049E0BC frames each tile layer shows (debug keys Tab and +/- change it)
+    i32 layerDirection = 0;    // swd32 0x0049E0C0 the layers cycle up (1) or back down (-1)
+    i32 spotlightTargetX = 0;  // 0x004C2B80 where the spotlight moves to
+    i32 cellTintRed = 0;       // swd32 0x004AB97C the tint of roles with cell effects
+    i32 cellTintGreen = 0;     // swd32 0x004AB994
+    i32 cellTintBlue = 0;      // swd32 0x004ACB98
+    i32 townWarpAllowed = 0;   // swd32 0x004ACDB4 1: the town warp works on this map
+    std::array<WeatherShade, 4> weatherShades = {};   // 0x004C6570
+    std::array<WeatherMotion, 4> weatherMotion = {};  // 0x004C65B0
+    i32 mapLeft = 0;                                  // swd32 0x004ACE48 the map in pixels (read nowhere)
+    i32 mapTop = 0;                                   // swd32 0x004ACE4C
+    i32 mapRight = 0;                                 // swd32 0x004ACE50
+    i32 mapBottom = 0;                                // swd32 0x004ACE54
+    i32 spotlightStepX = 0;                           // 0x004C6608 pixels per frame
+    i32 spotlightStepY = 0;                           // 0x004C660C
+    u16 weatherAction = 0;   // 0x004C66A4 the first action of the weather particles in the effect act
+    i16 lightningCount = 0;  // 0x004C4650 bolts wanted (up to 8)
+    i16 firefliesShown = 0;  // swd32 0x004B737C
+    static constexpr std::size_t ClearedBolts = 0x30;  // the bolts a new map clears
+    std::array<Streak, 0x40> bolts;                    // swd32 0x004B7520
+    i32 layerIndex = 0;                                // swd32 0x004B7944 the tile layer shown
+    std::array<i32, 0x20> trailY = {};                 // swd32 0x004B7998 the places of the leader, the latest first
+    std::array<i32, 0x20> trailDirection = {};         // swd32 0x004C8C00
+    std::array<i32, 0x20> trailX = {};                 // swd32 0x004B7A18
+    i32 layerTiles = 0;                                // swd32 0x004B7A98 the tiles of a layer
+    std::array<i32, 8> followers = {};                 // swd32 0x004B7C8C the roles following the leader
+    i32 weatherKind = 0;                               // 0x004D183C
+    std::array<MapParticle, 4> leaves = {};            // 0x004D1C40 (x MapParticle::Unplaced: to be placed)
+    i32 layerOffset = 0;                               // 0x004D1C84 the first tile of the layer shown
+    i32 mapStory = 0;        // swd32 0x004B88C0 bit 15: the leader takes the story act; below it the followers' story
+    i16 lightningShown = 0;  // 0x004D1E04
+    i32 encounterGroup = 0;  // swd32 0x004B896C the battle group of the map (0: none)
+    std::array<MoveRecord, 8> followerMoves;    // swd32 0x004B8E18
+    i32 spotlightX = 0;                         // 0x004D3450 the centre of the spotlight (screen pixels)
+    i32 spotlightY = 0;                         // 0x004D3454
+    std::array<i16, 0x100> soundRise = {};      // swd32 0x004BA430 by role: how far below the controlled role
+    i16 fireflyCount = 0;                       // swd32 0x004BAB80 (up to 1)
+    std::array<i16, 0x100> soundDistance = {};  // swd32 0x004C97F8 by role
+    std::array<Streak, 0x60> fireflies;         // swd32 0x004C8C80
+    std::array<i16, 0x40> heatLengths = {};     // 0x004C5094 bytes copied per line
+    std::array<i16, 0x40> heatCounts = {};      // 0x004C4A80 lines
+    std::array<i32, 0x30> heatOffsets = {};     // 0x004C6154 pixels
+    u16 heatFrame = 0;                          // 0x004E6CD8
+    ColorFade fade;     // 0x004C300C frames; steps 0x004A9A00, 0x004A94B8, 0x004C97F0; levels 0x004A93E0, 0x004B6C70,
+                        // 0x004C9A00; targets 0x004A93DC, 0x004B6C74, 0x004C9A04
+    i32 unk4C9A08 = 0;  // shown as dbg1
+    i32 unk4ACE64 = 0;  // shown as dbg2
+    i32 followerCount = 0;          // swd32 0x004BABA0 one past the last follower listed (slot 0 unused)
+    i32 mapWalkSpeed = 0;           // swd32 0x004C8BD8 the walking speed of the map
+    u16 weatherActions = 0;         // 0x004E55A6 how many actions follow it
+    i32 screenFlags = 0;            // swd32 0x004C9A18 ScreenFlag bits
+    i32 encounterSteps = 0;         // swd32 0x004C9A20 steps on the map since the last battle (bit 31 aside)
+    i32 spotlightTargetY = 0;       // 0x004E6CC4
+    i32 layerTick = 0;              // swd32 0x004CC2DC frames the layer has shown
+    i32 playerHold = 0;             // swd32 0x004A9920 HoldLocked (kept across maps) and the blocking talk windows open
+    MapTrigger triggers;            // swd32 0x004A9A18 (the list from +0x14)
+    std::array<RoleMark, 4> marks;  // 0x004E6B10
+    std::unique_ptr<ScriptEffect> effects;         // 0x004D3FBC
+    std::unique_ptr<ScriptSprite> spritesA;        // 0x004C6BD4
+    std::unique_ptr<ScriptSprite> spritesB;        // 0x004D3F94
+    std::unique_ptr<ScriptAnimation> animationsA;  // 0x004D15F4
+    std::unique_ptr<ScriptAnimation> animationsB;  // 0x004D1EBC
+    std::unique_ptr<ScriptObject> objects;         // 0x004C6150
+
+    void FreeEffects();
+    void FreeSpritesA();
+    void FreeSpritesB();
+    void FreeNodes();
+    void FreeAnimations();
+    void FreeMarks();
+    void ResetLeaves();
+    void ResetEffects();
+    void FreeObjects();
+};
+
+}  // namespace swd3e

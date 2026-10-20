@@ -1,0 +1,29 @@
+swd3e 0x004450E0 sub_4450E0 <- swd32 0x004400A0 sub_4400A0; method=callers reusable=no: the code differs
+same=275 offset=2 constant=1 global=0 code=2 inserted=5 deleted=17
+~ code     swd32: jge     short loc_440143                         swd3e: jge     short loc_445186
+~ code     swd32: jnz     short loc_440107                         swd3e: jnz     short loc_445147
+~ constant swd32: cmp     ecx, 50h                                 swd3e: cmp     ecx, 6Eh
+- swd32 only: jge     short loc_44016B
+- swd32 only: mov     eax, ecx
+- swd32 only: and     eax, 7
+- swd32 only: cmp     al, 7
+- swd32 only: jz      short loc_44016B
+- swd32 only: mov     ecx, dword_4AB784
+- swd32 only: push    ecx
+- swd32 only: push    0B7h
+- swd32 only: call    sub_485610
+- swd32 only: mov     ecx, dword_4FCAB4
+- swd32 only: add     esp, 8
+- swd32 only: cmp     ecx, 6Eh
+- swd32 only: mov     edx, dword_4AB784
+- swd32 only: push    edx
++ swd3e only: mov     eax, dword_4C4F0C
++ swd3e only: push    eax
+- swd32 only: mov     eax, edx
++ swd3e only: mov     ecx, edx
+- swd32 only: shr     eax, 1Fh
+- swd32 only: add     edx, eax
++ swd3e only: shr     ecx, 1Fh
++ swd3e only: add     edx, ecx
+~ offset   swd32: lea     eax, [ebp+ebx*2+0]                       swd3e: lea     eax, [ebp+ebx*2+0]
+~ offset   swd32: lea     ecx, [ebp+ebx*2+0]                       swd3e: lea     ecx, [ebp+ebx*2+0]

@@ -1,0 +1,135 @@
+swd3e 0x00464110 sub_464110 <- swd32 0x00459BF0 sub_459BF0; method=neighbours reusable=no: the code differs
+same=16 offset=4 constant=1 global=0 code=1 inserted=67 deleted=60
++ swd3e only: sub     esp, 14h
++ swd3e only: push    ebx
+- swd32 only: mov     ebp, [esp+4+arg_4]
+- swd32 only: push    edi
+- swd32 only: test    ebp, ebp
++ swd3e only: mov     esi, [esp+20h+arg_4]
++ swd3e only: test    esi, esi
+- swd32 only: mov     edi, [esp+0Ch+arg_C]
+- swd32 only: cmp     byte ptr dword_521374[edi], 0E0h
++ swd3e only: mov     ebx, [esp+20h+arg_C]
++ swd3e only: cmp     byte_536EAC[ebx], 0E0h
+~ offset   swd32: lea     eax, [esp+0Ch+arg_4]                     swd3e: lea     eax, [esp+20h+arg_4]
+~ offset   swd32: lea     ecx, [esp+0Ch+arg_C]                     swd3e: lea     ecx, [esp+20h+arg_C]
+~ offset   swd32: mov     ecx, [esp+14h+arg_0]                     swd3e: mov     ecx, [esp+28h+arg_0]
+- swd32 only: lea     edx, [edi+edi*8]
++ swd3e only: lea     edx, [ebx+ebx*4]
+~ offset   swd32: mov     ecx, [esp+0Ch+arg_8]                     swd3e: mov     ecx, [esp+20h+arg_8]
+- swd32 only: lea     esi, [edi+edx*2]
+- swd32 only: mov     edx, dword_53C00C
+- swd32 only: shl     esi, 3
+- swd32 only: lea     eax, unk_524980[esi]
+- swd32 only: mov     [eax], ebp
+- swd32 only: mov     dword_524988[esi], ecx
+- swd32 only: mov     ecx, 1
+- swd32 only: mov     dword_524A10[esi], 0
+- swd32 only: cmp     edx, ecx
+- swd32 only: jnz     short loc_459C5D
+- swd32 only: mov     dword_524A10[esi], ecx
++ swd3e only: lea     ebp, [ebx+edx*8]
++ swd3e only: shl     ebp, 2
++ swd3e only: lea     eax, unk_538160[ebp]
++ swd3e only: mov     [eax], esi
++ swd3e only: mov     ss:dword_538168[ebp], ecx
++ swd3e only: mov     ss:dword_5381FC[ebp], 0
+~ code     swd32: jnz     short loc_459C6E                         swd3e: jnz     short loc_46417F
++ swd3e only: pop     esi
++ swd3e only: pop     ebp
++ swd3e only: pop     ebx
++ swd3e only: add     esp, 14h
++ swd3e only: retn
++ swd3e only: mov     dx, ss:word_5381AC[ebp]
++ swd3e only: mov     ax, ss:word_5381AA[ebp]
++ swd3e only: push    edi
++ swd3e only: push    edx
++ swd3e only: lea     ecx, [esp+28h+var_14]
++ swd3e only: push    eax
++ swd3e only: push    ecx
++ swd3e only: call    sub_436770
++ swd3e only: mov     esi, eax
++ swd3e only: mov     ecx, 5
++ swd3e only: movsx   eax, byte_536EAC[ebx]
++ swd3e only: lea     edi, [esp+30h+var_14]
++ swd3e only: rep movsd
++ swd3e only: mov     edx, [esp+30h+var_14]
++ swd3e only: mov     ecx, ss:dword_538178[ebp]
++ swd3e only: mov     dword_4ED9A4, eax
++ swd3e only: mov     dword_4EC180, eax
++ swd3e only: mov     dword_4EC178, eax
++ swd3e only: mov     eax, [esp+30h+var_10]
++ swd3e only: mov     dword_4ED9BC, edx
++ swd3e only: mov     edx, [esp+30h+var_6]
++ swd3e only: push    eax
++ swd3e only: mov     eax, [esp+2Ch]
++ swd3e only: push    ecx
++ swd3e only: and     edx, 0FFFFh
++ swd3e only: movsx   ecx, word ptr [esp+38h+arg_4]
++ swd3e only: mov     edi, ss:dword_538170[ebp]
++ swd3e only: push    edx
++ swd3e only: mov     edx, ss:dword_538174[ebp]
++ swd3e only: and     eax, 0FFFFh
++ swd3e only: sub     ecx, edx
++ swd3e only: push    eax
++ swd3e only: movsx   edx, word ptr [esp+40h+arg_C]
++ swd3e only: sub     edx, edi
++ swd3e only: push    ecx
++ swd3e only: push    edx
++ swd3e only: call    sub_417A60
++ swd3e only: mov     al, byte_536EAC[ebx]
++ swd3e only: add     esp, 24h
++ swd3e only: add     al, 0FCh
++ swd3e only: mov     byte_536EAC[ebx], al
++ swd3e only: xor     eax, eax
++ swd3e only: pop     ebx
++ swd3e only: add     esp, 14h
+- swd32 only: mov     dx, word_5249CC[esi]
+- swd32 only: mov     ax, word_5249CA[esi]
+- swd32 only: push    edx
+- swd32 only: push    eax
+- swd32 only: call    sub_4315D0
+- swd32 only: mov     ecx, [eax]
+- swd32 only: mov     ebp, dword_524990[esi]
+- swd32 only: mov     dword_4CD730, ecx
+- swd32 only: movsx   ecx, byte ptr dword_521374[edi]
+- swd32 only: mov     dword_4CD71C, ecx
+- swd32 only: mov     dword_4CD30C, ecx
+- swd32 only: mov     dword_4CD304, ecx
+- swd32 only: mov     edx, [eax+4]
+- swd32 only: mov     ecx, dword_524998[esi]
+- swd32 only: push    edx
+- swd32 only: xor     edx, edx
+- swd32 only: push    ecx
+- swd32 only: mov     dx, [eax+0Eh]
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     cx, [eax+0Ch]
+- swd32 only: push    edx
+- swd32 only: movsx   edx, word ptr [esp+20h+arg_4]
+- swd32 only: movsx   eax, word ptr [esp+20h+arg_C]
+- swd32 only: push    ecx
+- swd32 only: mov     ecx, dword_524994[esi]
+- swd32 only: sub     edx, ecx
+- swd32 only: sub     eax, ebp
+- swd32 only: push    edx
+- swd32 only: push    eax
+- swd32 only: call    sub_4170E0
+- swd32 only: mov     al, byte ptr dword_521374[edi]
++ swd3e only: mov     byte_536EAC[ebx], 0
++ swd3e only: pop     esi
++ swd3e only: pop     ebp
++ swd3e only: mov     eax, 1
++ swd3e only: pop     ebx
+~ constant swd32: add     esp, 20h                                 swd3e: add     esp, 14h
+- swd32 only: add     al, 0FCh
+- swd32 only: mov     byte ptr dword_521374[edi], al
+- swd32 only: pop     edi
+- swd32 only: pop     esi
+- swd32 only: xor     eax, eax
+- swd32 only: pop     ebp
+- swd32 only: mov     byte ptr dword_521374[edi], 0
+- swd32 only: pop     edi
+- swd32 only: pop     esi
+- swd32 only: mov     eax, 1
+- swd32 only: pop     ebp
+- swd32 only: retn

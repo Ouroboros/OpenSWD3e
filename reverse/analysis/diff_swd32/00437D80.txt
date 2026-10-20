@@ -1,0 +1,13 @@
+swd3e 0x00437D80 sub_437D80 <- swd32 0x00433010 sub_433010; method=anchor reusable=no: the code differs
+same=25 offset=0 constant=0 global=0 code=0 inserted=8 deleted=3
+- swd32 only: mov     eax, dword_4FB304
++ swd3e only: mov     ecx, dword_4F5168
++ swd3e only: xor     eax, eax
+- swd32 only: test    eax, eax
+- swd32 only: mov     dword_4FB30C, 0
++ swd3e only: cmp     ecx, eax
++ swd3e only: mov     dword_4F5170, eax
++ swd3e only: mov     dword_4F5164, eax
++ swd3e only: mov     word_4F5120, ax
++ swd3e only: mov     word_4F517C, ax
++ swd3e only: mov     word_4F517E, ax

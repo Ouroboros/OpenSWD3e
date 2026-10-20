@@ -1,0 +1,10 @@
+swd3e 0x00446E40 sub_446E40 <- swd32 0x00441F70 sub_441F70; method=calls reusable=no: the code differs
+same=62 offset=0 constant=0 global=0 code=0 inserted=5 deleted=3
+- swd32 only: xor     edx, edx
+- swd32 only: mov     dx, word ptr dword_4FBECC
+- swd32 only: mov     ax, ds:word_499CD4[edx*2]
++ swd3e only: mov     edx, dword_50A820
++ swd3e only: push    edx
++ swd3e only: call    sub_441960
++ swd3e only: mov     ax, ds:word_4AACCC[eax*2]
++ swd3e only: add     esp, 4

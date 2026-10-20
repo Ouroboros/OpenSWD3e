@@ -1,0 +1,13 @@
+swd3e 0x00451160 sub_451160 <- swd32 0x00448650 sub_448650; method=calls reusable=no: the code differs
+same=30 offset=0 constant=2 global=0 code=0 inserted=5 deleted=4
+- swd32 only: add     edx, eax
++ swd3e only: add     eax, edx
+- swd32 only: push    edx
++ swd3e only: push    eax
+- swd32 only: jnz     short locret_4486F3
++ swd3e only: jz      short loc_451203
+~ constant swd32: push    0FFFFFFFFh                               swd3e: push    1
+~ constant swd32: push    2D9h                                     swd3e: push    0C10h
+- swd32 only: retn
++ swd3e only: call    sub_450DD0
++ swd3e only: jmp     sub_450D20

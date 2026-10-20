@@ -1,0 +1,5 @@
+swd3e 0x00483830 sub_483830 <- swd32 0x00472C70 sub_472C70; method=shape reusable=no: the code differs
+same=27 offset=3 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: test    byte ptr [esi+26C8h], 10h                swd3e: test    byte ptr [esi+2BD0h], 10h
+~ offset   swd32: shr     word ptr [esi+26DCh], 1                  swd3e: shr     word ptr [esi+2BE6h], 1
+~ offset   swd32: mov     ax, [esi+26DCh]                          swd3e: mov     ax, [esi+2BE6h]

@@ -1,0 +1,7 @@
+swd3e 0x0040E0D0 sub_40E0D0 <- swd32 0x0040DD60 sub_40DD60; method=neighbours reusable=no: the code differs
+same=63 offset=1 constant=0 global=0 code=0 inserted=4 deleted=0
++ swd3e only: mov     dl, [eax+33h]
++ swd3e only: mov     [ecx+35h], dl
++ swd3e only: mov     dl, [eax+33h]
++ swd3e only: mov     [ecx+36h], dl
+~ offset   swd32: mov     [ecx+35h], al                            swd3e: mov     [ecx+37h], al

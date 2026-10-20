@@ -1,0 +1,211 @@
+swd3e 0x004A1D52 sub_4A1D52 <- swd32 0x0048B1C0 sub_48B1C0; method=anchor reusable=no: the code differs
+same=27 offset=0 constant=3 global=0 code=5 inserted=80 deleted=121
++ swd3e only: push    ebx
++ swd3e only: mov     ebx, [esp+4+lpMem]
+- swd32 only: mov     ebp, esp
+- swd32 only: sub     esp, 14h
+- swd32 only: cmp     [ebp+lpMem], 0
++ swd3e only: push    esi
++ swd3e only: test    ebx, ebx
++ swd3e only: push    edi
+- swd32 only: mov     eax, [ebp+dwBytes]
+- swd32 only: push    eax
++ swd3e only: push    [esp+10h+arg_4]
+- swd32 only: add     esp, 4
++ swd3e only: pop     ecx
+- swd32 only: cmp     [ebp+dwBytes], 0
++ swd3e only: mov     esi, [esp+10h+arg_4]
++ swd3e only: test    esi, esi
+- swd32 only: mov     ecx, [ebp+lpMem]
+- swd32 only: push    ecx
++ swd3e only: push    ebx
+- swd32 only: add     esp, 4
++ swd3e only: pop     ecx
+- swd32 only: mov     [ebp+var_8], 0
+- swd32 only: cmp     [ebp+dwBytes], 0FFFFFFE0h
++ swd3e only: xor     edi, edi
++ swd3e only: cmp     esi, 0FFFFFFE0h
+- swd32 only: mov     edx, [ebp+lpMem]
+- swd32 only: push    edx
++ swd3e only: push    ebx
+- swd32 only: add     esp, 4
+- swd32 only: mov     [ebp+var_C], eax
+- swd32 only: cmp     [ebp+var_C], 0
++ swd3e only: mov     ebp, eax
++ swd3e only: pop     ecx
++ swd3e only: test    ebp, ebp
+- swd32 only: mov     eax, [ebp+dwBytes]
+- swd32 only: cmp     eax, dword_4A8390
++ swd3e only: cmp     esi, dword_4C0534
+- swd32 only: mov     ecx, [ebp+dwBytes]
+- swd32 only: push    ecx
+- swd32 only: mov     edx, [ebp+lpMem]
+- swd32 only: push    edx
+- swd32 only: mov     eax, [ebp+var_C]
+- swd32 only: push    eax
++ swd3e only: push    esi
++ swd3e only: push    ebx
++ swd3e only: push    ebp
+- swd32 only: mov     ecx, [ebp+lpMem]
+- swd32 only: mov     [ebp+var_8], ecx
++ swd3e only: mov     edi, ebx
+~ code     swd32: jmp     short loc_48B2A6                         swd3e: jmp     short loc_4A1DE3
+- swd32 only: mov     edx, [ebp+dwBytes]
+- swd32 only: push    edx
++ swd3e only: push    esi
++ swd3e only: call    sub_4A3E17
++ swd3e only: mov     edi, eax
++ swd3e only: pop     ecx
++ swd3e only: test    edi, edi
++ swd3e only: jz      short loc_4A1DEB
++ swd3e only: mov     eax, [ebx-4]
++ swd3e only: dec     eax
++ swd3e only: cmp     eax, esi
++ swd3e only: jb      short loc_4A1DD1
++ swd3e only: mov     eax, esi
++ swd3e only: push    eax
++ swd3e only: push    ebx
++ swd3e only: push    edi
++ swd3e only: call    sub_4A4F20
++ swd3e only: push    ebx
++ swd3e only: push    ebp
+~ constant swd32: add     esp, 4                                   swd3e: add     esp, 14h
+- swd32 only: mov     [ebp+var_8], eax
+- swd32 only: cmp     [ebp+var_8], 0
++ swd3e only: test    edi, edi
++ swd3e only: jnz     loc_4A1E6B
++ swd3e only: test    esi, esi
++ swd3e only: jnz     short loc_4A1DF2
++ swd3e only: push    1
++ swd3e only: pop     esi
++ swd3e only: add     esi, 0Fh
++ swd3e only: and     esi, 0FFFFFFF0h
++ swd3e only: push    esi
++ swd3e only: push    0
++ swd3e only: push    hHeap
++ swd3e only: call    ds:HeapAlloc
++ swd3e only: mov     edi, eax
++ swd3e only: test    edi, edi
+~ code     swd32: jz      short loc_48B2A6                         swd3e: jz      short loc_4A1E4E
+- swd32 only: mov     eax, [ebp+lpMem]
+- swd32 only: mov     ecx, [eax-4]
+- swd32 only: sub     ecx, 1
+- swd32 only: mov     [ebp+var_4], ecx
+- swd32 only: mov     edx, [ebp+var_4]
+- swd32 only: cmp     edx, [ebp+dwBytes]
+- swd32 only: jnb     short loc_48B27C
+- swd32 only: mov     eax, [ebp+var_4]
+- swd32 only: mov     [ebp+var_10], eax
+- swd32 only: jmp     short loc_48B282
+- swd32 only: mov     ecx, [ebp+dwBytes]
+- swd32 only: mov     [ebp+var_10], ecx
+- swd32 only: mov     edx, [ebp+var_10]
+- swd32 only: push    edx
+- swd32 only: mov     eax, [ebp+lpMem]
++ swd3e only: mov     eax, [ebx-4]
++ swd3e only: dec     eax
++ swd3e only: cmp     eax, esi
++ swd3e only: jb      short loc_4A1E17
++ swd3e only: mov     eax, esi
+- swd32 only: mov     ecx, [ebp+var_8]
+- swd32 only: push    ecx
++ swd3e only: push    ebx
++ swd3e only: push    edi
+- swd32 only: add     esp, 0Ch
+- swd32 only: mov     edx, [ebp+lpMem]
+- swd32 only: push    edx
+- swd32 only: mov     eax, [ebp+var_C]
+- swd32 only: push    eax
+- swd32 only: call    sub_48B5B0
+- swd32 only: add     esp, 8
+- swd32 only: cmp     [ebp+var_8], 0
+- swd32 only: jnz     short loc_48B326
+- swd32 only: cmp     [ebp+dwBytes], 0
+- swd32 only: jnz     short loc_48B2B9
+- swd32 only: mov     [ebp+dwBytes], 1
+- swd32 only: mov     ecx, [ebp+dwBytes]
+- swd32 only: add     ecx, 0Fh
+- swd32 only: and     ecx, 0FFFFFFF0h
+- swd32 only: mov     [ebp+dwBytes], ecx
+- swd32 only: mov     edx, [ebp+dwBytes]
+- swd32 only: push    edx
+- swd32 only: push    0
+- swd32 only: mov     eax, hHeap
+- swd32 only: push    eax
+- swd32 only: call    ds:HeapAlloc
+- swd32 only: mov     [ebp+var_8], eax
+- swd32 only: cmp     [ebp+var_8], 0
+- swd32 only: jz      short loc_48B326
+- swd32 only: mov     ecx, [ebp+lpMem]
+- swd32 only: mov     edx, [ecx-4]
+- swd32 only: sub     edx, 1
+- swd32 only: mov     [ebp+var_4], edx
+- swd32 only: mov     eax, [ebp+var_4]
+- swd32 only: cmp     eax, [ebp+dwBytes]
+- swd32 only: jnb     short loc_48B2FC
+- swd32 only: mov     ecx, [ebp+var_4]
+- swd32 only: mov     [ebp+var_14], ecx
+- swd32 only: jmp     short loc_48B302
+- swd32 only: mov     edx, [ebp+dwBytes]
+- swd32 only: mov     [ebp+var_14], edx
+- swd32 only: mov     eax, [ebp+var_14]
+- swd32 only: push    eax
+- swd32 only: mov     ecx, [ebp+lpMem]
+- swd32 only: push    ecx
+- swd32 only: mov     edx, [ebp+var_8]
+- swd32 only: push    edx
+- swd32 only: call    sub_4923E0
+- swd32 only: add     esp, 0Ch
+- swd32 only: mov     eax, [ebp+lpMem]
+- swd32 only: push    eax
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: push    ecx
++ swd3e only: push    ebx
++ swd3e only: push    ebp
+~ constant swd32: add     esp, 8                                   swd3e: add     esp, 14h
+~ code     swd32: jmp     short loc_48B35B                         swd3e: jmp     short loc_4A1E4A
+- swd32 only: cmp     [ebp+dwBytes], 0
++ swd3e only: test    esi, esi
+- swd32 only: mov     [ebp+dwBytes], 1
+- swd32 only: mov     edx, [ebp+dwBytes]
+- swd32 only: add     edx, 0Fh
+- swd32 only: and     edx, 0FFFFFFF0h
+- swd32 only: mov     [ebp+dwBytes], edx
+- swd32 only: mov     eax, [ebp+dwBytes]
+- swd32 only: push    eax
+- swd32 only: mov     ecx, [ebp+lpMem]
+- swd32 only: push    ecx
+~ constant swd32: push    0                                        swd3e: push    1
+- swd32 only: mov     edx, hHeap
+- swd32 only: push    edx
++ swd3e only: pop     esi
++ swd3e only: add     esi, 0Fh
++ swd3e only: and     esi, 0FFFFFFF0h
++ swd3e only: push    esi
++ swd3e only: push    ebx
++ swd3e only: push    0
++ swd3e only: push    hHeap
+- swd32 only: mov     [ebp+var_8], eax
+- swd32 only: cmp     [ebp+var_8], 0
++ swd3e only: mov     edi, eax
++ swd3e only: test    edi, edi
+~ code     swd32: jnz     short loc_48B36A                         swd3e: jnz     short loc_4A1E6B
+- swd32 only: jnz     short loc_48B36F
+- swd32 only: mov     eax, [ebp+var_8]
+- swd32 only: jmp     short loc_48B388
+- swd32 only: mov     eax, [ebp+dwBytes]
+- swd32 only: push    eax
++ swd3e only: jz      short loc_4A1E6B
++ swd3e only: push    esi
+- swd32 only: add     esp, 4
+- swd32 only: jnz     short loc_48B383
+- swd32 only: xor     eax, eax
+- swd32 only: jmp     short loc_48B388
++ swd3e only: pop     ecx
++ swd3e only: jnz     loc_4A1D83
+~ code     swd32: jmp     loc_48B1F6                               swd3e: jmp     loc_4A1D7C
+- swd32 only: mov     esp, ebp
++ swd3e only: mov     eax, edi
++ swd3e only: pop     edi
++ swd3e only: pop     esi
++ swd3e only: pop     ebx

@@ -1,0 +1,90 @@
+swd3e 0x004A78D5 sub_4A78D5 <- swd32 0x00492220 sub_492220; method=anchor reusable=no: the code differs
+same=8 offset=0 constant=0 global=0 code=0 inserted=42 deleted=46
+- swd32 only: push    ebp
+- swd32 only: mov     ebp, esp
+- swd32 only: sub     esp, 8
+- swd32 only: mov     [ebp+var_4], 0
+- swd32 only: cmp     dword_53D310, 0
++ swd3e only: push    ebx
++ swd3e only: xor     ebx, ebx
++ swd3e only: cmp     dword_579D04, ebx
++ swd3e only: push    esi
++ swd3e only: push    edi
+- swd32 only: mov     [ebp+hModule], eax
+- swd32 only: cmp     [ebp+hModule], 0
++ swd3e only: mov     edi, eax
++ swd3e only: cmp     edi, ebx
++ swd3e only: jz      short loc_4A795A
++ swd3e only: mov     esi, ds:GetProcAddress
++ swd3e only: push    offset aMessageboxa
++ swd3e only: push    edi
++ swd3e only: call    esi
++ swd3e only: test    eax, eax
++ swd3e only: mov     dword_579D04, eax
+- swd32 only: mov     eax, [ebp+hModule]
+- swd32 only: push    eax
+- swd32 only: call    ds:GetProcAddress
++ swd3e only: push    edi
++ swd3e only: call    esi
++ swd3e only: push    offset aGetlastactivep
++ swd3e only: push    edi
+- swd32 only: cmp     dword_53D310, 0
+- swd32 only: jnz     short loc_49226B
++ swd3e only: call    esi
++ swd3e only: mov     dword_579D0C, eax
++ swd3e only: mov     eax, dword_579D08
++ swd3e only: test    eax, eax
++ swd3e only: jz      short loc_4A7943
++ swd3e only: call    eax
++ swd3e only: mov     ebx, eax
++ swd3e only: test    ebx, ebx
++ swd3e only: jz      short loc_4A7943
++ swd3e only: mov     eax, dword_579D0C
++ swd3e only: test    eax, eax
++ swd3e only: jz      short loc_4A7943
++ swd3e only: push    ebx
++ swd3e only: call    eax
++ swd3e only: mov     ebx, eax
++ swd3e only: push    [esp+0Ch+arg_8]
++ swd3e only: push    [esp+10h+arg_4]
++ swd3e only: push    [esp+14h+arg_0]
++ swd3e only: push    ebx
++ swd3e only: call    dword_579D04
++ swd3e only: pop     edi
++ swd3e only: pop     esi
++ swd3e only: pop     ebx
++ swd3e only: retn
+- swd32 only: push    offset aGetactivewindo
+- swd32 only: mov     ecx, [ebp+hModule]
+- swd32 only: push    ecx
+- swd32 only: call    ds:GetProcAddress
+- swd32 only: mov     dword_53D314, eax
+- swd32 only: push    offset aGetlastactivep
+- swd32 only: mov     edx, [ebp+hModule]
+- swd32 only: push    edx
+- swd32 only: call    ds:GetProcAddress
+- swd32 only: mov     dword_53D318, eax
+- swd32 only: cmp     dword_53D314, 0
+- swd32 only: jz      short loc_4922A5
+- swd32 only: call    dword_53D314
+- swd32 only: mov     [ebp+var_4], eax
+- swd32 only: cmp     [ebp+var_4], 0
+- swd32 only: jz      short loc_4922C1
+- swd32 only: cmp     dword_53D318, 0
+- swd32 only: jz      short loc_4922C1
+- swd32 only: mov     eax, [ebp+var_4]
+- swd32 only: push    eax
+- swd32 only: call    dword_53D318
+- swd32 only: mov     [ebp+var_4], eax
+- swd32 only: mov     ecx, [ebp+arg_8]
+- swd32 only: push    ecx
+- swd32 only: mov     edx, [ebp+arg_4]
+- swd32 only: push    edx
+- swd32 only: mov     eax, [ebp+arg_0]
+- swd32 only: push    eax
+- swd32 only: mov     ecx, [ebp+var_4]
+- swd32 only: push    ecx
+- swd32 only: call    dword_53D310
+- swd32 only: mov     esp, ebp
+- swd32 only: pop     ebp
+- swd32 only: retn

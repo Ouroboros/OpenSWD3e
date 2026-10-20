@@ -1,0 +1,4 @@
+swd3e 0x0040F930 sub_40F930 <- swd32 0x0040F5E0 sub_40F5E0; method=shape reusable=no: the code differs
+same=21 offset=2 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     ecx, [eax+0A0h]                          swd3e: mov     ecx, [eax+0ACh]
+~ offset   swd32: mov     edx, [eax+0A0h]                          swd3e: mov     edx, [eax+0ACh]

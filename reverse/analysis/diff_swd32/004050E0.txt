@@ -1,0 +1,11 @@
+swd3e 0x004050E0 sub_4050E0 <- swd32 0x004053C0 sub_4053C0; method=calls reusable=no: the code differs
+same=32 offset=1 constant=1 global=0 code=0 inserted=5 deleted=2
+~ offset   swd32: mov     eax, [esp+arg_4]                         swd3e: mov     eax, [esp+arg_0]
++ swd3e only: mov     ecx, [esp+arg_4]
++ swd3e only: mov     edx, [eax]
++ swd3e only: and     dh, 0BFh
++ swd3e only: mov     [eax], edx
+- swd32 only: cmp     eax, edx
+- swd32 only: mov     eax, [esp+arg_0]
++ swd3e only: cmp     ecx, edx
+~ constant swd32: cmp     esi, 96h                                 swd3e: cmp     esi, 78h

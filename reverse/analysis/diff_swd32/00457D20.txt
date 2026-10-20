@@ -1,0 +1,14 @@
+swd3e 0x00457D20 sub_457D20 <- swd32 0x004506B0 sub_4506B0; method=shape reusable=no: the code differs
+same=71 offset=9 constant=3 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: sub     esp, 10h                                 swd3e: sub     esp, 28h
+~ offset   swd32: mov     eax, [esp+10h+arg_C]                     swd3e: mov     eax, [esp+28h+arg_C]
+~ offset   swd32: mov     ebx, [esp+14h+arg_8]                     swd3e: mov     ebx, [esp+2Ch+arg_8]
+~ offset   swd32: mov     edi, [esp+20h+arg_4]                     swd3e: mov     edi, [esp+38h+arg_4]
+~ constant swd32: mov     ecx, 3E8h                                swd3e: mov     ecx, 3B9ACA00h
+~ offset   swd32: mov     [esp+20h+arg_8], 4                       swd3e: mov     [esp+38h+arg_8], 0Ah
+~ offset   swd32: mov     eax, [esp+20h+arg_8]                     swd3e: mov     eax, [esp+38h+arg_8]
+~ offset   swd32: mov     [esp+20h+arg_8], eax                     swd3e: mov     [esp+38h+arg_8], eax
+~ offset   swd32: mov     ebp, [esp+20h+arg_0]                     swd3e: mov     ebp, [esp+38h+arg_0]
+~ offset   swd32: lea     esi, [esp+20h+var_4]                     swd3e: lea     esi, [esp+38h+var_4]
+~ offset   swd32: mov     eax, [esp+2Ch+arg_C]                     swd3e: mov     eax, [esp+44h+arg_C]
+~ constant swd32: add     esp, 10h                                 swd3e: add     esp, 28h

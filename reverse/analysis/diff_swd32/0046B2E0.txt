@@ -1,0 +1,10 @@
+swd3e 0x0046B2E0 sub_46B2E0 <- swd32 0x0045F1B0 sub_45F1B0; method=anchor reusable=no: the code differs
+same=85 offset=0 constant=1 global=0 code=0 inserted=3 deleted=4
+- swd32 only: mov     ecx, eax
+- swd32 only: shl     ecx, 5
+- swd32 only: add     ecx, eax
+- swd32 only: lea     edx, [eax+ecx*2]
++ swd3e only: lea     ecx, [eax+eax*4]
++ swd3e only: lea     eax, [eax+ecx*8]
++ swd3e only: lea     edx, [eax+eax*2]
+~ constant swd32: push    10Ch                                     swd3e: push    1ECh

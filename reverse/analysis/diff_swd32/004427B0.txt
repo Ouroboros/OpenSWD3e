@@ -1,0 +1,18 @@
+swd3e 0x004427B0 sub_4427B0 <- swd32 0x0043CEF0 sub_43CEF0; method=shape reusable=no: the code differs
+same=80 offset=15 constant=1 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     ecx, [eax+0ACh]                          swd3e: mov     ecx, [eax+0B0h]
+~ constant swd32: mov     ecx, 2Ch                                 swd3e: mov     ecx, 2Dh
+~ offset   swd32: cmp     [eax+72h], di                            swd3e: cmp     [eax+78h], di
+~ offset   swd32: mov     cx, [eax+60h]                            swd3e: mov     cx, [eax+64h]
+~ offset   swd32: cmp     [eax+76h], di                            swd3e: cmp     [eax+7Ch], di
+~ offset   swd32: mov     dx, [eax+60h]                            swd3e: mov     dx, [eax+64h]
+~ offset   swd32: cmp     [eax+7Ah], di                            swd3e: cmp     [eax+80h], di
+~ offset   swd32: mov     dx, [eax+60h]                            swd3e: mov     dx, [eax+64h]
+~ offset   swd32: cmp     [eax+86h], di                            swd3e: cmp     [eax+8Ch], di
+~ offset   swd32: mov     dx, [eax+60h]                            swd3e: mov     dx, [eax+64h]
+~ offset   swd32: cmp     [eax+8Ah], di                            swd3e: cmp     [eax+90h], di
+~ offset   swd32: mov     dx, [eax+60h]                            swd3e: mov     dx, [eax+64h]
+~ offset   swd32: cmp     [eax+7Eh], di                            swd3e: cmp     [eax+84h], di
+~ offset   swd32: mov     cx, [eax+60h]                            swd3e: mov     cx, [eax+64h]
+~ offset   swd32: cmp     [eax+82h], di                            swd3e: cmp     [eax+88h], di
+~ offset   swd32: mov     cx, [eax+60h]                            swd3e: mov     cx, [eax+64h]

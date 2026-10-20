@@ -1,0 +1,39 @@
+swd3e 0x0046F480 sub_46F480 <- swd32 0x00462420 sub_462420; method=calls reusable=no: the code differs
+same=34 offset=0 constant=0 global=0 code=0 inserted=19 deleted=18
+- swd32 only: lea     ecx, [esi-8]
+- swd32 only: mov     eax, ecx
+- swd32 only: shl     eax, 6
+- swd32 only: sub     eax, ecx
+- swd32 only: shl     eax, 4
+- swd32 only: sub     eax, ecx
+- swd32 only: lea     ecx, [eax+eax*2]
+- swd32 only: lea     ecx, ds:5029D0h[ecx*4]
++ swd3e only: lea     eax, [esi-14h]
++ swd3e only: lea     ecx, ds:0[eax*8]
++ swd3e only: sub     ecx, eax
++ swd3e only: lea     ecx, [ecx+ecx*2]
++ swd3e only: lea     ecx, [eax+ecx*8]
++ swd3e only: lea     edx, [ecx+ecx*4]
++ swd3e only: lea     eax, [eax+edx*4]
++ swd3e only: lea     ecx, ds:5136E0h[eax*4]
+- swd32 only: mov     edx, dword_53BCE4
++ swd3e only: mov     ecx, dword_576FA4
+- swd32 only: dec     edx
+- swd32 only: cmp     edi, edx
++ swd3e only: dec     ecx
++ swd3e only: cmp     edi, ecx
+- swd32 only: mov     eax, dword_53BD54
++ swd3e only: mov     edx, dword_577024
+- swd32 only: mov     dword_520DD0[edi*4], eax
+- swd32 only: xor     ecx, ecx
++ swd3e only: mov     dword_5368AC[edi*4], edx
++ swd3e only: xor     eax, eax
+- swd32 only: mov     dword_4FF0B0, ecx
++ swd3e only: mov     dword_50EBF0, eax
+- swd32 only: mov     dword_4FF0B4, ecx
++ swd3e only: mov     dword_50EBF4, eax
+- swd32 only: mov     dword_4FF0B8, ecx
+- swd32 only: mov     word_53BF22, cx
++ swd3e only: mov     dword_50EBF8, eax
++ swd3e only: mov     dword_50EBFC, eax
++ swd3e only: mov     word_57720A, ax

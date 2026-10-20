@@ -1,0 +1,2 @@
+swd3e 0x0049DB50 sub_49DB50 <- swd32 0x00486080 sub_486080; method=hash reusable=yes
+same=73 offset=0 constant=0 global=0 code=0 inserted=0 deleted=0

@@ -1,0 +1,2 @@
+swd3e 0x0040C500 sub_40C500 <- swd32 0x0040C100 sub_40C100; method=hash reusable=yes
+same=16 offset=0 constant=0 global=0 code=0 inserted=0 deleted=0

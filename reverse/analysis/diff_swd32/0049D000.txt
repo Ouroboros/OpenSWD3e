@@ -1,0 +1,13 @@
+swd3e 0x0049D000 sub_49D000 <- swd32 0x00485460 sub_485460; method=anchor reusable=no: the code differs
+same=27 offset=2 constant=0 global=0 code=5 inserted=4 deleted=0
++ swd3e only: dec     eax
++ swd3e only: jz      short loc_49D024
+~ code     swd32: jz      short loc_485479                         swd3e: jz      short loc_49D01C
+~ code     swd32: jz      short loc_485471                         swd3e: jz      short loc_49D014
++ swd3e only: lea     edi, [ecx+444h]
++ swd3e only: jmp     short loc_49D02A
+~ offset   swd32: lea     edi, [ecx+43Ch]                          swd3e: lea     edi, [ecx+46Ch]
+~ code     swd32: jmp     short loc_48547F                         swd3e: jmp     short loc_49D02A
+~ offset   swd32: lea     edi, [ecx+464h]                          swd3e: lea     edi, [ecx+494h]
+~ code     swd32: jz      short loc_485498                         swd3e: jz      short loc_49D043
+~ code     swd32: jnz     short loc_48548F                         swd3e: jnz     short loc_49D03A

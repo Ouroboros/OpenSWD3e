@@ -1,0 +1,4 @@
+swd3e 0x004808C0 sub_4808C0 <- swd32 0x0046FFE0 sub_46FFE0; method=calls reusable=no: the code differs
+same=1 offset=2 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     eax, [ecx+2EC4h]                         swd3e: mov     eax, [ecx+3454h]
+~ offset   swd32: mov     [ecx+2EC0h], eax                         swd3e: mov     [ecx+3450h], eax

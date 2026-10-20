@@ -1,0 +1,30 @@
+swd3e 0x004536D0 sub_4536D0 <- swd32 0x0044BDA0 sub_44BDA0; method=callers reusable=no: the code differs
+same=187 offset=0 constant=0 global=0 code=0 inserted=7 deleted=21
+- swd32 only: jz      loc_44BF48
++ swd3e only: jz      short loc_453861
+- swd32 only: jnz     short loc_44BEFB
++ swd3e only: jnz     loc_4538AA
+- swd32 only: pop     esi
+- swd32 only: retn
+- swd32 only: pop     edi
+- swd32 only: mov     dword_4FD3A8, 1
+- swd32 only: mov     dword_4FD3A4, 1Eh
+- swd32 only: cmp     dword_4FD30C, 6
++ swd3e only: mov     ecx, dword_50BE78
++ swd3e only: mov     eax, 5
++ swd3e only: cmp     ecx, eax
+- swd32 only: mov     dword_4FD2F8, 5
++ swd3e only: mov     dword_50BE64, eax
+- swd32 only: push    1Eh
+- swd32 only: push    2
++ swd3e only: pop     edi
+- swd32 only: call    sub_485910
+- swd32 only: add     esp, 8
+- swd32 only: call    sub_485880
+- swd32 only: mov     dword_4B7C74, esi
+- swd32 only: mov     dword_4B7C78, esi
+- swd32 only: mov     dword_4B7C7C, esi
+- swd32 only: mov     dword_4B7C80, esi
+- swd32 only: mov     dword ptr qword_4B7C84, esi
+- swd32 only: mov     dword ptr qword_4B7C84+4, esi
+- swd32 only: pop     edi

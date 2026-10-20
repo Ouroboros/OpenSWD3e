@@ -1,0 +1,3 @@
+swd3e 0x00490A40 sub_490A40 <- swd32 0x0047CC50 sub_47CC50; method=neighbours reusable=no: the code differs
+same=2 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     [ecx+2AD4h], eax                         swd3e: mov     [ecx+3014h], eax

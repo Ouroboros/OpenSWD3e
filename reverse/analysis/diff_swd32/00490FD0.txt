@@ -1,0 +1,10 @@
+swd3e 0x00490FD0 sub_490FD0 <- swd32 0x0047CEB0 sub_47CEB0; method=neighbours reusable=no: the code differs
+same=2 offset=1 constant=0 global=0 code=0 inserted=5 deleted=2
+~ offset   swd32: mov     edx, [ecx+2AB8h]                         swd3e: mov     edx, [ecx+2FF8h]
++ swd3e only: mov     eax, 1
++ swd3e only: cmp     edx, eax
++ swd3e only: jz      short locret_490FE9
++ swd3e only: cmp     [ecx+2FFCh], eax
++ swd3e only: jz      short locret_490FE9
+- swd32 only: cmp     edx, 1
+- swd32 only: setz    al

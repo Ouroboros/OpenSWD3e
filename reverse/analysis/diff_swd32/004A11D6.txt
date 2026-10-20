@@ -1,0 +1,38 @@
+swd3e 0x004A11D6 sub_4A11D6 <- swd32 0x00489780 sub_489780; method=neighbours reusable=no: the code differs
+same=12 offset=1 constant=1 global=0 code=0 inserted=12 deleted=22
+~ constant swd32: sub     esp, 18h                                 swd3e: sub     esp, 14h
+- swd32 only: push    ebx
+- swd32 only: push    esi
+- swd32 only: push    edi
+- swd32 only: mov     [ebp+var_14], 0
++ swd3e only: mov     eax, [ebp+arg_4]
++ swd3e only: and     [ebp+var_14], 0
++ swd3e only: mov     ecx, [ebp+arg_0]
++ swd3e only: mov     [ebp+var_C], eax
++ swd3e only: mov     eax, [ebp+arg_C]
+- swd32 only: mov     eax, [ebp+arg_4]
++ swd3e only: inc     eax
++ swd3e only: mov     [ebp+var_8], ecx
+~ offset   swd32: mov     [ebp+var_C], eax                         swd3e: mov     [ebp+var_4], eax
+- swd32 only: mov     ecx, [ebp+arg_0]
+- swd32 only: mov     [ebp+var_8], ecx
+- swd32 only: mov     edx, [ebp+arg_C]
+- swd32 only: add     edx, 1
+- swd32 only: mov     [ebp+var_4], edx
+- swd32 only: mov     eax, [ebp+arg_10]
+- swd32 only: push    eax
+- swd32 only: mov     ecx, [ebp+arg_0]
++ swd3e only: push    [ebp+arg_10]
+- swd32 only: mov     edx, [ebp+arg_8]
+- swd32 only: push    edx
++ swd3e only: push    [ebp+arg_8]
+- swd32 only: mov     [ebp+var_18], eax
++ swd3e only: mov     ecx, eax
+- swd32 only: mov     eax, [ebp+var_18]
+- swd32 only: pop     edi
+- swd32 only: pop     esi
+- swd32 only: pop     ebx
+- swd32 only: mov     esp, ebp
+- swd32 only: pop     ebp
++ swd3e only: mov     eax, ecx
++ swd3e only: leave

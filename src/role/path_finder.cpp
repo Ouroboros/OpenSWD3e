@@ -1,0 +1,664 @@
+#include "role/path_finder.h"
+
+#include <algorithm>
+#include <cmath>
+
+#include "core/debug_log.h"
+#include "game/game_state.h"
+#include "map/blocking_map.h"
+#include "platform/message_box.h"
+#include "text/big5.h"
+
+namespace swd3e
+{
+
+namespace
+{
+
+enum Side
+{
+    North,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+    NorthWest,
+};
+
+constexpr int kTile = MapHeader::TileSize;
+
+// The direction TryNeighbour stores for the neighbour on each side (the order of PathNode::children).
+enum Neighbour : int
+{
+    NorthWestNeighbour,
+    NorthNeighbour,
+    NorthEastNeighbour,
+    EastNeighbour,
+    SouthEastNeighbour,
+    SouthNeighbour,
+    SouthWestNeighbour,
+    WestNeighbour,
+};
+
+constexpr std::size_t kDeltaOffset = 1;  // DeltaX and DeltaY are indexed by the step plus kDeltaOffset
+constexpr int kDeltaCenter = 4;          // DirectionByDelta by DeltaY + DeltaX + kDeltaCenter
+// "!!! 危險 步數超過510 !!!" and "路徑計算" (swd32.exe 0x0049F520, 0x0049F53C).
+constexpr std::u8string_view kOverflowText = u8"!!! 危險 步數超過510 !!!";
+constexpr std::u8string_view kOverflowCaption = u8"路徑計算";
+
+void AttachChild(PathNode& parent, PathNode& child)
+{
+    for (PathNode*& slot : parent.children)
+    {
+        if (slot == nullptr)
+        {
+            slot = &child;
+            return;
+        }
+    }
+}
+
+double Distance(int dx, int dy)
+{
+    return std::sqrt(static_cast<double>(dx * dx + dy * dy));
+}
+
+}  // namespace
+
+PathNode* PathNodePool::NewNode()
+{
+    this->storage.push_back(std::make_unique<PathNode>());
+    return this->storage.back().get();
+}
+
+// swd3e.exe 0x00401B30: the pool head plus 8 free nodes
+void PathNodePool::Init()
+{
+    this->storage.clear();
+    this->head = this->NewNode();
+    this->free = 0;
+
+    do
+    {
+        PathNode* node = this->NewNode();
+        node->poolNext = this->head->poolNext;
+        this->head->poolNext = node;
+        ++this->free;
+    } while (this->free < PathNodePool::Initial);
+
+    this->free = PathNodePool::Initial;
+    this->peak = PathNodePool::Initial;
+    this->unused = 0;
+}
+
+// swd3e.exe 0x00401BC0: frees the pool; true when every node had been returned
+bool PathNodePool::Release()
+{
+    for (PathNode* node = this->head->poolNext; node != nullptr; node = this->head->poolNext)
+    {
+        this->head->poolNext = node->poolNext;
+        --this->free;
+    }
+
+    this->storage.clear();
+    this->head = nullptr;
+    return this->free == 0;
+}
+
+// swd3e.exe 0x00401C20: a cleared node; the pool grows when empty
+PathNode* PathNodePool::Alloc()
+{
+    if (this->head->poolNext == nullptr)
+    {
+        PathNode* node = this->NewNode();
+        node->poolNext = this->head->poolNext;
+        this->head->poolNext = node;
+        const int count = this->free + 1;
+        ++this->free;
+
+        if (this->peak < this->free)
+        {
+            this->peak = count;
+        }
+    }
+
+    PathNode* node = this->head->poolNext;
+    this->head->poolNext = node->poolNext;
+    --this->free;
+    *node = PathNode{};
+    return node;
+}
+
+// swd3e.exe 0x00401CA0
+int PathNodePool::Free(PathNode* node)
+{
+    if (node == nullptr)
+    {
+        return 0;
+    }
+
+    node->poolNext = this->head->poolNext;
+    this->head->poolNext = node;
+    return ++this->free;
+}
+
+// swd3e.exe 0x00401CD0
+PathFinder::PathFinder(PathNodePool& pool, const BlockingMap& map, ErrorReporter& reporter)
+    : pool(pool),
+      map(map),
+      reporter(reporter)
+{
+}
+
+// swd3e.exe 0x00401D00
+PathFinder::~PathFinder()
+{
+    this->Reset();
+}
+
+// swd3e.exe 0x00401D30: the directions from (fromX, fromY) to (toX, toY), ended by 0xFF. A search result is accepted
+// only when no path was found before or the path is empty (found is left from the last call). A path of more than
+// 510 steps shows a message box per extra step; the original goes on writing past the 512-byte buffer, here the
+// directions stop at its end.
+int PathFinder::FindPath(int fromX, int fromY, int toX, int toY, int width, int height, std::span<u8> directions)
+{
+    std::size_t written = 0;
+
+    auto put = [&](u8 direction)
+    {
+        if (written < directions.size())
+        {
+            directions[written] = direction;
+        }
+    };
+
+    put(PathFinder::End);
+    this->width = width;
+    this->height = height;
+
+    if (fromX == toX && fromY == toY)
+    {
+        return 1;
+    }
+
+    if (this->IsWalkable(toX, toY) == 0 || this->TileIndex(fromX, fromY) == this->TileIndex(toX, toY))
+    {
+        this->found = 0;
+        this->Reset();
+        return 0;
+    }
+
+    this->Reset();
+    this->Search(fromX, fromY, toX, toY);
+
+    if (this->IsUsable() == 0)
+    {
+        return 0;
+    }
+
+    int steps = 0;
+    const PathNode* current = this->result;
+
+    for (const PathNode* next = current->parent; next != nullptr; next = next->parent)
+    {
+        const int dy = (current->y >> MapHeader::TileShift) - (next->y >> MapHeader::TileShift);
+        const int dx = (current->x >> MapHeader::TileShift) - (next->x >> MapHeader::TileShift);
+        const int index = PathFinder::DeltaY[static_cast<std::size_t>(dy) + kDeltaOffset] +
+                          PathFinder::DeltaX[static_cast<std::size_t>(dx) + kDeltaOffset];
+        put(static_cast<u8>(PathFinder::DirectionByDelta[static_cast<std::size_t>(index + kDeltaCenter)]));
+        ++written;
+
+        if (++steps > PathFinder::MaxSteps)
+        {
+            this->reporter.ShowError(kOverflowCaption, kOverflowText);
+        }
+
+        current = next;
+    }
+
+    put(PathFinder::End);
+    this->found = 1;
+    this->Reset();
+    return 1;
+}
+
+// swd3e.exe 0x00401E80
+int PathFinder::IsUsable() const
+{
+    if (this->result == nullptr)
+    {
+        return 0;
+    }
+
+    if (this->found == 0)
+    {
+        return 1;
+    }
+
+    return this->result->parent == nullptr ? 1 : 0;
+}
+
+// swd3e.exe 0x00401EB0
+int PathFinder::TileIndex(int x, int y) const
+{
+    return (x >> MapHeader::TileShift) + this->map.width * (y >> MapHeader::TileShift);
+}
+
+// swd3e.exe 0x00401ED0
+int PathFinder::IsWalkable(int x, int y) const
+{
+    return (this->mask & this->map.Cell(this->TileIndex(x, y))) == 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x00401F00: returns every node of the search (chained through the open sentinel) to the pool
+void PathFinder::Reset()
+{
+    if (this->open == nullptr)
+    {
+        return;
+    }
+
+    while (PathNode* node = this->open->poolNext)
+    {
+        this->open->poolNext = node->poolNext;
+        this->pool.Free(node);
+    }
+
+    this->pool.Free(this->open);
+    this->open = nullptr;
+}
+
+// swd3e.exe 0x00401F40: searches from the target back to the origin, so the parents of the result lead from
+// (fromX, fromY) to (toX, toY)
+PathNode* PathFinder::Search(int fromX, int fromY, int toX, int toY)
+{
+    const int originTile = this->TileIndex(fromX, fromY);
+    this->open = this->pool.Alloc();
+    this->closed = this->pool.Alloc();
+    PathNode* target = this->pool.Alloc();
+    this->open->poolNext = this->closed;
+    this->closed->poolNext = target;
+    target->g = 0.0;
+    target->poolNext = nullptr;
+    const double h = Distance(toX - fromX, toY - fromY);
+    target->h = h;
+    target->f = h;
+    target->tile = this->TileIndex(toX, toY);
+    target->x = toX;
+    target->y = toY;
+    this->open->listNext = target;
+    PathNode* node = this->PopBest();
+
+    while (node != nullptr)
+    {
+        if (node->tile == originTile)
+        {
+            break;
+        }
+
+        this->Expand(*node, fromX, fromY);
+        node = this->PopBest();
+    }
+
+    this->result = node;
+    return node;
+}
+
+// swd3e.exe 0x00402020
+PathNode* PathFinder::PopBest()
+{
+    PathNode* node = this->open->listNext;
+
+    if (node == nullptr)
+    {
+        ErrorLog(u8"aStar ,Path find fail");
+        return nullptr;
+    }
+
+    this->open->listNext = node->listNext;
+    node->listNext = this->closed->listNext;
+    this->closed->listNext = node;
+    return node;
+}
+
+// swd3e.exe 0x00402060
+void PathFinder::Expand(PathNode& node, int targetX, int targetY)
+{
+    this->UpdateBlocked(node.x, node.y);
+    const int x = node.x;
+    const int y = node.y;
+
+    if (this->blocked[NorthWest] == 0)
+    {
+        this->TryNeighbour(node, x - kTile, y - kTile, targetX, targetY, NorthWestNeighbour);
+    }
+
+    if (this->blocked[North] == 0)
+    {
+        this->TryNeighbour(node, node.x, node.y - kTile, targetX, targetY, NorthNeighbour);
+    }
+
+    if (this->blocked[NorthEast] == 0)
+    {
+        this->TryNeighbour(node, node.x + kTile, node.y - kTile, targetX, targetY, NorthEastNeighbour);
+    }
+
+    if (this->blocked[East] == 0)
+    {
+        this->TryNeighbour(node, node.x + kTile, node.y, targetX, targetY, EastNeighbour);
+    }
+
+    if (this->blocked[SouthEast] == 0)
+    {
+        this->TryNeighbour(node, node.x + kTile, node.y + kTile, targetX, targetY, SouthEastNeighbour);
+    }
+
+    if (this->blocked[South] == 0)
+    {
+        this->TryNeighbour(node, node.x, node.y + kTile, targetX, targetY, SouthNeighbour);
+    }
+
+    if (this->blocked[SouthWest] == 0)
+    {
+        this->TryNeighbour(node, node.x - kTile, node.y + kTile, targetX, targetY, SouthWestNeighbour);
+    }
+
+    if (this->blocked[West] == 0)
+    {
+        this->TryNeighbour(node, node.x - kTile, node.y, targetX, targetY, WestNeighbour);
+    }
+}
+
+// swd3e.exe 0x00402180: an improved open node keeps its place in the open list; for a closed node the direction is
+// written to the parent's first child instead of the node
+void PathFinder::TryNeighbour(PathNode& parent, int x, int y, int targetX, int targetY, int direction)
+{
+    const double g = parent.g + 1.0;
+    const int tile = this->TileIndex(x, y);
+
+    if (PathNode* openNode = this->FindOpen(tile))
+    {
+        AttachChild(parent, *openNode);
+
+        if (g < openNode->g)
+        {
+            const double f = g + openNode->h;
+            openNode->g = g;
+            openNode->parent = &parent;
+            openNode->f = f;
+        }
+
+        return;
+    }
+
+    if (PathNode* closedNode = this->FindClosed(tile))
+    {
+        AttachChild(parent, *closedNode);
+
+        if (g < closedNode->g)
+        {
+            const double f = g + closedNode->h;
+            closedNode->g = g;
+            closedNode->parent = &parent;
+            closedNode->f = f;
+            this->Propagate(*closedNode);
+        }
+
+        parent.children.front()->direction = PathFinder::OppositeDirection[static_cast<std::size_t>(direction)];
+        return;
+    }
+
+    PathNode* node = this->pool.Alloc();
+    node->poolNext = this->open->poolNext;
+    this->open->poolNext = node;
+    node->g = g;
+    node->parent = &parent;
+    node->x = x;
+    node->tile = tile;
+    const double h = Distance(x - targetX, y - targetY);
+    node->y = y;
+    node->direction = direction;
+    node->h = h;
+    node->f = h + g;
+    this->InsertOpen(*node);
+    AttachChild(parent, *node);
+}
+
+// swd3e.exe 0x00402460
+PathNode* PathFinder::FindOpen(int tile) const
+{
+    for (PathNode* node = this->open->listNext; node != nullptr; node = node->listNext)
+    {
+        if (node->tile == tile)
+        {
+            return node;
+        }
+    }
+
+    return nullptr;
+}
+
+// swd3e.exe 0x00402480
+PathNode* PathFinder::FindClosed(int tile) const
+{
+    for (PathNode* node = this->closed->listNext; node != nullptr; node = node->listNext)
+    {
+        if (node->tile == tile)
+        {
+            return node;
+        }
+    }
+
+    return nullptr;
+}
+
+// swd3e.exe 0x004024A0: before the first node whose f is not smaller
+void PathFinder::InsertOpen(PathNode& node)
+{
+    PathNode* previous = this->open;
+    PathNode* current = this->open->listNext;
+
+    if (current == nullptr)
+    {
+        this->open->listNext = &node;
+        return;
+    }
+
+    while (current != nullptr && !(node.f <= current->f))
+    {
+        previous = current;
+        current = current->listNext;
+    }
+
+    node.listNext = current;
+    previous->listNext = &node;
+}
+
+// swd3e.exe 0x004024E0: pushes improved costs down to the children of `node`
+void PathFinder::Propagate(PathNode& node)
+{
+    auto relax = [this](PathNode& parent)
+    {
+        for (PathNode* child : parent.children)
+        {
+            if (child == nullptr)
+            {
+                break;
+            }
+
+            const double g = parent.g + 1.0;
+
+            if (g < child->g)
+            {
+                child->g = g;
+                const double f = g + child->h;
+                child->parent = &parent;
+                child->f = f;
+                this->Push(*child);
+            }
+        }
+    };
+
+    relax(node);
+
+    while (!this->stack.empty())
+    {
+        relax(*this->Pop());
+    }
+}
+
+// swd3e.exe 0x004025B0
+void PathFinder::Push(PathNode& node)
+{
+    this->stack.push_back(&node);
+}
+
+// swd3e.exe 0x004025E0
+PathNode* PathFinder::Pop()
+{
+    PathNode* node = this->stack.back();
+    this->stack.pop_back();
+    return node;
+}
+
+// swd3e.exe 0x00402600: the blocking bits around the footprint at (x, y): the rows above and below and the columns
+// left and right, each footprint + 2 tiles long, merged per direction. Footprints of at most 2 tiles take an unrolled
+// path that treats sizes below 1 like 1. The original keeps the four edges in 8-entry stack arrays that overlap for
+// footprints above 6 tiles; here they are separate.
+void PathFinder::UpdateBlocked(int x, int y)
+{
+    this->blocked.fill(0);
+    const int mapWidth = this->map.width;
+    const int tx = x >> MapHeader::TileShift;
+    const int above = (y - kTile) >> MapHeader::TileShift;
+    const int w = this->width;
+    const int h = this->height;
+    const int topBase = above * mapWidth + tx - 1;
+    const int bottomBase = ((y >> MapHeader::TileShift) + h) * mapWidth + tx - 1;
+    const std::size_t horizontal =
+        static_cast<std::size_t>(std::max(w + FootprintEdge::Corners, FootprintEdge::SmallCells));
+    std::vector<u32> top(horizontal, 0);
+    std::vector<u32> bottom(horizontal, 0);
+
+    if (w <= FootprintEdge::SmallFootprint)
+    {
+        for (int i = 0; i < static_cast<int>(FootprintEdge::AfterTwo); ++i)
+        {
+            top[static_cast<std::size_t>(i)] |= this->map.Cell(topBase + i) & this->mask;
+            bottom[static_cast<std::size_t>(i)] |= this->map.Cell(bottomBase + i) & this->mask;
+        }
+
+        if (w == FootprintEdge::SmallFootprint)
+        {
+            top[FootprintEdge::AfterTwo] |=
+                this->map.Cell(topBase + static_cast<int>(FootprintEdge::AfterTwo)) & this->mask;
+            bottom[FootprintEdge::AfterTwo] |=
+                this->map.Cell(bottomBase + static_cast<int>(FootprintEdge::AfterTwo)) & this->mask;
+        }
+
+        this->blocked[SouthWest] = bottom[FootprintEdge::Before];
+        this->blocked[NorthWest] = top[FootprintEdge::Before];
+        this->blocked[North] = top[FootprintEdge::First];
+        this->blocked[NorthEast] = top[FootprintEdge::AfterOne];
+        this->blocked[South] = bottom[FootprintEdge::First];
+        this->blocked[SouthEast] = bottom[FootprintEdge::AfterOne];
+
+        if (w == FootprintEdge::SmallFootprint)
+        {
+            this->blocked[NorthWest] = top[FootprintEdge::Before] | top[FootprintEdge::First];
+            this->blocked[North] = top[FootprintEdge::First] | top[FootprintEdge::AfterOne];
+            this->blocked[NorthEast] = top[FootprintEdge::AfterOne] | top[FootprintEdge::AfterTwo];
+            this->blocked[SouthWest] = bottom[FootprintEdge::Before] | bottom[FootprintEdge::First];
+            this->blocked[South] = bottom[FootprintEdge::First] | bottom[FootprintEdge::AfterOne];
+            this->blocked[SouthEast] = bottom[FootprintEdge::AfterOne] | bottom[FootprintEdge::AfterTwo];
+        }
+    }
+    else
+    {
+        for (int i = 0; i < w + FootprintEdge::Corners; ++i)
+        {
+            top[static_cast<std::size_t>(i)] |= this->map.Cell(topBase + i) & this->mask;
+            bottom[static_cast<std::size_t>(i)] |= this->map.Cell(bottomBase + i) & this->mask;
+        }
+
+        for (std::size_t i = 0; i < static_cast<std::size_t>(w); ++i)
+        {
+            this->blocked[North] |= top[i + FootprintEdge::First];
+            this->blocked[NorthWest] |= top[i];
+            this->blocked[NorthEast] |= top[i + FootprintEdge::AfterOne];
+            this->blocked[South] |= bottom[i + FootprintEdge::First];
+            this->blocked[SouthWest] |= bottom[i];
+            this->blocked[SouthEast] |= bottom[i + FootprintEdge::AfterOne];
+        }
+    }
+
+    const int leftBase = above * mapWidth + ((x - kTile) >> MapHeader::TileShift);
+    const int rightBase = above * mapWidth + tx + w;
+    const std::size_t vertical =
+        static_cast<std::size_t>(std::max(h + FootprintEdge::Corners, FootprintEdge::SmallCells));
+    std::vector<u32> left(vertical, 0);
+    std::vector<u32> right(vertical, 0);
+
+    if (h <= FootprintEdge::SmallFootprint)
+    {
+        for (int i = 0; i < static_cast<int>(FootprintEdge::AfterTwo); ++i)
+        {
+            left[static_cast<std::size_t>(i)] |= this->map.Cell(leftBase + i * mapWidth) & this->mask;
+            right[static_cast<std::size_t>(i)] |= this->map.Cell(rightBase + i * mapWidth) & this->mask;
+        }
+
+        if (h == FootprintEdge::SmallFootprint)
+        {
+            left[FootprintEdge::AfterTwo] |=
+                this->map.Cell(leftBase + static_cast<int>(FootprintEdge::AfterTwo) * mapWidth) & this->mask;
+            right[FootprintEdge::AfterTwo] |=
+                this->map.Cell(rightBase + static_cast<int>(FootprintEdge::AfterTwo) * mapWidth) & this->mask;
+        }
+
+        this->blocked[NorthWest] |= left[FootprintEdge::Before];
+        this->blocked[West] |= left[FootprintEdge::First];
+        this->blocked[SouthWest] |= left[FootprintEdge::AfterOne];
+        this->blocked[NorthEast] |= right[FootprintEdge::Before];
+        this->blocked[East] |= right[FootprintEdge::First];
+        this->blocked[SouthEast] |= right[FootprintEdge::AfterOne];
+
+        if (h == FootprintEdge::SmallFootprint)
+        {
+            this->blocked[NorthWest] |= left[FootprintEdge::First];
+            this->blocked[West] |= left[FootprintEdge::AfterOne];
+            this->blocked[SouthWest] |= left[FootprintEdge::AfterTwo];
+            this->blocked[NorthEast] |= right[FootprintEdge::First];
+            this->blocked[East] |= right[FootprintEdge::AfterOne];
+            this->blocked[SouthEast] |= right[FootprintEdge::AfterTwo];
+        }
+
+        return;
+    }
+
+    for (int i = 0; i < h + FootprintEdge::Corners; ++i)
+    {
+        left[static_cast<std::size_t>(i)] |= this->map.Cell(leftBase + i * mapWidth) & this->mask;
+        right[static_cast<std::size_t>(i)] |= this->map.Cell(rightBase + i * mapWidth) & this->mask;
+    }
+
+    for (std::size_t i = 0; i < static_cast<std::size_t>(h); ++i)
+    {
+        this->blocked[West] |= left[i + FootprintEdge::First];
+        this->blocked[NorthWest] |= left[i];
+        this->blocked[SouthWest] |= left[i + FootprintEdge::AfterOne];
+        this->blocked[East] |= right[i + FootprintEdge::First];
+        this->blocked[NorthEast] |= right[i];
+        this->blocked[SouthEast] |= right[i + FootprintEdge::AfterOne];
+    }
+}
+
+// swd3e.exe 0x00402A90
+int PathFinder::SetMask(int mask)
+{
+    this->mask = static_cast<u32>(mask);
+    return mask;
+}
+
+}  // namespace swd3e

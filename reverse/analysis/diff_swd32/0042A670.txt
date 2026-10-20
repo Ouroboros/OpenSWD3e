@@ -1,0 +1,10 @@
+swd3e 0x0042A670 sub_42A670 <- swd32 0x00427140 sub_427140; method=anchor reusable=no: the code differs
+same=96 offset=1 constant=0 global=0 code=0 inserted=1 deleted=6
++ swd3e only: push    200h
+~ offset   swd32: mov     [esp+60h+var_4], 0                       swd3e: mov     [esp+64h+var_4], 0
+- swd32 only: call    _AIL_serve@0
+- swd32 only: push    200h
+- swd32 only: call    sub_438150
+- swd32 only: call    _AIL_serve@0
+- swd32 only: call    _AIL_serve@0
+- swd32 only: call    _AIL_serve@0

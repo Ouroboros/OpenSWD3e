@@ -1,0 +1,43 @@
+swd3e 0x004014B0 sub_4014B0 <- swd32 0x004019A0 sub_4019A0; method=calls reusable=no: the code differs
+same=142 offset=1 constant=0 global=0 code=0 inserted=20 deleted=20
++ swd3e only: mov     ecx, [esp+10h+arg_4]
++ swd3e only: xor     edx, edx
++ swd3e only: mov     dx, [eax+2]
++ swd3e only: mov     edi, [esp+10h+arg_C]
++ swd3e only: mov     [ecx], edx
+~ offset   swd32: mov     edx, [esp+10h+arg_4]                     swd3e: mov     edx, [esp+10h+arg_8]
+- swd32 only: mov     esi, [esp+10h+arg_8]
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     edi, [esp+10h+arg_C]
+- swd32 only: mov     cx, [eax+2]
+- swd32 only: mov     [edx], ecx
+- swd32 only: xor     ecx, ecx
+- swd32 only: mov     cx, [eax+4]
+- swd32 only: mov     [esi], ecx
+- swd32 only: mov     cx, [eax+6]
+- swd32 only: and     ecx, 3FFFh
+- swd32 only: cmp     ecx, 10h
+- swd32 only: mov     [edi], ecx
++ swd3e only: xor     esi, esi
++ swd3e only: mov     si, [eax+4]
++ swd3e only: mov     [edx], esi
++ swd3e only: mov     si, [eax+6]
++ swd3e only: and     esi, 7FFFh
++ swd3e only: cmp     esi, 10h
++ swd3e only: mov     [edi], esi
+- swd32 only: cmp     ecx, 8
++ swd3e only: cmp     esi, 8
+- swd32 only: mov     edx, [edx]
+- swd32 only: imul    edx, [esi]
+- swd32 only: shl     edx, 1
+- swd32 only: push    edx
++ swd3e only: mov     eax, [ecx]
++ swd3e only: imul    eax, [edx]
++ swd3e only: shl     eax, 1
++ swd3e only: push    eax
++ swd3e only: mov     ecx, [ecx]
+- swd32 only: mov     eax, [edx]
+- swd32 only: imul    eax, [esi]
+- swd32 only: push    eax
++ swd3e only: imul    ecx, [edx]
++ swd3e only: push    ecx

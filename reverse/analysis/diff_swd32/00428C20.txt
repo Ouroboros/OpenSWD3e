@@ -1,0 +1,31 @@
+swd3e 0x00428C20 sub_428C20 <- swd32 0x00424EF0 sub_424EF0; method=anchor reusable=no: the code differs
+same=68 offset=0 constant=0 global=0 code=0 inserted=12 deleted=17
++ swd3e only: push    offset byte_4C2B94
++ swd3e only: mov     ecx, offset unk_578A68
++ swd3e only: mov     dword_4C6334, 0
++ swd3e only: call    sub_49CE20
++ swd3e only: push    offset byte_4C2B94
++ swd3e only: mov     ecx, offset unk_578F40
++ swd3e only: call    sub_49D480
++ swd3e only: mov     ecx, offset unk_578F40
++ swd3e only: call    sub_49DD70
++ swd3e only: push    eax
++ swd3e only: mov     ecx, offset unk_5795C0
++ swd3e only: call    sub_49E0C0
+- swd32 only: mov     dword_4ACB90, 0
+- swd32 only: push    offset Buffer
+- swd32 only: mov     ecx, offset unk_4A9AC8
+- swd32 only: call    sub_485360
+- swd32 only: push    offset Buffer
+- swd32 only: mov     ecx, offset unk_4C8450
+- swd32 only: call    sub_4859B0
+- swd32 only: mov     ecx, offset unk_4C8450
+- swd32 only: call    sub_4862A0
+- swd32 only: push    eax
+- swd32 only: mov     ecx, offset unk_4B7EB8
+- swd32 only: call    sub_484DD0
+- swd32 only: mov     ecx, offset unk_4C8450
+- swd32 only: call    sub_4862A0
+- swd32 only: push    eax
+- swd32 only: mov     ecx, offset unk_4C9288
+- swd32 only: call    sub_4865B0

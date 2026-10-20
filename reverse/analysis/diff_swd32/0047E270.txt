@@ -1,0 +1,3 @@
+swd3e 0x0047E270 sub_47E270 <- swd32 0x0046E0B0 sub_46E0B0; method=anchor reusable=no: the code differs
+same=91 offset=0 constant=0 global=0 code=0 inserted=1 deleted=0
++ swd3e only: mov     dword_57846C, 0

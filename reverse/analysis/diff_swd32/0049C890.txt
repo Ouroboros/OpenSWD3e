@@ -1,0 +1,10 @@
+swd3e 0x0049C890 sub_49C890 <- swd32 0x004846D0 sub_4846D0; method=similarity reusable=no: the code differs
+same=9 offset=0 constant=1 global=0 code=1 inserted=6 deleted=0
++ swd3e only: mov     ecx, dword_578624
++ swd3e only: or      eax, 0FFFFFFFFh
++ swd3e only: test    ecx, ecx
++ swd3e only: jz      short locret_49C8A2
++ swd3e only: jmp     loc_49C5C0
++ swd3e only: retn
+~ code     swd32: jz      short loc_4846E3                         swd3e: jz      short loc_49C5D3
+~ constant swd32: jbe     short locret_4846E6                      swd3e: jbe     short locret_49C5D6

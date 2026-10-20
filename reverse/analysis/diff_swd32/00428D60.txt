@@ -1,0 +1,13 @@
+swd3e 0x00428D60 sub_428D60 <- swd32 0x00425040 sub_425040; method=anchor reusable=no: the code differs
+same=49 offset=1 constant=1 global=0 code=0 inserted=3 deleted=6
+- swd32 only: push    3DEh
+- swd32 only: call    ds:GetCurrentDirectoryA
+- swd32 only: push    offset asc_4A0FBC
+- swd32 only: push    offset Buffer
+- swd32 only: call    ds:lstrcatA
+- swd32 only: push    offset byte_4B82F8
++ swd3e only: push    offset byte_4C2B94
++ swd3e only: call    sub_4364D0
++ swd3e only: call    sub_436510
+~ offset   swd32: mov     eax, [esp+14h+var_8]                     swd3e: mov     eax, [esp+18h+var_8]
+~ constant swd32: add     esp, 0Ch                                 swd3e: add     esp, 10h

@@ -1,0 +1,5 @@
+swd3e 0x00427090 sub_427090 <- swd32 0x00485650 sub_485650; method=calls reusable=no: the code differs
+same=6 offset=0 constant=0 global=0 code=0 inserted=1 deleted=2
++ swd3e only: mov     eax, [esp+arg_4]
+- swd32 only: mov     eax, [esp+arg_4]
+- swd32 only: and     ecx, 0FFFFh

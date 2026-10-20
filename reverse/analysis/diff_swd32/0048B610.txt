@@ -1,0 +1,24 @@
+swd3e 0x0048B610 sub_48B610 <- swd32 0x00478710 sub_478710; method=calls reusable=no: the code differs
+same=10 offset=5 constant=6 global=0 code=3 inserted=7 deleted=1
++ swd3e only: cmp     eax, 2
++ swd3e only: jz      short loc_48B665
++ swd3e only: cmp     eax, 0Dh
++ swd3e only: jz      short loc_48B665
+~ constant swd32: cmp     eax, 2                                   swd3e: cmp     eax, 3
+~ constant swd32: cmp     eax, 0Dh                                 swd3e: cmp     eax, 29h
+~ constant swd32: cmp     eax, 3                                   swd3e: cmp     eax, 0Eh
+~ code     swd32: jz      short loc_478756                         swd3e: jz      short loc_48B64B
+~ constant swd32: cmp     eax, 0Eh                                 swd3e: cmp     eax, 6
+~ code     swd32: jz      short loc_478741                         swd3e: jz      short loc_48B65E
+~ constant swd32: cmp     eax, 6                                   swd3e: cmp     eax, 0Fh
+~ code     swd32: jz      short loc_478746                         swd3e: jz      short loc_48B64B
+~ constant swd32: cmp     eax, 0Fh                                 swd3e: cmp     eax, 50h
+~ offset   swd32: mov     [ecx+2A6Ch], ax                          swd3e: mov     [ecx+2F88h], ax
+- swd32 only: jnz     short loc_47874F
++ swd3e only: jz      short loc_48B65E
++ swd3e only: cmp     eax, 50h
++ swd3e only: jz      short loc_48B65E
+~ offset   swd32: or      byte ptr [ecx+2A87h], 8                  swd3e: or      byte ptr [ecx+2FB1h], 40h
+~ offset   swd32: or      byte ptr [ecx+2A87h], 40h                swd3e: or      byte ptr [ecx+2FB1h], 8
+~ offset   swd32: mov     [ecx+2A70h], ax                          swd3e: mov     [ecx+2F8Ch], ax
+~ offset   swd32: mov     word ptr [ecx+2A6Ch], 0                  swd3e: mov     word ptr [ecx+2F88h], 0

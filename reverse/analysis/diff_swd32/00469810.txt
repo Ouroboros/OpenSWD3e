@@ -1,0 +1,4 @@
+swd3e 0x00469810 sub_469810 <- swd32 0x0045EA30 sub_45EA30; method=shape reusable=no: the code differs
+same=15 offset=0 constant=2 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: add     esi, 2F34h                               swd3e: add     esi, 34D4h
+~ constant swd32: add     esi, 2B28h                               swd3e: add     esi, 3078h

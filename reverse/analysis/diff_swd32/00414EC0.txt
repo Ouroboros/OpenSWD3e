@@ -1,0 +1,4 @@
+swd3e 0x00414EC0 sub_414EC0 <- swd32 0x004148F0 sub_4148F0; method=similarity reusable=no: the code differs
+same=36 offset=0 constant=0 global=0 code=0 inserted=0 deleted=2
+- swd32 only: jz      locret_4149A1
+- swd32 only: cmp     dword_4A9A10, 16h

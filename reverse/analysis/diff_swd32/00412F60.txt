@@ -1,0 +1,31 @@
+swd3e 0x00412F60 sub_412F60 <- swd32 0x00412930 sub_412930; method=callers reusable=no: the code differs
+same=167 offset=0 constant=2 global=0 code=10 inserted=4 deleted=13
+- swd32 only: add     esp, 4
+- swd32 only: test    eax, eax
+- swd32 only: jnz     short loc_412A8D
+- swd32 only: call    sub_413EA0
+~ constant swd32: add     esp, 8                                   swd3e: add     esp, 0Ch
+~ code     swd32: jnz     short loc_412ADF                         swd3e: jnz     short loc_413103
+~ code     swd32: jnz     short loc_412ADF                         swd3e: jnz     short loc_413103
+~ code     swd32: jnz     short loc_412B12                         swd3e: jnz     short loc_413136
+~ code     swd32: jmp     short loc_412B28                         swd3e: jmp     short loc_41314C
+~ code     swd32: jmp     short loc_412B28                         swd3e: jmp     short loc_41314C
++ swd3e only: push    1
++ swd3e only: call    sub_414CC0
+~ constant swd32: add     esp, 10h                                 swd3e: add     esp, 14h
+~ code     swd32: jz      short loc_412B62                         swd3e: jz      short loc_41318D
+~ code     swd32: jnb     short loc_412B8A                         swd3e: jnb     short loc_4131B5
+~ code     swd32: jnz     short loc_412B8A                         swd3e: jnz     short loc_4131B5
++ swd3e only: call    sub_4172A0
+~ code     swd32: jnz     short loc_412BB4                         swd3e: jnz     short loc_4131E9
+~ code     swd32: jnz     short loc_412BB4                         swd3e: jnz     short loc_4131E9
+- swd32 only: jz      short loc_412BC4
+- swd32 only: push    2Eh
+- swd32 only: mov     ecx, offset unk_4B8748
++ swd3e only: jnz     short loc_4131E9
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_412BC9
+- swd32 only: call    sub_4149B0
+- swd32 only: push    1
+- swd32 only: call    sub_4146F0
+- swd32 only: add     esp, 4

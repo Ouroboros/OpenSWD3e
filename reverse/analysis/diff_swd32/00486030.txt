@@ -1,0 +1,20 @@
+swd3e 0x00486030 sub_486030 <- swd32 0x004750C0 sub_4750C0; method=shape reusable=no: the code differs
+same=19 offset=17 constant=1 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: mov     ecx, 0Ah                                 swd3e: mov     ecx, 0Bh
+~ offset   swd32: lea     edi, [edx+0D90h]                         swd3e: lea     edi, [edx+1004h]
+~ offset   swd32: mov     [edx+2A86h], si                          swd3e: mov     [edx+2FB0h], si
+~ offset   swd32: lea     ecx, [edx+2630h]                         swd3e: lea     ecx, [edx+2B38h]
+~ offset   swd32: mov     [edx+2630h], eax                         swd3e: mov     [edx+2B38h], eax
+~ offset   swd32: mov     eax, [edx+2ED0h]                         swd3e: mov     eax, [edx+3460h]
+~ offset   swd32: mov     [edx+2F10h], si                          swd3e: mov     [edx+34A0h], si
+~ offset   swd32: mov     [edx+2F12h], si                          swd3e: mov     [edx+34A2h], si
+~ offset   swd32: mov     [edx+2A8Ah], si                          swd3e: mov     [edx+2FB4h], si
+~ offset   swd32: mov     [edx+2F16h], si                          swd3e: mov     [edx+34A6h], si
+~ offset   swd32: mov     [edx+2F18h], si                          swd3e: mov     [edx+34A8h], si
+~ offset   swd32: mov     [edx+29A6h], si                          swd3e: mov     [edx+2EB6h], si
+~ offset   swd32: mov     [edx+29A8h], si                          swd3e: mov     [edx+2EB8h], si
+~ offset   swd32: mov     [edx+29AAh], si                          swd3e: mov     [edx+2EBAh], si
+~ offset   swd32: mov     [edx+29A4h], si                          swd3e: mov     [edx+2EB0h], si
+~ offset   swd32: mov     [edx+2F14h], si                          swd3e: mov     [edx+34A4h], si
+~ offset   swd32: mov     eax, [edx+2EC8h]                         swd3e: mov     eax, [edx+3458h]
+~ offset   swd32: mov     [edx+2ED0h], esi                         swd3e: mov     [edx+3460h], esi

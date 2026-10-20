@@ -1,0 +1,27 @@
+swd3e 0x00485F30 sub_485F30 <- swd32 0x00474FC0 sub_474FC0; method=callers reusable=no: the code differs
+same=54 offset=6 constant=0 global=0 code=7 inserted=7 deleted=5
+~ offset   swd32: mov     [esi+2954h], bx                          swd3e: mov     [esi+2E60h], bx
++ swd3e only: call    sub_49B9C0
++ swd3e only: test    eax, eax
++ swd3e only: jnz     short loc_485F7A
+~ offset   swd32: mov     ax, [esi+0F6h]                           swd3e: mov     ax, [esi+0FEh]
+~ offset   swd32: mov     cx, [esi+0F8h]                           swd3e: mov     cx, [esi+100h]
+~ offset   swd32: mov     dx, [esi+2F1Ah]                          swd3e: mov     dx, [esi+34AAh]
++ swd3e only: add     esp, 10h
+- swd32 only: mov     al, [esi+26C0h]
+- swd32 only: add     esp, 10h
+- swd32 only: test    al, 80h
++ swd3e only: test    byte ptr [esi+2BC8h], 80h
+~ code     swd32: jz      short loc_475010                         swd3e: jz      short loc_485F88
+~ code     swd32: jnz     short loc_475033                         swd3e: jnz     short loc_485FAB
+~ offset   swd32: mov     eax, [esi+2B14h]                         swd3e: mov     eax, [esi+305Ch]
+~ code     swd32: jnz     short loc_475033                         swd3e: jnz     short loc_485FAB
+~ code     swd32: jnz     short loc_4750A5                         swd3e: jnz     short loc_48601D
+- swd32 only: mov     ecx, edi
+- swd32 only: call    sub_478780
+~ code     swd32: jz      short loc_475070                         swd3e: jz      short loc_485FE1
+~ code     swd32: jl      short loc_475081                         swd3e: jl      short loc_485FF2
+~ code     swd32: jz      short loc_4750A5                         swd3e: jz      short loc_486016
++ swd3e only: mov     ecx, edi
++ swd3e only: call    sub_48B690
+~ offset   swd32: mov     dword ptr [esi+2B14h], 1                 swd3e: mov     dword ptr [esi+305Ch], 1

@@ -1,0 +1,229 @@
+#include "input/input.h"
+
+#include <algorithm>
+#include <cstdlib>
+
+#include "crt/msvc.h"
+#include "platform/display.h"
+#include "platform/input_device.h"
+
+namespace swd3e
+{
+
+// swd32.exe 0x00436F70 (unmatched in swd3e): no devices, sensitivity 10 tenths
+Input::Input(InputDevice& device)
+    : device(device)
+{
+}
+
+// swd3e.exe 0x0043BA60
+Input::~Input()
+{
+    this->Release();
+}
+
+// swd3e.exe 0x0043BA70: 0 on success. The original's last GetDeviceState asks for a size DirectInput rejects, so its
+// mouse origin comes from the first eight bytes of the key state; the rebuild's position needs no origin.
+int Input::Init()
+{
+    this->acquired = true;
+    return 0;
+}
+
+// swd3e.exe 0x0043BD70 (the rebuild also keeps the previous state for IsKeyPressed)
+int Input::PollKeyboard()
+{
+    this->previousKeys = this->keys;
+    this->device.KeyboardState(this->keys);
+
+    // The rebuild: a key spent (SpendHeld) reads as up until it is let go.
+    for (std::size_t code = 0; code < Input::KeyCount; ++code)
+    {
+        if (!this->spent[code])
+        {
+            continue;
+        }
+
+        if ((this->keys[code] & Input::KeyDown) == 0)
+        {
+            this->spent[code] = false;
+        }
+        else
+        {
+            this->keys[code] = 0;
+        }
+    }
+
+    // The rebuild (deviations.md): a key going down takes the pointer out of play until the mouse is used again.
+    for (std::size_t code = 0; code < Input::KeyCount; ++code)
+    {
+        if ((this->keys[code] & Input::KeyDown) != 0 && (this->previousKeys[code] & Input::KeyDown) == 0)
+        {
+            if (!this->keyboardUsed)
+            {
+                const MouseState state = this->device.Mouse();
+                this->anchorX = state.x;
+                this->anchorY = state.y;
+            }
+
+            this->keyboardUsed = true;
+            break;
+        }
+    }
+
+    return 1;
+}
+
+// The rebuild (deviations.md): the keys and mouse buttons down now read as up from now until they are let go.
+void Input::SpendHeld()
+{
+    for (std::size_t code = 0; code < Input::KeyCount; ++code)
+    {
+        if ((this->keys[code] & Input::KeyDown) != 0)
+        {
+            this->spent[code] = true;
+            this->keys[code] = 0;
+        }
+    }
+
+    const MouseState state = this->device.Mouse();
+    this->spentButtons = (state.left ? Input::LeftButton : 0) | (state.right ? Input::RightButton : 0);
+}
+
+// swd3e.exe 0x0043BD90
+int Input::IsKeyDown(int scanCode) const
+{
+    return this->keys[static_cast<std::size_t>(scanCode)] & Input::KeyDown;
+}
+
+// Whether the key went down since the previous poll (the rebuild's walk/run toggle, see deviations.md 0x00402F80).
+bool Input::IsKeyPressed(int scanCode) const
+{
+    const auto code = static_cast<std::size_t>(scanCode);
+    return (this->keys[code] & Input::KeyDown) != 0 && (this->previousKeys[code] & Input::KeyDown) == 0;
+}
+
+// swd3e.exe 0x0043BDA0: the lowest pressed scan code; 0 when none (indistinguishable from code 0)
+int Input::FirstKeyDown() const
+{
+    for (int code = 0; code < static_cast<int>(Input::KeyCount); ++code)
+    {
+        if ((this->keys[static_cast<std::size_t>(code)] & Input::KeyDown) != 0)
+        {
+            return code;
+        }
+    }
+
+    return 0;
+}
+
+// swd3e.exe 0x0043BDC0
+int Input::PressKey(int scanCode)
+{
+    this->keys[static_cast<std::size_t>(scanCode)] |= Input::KeyDown;
+    return scanCode;
+}
+
+// swd3e.exe 0x0043BDD0: the screen position clamped to 640x480; bit 0 left, bit 1 right button. The original takes
+// sensitivity * axis / 10 from an origin that follows the unbounded DirectInput axes at the edges; the rebuild's axes
+// are the pointer in the window, so the position is the pointer's (deviations.md).
+int Input::ReadMouse(int& x, int& y)
+{
+    const MouseState state = this->device.Mouse();
+    int buttons = 0;
+
+    if (state.left)
+    {
+        buttons = Input::LeftButton;
+    }
+
+    if (state.right)
+    {
+        buttons |= Input::RightButton;
+    }
+
+    // The rebuild: a spent button (SpendHeld) reads as up until it is let go.
+    this->spentButtons &= buttons;
+    buttons &= ~this->spentButtons;
+
+    if (this->keyboardUsed && this->MouseUsed(state))
+    {
+        this->keyboardUsed = false;
+    }
+
+    this->PeekMouse(x, y);
+    return buttons;
+}
+
+void Input::PeekMouse(int& x, int& y) const
+{
+    const MouseState state = this->device.Mouse();
+
+    if (this->keyboardUsed && !this->MouseUsed(state))
+    {
+        x = Input::ParkedPointer;
+        y = Input::ParkedPointer;
+        return;
+    }
+
+    x = std::clamp(state.x, this->rangeLeft, this->rangeRight);
+    y = std::clamp(state.y, this->rangeTop, this->rangeBottom);
+}
+
+// The rebuild: the mouse moved away from where the keyboard was taken up, or a button of it down.
+bool Input::MouseUsed(const MouseState& state) const
+{
+    return state.left || state.right || std::abs(state.x - this->anchorX) > Input::PointerNudge ||
+           std::abs(state.y - this->anchorY) > Input::PointerNudge;
+}
+
+// The rebuild (deviations.md): where the position may lie, from (left, top) to (right, bottom) inclusive; the map
+// filling the window reaches past the 640x480 screen on its sides.
+void Input::SetRange(int left, int top, int right, int bottom)
+{
+    this->rangeLeft = left;
+    this->rangeTop = top;
+    this->rangeRight = right;
+    this->rangeBottom = bottom;
+}
+
+// swd3e.exe 0x0043BEF0: (x, y) clamped to the screen becomes the position. The original moves the origin so that the
+// current axes map there (its last computed value returned, which no caller reads); the rebuild moves the pointer.
+void Input::SetMousePosition(int x, int y)
+{
+    if (x >= Display::Width)
+    {
+        x = Input::ScreenRight;
+    }
+    else if (x <= 0)
+    {
+        x = 0;
+    }
+
+    if (y >= Display::Height)
+    {
+        y = Input::ScreenBottom;
+    }
+    else if (y <= 0)
+    {
+        y = 0;
+    }
+
+    this->device.MoveMouse(x, y);
+    this->anchorX = x;
+    this->anchorY = y;
+}
+
+// swd3e.exe 0x0043BF80: tenths, truncated
+void Input::SetSensitivity(double sensitivity)
+{
+    this->sensitivity = static_cast<i32>(crt::Ftol(sensitivity * Input::Tenths));
+}
+
+// swd3e.exe 0x0043BFA0
+void Input::Release()
+{
+    this->acquired = false;
+}
+
+}  // namespace swd3e

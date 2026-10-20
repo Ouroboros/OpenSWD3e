@@ -1,0 +1,393 @@
+swd3e 0x004A6830 sub_4A6830 <- swd32 0x00493950 sub_493950; method=anchor reusable=no: the code differs
+same=23 offset=0 constant=1 global=0 code=9 inserted=163 deleted=218
++ swd3e only: push    ecx
++ swd3e only: push    ebx
+- swd32 only: mov     ebp, esp
+- swd32 only: sub     esp, 0Ch
+- swd32 only: mov     [ebp+var_4], 0
+- swd32 only: mov     dword_53D358, 0
+- swd32 only: mov     dword_4A8B78, 0FFFFFFFFh
+- swd32 only: mov     eax, dword_4A8B78
+- swd32 only: mov     dword_4A8B68, eax
++ swd3e only: push    esi
++ swd3e only: push    edi
++ swd3e only: xor     ebp, ebp
++ swd3e only: or      ebx, 0FFFFFFFFh
++ swd3e only: xor     edi, edi
++ swd3e only: mov     dword_579C40, ebp
++ swd3e only: mov     dword_4C0CE8, ebx
++ swd3e only: mov     dword_4C0CD8, ebx
+- swd32 only: add     esp, 4
+- swd32 only: mov     [ebp+var_C], eax
+- swd32 only: cmp     [ebp+var_C], 0
++ swd3e only: mov     esi, eax
++ swd3e only: pop     ecx
++ swd3e only: cmp     esi, ebp
+- swd32 only: cmp     eax, 0FFFFFFFFh
++ swd3e only: cmp     eax, ebx
+- swd32 only: mov     dword_53D358, 1
++ swd3e only: mov     eax, TimeZoneInformation.Bias
++ swd3e only: imul    eax, 3Ch
++ swd3e only: cmp     TimeZoneInformation.StandardDate.wMonth, bp
++ swd3e only: push    1
++ swd3e only: pop     edx
++ swd3e only: mov     dword_4C0C40, eax
++ swd3e only: mov     dword_579C40, edx
++ swd3e only: jz      short loc_4A68A7
++ swd3e only: mov     esi, ecx
++ swd3e only: imul    esi, 3Ch
++ swd3e only: add     eax, esi
++ swd3e only: mov     dword_4C0C40, eax
++ swd3e only: cmp     TimeZoneInformation.DaylightDate.wMonth, bp
++ swd3e only: jz      short loc_4A68CB
++ swd3e only: mov     eax, TimeZoneInformation.DaylightBias
++ swd3e only: cmp     eax, ebp
++ swd3e only: jz      short loc_4A68CB
++ swd3e only: sub     eax, ecx
++ swd3e only: mov     dword_4C0C44, edx
++ swd3e only: imul    eax, 3Ch
++ swd3e only: mov     dword_4C0C48, eax
++ swd3e only: jmp     short loc_4A68D7
++ swd3e only: mov     dword_4C0C44, ebp
++ swd3e only: mov     dword_4C0C48, ebp
++ swd3e only: lea     eax, [esp+14h+UsedDefaultChar]
++ swd3e only: mov     esi, ds:WideCharToMultiByte
++ swd3e only: push    eax
++ swd3e only: push    ebp
++ swd3e only: push    3Fh
++ swd3e only: mov     edi, 220h
++ swd3e only: push    lpMultiByteStr
++ swd3e only: push    ebx
++ swd3e only: push    offset TimeZoneInformation.StandardName
++ swd3e only: push    edi
++ swd3e only: push    CodePage
++ swd3e only: call    esi
++ swd3e only: test    eax, eax
++ swd3e only: jz      short loc_4A6914
++ swd3e only: cmp     [esp+14h+UsedDefaultChar], ebp
++ swd3e only: jnz     short loc_4A6914
++ swd3e only: mov     eax, lpMultiByteStr
++ swd3e only: and     byte ptr [eax+3Fh], 0
++ swd3e only: jmp     short loc_4A691C
++ swd3e only: mov     eax, lpMultiByteStr
++ swd3e only: and     byte ptr [eax], 0
++ swd3e only: lea     eax, [esp+14h+UsedDefaultChar]
++ swd3e only: push    eax
++ swd3e only: push    ebp
++ swd3e only: push    3Fh
++ swd3e only: push    off_4C0CD0
++ swd3e only: push    ebx
++ swd3e only: push    offset TimeZoneInformation.DaylightName
++ swd3e only: push    edi
++ swd3e only: push    CodePage
++ swd3e only: call    esi
++ swd3e only: test    eax, eax
++ swd3e only: jz      loc_4A6A80
++ swd3e only: cmp     [esp+14h+UsedDefaultChar], ebp
++ swd3e only: jnz     loc_4A6A80
++ swd3e only: mov     eax, off_4C0CD0
++ swd3e only: and     byte ptr [eax+3Fh], 0
++ swd3e only: jmp     loc_4A6A88
++ swd3e only: cmp     byte ptr [esi], 0
++ swd3e only: jz      loc_4A6A88
++ swd3e only: mov     eax, dword_579CF4
++ swd3e only: cmp     eax, ebp
++ swd3e only: jz      short loc_4A697C
++ swd3e only: push    eax
++ swd3e only: push    esi
++ swd3e only: call    sub_4A6780
++ swd3e only: pop     ecx
++ swd3e only: test    eax, eax
++ swd3e only: pop     ecx
++ swd3e only: jz      loc_4A6A88
++ swd3e only: push    dword_579CF4
++ swd3e only: call    sub_4A1B52
++ swd3e only: push    esi
++ swd3e only: call    sub_4A6640
++ swd3e only: inc     eax
++ swd3e only: push    eax
++ swd3e only: call    sub_4A1ADE
++ swd3e only: add     esp, 0Ch
++ swd3e only: cmp     eax, ebp
++ swd3e only: mov     dword_579CF4, eax
++ swd3e only: jz      loc_4A6A88
++ swd3e only: push    esi
++ swd3e only: push    eax
++ swd3e only: call    sub_4A6350
++ swd3e only: push    3
++ swd3e only: push    esi
++ swd3e only: push    lpMultiByteStr
++ swd3e only: call    sub_4A7960
++ swd3e only: mov     eax, lpMultiByteStr
++ swd3e only: add     esi, 3
++ swd3e only: add     esp, 14h
++ swd3e only: and     byte ptr [eax+3], 0
++ swd3e only: cmp     byte ptr [esi], 2Dh
++ swd3e only: jnz     short loc_4A69D1
++ swd3e only: push    1
++ swd3e only: inc     esi
++ swd3e only: pop     edi
++ swd3e only: push    esi
++ swd3e only: call    sub_4A1FE8
++ swd3e only: pop     ecx
++ swd3e only: mov     bl, 30h
++ swd3e only: mov     ecx, eax
+~ constant swd32: imul    ecx, 3Ch                                 swd3e: imul    ecx, 0E10h
+- swd32 only: xor     edx, edx
+- swd32 only: mov     dx, TimeZoneInformation.StandardDate.wMonth
+- swd32 only: test    edx, edx
++ swd3e only: mov     al, [esi]
++ swd3e only: cmp     al, 2Bh
+~ code     swd32: jz      short loc_4939E5                         swd3e: jz      short loc_4A69F6
+- swd32 only: mov     eax, TimeZoneInformation.StandardBias
++ swd3e only: cmp     al, bl
++ swd3e only: jl      short loc_4A69F9
++ swd3e only: cmp     al, 39h
++ swd3e only: jg      short loc_4A69F9
++ swd3e only: inc     esi
++ swd3e only: jmp     short loc_4A69E8
++ swd3e only: cmp     byte ptr [esi], 3Ah
++ swd3e only: jnz     short loc_4A6A4C
++ swd3e only: inc     esi
++ swd3e only: push    esi
++ swd3e only: call    sub_4A1FE8
++ swd3e only: pop     ecx
+- swd32 only: xor     edx, edx
+- swd32 only: mov     dx, TimeZoneInformation.DaylightDate.wMonth
+- swd32 only: test    edx, edx
+- swd32 only: jz      short loc_493A1A
+- swd32 only: cmp     TimeZoneInformation.DaylightBias, 0
+- swd32 only: jz      short loc_493A1A
+- swd32 only: mov     dword_4A8AD4, 1
+- swd32 only: mov     eax, TimeZoneInformation.DaylightBias
+- swd32 only: sub     eax, TimeZoneInformation.StandardBias
+- swd32 only: imul    eax, 3Ch
+- swd32 only: mov     dword_4A8AD8, eax
++ swd3e only: mov     al, [esi]
++ swd3e only: cmp     al, bl
++ swd3e only: jl      short loc_4A6A24
++ swd3e only: cmp     al, 39h
++ swd3e only: jg      short loc_4A6A24
++ swd3e only: inc     esi
+~ code     swd32: jmp     short loc_493A2E                         swd3e: jmp     short loc_4A6A17
+- swd32 only: mov     dword_4A8AD4, 0
+- swd32 only: mov     dword_4A8AD8, 0
+- swd32 only: lea     ecx, [ebp+UsedDefaultChar]
+- swd32 only: push    ecx
+- swd32 only: push    0
+- swd32 only: push    3Fh
+- swd32 only: mov     edx, lpMultiByteStr
+- swd32 only: push    edx
+- swd32 only: push    0FFFFFFFFh
+- swd32 only: push    offset TimeZoneInformation.StandardName
+- swd32 only: push    220h
+- swd32 only: mov     eax, CodePage
+- swd32 only: push    eax
+- swd32 only: call    ds:WideCharToMultiByte
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_493A6B
+- swd32 only: cmp     [ebp+UsedDefaultChar], 0
++ swd3e only: cmp     byte ptr [esi], 3Ah
+~ code     swd32: jnz     short loc_493A6B                         swd3e: jnz     short loc_4A6A4C
+- swd32 only: mov     ecx, lpMultiByteStr
+- swd32 only: mov     byte ptr [ecx+3Fh], 0
+- swd32 only: jmp     short loc_493A74
+- swd32 only: mov     edx, lpMultiByteStr
+- swd32 only: mov     byte ptr [edx], 0
+- swd32 only: lea     eax, [ebp+UsedDefaultChar]
+- swd32 only: push    eax
+- swd32 only: push    0
+- swd32 only: push    3Fh
+- swd32 only: mov     ecx, off_4A8B60
+- swd32 only: push    ecx
+- swd32 only: push    0FFFFFFFFh
+- swd32 only: push    offset TimeZoneInformation.DaylightName
+- swd32 only: push    220h
+- swd32 only: mov     edx, CodePage
+- swd32 only: push    edx
+- swd32 only: call    ds:WideCharToMultiByte
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_493AB1
+- swd32 only: cmp     [ebp+UsedDefaultChar], 0
+- swd32 only: jnz     short loc_493AB1
+- swd32 only: mov     eax, off_4A8B60
+- swd32 only: mov     byte ptr [eax+3Fh], 0
+- swd32 only: jmp     short loc_493ABA
+- swd32 only: mov     ecx, off_4A8B60
+- swd32 only: mov     byte ptr [ecx], 0
+- swd32 only: jmp     loc_493CC5
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: movsx   eax, byte ptr [edx]
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_493AE9
+- swd32 only: cmp     dword_53D40C, 0
+- swd32 only: jz      short loc_493AEE
+- swd32 only: mov     ecx, dword_53D40C
+- swd32 only: push    ecx
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: push    edx
++ swd3e only: inc     esi
++ swd3e only: push    esi
+- swd32 only: add     esp, 8
+- swd32 only: test    eax, eax
+- swd32 only: jnz     short loc_493AEE
+- swd32 only: jmp     loc_493CC5
+- swd32 only: push    2
+- swd32 only: mov     eax, dword_53D40C
+- swd32 only: push    eax
+- swd32 only: call    sub_4885C0
+- swd32 only: add     esp, 8
+- swd32 only: push    10Ch
+- swd32 only: push    offset aTzsetC
+- swd32 only: push    2
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: push    ecx
+- swd32 only: call    sub_491C60
+- swd32 only: add     esp, 4
+- swd32 only: add     eax, 1
+- swd32 only: push    eax
+- swd32 only: call    sub_487C30
+- swd32 only: add     esp, 10h
+- swd32 only: mov     dword_53D40C, eax
+- swd32 only: cmp     dword_53D40C, 0
+- swd32 only: jnz     short loc_493B35
+- swd32 only: jmp     loc_493CC5
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: push    edx
+- swd32 only: mov     eax, dword_53D40C
+- swd32 only: push    eax
+- swd32 only: call    sub_491DE0
+- swd32 only: add     esp, 8
+- swd32 only: push    3
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: push    ecx
+- swd32 only: mov     edx, lpMultiByteStr
+- swd32 only: push    edx
+- swd32 only: call    sub_4922E0
+- swd32 only: add     esp, 0Ch
+- swd32 only: mov     eax, lpMultiByteStr
+- swd32 only: mov     byte ptr [eax+3], 0
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: add     ecx, 3
+- swd32 only: mov     [ebp+var_C], ecx
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: movsx   eax, byte ptr [edx]
+- swd32 only: cmp     eax, 2Dh
+- swd32 only: jnz     short loc_493B8B
+- swd32 only: mov     ecx, [ebp+var_4]
+- swd32 only: add     ecx, 1
+- swd32 only: mov     [ebp+var_4], ecx
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: add     edx, 1
+- swd32 only: mov     [ebp+var_C], edx
+- swd32 only: mov     eax, [ebp+var_C]
+- swd32 only: push    eax
+- swd32 only: call    sub_496960
+- swd32 only: add     esp, 4
+- swd32 only: imul    eax, 0E10h
+- swd32 only: mov     dword_4A8AD0, eax
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: movsx   edx, byte ptr [ecx]
+- swd32 only: cmp     edx, 2Bh
+- swd32 only: jz      short loc_493BC3
+- swd32 only: mov     eax, [ebp+var_C]
+- swd32 only: movsx   ecx, byte ptr [eax]
+- swd32 only: cmp     ecx, 30h
+- swd32 only: jl      short loc_493BCE
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: movsx   eax, byte ptr [edx]
+- swd32 only: cmp     eax, 39h
+- swd32 only: jg      short loc_493BCE
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: add     ecx, 1
+- swd32 only: mov     [ebp+var_C], ecx
+- swd32 only: jmp     short loc_493BA2
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: movsx   eax, byte ptr [edx]
+- swd32 only: cmp     eax, 3Ah
+- swd32 only: jnz     loc_493C73
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: add     ecx, 1
+- swd32 only: mov     [ebp+var_C], ecx
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: push    edx
+- swd32 only: call    sub_496960
+- swd32 only: add     esp, 4
+- swd32 only: imul    eax, 3Ch
++ swd3e only: pop     ecx
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: movsx   eax, byte ptr [edx]
+- swd32 only: cmp     eax, 30h
++ swd3e only: mov     al, [esi]
++ swd3e only: cmp     al, bl
+~ code     swd32: jl      short loc_493C24                         swd3e: jl      short loc_4A6A4C
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: movsx   edx, byte ptr [ecx]
+- swd32 only: cmp     edx, 39h
++ swd3e only: cmp     al, 39h
+~ code     swd32: jg      short loc_493C24                         swd3e: jg      short loc_4A6A4C
+- swd32 only: mov     eax, [ebp+var_C]
+- swd32 only: add     eax, 1
+- swd32 only: mov     [ebp+var_C], eax
++ swd3e only: inc     esi
+~ code     swd32: jmp     short loc_493C03                         swd3e: jmp     short loc_4A6A3F
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: movsx   edx, byte ptr [ecx]
+- swd32 only: cmp     edx, 3Ah
+- swd32 only: jnz     short loc_493C73
+- swd32 only: mov     eax, [ebp+var_C]
+- swd32 only: add     eax, 1
+- swd32 only: mov     [ebp+var_C], eax
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: push    ecx
+- swd32 only: call    sub_496960
+- swd32 only: add     esp, 4
+- swd32 only: mov     edx, dword_4A8AD0
+- swd32 only: add     edx, eax
+- swd32 only: mov     dword_4A8AD0, edx
+- swd32 only: mov     eax, [ebp+var_C]
+- swd32 only: movsx   ecx, byte ptr [eax]
+- swd32 only: cmp     ecx, 30h
+- swd32 only: jl      short loc_493C73
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: movsx   eax, byte ptr [edx]
+- swd32 only: cmp     eax, 39h
+- swd32 only: jg      short loc_493C73
+- swd32 only: mov     ecx, [ebp+var_C]
+- swd32 only: add     ecx, 1
+- swd32 only: mov     [ebp+var_C], ecx
+- swd32 only: jmp     short loc_493C52
+- swd32 only: cmp     [ebp+var_4], 0
++ swd3e only: cmp     edi, ebp
+~ code     swd32: jz      short loc_493C87                         swd3e: jz      short loc_4A6A58
+- swd32 only: mov     edx, dword_4A8AD0
+- swd32 only: neg     edx
+- swd32 only: mov     dword_4A8AD0, edx
+- swd32 only: mov     eax, [ebp+var_C]
+- swd32 only: movsx   ecx, byte ptr [eax]
++ swd3e only: neg     ecx
+- swd32 only: cmp     dword_4A8AD4, 0
++ swd3e only: movsx   eax, byte ptr [esi]
++ swd3e only: cmp     eax, ebp
++ swd3e only: mov     dword_4C0C44, eax
+~ code     swd32: jz      short loc_493CBC                         swd3e: jz      short loc_4A6A80
+- swd32 only: mov     edx, [ebp+var_C]
+- swd32 only: push    edx
++ swd3e only: push    esi
++ swd3e only: push    off_4C0CD0
++ swd3e only: call    sub_4A7960
+- swd32 only: push    eax
+- swd32 only: call    sub_4922E0
+- swd32 only: mov     ecx, off_4A8B60
+- swd32 only: mov     byte ptr [ecx+3], 0
++ swd3e only: and     byte ptr [eax+3], 0
+~ code     swd32: jmp     short loc_493CC5                         swd3e: jmp     short loc_4A6A88
+- swd32 only: mov     edx, off_4A8B60
+- swd32 only: mov     byte ptr [edx], 0
+- swd32 only: mov     esp, ebp
++ swd3e only: mov     eax, off_4C0CD0
++ swd3e only: and     byte ptr [eax], 0
++ swd3e only: pop     edi
++ swd3e only: pop     esi
++ swd3e only: pop     ebx
++ swd3e only: pop     ecx

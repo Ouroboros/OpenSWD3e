@@ -1,0 +1,13 @@
+swd3e 0x0040D980 sub_40D980 <- swd32 0x0040D610 sub_40D610; method=callers reusable=no: the code differs
+same=106 offset=1 constant=2 global=0 code=0 inserted=5 deleted=3
+~ offset   swd32: lea     eax, [ebp+ebp*2+0]                       swd3e: lea     eax, [ebp+ebp*8+0]
+- swd32 only: lea     eax, [eax+eax*8]
+- swd32 only: cmp     word_4BABC4[eax*8], 0
+- swd32 only: lea     esi, ds:4BABA8h[eax*8]
++ swd3e only: lea     eax, [ebp+eax*2+0]
++ swd3e only: lea     ecx, [eax+eax*2]
++ swd3e only: cmp     word_4D3FE4[ecx*4], 0
++ swd3e only: lea     esi, ds:4D3FC8h[ecx*4]
+~ constant swd32: push    0FFFFh                                   swd3e: push    8080h
++ swd3e only: push    0FFFFh
+~ constant swd32: add     esp, 30h                                 swd3e: add     esp, 34h

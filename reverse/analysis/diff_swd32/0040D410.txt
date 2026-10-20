@@ -1,0 +1,11 @@
+swd3e 0x0040D410 sub_40D410 <- swd32 0x0040D0C0 sub_40D0C0; method=calls reusable=no: the code differs
+same=37 offset=0 constant=0 global=0 code=0 inserted=5 deleted=4
+- swd32 only: lea     eax, [eax+eax*2]
+- swd32 only: lea     eax, [eax+eax*8]
+- swd32 only: lea     ecx, ds:4BABA8h[eax*8]
+- swd32 only: mov     eax, dword_4BABAC[eax*8]
++ swd3e only: lea     ecx, [eax+eax*8]
++ swd3e only: lea     eax, [eax+ecx*2]
++ swd3e only: lea     edx, [eax+eax*2]
++ swd3e only: mov     eax, dword_4D3FCC[edx*4]
++ swd3e only: lea     ecx, ds:4D3FC8h[edx*4]

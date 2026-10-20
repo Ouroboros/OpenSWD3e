@@ -1,0 +1,19 @@
+swd3e 0x00432630 sub_432630 <- swd32 0x0042D920 sub_42D920; method=anchor reusable=no: the code differs
+same=121 offset=6 constant=4 global=0 code=0 inserted=4 deleted=3
+~ constant swd32: sub     esp, 50h                                 swd3e: sub     esp, 54h
+- swd32 only: mov     esi, [esp+60h+arg_0]
++ swd3e only: mov     esi, dword ptr [esp+64h+arg_0]
+- swd32 only: lea     edi, [esi+esi*2]
++ swd3e only: lea     eax, [esi+esi*8]
++ swd3e only: lea     edi, [esi+eax*2]
+~ offset   swd32: lea     edi, [edi+edi*8]                         swd3e: lea     edi, [edi+edi*2]
+~ constant swd32: shl     edi, 3                                   swd3e: shl     edi, 2
+~ offset   swd32: mov     ecx, [esp+5Ch+var_C]                     swd3e: mov     ecx, [esp+60h+var_C]
+~ constant swd32: add     esp, 5Ch                                 swd3e: add     esp, 60h
+~ offset   swd32: mov     [esp+6Ch+var_4], ebp                     swd3e: mov     [esp+70h+var_4], ebp
+- swd32 only: mov     edx, [esp+70h+arg_0]
++ swd3e only: mov     edx, dword ptr [esp+74h+arg_0]
+~ offset   swd32: mov     [esp+6Ch+var_4], 0FFFFFFFFh              swd3e: mov     [esp+70h+var_4], 0FFFFFFFFh
+~ offset   swd32: mov     ecx, [esp+6Ch+var_C]                     swd3e: mov     ecx, [esp+70h+var_C]
+~ constant swd32: add     esp, 5Ch                                 swd3e: add     esp, 60h
+~ offset   swd32: lea     ecx, [ebp-58h]                           swd3e: lea     ecx, [ebp-5Ch]

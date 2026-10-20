@@ -1,0 +1,109 @@
+# MSVC 6 static CRT routines of swd3e.exe not paired with swd32 (whose CRT is the debug build): identified by their
+# structure, imports, globals and callers; the mapping is the C/C++ runtime of the rebuild (AGENTS.md: CRT).
+# address	name	mapping	evidence
+0x004A15F7	_onexit	C++ runtime: static destruction	realloc of the onexit table (0x0057B0D0/0x0057B0CC) by _msize 0x004A207E
+0x004A1664	atexit	C++ runtime: member destructors of Game (the __xc thunks)	-(_onexit(f) == NULL); called by the 26 static initialisers
+0x004A1676	__onexitinit	C++ runtime startup	malloc(0x80) into the onexit table, in the __xi table 0x004AF07C
+0x004A19E5	vsprintf	src/crt/msvc.h:Sprintf (std::snprintf)	string FILE on the stack, _output 0x004A314F, _flsbuf 0x004A303A, va_list argument pushed as is
+0x004A1A36	operator delete	C++ delete / containers	free(p)
+0x004A1AD0	operator new	C++ new / containers	_nh_malloc(size, 1)
+0x004A1ADE	malloc	std heap (containers)	_nh_malloc(size, _newmode 0x00579AE0)
+0x004A1AF0	_nh_malloc	std heap	size <= 0xFFFFFFE0, _heap_alloc, _callnewh retry
+0x004A1B1C	_heap_alloc	std heap	__sbh_alloc_block below the threshold 0x004C0534, else HeapAlloc
+0x004A1FD2	ExFilterRethrow	C++ exception handling	0xE06D7363 test, terminate
+0x004A2073	atoi	std::atoi (or the caller's parse)	atol 0x004A1FE8
+0x004A207E	_msize	std heap	__sbh_find_block, HeapSize
+0x004A21E6	_setdefaultprecision	C++ runtime (53-bit precision; SSE2 rounding, see CMakeLists.txt)	_controlfp(0x10000, 0x30000)
+0x004A225F	_forcdecpt	std formatting (internal)	tolower 0x004A5E95 compared with 'e', _isctype
+0x004A22B9	_cropzeros	std formatting (internal)	decimal point byte 0x004C0AE0
+0x004A2307	_positive	std formatting (internal)	fcomp with 0.0
+0x004A231F	_fassign	std formatting (internal)	_atodbl 0x004A62F2 / _atoflt 0x004A631F
+0x004A2461	_cftof	std formatting (internal)	_fltout2, _shift, flag 0x00579AC4
+0x004A253F	_cftog	std formatting (internal)	_cftoe_g 0x004A25DA / _cftof_g 0x004A2601
+0x004A25DA	_cftoe_g	std formatting (internal)	flag 0x00579AC4 set around _cftoe
+0x004A2601	_cftof_g	std formatting (internal)	flag 0x00579AC4 set around _cftof
+0x004A29E1	__FrameUnwindToState	C++ exception handling	_CallSettingFrame over the unwind map, SEH frame
+0x004A2A7F	CatchIt	C++ exception handling	_UnwindNestedFrames, __FrameUnwindToState, CallCatchBlock, BuildCatchObject, _JumpToContinuation
+0x004A2AFA	CallCatchBlock	C++ exception handling	_CallCatchBlock2, __local_unwind2, DestructExceptionObject
+0x004A2C06	ExFilterRethrow (catch block)	C++ exception handling	0xE06D7363 with 3 parameters
+0x004A2C30	BuildCatchObject	C++ exception handling	_CallMemberFunction0/1, AdjustPointer, memcpy
+0x004A2F22	_inconsistency	C++ exception handling	_NMSG_WRITE, terminate, _exit
+0x004A303A	_flsbuf	std stream output	_lseek, _write 0x004A6E14, _getbuf 0x004A6FC1, _isatty 0x004A7005
+0x004A314F	_output	std formatting (printf family)	write_char/write_multi_char/write_string, get_int/int64/short_arg, _aulldiv/_aullrem
+0x004A3890	write_char	std formatting (internal)	--cnt of the FILE, _flsbuf
+0x004A38C5	write_multi_char	std formatting (internal)	write_char loop
+0x004A38F6	write_string	std formatting (internal)	write_char loop over a string
+0x004A392E	get_int_arg	std formatting (internal)	*(int *)((ap += 4) - 4)
+0x004A393B	get_int64_arg	std formatting (internal)	ap += 8
+0x004A394B	get_short_arg	std formatting (internal)	word of ap += 4
+0x004A3A2C	_callnewh	std heap	_pnhHeap 0x00579AE4
+0x004A42CC	__sbh_resize_block	std heap	small-block heap, called by realloc
+0x004A45C2	_math_entry	std math (internal)	_ctrlfp 0x004A4DEA, _87except
+0x004A4615	_handle_exc	std math (internal)	math error dispatch
+0x004A4960	_umatherr	std math (internal)	math error reporting
+0x004A4B77	_87except	std math (internal)	_handle_exc, _ctrlfp
+0x004A4BFF	_errcode	std math (internal)	error type 1..3
+0x004A4C25	_trandisp_lookup	std math (internal)	table 0x004C0538
+0x004A4C4A	_get_fpe_type	std math (internal)	status bits 0x20, 8
+0x004A4C77	_frnd	std math (internal)	frndint
+0x004A4C89	_set_exp	std math (internal)	exponent of a double
+0x004A4CB2	_sptype	std math (internal)	NaN/infinity tests 0x7FF00000
+0x004A4D0C	_decomp	std math (internal)	mantissa and exponent
+0x004A4DCD	_statfp	std math (internal)	fstsw
+0x004A4DDB	_clrfp	std math (internal)	fnstsw, fnclex
+0x004A4DEA	_ctrlfp	std math (internal)	fstcw/fldcw
+0x004A4E63	__initstdio	C++ runtime startup	_nstream 0x0057B0A0 (20 at least), calloc, in the __xi table 0x004AF080
+0x004A4F08	__endstdio	C++ runtime shutdown	_flushall, _fcloseall when the flag 0x00579AA8 is set, in the __xt table 0x004AF094
+0x004A5525	xcptlookup	C++ runtime (structured exceptions)	exception action table 0x004C0AF0
+0x004A5568	_wincmdln	C++ runtime startup	command line past the program name, __initmbctable
+0x004A55C0	_setenvp	C++ runtime startup	environment copy
+0x004A59F8	_ioinit	C++ runtime startup	GetStartupInfoA, GetStdHandle, GetFileType, SetHandleCount
+0x004A5D2F	_control87	std math (internal)	_abstract_cw/_hw_cw
+0x004A5D64	_controlfp	std math (internal)	mask & ~_EM_DENORMAL, _control87
+0x004A5D7A	_abstract_cw	std math (internal)	control word to abstract bits
+0x004A5E0C	_hw_cw	std math (internal)	abstract bits to control word
+0x004A5E95	tolower	std::tolower (internal use)	_isctype, __crtLCMapStringA
+0x004A5F60	_ZeroTail	std number parsing (internal)	mantissa bit test
+0x004A5FA9	_IncMan	std number parsing (internal)	mantissa increment
+0x004A5FFF	_RoundMan	std number parsing (internal)	_ZeroTail, _IncMan
+0x004A608B	_CopyMan	std number parsing (internal)	three dwords
+0x004A60A6	_FillZeroMan	std number parsing (internal)	stosd x3
+0x004A60B2	_IsZeroMan	std number parsing (internal)	three dwords zero
+0x004A60CD	_ShrMan	std number parsing (internal)	shift right
+0x004A615A	_ld12cvt	std number parsing (internal)	_RoundMan, _ShrMan
+0x004A62C6	_ld12tod	std number parsing (internal)	format table 0x004C0C10
+0x004A62DC	_ld12tof	std number parsing (internal)	format table 0x004C0C28
+0x004A62F2	_atodbl	std number parsing (internal)	__strgtold12, _ld12tod
+0x004A631F	_atoflt	std number parsing (internal)	__strgtold12, _ld12tof
+0x004A6440	_fptostr	std formatting (internal)	digits copy, memcpy, strlen
+0x004A651B	__dtold	std formatting (internal)	double to 12-byte long double
+0x004A66BB	_fptrap	C++ runtime	_amsg_exit(2)
+0x004A66C4	__CxxUnhandledExceptionFilter	C++ exception handling	0xE06D7363, terminate, _ValidateExecute
+0x004A670A	__CxxSetUnhandledExceptionFilter	C++ runtime startup	SetUnhandledExceptionFilter, in the __xi table 0x004AF088
+0x004A671B	__CxxRestoreUnhandledExceptionFilter	C++ runtime shutdown	SetUnhandledExceptionFilter of the saved filter, in the __xt table 0x004AF0A0
+0x004A6E14	_write	std stream output (internal)	WriteFile with LF translation, _lseek, _dosmaperr
+0x004A6FC1	_getbuf	std stream output (internal)	malloc(0x1000), counter 0x00579AF0
+0x004A7005	_isatty	std stream output (internal)	handle flags below uNumber
+0x004A702B	wctomb	std text conversion (internal)	WideCharToMultiByte
+0x004A7185	_matherr	std math (internal)	returns 0
+0x004A7188	fflush	std stream output (internal)	_flush, flsall, _commit
+0x004A71C3	_flush	std stream output (internal)	_write of the buffer
+0x004A721F	_flushall	std stream output (internal)	flsall(1)
+0x004A7228	flsall	std stream output (internal)	fflush over the streams
+0x004A7295	calloc	std heap	size * count <= 0xFFFFFFE0, __sbh_alloc_block or HeapAlloc, memset, _callnewh
+0x004A7312	_fcloseall	std stream output (internal)	fclose of the streams from 3
+0x004A74B3	_ismbblead	std text (internal)	x_ismbbtype(c, 0, 4)
+0x004A74C4	x_ismbbtype	std text (internal)	_mbctype 0x00579E61
+0x004A78B9	__initmbctable	C++ runtime startup	_setmbcp(-3) once (flag 0x0057B0C8)
+0x004A7C82	__addl	std number parsing (internal)	carry add
+0x004A7CAD	__add_12	std number parsing (internal)	12-byte add
+0x004A7CCE	__shl_12	std number parsing (internal)	12-byte shift left
+0x004A7D2C	__shr_12	std number parsing (internal)	12-byte shift right
+0x004A7D5A	__mtold12	std number parsing (internal)	mantissa to 12 bytes
+0x004A7D87	__ld12mul_part	std number parsing (internal)	__shl_12, __shr_12
+0x004A7E4E	__strgtold12	std number parsing (internal)	digit state machine, _isctype, __multtenpow12
+0x004A85B2	raise	C++ runtime (signals)	siglookup, _exit
+0x004A86DF	siglookup	C++ runtime (signals)	action table 0x004C0AF0
+0x004A8916	fclose	std stream output (internal)	_flush, _close, _freebuf
+0x004A899F	__ld12mul	std number parsing (internal)	__add_12, __shl_12, __shr_12
+0x004A8BBF	__multtenpow12	std number parsing (internal)	power table 0x004C0FD0, __ld12mul

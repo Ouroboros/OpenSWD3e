@@ -1,0 +1,3 @@
+swd3e 0x004598C0 sub_4598C0 <- swd32 0x004517E0 sub_4517E0; method=callers reusable=no: the code differs
+same=5 offset=0 constant=1 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: push    2F34h                                    swd3e: push    34D4h

@@ -1,0 +1,3 @@
+swd3e 0x00499EB0 sub_499EB0 <- swd32 0x00482E80 sub_482E80; method=shape reusable=no: the code differs
+same=5 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: cmp     dword ptr [eax], 38h                     swd3e: cmp     dword ptr [eax], 30h

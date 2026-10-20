@@ -1,0 +1,4 @@
+swd3e 0x00404CF0 sub_404CF0 <- swd32 0x00404FD0 sub_404FD0; method=shape reusable=no: the code differs
+same=72 offset=0 constant=2 global=0 code=0 inserted=0 deleted=0
+~ constant swd32: mov     ecx, 0D8h                                swd3e: mov     ecx, 0E4h
+~ constant swd32: mov     ecx, 0D8h                                swd3e: mov     ecx, 0E4h

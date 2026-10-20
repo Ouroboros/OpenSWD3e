@@ -1,0 +1,13 @@
+swd3e 0x004965D0 sub_4965D0 <- swd32 0x004801A0 sub_4801A0; method=shape reusable=no: the code differs
+same=17 offset=11 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: lea     eax, [ecx+236Ch]                         swd3e: lea     eax, [ecx+2794h]
+~ offset   swd32: mov     ecx, [ecx+236Ch]                         swd3e: mov     ecx, [ecx+2794h]
+~ offset   swd32: cmp     word ptr [eax+1C6h], 0                   swd3e: cmp     word ptr [eax+1DEh], 0
+~ offset   swd32: mov     [eax+1DBh], cl                           swd3e: mov     [eax+1F5h], cl
+~ offset   swd32: mov     [eax+1C6h], cx                           swd3e: mov     [eax+1DEh], cx
+~ offset   swd32: lea     ecx, [eax+138h]                          swd3e: lea     ecx, [eax+150h]
+~ offset   swd32: mov     [eax+1B4h], ecx                          swd3e: mov     [eax+1CCh], ecx
+~ offset   swd32: mov     [eax+1B8h], edx                          swd3e: mov     [eax+1D0h], edx
+~ offset   swd32: mov     [eax+1BCh], ecx                          swd3e: mov     [eax+1D4h], ecx
+~ offset   swd32: mov     word ptr [eax+1C4h], 2                   swd3e: mov     word ptr [eax+1DCh], 2
+~ offset   swd32: mov     byte ptr [eax+1C8h], 3                   swd3e: mov     byte ptr [eax+1E0h], 3

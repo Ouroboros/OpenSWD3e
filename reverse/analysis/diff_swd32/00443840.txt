@@ -1,0 +1,34 @@
+swd3e 0x00443840 sub_443840 <- swd32 0x0043E080 sub_43E080; method=callers reusable=no: the code differs
+same=27 offset=0 constant=1 global=1 code=0 inserted=6 deleted=24
+- swd32 only: dec     eax
+- swd32 only: jz      short loc_43E09D
+- swd32 only: dec     eax
++ swd3e only: sub     eax, 2
+~ constant swd32: jnz     locret_43E16A                            swd3e: jnz     locret_4438E2
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_43E0B9
+- swd32 only: mov     eax, dword_4AB784
+- swd32 only: push    eax
+- swd32 only: push    107h
+- swd32 only: call    sub_485610
+- swd32 only: add     esp, 8
+- swd32 only: push    1BA9h
+- swd32 only: call    sub_40DC50
+- swd32 only: add     esp, 4
+- swd32 only: test    eax, eax
+- swd32 only: jz      locret_43E16A
+- swd32 only: test    byte ptr dword_4FCAAC, 1
+- swd32 only: jnz     locret_43E16A
+- swd32 only: mov     dword_4FCA8C, 0
+- swd32 only: retn
+- swd32 only: mov     eax, dword_4FCADC
+- swd32 only: dec     eax
++ swd3e only: inc     eax
++ swd3e only: cmp     eax, 2
+- swd32 only: jns     short loc_43E0FD
++ swd3e only: jle     short loc_443876
+~ global   swd32: mov     dword_4FCADC, 2                          swd3e: mov     dword_50B588, 0
+- swd32 only: mov     ecx, dword_4AB784
+- swd32 only: push    ecx
++ swd3e only: mov     eax, dword_4C4F0C
++ swd3e only: push    eax

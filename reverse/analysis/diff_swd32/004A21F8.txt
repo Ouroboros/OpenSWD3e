@@ -1,0 +1,39 @@
+swd3e 0x004A21F8 sub_4A21F8 <- swd32 0x0048D1B0 sub_48D1B0; method=calls reusable=no: the code differs
+same=5 offset=6 constant=1 global=0 code=0 inserted=12 deleted=18
+~ constant swd32: sub     esp, 1Ch                                 swd3e: sub     esp, 18h
+- swd32 only: push    ebx
+- swd32 only: push    esi
+- swd32 only: push    edi
+- swd32 only: mov     dword ptr [ebp+var_18], 80000000h
+- swd32 only: mov     dword ptr [ebp+var_18+4], 4147FFFFh
+- swd32 only: mov     dword ptr [ebp+var_8], 0C0000000h
+- swd32 only: mov     dword ptr [ebp+var_8+4], 4150017Eh
++ swd3e only: fld     ds:dbl_4ACA60
++ swd3e only: fstp    [ebp+var_8]
++ swd3e only: fld     ds:dbl_4ACA58
++ swd3e only: fstp    [ebp+var_10]
+~ offset   swd32: fld     [ebp+var_8]                              swd3e: fld     [ebp+var_10]
+~ offset   swd32: fdiv    [ebp+var_18]                             swd3e: fdiv    [ebp+var_8]
+~ offset   swd32: fmul    [ebp+var_18]                             swd3e: fmul    [ebp+var_8]
+~ offset   swd32: fsubr   [ebp+var_8]                              swd3e: fsubr   [ebp+var_10]
+~ offset   swd32: fstp    [ebp+var_10]                             swd3e: fstp    [ebp+var_18]
+~ offset   swd32: fld     [ebp+var_10]                             swd3e: fld     [ebp+var_18]
+- swd32 only: test    ah, 41h
+- swd32 only: jnz     short loc_48D1FD
+- swd32 only: mov     [ebp+var_1C], 1
+- swd32 only: jmp     short loc_48D204
+- swd32 only: mov     [ebp+var_1C], 0
+- swd32 only: mov     eax, [ebp+var_1C]
+- swd32 only: pop     edi
+- swd32 only: pop     esi
+- swd32 only: pop     ebx
+- swd32 only: mov     esp, ebp
+- swd32 only: pop     ebp
++ swd3e only: sahf
++ swd3e only: jbe     short loc_4A2232
++ swd3e only: push    1
++ swd3e only: pop     eax
++ swd3e only: leave
++ swd3e only: xor     eax, eax
++ swd3e only: leave
++ swd3e only: retn

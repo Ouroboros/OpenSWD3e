@@ -1,0 +1,20 @@
+swd3e 0x0043EB10 sub_43EB10 <- swd32 0x00439FD0 sub_439FD0; method=callers reusable=no: the code differs
+same=136 offset=0 constant=4 global=1 code=0 inserted=7 deleted=6
+- swd32 only: mov     ecx, dword_4B8740
++ swd3e only: mov     eax, dword_4D1C88
+- swd32 only: test    ecx, 80000000h
++ swd3e only: test    eax, 80000000h
++ swd3e only: call    sub_441910
++ swd3e only: mov     ecx, dword_4D1C88
++ swd3e only: mov     dword_50A418, esi
+- swd32 only: mov     dword_4FBED0, esi
++ swd3e only: mov     dword_50B2E8, 1
+- swd32 only: mov     dword_4FC848, 1
+- swd32 only: mov     word_4FC82C, si
++ swd3e only: mov     dword_50B2C8, esi
+~ global   swd32: mov     word_4FC82C, 1                           swd3e: mov     dword_50B2C8, 1
+- swd32 only: and     ecx, 0FFFFh
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h
+~ constant swd32: mov     ecx, 26h                                 swd3e: mov     ecx, 29h

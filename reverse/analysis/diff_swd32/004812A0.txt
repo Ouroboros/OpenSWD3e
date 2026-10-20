@@ -1,0 +1,8 @@
+swd3e 0x004812A0 sub_4812A0 <- swd32 0x004708C0 sub_4708C0; method=shape reusable=no: the code differs
+same=8 offset=5 constant=1 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     ax, [edx+2F18h]                          swd3e: mov     ax, [edx+34A8h]
+~ offset   swd32: or      byte ptr [edx+2A87h], 2                  swd3e: or      byte ptr [edx+2FB1h], 2
+~ offset   swd32: mov     dword ptr [edx+2B0Ch], 1                 swd3e: mov     dword ptr [edx+3054h], 1
+~ offset   swd32: mov     [edx+2A6Ch], ax                          swd3e: mov     [edx+2F88h], ax
+~ constant swd32: mov     ecx, 4Ch                                 swd3e: mov     ecx, 52h
+~ offset   swd32: lea     edi, [edx+0AF0h]                         swd3e: lea     edi, [edx+0BACh]

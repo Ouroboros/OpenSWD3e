@@ -1,0 +1,42 @@
+swd3e 0x004529D0 sub_4529D0 <- swd32 0x0044B070 sub_44B070; method=callers reusable=no: the code differs
+same=338 offset=0 constant=2 global=1 code=3 inserted=14 deleted=20
+- swd32 only: push    esi
++ swd3e only: mov     ecx, esi
++ swd3e only: mov     eax, 2E8BA2E9h
++ swd3e only: shl     ecx, 7
++ swd3e only: sub     ecx, esi
++ swd3e only: imul    ecx
++ swd3e only: sar     edx, 1
++ swd3e only: mov     ecx, edx
++ swd3e only: shr     ecx, 1Fh
++ swd3e only: add     edx, ecx
++ swd3e only: mov     ecx, offset unk_578A70
++ swd3e only: push    edx
+- swd32 only: add     esp, 4
+- swd32 only: lea     ecx, [esi+esi*4]
++ swd3e only: lea     edx, [esi+esi*4]
+- swd32 only: lea     edx, ds:3Ch[ecx*8]
+- swd32 only: mov     dword_4B7ACC, edx
++ swd3e only: lea     eax, ds:3Ch[edx*8]
++ swd3e only: mov     dword_4D1434, eax
+~ code     swd32: jnb     short loc_44B4AC                         swd3e: jnb     short loc_452E24
+~ code     swd32: jbe     short loc_44B4AC                         swd3e: jbe     short loc_452E24
+~ code     swd32: jle     short loc_44B49C                         swd3e: jle     short loc_452E14
+- swd32 only: cmp     ecx, 141h
+- swd32 only: jnb     short loc_44B4E2
+- swd32 only: cmp     ecx, 122h
+- swd32 only: jbe     short loc_44B4E2
+- swd32 only: test    esi, esi
+- swd32 only: mov     dword_4FD30C, 5
+- swd32 only: jl      loc_44B554
+- swd32 only: cmp     esi, 0Bh
+- swd32 only: jle     short loc_44B4D8
+- swd32 only: mov     esi, 0Bh
+- swd32 only: mov     dword_4ACE60, esi
+- swd32 only: pop     edi
+- swd32 only: pop     esi
+- swd32 only: pop     ebx
+- swd32 only: retn
+~ constant swd32: cmp     ecx, 161h                                swd3e: cmp     ecx, 141h
+~ constant swd32: cmp     ecx, 142h                                swd3e: cmp     ecx, 122h
+~ global   swd32: mov     dword_4FD30C, 6                          swd3e: mov     dword_50BE78, 5

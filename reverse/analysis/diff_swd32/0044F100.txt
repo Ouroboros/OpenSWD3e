@@ -1,0 +1,17 @@
+swd3e 0x0044F100 sub_44F100 <- swd32 0x00446680 sub_446680; method=neighbours reusable=no: the code differs
+same=2 offset=0 constant=0 global=1 code=1 inserted=10 deleted=3
+~ global   swd32: cmp     word_4FC900, 1F4h                        swd3e: cmp     dword_50B3AC, 1F4h
+- swd32 only: jb      short loc_446690
++ swd3e only: jl      short loc_44F111
+~ code     swd32: jmp     sub_43C7E0                               swd3e: jmp     loc_4420A0
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word_4FB8A8
++ swd3e only: mov     eax, dword_50A1C4
++ swd3e only: and     eax, 0FFFFh
++ swd3e only: call    sub_442020
++ swd3e only: mov     eax, dword_4C4F0C
++ swd3e only: push    eax
++ swd3e only: push    2Eh
++ swd3e only: call    sub_427040
++ swd3e only: add     esp, 8
++ swd3e only: retn

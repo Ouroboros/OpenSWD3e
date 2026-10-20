@@ -1,0 +1,97 @@
+#include "random/random.h"
+
+namespace swd3e
+{
+
+namespace
+{
+
+constexpr u32 kHighBit = 0x8000;
+constexpr u32 kLowMask = 0xFFFF;
+constexpr int kBasisFirst = 3;
+constexpr u32 kLcgMultiplier = 0x015A4E35;  // the seeding LCG: 15-bit values from bit kLcgShift
+constexpr int kLcgShift = 16;
+constexpr u32 kLcgMask = 0x7FFF;
+constexpr u32 kHalfRange = 0x4000;  // a seed value above it sets the high bit of a table word
+constexpr int kBasisStride = 11;
+constexpr int kBasisEnd = 179;
+
+}  // namespace
+
+// swd3e.exe 0x0043DAC0: the table from the LCG, bit 15 set when another LCG draw exceeds 0x4000, then the 16 words
+// 3, 14, ..., 168 forced to a triangular bit pattern (the original returns a leftover pointer).
+void Random::Seed(u32 seed)
+{
+    this->LcgSeed(seed);
+    this->index = 0;
+
+    for (u32& word : this->table)
+    {
+        word = this->LcgNext();
+    }
+
+    for (u32& word : this->table)
+    {
+        if (this->LcgNext() > kHalfRange)
+        {
+            word |= kHighBit;
+        }
+    }
+
+    u32 bit = kHighBit;
+    u32 mask = kLowMask;
+
+    for (int i = kBasisFirst; i < kBasisEnd; i += kBasisStride)
+    {
+        this->table[static_cast<std::size_t>(i)] = bit | (mask & this->table[static_cast<std::size_t>(i)]);
+        mask >>= 1;
+        bit >>= 1;
+    }
+}
+
+u32 Random::Step()
+{
+    const i32 current = this->index;
+    const i32 other = current >= Random::Tap ? current - Random::Tap : current + (Random::Size - Random::Tap);
+    const u32 value = this->table[static_cast<std::size_t>(other)] ^ this->table[static_cast<std::size_t>(current)];
+    this->table[static_cast<std::size_t>(current)] = value;
+    this->index = current < Random::Size - 1 ? current + 1 : 0;
+    return value;
+}
+
+// swd3e.exe 0x0043DB40
+u32 Random::Next()
+{
+    return this->Step();
+}
+
+// swd3e.exe 0x0043DB90: a value below `limit`; every attempt draws two values and keeps the second
+u32 Random::Below(u32 limit)
+{
+    const u32 bound = limit * (kLowMask / limit);
+    u32 value = 0;
+
+    do
+    {
+        this->Next();
+        value = this->Step();
+    } while (value >= bound);
+
+    return value % limit;
+}
+
+// swd3e.exe 0x0043DC10
+u32 Random::LcgNext()
+{
+    this->lcg = kLcgMultiplier * this->lcg + 1;
+    return (this->lcg >> kLcgShift) & kLcgMask;
+}
+
+// swd3e.exe 0x0043DC30
+u32 Random::LcgSeed(u32 seed)
+{
+    this->lcg = seed;
+    return seed;
+}
+
+}  // namespace swd3e

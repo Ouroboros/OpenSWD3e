@@ -1,0 +1,25 @@
+swd3e 0x00480CF0 sub_480CF0 <- swd32 0x00470380 sub_470380; method=anchor reusable=no: the code differs
+same=144 offset=15 constant=0 global=0 code=0 inserted=3 deleted=5
++ swd3e only: mov     ecx, 11h
+~ offset   swd32: mov     eax, [esi+2EC0h]                         swd3e: mov     eax, [esi+3450h]
+~ offset   swd32: mov     [esi+2EC0h], eax                         swd3e: mov     [esi+3450h], eax
+- swd32 only: mov     cx, [eax+5Eh]
+- swd32 only: cmp     cx, 1Bh
+- swd32 only: jb      short loc_4703F6
+- swd32 only: cmp     cx, 1Eh
+- swd32 only: ja      short loc_4703F6
++ swd3e only: cmp     [eax+62h], cx
++ swd3e only: jnz     short loc_480D61
+~ offset   swd32: mov     dword ptr [esi+2ED0h], 0                 swd3e: mov     dword ptr [esi+3460h], 0
+~ offset   swd32: mov     [esi+2F10h], ax                          swd3e: mov     [esi+34A0h], ax
+~ offset   swd32: mov     ecx, [esi+2EC0h]                         swd3e: mov     ecx, [esi+3450h]
+~ offset   swd32: mov     dword ptr [esi+2ED0h], 0                 swd3e: mov     dword ptr [esi+3460h], 0
+~ offset   swd32: mov     [esi+2F12h], ax                          swd3e: mov     [esi+34A2h], ax
+~ offset   swd32: mov     edx, [esi+2EC0h]                         swd3e: mov     edx, [esi+3450h]
+~ offset   swd32: mov     [esi+2F10h], ax                          swd3e: mov     [esi+34A0h], ax
+~ offset   swd32: mov     eax, [esi+2EC8h]                         swd3e: mov     eax, [esi+3458h]
+~ offset   swd32: mov     [esi+2EC8h], eax                         swd3e: mov     [esi+3458h], eax
+~ offset   swd32: cmp     cx, [esi+2F10h]                          swd3e: cmp     cx, [esi+34A0h]
+~ offset   swd32: mov     [esi+2ED0h], eax                         swd3e: mov     [esi+3460h], eax
+~ offset   swd32: mov     ax, [esi+2F10h]                          swd3e: mov     ax, [esi+34A0h]
+~ offset   swd32: mov     ax, [esi+2F12h]                          swd3e: mov     ax, [esi+34A2h]

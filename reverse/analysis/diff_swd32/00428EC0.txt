@@ -1,0 +1,10 @@
+swd3e 0x00428EC0 sub_428EC0 <- swd32 0x004251B0 sub_4251B0; method=anchor reusable=no: the code differs
+same=184 offset=0 constant=0 global=0 code=0 inserted=8 deleted=0
++ swd3e only: call    sub_49E590
++ swd3e only: call    sub_4366B0
++ swd3e only: mov     ecx, offset unk_5795C0
++ swd3e only: call    sub_49E120
++ swd3e only: mov     ecx, offset unk_578F40
++ swd3e only: call    sub_49D6F0
++ swd3e only: mov     ecx, offset unk_578A68
++ swd3e only: call    _AIL_shutdown@0

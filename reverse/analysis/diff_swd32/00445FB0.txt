@@ -1,0 +1,8 @@
+swd3e 0x00445FB0 sub_445FB0 <- swd32 0x00440FB0 sub_440FB0; method=callers reusable=no: the code differs
+same=41 offset=0 constant=1 global=0 code=0 inserted=3 deleted=2
++ swd3e only: mov     eax, dword_50A820
++ swd3e only: push    eax
++ swd3e only: call    sub_441960
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word ptr dword_4FBECC
+~ constant swd32: add     esp, 0Ch                                 swd3e: add     esp, 10h

@@ -1,0 +1,37 @@
+swd3e 0x0044EFC0 sub_44EFC0 <- swd32 0x00446550 sub_446550; method=callers reusable=no: the code differs
+same=55 offset=0 constant=0 global=1 code=0 inserted=17 deleted=17
+- swd32 only: mov     ax, word_4FC900
+- swd32 only: cmp     ax, 1F4h
+- swd32 only: jb      short loc_446561
++ swd3e only: mov     eax, dword_50B3AC
++ swd3e only: cmp     eax, 1F4h
++ swd3e only: jl      short loc_44EFD1
+- swd32 only: cmp     ax, 2
++ swd3e only: cmp     eax, 2
+~ global   swd32: cmp     word_4FB8A8, 1Fh                         swd3e: cmp     dword_50A1C4, 1Fh
+- swd32 only: mov     ax, word_4FC900
++ swd3e only: mov     eax, dword_50B3AC
+- swd32 only: cmp     ax, 5
++ swd3e only: cmp     eax, 5
+- swd32 only: xor     eax, eax
++ swd3e only: mov     eax, dword_50A1C4
+- swd32 only: mov     ax, word_4FB8A8
++ swd3e only: and     eax, 0FFFFh
+- swd32 only: cmp     ax, 0Ah
++ swd3e only: cmp     eax, 0Ah
++ swd3e only: mov     eax, dword_50A1C4
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word_4FB8A8
++ swd3e only: and     eax, 0FFFFh
+- swd32 only: cmp     ax, 0Bh
++ swd3e only: cmp     eax, 0Bh
+- swd32 only: xor     eax, eax
++ swd3e only: mov     eax, dword_50A1C4
+- swd32 only: mov     ax, word_4FB8A8
++ swd3e only: and     eax, 0FFFFh
+- swd32 only: cmp     ax, 0Fh
++ swd3e only: cmp     eax, 0Fh
+- swd32 only: xor     eax, eax
+- swd32 only: mov     ax, word_4FB8A8
++ swd3e only: mov     eax, dword_50A1C4
++ swd3e only: and     eax, 0FFFFh

@@ -1,0 +1,3 @@
+swd3e 0x00490F90 sub_490F90 <- swd32 0x0047CE70 sub_47CE70; method=shape reusable=no: the code differs
+same=2 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: movsx   eax, byte ptr [ecx+2694h]                swd3e: movsx   eax, byte ptr [ecx+2B9Ch]

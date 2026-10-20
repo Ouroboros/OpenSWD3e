@@ -1,0 +1,92 @@
+swd3e 0x00436720 sub_436720 <- swd32 0x004315D0 sub_4315D0; method=calls reusable=no: the code differs
+same=18 offset=0 constant=0 global=0 code=2 inserted=6 deleted=82
+- swd32 only: mov     eax, dword_4CF840
+- swd32 only: test    eax, eax
++ swd3e only: mov     esi, [esp+4+arg_4]
+- swd32 only: jnz     loc_431716
+- swd32 only: mov     esi, ds:lstrcpyA
+- swd32 only: push    offset Buffer
+- swd32 only: push    offset FileName
+- swd32 only: call    esi
+- swd32 only: mov     edi, ds:lstrcatA
+- swd32 only: push    offset aAllCharTsw
+- swd32 only: push    offset FileName
+- swd32 only: call    edi
+- swd32 only: push    offset FileName
+- swd32 only: call    sub_433270
+- swd32 only: add     esp, 4
+- swd32 only: mov     dword_4FB0CC, eax
+- swd32 only: push    offset Buffer
+- swd32 only: push    offset FileName
+- swd32 only: call    esi
+- swd32 only: push    offset aAllItemTsw
+- swd32 only: push    offset FileName
+- swd32 only: call    edi
+- swd32 only: push    offset FileName
+- swd32 only: call    sub_433270
+- swd32 only: add     esp, 4
+- swd32 only: mov     dword_4FB0D0, eax
+- swd32 only: push    offset Buffer
+- swd32 only: push    offset FileName
+- swd32 only: call    esi
+- swd32 only: push    offset aAllMagicTsw
+- swd32 only: push    offset FileName
+- swd32 only: call    edi
+- swd32 only: push    offset FileName
+- swd32 only: call    sub_433270
+- swd32 only: add     esp, 4
+- swd32 only: mov     dword_4FB0D4, eax
+- swd32 only: push    offset Buffer
+- swd32 only: push    offset FileName
+- swd32 only: call    esi
+- swd32 only: push    offset aAllSysTsw
+- swd32 only: push    offset FileName
+- swd32 only: call    edi
+- swd32 only: push    offset FileName
+- swd32 only: call    sub_433270
+- swd32 only: add     esp, 4
+- swd32 only: mov     dword_4FB0D8, eax
+- swd32 only: push    offset Buffer
+- swd32 only: push    offset FileName
+- swd32 only: call    esi
+- swd32 only: push    offset aAllMap1Tsw
+- swd32 only: push    offset FileName
+- swd32 only: call    edi
+- swd32 only: push    offset FileName
+- swd32 only: call    sub_433270
+- swd32 only: add     esp, 4
+- swd32 only: mov     dword_4FB0DC, eax
+- swd32 only: push    offset Buffer
+- swd32 only: push    offset FileName
+- swd32 only: call    esi
+- swd32 only: push    offset aAllMap2Tsw
+- swd32 only: push    offset FileName
+- swd32 only: call    edi
+- swd32 only: push    offset FileName
+- swd32 only: call    sub_433270
+- swd32 only: mov     dword_4FB0E0, eax
+- swd32 only: mov     ecx, 80E8h
+- swd32 only: xor     eax, eax
+- swd32 only: mov     edi, offset unk_4DAD28
+- swd32 only: rep stosd
+- swd32 only: mov     ecx, 2CD3h
+- swd32 only: mov     edi, offset dword_4CF988
+- swd32 only: rep stosd
+- swd32 only: mov     eax, dword_4FB0D4
+- swd32 only: push    eax
+- swd32 only: call    sub_431A50
+- swd32 only: add     esp, 8
+- swd32 only: mov     dword_4CF840, 1
+- swd32 only: mov     ecx, dword_4DAD0C
+- swd32 only: mov     eax, dword_4A6020
+- swd32 only: cmp     ecx, eax
+- swd32 only: jl      short loc_43172A
+- swd32 only: call    sub_431EA0
+- swd32 only: mov     esi, [esp+8+arg_4]
+~ code     swd32: jnz     short loc_431753                         swd3e: jnz     short loc_43675F
++ swd3e only: mov     eax, dword_4F4B7C
++ swd3e only: mov     ecx, dword_4B705C
++ swd3e only: cmp     eax, ecx
++ swd3e only: jb      short loc_43674C
++ swd3e only: call    sub_4369F0
+~ code     swd32: jnz     short loc_431753                         swd3e: jnz     short loc_43675F

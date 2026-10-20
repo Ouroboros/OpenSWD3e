@@ -1,0 +1,3 @@
+swd3e 0x00402A90 sub_402A90 <- swd32 0x00402F70 sub_402F70; method=calls reusable=no: the code differs
+same=2 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     [ecx+24h], eax                           swd3e: mov     [ecx+28h], eax

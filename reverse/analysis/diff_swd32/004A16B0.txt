@@ -1,0 +1,12 @@
+swd3e 0x004A16B0 sub_4A16B0 <- swd32 0x00489EB0 sub_489EB0; method=calls reusable=no: the code differs
+same=264 offset=0 constant=1 global=0 code=0 inserted=5 deleted=4
+~ constant swd32: test    al, 0A0h                                 swd3e: test    al, 18h
+- swd32 only: dec     eax
++ swd3e only: dec     edx
+- swd32 only: mov     al, ds:0A0F00048h
+- swd32 only: dec     eax
+- swd32 only: add     [edx-2EDCFCBAh], cl
++ swd3e only: sbb     [edx+0], cl
++ swd3e only: lock sbb [edx+0], cl
++ swd3e only: mov     al, [esi+3]
++ swd3e only: and     edx, ecx

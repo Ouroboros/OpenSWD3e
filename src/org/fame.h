@@ -1,0 +1,72 @@
+#pragma once
+
+#include <array>
+#include <memory>
+#include <span>
+#include <vector>
+
+#include "core/types.h"
+
+namespace swd3e
+{
+
+class Database;
+class ErrorReporter;
+
+// A counter (0x14 bytes in the original): fame and proficiency records by id. A list is held by a head of the same
+// layout (the original's five-dword holder) whose id field carries the count of nodes; the lookups compare the head
+// itself first, so the count can match an id.
+struct CounterNode
+{
+    static constexpr std::size_t SavedBytes = 0xE;
+    static constexpr u16 Cap = 0x14;  // the capped counters stop counting up from here
+
+    std::unique_ptr<CounterNode> next;  // +0x00
+    i16 id = 0;                         // +0x04 the count in a head
+    u16 value = 0;                      // +0x06
+    u16 percent = 0;                    // +0x08
+    u16 done = 0;                       // +0x0A
+    std::array<u8, 6> unk0C = {};       // +0x0C
+};
+
+using CounterList = CounterNode;
+
+void ClearCounterList(CounterList& list);
+u16 AddCounterCapped(CounterList& list, i16 id, i16 amount);
+u16 SetCounterCapped(CounterList& list, i16 id, u16 value);
+i16 FindCounterValue(CounterList& list, i16 id);
+int StepCounterProgress(CounterList& list, i16 id, u16 maximum, u16 scale);
+void SetCounterProgress(CounterList& list, i16 id, u16 maximum, u16 value);
+i16 FindCounterPercent(CounterList& list, i16 id);
+void SetProficiency(CounterList& list, u16 id, u16 value, Database& database);
+bool GetProficiency(CounterList& list, u16 id, u16& maximum, u16& value, Database& database);
+
+// The three counter lists saved with the game (0x004ACBA8, 0x004B9F00, 0x004B8A00; the last also holds the
+// proficiencies).
+struct Fame
+{
+    // The index of each list in `lists`.
+    enum List : std::size_t
+    {
+        UnkList0 = 0,
+        FameList = 1,         // the fame of Fame.dat
+        ProficiencyList = 2,  // also holds the proficiencies
+        Lists = 3,
+    };
+
+    // The save block: BlockVersion, the unpacked size, the packed size, then the LZO data of the three lists.
+    static constexpr std::size_t VersionAt = 0;
+    static constexpr u8 BlockVersion = 1;
+    static constexpr std::size_t UnpackedAt = 2;
+    static constexpr std::size_t PackedAt = 6;
+    static constexpr std::size_t BlockHeaderBytes = 0xA;
+    static constexpr int DictionaryBits = 15;
+
+    bool Save(std::vector<u8>& block, ErrorReporter& reporter) const;
+    bool Load(std::span<const u8> block, ErrorReporter& reporter);
+    void Free();
+
+    std::array<CounterList, Lists> lists;
+};
+
+}  // namespace swd3e

@@ -1,0 +1,14 @@
+swd3e 0x004369F0 sub_4369F0 <- swd32 0x00431EA0 sub_431EA0; method=similarity reusable=no: the code differs
+same=56 offset=0 constant=2 global=0 code=0 inserted=3 deleted=7
+~ constant swd32: cmp     ax, 0Ah                                  swd3e: cmp     ax, 10h
+- swd32 only: jl      loc_431F7C
++ swd3e only: jb      loc_436ABA
+- swd32 only: mov     edx, [ecx+10h]
+- swd32 only: push    edx
+- swd32 only: call    sub_4885A0
+- swd32 only: mov     eax, dword_4DACDC
+- swd32 only: push    eax
++ swd3e only: push    ecx
+~ constant swd32: add     esp, 10h                                 swd3e: add     esp, 0Ch
+- swd32 only: jge     loc_431EF1
++ swd3e only: jnb     short loc_436A41

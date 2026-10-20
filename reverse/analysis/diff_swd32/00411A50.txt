@@ -1,0 +1,31 @@
+swd3e 0x00411A50 sub_411A50 <- swd32 0x00411700 sub_411700; method=anchor reusable=no: the code differs
+same=72 offset=3 constant=3 global=0 code=4 inserted=14 deleted=5
+- swd32 only: push    esi
+~ offset   swd32: mov     edi, [esp+10h+arg_0]                     swd3e: mov     edi, [esp+0Ch+arg_0]
++ swd3e only: mov     ebp, eax
++ swd3e only: mov     eax, [esp+0Ch+arg_8]
++ swd3e only: test    eax, eax
++ swd3e only: jz      short loc_411AAE
+~ constant swd32: push    2449h                                    swd3e: push    234Eh
+- swd32 only: mov     ebp, eax
+~ offset   swd32: lea     edx, [ebp-2Eh]                           swd3e: lea     edx, [ebp-36h]
+~ offset   swd32: lea     eax, [ebx-6Ch]                           swd3e: lea     eax, [ebx-62h]
+- swd32 only: mov     ecx, edi
++ swd3e only: push    esi
++ swd3e only: mov     ecx, edi
+~ code     swd32: jz      short loc_411793                         swd3e: jz      short loc_411AEB
+~ code     swd32: jnz     short loc_41178B                         swd3e: jnz     short loc_411AE3
+~ code     swd32: jge     short loc_41178B                         swd3e: jge     short loc_411AE3
+~ code     swd32: jnz     short loc_411773                         swd3e: jnz     short loc_411ACB
++ swd3e only: mov     ecx, [esp+10h+arg_4]
++ swd3e only: pop     esi
++ swd3e only: test    ecx, ecx
++ swd3e only: push    0
++ swd3e only: jz      short loc_411B2E
++ swd3e only: push    0Dh
++ swd3e only: push    14h
++ swd3e only: jmp     short loc_411B32
+~ constant swd32: push    0                                        swd3e: push    3
+~ constant swd32: push    0Dh                                      swd3e: push    0Ah
+- swd32 only: push    14h
+- swd32 only: pop     esi

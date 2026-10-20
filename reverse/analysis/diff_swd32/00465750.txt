@@ -1,0 +1,39 @@
+swd3e 0x00465750 sub_465750 <- swd32 0x0045B280 sub_45B280; method=callers reusable=no: the code differs
+same=214 offset=5 constant=10 global=0 code=0 inserted=11 deleted=11
+~ constant swd32: mov     esi, 8                                   swd3e: mov     esi, 14h
+- swd32 only: lea     eax, [ebx+ebx*2]
+~ constant swd32: shl     eax, 3                                   swd3e: shl     eax, 7
+- swd32 only: sub     eax, ebx
+- swd32 only: lea     eax, [eax+eax*2]
+- swd32 only: lea     eax, [eax+eax*4]
+- swd32 only: lea     ecx, [ebx+eax*4]
++ swd3e only: add     eax, ebx
++ swd3e only: lea     eax, [ebx+eax*4]
++ swd3e only: lea     ecx, [eax+eax*2]
+~ offset   swd32: lea     ecx, [ebx-8]                             swd3e: lea     ecx, [ebx-14h]
+~ constant swd32: shl     eax, 6                                   swd3e: shl     eax, 4
+- swd32 only: sub     eax, ecx
++ swd3e only: add     eax, ecx
++ swd3e only: lea     eax, [eax+eax*4]
+~ constant swd32: shl     eax, 4                                   swd3e: shl     eax, 1
+~ offset   swd32: lea     eax, [eax+eax*2]                         swd3e: lea     eax, [eax+eax*4]
+- swd32 only: lea     ecx, ds:5029D0h[eax*4]
++ swd3e only: lea     ecx, [ecx+eax*4]
++ swd3e only: lea     ecx, ds:5136E0h[ecx*4]
+- swd32 only: movsx   ecx, ax
++ swd3e only: movsx   edx, ax
+- swd32 only: mov     [esp+28h+var_10], ecx
++ swd3e only: mov     [esp+28h+var_10], edx
+~ constant swd32: mov     eax, 8                                   swd3e: mov     eax, 14h
+~ offset   swd32: mov     [esp+28h+var_C], 12h                     swd3e: mov     [esp+28h+var_C], 1Eh
++ swd3e only: mov     eax, dword_53694C[ebx*4]
++ swd3e only: mov     [esp+28h+var_14], eax
+- swd32 only: mov     edx, dword_520E40[ebx*4]
+- swd32 only: mov     [esp+28h+var_14], edx
+~ constant swd32: cmp     eax, 12h                                 swd3e: cmp     eax, 1Eh
+~ constant swd32: cmp     ebx, 8                                   swd3e: cmp     ebx, 14h
+~ constant swd32: mov     eax, 8                                   swd3e: mov     eax, 14h
+~ offset   swd32: lea     ebp, [ecx+8]                             swd3e: lea     ebp, [ecx+14h]
+~ constant swd32: cmp     ebx, 8                                   swd3e: cmp     ebx, 14h
+~ constant swd32: mov     ecx, 12h                                 swd3e: mov     ecx, 1Eh
+~ offset   swd32: cmp     dword ptr [eax], 12h                     swd3e: cmp     dword ptr [eax], 1Eh

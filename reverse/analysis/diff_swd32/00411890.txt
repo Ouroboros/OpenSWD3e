@@ -1,0 +1,23 @@
+swd3e 0x00411890 sub_411890 <- swd32 0x00411530 sub_411530; method=callers reusable=no: the code differs
+same=81 offset=0 constant=0 global=0 code=4 inserted=4 deleted=13
++ swd3e only: cmp     eax, ebx
+- swd32 only: mov     edi, [esp+10h+arg_0]
+- swd32 only: cmp     eax, ebx
+- swd32 only: jge     short loc_411593
++ swd3e only: jge     loc_41195D
++ swd3e only: mov     edi, [esp+10h+arg_0]
+- swd32 only: cmp     esi, ebx
+- swd32 only: jnz     short loc_4115AF
+- swd32 only: mov     edx, [esp+10h+arg_4]
+- swd32 only: push    edx
+- swd32 only: push    edi
+- swd32 only: push    offset unk_4A029C
+- swd32 only: push    offset unk_4A028C
+- swd32 only: call    nullsub_1
+- swd32 only: add     esp, 10h
+- swd32 only: xor     eax, eax
++ swd3e only: xor     eax, eax
+~ code     swd32: jz      short loc_4115B1                         swd3e: jz      short loc_41195F
+~ code     swd32: jz      short loc_4115B8                         swd3e: jz      short loc_411900
+~ code     swd32: jmp     short loc_4115BC                         swd3e: jmp     short loc_411904
+~ code     swd32: jz      short loc_4115B1                         swd3e: jz      short loc_41195F

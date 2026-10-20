@@ -1,0 +1,26 @@
+swd3e 0x0040F0D0 sub_40F0D0 <- swd32 0x0040ED60 sub_40ED60; method=callers reusable=no: the code differs
+same=152 offset=1 constant=5 global=0 code=0 inserted=6 deleted=12
+- swd32 only: call    _AIL_serve@0
+- swd32 only: lea     edx, [esi+esi*2]
++ swd3e only: mov     eax, esi
++ swd3e only: shl     eax, 5
++ swd3e only: sub     eax, esi
++ swd3e only: lea     ecx, [eax+eax*2]
+- swd32 only: shl     edx, 4
+- swd32 only: add     edx, esi
+- swd32 only: lea     ecx, [esi+edx*4]
+~ constant swd32: shl     ecx, 1                                   swd3e: shl     ecx, 2
+~ constant swd32: add     ebp, 246h                                swd3e: add     ebp, 268h
+~ constant swd32: add     esi, 0DAh                                swd3e: add     esi, 0E7h
+~ constant swd32: sub     edx, 296h                                swd3e: sub     edx, 2BDh
+- swd32 only: push    offset dword_4A93E8
++ swd3e only: push    ebx
++ swd3e only: push    23AFh
+- swd32 only: mov     dword_4A93E8, 232Ah
+- swd32 only: mov     dword_4A93F0, 4Fh
+- swd32 only: mov     dword_4A941C, ebx
+- swd32 only: mov     dword_4A93F8, ebx
+- swd32 only: mov     dword_4A93FC, ebx
+~ offset   swd32: mov     ecx, [esp+24h+var_4]                     swd3e: mov     ecx, [esp+28h+var_4]
+~ constant swd32: add     esp, 18h                                 swd3e: add     esp, 1Ch
+- swd32 only: call    _AIL_serve@0

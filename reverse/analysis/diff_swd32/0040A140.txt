@@ -1,0 +1,135 @@
+swd3e 0x0040A140 _WinMain@16 <- swd32 0x00409EC0 _WinMain@16; method=anchor reusable=no: the code differs
+same=101 offset=12 constant=3 global=0 code=15 inserted=61 deleted=42
++ swd3e only: push    ebx
++ swd3e only: mov     esi, ds:FindWindowExA
+- swd32 only: xor     ebp, ebp
++ swd3e only: xor     ebx, ebx
+- swd32 only: push    ebp
+- swd32 only: push    ebp
+- swd32 only: call    ds:FindWindowExA
++ swd3e only: push    ebx
++ swd3e only: push    ebx
++ swd3e only: call    esi
++ swd3e only: pop     ebp
+- swd32 only: pop     ebp
++ swd3e only: pop     ebx
++ swd3e only: push    offset aGhost
++ swd3e only: push    offset aSsswd3eg
++ swd3e only: push    ebx
++ swd3e only: push    ebx
++ swd3e only: call    esi
++ swd3e only: mov     ebp, ds:SendMessageA
++ swd3e only: cmp     eax, ebx
++ swd3e only: jz      short loc_40A19A
++ swd3e only: push    ebx
++ swd3e only: push    ebx
++ swd3e only: push    401h
++ swd3e only: push    eax
++ swd3e only: call    ebp
++ swd3e only: push    3E8h
++ swd3e only: call    ds:Sleep
+~ offset   swd32: mov     eax, [esp+58h+lpCmdLine]                 swd3e: mov     eax, [esp+5Ch+lpCmdLine]
+~ code     swd32: jnz     short loc_409F06                         swd3e: jnz     short loc_40A1B8
++ swd3e only: pop     ebp
+- swd32 only: pop     ebp
++ swd3e only: pop     ebx
+- swd32 only: push    ebp
++ swd3e only: push    ebx
+~ constant swd32: push    65h                                      swd3e: push    7Dh
+~ offset   swd32: mov     esi, [esp+5Ch+hInstance]                 swd3e: mov     esi, [esp+60h+hInstance]
+~ offset   swd32: mov     [esp+5Ch+var_30.cbSize], 30h             swd3e: mov     [esp+60h+var_30.cbSize], 30h
+- swd32 only: mov     [esp+60h+var_30.style], ebp
++ swd3e only: mov     [esp+64h+var_30.style], ebx
+~ offset   swd32: mov     [esp+60h+var_30.lpfnWndProc], offset sub_40A0D0 swd3e: mov     [esp+64h+var_30.lpfnWndProc], offset sub_40A380
+- swd32 only: mov     [esp+60h+var_30.cbClsExtra], ebp
+- swd32 only: mov     [esp+60h+var_30.cbWndExtra], ebp
++ swd3e only: mov     [esp+64h+var_30.cbClsExtra], ebx
++ swd3e only: mov     [esp+64h+var_30.cbWndExtra], ebx
+~ offset   swd32: mov     [esp+60h+var_30.hInstance], esi          swd3e: mov     [esp+64h+var_30.hInstance], esi
+~ constant swd32: push    65h                                      swd3e: push    7Dh
+~ offset   swd32: mov     [esp+60h+var_30.hIcon], eax              swd3e: mov     [esp+64h+var_30.hIcon], eax
+~ offset   swd32: mov     [esp+60h+var_30.hIconSm], eax            swd3e: mov     [esp+64h+var_30.hIconSm], eax
+~ offset   swd32: mov     [esp+5Ch+var_30.hCursor], eax            swd3e: mov     [esp+60h+var_30.hCursor], eax
+~ offset   swd32: lea     ecx, [esp+58h+var_30]                    swd3e: lea     ecx, [esp+5Ch+var_30]
+- swd32 only: mov     [esp+58h+var_30.lpszMenuName], ebp
++ swd3e only: mov     [esp+5Ch+var_30.lpszMenuName], ebx
+~ offset   swd32: mov     [esp+5Ch+var_30.hbrBackground], eax      swd3e: mov     [esp+60h+var_30.hbrBackground], eax
+~ offset   swd32: mov     [esp+5Ch+var_30.lpszClassName], offset ClassName swd3e: mov     [esp+60h+var_30.lpszClassName], offset ClassName
+~ code     swd32: jnz     short loc_409F96                         swd3e: jnz     short loc_40A249
++ swd3e only: pop     ebp
+- swd32 only: pop     ebp
++ swd3e only: pop     ebx
+- swd32 only: push    ebp
++ swd3e only: push    ebx
+- swd32 only: push    ebp
+- swd32 only: push    ebp
++ swd3e only: push    ebx
++ swd3e only: push    ebx
+- swd32 only: push    ebp
++ swd3e only: push    ebx
+~ constant swd32: push    0FFFFF8F8h                               swd3e: push    0FFFFFCE0h
+- swd32 only: cmp     eax, ebp
++ swd3e only: cmp     eax, ebx
+~ code     swd32: jnz     short loc_409FDE                         swd3e: jnz     short loc_40A292
++ swd3e only: pop     ebp
+- swd32 only: pop     ebp
++ swd3e only: pop     ebx
+~ offset   swd32: mov     edx, [esp+58h+nShowCmd]                  swd3e: mov     edx, [esp+5Ch+nShowCmd]
+- swd32 only: push    ebx
+- swd32 only: push    ebp
+- swd32 only: push    ebp
++ swd3e only: push    ebx
++ swd3e only: push    ebx
+- swd32 only: call    ds:SendMessageA
+- swd32 only: push    ebp
++ swd3e only: call    ebp
++ swd3e only: push    ebx
+- swd32 only: push    ebp
++ swd3e only: push    ebx
++ swd3e only: mov     esi, ds:PeekMessageA
+- swd32 only: mov     ebx, ds:GetMessageA
+- swd32 only: mov     esi, ds:Sleep
++ swd3e only: mov     ebp, ds:TranslateMessage
+- swd32 only: push    ebp
+- swd32 only: push    ebp
+- swd32 only: push    ebp
++ swd3e only: push    ebx
++ swd3e only: push    ebx
++ swd3e only: push    ebx
+- swd32 only: push    ebp
++ swd3e only: push    ebx
+- swd32 only: call    edi
++ swd3e only: call    esi
+~ code     swd32: jz      short loc_40A077                         swd3e: jz      short loc_40A322
+- swd32 only: push    ebp
+- swd32 only: push    ebp
++ swd3e only: push    ebx
++ swd3e only: push    ebx
+- swd32 only: push    ebp
++ swd3e only: push    ebx
+- swd32 only: call    ebx
++ swd3e only: call    edi
+~ code     swd32: jz      short loc_40A0BC                         swd3e: jz      short loc_40A366
+- swd32 only: call    ds:TranslateMessage
++ swd3e only: call    ebp
+~ code     swd32: jmp     short loc_40A042                         swd3e: jmp     short loc_40A2F1
+- swd32 only: cmp     dword_4CC2AC, ebp
++ swd3e only: cmp     dword_4E6D08, ebx
+~ code     swd32: jz      short loc_40A0AC                         swd3e: jz      short loc_40A356
+~ code     swd32: jnz     short loc_40A0A0                         swd3e: jnz     short loc_40A34F
+~ code     swd32: jnz     short loc_40A09B                         swd3e: jnz     short loc_40A346
+- swd32 only: cmp     dword_4BABA4, ebp
++ swd3e only: cmp     dword_4D3FC4, ebx
+~ code     swd32: jnz     short loc_40A09B                         swd3e: jnz     short loc_40A346
+~ code     swd32: jmp     short loc_40A042                         swd3e: jmp     short loc_40A2F1
+- swd32 only: push    ebp
+- swd32 only: call    esi
++ swd3e only: push    ebx
++ swd3e only: call    ds:Sleep
+~ code     swd32: jmp     short loc_40A042                         swd3e: jmp     short loc_40A2F1
+- swd32 only: call    sub_484950
+~ code     swd32: jmp     short loc_40A042                         swd3e: jmp     short loc_40A2F1
+~ code     swd32: jnz     short loc_40A09B                         swd3e: jnz     short loc_40A346
+~ code     swd32: jmp     short loc_40A042                         swd3e: jmp     short loc_40A2F1
+- swd32 only: pop     ebx
++ swd3e only: pop     ebx

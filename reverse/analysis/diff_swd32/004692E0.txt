@@ -1,0 +1,59 @@
+swd3e 0x004692E0 sub_4692E0 <- swd32 0x0045E580 sub_45E580; method=callers reusable=no: the code differs
+same=35 offset=0 constant=0 global=0 code=0 inserted=41 deleted=16
++ swd3e only: mov     eax, dword_5770D4
+- swd32 only: mov     edx, dword_53BF0C
+- swd32 only: xor     eax, eax
+- swd32 only: and     edx, 0FFFFh
+- swd32 only: mov     ax, word ptr dword_53BF24+2
++ swd3e only: and     eax, 0FFFFh
++ swd3e only: xor     edx, edx
++ swd3e only: mov     dx, word ptr dword_57720C+2
++ swd3e only: sub     ecx, eax
++ swd3e only: mov     eax, dword_5771F4
++ swd3e only: sub     ecx, edx
++ swd3e only: and     eax, 0FFFFh
++ swd3e only: xor     edx, edx
++ swd3e only: mov     dl, byte_5771E7
++ swd3e only: sub     ecx, eax
+- swd32 only: sub     ecx, eax
+- swd32 only: xor     eax, eax
+- swd32 only: mov     al, byte_53BEFF
+- swd32 only: sub     ecx, edx
+- swd32 only: cmp     eax, ecx
++ swd3e only: cmp     edx, ecx
+- swd32 only: call    sub_45E9C0
++ swd3e only: mov     eax, dword_5770C8
++ swd3e only: push    0
++ swd3e only: push    esi
++ swd3e only: push    eax
++ swd3e only: mov     ecx, offset unk_578A70
++ swd3e only: call    sub_49D0C0
++ swd3e only: mov     ecx, dword_5770C8
++ swd3e only: push    0
++ swd3e only: push    esi
++ swd3e only: push    ecx
++ swd3e only: mov     ecx, offset unk_578A70
++ swd3e only: call    sub_49D0C0
+- swd32 only: mov     edx, dword_53BF00
+- swd32 only: xor     ecx, ecx
+- swd32 only: and     edx, 0FFh
+- swd32 only: mov     cl, byte ptr dword_53BF00+2
+- swd32 only: sub     edx, ecx
+- swd32 only: cmp     edx, eax
++ swd3e only: mov     ecx, dword_576FA0
++ swd3e only: xor     edx, edx
++ swd3e only: and     eax, 0FFh
++ swd3e only: mov     dl, byte ptr dword_5771E8+2
++ swd3e only: sub     eax, edx
++ swd3e only: cmp     eax, ecx
++ swd3e only: push    0
++ swd3e only: push    esi
++ swd3e only: push    4
++ swd3e only: mov     ecx, offset unk_578A70
++ swd3e only: call    sub_49D0C0
++ swd3e only: mov     ecx, dword_5770C8
++ swd3e only: push    0
++ swd3e only: push    esi
++ swd3e only: push    ecx
++ swd3e only: mov     ecx, offset unk_578A70
++ swd3e only: call    sub_49D0C0

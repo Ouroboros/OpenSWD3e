@@ -1,0 +1,104 @@
+# swd3er 的设置（TOML 1.0），放在可执行文件旁边。共两个文件：
+#   swd3er.toml          用户的文件（本文件）：程序只读不写，注释与顺序都保留。
+#   swd3er.default.toml  程序的文件：程序读写，存游戏里改的设置、按键、退出时的窗口大小与会话标记。
+# 两个文件按键合并，同一项以 swd3er.toml 为准（在这里写了的项，游戏里再改只在当次有效）。
+# 删除行首的 # 即可启用。缺少的项、非法的值都取默认值并在日志中记一条警告；整个文件不是合法 TOML 时全部取默认值。
+# 字符串用单引号时不处理转义（适合 Windows 路径，如 'E:\Game\swd3'），用双引号时反斜杠要写成 \\。
+
+[paths]
+
+# 相对路径以可执行文件目录为基准。
+# 未配置 data_dir 时使用工作目录。配置后，工作目录切换到 data_dir（原程序按工作目录读取 all_char.act 等档案），
+# 游戏数据也从这里读取。
+# 未配置 save_dir 时，编号存档 0.sav..98.sav 仍按原逻辑保存在 <data_dir>\save\ 中。
+
+# data_dir = './'
+# save_dir = './save'
+
+[logging]
+
+# 相对路径基于可执行文件目录解析。该路径提供文件名前缀和扩展名。每次启动都会在其旁边写入
+# 独立的 PREFIX-YYYY-MM-DD_HH-MM-SS-{PID}.log 文件，UTF-8 编码，每条记录立即刷新。
+# 级别：trace、debug、info、warning、error、critical。
+# 未配置 path 时，前缀取可执行文件名，例如 swd3er.exe 写入 logs/swd3er-YYYY-MM-DD_HH-MM-SS-{PID}.log。
+
+# path = "logs/swd3er.log"
+# level = "debug"
+
+[window]
+
+# 这些值只控制宿主窗口。游戏画面保持宽高比，尽量填满窗口，比例不一致时居中留黑边。
+# 退出时的窗口大小与最大化写入 swd3er.default.toml；在这里写了就固定为这里的值。
+# 宽至少 640，高至少 480（逻辑画面的大小）。
+
+# width = 1280
+# height = 960
+# maximized = false
+
+[display]
+
+# 游戏实际绘制的逻辑分辨率。目前只支持原程序的 640x480（scale 以 640x480 为 1.0）；
+# 其他取值会记一条警告并按 640x480 运行。宽高必须同时提供或同时省略，scale 优先于宽高。
+
+# scale = 1.0
+# width = 640
+# height = 480
+
+# 平滑画面：游戏逻辑仍按原版每 35 ms 一帧；地图、菜单、商店、战斗中的动态（移动、淡入淡出、发光、展开等）在两帧之间
+# 连续前进，按显示器刷新率画出当前状态，画面比实际状态晚最多一帧。关闭后与原版一样每帧画一次。
+# vsync：等显示器刷新再显示，消除撕裂。
+# frame_rate：每秒最多画几帧，0 表示不限（开 vsync 时即跟随显示器刷新率）；其他取值 30..1000。
+# render_scale：平滑画面按几倍绘制。N 倍时镜头和人物可以停在 1/N 个像素上，移动更细；每个原版像素仍画成
+# N×N 的方块，画面与原版一致。"auto" 按窗口大小取能完整显示的最大整数倍（最多 4）；也可以写 1..8，
+# 倍数越大越耗 CPU（2 倍约为 1 倍的 3～4 倍）。只在 smooth_motion 开启时有效。
+# wide_map：地图画面填满窗口，看到的地图范围随窗口变大；对话框等界面仍在中间。菜单、战斗、存档等画面仍是
+# 640×480，两边留黑边。
+# 这五项也可以在游戏中按 Esc →「設定」→「顯示設定」调整，调整后写入 swd3er.default.toml；这里写了的值启动时优先。
+
+# smooth_motion = true
+# vsync = true
+# frame_rate = 0
+# render_scale = "auto"
+# wide_map = true
+
+[game]
+
+# 游戏本身的设置，原程序存在 Env.dat。第一次启动时 swd3er.default.toml 还没有 [game]，
+# 从 data_dir 的 Env.dat 导入一次，之后不再读写 Env.dat。游戏里改设置、改按键都写入 swd3er.default.toml。
+# 下面是没有 Env.dat 时的默认值。
+
+# sound_volume = 6      # 音效音量 0..11
+# music_volume = 6      # 音乐音量 0..11
+# cache_size = 60       # 置换空间（地图缓存上限，MB）：60、100 或 140
+# effects_off = false   # 关闭画面特效
+# text_speed = 2        # 文字速度 0（最快）..4
+# battle_speed = 11     # 战斗速度 0..11
+# running = true        # 地图上跑步（true）还是走路（false）；按 R 切换时写入，下次启动恢复
+# launcher = true       # 启动时先显示启动画面（true），还是直接进入标题画面（false）；游戏中「設定」第一行可切换
+# debug = false         # 调试热键
+# unk14 = 100           # Env.dat 偏移 0x14 的值，用途未明（游戏里保存设置时写 100）
+# red_mask = 31744      # 地图缓存所对应的显示颜色掩码，显示格式变了会清空缓存（程序维护）
+# green_mask = 992
+# blue_mask = 31
+# session_open = false  # 游戏运行时为 true，正常退出时为 false；启动时仍为 true 表示上次异常退出，会清空地图缓存（程序维护）
+
+[game.keys]
+
+# 按键设定页的 16 个按键，值为 DirectInput 扫描码。下面是默认值。
+
+# up = 200          # 上（↑）
+# down = 208        # 下（↓）
+# left = 203        # 左（←）
+# right = 205       # 右（→）
+# menu = 28         # 進入介面（Enter）
+# confirm = 57      # 確定（空格）
+# cancel = 157      # 取消（右 Ctrl）
+# give_up = 1       # 放棄（Esc）
+# switch_1 = 207    # 切換一（End）
+# switch_2 = 54     # 切換二（右 Shift）
+# help = 59         # 說明文（F1）
+# page_up = 201     # 上一頁（PgUp）
+# page_down = 209   # 下一頁（PgDn）
+# run = 19          # 跑步（R）
+# auto_attack = 30  # 自動攻擊（A）
+# flee = 34         # 逃跑（G）

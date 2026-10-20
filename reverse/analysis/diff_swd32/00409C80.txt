@@ -1,0 +1,5 @@
+swd3e 0x00409C80 sub_409C80 <- swd32 0x00409DD0 sub_409DD0; method=anchor reusable=no: the code differs
+same=66 offset=0 constant=0 global=0 code=0 inserted=1 deleted=2
+- swd32 only: rep stosd
+- swd32 only: call    _AIL_serve@0
++ swd3e only: rep stosd

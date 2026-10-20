@@ -1,0 +1,23 @@
+swd3e 0x00441200 sub_441200 <- swd32 0x0043B9E0 sub_43B9E0; method=calls reusable=no: the code differs
+same=18 offset=0 constant=0 global=0 code=3 inserted=13 deleted=5
++ swd3e only: xor     edx, edx
++ swd3e only: cmp     eax, edx
++ swd3e only: mov     byte_50AC3C, dl
++ swd3e only: jz      short locret_441268
+~ code     swd32: jnz     short loc_43BA02                         swd3e: jnz     short loc_44122E
++ swd3e only: push    esi
+- swd32 only: mov     edx, [ecx+4Ch]
+- swd32 only: lea     eax, [edx+eax*4]
++ swd3e only: mov     esi, [ecx+4Ch]
++ swd3e only: lea     eax, [esi+eax*4]
++ swd3e only: pop     esi
+~ code     swd32: jz      short loc_43BA32                         swd3e: jz      short loc_441262
+- swd32 only: mov     dl, [eax]
+- swd32 only: mov     byte_4FC2A0[ecx], dl
++ swd3e only: push    ebx
++ swd3e only: mov     bl, [eax]
++ swd3e only: mov     byte_50AC3C[ecx], bl
+~ code     swd32: jnz     short loc_43BA21                         swd3e: jnz     short loc_441250
+- swd32 only: mov     byte_4FC2A0[ecx], 0
++ swd3e only: pop     ebx
++ swd3e only: mov     byte_50AC3C[ecx], dl

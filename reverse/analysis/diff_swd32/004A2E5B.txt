@@ -1,0 +1,40 @@
+swd3e 0x004A2E5B sub_4A2E5B <- swd32 0x0048E5D0 sub_48E5D0; method=neighbours reusable=no: the code differs
+same=2 offset=0 constant=0 global=0 code=0 inserted=13 deleted=25
+- swd32 only: push    ebp
+- swd32 only: mov     ebp, esp
+- swd32 only: push    ecx
+- swd32 only: mov     eax, [ebp+arg_4]
+- swd32 only: mov     ecx, [ebp+arg_0]
+- swd32 only: add     ecx, [eax]
+- swd32 only: mov     [ebp+var_4], ecx
+- swd32 only: mov     edx, [ebp+arg_4]
+- swd32 only: cmp     dword ptr [edx+4], 0
++ swd3e only: mov     ecx, [esp+arg_4]
++ swd3e only: push    esi
++ swd3e only: mov     esi, [esp+4+arg_0]
++ swd3e only: mov     eax, [ecx]
++ swd3e only: mov     edx, [ecx+4]
++ swd3e only: add     eax, esi
++ swd3e only: test    edx, edx
+- swd32 only: mov     eax, [ebp+arg_4]
+- swd32 only: mov     ecx, [eax+4]
+- swd32 only: mov     edx, [ebp+arg_0]
+- swd32 only: mov     eax, [edx+ecx]
+- swd32 only: mov     ecx, [ebp+arg_4]
+- swd32 only: mov     edx, [ecx+8]
+- swd32 only: mov     ecx, [ebp+var_4]
+- swd32 only: add     ecx, [eax+edx]
+- swd32 only: mov     [ebp+var_4], ecx
+- swd32 only: mov     edx, [ebp+arg_4]
+- swd32 only: mov     eax, [ebp+var_4]
+- swd32 only: add     eax, [edx+4]
+- swd32 only: mov     [ebp+var_4], eax
+- swd32 only: mov     eax, [ebp+var_4]
+- swd32 only: mov     esp, ebp
+- swd32 only: pop     ebp
++ swd3e only: mov     esi, [edx+esi]
++ swd3e only: mov     ecx, [ecx+8]
++ swd3e only: mov     ecx, [esi+ecx]
++ swd3e only: add     ecx, edx
++ swd3e only: add     eax, ecx
++ swd3e only: pop     esi

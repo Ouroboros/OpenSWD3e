@@ -1,0 +1,41 @@
+swd3e 0x004A4F20 sub_4A4F20 <- swd32 0x004923E0 sub_4923E0; method=calls reusable=no: the code differs
+same=237 offset=8 constant=0 global=0 code=17 inserted=8 deleted=6
+- swd32 only: align 4
+- swd32 only: dd offset loc_492450
++ swd3e only: db 2 dup(90h)
++ swd3e only: db 4Fh, 4Ah, 0
+~ code     swd32: dd offset loc_49247C                             swd3e: dd offset loc_4A4FBC
+~ code     swd32: dd offset loc_4924A0                             swd3e: dd offset loc_4A4FE0
+~ code     swd32: jnz     short loc_4925AC                         swd3e: jnz     short loc_4A50EC
+~ code     swd32: jb      short loc_4925A0                         swd3e: jb      short loc_4A50E0
+~ offset   swd32: jmp     ds:jpt_4925C4[edx*4]                     swd3e: jmp     ds:jpt_4A5104[edx*4]
+~ offset   swd32: jmp     ds:jpt_4925A2[ecx*4]                     swd3e: jmp     ds:jpt_4A50E2[ecx*4]
+~ code     swd32: jb      short loc_4925C4                         swd3e: jb      short loc_4A5104
+~ offset   swd32: jmp     dword ptr ds:loc_4925C4+4[eax*4]         swd3e: jmp     dword ptr ds:loc_4A5104+4[eax*4]
+~ offset   swd32: jmp     ds:jpt_4925C4[ecx*4]                     swd3e: jmp     ds:jpt_4A5104[ecx*4]
+- swd32 only: fsub    dword ptr ds:25F80049h
+- swd32 only: dec     ecx
+- swd32 only: add     [eax], ah
+- swd32 only: dec     ecx
++ swd3e only: sbb     [ecx+4Ah], dl
++ swd3e only: add     [eax], bh
++ swd3e only: push    ecx
++ swd3e only: dec     edx
++ swd3e only: add     [eax+51h], ah
++ swd3e only: dec     edx
+~ code     swd32: jb      short loc_4925A0                         swd3e: jb      short loc_4A50E0
+~ offset   swd32: jmp     ds:jpt_4925C4[edx*4]                     swd3e: jmp     ds:jpt_4A5104[edx*4]
+~ code     swd32: jb      short loc_4925A0                         swd3e: jb      short loc_4A50E0
+~ offset   swd32: jmp     ds:jpt_4925C4[edx*4]                     swd3e: jmp     ds:jpt_4A5104[edx*4]
+~ code     swd32: jb      loc_4925A0                               swd3e: jb      loc_4A50E0
+~ offset   swd32: jmp     ds:jpt_4925C4[edx*4]                     swd3e: jmp     ds:jpt_4A5104[edx*4]
+~ code     swd32: dd offset loc_492674                             swd3e: dd offset loc_4A51B4
+~ code     swd32: dd offset loc_49267C                             swd3e: dd offset loc_4A51BC
+~ code     swd32: dd offset loc_492684                             swd3e: dd offset loc_4A51C4
+~ code     swd32: dd offset loc_49268C                             swd3e: dd offset loc_4A51CC
+~ code     swd32: dd offset loc_492694                             swd3e: dd offset loc_4A51D4
+~ code     swd32: dd offset loc_49269C                             swd3e: dd offset loc_4A51DC
+~ code     swd32: dd offset loc_4926A4                             swd3e: dd offset loc_4A51E4
+~ code     swd32: dd offset loc_4926B7                             swd3e: dd offset loc_4A51F7
+~ offset   swd32: jmp     ds:jpt_4925C4[edx*4]                     swd3e: jmp     ds:jpt_4A5104[edx*4]
+~ code     swd32: dd offset loc_4926D0                             swd3e: dd offset loc_4A5210

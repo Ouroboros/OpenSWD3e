@@ -1,0 +1,18 @@
+swd3e 0x00409480 sub_409480 <- swd32 0x00409600 sub_409600; method=shape reusable=no: the code differs
+same=259 offset=10 constant=6 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     [ebp+298h], eax                          swd3e: mov     [ebp+2C8h], eax
+~ offset   swd32: mov     eax, [ebp+298h]                          swd3e: mov     eax, [ebp+2C8h]
+~ offset   swd32: mov     [ebp+294h], eax                          swd3e: mov     [ebp+2C4h], eax
+~ offset   swd32: mov     ecx, [ebp+294h]                          swd3e: mov     ecx, [ebp+2C4h]
+~ offset   swd32: mov     [ebp+29Ch], eax                          swd3e: mov     [ebp+2CCh], eax
+~ constant swd32: push    0E0h                                     swd3e: push    0F0h
+~ constant swd32: mov     ecx, 38h                                 swd3e: mov     ecx, 3Ch
+~ constant swd32: add     eax, 38h                                 swd3e: add     eax, 3Ch
+~ constant swd32: push    40h                                      swd3e: push    80h
+~ constant swd32: mov     ecx, 10h                                 swd3e: mov     ecx, 20h
+~ offset   swd32: mov     [ebp+2A0h], eax                          swd3e: mov     [ebp+2D0h], eax
+~ constant swd32: add     edx, 40h                                 swd3e: add     edx, 80h
+~ offset   swd32: mov     [ebp+2A4h], edi                          swd3e: mov     [ebp+2D4h], edi
+~ offset   swd32: mov     ecx, [ebp+2A4h]                          swd3e: mov     ecx, [ebp+2D4h]
+~ offset   swd32: mov     edx, [ebp+2A4h]                          swd3e: mov     edx, [ebp+2D4h]
+~ offset   swd32: mov     edx, [ebp+2A4h]                          swd3e: mov     edx, [ebp+2D4h]

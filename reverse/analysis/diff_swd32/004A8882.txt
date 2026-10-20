@@ -1,0 +1,31 @@
+swd3e 0x004A8882 sub_4A8882 <- swd32 0x00496C90 sub_496C90; method=neighbours reusable=no: the code differs
+same=6 offset=0 constant=0 global=1 code=0 inserted=9 deleted=19
+- swd32 only: push    ebp
+- swd32 only: mov     ebp, esp
+- swd32 only: mov     eax, [ebp+arg_0]
++ swd3e only: mov     eax, [esp+arg_0]
+- swd32 only: mov     ecx, [ebp+arg_0]
++ swd3e only: mov     ecx, eax
++ swd3e only: and     eax, 1Fh
+- swd32 only: mov     edx, [ebp+arg_0]
+- swd32 only: and     edx, 1Fh
+- swd32 only: mov     eax, dword_53D680[ecx*4]
+- swd32 only: movsx   ecx, byte ptr [eax+edx*8+4]
+- swd32 only: and     ecx, 1
+- swd32 only: test    ecx, ecx
++ swd3e only: mov     ecx, dword_579F80[ecx*4]
++ swd3e only: test    byte ptr [ecx+eax*8+4], 1
++ swd3e only: lea     eax, [ecx+eax*8]
+- swd32 only: mov     edx, [ebp+arg_0]
+- swd32 only: sar     edx, 5
+- swd32 only: mov     eax, [ebp+arg_0]
+- swd32 only: and     eax, 1Fh
+- swd32 only: mov     ecx, dword_53D680[edx*4]
+- swd32 only: mov     eax, [ecx+eax*8]
+- swd32 only: jmp     short loc_496CEC
+- swd32 only: mov     dword_53D158, 9
++ swd3e only: mov     eax, [eax]
++ swd3e only: retn
++ swd3e only: and     dword_579A6C, 0
+~ global   swd32: mov     dword_53D15C, 0                          swd3e: mov     dword_579A68, 9
+- swd32 only: pop     ebp

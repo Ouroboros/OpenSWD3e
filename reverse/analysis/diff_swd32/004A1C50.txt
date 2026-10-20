@@ -1,0 +1,17 @@
+swd3e 0x004A1C50 sub_4A1C50 <- swd32 0x0048A330 sub_48A330; method=calls reusable=no: the code differs
+same=5 offset=0 constant=1 global=1 code=0 inserted=5 deleted=8
+- swd32 only: push    ebp
+- swd32 only: mov     ebp, esp
+- swd32 only: cmp     off_4A8320, 0
++ swd3e only: mov     eax, off_4C04C8
++ swd3e only: test    eax, eax
++ swd3e only: call    eax
++ swd3e only: push    offset unk_4AF08C
++ swd3e only: push    offset unk_4AF078
+~ global   swd32: call    off_4A8320                               swd3e: call    sub_4A1D38
+~ constant swd32: add     esp, 8                                   swd3e: add     esp, 10h
+- swd32 only: push    offset unk_49E070
+- swd32 only: push    offset unk_49E000
+- swd32 only: call    sub_48A490
+- swd32 only: add     esp, 8
+- swd32 only: pop     ebp

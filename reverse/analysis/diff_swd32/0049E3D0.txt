@@ -1,0 +1,13 @@
+swd3e 0x0049E3D0 sub_49E3D0 <- swd32 0x004868E0 sub_4868E0; method=calls reusable=no: the code differs
+same=6 offset=0 constant=1 global=0 code=0 inserted=8 deleted=2
+- swd32 only: mov     ecx, [esp+arg_0]
++ swd3e only: push    esi
++ swd3e only: mov     esi, [esp+4+arg_4]
++ swd3e only: test    esi, esi
++ swd3e only: jnz     short loc_49E3DE
++ swd3e only: mov     esi, 1
++ swd3e only: mov     ecx, [esp+4+arg_0]
+- swd32 only: idiv    [esp+arg_4]
++ swd3e only: idiv    esi
++ swd3e only: pop     esi
+~ constant swd32: jnz     short locret_4868FA                      swd3e: jnz     short locret_49E3F7

@@ -1,0 +1,83 @@
+swd3e 0x0049B1B0 sub_49B1B0 <- swd32 0x00484020 sub_484020; method=callers reusable=no: the code differs
+same=44 offset=21 constant=0 global=0 code=0 inserted=29 deleted=31
++ swd3e only: mov     ebp, [esp+18h+arg_4]
++ swd3e only: mov     ebx, ecx
+- swd32 only: mov     esi, [esp+1Ch+arg_4]
+- swd32 only: mov     ebx, ecx
+- swd32 only: mov     ecx, esi
++ swd3e only: mov     ecx, ebp
+~ offset   swd32: mov     [ebx+255Ch], eax                         swd3e: mov     [ebx+2A54h], eax
+~ offset   swd32: lea     ecx, [esp+20h+var_10]                    swd3e: lea     ecx, [esp+20h+arg_4]
+- swd32 only: mov     ecx, esi
++ swd3e only: mov     ecx, ebp
+- swd32 only: mov     ebp, [esp+20h+arg_0]
++ swd3e only: mov     eax, [esp+20h+arg_0]
+- swd32 only: lea     edx, [ebp+ebp*4+0]
+- swd32 only: lea     eax, [ebp+edx*2+0]
++ swd3e only: lea     edx, [eax+eax*4]
++ swd3e only: lea     eax, [eax+edx*2]
+~ offset   swd32: lea     edi, [esi+0E6Ch]                         swd3e: lea     edi, [esi+10E4h]
+~ offset   swd32: mov     ecx, [ebx+255Ch]                         swd3e: mov     ecx, [ebx+2A54h]
+~ offset   swd32: mov     [esi+0E6Ch], eax                         swd3e: mov     [esi+10E4h], eax
+~ offset   swd32: mov     eax, [ebx+255Ch]                         swd3e: mov     eax, [ebx+2A54h]
+- swd32 only: lea     ecx, [ebp+ebp*4+0D2h]
+- swd32 only: mov     ax, [eax+0Ch]
+- swd32 only: lea     edx, [ebp+ecx*2+2Ah]
+- swd32 only: mov     [ebx+edx*8], ax
+- swd32 only: mov     ecx, [ebx+255Ch]
+- swd32 only: movsx   eax, [esp+20h+var_10]
+- swd32 only: mov     dx, [ecx+0Eh]
+- swd32 only: dec     eax
+- swd32 only: movsx   ecx, [esp+20h+var_E]
+- swd32 only: mov     [esi+0E72h], dx
+- swd32 only: mov     [esi+0E74h], eax
++ swd3e only: mov     cx, [eax+0Ch]
++ swd3e only: mov     [esi+10E8h], cx
++ swd3e only: mov     edx, [ebx+2A54h]
++ swd3e only: movsx   ecx, word ptr [esp+20h+arg_4]
++ swd3e only: mov     ax, [edx+0Eh]
++ swd3e only: dec     ecx
++ swd3e only: movsx   edx, [esp+20h+var_E]
++ swd3e only: mov     [esi+10EAh], ax
+~ offset   swd32: mov     [esi+0E78h], ecx                         swd3e: mov     [esi+10ECh], ecx
+- swd32 only: movsx   edx, word ptr [ebx+29B2h]
++ swd3e only: mov     [esi+10F0h], edx
+~ offset   swd32: movsx   eax, word ptr [ebx+29ACh]                swd3e: movsx   eax, word ptr [ebx+2EC2h]
+~ offset   swd32: movsx   ecx, word ptr [ebx+0D66h]                swd3e: movsx   ecx, word ptr [ebx+2EBCh]
+- swd32 only: sub     eax, edx
+- swd32 only: lea     edx, [eax+ecx-32h]
+- swd32 only: mov     [esi+0E7Ch], edx
+- swd32 only: mov     edx, [ebx+2B4h]
+- swd32 only: movsx   eax, word ptr [ebx+0D68h]
+- swd32 only: sub     eax, edx
+- swd32 only: add     eax, 28h
++ swd3e only: movsx   edx, word ptr [ebx+0FDAh]
++ swd3e only: sub     ecx, eax
++ swd3e only: lea     eax, [ecx+edx-32h]
+~ offset   swd32: mov     [esi+0E84h], eax                         swd3e: mov     [esi+10F4h], eax
++ swd3e only: mov     eax, [ebx+2C8h]
++ swd3e only: movsx   ecx, word ptr [ebx+0FDCh]
++ swd3e only: sub     ecx, eax
++ swd3e only: add     ecx, 28h
++ swd3e only: mov     [esi+10FCh], ecx
+~ offset   swd32: mov     [esi+0E80h], edi                         swd3e: mov     [esi+10F8h], edi
+~ offset   swd32: mov     [esi+0E88h], edi                         swd3e: mov     [esi+1100h], edi
+~ offset   swd32: mov     word ptr [esi+0E8Eh], 28h                swd3e: mov     word ptr [esi+1106h], 28h
+~ offset   swd32: mov     word ptr [esi+0E8Ch], 14h                swd3e: mov     word ptr [esi+1104h], 14h
+- swd32 only: mov     ecx, [ebx+255Ch]
++ swd3e only: mov     edx, [ebx+2A54h]
++ swd3e only: mov     ecx, ebp
++ swd3e only: mov     ax, [edx+0Eh]
++ swd3e only: shr     ax, 1
++ swd3e only: mov     [esi+1108h], ax
+- swd32 only: mov     dx, [ecx+0Eh]
+- swd32 only: mov     ecx, [esp+20h+arg_4]
+- swd32 only: shr     dx, 1
+- swd32 only: mov     [esi+0E90h], dx
+~ offset   swd32: mov     word ptr [esi+0E92h], 3Ch                swd3e: mov     word ptr [esi+110Ah], 3Ch
+~ offset   swd32: mov     [esi+0E98h], eax                         swd3e: mov     [esi+1110h], eax
+~ offset   swd32: mov     [esi+0E9Ch], eax                         swd3e: mov     [esi+1114h], eax
+~ offset   swd32: mov     [esi+0EA0h], eax                         swd3e: mov     [esi+1118h], eax
+~ offset   swd32: mov     word ptr [esi+0E94h], 56h                swd3e: mov     word ptr [esi+110Ch], 56h
+~ offset   swd32: or      [esi+0E94h], di                          swd3e: or      [esi+110Ch], di
+~ offset   swd32: or      byte ptr [ebx+2A87h], 8                  swd3e: or      byte ptr [ebx+2FB1h], 8

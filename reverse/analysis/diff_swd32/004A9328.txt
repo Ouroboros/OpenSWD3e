@@ -1,0 +1,2 @@
+swd3e 0x004A9328 RtlUnwind <- swd32 0x00497FC6 RtlUnwind; method=anchor reusable=no: the code differs
+same=1 offset=0 constant=0 global=0 code=0 inserted=0 deleted=0

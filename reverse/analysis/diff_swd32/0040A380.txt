@@ -1,0 +1,187 @@
+swd3e 0x0040A380 sub_40A380 <- swd32 0x0040A0D0 sub_40A0D0; method=anchor reusable=no: the code differs
+same=207 offset=0 constant=1 global=0 code=8 inserted=78 deleted=98
+- swd32 only: ja      def_40A163
++ swd3e only: ja      short def_40A40F
+- swd32 only: jz      def_40A163
++ swd3e only: jz      short def_40A40F
+- swd32 only: jnz     def_40A163
++ swd3e only: jnz     short def_40A40F
+- swd32 only: jmp     def_40A163
++ swd3e only: mov     edx, [esp+68h+lParam]
++ swd3e only: push    edx
++ swd3e only: push    ebx
++ swd3e only: push    esi
++ swd3e only: push    edi
++ swd3e only: call    ds:DefWindowProcA
++ swd3e only: pop     edi
++ swd3e only: pop     esi
++ swd3e only: pop     ebx
++ swd3e only: mov     ecx, [esp+5Ch+var_C]
++ swd3e only: mov     large fs:0, ecx
++ swd3e only: add     esp, 5Ch
++ swd3e only: retn    10h
+- swd32 only: jz      def_40A163
++ swd3e only: jz      short def_40A40F
+- swd32 only: call    sub_40AB50
+- swd32 only: add     esp, 4
+- swd32 only: jmp     def_40A163
++ swd3e only: jmp     short loc_40A448
+- swd32 only: jnz     def_40A163
++ swd3e only: jnz     short def_40A40F
+- swd32 only: jmp     def_40A163
++ swd3e only: jmp     short def_40A40F
+~ code     swd32: jnz     short loc_40A211                         swd3e: jnz     short loc_40A4BC
+~ code     swd32: jz      short loc_40A216                         swd3e: jz      short loc_40A4C1
+- swd32 only: mov     eax, dword_4B7A9C
+- swd32 only: and     eax, 20h
+- swd32 only: jz      short loc_40A23F
+~ constant swd32: cmp     ebx, 1Bh                                 swd3e: cmp     ebx, 77h
+- swd32 only: jnz     short loc_40A23F
+- swd32 only: call    sub_484920
+- swd32 only: jmp     short loc_40A266
+- swd32 only: cmp     ebx, 77h
+- swd32 only: jnz     short loc_40A266
+- swd32 only: test    eax, eax
+~ code     swd32: jnz     short loc_40A25C                         swd3e: jnz     short loc_40A4EB
+- swd32 only: jmp     short loc_40A266
+- swd32 only: mov     dword_4CC2AC, 1
++ swd3e only: test    byte ptr dword_4D1404, 20h
++ swd3e only: jz      short loc_40A4FE
++ swd3e only: cmp     ebx, 1Bh
++ swd3e only: jnz     short loc_40A4FE
++ swd3e only: call    sub_49C7B0
+- swd32 only: call    _AIL_serve@0
+- swd32 only: cmp     esi, 201h
+- swd32 only: ja      loc_40A453
+- swd32 only: jz      loc_40A433
+~ code     swd32: jz      loc_40A40E                               swd3e: jz      loc_40A75E
++ swd3e only: jz      loc_40A6D6
++ swd3e only: sub     eax, 2F2h
++ swd3e only: mov     ecx, hInstance
++ swd3e only: push    42007h
++ swd3e only: push    ecx
++ swd3e only: push    78h
++ swd3e only: call    ds:PlaySoundA
++ swd3e only: call    sub_428160
++ swd3e only: call    sub_428D60
++ swd3e only: push    12h
++ swd3e only: call    sub_40E020
++ swd3e only: add     esp, 4
++ swd3e only: call    sub_409AC0
++ swd3e only: test    eax, eax
++ swd3e only: jz      short loc_40A64D
++ swd3e only: push    12h
++ swd3e only: call    sub_40DFF0
++ swd3e only: add     esp, 4
++ swd3e only: mov     edx, hWnd
++ swd3e only: mov     eax, hInstance
++ swd3e only: push    0
++ swd3e only: push    offset sub_428210
++ swd3e only: push    edx
++ swd3e only: push    6Bh
++ swd3e only: push    eax
++ swd3e only: call    ds:DialogBoxParamA
++ swd3e only: dec     eax
++ swd3e only: jz      short loc_40A69A
++ swd3e only: dec     eax
++ swd3e only: jz      short loc_40A690
++ swd3e only: sub     eax, 4
++ swd3e only: jnz     def_40A40F
++ swd3e only: mov     ecx, hWnd
++ swd3e only: push    0
++ swd3e only: push    0
++ swd3e only: push    2
++ swd3e only: push    ecx
++ swd3e only: call    ds:SendMessageA
++ swd3e only: jmp     def_40A40F
++ swd3e only: call    sub_428730
++ swd3e only: jmp     def_40A40F
++ swd3e only: call    sub_428730
++ swd3e only: mov     eax, 3
++ swd3e only: mov     dword_4D1C88, 0
++ swd3e only: mov     dword_50A404, eax
++ swd3e only: mov     dword_4E6CF4, eax
++ swd3e only: mov     eax, 1
++ swd3e only: mov     dword_4E6D00, eax
++ swd3e only: mov     dword_4E6D04, eax
++ swd3e only: call    sub_406B50
++ swd3e only: call    sub_4098C0
++ swd3e only: jmp     def_40A40F
+~ code     swd32: jnz     short loc_40A3A7                         swd3e: jnz     short loc_40A6F7
+~ code     swd32: jnz     short loc_40A3C8                         swd3e: jnz     short loc_40A718
+~ code     swd32: jnz     short loc_40A3E9                         swd3e: jnz     short loc_40A739
++ swd3e only: mov     ecx, [esp+68h+var_C]
+- swd32 only: mov     ecx, [esp+5Ch+var_C]
+- swd32 only: call    sub_40AB50
+- swd32 only: add     esp, 4
+~ code     swd32: jmp     def_40A163                               swd3e: jmp     loc_40A448
+- swd32 only: test    byte ptr dword_4B7A9C, 20h
+- swd32 only: jz      def_40A163
+- swd32 only: cmp     ebx, 1Bh
+- swd32 only: jnz     def_40A163
+- swd32 only: call    sub_484920
+- swd32 only: jmp     def_40A163
+- swd32 only: cmp     esi, 404h
+- swd32 only: jnz     def_40A163
+- swd32 only: mov     ecx, hmod
+- swd32 only: push    42007h
+- swd32 only: push    ecx
+- swd32 only: push    78h
+- swd32 only: call    ds:PlaySoundA
+- swd32 only: call    sub_424390
+- swd32 only: call    sub_425040
+- swd32 only: push    12h
+- swd32 only: call    sub_40DCB0
+- swd32 only: add     esp, 4
+- swd32 only: call    sub_409C10
+- swd32 only: test    eax, eax
+- swd32 only: jz      short loc_40A49A
+- swd32 only: push    12h
+- swd32 only: call    sub_40DC80
+- swd32 only: add     esp, 4
+- swd32 only: mov     edx, hWnd
+- swd32 only: mov     eax, hmod
+- swd32 only: push    0
+- swd32 only: push    offset sub_424440
+- swd32 only: push    edx
+- swd32 only: push    6Bh
+- swd32 only: push    eax
+- swd32 only: call    ds:DialogBoxParamA
+- swd32 only: dec     eax
+- swd32 only: jz      short loc_40A4DD
+- swd32 only: dec     eax
+- swd32 only: jz      short loc_40A4D6
+- swd32 only: sub     eax, 4
+- swd32 only: jnz     short def_40A163
+- swd32 only: mov     ecx, hWnd
+- swd32 only: push    0
+- swd32 only: push    0
+- swd32 only: push    2
+- swd32 only: push    ecx
+- swd32 only: call    ds:SendMessageA
+- swd32 only: jmp     short def_40A163
+- swd32 only: call    sub_424910
+- swd32 only: jmp     short def_40A163
+- swd32 only: call    sub_424910
+- swd32 only: mov     eax, 3
+- swd32 only: mov     dword_4B8740, 0
+- swd32 only: mov     dword_4FBAB0, eax
+- swd32 only: mov     dword_4CAEB0, eax
+- swd32 only: mov     eax, 1
+- swd32 only: mov     dword_4CAEBC, eax
+- swd32 only: mov     dword_4CAEC0, eax
+- swd32 only: call    sub_406D30
+- swd32 only: call    sub_409A10
+- swd32 only: mov     edx, [esp+68h+lParam]
+- swd32 only: push    edx
+- swd32 only: push    ebx
+- swd32 only: push    esi
+- swd32 only: push    edi
+- swd32 only: call    ds:DefWindowProcA
+- swd32 only: pop     edi
+- swd32 only: pop     esi
+- swd32 only: mov     ecx, [esp+60h+var_C]
+- swd32 only: pop     ebx
+- swd32 only: mov     large fs:0, ecx
+- swd32 only: add     esp, 5Ch
+- swd32 only: retn    10h

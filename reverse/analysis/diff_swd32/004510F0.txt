@@ -1,0 +1,8 @@
+swd3e 0x004510F0 sub_4510F0 <- swd32 0x004485F0 sub_4485F0; method=neighbours reusable=no: the code differs
+same=12 offset=0 constant=1 global=0 code=0 inserted=5 deleted=0
++ swd3e only: push    0
++ swd3e only: push    0FFFFFFFFh
++ swd3e only: push    0C10h
++ swd3e only: push    offset dword_50BD50
++ swd3e only: call    sub_454970
+~ constant swd32: add     esp, 8                                   swd3e: add     esp, 18h

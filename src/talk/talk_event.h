@@ -1,0 +1,13 @@
+#pragma once
+
+#include <string_view>
+
+namespace swd3e
+{
+
+struct Role;
+
+// The failed run of a role's act, as the event commands report it.
+void LogActError(std::u8string_view where, const Role& role);
+
+}  // namespace swd3e

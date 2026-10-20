@@ -1,0 +1,3 @@
+swd3e 0x00483490 sub_483490 <- swd32 0x004728D0 sub_4728D0; method=calls reusable=no: the code differs
+same=4 offset=1 constant=0 global=0 code=0 inserted=0 deleted=0
+~ offset   swd32: mov     ax, [ecx+26D0h]                          swd3e: mov     ax, [ecx+2BD8h]

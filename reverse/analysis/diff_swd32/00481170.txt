@@ -1,0 +1,23 @@
+swd3e 0x00481170 sub_481170 <- swd32 0x004707B0 sub_4707B0; method=callers reusable=no: the code differs
+same=16 offset=9 constant=2 global=0 code=0 inserted=8 deleted=2
+- swd32 only: mov     eax, [esp+arg_0]
+~ constant swd32: sub     esp, 0A4h                                swd3e: sub     esp, 0A8h
++ swd3e only: xor     eax, eax
++ swd3e only: push    edi
++ swd3e only: mov     ecx, 2Ah
++ swd3e only: lea     edi, [esp+0B0h+var_A8]
++ swd3e only: rep stosd
++ swd3e only: mov     eax, [esp+0B0h+lpMem]
+~ offset   swd32: lea     ecx, [esp+0A8h+var_A4]                   swd3e: lea     ecx, [esp+0B0h+var_A8]
+- swd32 only: mov     edx, [esi+0Ch]
++ swd3e only: lea     edx, [esp+0B8h+var_A8]
+~ offset   swd32: mov     eax, [esp+0B4h+var_54]                   swd3e: mov     eax, [esp+0BCh+var_54]
+~ offset   swd32: mov     ecx, [esp+0B4h+arg_4]                    swd3e: mov     ecx, [esp+0BCh+arg_4]
+~ offset   swd32: mov     edx, [esp+0B4h+var_66]                   swd3e: mov     edx, [esp+0BCh+var_6A]
+~ offset   swd32: lea     eax, [esi+0D90h]                         swd3e: lea     eax, [esi+1004h]
+~ offset   swd32: cmp     word ptr [esi+0DA0h], 0                  swd3e: cmp     word ptr [esi+1014h], 0
+~ offset   swd32: mov     cx, [esp+0A8h+var_70]                    swd3e: mov     cx, [esp+0B0h+var_74]
+~ offset   swd32: mov     [esi+0D9Eh], cx                          swd3e: mov     [esi+1012h], cx
+~ offset   swd32: or      byte ptr [esi+2A87h], 80h                swd3e: or      byte ptr [esi+2FB1h], 80h
++ swd3e only: pop     edi
+~ constant swd32: add     esp, 0A4h                                swd3e: add     esp, 0A8h

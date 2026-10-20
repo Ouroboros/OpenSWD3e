@@ -1,0 +1,27 @@
+swd3e 0x00406590 sub_406590 <- swd32 0x00406770 sub_406770; method=anchor reusable=no: the code differs
+same=135 offset=0 constant=0 global=0 code=0 inserted=13 deleted=12
++ swd3e only: mov     esi, [esp+10h+arg_0]
+- swd32 only: mov     edi, [esp+14h+arg_0]
+- swd32 only: lea     eax, [edi+edi*2]
+- swd32 only: lea     eax, [eax+eax*8]
+- swd32 only: lea     ebx, ds:4BABA8h[eax*8]
++ swd3e only: lea     eax, [esi+esi*8]
++ swd3e only: lea     eax, [esi+eax*2]
++ swd3e only: lea     ecx, [eax+eax*2]
++ swd3e only: lea     ebx, ds:4D3FC8h[ecx*4]
+- swd32 only: xor     esi, esi
++ swd3e only: xor     edi, edi
+- swd32 only: cmp     edi, edx
++ swd3e only: cmp     esi, edx
+- swd32 only: cmp     edi, edx
++ swd3e only: cmp     esi, edx
+- swd32 only: mov     esi, ebp
++ swd3e only: mov     edi, ebp
+- swd32 only: push    edi
++ swd3e only: push    esi
+- swd32 only: mov     esi, ecx
++ swd3e only: mov     edi, ecx
+- swd32 only: mov     word_4AD490[ecx], di
++ swd3e only: mov     word_4C6C88[ecx], si
+- swd32 only: lea     ecx, [esi+esi*2]
++ swd3e only: lea     ecx, [edi+edi*2]
