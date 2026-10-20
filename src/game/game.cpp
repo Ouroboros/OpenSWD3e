@@ -145,9 +145,9 @@ constexpr char kRefusedCharacter = '%';
 constexpr u8 kFirstTypedByte = 0x20;
 
 // The name box.
-constexpr u32 kNameBoxPicture = 0x2449;
-constexpr int kNameBoxLeft = 0x6C;
-constexpr int kNameBoxUp = 0x2E;
+constexpr u32 kNameBoxPicture = 0x234E;  // swd3e: drawn behind the first name box
+constexpr int kNameBoxLeft = 0x62;
+constexpr int kNameBoxUp = 0x36;
 constexpr std::size_t kNameBytes = 0x40;
 constexpr int kNameRed = 0x15;
 constexpr int kNameGreen = 0xF;
@@ -156,6 +156,24 @@ constexpr int kNameGlyphWidth = 0xB;
 constexpr int kCursorHeight = 0x16;
 constexpr int kCursorRed = 0x14;
 constexpr int kCursorGreen = 0xD;
+constexpr int kIdleCursorRed = 0xA;  // the cursor of a name box other than the current one
+constexpr int kIdleCursorGreen = 3;
+// NameBoxFrame: the pointer over a name box (rows, then columns) and over the confirm button
+constexpr u32 kNameRowTop = 0xEC;
+constexpr u32 kNameRowBottom = 0x104;
+constexpr u32 kSurnameLeft = 0x11C;
+constexpr u32 kSurnameRight = 0x154;
+constexpr u32 kGivenLeft = 0x174;
+constexpr u32 kGivenRight = 0x1AE;
+constexpr u32 kNicknameTop = 0x116;
+constexpr u32 kNicknameBottom = 0x12E;
+constexpr u32 kNicknameLeft = 0x144;
+constexpr u32 kNicknameRight = 0x1AE;
+constexpr u32 kConfirmTop = 0x134;
+constexpr u32 kConfirmBottom = 0x148;
+constexpr u32 kConfirmLeft = 0x178;
+constexpr u32 kConfirmRight = 0x1B6;
+constexpr i32 kFirstHeldFrame = 1;  // ButtonState::heldFrames in the frame a button goes down
 
 // The wParam of a mouse message: the buttons and the modifier keys held.
 u32 MouseKeys(SDL_MouseButtonFlags buttons)
@@ -453,10 +471,10 @@ void Game::LoopFrame()
     }
 
     // The rebuild: an input method shows its candidates beside the box being typed in.
-    if (this->state.GameFlag(GameState::TextBox) && this->textInput != nullptr)
+    if (this->state.GameFlag(GameState::TextBox) && this->currentNameBox != nullptr)
     {
-        const int x = this->textInput->GetX() - kNameBoxLeft;
-        const int y = this->textInput->GetY() - kNameBoxUp;
+        const int x = this->currentNameBox->GetX() - kNameBoxLeft;
+        const int y = this->currentNameBox->GetY() - kNameBoxUp;
         const Picture* box = this->archive.GetPicture(kNameBoxPicture, 0);
         this->display.SetTextInputArea(x, y, box != nullptr ? box->width : 0, box != nullptr ? box->height : 0);
     }
@@ -1781,18 +1799,22 @@ void Game::SaveFameFile()
     file.Close();
 }
 
-// swd3e.exe 0x00411A50: the name box (picture 0x2449) behind the text typed (a lead byte left alone shows as '@') in
-// the large font and the cursor box
-void Game::DrawTextInput(const TextInput& box)
+// swd3e.exe 0x00411A50: a name box: with `withPicture` the picture 0x234E behind the boxes, then the text typed (a
+// lead byte left alone shows as '@') in the large font and the cursor box, brighter in the current box
+void Game::DrawTextInput(const TextInput& box, bool current, bool withPicture)
 {
     const int x = box.GetX();
     const int y = box.GetY();
-    const Picture* picture = this->archive.GetPicture(kNameBoxPicture, 0);
 
-    if (picture != nullptr)
+    if (withPicture)
     {
-        this->painter.SetSource(picture->data.data());
-        this->painter.DrawPicture(x - kNameBoxLeft, y - kNameBoxUp, picture->width, picture->height, 0);
+        const Picture* picture = this->archive.GetPicture(kNameBoxPicture, 0);
+
+        if (picture != nullptr)
+        {
+            this->painter.SetSource(picture->data.data());
+            this->painter.DrawPicture(x - kNameBoxLeft, y - kNameBoxUp, picture->width, picture->height, 0);
+        }
     }
 
     std::string text = box.CopyText(kNameBytes);
@@ -1812,17 +1834,133 @@ void Game::DrawTextInput(const TextInput& box)
     const auto color = static_cast<Pixel>(this->painter.MakeColor(kNameRed, kNameGreen, kNameBlue));
     this->largeFont.DrawText(this->painter.Target(), x, y, text, color, TextFont::BoldShadow);
     const int cursor = box.GetCursor();
+    const int red = current ? kCursorRed : kIdleCursorRed;
+    const int green = current ? kCursorGreen : kIdleCursorGreen;
     FillBox(
         this->painter,
         x + kNameGlyphWidth * cursor,
         y,
         kNameGlyphWidth,
         kCursorHeight,
-        kCursorRed,
-        kCursorGreen,
+        red,
+        green,
         0,
         FillMode::Gradient
     );
+}
+
+// swd3e.exe 0x004172A0: the name boxes of talk command 209 while NameBoxesOpen: a click in a box makes it the
+// current one, the key of button slot 2 goes on to the next; the three are drawn. Enter or a click on the confirm
+// button takes the name: the role's name becomes the one the texts write for it, each part then cleared for the
+// box's bytes and filled with its text; the boxes are freed. Escape gives the name up, the boxes left as they are.
+// Either way the keyboard no longer goes to them.
+bool Game::NameBoxFrame()
+{
+    if ((this->systemFlags & Game::NameBoxesOpen) == 0)
+    {
+        return false;
+    }
+
+    TextInput* surname = this->nameBoxes[SurnameBox].get();
+    TextInput* given = this->nameBoxes[GivenBox].get();
+    TextInput* nickname = this->nameBoxes[NicknameBox].get();
+    const auto pointerX = static_cast<u32>(this->state.pointerX);
+    const auto pointerY = static_cast<u32>(this->state.pointerY);
+    const bool clicked = this->controls.At(Button::MouseLeft).heldFrames == kFirstHeldFrame;
+
+    if (clicked)
+    {
+        if (pointerY < kNameRowBottom)
+        {
+            if (pointerY > kNameRowTop && pointerX < kSurnameRight && pointerX > kSurnameLeft)
+            {
+                this->currentNameBox = surname;
+            }
+
+            if (pointerY > kNameRowTop && pointerX < kGivenRight && pointerX > kGivenLeft)
+            {
+                this->currentNameBox = given;
+            }
+        }
+
+        if (pointerY < kNicknameBottom && pointerY > kNicknameTop && pointerX < kNicknameRight &&
+            pointerX > kNicknameLeft)
+        {
+            this->currentNameBox = nickname;
+        }
+    }
+
+    if (this->controls.At(Button::RightShift).heldFrames == kFirstHeldFrame)
+    {
+        if (this->currentNameBox == surname)
+        {
+            this->currentNameBox = given;
+        }
+        else if (this->currentNameBox == given)
+        {
+            this->currentNameBox = nickname;
+        }
+        else if (this->currentNameBox == nickname)
+        {
+            this->currentNameBox = surname;
+        }
+    }
+
+    for (std::size_t box = 0; box < NameBoxCount; ++box)
+    {
+        const TextInput* drawn = this->nameBoxes[box].get();
+
+        if (drawn != nullptr)
+        {
+            this->DrawTextInput(*drawn, this->currentNameBox == drawn, box == SurnameBox);
+        }
+    }
+
+    const int result = this->currentNameBox != nullptr ? this->currentNameBox->GetResult() : 0;
+    const bool confirmed = clicked && pointerY < kConfirmBottom && pointerY > kConfirmTop && pointerX < kConfirmRight &&
+                           pointerX > kConfirmLeft;
+
+    if (confirmed || result == TextInput::Enter)
+    {
+        // A role past the four (talk command 209 reports it and goes on) has the original write past the names;
+        // here such a name is not kept (deviations.md).
+        if (this->nameRole < Party::Roles)
+        {
+            RoleName& name = this->party.names[this->nameRole];
+            name = this->party.nameTags[this->nameRole];
+
+            auto take = [](const TextInput* box, std::span<char> part, int size)
+            {
+                std::fill_n(part.begin(), size, '\0');
+
+                if (box != nullptr)
+                {
+                    const std::string text = box->CopyText(size);
+                    std::copy(text.begin(), text.end(), part.begin());
+                }
+            };
+
+            take(surname, name.surname, NameBoxPlaces[SurnameBox].capacity);
+            take(given, name.given, NameBoxPlaces[GivenBox].capacity);
+            take(nickname, name.nickname, NameBoxPlaces[NicknameBox].capacity);
+        }
+
+        for (std::unique_ptr<TextInput>& box : this->nameBoxes)
+        {
+            box.reset();
+        }
+
+        this->currentNameBox = nullptr;
+    }
+    else if (result != TextInput::Escape)
+    {
+        return true;
+    }
+
+    this->state.ClearGameFlag(GameState::TextBox);
+    this->systemFlags &= ~Game::NameBoxesOpen;
+    this->nameRole = 0;
+    return true;
 }
 
 // swd32.exe 0x0040CF10 (unmatched in swd3e): the music queue, the streams, the MIDI player and the sound effects
@@ -2196,9 +2334,10 @@ void Game::BattleMainFrame()
 // A window message to the text box (WndProc, flag 0x50).
 void Game::SendText(TextMessage message, u32 parameter)
 {
-    if (this->textInput != nullptr)
+    // The original sends to a box that is not there as well (flag 0x50 without one); here nothing is sent.
+    if (this->currentNameBox != nullptr)
     {
-        this->textInput
+        this->currentNameBox
             ->HandleMessage(message, parameter, false, this->textEntry, this->audio, this->config.soundVolume);
     }
 }
@@ -2310,7 +2449,7 @@ void Game::HandleEvent(const SDL_Event& event)
             }
         }
     }
-    else if (event.type == SDL_EVENT_TEXT_INPUT && this->textInput != nullptr)
+    else if (event.type == SDL_EVENT_TEXT_INPUT && this->currentNameBox != nullptr)
     {
         // The rebuild (deviations.md): the text the keyboard or an input method commits goes into the box whole, its
         // characters as they fit; '%' is refused with the box's sound, control characters are left out (a Big5 trail
@@ -2335,7 +2474,7 @@ void Game::HandleEvent(const SDL_Event& event)
             this->audio.PlaySound(TextInput::RejectedSound, this->config.soundVolume);
         }
 
-        this->textInput->InsertText(typed);
+        this->currentNameBox->InsertText(typed);
     }
 }
 

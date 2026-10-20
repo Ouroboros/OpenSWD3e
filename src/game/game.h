@@ -115,7 +115,7 @@ public:
         TitleScreenMenu = 3,           // the system page in mode 0
         SystemMenuA = 4,               // the system page in mode 1 (talk command EndGame)
         SystemMenuB = 5,               // the system page in mode 2
-        NameEntryMenu = 6,             // the system page in mode 3
+        NameEntryMenu = 6,             // the system page in mode 3 (swd3e: load at once; no setter known)
         MenuOnEquipment = 0x40000000,  // the main menu opens on its equipment page (the shop)
         MenuActsReset = 0x20000000,    // the shop resets its acts (ShopFrame)
         MenuEntering = 0x80000000,
@@ -132,10 +132,34 @@ public:
         MovieOpened = 2,      // a map movie plays (talk command MapMovie)
         QuitRequested = 4,    // the game ends after the frame
         VideoPlaying = 0x20,  // a full-screen video plays
-        // swd3e: set by a talk command (0x00431C31), read by 0x004172A0; the controlled role is not driven (0x00402AA0)
-        UnkSystem40 = 0x40,
+        // swd3e: the name boxes of talk command 209 are open (set by it in 0x0042BAF0, cleared by 0x004172A0 when the
+        // name is taken or given up); the controlled role is not driven (0x00402AA0)
+        NameBoxesOpen = 0x40,
         AscentRunning = 0x80,  // swd3e: the ascent game runs instead of the frame (0x0040A7B0)
     };
+
+    // The name boxes (swd3e): the surname, the given name and the nickname of a RoleName.
+    enum NameBox : std::size_t
+    {
+        SurnameBox = 0,
+        GivenBox = 1,
+        NicknameBox = 2,
+        NameBoxCount = 3,
+    };
+
+    // Where a name box is typed and the bytes it takes (talk command 209 and 0x00451B60 make them alike).
+    struct NameBoxPlace
+    {
+        int x;
+        int y;
+        int capacity;
+    };
+
+    static constexpr std::array<NameBoxPlace, NameBoxCount> NameBoxPlaces = {{
+        {0x122, 0xEE, 4},
+        {0x17A, 0xEE, 4},
+        {0x14A, 0x118, 8},
+    }};
 
     // `storyState`: 0 while the story runs, SaveSlotsState while the save slots are shown.
     static constexpr i32 StoryRunning = 0;
@@ -264,7 +288,8 @@ private:
     void DrawShopList(Pixel color);
     void DrawShopChosen(const ItemNode& item, Pixel color);
     void DrawWrappedText(std::string_view text, int x, int y, int lines, int width);
-    void DrawTextInput(const TextInput& box);
+    void DrawTextInput(const TextInput& box, bool current, bool withPicture);
+    bool NameBoxFrame();
     void MainFrame();
     void EndMainFrame();
     void RunTimers();
@@ -600,7 +625,11 @@ private:
     i32 lastPointerAction = 0;  // 0x004E6D48
     Menu menu;
     SaveSlots saveSlots;
-    std::unique_ptr<TextInput> textInput;  // swd32 0x004CACD8 the text box the keyboard goes to (with flag 0x50)
+    // The boxes a name is typed in (swd3e; talk command 209 and the new game's name page), by NameBox: 0x004D0E04,
+    // 0x004D3C74 and 0x004E6B54
+    std::array<std::unique_ptr<TextInput>, NameBoxCount> nameBoxes;
+    TextInput* currentNameBox = nullptr;  // 0x004C6620 the box the keyboard goes to (with flag 0x50)
+    u32 nameRole = 0;                     // 0x004E6CD0 the role talk command 209 names
     ActState unk4CC200;
     i32 flagCursor = 0;      // 0x004C27A8 the flag chosen in the flag view
     u32 saveFrames = 0;      // 0x004C27B0 frames since the save screen opened

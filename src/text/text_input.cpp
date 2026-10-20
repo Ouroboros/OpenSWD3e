@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <climits>
 #include <cstring>
+#include <memory>
 
 #include "audio/audio_manager.h"
 #include "text/big5.h"
@@ -45,8 +46,21 @@ TextInput::TextInput(std::u8string_view text, int capacity, int x, int y)
       y(y),
       capacity(capacity)
 {
-    const std::string game = Big5(text);
-    const std::string_view source = std::string_view(game).substr(0, game.find('\0'));
+    this->Fill(Big5(text));
+}
+
+// swd3e.exe 0x0043D4A0 given a Big5 text of the game's data (a name typed before)
+std::unique_ptr<TextInput> TextInput::FromBig5(std::string_view text, int capacity, int x, int y)
+{
+    auto box = std::make_unique<TextInput>(std::u8string_view(), capacity, x, y);
+    box->Fill(text);
+    return box;
+}
+
+// The whole characters of `game` up to its NUL that fit the capacity
+void TextInput::Fill(std::string_view game)
+{
+    const std::string_view source = game.substr(0, game.find('\0'));
     const u32 length = TextFitLength(source, this->capacity);
     std::copy_n(source.begin(), length, this->text.begin());
 }

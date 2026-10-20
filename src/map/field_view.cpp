@@ -297,6 +297,7 @@ void FieldView::Paint()
         }
     }
 
+    owner.NameBoxFrame();
     const bool pointer = (!state.GameFlag(GameState::NoPointer) && !state.GameFlag(GameState::NoChoicePointer) &&
                           !state.GameFlag(GameState::HideHud)) ||
                          owner.input.IsKeyDown(Input::C) != 0;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -50,6 +51,7 @@ public:
     static constexpr u16 RejectedSound = 0x8C;
 
     TextInput(std::u8string_view text, int capacity, int x, int y);
+    static std::unique_ptr<TextInput> FromBig5(std::string_view text, int capacity, int x, int y);
     ~TextInput();
 
     int HandleMessage(
@@ -74,6 +76,7 @@ public:
 
 private:
     std::string_view Contents() const;
+    void Fill(std::string_view game);
 
     std::vector<char> text;  // capacity + 1 bytes
     i32 x = 0;

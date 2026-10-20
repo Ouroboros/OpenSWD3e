@@ -14,9 +14,6 @@ namespace
 {
 
 constexpr u32 kTranslucent = Painter::Translucent;
-constexpr u32 kTinted = Painter::Additive;
-constexpr int kGlowLimit = -12;
-constexpr int kGlowBase = -25;
 constexpr u32 kDecimal = 10;
 constexpr int kLabelLeft = 0x18;
 
@@ -57,53 +54,6 @@ void ActDrawer::Draw(ActState& state, int x, int y)
     this->painter.SetSource(picture->data.data());
     this->painter.Options().alpha = state.signal;
     this->painter.DrawPicture(x - state.x, y - state.y, picture->width, picture->height, state.flags);
-}
-
-// swd32.exe 0x00449C30 (unmatched in swd3e): the picture tinted darker by `level`, then while `level` is below -12 a
-// trail of copies spreading to both sides, each one step brighter
-void ActDrawer::DrawGlow(ActState& state, int x, int y, int level)
-{
-    if (this->acts.Run(state) == 0)
-    {
-        ErrorBox(
-            this->errors,
-            u8"Act Err(Menu::DrawActAlpha)",
-            u8"設定錯誤 \nact[%d] qq[%d] dir[%d]",
-            state.id,
-            state.action,
-            state.direction
-        );  // 0x004A6B1C + 0x0049FD0C
-        return;
-    }
-
-    const Picture* picture = this->archive.GetPicture(state.frame, state.picture);
-
-    if (picture == nullptr)
-    {
-        return;
-    }
-
-    auto tint = [this](int steps)
-    {
-        DrawOptions& options = this->painter.Options();
-        options.tintBlue = steps;
-        options.tintGreen = steps;
-        options.tintRed = steps;
-    };
-
-    this->painter.SetSource(picture->data.data());
-    tint(kGlowBase - level);
-    this->painter.DrawPicture(x - state.x, y - state.y, picture->width, picture->height, kTinted);
-    int step = level;
-
-    for (int offset = kGlowLimit - level; step < kGlowLimit; --offset)
-    {
-        tint(step);
-        this->painter.DrawPicture(x + offset - state.x, y - state.y, picture->width, picture->height, kTinted);
-        tint(step);
-        this->painter.DrawPicture(x - offset / 2 - state.x, y - state.y, picture->width, picture->height, kTinted);
-        ++step;
-    }
 }
 
 // swd3e.exe 0x00411B50: `value` in the digits of picture 0x2377 leftwards from `right` (each digit against the one

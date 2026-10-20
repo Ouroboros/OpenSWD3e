@@ -343,7 +343,7 @@ void RoleControl::ControlPlayer()
         }
     }
 
-    if ((owner.systemFlags & Game::UnkSystem40) != 0 || controls.mouseSuppressed != 0 || !still ||
+    if ((owner.systemFlags & Game::NameBoxesOpen) != 0 || controls.mouseSuppressed != 0 || !still ||
         owner.menuState != Game::NoMenu)
     {
         return;

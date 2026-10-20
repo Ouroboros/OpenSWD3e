@@ -138,12 +138,12 @@ struct EquipPage
     RoleRecord worn;                             // 0x0050B80C the record the stats are computed in
     // swd32 0x004FCD54 0: the slots, 1: the list, 5: a description, 0xF: refused
     i32 stage = 0;
-    ItemNode* described = nullptr;               // swd32 0x004FCD58
-    i32 unk4FCD5C = 0;                           // swd32 0x004FCD5C
-    ItemNode* firstShown = nullptr;              // swd32 0x004FCD64
-    u16 scrollArrows = 0;                        // swd32 0x004FCD68
-    ItemLink objects;                            // 0x0050B830 the objects that fit the slot
-    i32 top = 0;                                 // swd32 0x004FCF88
+    ItemNode* described = nullptr;   // swd32 0x004FCD58
+    i32 unk4FCD5C = 0;               // swd32 0x004FCD5C
+    ItemNode* firstShown = nullptr;  // swd32 0x004FCD64
+    u16 scrollArrows = 0;            // swd32 0x004FCD68
+    ItemLink objects;                // 0x0050B830 the objects that fit the slot
+    i32 top = 0;                     // swd32 0x004FCF88
     std::array<EquipStats, Party::Roles + 1> stats =
         {};                 // swd32 0x004FCF8C the four roles, then the role with the object tried
     i32 count = 0;          // swd32 0x004FCF90
@@ -203,12 +203,12 @@ struct OptionsPage
     i32 heldKey = 0;                          // swd32 0x004FD314 a key down since the last one taken
     // swd32 0x004FD2E8 the key a swap took from another row (kept, never read)
     i32 swappedKey = 0;
-    std::vector<u16> notes;                   // 0x0050BE84 the numbers of the notes
-    i32 noteCount = 0;                        // 0x0050BE8C
-    i32 noteTop = 0;                          // 0x0050BE60
-    i32 notesShown = 0;                       // 0x0050BE88
-    i32 noteRow = 0;                          // 0x0050BE50 (kept, never read)
-    std::size_t noteAt = 0;                   // 0x0050BE68 (kept, never read)
+    std::vector<u16> notes;  // 0x0050BE84 the numbers of the notes
+    i32 noteCount = 0;       // 0x0050BE8C
+    i32 noteTop = 0;         // 0x0050BE60
+    i32 notesShown = 0;      // 0x0050BE88
+    i32 noteRow = 0;         // 0x0050BE50 (kept, never read)
+    std::size_t noteAt = 0;  // 0x0050BE68 (kept, never read)
     u32 arrows = 0;          // 0x0050BE4C frames the scroll arrows stay pressed (bits 0..3 up, 4..7 down)
     i32 sampleLength = 0;    // swd32 0x004FD300 characters of the speed sample shown
     i32 textSpeedShown = 0;  // swd32 0x004FD304
@@ -265,7 +265,8 @@ public:
     static constexpr int TitleMode = 0;
     static constexpr int GameModeA = 1;
     static constexpr int GameModeB = 2;
-    static constexpr int NameEntryMode = 3;
+    // swd3e: the page chooses entry 1 (load) at once; no setter of the menu that opens it is known
+    static constexpr int LoadMode = 3;
 
     // The role pages: `page` counts from FirstRolePage as the mode counts from FirstPageMode in PageModeStep steps.
     static constexpr u16 FirstRolePage = 0xB;
@@ -567,7 +568,7 @@ public:
     void MainCancel();
     void MainDraw();
     void OptionsLeave();
-    bool DrawNameEntry();
+    void DrawNameEntry();
     void ActOnEntry();
     void DrawSettings();
     // The rebuild's display setup on the title page (deviations.md).
@@ -585,10 +586,12 @@ public:
     void SystemFirst();
     void SystemLeft();
     void SystemRight();
+    void SystemShift();
     void SystemEnd();
     void SystemSelect();
     void SystemCancel();
     void SystemDraw();
+    void DrawActAlpha(ActState& state, int x, int y, bool draw);
 
     void Nothing();
 
@@ -610,12 +613,12 @@ public:
     std::array<Handler, Pages> leaveTable = {};  // swd32 0x004FB884 left
     std::array<Handler, Pages> drawTable = {};   // swd32 0x004FBF54 drawn
 
-    u16 code = 0;                  // swd32 0x004FC900 the code the menu was opened with
-    u16 page = 0;                  // swd32 0x004FC3C4 (low word) the page index
-    u16 mode = 0;                  // swd32 0x004FB8A8
-    u16 unk4FC200 = 0;             // swd32 0x004FC200
-    u16 unk4FBAB8 = 0;             // swd32 0x004FBAB8
-    u16 roleTab = 0;               // swd32 0x004FBECC (low word) the role tab raised (the equipment page's role)
+    u16 code = 0;       // swd32 0x004FC900 the code the menu was opened with
+    u16 page = 0;       // swd32 0x004FC3C4 (low word) the page index
+    u16 mode = 0;       // swd32 0x004FB8A8
+    u16 unk4FC200 = 0;  // swd32 0x004FC200
+    u16 unk4FBAB8 = 0;  // swd32 0x004FBAB8
+    u16 roleTab = 0;    // swd32 0x004FBECC (low word) the role tab raised (the equipment page's role)
     // swd32 0x004FC82C bit 0: the menu opened on the equipment, left back to the item choice
     u16 openedOnEquipment = 0;
     u16 unk4A6AA8 = 0;             // swd32 0x004A6AA8
@@ -638,30 +641,32 @@ public:
     ActState hitPointBar;              // swd32 0x004FB810 the bars of the role tabs
     ActState downArrowAct;             // swd32 0x004FB8D8 the down arrow of the lists (the shop's minus button)
     ActState upArrowAct;               // swd32 0x004FBA18 the up arrow of the lists (the shop's plus button)
-    std::array<ActState, Tabs> items;  // swd32 0x004FBFA0 the four entries of a page
+    std::array<ActState, Tabs> items;  // 0x0050A900 the four entries of a page
     ActState titleAct;                 // swd32 0x004FBEE0 the title of the page, lit and glowing
-    ActState face;                     // swd32 0x004FC208 the face of the name entry
+    ActState face;                     // 0x0050AB98 the face of the name entry
     ActState barTrackAct;              // swd32 0x004FC328 the track of the scroll bars, repeated down
     ActState spiritBar;                // swd32 0x004FC450
     ActState staminaBar;               // swd32 0x004FC518
-    ActState gauge;                    // swd32 0x004FC650 a step of the settings bars
+    ActState gauge;                    // 0x0050B0C8 a step of the settings bars
     ActState barThumbAct;              // swd32 0x004FC6E8 their thumb
     ActState titleArrowAct;            // swd32 0x004FC790 the arrow beside the title
     ActState tabsPanelAct;             // swd32 0x004FC840 the panel of the tabs (the shop's frame)
 
-    // The system page (0x004FD29C..0x004FD2D4).
-    i32 systemClick = 0;           // swd32 0x004FD29C 1: the confirm button clicked, 2: a right click
-    i32 nameReply = 0;             // swd32 0x004FD2A0 frames of the face's reply to a name
-    i32 textSpeedShown = 0;        // swd32 0x004FD2A4
+    // The system page (0x0050BE08..0x0050BE40).
+    i32 systemClick = 0;           // 0x0050BE08 1: the confirm button clicked, 2: a right click
+    i32 nameReply = 0;             // 0x0050BE0C frames of the face's reply to a name
+    i32 textSpeedShown = 0;        // 0x0050BE10
     i32 systemState = 0;           // 0x0050BE18 1: the title entries, 2: chosen (5: the settings, 100: in game)
-    std::vector<u16> savedScreen;  // swd32 0x004FD2B0 the frame under the page in game
+    std::vector<u16> savedScreen;  // 0x0050BE1C the frame under the page in game
     i32 systemCursor = 0;          // 0x0050BE20 the title entry
-    std::array<i32, 4> glow = {};  // swd32 0x004FD2B8 the glow of the four entries
-    i32 systemRow = 0;             // 0x0050BE34 the settings row, the fade and name entry steps otherwise
+    // 0x0050BE24 by entry: -0x10 on entering; swd3e's page clears the first and sets the chosen one to 1 each frame
+    // (no reader is known)
+    std::array<i32, 4> glow = {};
+    i32 systemRow = 0;  // 0x0050BE34 the settings row, the fade and name entry steps otherwise
     std::optional<Config::Settings> storedSettings;  // StoreChangedSettings: what the settings page last wrote
-    i32 sampleLength = 0;                            // swd32 0x004FD2CC characters of the text speed sample shown
-    std::vector<u8> enteredNames;                    // swd32 0x004FD2D0 the two names typed (0x20 bytes)
-    i32 sampleDelay = 0;                             // swd32 0x004FD2D4
+    i32 sampleLength = 0;                            // 0x0050BE38 characters of the text speed sample shown
+    std::vector<u8> enteredName;                     // 0x0050BE3C the name typed (a RoleName's 0x20 bytes)
+    i32 sampleDelay = 0;                             // 0x0050BE40
 
     // The items page.
     MenuList itemList;        // 0x0050BBE4 (see MenuList)

@@ -218,7 +218,7 @@ void Menu::Run()
                 this->items[item].action = static_cast<i32>(kFirstSystemItemAction + item);
             }
 
-            this->Open(menu == Game::NameEntryMenu ? Menu::NameEntryMode : Menu::TitleMode, Menu::SystemPage);
+            this->Open(menu == Game::NameEntryMenu ? Menu::LoadMode : Menu::TitleMode, Menu::SystemPage);
         }
 
         if (menu == Game::SystemMenuA)
@@ -337,7 +337,7 @@ void Menu::SetPage(int menuCode)
         this->right = &Menu::SystemRight;
         this->pageDown = &Menu::SystemLast;
         this->pageUp = &Menu::SystemFirst;
-        this->shift = &Menu::Nothing;
+        this->shift = &Menu::SystemShift;
         this->end = &Menu::SystemEnd;
         this->select = &Menu::SystemSelect;
         this->cancel = &Menu::SystemCancel;
