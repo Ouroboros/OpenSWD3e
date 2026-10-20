@@ -39,7 +39,9 @@ void FieldView::DrawRoles()
 
 // swd3e.exe 0x00413F20: a visible role (flag 0x8000 without 0x400) near the camera: its sound cue, its shadow, its
 // picture with its wave and translucency, a tinted copy (the map's tint and the tint of bits 20..23), the act attached
-// to it, its bubbles and, while no event runs, its label. Act roles are skipped while story flag 0xB is set.
+// to it, its bubbles and, while no event runs, its label. Act roles are skipped while story flag 0xB is set. A role
+// with an id and without Role::NoDepthScale is zoomed by the map's depth scale where it stands (between its tile row
+// and the one above for a scale by rows), its shadow too; the zoom is reset afterwards.
 int FieldView::DrawRole(Role& role)
 {
     if ((role.flags & (Role::Visible | Role::Hidden)) != Role::Visible)
@@ -55,7 +57,7 @@ int FieldView::DrawRole(Role& role)
     const int cameraLeft = field.cameraLeft;
     const int cameraTop = field.cameraTop;
 
-    if (x - cameraLeft < -kRoleMarginX || x - cameraLeft > field.viewWidth + kRoleMarginX)
+    if (x - cameraLeft < -kDrawnRoleMargin || x - cameraLeft > field.viewWidth + kDrawnRoleMargin)
     {
         return 1;
     }
@@ -85,24 +87,52 @@ int FieldView::DrawRole(Role& role)
         return 1;
     }
 
-    if ((role.flags & Role::CellEffects) != 0 && (view.weatherKind & kWeatherKindMask) < kShadowWeathers)
+    int scale = MapScale::DefaultScale;
+    u32 mode = role.act.flags;
+    bool zoomed = false;
+
+    if (role.id != Role::NoId && (role.flags & Role::NoDepthScale) == 0)
+    {
+        const MapScale& depth = field.scale;
+        scale = depth.Scale(depth.LevelAt(role.x, role.y));
+
+        if (depth.GetKind() == MapScale::Kind::Rows)
+        {
+            const int above = depth.Scale(depth.LevelAt(role.x, role.y - MapHeader::TileSize));
+            scale = above + (role.y & MapHeader::TileFraction) * (scale - above) / MapHeader::TileSize;
+        }
+
+        zoomed = true;
+        mode |= Painter::ZoomCopy;
+    }
+
+    if (field.shadowKind != 0 && (role.flags & Role::CellEffects) != 0)
     {
         this->DrawShadow(
             role,
             *picture,
             x - role.act.x - cameraLeft,
             y - role.act.y - cameraTop,
-            view.weatherKind,
-            kShadowTint[(role.flags & Role::CellShades) >> Role::CellShadeShift]
+            field.shadowKind,
+            kShadowTint[(role.flags & Role::CellShades) >> Role::CellShadeShift],
+            scale
         );
     }
 
-    const u32 mode = role.act.flags;
     painter.SetWave(role.act.wait);
     painter.SetWavePhase(role.act.wavePhase);
     DrawOptions& options = painter.Options();
     options.unusedFlag = 0;
     options.alpha = role.act.signal;
+
+    if (scale != 0)
+    {
+        painter.SetZoomSheared(role.act.x + kZoomAnchorX, role.act.y + kZoomAnchorY, scale, scale, 0);
+    }
+
+    options.tintBlue = 0;
+    options.tintGreen = 0;
+    options.tintRed = 0;
     painter.SetSource(picture->data.data());
     const int drawX = x + role.drawOffsetX - role.act.x - cameraLeft;
     const int drawY = y + role.drawOffsetY - role.act.y - cameraTop;
@@ -138,7 +168,8 @@ int FieldView::DrawRole(Role& role)
             drawY,
             picture->width,
             picture->height,
-            (mode & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::TintUnder,
+            (mode & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::TintUnder |
+                (zoomed ? Painter::ZoomCopy : 0u),
             PictureArgument(*picture)
         );
     }
@@ -152,14 +183,16 @@ int FieldView::DrawRole(Role& role)
         {
             painter.SetSource(extra->data.data());
             painter.DrawPicture(
-                x + role.drawOffsetX - attached.x - cameraLeft,
-                role.drawOffsetY - attached.y - role.act.y - cameraTop + y + kAttachedDrop,
+                role.drawOffsetX - attached.x - cameraLeft + x + kAttachedShift,
+                y + role.drawOffsetY - scale * role.act.y / kZoomUnit - cameraTop,
                 extra->width,
                 extra->height,
                 attached.flags
             );
         }
     }
+
+    painter.SetZoom(0, 0, kZoomUnit, kZoomUnit);
 
     if (!this->replaying)
     {
@@ -260,50 +293,36 @@ void FieldView::UpdateRoleSound(Role& role)
     effects.SetPan(role.sound, (role.x - player.x) * kPanScale / kSoundRange);
 }
 
-// swd3e.exe 0x00414BF0: the shadow of a role: its picture squashed to half its height (a quarter with bit 3 of
-// `kind`), sheared to the side of bit 0 and darkened by `tint`; kinds from 2 on flip it over
-void FieldView::DrawShadow(const Role& role, const Picture& picture, int x, int y, int kind, int tint)
+// swd3e.exe 0x00414BF0: the shadow of a role: its picture tinted onto the destination, zoomed about the act's anchor
+// (16, 8 to the right and down) to the role's scale across and half of it down (a quarter from shadow kind 5 on),
+// sheared to the right for odd kinds (to the left otherwise), flipped for kinds whose (kind - 1) % 4 is 2 or 3, and
+// darkened by `tint`. The kind is the map's (Field::shadowKind) whatever `kind` is passed.
+void FieldView::DrawShadow(const Role& role, const Picture& picture, int x, int y, int kind, int tint, int scale)
 {
+    static_cast<void>(kind);
     Painter& painter = this->game.painter;
-    DrawOptions& options = painter.Options();
-    u32 mode = (role.act.flags & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::Shadow;
+    const int shadow = this->game.field.shadowKind;
+    const u32 bits = role.act.flags;
     painter.SetSource(picture.data.data());
-    const int half = picture.height >> 1;
-    options.scaleHeight = half;
-    options.shear = -(picture.height >> kShearShift);
-
-    if ((kind & kShadowLeansRight) != 0)
-    {
-        options.shear = picture.height >> kShearShift;
-    }
-
+    painter.SetZoomSheared(
+        role.act.x + kZoomAnchorX,
+        role.act.y + kZoomAnchorY,
+        scale,
+        scale / (shadow < kQuarterShadowKind ? kHalfShadow : kQuarterShadow),
+        (shadow & kShadowLeansRight) != 0 ? kShadowShear : -kShadowShear
+    );
+    DrawOptions& options = painter.Options();
     options.tintBlue = tint;
     options.tintGreen = tint;
     options.tintRed = tint;
-    int extra = 0;
-    int lift = 0;
-
-    if ((kind & kQuarterShadow) != 0)
-    {
-        options.scaleHeight = half / 2;
-        lift = role.act.y / 2;
-        extra = kShadowStep;
-    }
-
-    int offsetY = 0;
-
-    if ((kind & kShadowKindMask) < kFlippedShadow)
-    {
-        offsetY = (role.act.y + lift + kShadowDrop) / 2 + extra;
-    }
-    else
-    {
-        mode |= Painter::Flip;
-        offsetY = extra + role.act.y + kShadowStep;
-    }
-
-    const int offsetX = (kind & kShadowLeansRight) == 0 ? kShadowStep : -kShadowStep;
-    painter.DrawPicture(x + offsetX, y + offsetY, picture.width, picture.height, mode);
+    const u32 flip = (shadow - 1) % kShadowKinds < kFlippedShadowKinds ? 0u : static_cast<u32>(Painter::Flip);
+    painter.DrawPicture(
+        x,
+        y,
+        picture.width,
+        picture.height,
+        (bits & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::ZoomTint | flip
+    );
 }
 
 // swd32.exe 0x00413EA0 (unmatched in swd3e): the reflections of the roles of layer 0 standing on reflecting cells (flag

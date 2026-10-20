@@ -182,9 +182,7 @@ constexpr std::array<char, 8> kLeafActions = {'4', '4', '4', '6', '8', '8', '8',
 constexpr std::array<i8, 8> kFireflySway = {0, 1, 1, 1, 0, -1, -1, -1};
 
 // Scene::weatherKind (the weather kind): kinds 0 and 1 send returning particles up from below the map, 2 and 3 down
-// from above it; roles cast shadows under the kinds below kShadowWeathers.
-constexpr int kWeatherKindMask = 7;
-constexpr int kShadowWeathers = 4;
+// from above it (swd32 also cast the roles' shadows by it; swd3e by Field::shadowKind).
 constexpr int kWeatherFromBelow = 0;
 constexpr int kWeatherFromBelowDrifting = 1;
 constexpr int kWeatherFromAbove = 2;
@@ -195,14 +193,22 @@ constexpr int kLabelGlyphWidth = 0xB;  // a role label is centred by this width 
 constexpr int kLabelShift = 0x10;
 constexpr int kLabelStyle = TextFont::BoldShadow;
 
-// DrawShadow `kind`: bit 0 leans the shadow right, bit 3 squashes it to a quarter; kinds from kFlippedShadow flip it.
+// DrawShadow (swd3e): the map's shadow kind (Field::shadowKind): odd kinds lean the shadow right, kinds from
+// kQuarterShadowKind squash it to a quarter (else half), kinds whose (kind - 1) % kShadowKinds is from
+// kFlippedShadowKinds on flip it; 0 casts none.
 constexpr int kShadowLeansRight = 1;
-constexpr int kQuarterShadow = 8;
-constexpr int kShadowKindMask = 7;
-constexpr int kFlippedShadow = 2;
-constexpr int kShadowStep = 4;
-constexpr int kShadowDrop = 8;
-constexpr int kShearShift = 2;  // the shear is a quarter of the height
+constexpr int kQuarterShadowKind = 5;
+constexpr int kHalfShadow = 2;
+constexpr int kQuarterShadow = 4;
+constexpr int kShadowShear = 0x400;
+constexpr int kShadowKinds = 4;
+constexpr int kFlippedShadowKinds = 2;
+// The zoom of a role and its shadow is about its act's anchor this far right and down (0x00413F20, 0x00414BF0).
+constexpr int kZoomAnchorX = 0x10;
+constexpr int kZoomAnchorY = 8;
+constexpr int kZoomUnit = 1 << Painter::FractionBits;  // a scale of 1:1
+constexpr int kDrawnRoleMargin = 0x190;  // swd3e: roles this far beside the 640-pixel screen are still drawn
+constexpr int kAttachedShift = 0x14;     // swd3e: an attached act is drawn this far right
 
 constexpr int kReflectionAlpha = 4;
 constexpr int kReflectionDrop = 8;

@@ -38,6 +38,7 @@ struct Role
         FrontLayer = 1,  // the layers in LayerMask (0: the middle one)
         BackLayer = 2,
         Untalkable = 4,        // swd3e: Space does not talk to it (0x00402AA0)
+        NoDepthScale = 8,      // swd3e: drawn at 1:1 whatever the depth scale of the map (0x00413F20)
         Unk10 = 0x10,          // its cells get bit 23 too (Field::MarkRoleCells)
         NoTalkPointer = 0x20,  // the pointer does not offer to talk to it
         Examine = 0x40,        // the pointer offers to examine it instead
