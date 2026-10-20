@@ -167,13 +167,13 @@ public:
     i32 fadingField = 0;        // swd32 0x0053C030 1: an act started the field fade (the background waits for it)
     u8 evadeStreak = 0;         // swd32 0x0053D028 failed evasion rolls in a row
     u8 evadeJustSucceeded = 0;  // swd32 0x0053D029
-    std::array<std::unique_ptr<Surface>, 2> surfaces;            // 0x005379F4 screen sized off-screen surfaces
+    std::array<std::unique_ptr<Surface>, 2> surfaces;  // 0x005379F4 screen sized off-screen surfaces
     // swd32 0x0052022C 4 rows of 10, taken by TakePendingAction
     std::array<i16, QueueRows * QueueColumns> actionQueue = {};
-    i32 panelFlags = 0;                                          // 0x00576D3C bit 5: the resistance panel
-    i16 pendingActionRow = 0;                                    // swd32 0x0053BF1E
-    i16 pendingAction = 0;                                       // swd32 0x0053BF20
-    i32 paused = 0;                                              // swd32 0x0053C00C messages do not slide while set
+    i32 panelFlags = 0;        // 0x00576D3C bit 5: the resistance panel
+    i16 pendingActionRow = 0;  // swd32 0x0053BF1E
+    i16 pendingAction = 0;     // swd32 0x0053BF20
+    i32 paused = 0;            // swd32 0x0053C00C messages do not slide while set
     // swd32 0x0053D02C the formatted text of the battle messages
     std::array<char, TextBytes> text = {};
 
@@ -192,18 +192,18 @@ public:
     std::array<i32, Party::Roles> partyRoles = {0, 1, 2, 3};  // swd32 0x004A75C8 the party role of each battle role
     // swd32 0x00521398 the four roles are in the party (story flags 0x1E..)
     std::array<u8, Party::Roles> inParty = {};
-    std::array<u8, Guests> guestUsed = {};            // swd32 0x004FDF80
-    u16 guestCount = 0;                               // 0x005771F4
-    u8 defeatedRoles = 0;                             // swd32 0x0053BEFF the party roles entering defeated
-    i32 result = 0;                                   // 0x00576FAC 0x67: the battle is lost before it starts
-    i32 mirrored = 0;                                 // 0x00577304 the sides are swapped
-    u16 timingWindow = DefaultTimingWindow;           // swd32 0x004A762A
-    u16 lightColor = 0;                               // swd32 0x004FF104
-    u16 darkColor = 0;                                // swd32 0x005240BC
-    i32 pointerX = 0;                                 // swd32 0x005028A0
-    i32 pointerY = 0;                                 // swd32 0x005028A4
-    std::array<UnitPlacement, Enemies> enemyPlaces;   // swd32 0x005213A0
-    std::array<UnitPlacement, RoleUnits> rolePlaces;  // swd32 0x0053AF70
+    std::array<u8, Guests> guestUsed = {};               // swd32 0x004FDF80
+    u16 guestCount = 0;                                  // 0x005771F4
+    u8 defeatedRoles = 0;                                // swd32 0x0053BEFF the party roles entering defeated
+    i32 result = 0;                                      // 0x00576FAC 0x67: the battle is lost before it starts
+    i32 mirrored = 0;                                    // 0x00577304 the sides are swapped
+    u16 timingWindow = DefaultTimingWindow;              // swd32 0x004A762A
+    u16 lightColor = 0;                                  // swd32 0x004FF104
+    u16 darkColor = 0;                                   // swd32 0x005240BC
+    i32 pointerX = 0;                                    // swd32 0x005028A0
+    i32 pointerY = 0;                                    // swd32 0x005028A4
+    std::array<UnitPlacement, Enemies> enemyPlaces;      // swd32 0x005213A0
+    std::array<UnitPlacement, RoleUnits> rolePlaces;     // swd32 0x0053AF70
     std::array<i32, 2 * Party::Roles> panelPlaces = {};  // swd32 0x004FF558 the x and y of the four role panels
     std::array<i32, Party::Roles> roleListRows = {};     // swd32 0x004FF578 by role: its roleListRow
     std::array<i32, RoleUnits> hitPointBars = {};        // swd32 0x00520200 and its copy 0x00502914
@@ -361,7 +361,7 @@ public:
     i32 unk53BFB8 = 0;
     i32 damageShown = 0;  // swd32 0x0053BFD8 set when a unit's damage numbers are done (ApplyHits)
     i32 unk53BD9C = 0;
-    i32 pageListRow = 1;                      // swd32 0x004A7558 the row marked in the list of state 2 (1-based)
+    i32 pageListRow = 1;  // swd32 0x004A7558 the row marked in the list of state 2 (1-based)
     // swd32 0x004A755C the row marked in the lists of states 4 and 0x1B (1-based)
     i32 roleListRow = 1;
     i32 listScroll = 0;                       // swd32 0x0053BD04 the scroll of a list
@@ -387,7 +387,7 @@ public:
     i32 hitsAllRoles = 0;  // swd32 0x0053BF68 1: the hit falls on all roles at once
     i32 unk53BD88 = 0;
     i32 unk53BD80 = 0;
-    i32 snapNext = 0;           // swd32 0x0053BFE8 1: the next frame is saved as c:\snap\<n>.bmp
+    i32 snapNext = 0;           // swd32 0x0053BFE8 1: the next frame is saved as a screenshot
     std::u8string battleMusic;  // swd32 0x0053C198 the path of the battle music
     i32 unk53AF30 = 0;
     i32 unk53AF34 = 0;
@@ -500,11 +500,11 @@ public:
     i32 unk53BFB4 = 0;
     i32 unk4A763C = 1;
     i32 unk53C028 = 0;
-    i32 autoTarget = -1;        // swd32 0x004A7564 the enemy the auto battle aims at (1-based), -1: none
+    i32 autoTarget = -1;  // swd32 0x004A7564 the enemy the auto battle aims at (1-based), -1: none
     // swd32 0x004A7644 a role unit that may take the panel in any battle state (SelectRoleUnit)
     u16 anyStateRole = 0xFFFF;
-    i32 menuCommand = 1;        // swd32 0x004A7548 the command chosen in the menu (1-based)
-    i32 listPage = 0;           // 0x00576FEC the page of the list of state 2 (0..2)
+    i32 menuCommand = 1;  // swd32 0x004A7548 the command chosen in the menu (1-based)
+    i32 listPage = 0;     // 0x00576FEC the page of the list of state 2 (0..2)
     // The menu (MenuCancel).
     i32 unk53BFB0 = 0;
     // The rebuild (deviations.md): the last button pressed was the mouse's (a key: false); the menu opens at the
