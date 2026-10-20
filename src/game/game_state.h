@@ -176,8 +176,9 @@ public:
         NoSlide = 0x14,  // steps into walls do not slide (debug key Ctrl+F3)
         Unk15 = 0x15,    // cleared by a new game
         Fireflies = 0x16,
-        Unk17 = 0x17,    // cleared by a new game
-        InParty = 0x1E,  // 0x1E..0x21: the four roles are in the party
+        Unk17 = 0x17,           // cleared by a new game
+        EventUnderfoot = 0x18,  // swd3e: a step runs the event of the cell under the controlled role (0x00402AA0)
+        InParty = 0x1E,         // 0x1E..0x21: the four roles are in the party
         NoLoadingScreen = 0x46,
         PlainScreen = 0x48,   // the spotlight, the bubbles, the ripples and the screen effects are off
         SwappedPages = 0x49,  // the menu shows its pages in the other order

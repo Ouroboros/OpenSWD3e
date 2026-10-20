@@ -429,7 +429,7 @@ void TalkFrame::DrawWindowAdvance(TalkWindow& window, Surface& surface, u16* pix
 
                             if ((speaker.flags & Role::FacesTalker) != 0 && owner.acts.Run(speaker.act) == 0)
                             {
-                                LogActError(u8"Act Err(DlgMessage:Fr)", speaker);
+                                ReportActError(owner.errors, u8"Act Err(DlgMessage:Fr)", speaker);
                             }
                         }
 
@@ -936,13 +936,13 @@ void TalkFrame::DrawAdvance(Scene& scene)
 
     if (owner.acts.Run(talk.EndAct()) == 0)
     {
-        LogActError(u8"Act Err(DlgMessage:EndBtn)", endButton);
+        ReportActError(owner.errors, u8"Act Err(DlgMessage:EndBtn)", endButton);
     }
 
     // The original reports the end button's role here too (0x0043012B..0x0043014B push the same globals).
     if (owner.acts.Run(talk.NextAct()) == 0)
     {
-        LogActError(u8"Act Err(DlgMessage:NextPage)", endButton);
+        ReportActError(owner.errors, u8"Act Err(DlgMessage:NextPage)", endButton);
     }
 
     i32 pitch = 0;

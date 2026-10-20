@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <string_view>
 
 #include "core/types.h"
 
@@ -48,6 +49,7 @@ public:
 private:
     u32 Cell(std::ptrdiff_t index) const;
     void Approach(Role& player, Role& other, u32 index, bool walking);
+    void LeaveMapForBattle(std::u8string_view failure);
 
     Game& game;
 };

@@ -546,7 +546,7 @@ bool Talk::RunStateCommand(EventRun& run)
 
                 if (owner.acts.Run(role.act) == 0)
                 {
-                    LogActError(u8"TakeActData(Talk,TakeActData)", role);
+                    ReportActError(owner.errors, u8"TakeActData(Talk,TakeActData)", role);
                 }
 
                 role.flags |= Role::StepsAct;

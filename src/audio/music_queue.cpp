@@ -35,6 +35,13 @@ int MusicQueue::ClearSlots(int list)
     return 0;
 }
 
+// swd3e.exe 0x0049D3B0 (the same code as BattleUnit::Data, the field at +0x0C): the list playing (FirstList,
+// SecondList or Silent)
+int MusicQueue::Mode() const
+{
+    return this->mode;
+}
+
 // swd3e.exe 0x0049D1A0: once the current piece has stopped, applies a pending list switch and starts the next entry
 // of the current list; every stream start is preceded by MessageBeep(0)
 int MusicQueue::Update()

@@ -304,7 +304,7 @@ void Game::InitRole(Role& role)
 
     if (this->acts.Run(role.act) == 0)
     {
-        LogActError(u8"Act Err(Misc:newRoleInit)", role);
+        ReportActError(this->errors, u8"Act Err(Misc:newRoleInit)", role);
     }
 
     role.flags &= ~(Role::Reflects | Role::CellShades);
@@ -1317,7 +1317,7 @@ void Game::ReleaseRole(int index)
 
     if (this->acts.Run(role.act) == 0)
     {
-        LogActError(u8"Act Err(Talk:Talkend)", role);
+        ReportActError(this->errors, u8"Act Err(Talk:Talkend)", role);
     }
 
     role.act.savedAction = ActState::NotSaved;

@@ -37,6 +37,7 @@ struct Role
         LayerMask = 3,   // the drawing layer
         FrontLayer = 1,  // the layers in LayerMask (0: the middle one)
         BackLayer = 2,
+        Untalkable = 4,        // swd3e: Space does not talk to it (0x00402AA0)
         Unk10 = 0x10,          // its cells get bit 23 too (Field::MarkRoleCells)
         NoTalkPointer = 0x20,  // the pointer does not offer to talk to it
         Examine = 0x40,        // the pointer offers to examine it instead

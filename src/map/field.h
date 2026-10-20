@@ -25,11 +25,11 @@ struct MapRegion
     static constexpr u32 ClickFlagMask = 0xFFFF;  // in `flag`: the story flag that lets it be clicked
     static constexpr u32 BlockFlagShift = 16;     // in `flag`: above it, the story flag that blocks it
 
-    std::unique_ptr<MapRegion> next;   // +0x00
-    i32 id = 0;                        // +0x04
-    i32 event = 0;                     // +0x08 bit 15 aside: the event run when the region is clicked
-    i32 flag = 0;                      // +0x0C ClickFlagMask and BlockFlagShift
-    i32 unk10 = 0;                     // +0x10
+    std::unique_ptr<MapRegion> next;  // +0x00
+    i32 id = 0;                       // +0x04
+    i32 event = 0;                    // +0x08 bit 15 aside: the event run when the region is clicked
+    i32 flag = 0;                     // +0x0C ClickFlagMask and BlockFlagShift
+    i32 blockFlag = 0;  // +0x10 swd3e: the story flag that stops the controlled role entering (0x00402AA0)
     std::array<char, 0x20> name = {};  // +0x14
 };
 

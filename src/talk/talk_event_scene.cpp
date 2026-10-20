@@ -649,7 +649,7 @@ bool Talk::RunSceneCommand(EventRun& run)
 
                 if (owner.acts.Run(role->act) == 0)
                 {
-                    LogActError(u8"Act Err(Talk:SeekAct1)", *role);
+                    ReportActError(owner.errors, u8"Act Err(Talk:SeekAct1)", *role);
                 }
 
                 for (int step = 0; step < run.valueB; ++step)
@@ -658,7 +658,7 @@ bool Talk::RunSceneCommand(EventRun& run)
 
                     if (owner.acts.Run(role->act) == 0)
                     {
-                        LogActError(u8"Act Err(Talk:SeekAct2)", *role);
+                        ReportActError(owner.errors, u8"Act Err(Talk:SeekAct2)", *role);
                     }
 
                     role->act.view = 0;
@@ -957,14 +957,14 @@ bool Talk::RunSceneCommand(EventRun& run)
 
             if (!found)
             {
-                LogActError(u8"Act Err(Talk:TurnFace[1])", turning);
+                ReportActError(owner.errors, u8"Act Err(Talk:TurnFace[1])", turning);
             }
 
             u32 other = 0;
 
             if (!state.FindRoleOrPlayer(otherId, other))
             {
-                LogActError(u8"Act Err(Talk:TurnFace[2])", turning);
+                ReportActError(owner.errors, u8"Act Err(Talk:TurnFace[2])", turning);
             }
 
             const Role& faced = other < GameState::Roles ? state.roles[other] : blank;
@@ -994,7 +994,7 @@ bool Talk::RunSceneCommand(EventRun& run)
 
                 if (owner.acts.Run(role->act) == 0)
                 {
-                    LogActError(u8"Act Err(Talk:TurnFace[3])", *role);
+                    ReportActError(owner.errors, u8"Act Err(Talk:TurnFace[3])", *role);
                 }
 
                 owner.rolePath.HoldRole(static_cast<int>(run.found));
@@ -1031,7 +1031,7 @@ bool Talk::RunSceneCommand(EventRun& run)
 
                 if (owner.acts.Run(role.act) == 0)
                 {
-                    LogActError(u8"Act Err(Talk:SetRoleSpd)", role);
+                    ReportActError(owner.errors, u8"Act Err(Talk:SetRoleSpd)", role);
                 }
             }
             else

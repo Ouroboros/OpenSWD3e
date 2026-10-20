@@ -595,7 +595,7 @@ bool Field::LoadMap(u32 map, u32& systemFlags)
         node->id = Word(block, at);
         node->event = static_cast<i32>(Dword(block, at + kRegionEventAt));
         node->flag = static_cast<i32>(Dword(block, at + kRegionFlagAt));
-        node->unk10 = static_cast<i32>(Dword(block, at + kRegionUnk10At));
+        node->blockFlag = static_cast<i32>(Dword(block, at + kRegionUnk10At));
         at += kRegionNameAt;
         const std::size_t length = StringLength(block, at);
         std::copy_n(

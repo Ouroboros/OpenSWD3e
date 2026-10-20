@@ -38,6 +38,7 @@ public:
 
     int ClearSlots(int list);
     int Update();
+    int Mode() const;
 
 private:
     StreamPlayer& streams;

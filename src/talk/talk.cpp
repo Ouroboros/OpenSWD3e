@@ -237,7 +237,7 @@ void Talk::HandlePointer()
 
             if (owner.acts.Run(player.act) == 0)
             {
-                LogActError(u8"Act Err(Talk:MouseActiveStory)", player);
+                ReportActError(owner.errors, u8"Act Err(Talk:MouseActiveStory)", player);
             }
 
             owner.scene.playerHold = Scene::HoldLocked;
@@ -316,7 +316,7 @@ void Talk::HandlePointer()
 
         if (owner.acts.Run(target.act) == 0)
         {
-            LogActError(u8"Act Err(Talk:RoleTurn)", target);
+            ReportActError(owner.errors, u8"Act Err(Talk:RoleTurn)", target);
         }
     }
 
@@ -326,7 +326,7 @@ void Talk::HandlePointer()
 
     if (owner.acts.Run(player.act) == 0)
     {
-        LogActError(u8"Act Err(Talk:MRoleTFace)", player);
+        ReportActError(owner.errors, u8"Act Err(Talk:MRoleTFace)", player);
     }
 
     Role& leader = state.leader;

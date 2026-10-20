@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/words.h"
 #include "game/cheat_dialog.h"
 #include "game/game.h"
@@ -26,10 +27,10 @@ constexpr i32 kRepeatMask = 7;       // a held arrow moves the choice every 8 fr
 constexpr int kDebugKeyPause = 500;  // milliseconds slept after a debug key
 constexpr int kSkipKeyPause = 350;
 constexpr int kToggleKeyPause = 300;
-constexpr int kGoldKeyPause = 250;
+constexpr int kAscentKeyPause = 250;
 constexpr int kToggleStates = 2;
 constexpr i32 kMaxMapSpeed = 0x40;
-constexpr i32 kDebugGold = 1000;
+constexpr int kForceEncounter = 1;     // RollEncounter: a battle whatever the steps
 constexpr u16 kFirstDebugItem = 0x65;  // F6 gives kDebugItemCount of the objects kFirstDebugItem..kDebugItemsEnd-1
 constexpr u16 kDebugItemsEnd = 0x4B0;
 constexpr u16 kDebugItemCount = 0xA;
@@ -46,7 +47,6 @@ constexpr i32 kRegionLeaderSteps = 0x10;  // a region event is placed this many 
 constexpr i32 kDoublePress = 2;           // ButtonState::press of a second click
 constexpr int kRunSpeedFactor = 2;
 constexpr int kSkipSpeed = 0x10;
-constexpr i32 kIdlePoseFrames = 0x80;
 
 }  // namespace
 
@@ -71,13 +71,15 @@ void RoleControl::Approach(Role& player, Role& other, u32 index, bool walking)
         {
             if (walking)
             {
-                LogActError(u8"Act Err(KeyCole:Collision1)", other);  // 0x00403CEB
+                ReportActError(game.errors, u8"Act Err(KeyCole:Collision1)", other);  // 0x00403CEB
             }
             else
             {
-                // 0x004037B7, the format 0x0049F6B0
-                DebugLog(
-                    u8"Act Err(KeyCole:Talk1) 設定錯誤\nGUID%d ,act[%d] qq[%d] dir[%d]",
+                // the text 0x004AF288
+                ErrorBox(
+                    game.errors,
+                    u8"Act Err(KeyCole:Talk1)",
+                    u8"設定錯誤\nGUID%d ,act[%d] qq[%d] dir[%d]",
                     other.id,
                     other.act.id,
                     other.act.action,
@@ -94,7 +96,7 @@ void RoleControl::Approach(Role& player, Role& other, u32 index, bool walking)
     if (game.acts.Run(walking ? other.act : player.act) == 0)
     {
         // 0x00403D38, 0x0040380C
-        LogActError(walking ? u8"Act Err(KeyCole:Collision2)" : u8"Act Err(KeyCole:Talk2)", player);
+        ReportActError(game.errors, walking ? u8"Act Err(KeyCole:Collision2)" : u8"Act Err(KeyCole:Talk2)", player);
     }
 
     Role& leader = game.state.leader;
@@ -115,12 +117,15 @@ void RoleControl::Approach(Role& player, Role& other, u32 index, bool walking)
 }
 
 // swd3e.exe 0x00402AA0: the keys of the map. The debug keys (story flag 0x52, turned on in debug mode with Ctrl,
-// right Shift, Home and End): F12 or Ctrl+S / Ctrl+L the save and load screens, Ctrl+F9 skipping texts, Ctrl+Q
-// quitting, Ctrl+F1..F3 the debug lines, cells and flag 0x14, Tab with keypad + / - the map's speed, F4 the cheat
-// dialog, F7 1000 gold, F6 ten of every item. Key slot 16 toggles running. Then, when the controlled role stands
-// still and no menu is open: Space and Enter move the talk windows on (or close the choices); Space talks to the
-// role in front, Enter opens the menu; the arrows move the role (or the choice): a step slides along walls, runs into
-// map regions and roles with events, scrolls the camera or moves the role alone, and may meet enemies.
+// right Shift, Home and End): F12 or Ctrl+S / Ctrl+L the save and load screens, Ctrl+F a battle at once (with
+// encounters on), Ctrl+F9 skipping texts, Ctrl+Q quitting, Ctrl+F1..F3 the debug lines, cells and flag 0x14, Tab with
+// keypad + / - the map's speed, F4 the cheat dialog, F7 the ascent game, F6 ten of every item. Key slot 16 toggles
+// running. Then, unless system flag 0x40 is set, when the controlled role stands still and no menu is open: Space and
+// Enter move the talk windows on (or close the choices); Space talks to the role in front (unless it is
+// Role::Untalkable), Enter opens the menu; the arrows move the role (or the choice): a step slides along walls, runs
+// into map regions and roles with events (with flag 0x18 the event of the cell under the role), scrolls the camera or
+// moves the role alone, and may meet enemies. Standing still keeps action 0: past 0x80 frames swd3e sets 0 again
+// where swd32 set the idle pose, so the idle pose never shows.
 void RoleControl::ControlPlayer()
 {
     Game& owner = this->game;
@@ -158,6 +163,24 @@ void RoleControl::ControlPlayer()
 
         if (input.IsKeyDown(Input::LeftControl) || input.IsKeyDown(Input::RightControl))
         {
+            if (input.IsKeyDown(Input::F) && state.GameFlag(GameState::Encounters))
+            {
+                owner.battleRequest = static_cast<i32>(owner.RollEncounter(view.encounterSteps, kForceEncounter));
+
+                if (owner.battleRequest != 0)
+                {
+                    owner.audio.Effects().StopAll();
+                    owner.acts.CloseAll();
+                    owner.archive.CloseAll();
+                    owner.StartBattle(static_cast<u16>(owner.battleRequest));
+                    owner.inBattle = 1;
+                    SleepMilliseconds(kToggleKeyPause);
+                    this->LeaveMapForBattle(u8"Fight by keyTrig ,CloseView fail ,%s");  // 0x004AF2FC
+                }
+
+                return;
+            }
+
             if (input.IsKeyDown(Input::F9))
             {
                 owner.talk.skipAll = (owner.talk.skipAll + 1) % kToggleStates;
@@ -255,8 +278,23 @@ void RoleControl::ControlPlayer()
 
         if (input.IsKeyDown(Input::F7))
         {
-            owner.party.variables[Party::Gold] += kDebugGold;
-            SleepMilliseconds(kGoldKeyPause);
+            owner.systemFlags |= Game::AscentRunning;
+            SleepMilliseconds(kAscentKeyPause);
+            owner.ascentGame.Start(
+                AscentGame::SceneUnk00,
+                AscentGame::SceneAct,
+                AscentGame::BackgroundAction,
+                AscentGame::SceneAct,
+                AscentGame::PlayerAction,
+                AscentGame::SceneAct,
+                AscentGame::LeaderAction,
+                AscentGame::FullStamina
+            );
+
+            for (u32 kind = 0; kind < AscentGame::ObstacleActions.size(); ++kind)
+            {
+                owner.ascentGame.SetObstacleAct(kind, AscentGame::SceneAct, AscentGame::ObstacleActions[kind]);
+            }
         }
 
         if (input.IsKeyDown(Input::F6))
@@ -305,7 +343,8 @@ void RoleControl::ControlPlayer()
         }
     }
 
-    if (controls.mouseSuppressed != 0 || !still || owner.menuState != Game::NoMenu)
+    if ((owner.systemFlags & Game::UnkSystem40) != 0 || controls.mouseSuppressed != 0 || !still ||
+        owner.menuState != Game::NoMenu)
     {
         return;
     }
@@ -354,7 +393,8 @@ void RoleControl::ControlPlayer()
         const u32 found =
             this->FindRoleAhead(state.playerRole, RoleControl::AheadX[facing], RoleControl::AheadY[facing]);
 
-        if (found < GameState::Roles && state.roles[found].talkState == Role::NoTalk)
+        if (found < GameState::Roles && (state.roles[found].flags & Role::Untalkable) == 0 &&
+            state.roles[found].talkState == Role::NoTalk)
         {
             this->Approach(player, state.roles[found], found, false);
             owner.talk.advance = 0;
@@ -506,6 +546,13 @@ void RoleControl::ControlPlayer()
         event = state.roles[target].event;
     }
 
+    if (state.GameFlag(GameState::EventUnderfoot))
+    {
+        event = player.cell != nullptr ? *player.cell & MapHeader::RegionMask : 0;
+        target = kNone;
+        found = kNone;
+    }
+
     if (event != 0)
     {
         const MapRegion* region = nullptr;
@@ -518,7 +565,7 @@ void RoleControl::ControlPlayer()
             {
                 DebugLog(u8"錯誤的劇情點(%d)", event);
             }
-            else if (state.GameFlag(static_cast<int>(HighWord(static_cast<u32>(region->flag)))))
+            else if (state.GameFlag(region->blockFlag))
             {
                 stepY = 0;
                 stepX = 0;
@@ -648,8 +695,8 @@ void RoleControl::ControlPlayer()
 
                 if (owner.battleRequest != 0)
                 {
-                    owner.audio.StopMusic();
-                    owner.audio.StopAllSounds();
+                    owner.musicBeforeBattle = owner.audio.Queue().Mode();
+                    owner.audio.Effects().StopAll();
                     owner.acts.CloseAll();
                     owner.archive.CloseAll();
                     owner.StartBattle(static_cast<u16>(owner.battleRequest));
@@ -658,22 +705,7 @@ void RoleControl::ControlPlayer()
                     owner.scrollStepX = 0;
                     owner.walkStepY = 0;
                     owner.walkStepX = 0;
-
-                    if (owner.mapCache.unitFile.UnmapView(owner.mapCache.view))
-                    {
-                        owner.mapCache.view = nullptr;
-                    }
-                    else
-                    {
-                        ErrorLog(u8"Fight by map ,CloseView fail ,%s", owner.mapCache.unitFile.ErrorText());
-                    }
-
-                    owner.mapCache.unitFile.CloseMapping();
-
-                    for (int index = 1; index < state.roleCount && index < GameState::Roles; ++index)
-                    {
-                        state.roles[static_cast<std::size_t>(index)].flags &= ~Role::SoundOnce;
-                    }
+                    this->LeaveMapForBattle(u8"Fight by map ,CloseView fail ,%s");  // 0x004AF138
                 }
             }
         }
@@ -688,11 +720,6 @@ void RoleControl::ControlPlayer()
         }
 
         player.act.action = 0;
-
-        if (this->idleFrames > kIdlePoseFrames)
-        {
-            player.act.action = Role::IdleAction;
-        }
 
         if ((++owner.counterWait > kCounterDelay || (owner.counterAlpha & (kCounterOpaque - 1)) != 0) &&
             ++owner.counterAlpha > kCounterOpaque)
@@ -709,6 +736,30 @@ void RoleControl::ControlPlayer()
     }
 
     ++this->debugKeyFrames;
+}
+
+// Part of 0x00402AA0 (both battles it starts): the map unit's view unmapped (`failure` logged with the error when
+// that fails) and its mapping closed, and every role but the first may play its once-only sound again.
+void RoleControl::LeaveMapForBattle(std::u8string_view failure)
+{
+    Game& owner = this->game;
+    GameState& state = owner.state;
+
+    if (owner.mapCache.unitFile.UnmapView(owner.mapCache.view))
+    {
+        owner.mapCache.view = nullptr;
+    }
+    else
+    {
+        ErrorLog(failure, owner.mapCache.unitFile.ErrorText());
+    }
+
+    owner.mapCache.unitFile.CloseMapping();
+
+    for (int index = 1; index < state.roleCount && index < GameState::Roles; ++index)
+    {
+        state.roles[static_cast<std::size_t>(index)].flags &= ~Role::SoundOnce;
+    }
 }
 
 }  // namespace swd3e

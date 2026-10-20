@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "game/game.h"
 #include "platform/message_box.h"
@@ -21,10 +22,17 @@ constexpr u8 kNoCommandByte = 0xFF;  // both bytes of EventCommand::None
 
 }  // namespace
 
-void LogActError(std::u8string_view where, const Role& role)
+void ReportActError(ErrorReporter& errors, std::u8string_view where, const Role& role)
 {
-    const std::u8string format = std::u8string(where) + u8" 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]";
-    DebugLog(format, role.id, role.act.id, role.act.action, role.act.direction);
+    ErrorBox(
+        errors,
+        where,
+        u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+        role.id,
+        role.act.id,
+        role.act.action,
+        role.act.direction
+    );
 }
 
 // swd3e.exe 0x0042BAF0: the event script of `context` (the leader) from where it stopped. On its first frame the
@@ -90,7 +98,7 @@ void Talk::RunEvent(Role& context)
 
         if (owner.acts.Run(player.act) == 0)
         {
-            LogActError(u8"Act Err(Talk:LoadTalk)", player);
+            ReportActError(owner.errors, u8"Act Err(Talk:LoadTalk)", player);
         }
 
         owner.audioDevice.Serve();
@@ -376,7 +384,7 @@ void Talk::EndEvent(EventRun& run)
 
             if (owner.acts.Run(role.act) == 0)
             {
-                LogActError(u8"Act Err(Talk:Talkend)", role);
+                ReportActError(owner.errors, u8"Act Err(Talk:Talkend)", role);
             }
 
             if ((role.flags & Role::InEvent) != 0)
@@ -847,7 +855,7 @@ bool Talk::RunRoleCommand(EventRun& run)
 
                     if (!this->CommandsRole(next, run.found) && owner.acts.Run(role.act) == 0)
                     {
-                        LogActError(u8"Act Err(Talk:ChangQQ)", role);
+                        ReportActError(owner.errors, u8"Act Err(Talk:ChangQQ)", role);
                     }
                 }
                 else
@@ -857,7 +865,7 @@ bool Talk::RunRoleCommand(EventRun& run)
 
                     if (!this->CommandsRole(next, run.found) && owner.acts.Run(role.act) == 0)
                     {
-                        LogActError(u8"Act Err(Talk:ChangDir)", role);
+                        ReportActError(owner.errors, u8"Act Err(Talk:ChangDir)", role);
                     }
 
                     role.flags |= Role::StepsAct;
@@ -1460,7 +1468,7 @@ bool Talk::RunRoleCommand(EventRun& run)
 
                 if (owner.acts.Run(player.act) == 0)
                 {
-                    LogActError(u8"Act Err(Talk:Rmlock)", player);
+                    ReportActError(owner.errors, u8"Act Err(Talk:Rmlock)", player);
                 }
             }
             else
@@ -1485,7 +1493,7 @@ bool Talk::RunRoleCommand(EventRun& run)
 
                 if (owner.acts.Run(role->act) == 0)
                 {
-                    LogActError(u8"Act Err(Talk:ChangSpd)", *role);
+                    ReportActError(owner.errors, u8"Act Err(Talk:ChangSpd)", *role);
                 }
             }
 
@@ -1514,7 +1522,7 @@ bool Talk::RunRoleCommand(EventRun& run)
 
                 if (!this->CommandsRole(next, run.found) && owner.acts.Run(role.act) == 0)
                 {
-                    LogActError(u8"Act Err(Talk:ChangAct)", role);
+                    ReportActError(owner.errors, u8"Act Err(Talk:ChangAct)", role);
                 }
 
                 role.flags |= Role::StepsAct;
@@ -1583,7 +1591,7 @@ bool Talk::RunRoleCommand(EventRun& run)
 
                 if (owner.acts.Run(act) == 0)
                 {
-                    LogActError(u8"Act Err(Talk:RestoreOpSet)", *role);
+                    ReportActError(owner.errors, u8"Act Err(Talk:RestoreOpSet)", *role);
                 }
             }
 

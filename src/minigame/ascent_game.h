@@ -68,6 +68,15 @@ class AscentGame
 {
 public:
     static constexpr int CourseHeight = 0x320;  // 0x00579A30
+    // How talk command 210 and the debug key F7 start it: all its pictures from act 0x2332 (actions 0 the background,
+    // 1 the player, 2 the leader, 3..6 the obstacles, two kinds each), full stamina.
+    static constexpr i32 SceneAct = 0x2332;
+    static constexpr i32 SceneUnk00 = 0x64;
+    static constexpr i32 BackgroundAction = 0;
+    static constexpr i32 PlayerAction = 1;
+    static constexpr i32 LeaderAction = 2;
+    static constexpr i32 FullStamina = 0x64;
+    static constexpr std::array<i32, 8> ObstacleActions = {3, 4, 5, 6, 3, 4, 5, 6};
 
     explicit AscentGame(Game& game);
     ~AscentGame();

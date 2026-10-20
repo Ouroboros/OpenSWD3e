@@ -132,6 +132,9 @@ public:
         MovieOpened = 2,      // a map movie plays (talk command MapMovie)
         QuitRequested = 4,    // the game ends after the frame
         VideoPlaying = 0x20,  // a full-screen video plays
+        // swd3e: set by a talk command (0x00431C31), read by 0x004172A0; the controlled role is not driven (0x00402AA0)
+        UnkSystem40 = 0x40,
+        AscentRunning = 0x80,  // swd3e: the ascent game runs instead of the frame (0x0040A7B0)
     };
 
     // `storyState`: 0 while the story runs, SaveSlotsState while the save slots are shown.
@@ -607,11 +610,12 @@ private:
     u8 upArrowPress = 0;     // 0x004C2651 and the up arrow up
     i32 slotPrompt = 0;      // 0x004C27A4 browsing, the overwrite answer or the slot chosen
     i32 slotMouseBlock = 0;  // 0x004C1610 frames a key or click keeps the pointer from choosing a slot
-    u32 systemFlags = 0;     // swd32 0x004B7A9C SystemFlag bits
+    u32 systemFlags = 0;     // 0x004D1404 SystemFlag bits
     i32 counterAlpha = 0;    // swd32 0x004C9A24
     i32 unk4A9484 = 0;
     static constexpr u32 ScriptedBattle = 0x80000000;  // in `battleRequest`: started by a talk command
-    i32 battleRequest = 0;       // swd32 0x004A94AC a battle to start (its number in the low word)
+    i32 battleRequest = 0;                             // 0x004C2B84 a battle to start (its number in the low word)
+    i32 musicBeforeBattle = 0;   // 0x004C15D0 the music queue's mode when a map battle starts (0x0040A7B0 restores it)
     i32 inBattle = 0;            // swd32 0x004CAEB4 a battle from the map runs
     std::vector<u16> shopGoods;  // 0x004D1290 the items of talk command 0x85 for the shop, ended by 0
     i32 currentMap = 0;          // 0x004C3190 the number of the map shown
