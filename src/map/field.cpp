@@ -8,6 +8,7 @@
 #include "config/config.h"
 #include "core/byte_reader.h"
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "core/words.h"
 #include "game/game.h"
@@ -25,101 +26,111 @@ namespace
 {
 
 constexpr std::string_view kLmf = "HUGE.lmf";
-constexpr u32 kHeaderRead = 0x2000;
-constexpr u32 kSectionRead = 0x10000;
-constexpr u32 kWorkBytes = 0x20000;
 
 // HUGE.lmf: its first dword is the offset of the directory at its end, one kDirectoryEntryBytes entry per map with the
 // start of the map and its number. Offsets inside a map are from its start.
 constexpr std::size_t kDirectoryEntryBytes = 0x10;
+constexpr int kEntryShift = 4;  // the entries in the directory's bytes less one
 constexpr std::size_t kEntryStartAt = 0;
 constexpr std::size_t kEntryMapAt = 8;
 
-// The map header.
-constexpr std::size_t kVersionAt = 0;
-constexpr std::size_t kDataAt = 4;
-constexpr std::size_t kRolesAt = 0x14;
-constexpr std::size_t kOverlaysAt = 0x18;
-constexpr std::size_t kExtrasAt = 0x1C;
-constexpr std::size_t kUnitSizeAt = 0x20;
-constexpr std::size_t kWidthAt = 0x84;
-constexpr std::size_t kHeightAt = 0x86;
-constexpr std::size_t kBitsAt = 0x88;
-constexpr std::size_t kTilesLowAt = 0x8A;  // the tile count (MapHeader::unk0C); a high word is refused
-constexpr std::size_t kLayersAt = 0x8C;
-constexpr std::size_t kTilesHighAt = 0x8E;
-constexpr std::size_t kNameAt = 0x96;  // followed by the tile words, each in a dword, and the packed blocks
-constexpr int kUnknownVersion = 0;     // Field::Version1 and Version2 maps
-constexpr int kFirstVersion = 1;       // its pixels are in the map, the blocks follow a skipped part
-constexpr int kSecondVersion = 2;
+// The MSF3 map (swd3e): the magic, then a header of kHeaderRead bytes (offsets below are into it) whose sections
+// are each an offset from the start of the map and a size; the tiles lie at kTilesAt from the start of the map.
+constexpr u32 kHeaderRead = 0x400;
+constexpr std::size_t kBlocksAt = 0x08;
+constexpr std::size_t kBlocksBytesAt = 0x0C;
+constexpr std::size_t kRegionsAt = 0x10;
+constexpr std::size_t kRegionsBytesAt = 0x14;
+constexpr std::size_t kObjectsAt = 0x18;
+constexpr std::size_t kObjectsBytesAt = 0x1C;
+constexpr std::size_t kRolesAt = 0x20;
+constexpr std::size_t kRolesBytesAt = 0x24;
+constexpr std::size_t kOverlaysAt = 0x28;
+constexpr std::size_t kOverlaysBytesAt = 0x2C;
+constexpr std::size_t kUnitSizeAt = 0x38;
+constexpr std::size_t kScalePictureAt = 0x40;
+constexpr std::size_t kScalePictureBytesAt = 0x44;
+constexpr std::size_t kScalesAt = 0x48;
+constexpr std::size_t kScalesBytesAt = 0x4C;
+constexpr std::size_t kScalesUnpackedAt = 0x50;
+constexpr std::size_t kWidthAt = 0x100;
+constexpr std::size_t kHeightAt = 0x102;
+constexpr std::size_t kBitsAt = 0x104;
+constexpr std::size_t kUnk0CAt = 0x106;
+constexpr std::size_t kLayersAt = 0x108;
+constexpr std::size_t kShadowAt = 0x10C;
+constexpr u32 kTilesAt = 0x118;
 
-// A unit (a picture of the map): its size in tiles, its format, the unpacked and packed sizes, then the data.
-constexpr std::size_t kUnitWidthAt = 2;
-constexpr std::size_t kUnitHeightAt = 4;
-constexpr std::size_t kUnitFormatAt = 6;
-constexpr std::size_t kUnitUnpackedAt = 8;
-constexpr std::size_t kUnitPackedAt = 0xC;
-constexpr std::size_t kUnitHeaderBytes = 0x10;
-constexpr u16 kRleUnit = 0x10;  // a 16-bit RLE picture; other units are 8-bit tiles
+// A region (0x30 bytes after the count): its id, event, flag and block flag, then its name.
+constexpr std::size_t kRegionBytes = 0x30;
+constexpr std::size_t kRegionEventAt = 4;
+constexpr std::size_t kRegionFlagAt = 8;
+constexpr std::size_t kRegionBlockFlagAt = 0xC;
+constexpr std::size_t kRegionNameAt = 0x10;
 
-// A region: its id, event, flag, a dword, then its name.
-constexpr std::size_t kRegionEventAt = 2;
-constexpr std::size_t kRegionFlagAt = 6;
-constexpr std::size_t kRegionUnk10At = 0xA;
-constexpr std::size_t kRegionNameAt = 0xE;
-
-// A role of the role section: its picture (1-based), its tile x, the tile row of its top, its tile y, the placement
-// word, then its name.
+// The object and role sections: a word count, then from kRecordsAt their records.
+constexpr std::size_t kRecordsAt = 8;
+// An object: its data's offset, packed and unpacked sizes, its number and its flags.
+constexpr std::size_t kObjectBytes = 0x10;
+constexpr std::size_t kObjectPackedAt = 4;
+constexpr std::size_t kObjectUnpackedAt = 8;
+constexpr std::size_t kObjectNumberAt = 0xC;
+constexpr std::size_t kObjectFlagsAt = 0xE;
+constexpr u32 kAnimatedBytes = 0x10;  // read of an animated object's data: its act and action first
+// A role: its object, its x, the y of its top, a word, its y and the placement word.
+constexpr std::size_t kRoleBytes = 0x10;
 constexpr std::size_t kRoleXAt = 2;
 constexpr std::size_t kRoleTopAt = 4;
 constexpr std::size_t kRoleYAt = 8;
 constexpr std::size_t kRolePlacementAt = 0xA;
-constexpr std::size_t kRoleNameAt = 0xC;
+constexpr int kRoleMarginX = 0x28;  // a role further right than this many tiles past the map is not placed
+constexpr int kRoleMarginY = 0x1E;  // or further down
 
-// An extra role: its act, its action, its tile x and y, the placement word, then its name.
-constexpr std::size_t kExtraActionAt = 2;
-constexpr std::size_t kExtraXAt = 4;
-constexpr std::size_t kExtraYAt = 6;
-constexpr std::size_t kExtraPlacementAt = 8;
-constexpr std::size_t kExtraNameAt = 0xA;
+// The placement word of a role: its offsets in its low byte (bits 4..7 across, bits 0..3 down), its layer in bits
+// 8..9 by kPlacementLayers.
+constexpr int kPlacementLayerShift = 8;
+constexpr u16 kPlacementLowByte = 0xFF;
+constexpr int kPlacementOffsetXShift = 4;
+constexpr u16 kPlacementOffsetMask = 0xF;
+constexpr std::array<u32, 3> kPlacementLayers = {Role::BackLayer, 0, Role::FrontLayer};
+// Placement layer 3 reads the dword after the table on the stack: the return address of 0x0042A7D0 in its caller.
+constexpr u32 kPlacementLayerPast = 0x0040CB13;
 
-// The placement word of a role: the layer (Role::LayerMask), bits 8..11 and bits 12..15.
-constexpr int kPlacementOffsetYShift = 8;
-constexpr u16 kPlacementOffsetYMask = 0xF;
-constexpr int kPlacementOffsetXShift = 0xC;
+// An overlay (0x18 bytes): its data's offset, packed and unpacked sizes, its kinds word (bits 0..2 the kind, bits
+// 3..6 of its low byte the parallax across, bits 7..10 down), then its rectangle in tiles (bytes).
+constexpr std::size_t kOverlayBytes = 0x18;
+constexpr std::size_t kOverlayPackedAt = 4;
+constexpr std::size_t kOverlayUnpackedAt = 8;
+constexpr std::size_t kOverlayKindsAt = 0xC;
+constexpr std::size_t kOverlayLeftAt = 0xE;
+constexpr std::size_t kOverlayTopAt = 0xF;
+constexpr std::size_t kOverlayRightAt = 0x10;
+constexpr std::size_t kOverlayBottomAt = 0x11;
+constexpr u16 kOverlayKindMask = 7;
+constexpr int kParallaxXShift = 3;
+constexpr int kParallaxYShift = 7;
+constexpr u16 kParallaxMask = 0xF;
 
-// An overlay: its size in tiles, its rectangle in tiles, its kind and parallax, the unpacked and packed sizes, then
-// the data.
-constexpr std::size_t kOverlayWidthAt = 0;
-constexpr std::size_t kOverlayHeightAt = 2;
-constexpr std::size_t kOverlayLeftAt = 6;
-constexpr std::size_t kOverlayTopAt = 8;
-constexpr std::size_t kOverlayRightAt = 0xA;
-constexpr std::size_t kOverlayBottomAt = 0xC;
-constexpr std::size_t kOverlayKindAt = 0xE;
-constexpr std::size_t kOverlayParallaxXAt = 0xF;
-constexpr std::size_t kOverlayParallaxYAt = 0x10;
-constexpr std::size_t kOverlayUnpackedAt = 0x12;
-constexpr std::size_t kOverlayPackedAt = 0x16;
-constexpr std::size_t kOverlayDataAt = 0x1A;
+// The depth scale's picture block: a dword, the unpacked size, then the packed data.
+constexpr std::size_t kScaleUnpackedAt = 4;
+constexpr std::size_t kScaleDataAt = 8;
 
-constexpr std::size_t kCountBytes = sizeof(u32);  // a section starts with its count, then a dword per record
+// An object picture: a palette before the RLE header when it is not 16-bit RLE.
+constexpr std::size_t kPaletteBytes = 0x200;
+
+constexpr std::size_t kCountBytes = sizeof(u32);  // a section starts with its count
 constexpr std::size_t kTileEntryBytes = sizeof(u32);
-
-// The loading progress after each part (percent).
-constexpr int kProgressHeader = 15;
-constexpr int kProgressPixels = 60;
-constexpr int kProgressRegions = 65;
-constexpr int kProgressUnits = 70;
-constexpr int kProgressRoles = 75;
-constexpr int kProgressOverlays = 80;
-constexpr int kProgressDone = 85;
 
 constexpr i32 kTwoTiles = 2;  // a role this wide or high has its second cell set directly
 
 u16 Word(std::span<const u8> bytes, std::size_t at)
 {
     return ByteReader::Word16At(bytes, at);
+}
+
+u8 Byte(std::span<const u8> bytes, std::size_t at)
+{
+    return at < bytes.size() ? bytes[at] : u8{0};
 }
 
 u32 Dword(std::span<const u8> bytes, std::size_t at)
@@ -150,11 +161,12 @@ std::vector<u8> ReadBlock(File& file, u32 bytes)
 
 }  // namespace
 
-Field::Field(GameState& state, MapCache& cache, const Config& config, const RleCodec& codec)
+Field::Field(GameState& state, MapCache& cache, const Config& config, const RleCodec& codec, ErrorReporter& errors)
     : state(state),
       cache(cache),
       config(config),
-      codec(codec)
+      codec(codec),
+      errors(errors)
 {
 }
 
@@ -174,6 +186,12 @@ void Field::ResetRows()
 // y, then by id)
 void Field::InsertRole(Role& role, int layer)
 {
+    // The original indexes past its three layers for a layer of 3 (a placement of 3, Field::LoadMap).
+    if (layer < 0 || layer >= Field::Layers)
+    {
+        return;
+    }
+
     const auto y = static_cast<u32>(role.y);
     const auto row = static_cast<std::size_t>(static_cast<i32>(y) / MapHeader::TileSize + Field::RowMargin);
     std::vector<Role*>& lists = this->rows[static_cast<std::size_t>(layer)];
@@ -342,38 +360,35 @@ Role* Field::UnlinkRole(Role& role, int layer)
     return nullptr;
 }
 
-// swd32.exe 0x0040AD10 (unmatched in swd3e): unit `unit` of the map from HUGE.lmf unpacked into `picture` (16-bit RLE
-// pictures converted to the display, 8-bit tiles to 16 bits); false past the last unit
-bool Field::LoadUnitPicture(u32 unit, Picture& picture)
+// swd3e.exe 0x0040B060: the picture of map object `object` unpacked from HUGE.lmf: a 16-bit RLE picture is converted
+// to the display, any other (a 256-entry palette followed by an 8-bit RLE picture, whose size it gives) becomes a
+// 16-bit RLE picture. Always true; an object past the tables gives no picture (the original reads past them).
+bool Field::LoadObjectPicture(u32 object, Picture& picture)
 {
     picture.data.clear();
 
-    if (unit > static_cast<u32>(this->unitCount) || unit >= Field::Units)
+    if (object >= Field::Objects)
     {
-        return false;
+        return true;
     }
 
-    const u32 bytes = this->unitSizes[unit] + kUnitHeaderBytes;
-    this->cache.lmf.SeekBegin(static_cast<i32>(this->unitBase + this->unitOffsets[unit]));
-    const std::vector<u8> block = ReadBlock(this->cache.lmf, bytes);
-    picture.width = static_cast<u16>(MapHeader::TileSize * Word(block, kUnitWidthAt));
-    picture.height = static_cast<u16>(MapHeader::TileSize * Word(block, kUnitHeightAt));
-    const u16 format = Word(block, kUnitFormatAt);
-    const u32 unpacked = Dword(block, kUnitUnpackedAt);
-    const u32 packed = Dword(block, kUnitPackedAt);
-    picture.data.assign(unpacked, 0);
-    MapCache::Unpack(
-        std::span<const u8>(block)
-            .subspan(kUnitHeaderBytes, std::min<std::size_t>(packed, block.size() - kUnitHeaderBytes)),
-        picture.data
-    );
+    const MapObject& entry = this->objects[object];
+    this->cache.lmf.SeekBegin(static_cast<i32>(this->unitBase + entry.offset));
+    const std::vector<u8> packed = ReadBlock(this->cache.lmf, entry.packed);
+    picture.data.assign(entry.unpacked, 0);
+    MapCache::Unpack(packed, picture.data);
+    const bool rle = Word(picture.data, 0) == RleHeader::Magic;
+    const std::size_t header = rle ? 0 : kPaletteBytes;
+    picture.width = Word(picture.data, header + RleHeader::WidthAt);
+    picture.height = Word(picture.data, header + RleHeader::HeightAt);
+    const u16 format = Word(picture.data, header + RleHeader::FormatAt);
 
-    if (format == kRleUnit)
+    if ((format & RleHeader::CountMask) == RleHeader::TrueColor)
     {
-        RleHeader header;
-        this->codec.ConvertToDisplay(picture.data, header);
-        picture.width = header.width;
-        picture.height = header.height;
+        RleHeader converted;
+        this->codec.ConvertToDisplay(picture.data, converted);
+        picture.width = converted.width;
+        picture.height = converted.height;
     }
     else
     {
@@ -383,10 +398,10 @@ bool Field::LoadUnitPicture(u32 unit, Picture& picture)
     return true;
 }
 
-// The pictures of the map units for the picture archive (id 0xFFFF).
+// The pictures of the map objects for the picture archive (id 0xFFFF).
 bool Field::LoadMapPicture(int unit, Picture& picture)
 {
-    return this->LoadUnitPicture(static_cast<u32>(unit), picture);
+    return this->LoadObjectPicture(static_cast<u32>(unit), picture);
 }
 
 // swd3e.exe 0x0040D410: the camera centred on the controlled role (304 pixels left of it, 240 above: half the view
@@ -458,21 +473,22 @@ i32 Field::ScreenTop() const
     return this->cameraTop + this->screenY;
 }
 
-// swd32.exe 0x00425BE0 (unmatched in swd3e): map `map` of HUGE.lmf (from the CD for the small installation): its
-// header, the cached unit of its pixels, the tiles and blocks, the regions, the unit table, the roles of its two role
-// sections and the overlays. False on a missing file, map or section (a missing map also ends the game).
+// swd3e.exe 0x0042A7D0: map `map` of HUGE.lmf (MSF3; the CD's for the small installation): its header, the cached
+// unit of its pixels, the tiles (a word kept of each dword, one more than the map's), the blocks, the regions, the
+// object table, the roles, the overlays and the depth scale. False on a missing file or map (a missing map also ends
+// the game); another magic is reported and read on. A role placed out past 40 tiles right or 30 below the map takes
+// no slot; a role whose placement layer is 3 takes the caller's return address as its flags (the layer table has
+// three entries).
 bool Field::LoadMap(u32 map, u32& systemFlags)
 {
     MapHeader& header = this->state.map;
-    header.blocks.clear();
-    header.tiles.clear();
-    this->regions = MapRegion{};
-    this->unitOffsets.fill(0);
-    this->unitSizes.fill(0);
-    this->unitCount = 0;
     File& lmf = this->cache.lmf;
     lmf.Close();
-    // The original reads the minimal installation's HUGE.lmf from the CD (<cd>swd3\HUGE.lmf); the rebuild reads it
+    header.blocks.clear();
+    header.tiles.clear();
+    this->scale.Clear();
+    this->regions = MapRegion{};
+    // The original reads the minimal installation's HUGE.lmf from the CD (<cd>swd3e\HUGE.lmf); the rebuild reads it
     // from the installation whatever the type (see deviations.md).
     const std::u8string path = PathFormat("%s%s", {this->config.installDirectory, kLmf});
 
@@ -482,343 +498,238 @@ bool Field::LoadMap(u32 map, u32& systemFlags)
         return false;
     }
 
-    const u32 size = lmf.Size();
     u32 directory = 0;
     lmf.ReadDword(directory);
-    const u32 directoryBytes = size - directory;
-    const i32 entries = static_cast<i32>(directoryBytes - 1) / kDirectoryEntryBytes;
+    const u32 directoryBytes = lmf.Size() - directory;
+    const u32 entries = (directoryBytes - 1) >> kEntryShift;
     lmf.SeekBegin(static_cast<i32>(directory));
     const std::vector<u8> table = ReadBlock(lmf, directoryBytes);
-    i32 entry = 0;
+    u32 entry = 0;
 
     while (entry < entries && Dword(table, kDirectoryEntryBytes * static_cast<std::size_t>(entry) + kEntryMapAt) != map)
     {
         ++entry;
     }
 
-    if (entry >= entries)
+    if (entry == entries)
     {
         systemFlags |= Game::QuitRequested;
-        ErrorLog(u8"Load(%d)  ,MapCode fail:%d", map, map);
+        ErrorLog(u8"LoadMap3(%d) ,MapCode fail:%d", map, map);
         return false;
     }
 
     this->unitBase = Dword(table, kDirectoryEntryBytes * static_cast<std::size_t>(entry) + kEntryStartAt);
-    lmf.SeekBegin(static_cast<i32>(this->unitBase));
-    std::vector<u8> block = ReadBlock(lmf, kHeaderRead);
-    block.resize(kWorkBytes, 0);
-    const u32 dataOffset = Dword(block, kDataAt);
-    const u32 rolesOffset = Dword(block, kRolesAt);
-    const u32 overlaysOffset = Dword(block, kOverlaysAt);
-    const u32 extrasOffset = Dword(block, kExtrasAt);
-    const u32 unitSize = Dword(block, kUnitSizeAt);
-    int version = kUnknownVersion;
+    const u32 base = this->unitBase;
+    lmf.SeekBegin(static_cast<i32>(base));
+    u32 magic = 0;
+    lmf.ReadDword(magic);
 
-    if (Dword(block, kVersionAt) == Field::Version1)
+    if (magic != Field::Msf3)
     {
-        // 0x00425E5F (nullsub_1 with "LoadMap" and the text 0x004A11CC)
-        DebugLog(u8"LoadMap 地圖[%d]是舊格式", map);
-        version = kFirstVersion;
+        ErrorBox(this->errors, u8"LoadMap3", u8"地圖[%d]是舊格式", map);  // 0x004B218C
     }
 
-    if (Dword(block, kVersionAt) == Field::Version2)
-    {
-        version = kSecondVersion;
-    }
-    else if (version == kUnknownVersion)
-    {
-        return false;
-    }
-
-    if (this->cache.progress)
-    {
-        this->cache.progress(kProgressHeader);
-    }
-
-    if (lmf.SeekBegin(static_cast<i32>(dataOffset + this->unitBase)) == 0)
-    {
-        ErrorLog(u8"Load(%d)  ,Seek2Map fail:%d", map, map);
-        return false;
-    }
-
-    if (Word(block, kTilesHighAt) != 0)
-    {
-        systemFlags |= Game::QuitRequested;
-        ErrorLog(u8"Load(%d)  ,Tile TOO much:%d", map, MakeWords(Word(block, kTilesHighAt), Word(block, kTilesLowAt)));
-        return false;
-    }
-
-    header.width = Word(block, kWidthAt);
-    header.height = Word(block, kHeightAt);
-    header.bitsPerPixel = Word(block, kBitsAt);
-    header.unk0C = Word(block, kTilesLowAt);
-    header.layers = Word(block, kLayersAt);
+    const std::vector<u8> head = ReadBlock(lmf, kHeaderRead);
+    header.width = Word(head, kWidthAt);
+    header.height = Word(head, kHeightAt);
+    header.bitsPerPixel = Word(head, kBitsAt);
+    header.unk0C = Word(head, kUnk0CAt);
+    header.layers = Word(head, kLayersAt);
+    this->shadowKind = Word(head, kShadowAt);
     header.unk14 = 0;
     this->ResetRows();
-    const std::size_t nameLength = StringLength(block, kNameAt);
-    header.name = {};
-    std::copy_n(
-        block.begin() + kNameAt,
-        std::min<std::size_t>(nameLength, header.name.size() - 1),
-        header.name.begin()
-    );
-    const bool unmapped = this->cache.unitFile.UnmapView(header.pixels);
+    header.name[0] = 0;
+    this->cache.unitFile.UnmapView(header.pixels);
     header.pixels = nullptr;
     this->cache.view = nullptr;
+    this->cache.unitFile.CloseMapping();
+    this->cache.unitFile.Close();
+    header.pixels = this->cache.GetCachedMap(map, base, Dword(head, kUnitSizeAt), 0);
 
-    if (!unmapped)
-    {
-        ErrorLog(u8"Load(%d) ,CloseView fail ,%s", map, this->cache.unitFile.ErrorText());
-    }
-
-    if (!this->cache.unitFile.CloseMapping())
-    {
-        ErrorLog(u8"Load(%d)  ,CloseMapping fail ,%s", map, this->cache.unitFile.ErrorText());
-    }
-
-    if (!this->cache.unitFile.Close())
-    {
-        ErrorLog(u8"Load(%d)  ,Close fail ,%s", map, this->cache.unitFile.ErrorText());
-    }
-
-    header.pixels =
-        this->cache.GetCachedMap(map, this->unitBase, version != kFirstVersion ? unitSize : 0, header.bitsPerPixel);
-
-    if (this->cache.progress)
-    {
-        this->cache.progress(kProgressPixels);
-    }
-
-    lmf.SeekBegin(static_cast<i32>(kNameAt + nameLength + 1 + this->unitBase));
-    const u32 tileBytes = kTileEntryBytes * static_cast<u32>(header.width) * static_cast<u32>(header.layers) *
-                              static_cast<u32>(header.height) +
-                          kCountBytes;
+    // The tiles: a dword each (and one more), of which the low word is kept.
+    const u32 tileBytes = kTileEntryBytes * static_cast<u32>(header.height) * static_cast<u32>(header.width) *
+                              static_cast<u32>(header.layers) +
+                          kTileEntryBytes;
+    lmf.SeekBegin(static_cast<i32>(base + kTilesAt));
     const std::vector<u8> tileWords = ReadBlock(lmf, tileBytes);
-    const u32 tileCount = static_cast<u32>((tileBytes - kCountBytes) / kTileEntryBytes);
-    header.tiles.assign(tileCount, 0);
+    header.tiles.assign(tileBytes / kTileEntryBytes, 0);
 
-    for (u32 tile = 0; tile < tileCount; ++tile)
+    for (std::size_t tile = 0; tile < header.tiles.size(); ++tile)
     {
-        header.tiles[tile] = Word(tileWords, kTileEntryBytes * static_cast<std::size_t>(tile));
+        header.tiles[tile] = Word(tileWords, kTileEntryBytes * tile);
     }
 
-    u32 next = Dword(tileWords, kTileEntryBytes * static_cast<std::size_t>(tileCount));
-    u32 packedBlocks = next;
-
-    if (version == kFirstVersion)
-    {
-        lmf.SeekCurrent(static_cast<i32>(next));
-        lmf.ReadDword(packedBlocks);
-    }
-
-    const std::vector<u8> packed = ReadBlock(lmf, static_cast<u32>(packedBlocks + kCountBytes));
-    const u32 regionCount = Dword(packed, packedBlocks);
+    lmf.SeekBegin(static_cast<i32>(base + Dword(head, kBlocksAt)));
+    const std::vector<u8> packed = ReadBlock(lmf, Dword(head, kBlocksBytesAt));
     header.blocks.assign(static_cast<std::size_t>(header.width) * static_cast<std::size_t>(header.height), 0);
     MapCache::Unpack(
-        std::span<const u8>(packed).first(packedBlocks),
+        packed,
         std::span<u8>(reinterpret_cast<u8*>(header.blocks.data()), header.blocks.size() * sizeof(u32))
     );
-    block = ReadBlock(lmf, kSectionRead);
-    std::size_t at = kCountBytes * static_cast<std::size_t>(regionCount);
+
+    lmf.SeekBegin(static_cast<i32>(base + Dword(head, kRegionsAt)));
+    std::vector<u8> block = ReadBlock(lmf, Dword(head, kRegionsBytesAt));
+    const u32 regionCount = Dword(block, 0);
 
     for (u32 region = 0; region < regionCount; ++region)
     {
+        const std::size_t at = kCountBytes + kRegionBytes * static_cast<std::size_t>(region);
         auto node = std::make_unique<MapRegion>();
-        node->id = Word(block, at);
+        node->id = static_cast<i32>(Dword(block, at));
         node->event = static_cast<i32>(Dword(block, at + kRegionEventAt));
         node->flag = static_cast<i32>(Dword(block, at + kRegionFlagAt));
-        node->blockFlag = static_cast<i32>(Dword(block, at + kRegionUnk10At));
-        at += kRegionNameAt;
-        const std::size_t length = StringLength(block, at);
+        node->blockFlag = static_cast<i32>(Dword(block, at + kRegionBlockFlagAt));
+        const std::size_t length = StringLength(block, at + kRegionNameAt);
         std::copy_n(
-            block.begin() + static_cast<std::ptrdiff_t>(at),
+            block.begin() + static_cast<std::ptrdiff_t>(std::min(at + kRegionNameAt, block.size())),
             std::min<std::size_t>(length, node->name.size() - 1),
             node->name.begin()
         );
-        at += length + 1;
         node->next = std::move(this->regions.next);
         this->regions.next = std::move(node);
     }
 
-    if (this->cache.progress)
+    lmf.SeekBegin(static_cast<i32>(base + Dword(head, kObjectsAt)));
+    block = ReadBlock(lmf, Dword(head, kObjectsBytesAt));
+    const u16 objectCount = Word(block, 0);
+
+    for (u16 index = 0; index < objectCount; ++index)
     {
-        this->cache.progress(kProgressRegions);
+        const std::size_t at = kRecordsAt + kObjectBytes * index;
+        const u16 object = Word(block, at + kObjectNumberAt);
+
+        if (object < Field::Objects)
+        {
+            this->objects[object] = {
+                Dword(block, at),
+                Dword(block, at + kObjectPackedAt),
+                Dword(block, at + kObjectUnpackedAt),
+                Word(block, at + kObjectFlagsAt),
+            };
+        }
     }
 
-    this->unitCount = static_cast<i32>(Dword(block, at));
+    lmf.SeekBegin(static_cast<i32>(base + Dword(head, kRolesAt)));
+    block = ReadBlock(lmf, Dword(head, kRolesBytesAt));
+    const u16 roleCount = Word(block, 0);
 
-    for (i32 unit = 0; unit < this->unitCount && unit < Field::Units; ++unit)
-    {
-        this->unitOffsets[static_cast<std::size_t>(unit)] =
-            Dword(block, at + kCountBytes + kCountBytes * static_cast<std::size_t>(unit));
-    }
-
-    for (i32 unit = 0; unit < this->unitCount && unit < Field::Units; ++unit)
-    {
-        lmf.SeekBegin(
-            static_cast<i32>(this->unitOffsets[static_cast<std::size_t>(unit)] + this->unitBase + kUnitPackedAt)
-        );
-        lmf.ReadDword(this->unitSizes[static_cast<std::size_t>(unit)]);
-    }
-
-    if (this->cache.progress)
-    {
-        this->cache.progress(kProgressUnits);
-    }
-
-    if (lmf.SeekBegin(static_cast<i32>(rolesOffset + this->unitBase)) == 0)
-    {
-        return false;
-    }
-
-    block = ReadBlock(lmf, kSectionRead);
-    this->sectionRoles = static_cast<i32>(Dword(block, 0));
-    at = kCountBytes * (static_cast<std::size_t>(this->sectionRoles) + 1);
-
-    for (i32 index = 0; index < this->sectionRoles; ++index)
+    for (u16 index = 0; index < roleCount; ++index)
     {
         if (this->state.roleCount < 0 || this->state.roleCount >= GameState::Roles)
         {
             break;
         }
 
+        const std::size_t at = kRecordsAt + kRoleBytes * index;
         Role& role = this->state.roles[static_cast<std::size_t>(this->state.roleCount)];
         role.act = ActState{};
         ResetPlayback(role.act);
         const u16 placement = Word(block, at + kRolePlacementAt);
-        const u32 flags = (placement & Role::LayerMask) | Role::Visible | Role::StepsAct;
+        const std::size_t layer = (placement >> kPlacementLayerShift) & Role::LayerMask;
+        role.flags = (layer < kPlacementLayers.size() ? kPlacementLayers[layer] : kPlacementLayerPast) | Role::Visible |
+                     Role::StepsAct;
+        role.drawOffsetX = static_cast<u16>((placement & kPlacementLowByte) >> kPlacementOffsetXShift);
+        role.drawOffsetY = static_cast<u16>(placement & kPlacementOffsetMask);
+        const u16 x = Word(block, at + kRoleXAt);
+        const u16 y = Word(block, at + kRoleYAt);
+        role.x = x;
+        role.y = y;
         role.id = Role::NoId;
-        role.flags = flags;
-        role.drawOffsetX = static_cast<u16>(placement >> kPlacementOffsetXShift);
-        role.drawOffsetY = static_cast<u16>((placement >> kPlacementOffsetYShift) & kPlacementOffsetYMask);
-        role.x = MapHeader::TileSize * static_cast<i16>(Word(block, at + kRoleXAt));
-        role.y = MapHeader::TileSize * static_cast<i16>(Word(block, at + kRoleYAt));
-        role.act.id = 0;
-        role.act.picture = static_cast<u16>(Word(block, at) - 1);
-        role.act.x = 0;
-        role.cell = nullptr;
-        role.act.y = MapHeader::TileSize * (Word(block, at + kRoleYAt) - Word(block, at + kRoleTopAt));
 
-        if (static_cast<u32>(role.y) >= static_cast<u32>(MapHeader::TileSize * (header.height + Field::RowMargin)) ||
-            role.y <= -MapHeader::TileSize * Field::RowMargin)
+        if (x > static_cast<u32>(MapHeader::TileSize * (header.width + kRoleMarginX)) ||
+            y > MapHeader::TileSize * (header.height + kRoleMarginY))
         {
-            --this->state.roleCount;
+            continue;
+        }
+
+        const u16 object = Word(block, at);
+        const MapObject* definition = object < Field::Objects ? &this->objects[object] : nullptr;
+
+        if (definition != nullptr && (definition->flags & (MapObject::Animated | MapObject::Unk1000000)) != 0)
+        {
+            lmf.SeekBegin(static_cast<i32>(base + definition->offset));
+            const std::vector<u8> act = ReadBlock(lmf, kAnimatedBytes);
+            role.act.id = Word(act, 0);
+            role.act.action = Word(act, sizeof(u16));
+            role.act.x = 0;
+            role.act.y = 0;
+            role.cell = nullptr;
         }
         else
         {
-            this->InsertRole(role, static_cast<int>(flags & Role::LayerMask));
+            role.act.id = 0;
+            role.act.picture = object;
+            role.act.x = 0;
+            role.cell = nullptr;
+            role.act.y = Word(block, at + kRoleYAt) - Word(block, at + kRoleTopAt);
         }
 
-        at += kRoleNameAt + StringLength(block, at + kRoleNameAt) + 1;
+        this->InsertRole(role, static_cast<int>(role.flags & Role::LayerMask));
         ++this->state.roleCount;
     }
 
-    if (this->cache.progress)
+    if (Dword(head, kOverlaysAt) != 0)
     {
-        this->cache.progress(kProgressRoles);
-    }
+        lmf.SeekBegin(static_cast<i32>(base + Dword(head, kOverlaysAt)));
+        block = ReadBlock(lmf, Dword(head, kOverlaysBytesAt));
+        const u16 overlayCount = Word(block, 0);
 
-    if (lmf.SeekBegin(static_cast<i32>(overlaysOffset + this->unitBase)) == 0)
-    {
-        return false;
-    }
-
-    block = ReadBlock(lmf, kHeaderRead);
-    const u32 overlayCount = Dword(block, 0);
-    std::vector<u32> offsets;
-
-    for (u32 overlay = 0; overlay < overlayCount; ++overlay)
-    {
-        offsets.push_back(Dword(block, kCountBytes + kCountBytes * static_cast<std::size_t>(overlay)));
-    }
-
-    for (const u32 offset : offsets)
-    {
-        if (lmf.SeekBegin(static_cast<i32>(this->unitBase + offset)) == 0)
+        for (u16 index = 0; index < overlayCount; ++index)
         {
-            return false;
+            const std::size_t at = kRecordsAt + kOverlayBytes * index;
+            const u32 packedBytes = Dword(block, at + kOverlayPackedAt);
+
+            if (packedBytes == 0)
+            {
+                continue;
+            }
+
+            lmf.SeekBegin(static_cast<i32>(base + Dword(block, at)));
+            const std::vector<u8> data = ReadBlock(lmf, packedBytes);
+            auto node = std::make_unique<MapOverlay>();
+            node->picture.assign(Dword(block, at + kOverlayUnpackedAt), 0);
+            MapCache::Unpack(data, node->picture);
+            node->width = Word(node->picture, RleHeader::WidthAt);
+            node->height = Word(node->picture, RleHeader::HeightAt);
+            node->left = static_cast<u16>(MapHeader::TileSize * Byte(block, at + kOverlayLeftAt));
+            node->top = static_cast<u16>(MapHeader::TileSize * Byte(block, at + kOverlayTopAt));
+            node->right = static_cast<u16>(MapHeader::TileSize * Byte(block, at + kOverlayRightAt));
+            node->bottom = static_cast<u16>(MapHeader::TileSize * Byte(block, at + kOverlayBottomAt));
+            const u16 kinds = Word(block, at + kOverlayKindsAt);
+            node->kind = kinds & kOverlayKindMask;
+            node->parallaxX = static_cast<u16>((Byte(block, at + kOverlayKindsAt) >> kParallaxXShift) & kParallaxMask);
+            node->parallaxY = static_cast<u16>((kinds >> kParallaxYShift) & kParallaxMask);
+
+            if ((Word(node->picture, RleHeader::FormatAt) & RleHeader::CountMask) == RleHeader::TrueColor)
+            {
+                RleHeader converted;
+                this->codec.ConvertToDisplay(node->picture, converted);
+                node->width = converted.width;
+                node->height = converted.height;
+            }
+
+            node->next = std::move(this->overlays);
+            this->overlays = std::move(node);
         }
-
-        block = ReadBlock(lmf, kHeaderRead);
-        auto node = std::make_unique<MapOverlay>();
-        node->width = static_cast<u16>(MapHeader::TileSize * Word(block, kOverlayWidthAt));
-        node->height = static_cast<u16>(MapHeader::TileSize * Word(block, kOverlayHeightAt));
-        node->left = static_cast<u16>(MapHeader::TileSize * Word(block, kOverlayLeftAt));
-        node->top = static_cast<u16>(MapHeader::TileSize * Word(block, kOverlayTopAt));
-        node->right = static_cast<u16>(MapHeader::TileSize * Word(block, kOverlayRightAt));
-        node->bottom = static_cast<u16>(MapHeader::TileSize * Word(block, kOverlayBottomAt));
-        node->kind = block[kOverlayKindAt];
-        node->parallaxX = block[kOverlayParallaxXAt];
-        node->parallaxY = block[kOverlayParallaxYAt];
-        const u32 unpacked = Dword(block, kOverlayUnpackedAt);
-        const u32 packedBytes = Dword(block, kOverlayPackedAt);
-        node->picture.assign(unpacked, 0);
-
-        if (lmf.SeekBegin(static_cast<i32>(offset + this->unitBase + kOverlayDataAt)) == 0)
-        {
-            return false;
-        }
-
-        const std::vector<u8> picture = ReadBlock(lmf, packedBytes);
-        MapCache::Unpack(picture, node->picture);
-        RleHeader rle;
-        this->codec.ConvertToDisplay(node->picture, rle);
-        node->width = rle.width;
-        node->height = rle.height;
-        node->next = std::move(this->overlays);
-        this->overlays = std::move(node);
     }
 
-    if (this->cache.progress)
+    if (Dword(head, kScalePictureAt) != 0)
     {
-        this->cache.progress(kProgressOverlays);
+        lmf.SeekBegin(static_cast<i32>(base + Dword(head, kScalePictureAt)));
+        const std::vector<u8> data = ReadBlock(lmf, Dword(head, kScalePictureBytesAt));
+        std::vector<u8> unpacked(Dword(data, kScaleUnpackedAt), 0);
+        const std::size_t produced =
+            MapCache::Unpack(std::span<const u8>(data).subspan(std::min(kScaleDataAt, data.size())), unpacked);
+        this->scale.SetPicture(std::span<const u8>(unpacked).first(std::min(produced, unpacked.size())));
     }
 
-    lmf.SeekBegin(static_cast<i32>(extrasOffset + this->unitBase));
-    block = ReadBlock(lmf, kSectionRead);
-    const u32 extraCount = Dword(block, 0);
-    at = kCountBytes * (static_cast<std::size_t>(extraCount) + 1);
-
-    for (u32 index = 0; index < extraCount; ++index)
+    if (Dword(head, kScalesAt) != 0)
     {
-        if (this->state.roleCount < 0 || this->state.roleCount >= GameState::Roles)
-        {
-            break;
-        }
-
-        Role& role = this->state.roles[static_cast<std::size_t>(this->state.roleCount)];
-        const u16 placement = Word(block, at + kExtraPlacementAt);
-        role.act.id = Word(block, at);
-        role.act.action = Word(block, at + kExtraActionAt);
-        role.x = Word(block, at + kExtraXAt);
-        role.y = Word(block, at + kExtraYAt);
-        role.flags = placement & Role::LayerMask;
-        role.drawOffsetX = static_cast<u16>(placement >> kPlacementOffsetXShift);
-        role.drawOffsetY = static_cast<u16>((placement >> kPlacementOffsetYShift) & kPlacementOffsetYMask);
-        at += kExtraNameAt + StringLength(block, at + kExtraNameAt) + 1;
-        role.id = Role::NoId;
-        role.x *= MapHeader::TileSize;
-        role.y *= MapHeader::TileSize;
-        role.flags |= Role::Visible | Role::StepsAct;
-        role.act.wait = 0;
-
-        if (static_cast<u32>(role.y) < static_cast<u32>(MapHeader::TileSize * header.height))
-        {
-            this->InsertRole(role, static_cast<int>(role.flags & Role::LayerMask));
-        }
-        else
-        {
-            --this->state.roleCount;
-            role.x = 0;
-            role.y = 0;
-        }
-
-        ++this->state.roleCount;
-    }
-
-    if (this->cache.progress)
-    {
-        this->cache.progress(kProgressDone);
+        lmf.SeekBegin(static_cast<i32>(base + Dword(head, kScalesAt)));
+        const std::vector<u8> data = ReadBlock(lmf, Dword(head, kScalesBytesAt));
+        std::vector<u8> unpacked(Dword(head, kScalesUnpackedAt), 0);
+        const std::size_t produced = MapCache::Unpack(data, unpacked);
+        this->scale.SetScales(std::span<const u8>(unpacked).first(std::min(produced, unpacked.size())));
     }
 
     return true;

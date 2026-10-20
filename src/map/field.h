@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "core/types.h"
+#include "map/map_scale.h"
 #include "platform/display.h"
 #include "res/tsw_archive.h"
 
@@ -12,6 +13,7 @@ namespace swd3e
 {
 
 class Config;
+class ErrorReporter;
 class GameState;
 class MapCache;
 class RleCodec;
@@ -55,6 +57,23 @@ struct MapOverlay
 // The map the party is on: HUGE.lmf's map (its blocks, tiles, units and roles), the drawing order of the roles by row
 // for the three layers, the regions, the overlays and the camera.
 // A camera rectangle in pixels (four dwords in the original).
+// An object of the map (swd3e; the four tables at 0x004F0DBC, 0x004F25BC, 0x004F19BC and 0x004F31BC by object number):
+// where its data lies in the map, packed and unpacked, and its flags.
+struct MapObject
+{
+    // Bits of `flags`.
+    enum Flag : u32
+    {
+        Animated = 0x100,        // its data starts with the act and action a role of it runs
+        Unk1000000 = 0x1000000,  // tested with Animated; the flags are a word, so never set
+    };
+
+    u32 offset = 0;    // 0x004F0DBC from the start of the map
+    u32 packed = 0;    // 0x004F25BC
+    u32 unpacked = 0;  // 0x004F19BC
+    u32 flags = 0;     // 0x004F31BC MapObject::Flag
+};
+
 struct CameraRect
 {
     i32 left = 0;
@@ -79,18 +98,17 @@ public:
 
     static constexpr int Layers = 3;
     static constexpr int RowMargin = 0x14;
-    static constexpr int Units = 0x300;
-    static constexpr u32 Version1 = 0x7046534D;  // "MSFp"
-    static constexpr u32 Version2 = 0x3246534D;  // "MSF2"
+    static constexpr std::size_t Objects = 0x300;
+    static constexpr u32 Msf3 = 0x3346534D;  // "MSF3", the map format of swd3e
 
-    Field(GameState& state, MapCache& cache, const Config& config, const RleCodec& codec);
+    Field(GameState& state, MapCache& cache, const Config& config, const RleCodec& codec, ErrorReporter& errors);
 
     bool LoadMap(u32 map, u32& systemFlags);
     void ResetRows();
     void InsertRole(Role& role, int layer);
     Role* RemoveRole(u16 id, int layer, int row, int keep);
     Role* UnlinkRole(Role& role, int layer);
-    bool LoadUnitPicture(u32 unit, Picture& picture);
+    bool LoadObjectPicture(u32 object, Picture& picture);
     bool LoadMapPicture(int unit, Picture& picture) override;
     void CenterCamera();
     // The camera CenterCamera gives a controlled role at (x, y): its left and top (in 1/scale pixels, as x and y).
@@ -112,11 +130,10 @@ public:
     MapRegion regions;                            // 0x004C6258
     std::unique_ptr<MapOverlay> overlays;         // swd32 0x004AB2F4
     std::array<std::vector<Role*>, Layers> rows;  // 0x004C3184 the roles by row, RowMargin rows above the map
-    i32 unitCount = 0;                            // swd32 0x004CDEA4
-    std::array<u32, Units> unitOffsets = {};      // swd32 0x004CDEA8
-    u32 unitBase = 0;                             // swd32 0x004CEAA8 the map in HUGE.lmf
-    std::array<u32, Units> unitSizes = {};        // swd32 0x004CEAAC
-    i32 sectionRoles = 0;                         // swd32 0x004CDEA0
+    u32 unitBase = 0;                             // 0x004F01B8 the map in HUGE.lmf
+    std::array<MapObject, Objects> objects = {};  // 0x004F0DBC, 0x004F25BC, 0x004F19BC, 0x004F31BC
+    MapScale scale;                               // 0x004F3DC0
+    i32 shadowKind = 0;                           // 0x004D183C the map header's, how the roles' shadows fall
     i32 cameraLeft = 0;                           // 0x004C5118
     i32 cameraTop = 0;                            // 0x004C511C
     i32 cameraRight = 0;                          // 0x004C5120
@@ -134,6 +151,7 @@ private:
     MapCache& cache;
     const Config& config;
     const RleCodec& codec;
+    ErrorReporter& errors;
 };
 
 }  // namespace swd3e

@@ -21,6 +21,7 @@
 #include "platform/display.h"
 #include "platform/host_settings.h"
 #include "platform/surface.h"
+#include "recording_reporter.h"
 #include "talk/text_colors.h"
 #include "test.h"
 #include "text/big5.h"
@@ -100,7 +101,9 @@ TEST_CASE("game init: the session mark of [game] empties the map cache")
     swd3e::Surface surface(swd3e::Display::Width, swd3e::Display::Height);
     swd3e::Painter painter;
     painter.Init(surface);
-    MapCache cache(config, painter);
+    swd3e::MapHeader header;
+    swd3etest::RecordingReporter reporter;
+    MapCache cache(config, painter, header, reporter);
 
     auto sessionOpen = [&config, &directory]
     {

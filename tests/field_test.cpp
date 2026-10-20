@@ -18,6 +18,7 @@
 #include "pic/rle.h"
 #include "platform/display.h"
 #include "platform/surface.h"
+#include "recording_reporter.h"
 #include "role/role.h"
 #include "test.h"
 
@@ -43,9 +44,9 @@ struct Fixture
 {
     Fixture()
         : surface(swd3e::Display::Width, swd3e::Display::Height),
-          cache(this->config, this->painter),
+          cache(this->config, this->painter, this->state.map, this->reporter),
           codec(this->painter),
-          field(this->state, this->cache, this->config, this->codec)
+          field(this->state, this->cache, this->config, this->codec, this->reporter)
     {
         this->painter.Init(this->surface);
     }
@@ -54,6 +55,7 @@ struct Fixture
     swd3e::Surface surface;
     swd3e::Painter painter;
     swd3e::GameState state;
+    swd3etest::RecordingReporter reporter;
     swd3e::MapCache cache;
     swd3e::RleCodec codec;
     swd3e::Field field;
@@ -115,7 +117,8 @@ TEST_CASE("field: the first map of a new game from HUGE.lmf")
         header.bitsPerPixel == swd3e::MapHeader::IndexedBits || header.bitsPerPixel == swd3e::MapHeader::TrueColorBits
     );
     CHECK_EQ(header.blocks.size(), static_cast<std::size_t>(header.width) * header.height);
-    CHECK_EQ(header.tiles.size(), static_cast<std::size_t>(header.width) * header.height * header.layers);
+    // swd3e keeps one tile word more than the map has (the dword after the tiles).
+    CHECK_EQ(header.tiles.size(), static_cast<std::size_t>(header.width) * header.height * header.layers + 1);
     CHECK(header.pixels != nullptr);
     CHECK(std::filesystem::exists(std::filesystem::path(all.config.installDirectory + u8"data/mcache.dat")));
     CHECK_EQ(all.field.rows[0].size(), static_cast<std::size_t>(header.height) + 2 * swd3e::Field::RowMargin);

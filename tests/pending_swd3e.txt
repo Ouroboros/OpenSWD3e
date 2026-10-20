@@ -29,7 +29,6 @@ database: mon.dat objects and skills, level.dat entries match the legacy readers
 # fame_test.cpp
 fame: the fame block of original saves is saved again unchanged
 # field_test.cpp
-field: the first map of a new game from HUGE.lmf
 field: the speed nibbles of the map settings match swd32.exe
 # fight_talk_test.cpp
 fight talk: the initial state matches swd32.exe

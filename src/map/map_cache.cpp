@@ -10,6 +10,7 @@
 #include "config/config.h"
 #include "core/byte_reader.h"
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "core/log.h"
 #include "draw/painter.h"
@@ -27,9 +28,11 @@ constexpr std::string_view kTableFile = "mcache.dat";
 
 }  // namespace
 
-MapCache::MapCache(const Config& config, const Painter& painter)
+MapCache::MapCache(const Config& config, const Painter& painter, const MapHeader& map, ErrorReporter& errors)
     : config(config),
-      painter(painter)
+      painter(painter),
+      map(map),
+      errors(errors)
 {
 }
 
@@ -212,7 +215,15 @@ constexpr std::size_t kUnpackedAt = 0x10;
 constexpr std::size_t kBlockSizeAt = 0x14;
 constexpr std::size_t kBlocksAt = 0x1C;
 constexpr std::size_t kBlockEntryBytes = 8;
-constexpr int kSlackShift = 10;     // a block buffer has 1/1024 to spare for packed data
+// The MSF3 unit header (swd3e): the block size, the unpacked size, then from kMsf3BlocksAt the offset of each block
+// from the map and its length.
+constexpr u32 kMsf3HeaderBytes = 0x400;
+constexpr std::size_t kMsf3BlockSizeAt = 4;
+constexpr std::size_t kMsf3UnpackedAt = 8;
+constexpr std::size_t kMsf3BlocksAt = 0x10;
+constexpr std::u8string_view kCacheTitle = u8"地圖快取製作";   // 0x004B2278
+constexpr std::u8string_view kOldFormat = u8"這地圖是舊格式";  // 0x004B2288
+constexpr int kSlackShift = 10;                                // a block buffer has 1/1024 to spare for packed data
 constexpr u32 kProgressStart = 15;  // the loading screen runs from 15 to 60 percent while unpacking
 constexpr u32 kProgressSpan = 45;
 constexpr int kMegabyteShift = 20;
@@ -231,37 +242,40 @@ std::vector<u8> MapCache::Pack(std::span<const u8> data)
     return LzoEncoder(kDictionaryBits).Compress(data);
 }
 
-// swd3e.exe 0x00429C00
-void MapCache::Unpack(std::span<const u8> packed, std::span<u8> output)
+// swd3e.exe 0x00429C00: the bytes it unpacked
+std::size_t MapCache::Unpack(std::span<const u8> packed, std::span<u8> output)
 {
-    LzoDecoder(packed, output).Run();
+    LzoDecoder decoder(packed, output);
+    decoder.Run();
+    return decoder.Written();
 }
 
-// swd3e.exe 0x0042A620: the unpacked size of a map's unit (the dword at +0x10 of its block header); nothing when the
-// map has no unit
-void MapCache::ReadUnitBytes(u32 base, u32 size, u32& bytes)
+// swd3e.exe 0x0042A620: the unpacked size of a map's unit (the dword at +0x10 of a legacy header, at +8 of the MSF3
+// one); a map without a unit is reported in the error box
+void MapCache::ReadUnitBytes(u32 base, u32 size, int legacy, u32& bytes)
 {
     if (size == 0)
     {
-        // 0x00427103 (nullsub_1, the same strings as 0x00426E30)
-        DebugLog(u8"地圖快取製作 這地圖是舊格式");
+        ErrorBox(this->errors, kCacheTitle, kOldFormat);
         return;
     }
 
-    this->lmf.SeekBegin(static_cast<i32>(base + size + kUnpackedAt));
+    this->lmf.SeekBegin(static_cast<i32>(base + size + (legacy != 0 ? kUnpackedAt : kMsf3UnpackedAt)));
     this->lmf.ReadDword(bytes);
 }
 
 // swd3e.exe 0x0042A180: unpacks the unit of a map from HUGE.lmf block by block into data\<unit>.cm (16-bit pixels
-// converted to the display), the loading screen from 15 to 60
+// converted to the display when the map is 16-bit), the loading screen from 15 to 60. A legacy unit (swd32's header:
+// the block lengths in order, each block the block size but the last) is written block by block of the block size; an
+// MSF3 unit (a 0x400-byte header: the block size, the unpacked size, then each block's offset from the map and length)
+// writes what each block unpacks to, until exactly the unpacked size is written.
 // swd3e.exe EH funclet (tail) of 0x0042A180, swd32 0x00498250 (EH unwind: the cFile, closed by its destructor)
 // swd3e.exe EH funclet (tail) of 0x0042A180, swd32 0x00498258 (EH handler of 0x00426DF0)
-void MapCache::DecompressMap(int unit, u32 base, u32 size, int bitsPerPixel, u32& bytes)
+void MapCache::DecompressMap(int unit, u32 base, u32 size, int legacy, u32& bytes)
 {
     if (size == 0)
     {
-        // 0x00426E30 (nullsub_1 with the title 0x004A12C8 and the text 0x004A12D8)
-        DebugLog(u8"地圖快取製作 這地圖是舊格式");
+        ErrorBox(this->errors, kCacheTitle, kOldFormat);
         return;
     }
 
@@ -276,6 +290,13 @@ void MapCache::DecompressMap(int unit, u32 base, u32 size, int bitsPerPixel, u32
 
     cached.SeekBegin(0);
     this->lmf.SeekBegin(static_cast<i32>(size + base));
+
+    if (legacy == 0)
+    {
+        this->DecompressMsf3(cached, base, bytes);
+        return;
+    }
+
     std::array<u8, MapCache::HeaderBytes> header = {};
     u32 read = MapCache::HeaderBytes;
 
@@ -323,7 +344,7 @@ void MapCache::DecompressMap(int unit, u32 base, u32 size, int bitsPerPixel, u32
         MapCache::Unpack(std::span<const u8>(packed).first(length), output);
         u32 written = std::min(blockSize, remaining);
 
-        if (bitsPerPixel == MapHeader::TrueColorBits)
+        if (this->map.bitsPerPixel == MapHeader::TrueColorBits)
         {
             this->painter.ConvertPixels(std::span<u16>(reinterpret_cast<u16*>(output.data()), written / sizeof(u16)));
         }
@@ -337,6 +358,74 @@ void MapCache::DecompressMap(int unit, u32 base, u32 size, int bitsPerPixel, u32
         }
 
         step += kProgressSpan;
+    }
+
+    cached.Close();
+}
+
+// Part of 0x0042A180: the MSF3 unit, its header at the current position of HUGE.lmf, into `cached`. A block size of
+// 0 or a block list past the header ends it (the original divides by it, or reads on past its buffer).
+void MapCache::DecompressMsf3(File& cached, u32 base, u32& bytes)
+{
+    std::array<u8, kMsf3HeaderBytes> header = {};
+    u32 read = kMsf3HeaderBytes;
+
+    if (!this->lmf.Read(header.data(), read))
+    {
+        cached.Close();
+        return;
+    }
+
+    const u32 blockSize = ByteReader::Word32At(header, kMsf3BlockSizeAt);
+    const u32 total = ByteReader::Word32At(header, kMsf3UnpackedAt);
+    bytes = total;
+    std::vector<u8> packed((blockSize >> kSlackShift) + blockSize, 0);
+    std::vector<u8> output((blockSize >> kSlackShift) + blockSize, 0);
+
+    if (total == 0 || blockSize == 0)
+    {
+        cached.Close();
+        return;
+    }
+
+    const u32 blocks = (blockSize + total) / blockSize;
+    u32 written = 0;
+    u32 done = 0;
+
+    for (std::size_t entry = kMsf3BlocksAt; entry + kBlockEntryBytes <= header.size(); entry += kBlockEntryBytes)
+    {
+        u32 length = ByteReader::Word32At(header, entry + sizeof(u32));
+        this->lmf.SeekBegin(static_cast<i32>(base + ByteReader::Word32At(header, entry)));
+        packed.resize(std::max<std::size_t>(packed.size(), length));
+
+        if (!this->lmf.Read(packed.data(), length))
+        {
+            ErrorLog(u8"DecompressMap ,read block fail when ");
+            cached.Close();
+            return;
+        }
+
+        const std::size_t produced = MapCache::Unpack(std::span<const u8>(packed).first(length), output);
+
+        if (this->map.bitsPerPixel == MapHeader::TrueColorBits)
+        {
+            this->painter.ConvertPixels(std::span<u16>(reinterpret_cast<u16*>(output.data()), produced / sizeof(u16)));
+        }
+
+        auto count = static_cast<u32>(produced);
+        cached.Write(output.data(), count);
+        written += static_cast<u32>(produced);
+        ++done;
+
+        if (this->progress)
+        {
+            this->progress(static_cast<int>(kProgressSpan * done / blocks + kProgressStart));
+        }
+
+        if (written == total)
+        {
+            break;
+        }
     }
 
     cached.Close();
@@ -383,7 +472,7 @@ const u8* MapCache::OpenUnit(int unit)
 // swd3e.exe EH funclet (tail) of 0x00429C20, swd32 0x0049822B (EH unwind: the cFile, closed by its destructor)
 // swd3e.exe EH funclet (tail) of 0x00429C20, swd32 0x00498233 (EH unwind: the cFile, closed by its destructor)
 // swd3e.exe EH funclet (tail) of 0x00429C20, swd32 0x0049823E (EH handler of 0x00426840)
-const u8* MapCache::GetCachedMap(u32 map, u32 base, u32 size, int bitsPerPixel)
+const u8* MapCache::GetCachedMap(u32 map, u32 base, u32 size, int legacy)
 {
     File table;
     const std::u8string tablePath = PathFormat("%sdata\\%s", {this->config.installDirectory, kTableFile});
@@ -400,7 +489,7 @@ const u8* MapCache::GetCachedMap(u32 map, u32 base, u32 size, int bitsPerPixel)
     if (bytes == 0)
     {
         u32 unpacked = 0;
-        this->DecompressMap(0, base, size, bitsPerPixel, unpacked);
+        this->DecompressMap(0, base, size, legacy, unpacked);
         slots[0] = {map, unpacked, 0, 0};
 
         for (int unit = 1; unit < MapCache::Units; ++unit)
@@ -448,7 +537,7 @@ const u8* MapCache::GetCachedMap(u32 map, u32 base, u32 size, int bitsPerPixel)
     }
 
     u32 needed = 0;
-    this->ReadUnitBytes(base, size, needed);
+    this->ReadUnitBytes(base, size, legacy, needed);
     bool full = true;
 
     for (u32 slot = 0; slot < kept; ++slot)
@@ -538,7 +627,7 @@ const u8* MapCache::GetCachedMap(u32 map, u32 base, u32 size, int bitsPerPixel)
     table.Write(slots.data(), written);
     table.Truncate();
     table.Close();
-    this->DecompressMap(static_cast<int>(free), base, size, bitsPerPixel, needed);
+    this->DecompressMap(static_cast<int>(free), base, size, legacy, needed);
     return this->OpenUnit(static_cast<int>(free));
 }
 

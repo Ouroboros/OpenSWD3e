@@ -14,6 +14,8 @@ namespace swd3e
 class Config;
 class Painter;
 struct GameSettings;
+struct MapHeader;
+class ErrorReporter;
 
 // The cache of decompressed map units in <install directory>data\0.cm .. 23.cm with their table in mcache.dat. The
 // session mark ([game] session_open; the last byte of Env.dat in the original) marks a session that did not end
@@ -41,18 +43,19 @@ public:
 
     static constexpr u32 HeaderBytes = 0x1A8;
 
-    MapCache(const Config& config, const Painter& painter);
+    MapCache(const Config& config, const Painter& painter, const MapHeader& map, ErrorReporter& errors);
 
     u32 Check(int mode);
     void MarkClean();
     void MarkDirty();
     u32 CacheBytes() const;
-    const u8* GetCachedMap(u32 map, u32 base, u32 size, int bitsPerPixel);
-    void DecompressMap(int unit, u32 base, u32 size, int bitsPerPixel, u32& bytes);
-    void ReadUnitBytes(u32 base, u32 size, u32& bytes);
+    // `legacy`: the unit has the 0x1A8-byte header of swd32's maps (swd3e's loader always passes 0).
+    const u8* GetCachedMap(u32 map, u32 base, u32 size, int legacy);
+    void DecompressMap(int unit, u32 base, u32 size, int legacy, u32& bytes);
+    void ReadUnitBytes(u32 base, u32 size, int legacy, u32& bytes);
     const u8* OpenUnit(int unit);
     static std::vector<u8> Pack(std::span<const u8> data);
-    static void Unpack(std::span<const u8> packed, std::span<u8> output);
+    static std::size_t Unpack(std::span<const u8> packed, std::span<u8> output);
 
     File lmf;                           // 0x004D1DB0 HUGE.lmf
     File unitFile;                      // 0x004E6830 the mapped unit
@@ -63,9 +66,12 @@ public:
 private:
     void Clear();
     void Store(const std::function<void(GameSettings&)>& change) const;
+    void DecompressMsf3(File& cached, u32 base, u32& bytes);
 
     const Config& config;
     const Painter& painter;
+    const MapHeader& map;  // 0x004D1298 its colour depth (0x004D12A0) decides the pixel conversion
+    ErrorReporter& errors;
 };
 
 }  // namespace swd3e

@@ -25,13 +25,13 @@
 - 当前阶段：第2阶段（对齐）基本完成，第3阶段（还原）进行中。
 - 已识别函数数：1700；模块已按swd32配对对齐（`unknown` 152个）。
 - 函数总数：待确定（间接调用目标、运行时跳转表未闭合；`.rsrc`资源已提取至third_party/asset/launcher）。
-- 已实现／总数：869／待确定（已识别1700）。
+- 已实现／总数：882／待确定（已识别1700）。
 - 已验证／总数：0／待确定（已识别1700）。
-- 待实现／待验证：831／1700（以已识别函数计）。
+- 待实现／待验证：818／1700（以已识别函数计）。
 
 ## 当前工作
 
-以swd3-rebuild提交`6f7214a`为底稿复制源码、测试与构建配置，Linux与Windows构建通过，Linux测试128项通过、43项列为待外传化（tests/pending_swd3e.txt）。res模块（tsw、act档案与动作解释器）已按swd3e汇编重写；CRT全部映射；与swd32代码一致的函数已登记；role与role_path（寻路器）模块已按swd3e核对完毕；外传新增的小游戏（src/minigame/，0x0049EFF0起13个函数）已还原；外传的“Act Err”报告统一改为错误对话框。停点：map模块，剩余地图缓存与载入（0x00429C20、0x0042A180、0x0042A620、0x0042A7D0，HUGE.lmf）、Render、Paint（依赖外传命名对话框0x004172A0）、DrawRole与DrawShadow（draw模块的外传缩放绘制族已还原，可接着做）。
+以swd3-rebuild提交`6f7214a`为底稿复制源码、测试与构建配置，Linux与Windows构建通过，Linux测试128项通过、43项列为待外传化（tests/pending_swd3e.txt）。res模块（tsw、act档案与动作解释器）已按swd3e汇编重写；CRT全部映射；与swd32代码一致的函数已登记；role与role_path（寻路器）模块已按swd3e核对完毕；外传新增的小游戏（src/minigame/，0x0049EFF0起13个函数）已还原；外传的“Act Err”报告统一改为错误对话框。停点：map模块剩余Render、Paint（依赖外传命名对话框0x004172A0）、DrawRole与DrawShadow（外传MSF3地图载入、深度缩放与缩放绘制族均已还原）。
 
 ## 下一步
 
