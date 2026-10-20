@@ -2575,8 +2575,8 @@ bool BattleUnit::IsSmallMachine() const
 // swd32.exe 0x00475870 (unmatched in swd3e)
 void BattleUnit::Unk62And8A(u16& first, u16& second) const
 {
-    first = this->data->data.unk62;
-    second = this->data->data.unk8A;
+    first = this->data->data.unk66;
+    second = this->data->data.unk90;
 }
 
 // swd3e.exe 0x00499FA0: the value (+0x40, low 14 bits) of the worn accessory of `kind`, 0 without one
@@ -5006,7 +5006,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
     if (this->commandA != BattleUnit::UnkCommand1)
     {
         const u32 spread = random.Below(kEnemySpreadRoll);
-        const auto limit = static_cast<u16>((data.level + data.unk5C) / static_cast<u16>(spread + kEnemySpreadBase));
+        const auto limit = static_cast<u16>((data.level + data.unk60) / static_cast<u16>(spread + kEnemySpreadBase));
         const i32 bonus = static_cast<i32>(random.Below(limit)) + 1;
 
         if (damage > 0)

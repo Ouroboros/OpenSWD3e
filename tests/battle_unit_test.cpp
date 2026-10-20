@@ -698,7 +698,7 @@ TEST_CASE("battle unit: the damage of an enemy's hit")
     Services all;
     swd3e::ObjectRecord attackerData;
     attackerData.data.level = kEnemyLevel;
-    attackerData.data.unk5C = kEnemyLevel;
+    attackerData.data.unk60 = kEnemyLevel;
     BattleUnit attacker;
     attacker.data = &attackerData;
     attacker.unk29A4 = kAttackValue;

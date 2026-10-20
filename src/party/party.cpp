@@ -11,8 +11,15 @@
 namespace swd3e
 {
 
+namespace
+{
+
+constexpr std::size_t kStartingResistances = 9;  // the resistances of a starting role in maps.dat
+
+}  // namespace
+
 // swd3e.exe 0x0040E0D0: a role of the starting state in maps.dat (0x34 bytes): the maxima come before the current
-// values, the experience is a word
+// values, the experience is a word; the last of its nine resistances fills the two more of swd3e
 void RoleRecord::Load(std::span<const u8> record)
 {
     ByteReader reader(record);
@@ -38,9 +45,14 @@ void RoleRecord::Load(std::span<const u8> record)
     this->defenseBonus = reader.Word16();
     this->level = reader.Byte();
 
-    for (u8& value : this->resistances)
+    for (std::size_t element = 0; element < kStartingResistances; ++element)
     {
-        value = reader.Byte();
+        this->resistances[element] = reader.Byte();
+    }
+
+    for (std::size_t element = kStartingResistances; element < this->resistances.size(); ++element)
+    {
+        this->resistances[element] = this->resistances[kStartingResistances - 1];
     }
 }
 

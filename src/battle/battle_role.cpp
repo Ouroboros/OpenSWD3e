@@ -328,7 +328,7 @@ void BattleRole::SetupEscort(const UnitPlacement& at, Database& database, ErrorR
     record.attackBonus = object.attack;
     record.defenseBonus = object.defense;
     record.agility = static_cast<i16>(object.agility);
-    record.wisdom = static_cast<i16>(object.unk5C);
+    record.wisdom = static_cast<i16>(object.unk60);
     record.evasion = object.battleLevel;
     std::copy_n(object.resistances.begin(), record.resistances.size(), record.resistances.begin());
     this->evadeSkill = static_cast<u8>(record.evasion);

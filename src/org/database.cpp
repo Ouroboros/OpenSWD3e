@@ -21,13 +21,20 @@ constexpr u32 kLevelIndex = 0x70;
 constexpr int kLevelsPerGroup = 0x64;
 constexpr int kTextSearch = 0xFF;
 constexpr u16 kEnd = static_cast<u16>(ObjectTag::End);
-constexpr std::size_t kActBlockBytes = 0x4D;
-constexpr std::size_t kTextEndBytes = 2;   // the "$$" after a text
-constexpr std::size_t kResistUnk9BAt = 9;  // tag 0x7D0: nine resistances, two bytes and two words
-constexpr std::size_t kResistUnk9CAt = 10;
-constexpr std::size_t kResistLevelAt = 11;
-constexpr std::size_t kResistUnk52At = 13;
-constexpr std::size_t kResistBytes = 15;
+constexpr std::size_t kActBlockBytes = 0x4F;
+constexpr std::size_t kTextEndBytes = 2;  // the "$$" after a text
+// Tag 0x7D0 (swd3e): seven bytes from the fifth resistance (to unkA2), then the level and the category.
+constexpr std::size_t kResistFrom = 4;
+constexpr std::size_t kResistTailBytes = 7;
+constexpr std::size_t kResistLevelAt = 7;
+constexpr std::size_t kResistCategoryAt = 9;
+constexpr std::size_t kResistBytes = 11;
+// Objects numbered 3000..3400 and from 6001 on sit lower in the index of mon.dat (0x00489B00).
+constexpr u16 kSecondRangeFirst = 0xBB8;
+constexpr u16 kSecondRangeLast = 0xD48;
+constexpr u16 kSecondRangeShift = 0x9C4;
+constexpr u16 kThirdRangeFirst = 0x1771;
+constexpr u16 kThirdRangeShift = 0x13EC;
 constexpr u16 kLevelStats = 0;  // level.dat opcodes: the stats (kLevelStatBytes), a skipped word
 constexpr u16 kLevelSkip = 1;
 constexpr std::size_t kLevelStatBytes = 0x1A;
@@ -348,9 +355,10 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
 }
 
 // swd3e.exe 0x00489B00: the object `id` of mon.dat into `record` (cleared first; a previous description is freed and
-// uncounted). The script must start with tag 0x3E8 (the name up to "$$"), then tags until 5: words, the 0x4D-byte
-// block of tag 1, the resistances and words of 0x7D0, single bytes of 0x1C and 0x1D, the description of 0x1E. The
-// original copies a name of up to 0xFE bytes over the record (and past it); here at most the fixed part is written.
+// uncounted). Objects 3000..3400 and from 6001 on are looked up lower in the index. The script must start with tag
+// 0x3E8 (the name up to "$$"), then tags until 5: words, the 0x4F-byte block of tag 1, two words of 0x18, the last five
+// resistances, two bytes and two words of 0x7D0, single bytes of 0x1C and 0x1D, the description of 0x1E. The original
+// copies a name of up to 0xFE bytes over the record (and past it); here at most the fixed part is written.
 bool Database::LoadObject(ObjectRecord& record, u16 id)
 {
     if (record.description.has_value())
@@ -367,9 +375,21 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
         return false;
     }
 
+    int index = id;
+
+    if (id >= kSecondRangeFirst && id <= kSecondRangeLast)
+    {
+        index = id - kSecondRangeShift;
+    }
+
+    if (index >= kThirdRangeFirst)
+    {
+        index -= kThirdRangeShift;
+    }
+
     file->SeekBegin(static_cast<i32>(kIndexBase));
     ReadDword(*file);
-    file->SeekCurrent(static_cast<i32>(sizeof(u32) * (id - 1)));
+    file->SeekCurrent(static_cast<i32>(sizeof(u32)) * (index - 1));
     const u32 offset = ReadDword(*file);
     std::vector<u8> script;
     this->ReadScript(*file, offset, script);
@@ -405,6 +425,14 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
             case ObjectTag::ActBlock:
                 code.Copy(bytes + offsetof(ObjectData, act), kActBlockBytes);
                 code.position += kActBlockBytes;
+                break;
+
+            case ObjectTag::Unk4A:
+                word(data.unk4A);
+                break;
+
+            case ObjectTag::Unk4C:
+                word(data.unk4C);
                 break;
 
             case ObjectTag::CostBits:
@@ -475,6 +503,11 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
                 word(data.unk48);
                 break;
 
+            case ObjectTag::Chances:
+                code.Copy(bytes + offsetof(ObjectData, itemChance), 2 * sizeof(u16));
+                code.position += 2 * sizeof(u16);
+                break;
+
             case ObjectTag::Kind:
                 data.kind = code.DwordAt(at + sizeof(u16));
                 code.position += sizeof(u16) + sizeof(u32);
@@ -493,8 +526,8 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
                 code.position += sizeof(u8);
                 break;
 
-            case ObjectTag::Unk9C:
-                data.unk9C = code.ByteAt(at);
+            case ObjectTag::UnkA2:
+                data.unkA2 = code.ByteAt(at);
                 code.position += sizeof(u8);
                 break;
 
@@ -534,11 +567,9 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
             }
 
             case ObjectTag::Resistances:
-                code.Copy(data.resistances.data(), data.resistances.size());
-                data.altar = code.ByteAt(at + kResistUnk9BAt);
-                data.unk9C = code.ByteAt(at + kResistUnk9CAt);
+                code.Copy(bytes + offsetof(ObjectData, resistances) + kResistFrom, kResistTailBytes);
                 data.level = code.WordAt(at + kResistLevelAt);
-                data.category = code.WordAt(at + kResistUnk52At);
+                data.category = code.WordAt(at + kResistCategoryAt);
                 code.position += kResistBytes;
                 break;
 

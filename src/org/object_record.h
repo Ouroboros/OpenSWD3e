@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <optional>
 #include <string>
 
@@ -11,9 +12,9 @@ namespace swd3e
 
 #pragma pack(push, 1)
 
-// The fixed part of a mon.dat object (an item, a skill or a monster; 0xA0 of the 0xA4 bytes of the original record),
-// filled tag by tag by Database::LoadObject. Offsets are given for reference; names follow the bestiary and battle
-// screens, the rest are placeholders.
+// The fixed part of a mon.dat object (an item, a skill or a monster; 0xA4 of the 0xA8 bytes of the original swd3e
+// record, swd32's 0xA0), filled tag by tag by Database::LoadObject. Offsets are given for reference; names follow the
+// bestiary and battle screens, the rest are placeholders.
 struct ObjectData
 {
     static constexpr u16 FirstRoleBit = 0x8000;  // in `usableBy`: the bit of the first role, the others below it
@@ -42,54 +43,66 @@ struct ObjectData
     u16 counterMax = 0;                // +0x44 tag 0xD the top of its counter (proficiency)
     u16 price = 0;                     // +0x46 tag 0xB (the shop value)
     u16 unk48 = 0;                     // +0x48 tag 0x16
-    u16 unk4A = 0;                     // +0x4A
-    i32 maxHitPoints = 0;              // +0x4C an enemy's maximum (set in battle)
-    // +0x50..+0x9C: the 0x4D-byte block of tag 1; tags 0xE, 0x7D0, 0x1C and 0x1D set parts of it.
-    u16 act = 0;            // +0x50 tag 0xE its act (an accessory copy keeps its item id there)
-    u16 category = 0;       // +0x52 tag 0x7D0 the altar category, an enemy's type
-    u16 level = 0;          // +0x54 tag 0x7D0 (shown by the bestiary)
-    u16 attack = 0;         // +0x56
-    u16 defense = 0;        // +0x58
-    u16 agility = 0;        // +0x5A the battle speed
-    u16 unk5C = 0;          // +0x5C
-    u16 ailmentChance = 0;  // +0x5E an ailment lands on a roll of 1..10 up to it
-    u16 skill = 0;          // +0x60 an enemy's skill script (mon.dat)
-    u16 unk62 = 0;          // +0x62
-    i16 hitPoints = 0;      // +0x64
-    u16 itemA = 0;          // +0x66 the objects an enemy uses (inferred) and their counts; 0x66..0x70: set together
-                            // by 0x004769A0 (BattleUnit::ChooseCommand)
+    u16 unk4A = 0;                     // +0x4A tag 2 (swd3e)
+    u16 unk4C = 0;                     // +0x4C tag 3 (swd3e)
+    u16 unk4E = 0;                     // +0x4E
+    i32 maxHitPoints = 0;              // +0x50 an enemy's maximum (set in battle; swd32 +0x4C)
+    // +0x54..+0xA2: the 0x4F-byte block of tag 1; tags 0xE, 0x7D0, 0x18, 0x1C and 0x1D set parts of it. Against
+    // swd32 the fields from act on are 4 bytes later, those from itemA on 6 (hitPoints grew to a dword).
+    u16 act = 0;            // +0x54 tag 0xE its act (an accessory copy keeps its item id there)
+    u16 category = 0;       // +0x56 tag 0x7D0 the altar category, an enemy's type
+    u16 level = 0;          // +0x58 tag 0x7D0 (shown by the bestiary)
+    u16 attack = 0;         // +0x5A
+    u16 defense = 0;        // +0x5C
+    u16 agility = 0;        // +0x5E the battle speed
+    u16 unk60 = 0;          // +0x60
+    u16 ailmentChance = 0;  // +0x62 an ailment lands on a roll of 1..10 up to it
+    u16 skill = 0;          // +0x64 an enemy's skill script (mon.dat)
+    u16 unk66 = 0;          // +0x66
+    i32 hitPoints = 0;      // +0x68 (read as a dword by the bestiary, 0x00442920)
+    u16 itemA = 0;          // +0x6C the objects an enemy uses (inferred) and their counts; set together by
+                            // BattleUnit::ChooseCommand
     u16 itemACount = 0;
     u16 itemB = 0;
     u16 itemBCount = 0;
     u16 itemC = 0;
     u16 itemCCount = 0;
-    u16 skillA = 0;  // +0x72 the skills of an enemy and their counts; 0x72..0x76: set together by 0x00476A10
+    u16 skillA = 0;  // +0x78 the skills of an enemy and their counts, set together
     u16 skillACount = 0;
     u16 skillB = 0;
     u16 skillBCount = 0;
-    u16 healItemA = 0;   // +0x7A the object an enemy heals itself with (choice 1)
-    u16 healCountA = 0;  // +0x7C its uses left
+    u16 healItemA = 0;   // +0x80 the object an enemy heals itself with (choice 1)
+    u16 healCountA = 0;  // +0x82 its uses left
     u16 healItemB = 0;
-    u16 healCountB = 0;       // +0x80 (choice 2)
-    u16 dropItem = 0;         // +0x82 the object an enemy may drop (RollDrop)
-    u16 dropChance = 0;       // +0x84 a roll of 0..19 below it drops it
-    u16 stealItem = 0;        // +0x86 the item an enemy can be robbed of (BattleRole::Steal), 0: none
-    u16 stealDifficulty = 0;  // +0x88 2..5: a steal roll below it succeeds
-    u16 unk8A = 0;
-    u16 unk8C = 0;
-    u8 itemChance = 0;   // +0x8E 0: the enemy uses no objects, else added to the turns without one for the roll
-    u8 skillChance = 0;  // +0x8F the same for the skills
-    u8 battleLevel = 0;  // +0x90 a unit's level byte in battle
-    u8 catchChance = 0;  // +0x91 near enough, a catch roll of 0..9 below it catches the enemy
-    std::array<u8, 9> resistances = {};  // +0x92 tag 0x7D0: per element
-    u8 altar = 0;                        // +0x9B tag 0x1C, 0x7D0 the altar it belongs to
-    u8 unk9C = 0;                        // +0x9C tag 0x1D, 0x7D0
-    std::array<u8, 3> unk9D = {};        // +0x9D
+    u16 healCountB = 0;       // +0x86 (choice 2)
+    u16 dropItem = 0;         // +0x88 the object an enemy may drop (RollDrop)
+    u16 dropChance = 0;       // +0x8A a roll of 0..19 below it drops it
+    u16 stealItem = 0;        // +0x8C the item an enemy can be robbed of (BattleRole::Steal), 0: none
+    u16 stealDifficulty = 0;  // +0x8E 2..5: a steal roll below it succeeds
+    u16 unk90 = 0;
+    u16 unk92 = 0;
+    u8 itemChance = 0;   // +0x94 tag 0x18 (with the next byte): 0: the enemy uses no objects, else added to the turns
+                         // without one for the roll
+    u8 skillChance = 0;  // +0x95 the same for the skills
+    u8 battleLevel = 0;  // +0x96 tag 0x18 (with the next byte) a unit's level byte in battle
+    u8 catchChance = 0;  // +0x97 near enough, a catch roll of 0..9 below it catches the enemy
+    // +0x98 per element; tag 0x7D0 sets the last five of them
+    std::array<u8, 9> resistances = {};
+    u8 altar = 0;  // +0xA1 tags 0x1C, 0x7D0 the altar it belongs to
+    u8 unkA2 = 0;  // +0xA2 tags 0x1D, 0x7D0
+    u8 unkA3 = 0;  // +0xA3
 };
 
 #pragma pack(pop)
 
-static_assert(sizeof(ObjectData) == 0xA0);
+static_assert(sizeof(ObjectData) == 0xA4);
+static_assert(offsetof(ObjectData, maxHitPoints) == 0x50);
+static_assert(offsetof(ObjectData, act) == 0x54);
+static_assert(offsetof(ObjectData, hitPoints) == 0x68);
+static_assert(offsetof(ObjectData, itemA) == 0x6C);
+static_assert(offsetof(ObjectData, itemChance) == 0x94);
+static_assert(offsetof(ObjectData, resistances) == 0x98);
+static_assert(offsetof(ObjectData, altar) == 0xA1);
 
 // A mon.dat object: the fixed part and the description (+0xA0, tag 0x1E; none when the record has no such tag).
 struct ObjectRecord
@@ -149,9 +162,9 @@ struct SkillScript
         UnkFlag200 = 0x200,
         UnkFlag400 = 0x400,
         UnkFlag800 = 0x800,
-        UnkFlag1000 = 0x1000,  // opcode 0x16, with unk22 and turns
-        UnkFlag2000 = 0x2000,  // opcode 0x18
-        UnkFlag4000 = 0x4000,  // opcode 0x19
+        UnkFlag1000 = 0x1000,      // opcode 0x16, with unk22 and turns
+        UnkFlag2000 = 0x2000,      // opcode 0x18
+        UnkFlag4000 = 0x4000,      // opcode 0x19
         UnkFlag8000 = 0x8000,      // opcode 0x1B
         UnkFlag10000 = 0x10000,    // opcode 0x1C
         UnkFlag20000 = 0x20000,    // opcode 0xC when statusBits has the bit
@@ -160,7 +173,7 @@ struct SkillScript
         UnkFlag100000 = 0x100000,  // opcode 0x1F, with unk24
     };
 
-    static constexpr u16 Unk1EMark = 0x8000;  // set in unk20 by opcode 0xA
+    static constexpr u16 Unk1EMark = 0x8000;        // set in unk20 by opcode 0xA
     static constexpr u32 StatusUnk20000 = 0x20000;  // in statusBits: opcode 0xC also sets UnkFlag20000
 
     // The values of `element` (names from the battle messages of each resistance).
@@ -252,7 +265,9 @@ enum class SkillOpcode : u16
 // The tags of an object script of mon.dat (Database::LoadObject); 5 ends the script.
 enum class ObjectTag : u16
 {
-    ActBlock = 1,  // 0x4D bytes from act
+    ActBlock = 1,  // 0x4F bytes from act (swd32: 0x4D)
+    Unk4A = 2,     // swd3e
+    Unk4C = 3,     // swd3e
     End = 5,
     CostBits = 6,
     AttackBonusUp = 7,
@@ -271,15 +286,16 @@ enum class ObjectTag : u16
     SpiritUp = 0x14,
     StaminaUp = 0x15,
     Unk48 = 0x16,
+    Chances = 0x18,  // swd3e: two words from itemChance (the item and skill chances, the battle level and catch chance)
     Kind = 0x19,
     UsableBy = 0x1A,
     UseKind = 0x1B,
     Altar = 0x1C,
-    Unk9C = 0x1D,
+    UnkA2 = 0x1D,
     Description = 0x1E,
     SkillScript = 0x64,
     Name = 0x3E8,
-    Resistances = 0x7D0,  // the resistances, altar, unk9C, the level and category
+    Resistances = 0x7D0,  // swd3e: the last five resistances, the altar, unkA2, the level and category
 };
 
 }  // namespace swd3e

@@ -22,34 +22,36 @@ struct RoleRecord
 {
     static constexpr u16 Defeated = 0x8000;  // in `condition`: the role starts the battle defeated
 
-    i32 totalExperience = 0;             // +0x00 總經驗, raised by a won battle and checked against the next level
-    i16 hitPoints = 0;                   // +0x04 生命
-    i16 spirit = 0;                      // +0x06 靈力
-    i16 stamina = 0;                     // +0x08 體力
-    i16 maxHitPoints = 0;                // +0x0A
-    i16 maxSpirit = 0;                   // +0x0C
-    i16 maxStamina = 0;                  // +0x0E
-    i16 strength = 0;                    // +0x10 力量
-    i16 endurance = 0;                   // +0x12 耐力
-    i16 wisdom = 0;                      // +0x14 智慧
-    i16 agility = 0;                     // +0x16 (inferred)
-    i16 rapport = 0;                     // +0x18 默契
-    i16 reaction = 0;                    // +0x1A 反應力
-    i16 ailmentChance = 0;               // +0x1C an ailment lands on a roll of 1..10 up to it
-    i16 evasion = 0;                     // +0x1E 閃躲
-    i32 experience = 0;                  // +0x20 (inferred: the level.dat dword)
-    u16 condition = 0;                   // +0x24 Defeated
-    u16 attackBonus = 0;                 // +0x26 from the equipment, cleared in the save
-    u16 defenseBonus = 0;                // +0x28 from the equipment, cleared in the save
-    u16 unk2A = 0;                       // +0x2A
-    u8 level = 0;                        // +0x2C
-    std::array<u8, 9> resistances = {};  // +0x2D by element, in tenths
-    std::array<u8, 2> unk36 = {};        // +0x36
+    i32 totalExperience = 0;  // +0x00 總經驗, raised by a won battle and checked against the next level
+    i16 hitPoints = 0;        // +0x04 生命
+    i16 spirit = 0;           // +0x06 靈力
+    i16 stamina = 0;          // +0x08 體力
+    i16 maxHitPoints = 0;     // +0x0A
+    i16 maxSpirit = 0;        // +0x0C
+    i16 maxStamina = 0;       // +0x0E
+    i16 strength = 0;         // +0x10 力量
+    i16 endurance = 0;        // +0x12 耐力
+    i16 wisdom = 0;           // +0x14 智慧
+    i16 agility = 0;          // +0x16 (inferred)
+    i16 rapport = 0;          // +0x18 默契
+    i16 reaction = 0;         // +0x1A 反應力
+    i16 ailmentChance = 0;    // +0x1C an ailment lands on a roll of 1..10 up to it
+    i16 evasion = 0;          // +0x1E 閃躲
+    i32 experience = 0;       // +0x20 (inferred: the level.dat dword)
+    u16 condition = 0;        // +0x24 Defeated
+    u16 attackBonus = 0;      // +0x26 from the equipment, cleared in the save
+    u16 defenseBonus = 0;     // +0x28 from the equipment, cleared in the save
+    u16 unk2A = 0;            // +0x2A
+    u8 level = 0;             // +0x2C
+    // +0x2D by element, in tenths: swd3e keeps eleven (swd32 nine), the starting state copying the ninth into the
+    // last two (0x0040E0D0)
+    std::array<u8, 0xB> resistances = {};
+    std::array<u8, 4> unk38 = {};  // +0x38
 
     void Load(std::span<const u8> record);
 };
 
-static_assert(sizeof(RoleRecord) == 0x38);
+static_assert(sizeof(RoleRecord) == 0x3C);
 
 // The 0x60-byte battle block of a party role (four of them at 0x004ACF50).
 struct RoleBattleBlock
@@ -98,7 +100,7 @@ public:
     static constexpr u32 ClockLimit = 1000;                                 // the clock goes back to 0 past it
     // swd32 0x004ACDB0 the game clock: a tick every Game::ClockFrames + 1 frames on the map (talk commands
     i32 clock = 0;
-                    // 0x22..0x25)
+    // 0x22..0x25)
     std::array<i32, Variables> variables = {};  // 0x004C6370 [0]: the gold
     Fame fame;
     std::array<Name, Roles> names = Party::DefaultNames();  // swd32 0x0049E148
