@@ -1,0 +1,1701 @@
+a_address	a_name	b_address	b_name	method	confidence	reusable	a_instructions	b_instructions	order_consistent	block_overlap
+0x00401000	sub_401000	0x004014F0	sub_4014F0	similarity	0.709	no: the code differs	371	378	yes	0.522
+0x004014B0	sub_4014B0	0x004019A0	sub_4019A0	calls	0.935	no: the code differs	163	163	yes	0.892
+0x00401680	sub_401680	0x00401B70	sub_401B70	hash	1.000	yes	81	81	yes	1.000
+0x00401780	sub_401780	0x00401C70	sub_401C70	callers	0.866	no: the code differs	150	154	yes	0.786
+0x00401950	sub_401950	0x00401E50	sub_401E50	shape	0.970	no: the code differs	140	140	yes	1.000
+0x00401B30	sub_401B30	0x00402030	sub_402030	shape	0.970	no: the code differs	35	35	yes	1.000
+0x00401BC0	sub_401BC0	0x004020C0	sub_4020C0	shape	0.970	no: the code differs	24	24	yes	1.000
+0x00401C20	sub_401C20	0x00402120	sub_402120	shape	0.970	no: the code differs	39	39	yes	1.000
+0x00401CA0	sub_401CA0	0x004021A0	sub_4021A0	shape	0.970	no: the code differs	12	12	yes	1.000
+0x00401CD0	sub_401CD0	0x004021D0	sub_4021D0	shape	0.970	no: the code differs	18	18	yes	1.000
+0x00401D00	sub_401D00	0x00402200	sub_402200	shape	0.970	no: the code differs	12	12	yes	1.000
+0x00401D30	sub_401D30	0x00402230	sub_402230	anchor	0.607	no: the code differs	112	116	yes	0.357
+0x00401E80	sub_401E80	0x00402390	sub_402390	shape	0.970	no: the code differs	15	15	yes	1.000
+0x00401EB0	sub_401EB0	0x004023C0	sub_4023C0	hash	1.000	yes	7	7	yes	1.000
+0x00401ED0	sub_401ED0	0x004023E0	sub_4023E0	shape	0.970	no: the code differs	14	14	yes	1.000
+0x00401F00	sub_401F00	0x00402410	sub_402410	shape	0.970	no: the code differs	26	26	yes	1.000
+0x00401F40	sub_401F40	0x00402450	sub_402450	callers	0.740	no: the code differs	88	79	yes	0.600
+0x00402020	sub_402020	0x00402520	sub_402520	shape	0.970	no: the code differs	19	19	yes	1.000
+0x00402060	sub_402060	0x00402560	sub_402560	callers	0.682	no: the code differs	135	135	yes	0.471
+0x00402180	sub_402180	0x00402690	sub_402690	calls	0.435	no: the code differs	281	276	yes	0.065
+0x00402460	sub_402460	0x00402940	sub_402940	shape	0.970	no: the code differs	12	12	yes	1.000
+0x00402480	sub_402480	0x00402960	sub_402960	shape	0.970	no: the code differs	12	12	yes	1.000
+0x004024A0	sub_4024A0	0x00402980	sub_402980	shape	0.970	no: the code differs	26	26	yes	1.000
+0x004024E0	sub_4024E0	0x004029C0	sub_4029C0	callers	0.680	no: the code differs	76	76	yes	0.467
+0x004025B0	sub_4025B0	0x00402A90	sub_402A90	shape	0.970	no: the code differs	18	18	yes	1.000
+0x004025E0	sub_4025E0	0x00402AC0	sub_402AC0	shape	0.970	no: the code differs	12	12	yes	1.000
+0x00402600	sub_402600	0x00402AE0	sub_402AE0	shape	0.970	no: the code differs	371	371	yes	1.000
+0x00402A90	sub_402A90	0x00402F70	sub_402F70	calls	1.000	no: the code differs	3	3	yes	1.000
+0x00402AA0	sub_402AA0	0x00402F80	sub_402F80	anchor	0.829	no: the code differs	1360	1224	yes	0.764
+0x00403DC0	sub_403DC0	0x004040B0	sub_4040B0	hash	1.000	yes	333	333	yes	1.000
+0x00404220	sub_404220	0x00404510	sub_404510	hash	1.000	yes	89	89	yes	1.000
+0x00404320	sub_404320	0x00404610	sub_404610	callers	0.991	no: the code differs	451	450	yes	0.986
+0x00404920	sub_404920	0x00404C00	sub_404C00	callers	0.992	no: the code differs	305	304	yes	0.988
+0x00404CF0	sub_404CF0	0x00404FD0	sub_404FD0	shape	0.970	no: the code differs	74	74	yes	1.000
+0x00404DD0	sub_404DD0	0x004050B0	sub_4050B0	callers	0.837	no: the code differs	16	15	yes	0.750
+0x00404E00	sub_404E00	0x004050E0	sub_4050E0	hash	1.000	yes	189	189	yes	1.000
+0x004050E0	sub_4050E0	0x004053C0	sub_4053C0	calls	0.918	no: the code differs	39	36	yes	0.889
+0x00405150	sub_405150	0x00405430	sub_405430	shape	0.970	no: the code differs	70	70	yes	1.000
+0x00405220	sub_405220	0x00405500	sub_405500	callers	0.838	no: the code differs	1164	1085	yes	0.794
+0x004061B0	sub_4061B0	0x00406390	sub_406390	anchor	0.613	no: the code differs	153	152	yes	0.357
+0x004063A0	sub_4063A0	0x00406580	sub_406580	anchor	0.967	no: the code differs	116	115	yes	0.947
+0x00406530	sub_406530	0x00406710	sub_406710	neighbours	0.392	no: the code differs	26	25	yes	0.000
+0x00406590	sub_406590	0x00406770	sub_406770	anchor	0.824	no: the code differs	148	147	yes	0.708
+0x00406780	sub_406780	0x00406960	sub_406960	anchor	0.891	no: the code differs	296	294	yes	0.821
+0x00406B50	sub_406B50	0x00406D30	sub_406D30	hash	1.000	yes	52	52	yes	1.000
+0x00406C20	sub_406C20	0x00406E00	sub_406E00	hash	1.000	yes	8	8	yes	1.000
+0x00406C50	sub_406C50	0x00406E30	sub_406E30	hash	1.000	yes	29	29	yes	1.000
+0x00406CD0	sub_406CD0	0x00406EB0	sub_406EB0	hash	1.000	yes	50	50	yes	1.000
+0x00406D90	sub_406D90	0x00406F70	sub_406F70	hash	1.000	yes	86	86	yes	1.000
+0x00406EC0	sub_406EC0	0x004070A0	sub_4070A0	anchor	0.909	no: the code differs	1942	1922	yes	0.903
+0x00408B40	sub_408B40	0x00408CF0	sub_408CF0	hash	1.000	yes	36	36	yes	1.000
+0x00408BC0	sub_408BC0	0x00408D70	sub_408D70	hash	1.000	yes	82	82	yes	1.000
+0x00408CC0	sub_408CC0	0x00408E70	sub_408E70	anchor	0.662	no: the code differs	467	455	yes	0.444
+0x00409320	sub_409320	0x004094A0	sub_4094A0	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	49	49	yes	1.000
+0x004093C0	sub_4093C0	0x00409540	sub_409540	hash	1.000	no: callee 0x00451210 unmatched or matched elsewhere	40	40	yes	1.000
+0x00409480	sub_409480	0x00409600	sub_409600	shape	0.970	no: the code differs	275	275	yes	1.000
+0x00409840	sub_409840	0x004099C0	sub_4099C0	neighbours	0.315	no: the code differs	40	23	yes	0.000
+0x004098C0	sub_4098C0	0x00409A10	sub_409A10	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	108	108	yes	1.000
+0x00409A30	sub_409A30	0x00409B80	sub_409B80	shape	0.970	no: the code differs	41	41	yes	1.000
+0x00409AC0	sub_409AC0	0x00409C10	sub_409C10	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	66	66	yes	1.000
+0x00409B90	sub_409B90	0x00409CE0	sub_409CE0	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	68	68	yes	1.000
+0x00409C80	sub_409C80	0x00409DD0	sub_409DD0	anchor	0.911	no: the code differs	67	68	yes	0.857
+0x00409DE0	sub_409DE0	0x00401190	sub_401190	hash	1.000	yes	9	9	no	1.000
+0x00409E00	sub_409E00	0x004011B0	sub_4011B0	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x00409E10	sub_409E10	0x004011C0	sub_4011C0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409E20	sub_409E20	0x004011D0	sub_4011D0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409E30	sub_409E30	0x004011E0	sub_4011E0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409E40	sub_409E40	0x004011F0	sub_4011F0	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x00409E50	sub_409E50	0x00401200	sub_401200	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409E60	sub_409E60	0x00401210	sub_401210	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409E70	sub_409E70	0x00401220	sub_401220	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409E80	sub_409E80	0x00401230	sub_401230	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x00409E90	sub_409E90	0x00401240	sub_401240	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409EA0	sub_409EA0	0x00401250	sub_401250	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409EB0	sub_409EB0	0x00401260	sub_401260	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409EC0	sub_409EC0	0x00401270	sub_401270	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x00409ED0	sub_409ED0	0x00401280	sub_401280	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409EE0	sub_409EE0	0x00401290	sub_401290	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409EF0	sub_409EF0	0x004012A0	sub_4012A0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409F00	sub_409F00	0x004012B0	sub_4012B0	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x00409F10	sub_409F10	0x004012C0	sub_4012C0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409F20	sub_409F20	0x004012D0	sub_4012D0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409F30	sub_409F30	0x004012E0	sub_4012E0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409F40	sub_409F40	0x004012F0	sub_4012F0	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x00409F50	sub_409F50	0x00401300	sub_401300	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409F60	sub_409F60	0x00401310	sub_401310	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409F70	sub_409F70	0x00401320	sub_401320	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409F80	sub_409F80	0x00401330	sub_401330	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x00409F90	sub_409F90	0x00401340	sub_401340	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409FA0	sub_409FA0	0x00401350	sub_401350	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409FB0	sub_409FB0	0x00401360	sub_401360	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409FC0	sub_409FC0	0x00401370	sub_401370	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x00409FD0	sub_409FD0	0x00401380	sub_401380	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409FE0	sub_409FE0	0x00401390	sub_401390	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x00409FF0	sub_409FF0	0x004013A0	sub_4013A0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A000	sub_40A000	0x004013B0	sub_4013B0	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x0040A010	sub_40A010	0x004013C0	sub_4013C0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A020	sub_40A020	0x004013D0	sub_4013D0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A030	sub_40A030	0x004013E0	sub_4013E0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A040	sub_40A040	0x004013F0	sub_4013F0	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x0040A050	sub_40A050	0x00401400	sub_401400	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A060	sub_40A060	0x00401410	sub_401410	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A070	sub_40A070	0x00401420	sub_401420	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A080	sub_40A080	0x00401430	sub_401430	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x0040A090	sub_40A090	0x00401440	sub_401440	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A0A0	sub_40A0A0	0x00401450	sub_401450	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A0B0	sub_40A0B0	0x00401460	sub_401460	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A0C0	sub_40A0C0	0x00401470	sub_401470	neighbours	1.000	no: the code differs	4	4	no	1.000
+0x0040A0D0	sub_40A0D0	0x00401480	sub_401480	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A0E0	sub_40A0E0	0x00401490	sub_401490	neighbours	1.000	no: the code differs	1	1	no	1.000
+0x0040A0F0	sub_40A0F0	0x004014A0	sub_4014A0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A100	sub_40A100	0x004014B0	sub_4014B0	neighbours	1.000	no: the code differs	2	2	no	1.000
+0x0040A110	sub_40A110	0x004014C0	sub_4014C0	calls	0.544	no: the code differs	9	2	no	0.500
+0x0040A140	_WinMain@16	0x00409EC0	_WinMain@16	anchor	0.485	no: the code differs	192	173	yes	0.250
+0x0040A380	sub_40A380	0x0040A0D0	sub_40A0D0	anchor	0.768	no: the code differs	294	314	yes	0.634
+0x0040A7B0	sub_40A7B0	0x0040A570	sub_40A570	anchor	0.787	no: the code differs	451	366	yes	0.708
+0x0040AEC0	sub_40AEC0	0x0040AB50	sub_40AB50	anchor	0.772	no: the code differs	117	123	yes	0.636
+0x0040B370	sub_40B370	0x0040AFF0	sub_40AFF0	anchor	0.954	no: the code differs	590	585	yes	0.927
+0x0040BB90	sub_40BB90	0x0040B7F0	sub_40B7F0	callers	0.689	no: the code differs	225	196	yes	0.619
+0x0040BEA0	sub_40BEA0	0x0040BAA0	sub_40BAA0	hash	1.000	yes	55	55	yes	1.000
+0x0040BF20	sub_40BF20	0x0040BB20	sub_40BB20	hash	1.000	yes	13	13	yes	1.000
+0x0040BF50	sub_40BF50	0x0040BB50	sub_40BB50	hash	1.000	yes	359	359	yes	1.000
+0x0040C420	sub_40C420	0x0040C020	sub_40C020	shape	0.970	no: the code differs	18	18	yes	1.000
+0x0040C460	sub_40C460	0x0040C060	sub_40C060	anchor	0.587	no: the code differs	32	30	yes	0.333
+0x0040C4D0	sub_40C4D0	0x0040C0D0	sub_40C0D0	hash	1.000	yes	14	14	yes	1.000
+0x0040C500	sub_40C500	0x0040C100	sub_40C100	hash	1.000	yes	16	16	yes	1.000
+0x0040C570	sub_40C570	0x0040C130	sub_40C130	anchor	0.637	no: the code differs	798	861	yes	0.419
+0x0040D3B0	sub_40D3B0	0x0040D060	sub_40D060	hash	1.000	yes	30	30	yes	1.000
+0x0040D410	sub_40D410	0x0040D0C0	sub_40D0C0	calls	0.929	no: the code differs	42	41	yes	0.889
+0x0040D4C0	sub_40D4C0	0x0040D160	sub_40D160	hash	1.000	yes	44	44	yes	1.000
+0x0040D560	sub_40D560	0x0040D200	sub_40D200	anchor	0.970	no: the code differs	127	126	yes	0.952
+0x0040D720	sub_40D720	0x0040D3C0	sub_40D3C0	shape	0.970	no: the code differs	49	49	yes	1.000
+0x0040D7C0	sub_40D7C0	0x0040D460	sub_40D460	anchor	0.924	no: the code differs	70	66	yes	0.893
+0x0040D8D0	sub_40D8D0	0x0040D560	sub_40D560	shape	0.970	no: the code differs	55	55	yes	1.000
+0x0040D980	sub_40D980	0x0040D610	sub_40D610	callers	0.921	no: the code differs	114	112	yes	0.875
+0x0040DB00	sub_40DB00	0x0040D790	sub_40D790	anchor	0.904	no: the code differs	181	178	yes	0.846
+0x0040DD50	sub_40DD50	0x0040D9E0	sub_40D9E0	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	40	40	yes	1.000
+0x0040DDD0	sub_40DDD0	0x0040DA60	sub_40DA60	callers	0.960	no: the code differs	83	82	yes	0.938
+0x0040DEB0	sub_40DEB0	0x0040DB40	sub_40DB40	hash	1.000	yes	9	9	yes	1.000
+0x0040DED0	sub_40DED0	0x0040DB60	sub_40DB60	hash	1.000	yes	33	33	yes	1.000
+0x0040DF30	sub_40DF30	0x0040DBC0	sub_40DBC0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	21	21	yes	1.000
+0x0040DF70	sub_40DF70	0x0040DC00	sub_40DC00	shape	0.970	no: the code differs	12	12	yes	1.000
+0x0040DFA0	sub_40DFA0	0x0040DC30	sub_40DC30	hash	1.000	yes	11	11	yes	1.000
+0x0040DFC0	sub_40DFC0	0x0040DC50	sub_40DC50	hash	1.000	yes	11	11	yes	1.000
+0x0040DFF0	sub_40DFF0	0x0040DC80	sub_40DC80	hash	1.000	yes	10	10	yes	1.000
+0x0040E020	sub_40E020	0x0040DCB0	sub_40DCB0	hash	1.000	yes	14	14	yes	1.000
+0x0040E050	sub_40E050	0x0040DCE0	sub_40DCE0	hash	1.000	yes	12	12	yes	1.000
+0x0040E080	sub_40E080	0x0040DD10	sub_40DD10	similarity	1.000	no: the code differs	3	3	yes	1.000
+0x0040E090	sub_40E090	0x0040DD20	sub_40DD20	hash	1.000	yes	4	4	yes	1.000
+0x0040E0A0	sub_40E0A0	0x0040DD30	sub_40DD30	hash	1.000	yes	3	3	yes	1.000
+0x0040E0B0	sub_40E0B0	0x0040DD40	sub_40DD40	hash	1.000	yes	7	7	yes	1.000
+0x0040E0D0	sub_40E0D0	0x0040DD60	sub_40DD60	neighbours	0.388	no: the code differs	68	64	yes	0.000
+0x0040E1C0	sub_40E1C0	0x0040DE50	sub_40DE50	hash	1.000	yes	165	165	yes	1.000
+0x0040E3A0	sub_40E3A0	0x0040E030	sub_40E030	calls	0.392	no: the code differs	24	23	yes	0.000
+0x0040E3F0	sub_40E3F0	0x0040E080	sub_40E080	hash	1.000	yes	18	18	yes	1.000
+0x0040E420	sub_40E420	0x0040E0B0	sub_40E0B0	anchor	0.924	no: the code differs	778	745	yes	0.887
+0x0040EF60	sub_40EF60	0x0040EBF0	sub_40EBF0	shape	0.970	no: the code differs	49	49	yes	1.000
+0x0040EFF0	sub_40EFF0	0x0040EC80	sub_40EC80	hash	1.000	yes	22	22	yes	1.000
+0x0040F030	sub_40F030	0x0040ECC0	sub_40ECC0	shape	0.970	no: the code differs	53	53	yes	1.000
+0x0040F0D0	sub_40F0D0	0x0040ED60	sub_40ED60	callers	0.907	no: the code differs	164	170	yes	0.857
+0x0040F310	sub_40F310	0x0040EFD0	sub_40EFD0	hash	1.000	yes	39	39	yes	1.000
+0x0040F380	sub_40F380	0x0040F040	sub_40F040	hash	1.000	no: callee 0x0040C530 unmatched or matched elsewhere	80	80	yes	1.000
+0x0040F4A0	sub_40F4A0	0x0040F160	sub_40F160	callers	0.797	no: the code differs	71	72	yes	0.667
+0x0040F5C0	sub_40F5C0	0x0040F280	sub_40F280	hash	1.000	no: callee 0x0040C530 unmatched or matched elsewhere	62	62	yes	1.000
+0x0040F680	sub_40F680	0x0040F340	sub_40F340	hash	1.000	yes	40	40	yes	1.000
+0x0040F6F0	sub_40F6F0	0x0040F3B0	sub_40F3B0	shape	0.970	no: the code differs	32	32	yes	1.000
+0x0040F750	sub_40F750	0x0040F410	sub_40F410	shape	0.970	no: the code differs	79	79	yes	1.000
+0x0040F840	sub_40F840	0x0040F500	sub_40F500	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	20	20	yes	1.000
+0x0040F880	sub_40F880	0x0040F540	sub_40F540	calls	1.000	no: the code differs	12	12	yes	1.000
+0x0040F8B0	sub_40F8B0	0x0040F570	sub_40F570	calls	1.000	no: the code differs	12	12	yes	1.000
+0x0040F8E0	sub_40F8E0	0x0040F5A0	sub_40F5A0	calls	0.774	no: the code differs	23	20	yes	0.667
+0x0040F930	sub_40F930	0x0040F5E0	sub_40F5E0	shape	0.970	no: the code differs	23	23	yes	1.000
+0x0040F980	sub_40F980	0x0040F630	sub_40F630	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	24	24	yes	1.000
+0x0040F9C0	sub_40F9C0	0x0040F670	sub_40F670	hash	1.000	yes	6	6	yes	1.000
+0x0040F9E0	sub_40F9E0	0x0040F690	sub_40F690	hash	1.000	no: callee 0x004A1A36 unmatched or matched elsewhere	19	19	yes	1.000
+0x0040FA20	sub_40FA20	0x0040F6D0	sub_40F6D0	anchor	0.902	no: the code differs	117	116	yes	0.840
+0x0040FBE0	DialogFunc	0x0040F890	DialogFunc	shape	0.970	no: the code differs	923	923	yes	1.000
+0x00410710	sub_410710	0x004103C0	sub_4103C0	hash	1.000	yes	57	57	yes	1.000
+0x004107E0	sub_4107E0	0x00410490	sub_410490	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	115	115	yes	1.000
+0x00410950	sub_410950	0x00410600	sub_410600	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	102	102	yes	1.000
+0x00410A80	sub_410A80	0x00410730	sub_410730	callers	0.951	no: the code differs	447	443	yes	0.969
+0x00411390	sub_411390	0x00411030	sub_411030	calls	0.514	no: the code differs	154	154	yes	0.190
+0x004115D0	sub_4115D0	0x004112B0	sub_4112B0	calls	0.482	no: the code differs	104	100	yes	0.150
+0x00411790	sub_411790	0x00411490	sub_411490	hash	1.000	yes	72	72	yes	1.000
+0x00411890	sub_411890	0x00411530	sub_411530	callers	0.667	no: the code differs	89	98	yes	0.810
+0x00411970	sub_411970	0x00411620	sub_411620	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	58	58	yes	1.000
+0x00411A50	sub_411A50	0x00411700	sub_411700	anchor	0.599	no: the code differs	96	87	yes	0.364
+0x00411B50	sub_411B50	0x004117F0	sub_4117F0	callers	0.591	no: the code differs	64	67	yes	0.333
+0x00411C10	sub_411C10	0x00411C90	sub_411C90	hash	1.000	yes	35	35	yes	1.000
+0x00411C80	sub_411C80	0x00411D00	sub_411D00	hash	1.000	yes	30	30	yes	1.000
+0x00411D10	sub_411D10	0x00411D90	sub_411D90	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	58	58	yes	1.000
+0x00411DA0	sub_411DA0	0x00411E20	sub_411E20	hash	1.000	yes	84	84	yes	1.000
+0x00411E80	sub_411E80	0x00411F00	sub_411F00	hash	1.000	yes	38	38	yes	1.000
+0x00411F10	sub_411F10	0x00411F90	sub_411F90	calls	1.000	no: the code differs	2	2	yes	1.000
+0x00411F20	sub_411F20	0x00411FA0	sub_411FA0	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	63	63	yes	1.000
+0x004126A0	sub_4126A0	0x004120B0	sub_4120B0	callers	0.803	no: the code differs	623	606	yes	0.792
+0x00412F60	sub_412F60	0x00412930	sub_412930	callers	0.883	no: the code differs	183	192	yes	0.821
+0x004131F0	sub_4131F0	0x00412BE0	sub_412BE0	hash	1.000	yes	104	104	yes	1.000
+0x00413340	sub_413340	0x00412D30	sub_412D30	hash	1.000	yes	374	374	yes	1.000
+0x00413830	sub_413830	0x00413220	sub_413220	hash	1.000	yes	105	105	yes	1.000
+0x00413980	sub_413980	0x00413370	sub_413370	hash	1.000	yes	379	379	yes	1.000
+0x00413E80	sub_413E80	0x00413870	sub_413870	callers	0.962	no: the code differs	61	61	yes	0.938
+0x00413F20	sub_413F20	0x00413910	sub_413910	callers	0.594	no: the code differs	371	292	yes	0.395
+0x004143B0	sub_4143B0	0x00413CA0	sub_413CA0	callers	0.794	no: the code differs	151	156	yes	0.667
+0x004145A0	sub_4145A0	0x00413FE0	sub_413FE0	callers	0.629	no: the code differs	445	422	yes	0.429
+0x00414B70	sub_414B70	0x00414570	sub_414570	hash	1.000	yes	35	35	yes	1.000
+0x00414BF0	sub_414BF0	0x004145F0	sub_4145F0	neighbours	0.372	no: the code differs	74	86	yes	0.000
+0x00414CC0	sub_414CC0	0x004146F0	sub_4146F0	hash	1.000	yes	57	57	yes	1.000
+0x00414DB0	sub_414DB0	0x004147E0	sub_4147E0	shape	0.970	no: the code differs	90	90	yes	1.000
+0x00414EC0	sub_414EC0	0x004148F0	sub_4148F0	similarity	0.914	no: the code differs	36	38	yes	0.875
+0x00414F70	sub_414F70	0x004149B0	sub_4149B0	hash	1.000	no: callee 0x0040C530 unmatched or matched elsewhere	107	107	yes	1.000
+0x00415120	sub_415120	0x00414B60	sub_414B60	shape	0.970	no: the code differs	115	115	yes	1.000
+0x004152A0	sub_4152A0	0x00414CE0	sub_414CE0	shape	0.970	no: the code differs	99	99	yes	1.000
+0x00415410	sub_415410	0x00414E50	sub_414E50	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	288	288	yes	1.000
+0x004157B0	sub_4157B0	0x004151F0	sub_4151F0	anchor	0.511	no: the code differs	143	158	yes	0.217
+0x00415960	sub_415960	0x004153D0	sub_4153D0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	65	65	yes	1.000
+0x00415A30	sub_415A30	0x004154A0	sub_4154A0	callers	0.742	no: the code differs	244	245	yes	0.571
+0x00415D50	sub_415D50	0x004157D0	sub_4157D0	hash	1.000	yes	91	91	yes	1.000
+0x00415E40	sub_415E40	0x004158C0	sub_4158C0	callers	0.903	no: the code differs	193	200	yes	0.850
+0x004160E0	sub_4160E0	0x00415B70	sub_415B70	shape	0.970	no: the code differs	223	223	yes	1.000
+0x00416450	sub_416450	0x00415EE0	sub_415EE0	callers	0.879	no: the code differs	213	212	yes	0.800
+0x00416730	sub_416730	0x004161C0	sub_4161C0	shape	0.970	no: the code differs	165	165	yes	1.000
+0x00416930	sub_416930	0x004163C0	sub_4163C0	callers	0.961	no: the code differs	136	136	yes	0.935
+0x00416B00	sub_416B00	0x00416590	sub_416590	hash	1.000	yes	150	150	yes	1.000
+0x00416D20	sub_416D20	0x004167B0	sub_4167B0	shape	0.970	no: the code differs	267	267	yes	1.000
+0x004170A0	sub_4170A0	0x00416B30	sub_416B30	hash	1.000	yes	120	120	yes	1.000
+0x00417230	sub_417230	0x00416CC0	sub_416CC0	hash	1.000	no: callee 0x004A1A36 unmatched or matched elsewhere	39	39	yes	1.000
+0x00417510	sub_417510	0x00416D30	sub_416D30	callers	0.629	no: the code differs	24	28	yes	0.429
+0x00417570	sub_417570	0x00416D90	sub_416D90	calls	0.375	no: the code differs	64	56	yes	0.000
+0x00417740	sub_417740	0x00416F10	sub_416F10	hash	1.000	yes	28	28	yes	1.000
+0x00417790	sub_417790	0x00416F60	sub_416F60	hash	1.000	yes	7	7	yes	1.000
+0x004177B0	sub_4177B0	0x00416F80	sub_416F80	hash	1.000	yes	33	33	yes	1.000
+0x00417820	sub_417820	0x00416FF0	sub_416FF0	hash	1.000	yes	30	30	yes	1.000
+0x004179D0	sub_4179D0	0x00417050	sub_417050	hash	1.000	yes	62	62	yes	1.000
+0x00417A60	sub_417A60	0x004170E0	sub_4170E0	calls	0.836	no: the code differs	298	277	yes	0.750
+0x00417E90	sub_417E90	0x004174D0	sub_4174D0	hash	1.000	yes	35	35	yes	1.000
+0x00417EF0	sub_417EF0	0x00417530	sub_417530	hash	1.000	yes	42	42	yes	1.000
+0x00417F70	sub_417F70	0x004175B0	sub_4175B0	hash	1.000	yes	54	54	yes	1.000
+0x00418010	sub_418010	0x00417650	sub_417650	hash	1.000	yes	44	44	yes	1.000
+0x00418090	sub_418090	0x004176D0	sub_4176D0	hash	1.000	yes	85	85	yes	1.000
+0x00418190	sub_418190	0x004177D0	sub_4177D0	hash	1.000	yes	37	37	yes	1.000
+0x00418200	sub_418200	0x00417840	sub_417840	hash	1.000	yes	92	92	yes	1.000
+0x00418310	sub_418310	0x00417950	sub_417950	hash	1.000	yes	340	340	yes	1.000
+0x004187A0	sub_4187A0	0x00417DE0	sub_417DE0	hash	1.000	yes	33	33	yes	1.000
+0x00418800	sub_418800	0x00417E40	sub_417E40	hash	1.000	yes	41	41	yes	1.000
+0x00418880	sub_418880	0x00417EC0	sub_417EC0	hash	1.000	yes	344	344	yes	1.000
+0x00418D10	sub_418D10	0x00418350	sub_418350	hash	1.000	yes	195	195	yes	1.000
+0x00418F80	sub_418F80	0x004185C0	sub_4185C0	hash	1.000	yes	207	207	yes	1.000
+0x00419200	sub_419200	0x00418840	sub_418840	hash	1.000	yes	468	468	yes	1.000
+0x00419870	sub_419870	0x00418EB0	sub_418EB0	hash	1.000	yes	492	492	yes	1.000
+0x00419F30	sub_419F30	0x00419570	sub_419570	hash	1.000	yes	1086	1086	yes	1.000
+0x0041AD70	sub_41AD70	0x0041A3B0	sub_41A3B0	hash	1.000	yes	1134	1134	yes	1.000
+0x0041BC40	sub_41BC40	0x0041B280	sub_41B280	hash	1.000	yes	274	274	yes	1.000
+0x0041BFE0	sub_41BFE0	0x0041B620	sub_41B620	hash	1.000	yes	291	291	yes	1.000
+0x0041C3B0	sub_41C3B0	0x0041B9F0	sub_41B9F0	hash	1.000	yes	1430	1430	yes	1.000
+0x0041D6B0	sub_41D6B0	0x0041CCF0	sub_41CCF0	hash	1.000	yes	249	249	yes	1.000
+0x0041D9D0	sub_41D9D0	0x0041D010	sub_41D010	hash	1.000	yes	264	264	yes	1.000
+0x0041DD00	sub_41DD00	0x0041D340	sub_41D340	hash	1.000	yes	1404	1404	yes	1.000
+0x0041EF80	sub_41EF80	0x0041E5C0	sub_41E5C0	hash	1.000	yes	1447	1447	yes	1.000
+0x00420290	sub_420290	0x0041F8D0	sub_41F8D0	hash	1.000	yes	412	412	yes	1.000
+0x00420860	sub_420860	0x0041FEA0	sub_41FEA0	hash	1.000	yes	433	433	yes	1.000
+0x00420E50	sub_420E50	0x00420490	sub_420490	hash	1.000	yes	69	69	yes	1.000
+0x00420F20	sub_420F20	0x00420560	sub_420560	hash	1.000	yes	61	61	yes	1.000
+0x00420FC0	sub_420FC0	0x00420600	sub_420600	hash	1.000	yes	90	90	yes	1.000
+0x004210B0	sub_4210B0	0x004206F0	sub_4206F0	hash	1.000	yes	90	90	yes	1.000
+0x004211A0	sub_4211A0	0x004207E0	sub_4207E0	hash	1.000	yes	64	64	yes	1.000
+0x00421290	sub_421290	0x004208D0	sub_4208D0	hash	1.000	yes	341	341	yes	1.000
+0x00421730	sub_421730	0x00420D70	sub_420D70	hash	1.000	yes	356	356	yes	1.000
+0x00421BF0	sub_421BF0	0x00421230	sub_421230	hash	1.000	yes	241	241	yes	1.000
+0x00421F00	sub_421F00	0x00421540	sub_421540	hash	1.000	yes	254	254	yes	1.000
+0x00422210	sub_422210	0x00421850	sub_421850	hash	1.000	yes	273	273	yes	1.000
+0x004225A0	sub_4225A0	0x00421BE0	sub_421BE0	hash	1.000	yes	290	290	yes	1.000
+0x00422970	sub_422970	0x00421FB0	sub_421FB0	hash	1.000	yes	42	42	yes	1.000
+0x004229F0	sub_4229F0	0x00422030	sub_422030	hash	1.000	yes	250	250	yes	1.000
+0x00422D60	sub_422D60	0x004223A0	sub_4223A0	hash	1.000	yes	262	262	yes	1.000
+0x004230F0	sub_4230F0	0x00422730	sub_422730	hash	1.000	yes	200	200	yes	1.000
+0x00423380	sub_423380	0x004229C0	sub_4229C0	hash	1.000	yes	210	210	yes	1.000
+0x00427040	sub_427040	0x00485610	sub_485610	calls	0.389	no: the code differs	18	19	no	0.000
+0x00427080	sub_427080	0x00485F30	sub_485F30	anchor	0.939	no: the code differs	60	58	no	0.909
+0x00427090	sub_427090	0x00485650	sub_485650	calls	0.375	no: the code differs	7	8	no	0.000
+0x004270B0	sub_4270B0	0x00485750	sub_485750	callers	0.592	no: the code differs	74	71	no	0.333
+0x004271A0	sub_4271A0	0x004233D0	sub_4233D0	hash	1.000	yes	10	10	yes	1.000
+0x004271D0	sub_4271D0	0x00423400	sub_423400	hash	1.000	no: callee 0x0040C560 unmatched or matched elsewhere	268	268	yes	1.000
+0x00427680	sub_427680	0x004238B0	sub_4238B0	calls	0.800	no: the code differs	7	7	yes	1.000
+0x004276A0	sub_4276A0	0x004238D0	sub_4238D0	calls	0.800	no: the code differs	7	7	yes	1.000
+0x004276C0	sub_4276C0	0x004238F0	sub_4238F0	hash	1.000	yes	15	15	yes	1.000
+0x004276F0	sub_4276F0	0x00423920	sub_423920	hash	1.000	yes	21	21	yes	1.000
+0x00427720	sub_427720	0x00423950	sub_423950	hash	1.000	yes	21	21	yes	1.000
+0x00427760	sub_427760	0x00423990	sub_423990	hash	1.000	yes	21	21	yes	1.000
+0x004277A0	sub_4277A0	0x004239D0	sub_4239D0	hash	1.000	yes	21	21	yes	1.000
+0x004277E0	sub_4277E0	0x00423A10	sub_423A10	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	75	75	yes	1.000
+0x004278C0	sub_4278C0	0x00423AF0	sub_423AF0	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	268	268	yes	1.000
+0x00427BD0	sub_427BD0	0x00423E00	sub_423E00	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	137	137	yes	1.000
+0x00427D80	sub_427D80	0x00423FB0	sub_423FB0	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	245	245	yes	1.000
+0x00428080	sub_428080	0x004242B0	sub_4242B0	anchor	0.653	no: the code differs	49	48	yes	0.429
+0x00428100	sub_428100	0x00424330	sub_424330	hash	1.000	yes	22	22	yes	1.000
+0x00428160	sub_428160	0x00424390	sub_424390	hash	1.000	yes	17	17	yes	1.000
+0x00428210	sub_428210	0x00424440	sub_424440	anchor	0.784	no: the code differs	388	377	yes	0.649
+0x00428730	sub_428730	0x00424910	sub_424910	neighbours	0.371	no: the code differs	7	6	yes	0.000
+0x00428750	sub_428750	0x00424930	sub_424930	anchor	1.000	no: the code differs	91	91	yes	1.000
+0x004288B0	sub_4288B0	0x00424B90	sub_424B90	anchor	0.925	no: the code differs	252	242	yes	0.889
+0x00428C20	sub_428C20	0x00424EF0	sub_424EF0	anchor	0.748	no: the code differs	80	85	yes	0.600
+0x00428D60	sub_428D60	0x00425040	sub_425040	anchor	0.739	no: the code differs	54	57	yes	0.667
+0x00428E60	sub_428E60	0x00425150	sub_425150	hash	1.000	yes	22	22	yes	1.000
+0x00428EC0	sub_428EC0	0x004251B0	sub_4251B0	anchor	0.947	no: the code differs	192	184	yes	0.926
+0x004291B0	sub_4291B0	0x00425570	sub_425570	shape	0.970	no: the code differs	278	278	yes	1.000
+0x00429520	sub_429520	0x004258E0	sub_4258E0	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	68	68	yes	1.000
+0x004295F0	sub_4295F0	0x004259B0	sub_4259B0	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	60	60	yes	1.000
+0x004296B0	sub_4296B0	0x00425A70	sub_425A70	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	67	67	yes	1.000
+0x00429780	sub_429780	0x00425B40	sub_425B40	hash	1.000	yes	2	2	yes	1.000
+0x00429B10	sub_429B10	0x00425B50	sub_425B50	shape	0.970	no: the code differs	42	42	yes	1.000
+0x00429C00	sub_429C00	0x00426820	sub_426820	hash	1.000	yes	12	12	yes	1.000
+0x00429C20	sub_429C20	0x00426840	sub_426840	anchor	0.644	no: the code differs	391	408	yes	0.420
+0x0042A180	sub_42A180	0x00426DF0	sub_426DF0	callers	0.524	no: the code differs	327	213	yes	0.323
+0x0042A620	sub_42A620	0x004270F0	sub_4270F0	anchor	0.400	no: the code differs	22	22	yes	0.000
+0x0042A670	sub_42A670	0x00427140	sub_427140	anchor	0.724	no: the code differs	98	103	yes	0.556
+0x0042B480	sub_42B480	0x004272C0	sub_4272C0	callers	1.000	no: the code differs	2	2	yes	1.000
+0x0042B490	sub_42B490	0x004272D0	sub_4272D0	callers	1.000	no: the code differs	2	2	yes	1.000
+0x0042B4A0	sub_42B4A0	0x004272E0	sub_4272E0	callers	1.000	no: the code differs	4	4	yes	1.000
+0x0042B4B0	sub_42B4B0	0x004272F0	sub_4272F0	callers	1.000	no: the code differs	2	2	yes	1.000
+0x0042B4C0	sub_42B4C0	0x00427300	sub_427300	anchor	0.874	no: the code differs	452	448	yes	0.792
+0x0042BAF0	sub_42BAF0	0x00427920	sub_427920	callers	0.626	no: the code differs	7114	6296	yes	0.495
+0x00432630	sub_432630	0x0042D920	sub_42D920	anchor	0.924	no: the code differs	135	134	yes	0.875
+0x00432800	sub_432800	0x0042DAF0	sub_42DAF0	anchor	0.791	no: the code differs	517	521	yes	0.654
+0x00432F90	sub_432F90	0x0042E280	sub_42E280	anchor	0.965	no: the code differs	125	124	yes	0.944
+0x00433140	sub_433140	0x0042E430	sub_42E430	neighbours	0.370	no: the code differs	17	20	yes	0.000
+0x00433190	sub_433190	0x0042E480	sub_42E480	anchor	0.592	no: the code differs	75	78	yes	0.333
+0x004332A0	sub_4332A0	0x0042E5A0	sub_42E5A0	callers	0.814	no: the code differs	134	132	yes	0.696
+0x00433440	sub_433440	0x0042E740	sub_42E740	hash	1.000	yes	24	24	yes	1.000
+0x00433490	sub_433490	0x0042E790	sub_42E790	calls	0.401	no: the code differs	71	52	yes	0.091
+0x00433720	sub_433720	0x0042E850	sub_42E850	hash	1.000	yes	437	437	yes	1.000
+0x00433C10	sub_433C10	0x0042ED40	sub_42ED40	anchor	0.969	no: the code differs	1541	1527	yes	0.952
+0x00435080	sub_435080	0x00430180	sub_430180	hash	1.000	yes	59	59	yes	1.000
+0x00435130	sub_435130	0x00430230	sub_430230	hash	1.000	yes	60	60	yes	1.000
+0x004351F0	sub_4351F0	0x004302F0	sub_4302F0	hash	1.000	no: callee 0x004A19E5 unmatched or matched elsewhere	24	24	yes	1.000
+0x00435250	sub_435250	0x00430350	sub_430350	hash	1.000	yes	34	34	yes	1.000
+0x004352D0	sub_4352D0	0x004303D0	sub_4303D0	callers	0.575	no: the code differs	198	211	yes	0.313
+0x00435590	sub_435590	0x004306C0	sub_4306C0	calls	0.428	no: the code differs	180	167	yes	0.071
+0x004357C0	sub_4357C0	0x004308C0	sub_4308C0	hash	1.000	yes	216	216	yes	1.000
+0x00435A60	sub_435A60	0x00430B60	sub_430B60	hash	1.000	yes	38	38	yes	1.000
+0x00435AE0	sub_435AE0	0x00430BE0	sub_430BE0	hash	1.000	yes	55	55	yes	1.000
+0x00435B60	sub_435B60	0x00430C60	sub_430C60	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	46	46	yes	1.000
+0x00435BF0	sub_435BF0	0x00430CF0	sub_430CF0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	yes	1.000
+0x00435C10	sub_435C10	0x00430D10	sub_430D10	hash	1.000	yes	25	25	yes	1.000
+0x00435C50	sub_435C50	0x00430D50	sub_430D50	hash	1.000	yes	17	17	yes	1.000
+0x00435C80	sub_435C80	0x00430D80	sub_430D80	shape	0.970	no: the code differs	102	102	yes	1.000
+0x00435DB0	sub_435DB0	0x00430EB0	sub_430EB0	shape	0.970	no: the code differs	106	106	yes	1.000
+0x00435EF0	sub_435EF0	0x00430FF0	sub_430FF0	hash	1.000	yes	131	131	yes	1.000
+0x00436050	sub_436050	0x00431150	sub_431150	hash	1.000	yes	41	41	yes	1.000
+0x004360C0	sub_4360C0	0x004311C0	sub_4311C0	hash	1.000	yes	206	206	yes	1.000
+0x004364C0	sub_4364C0	0x004315C0	sub_4315C0	calls	1.000	no: the code differs	3	3	yes	1.000
+0x004366B0	sub_4366B0	0x00431960	sub_431960	callers	0.665	no: the code differs	31	47	no	0.556
+0x00436720	sub_436720	0x004315D0	sub_4315D0	calls	0.351	no: the code differs	26	102	yes	0.500
+0x004367E0	sub_4367E0	0x00431A20	sub_431A20	hash	1.000	yes	9	9	yes	1.000
+0x00436950	sub_436950	0x00431DF0	sub_431DF0	calls	0.716	no: the code differs	52	57	yes	0.556
+0x004369F0	sub_4369F0	0x00431EA0	sub_431EA0	similarity	0.824	no: the code differs	61	65	yes	0.727
+0x00436AC0	sub_436AC0	0x00431F80	sub_431F80	calls	0.501	no: the code differs	39	43	yes	0.200
+0x00436B40	sub_436B40	0x00432010	sub_432010	calls	1.000	no: the code differs	3	3	yes	1.000
+0x00436B50	sub_436B50	0x00432020	sub_432020	hash	1.000	yes	15	15	yes	1.000
+0x00436C80	sub_436C80	0x004321E0	sub_4321E0	calls	0.527	no: the code differs	733	555	yes	0.293
+0x004377B0	sub_4377B0	0x00432A50	sub_432A50	callers	1.000	no: the code differs	96	96	yes	1.000
+0x00437C50	sub_437C50	0x00432EE0	sub_432EE0	shape	0.970	no: the code differs	56	56	yes	1.000
+0x00437D10	sub_437D10	0x00432FA0	sub_432FA0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	35	35	yes	1.000
+0x00437D80	sub_437D80	0x00433010	sub_433010	anchor	0.884	no: the code differs	33	28	yes	0.857
+0x00437F30	sub_437F30	0x00433190	sub_433190	similarity	0.632	no: the code differs	48	50	yes	0.400
+0x00437FC0	sub_437FC0	0x00433220	sub_433220	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	27	27	yes	1.000
+0x00438020	sub_438020	0x00433270	sub_433270	hash	1.000	yes	15	15	yes	1.000
+0x00438050	sub_438050	0x004332A0	sub_4332A0	anchor	0.379	no: the code differs	42	47	yes	0.000
+0x00438560	sub_438560	0x00433AA0	sub_433AA0	hash	1.000	yes	114	114	yes	1.000
+0x004386B0	sub_4386B0	0x00433BF0	sub_433BF0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	20	20	yes	1.000
+0x00438700	sub_438700	0x00433C40	sub_433C40	hash	1.000	yes	84	84	yes	1.000
+0x00438830	sub_438830	0x00433D70	sub_433D70	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	19	19	yes	1.000
+0x00438880	sub_438880	0x00433DC0	sub_433DC0	hash	1.000	yes	34	34	yes	1.000
+0x004388E0	sub_4388E0	0x00433E20	sub_433E20	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	36	36	yes	1.000
+0x00438950	sub_438950	0x00433E90	sub_433E90	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	36	36	yes	1.000
+0x004389C0	sub_4389C0	0x00433F00	sub_433F00	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	yes	1.000
+0x004389F0	sub_4389F0	0x00433F30	sub_433F30	hash	1.000	yes	21	21	yes	1.000
+0x00438A30	sub_438A30	0x00433F70	sub_433F70	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	307	307	yes	1.000
+0x00438DA0	sub_438DA0	0x004342E0	sub_4342E0	hash	1.000	yes	39	39	yes	1.000
+0x00438E10	sub_438E10	0x00434350	sub_434350	hash	1.000	yes	84	84	yes	1.000
+0x00438EE0	sub_438EE0	0x00434420	sub_434420	hash	1.000	yes	81	81	yes	1.000
+0x00438FA0	sub_438FA0	0x004344E0	sub_4344E0	hash	1.000	yes	195	195	yes	1.000
+0x00439250	sub_439250	0x00434790	sub_434790	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	509	509	yes	1.000
+0x00439890	sub_439890	0x00434DD0	sub_434DD0	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	249	249	yes	1.000
+0x00439BA0	sub_439BA0	0x004350E0	sub_4350E0	hash	1.000	yes	28	28	yes	1.000
+0x00439BF0	sub_439BF0	0x00435130	sub_435130	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	14	14	yes	1.000
+0x00439C20	sub_439C20	0x00435160	sub_435160	hash	1.000	yes	48	48	yes	1.000
+0x00439CB0	sub_439CB0	0x004351F0	sub_4351F0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	23	23	yes	1.000
+0x00439D00	sub_439D00	0x00435240	sub_435240	hash	1.000	yes	37	37	yes	1.000
+0x00439D80	sub_439D80	0x004352C0	sub_4352C0	hash	1.000	yes	11	11	yes	1.000
+0x00439DA0	sub_439DA0	0x004352E0	sub_4352E0	hash	1.000	yes	86	86	yes	1.000
+0x00439E80	sub_439E80	0x004353C0	sub_4353C0	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	29	29	yes	1.000
+0x00439ED0	sub_439ED0	0x00435410	sub_435410	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	yes	1.000
+0x00439EF0	sub_439EF0	0x00435430	sub_435430	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	53	53	yes	1.000
+0x00439F90	sub_439F90	0x004354D0	sub_4354D0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	yes	1.000
+0x00439FC0	sub_439FC0	0x00435500	sub_435500	hash	1.000	yes	51	51	yes	1.000
+0x0043A070	sub_43A070	0x004355B0	sub_4355B0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	45	45	yes	1.000
+0x0043A0E0	sub_43A0E0	0x00435620	sub_435620	hash	1.000	yes	9	9	yes	1.000
+0x0043A110	sub_43A110	0x00435650	sub_435650	hash	1.000	yes	3	3	yes	1.000
+0x0043A120	sub_43A120	0x00435660	sub_435660	hash	1.000	yes	3	3	yes	1.000
+0x0043A130	sub_43A130	0x00435670	sub_435670	hash	1.000	yes	3	3	yes	1.000
+0x0043A140	sub_43A140	0x00435680	sub_435680	hash	1.000	yes	176	176	yes	1.000
+0x0043A380	sub_43A380	0x004358C0	sub_4358C0	hash	1.000	yes	174	174	yes	1.000
+0x0043A5B0	sub_43A5B0	0x00435AF0	sub_435AF0	hash	1.000	yes	201	201	yes	1.000
+0x0043A840	sub_43A840	0x00435D80	sub_435D80	hash	1.000	yes	212	212	yes	1.000
+0x0043AAF0	sub_43AAF0	0x00436030	sub_436030	hash	1.000	yes	282	282	yes	1.000
+0x0043AED0	sub_43AED0	0x00436410	sub_436410	hash	1.000	yes	298	298	yes	1.000
+0x0043B300	sub_43B300	0x00436840	sub_436840	hash	1.000	yes	52	52	yes	1.000
+0x0043B390	sub_43B390	0x004368D0	sub_4368D0	hash	1.000	yes	61	61	yes	1.000
+0x0043B440	sub_43B440	0x00436980	sub_436980	hash	1.000	yes	24	24	yes	1.000
+0x0043B480	sub_43B480	0x004369C0	sub_4369C0	hash	1.000	yes	95	95	yes	1.000
+0x0043B590	sub_43B590	0x00436AD0	sub_436AD0	hash	1.000	yes	343	343	yes	1.000
+0x0043B960	sub_43B960	0x00436EA0	sub_436EA0	shape	0.970	no: the code differs	77	77	yes	1.000
+0x0043BA60	sub_43BA60	0x00436FA0	sub_436FA0	callers	1.000	no: the code differs	1	1	yes	1.000
+0x0043BA70	sub_43BA70	0x00436FB0	sub_436FB0	hash	1.000	yes	272	272	yes	1.000
+0x0043BD70	sub_43BD70	0x004372B0	sub_4372B0	hash	1.000	yes	8	8	yes	1.000
+0x0043BD90	sub_43BD90	0x004372D0	sub_4372D0	hash	1.000	yes	4	4	yes	1.000
+0x0043BDA0	sub_43BDA0	0x004372E0	sub_4372E0	hash	1.000	yes	8	8	yes	1.000
+0x0043BDC0	sub_43BDC0	0x00437300	sub_437300	hash	1.000	yes	3	3	yes	1.000
+0x0043BDD0	sub_43BDD0	0x00437310	sub_437310	hash	1.000	yes	88	88	yes	1.000
+0x0043BEF0	sub_43BEF0	0x00437430	sub_437430	hash	1.000	yes	50	50	yes	1.000
+0x0043BF80	sub_43BF80	0x004374C0	sub_4374C0	hash	1.000	yes	8	8	yes	1.000
+0x0043BFA0	sub_43BFA0	0x004374E0	sub_4374E0	hash	1.000	yes	34	34	yes	1.000
+0x0043C020	sub_43C020	0x00437560	sub_437560	hash	1.000	yes	6	6	yes	1.000
+0x0043C030	sub_43C030	0x00437570	sub_437570	hash	1.000	yes	66	66	yes	1.000
+0x0043C0D0	sub_43C0D0	0x00437610	sub_437610	hash	1.000	yes	41	41	yes	1.000
+0x0043C140	sub_43C140	0x00437680	sub_437680	hash	1.000	yes	34	34	yes	1.000
+0x0043C190	sub_43C190	0x004376D0	sub_4376D0	hash	1.000	yes	32	32	yes	1.000
+0x0043C1E0	sub_43C1E0	0x00437720	sub_437720	hash	1.000	yes	75	75	yes	1.000
+0x0043C290	sub_43C290	0x004377D0	sub_4377D0	shape	0.970	no: the code differs	233	233	yes	1.000
+0x0043C510	sub_43C510	0x00437A50	sub_437A50	hash	1.000	yes	55	55	yes	1.000
+0x0043C590	sub_43C590	0x00437AD0	sub_437AD0	hash	1.000	yes	7	7	yes	1.000
+0x0043C5A0	sub_43C5A0	0x00437AE0	sub_437AE0	hash	1.000	yes	52	52	yes	1.000
+0x0043C620	sub_43C620	0x00437B60	sub_437B60	hash	1.000	yes	47	47	yes	1.000
+0x0043C6C0	sub_43C6C0	0x00437C00	sub_437C00	hash	1.000	yes	21	21	yes	1.000
+0x0043C700	sub_43C700	0x00437C40	sub_437C40	hash	1.000	yes	16	16	yes	1.000
+0x0043C740	sub_43C740	0x00437C80	sub_437C80	hash	1.000	yes	99	99	yes	1.000
+0x0043C840	sub_43C840	0x00437D80	sub_437D80	hash	1.000	yes	19	19	yes	1.000
+0x0043C880	sub_43C880	0x00437DC0	sub_437DC0	hash	1.000	yes	20	20	yes	1.000
+0x0043C8B0	sub_43C8B0	0x00437DF0	sub_437DF0	hash	1.000	yes	15	15	yes	1.000
+0x0043C8E0	sub_43C8E0	0x00437E20	sub_437E20	hash	1.000	yes	2	2	yes	1.000
+0x0043C8F0	sub_43C8F0	0x00437E30	sub_437E30	hash	1.000	yes	25	25	yes	1.000
+0x0043C970	sub_43C970	0x00437E90	sub_437E90	hash	1.000	yes	7	7	yes	1.000
+0x0043C990	sub_43C990	0x00437EB0	sub_437EB0	hash	1.000	yes	24	24	yes	1.000
+0x0043C9D0	sub_43C9D0	0x00437EF0	sub_437EF0	hash	1.000	yes	28	28	yes	1.000
+0x0043CA20	sub_43CA20	0x00437F40	sub_437F40	hash	1.000	yes	19	19	yes	1.000
+0x0043CA70	sub_43CA70	0x00437F90	sub_437F90	hash	1.000	yes	39	39	yes	1.000
+0x0043CAE0	sub_43CAE0	0x00438000	sub_438000	hash	1.000	yes	13	13	yes	1.000
+0x0043CB10	sub_43CB10	0x00438030	sub_438030	hash	1.000	no: callee 0x004A1A36 unmatched or matched elsewhere	49	49	yes	1.000
+0x0043CB90	sub_43CB90	0x004380B0	sub_4380B0	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	54	54	yes	1.000
+0x0043CC30	sub_43CC30	0x00438150	sub_438150	hash	1.000	no: callee 0x004A1A36 unmatched or matched elsewhere	55	55	yes	1.000
+0x0043CCC0	sub_43CCC0	0x004381E0	sub_4381E0	hash	1.000	yes	35	35	yes	1.000
+0x0043CD10	sub_43CD10	0x00438230	sub_438230	hash	1.000	yes	29	29	yes	1.000
+0x0043CD70	sub_43CD70	0x00438290	sub_438290	hash	1.000	yes	28	28	yes	1.000
+0x0043CDC0	sub_43CDC0	0x004382E0	sub_4382E0	hash	1.000	yes	28	28	yes	1.000
+0x0043CE20	sub_43CE20	0x00438340	sub_438340	hash	1.000	yes	9	9	yes	1.000
+0x0043CE40	sub_43CE40	0x00438360	sub_438360	hash	1.000	yes	8	8	yes	1.000
+0x0043CE60	sub_43CE60	0x00438380	sub_438380	anchor	1.000	no: the code differs	39	39	yes	1.000
+0x0043CEC0	sub_43CEC0	0x004383E0	sub_4383E0	calls	1.000	no: the code differs	39	39	yes	1.000
+0x0043CF20	sub_43CF20	0x00438440	sub_438440	hash	1.000	yes	37	37	yes	1.000
+0x0043CF80	sub_43CF80	0x004384B0	sub_4384B0	hash	1.000	yes	6	6	yes	1.000
+0x0043CF90	sub_43CF90	0x004384C0	sub_4384C0	hash	1.000	yes	6	6	yes	1.000
+0x0043CFA0	sub_43CFA0	0x004384D0	sub_4384D0	hash	1.000	yes	29	29	yes	1.000
+0x0043CFF0	sub_43CFF0	0x00438520	sub_438520	hash	1.000	yes	27	27	yes	1.000
+0x0043D040	sub_43D040	0x00438570	sub_438570	hash	1.000	yes	14	14	yes	1.000
+0x0043D070	sub_43D070	0x004385A0	sub_4385A0	hash	1.000	yes	5	5	yes	1.000
+0x0043D080	sub_43D080	0x004385B0	sub_4385B0	hash	1.000	yes	5	5	yes	1.000
+0x0043D090	sub_43D090	0x004385C0	sub_4385C0	hash	1.000	yes	22	22	yes	1.000
+0x0043D0D0	sub_43D0D0	0x00438600	sub_438600	hash	1.000	yes	5	5	yes	1.000
+0x0043D0E0	sub_43D0E0	0x00438610	sub_438610	hash	1.000	yes	5	5	yes	1.000
+0x0043D0F0	sub_43D0F0	0x00438620	sub_438620	hash	1.000	yes	11	11	yes	1.000
+0x0043D110	sub_43D110	0x00438640	sub_438640	hash	1.000	yes	2	2	yes	1.000
+0x0043D120	sub_43D120	0x00438650	sub_438650	shape	0.970	no: the code differs	51	51	yes	1.000
+0x0043D1B0	sub_43D1B0	0x004386E0	sub_4386E0	shape	0.970	no: the code differs	91	91	yes	1.000
+0x0043D2D0	sub_43D2D0	0x00438800	sub_438800	shape	0.970	no: the code differs	24	24	yes	1.000
+0x0043D310	sub_43D310	0x00438840	sub_438840	shape	0.970	no: the code differs	28	28	yes	1.000
+0x0043D350	sub_43D350	0x00438880	sub_438880	anchor	0.938	no: the code differs	116	117	yes	0.900
+0x0043D470	sub_43D470	0x004389A0	sub_4389A0	shape	0.970	no: the code differs	11	11	yes	1.000
+0x0043D4A0	sub_43D4A0	0x004389D0	sub_4389D0	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	50	50	yes	1.000
+0x0043D530	sub_43D530	0x00438A60	sub_438A60	hash	1.000	yes	2	2	yes	1.000
+0x0043D540	sub_43D540	0x00438A70	sub_438A70	hash	1.000	no: callee 0x004A1A36 unmatched or matched elsewhere	5	5	yes	1.000
+0x0043D550	sub_43D550	0x00438A80	sub_438A80	hash	1.000	yes	29	29	yes	1.000
+0x0043D590	sub_43D590	0x00438AC0	sub_438AC0	hash	1.000	yes	2	2	yes	1.000
+0x0043D5A0	sub_43D5A0	0x00438AD0	sub_438AD0	hash	1.000	yes	2	2	yes	1.000
+0x0043D5B0	sub_43D5B0	0x00438AE0	sub_438AE0	hash	1.000	yes	2	2	yes	1.000
+0x0043D5C0	sub_43D5C0	0x00438AF0	sub_438AF0	hash	1.000	yes	41	41	yes	1.000
+0x0043D620	sub_43D620	0x00438B50	sub_438B50	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	200	200	yes	1.000
+0x0043D890	sub_43D890	0x00438DC0	sub_438DC0	hash	1.000	yes	3	3	yes	1.000
+0x0043D8A0	sub_43D8A0	0x00438DD0	sub_438DD0	hash	1.000	yes	2	2	yes	1.000
+0x0043D8B0	sub_43D8B0	0x00438DE0	sub_438DE0	hash	1.000	yes	15	15	yes	1.000
+0x0043D8E0	sub_43D8E0	0x00438E10	sub_438E10	hash	1.000	yes	24	24	yes	1.000
+0x0043D920	sub_43D920	0x00438E50	sub_438E50	hash	1.000	no: callee 0x004A1AD0 unmatched or matched elsewhere	111	111	yes	1.000
+0x0043DA30	sub_43DA30	0x00438F60	sub_438F60	hash	1.000	yes	29	29	yes	1.000
+0x0043DAB0	sub_43DAB0	0x00485910	sub_485910	similarity	0.600	no: the code differs	7	7	no	0.333
+0x0043DAC0	sub_43DAC0	0x00438FA0	sub_438FA0	hash	1.000	yes	36	36	yes	1.000
+0x0043DB40	sub_43DB40	0x00439020	sub_439020	hash	1.000	yes	17	17	yes	1.000
+0x0043DB90	sub_43DB90	0x00439070	sub_439070	hash	1.000	yes	33	33	yes	1.000
+0x0043DC10	sub_43DC10	0x004390F0	sub_4390F0	hash	1.000	yes	7	7	yes	1.000
+0x0043DC30	sub_43DC30	0x00439110	sub_439110	calls	1.000	no: the code differs	3	3	yes	1.000
+0x0043DC40	sub_43DC40	0x00439120	sub_439120	similarity	1.000	no: the code differs	98	98	yes	1.000
+0x0043DD30	sub_43DD30	0x00439210	sub_439210	similarity	1.000	no: the code differs	301	301	yes	1.000
+0x0043E0A0	sub_43E0A0	0x00439580	sub_439580	calls	1.000	no: the code differs	98	98	yes	1.000
+0x0043E190	sub_43E190	0x00439670	sub_439670	calls	1.000	no: the code differs	301	301	yes	1.000
+0x0043E500	sub_43E500	0x004399E0	sub_4399E0	hash	1.000	yes	248	248	yes	1.000
+0x0043E740	sub_43E740	0x00439C20	sub_439C20	hash	1.000	yes	182	182	yes	1.000
+0x0043E900	sub_43E900	0x00439DE0	sub_439DE0	callers	0.591	no: the code differs	87	83	yes	0.333
+0x0043EB10	sub_43EB10	0x00439FD0	sub_439FD0	callers	0.884	no: the code differs	148	147	yes	0.810
+0x0043EDE0	sub_43EDE0	0x0043A2A0	sub_43A2A0	neighbours	0.393	no: the code differs	53	55	yes	0.000
+0x0043EEB0	sub_43EEB0	0x0043A380	sub_43A380	anchor	0.354	no: the code differs	47	61	yes	0.000
+0x0043EF70	sub_43EF70	0x0043A470	sub_43A470	hash	1.000	yes	121	121	yes	1.000
+0x004405E0	sub_4405E0	0x0043AE40	sub_43AE40	anchor	0.630	no: the code differs	187	186	yes	0.385
+0x00440830	sub_440830	0x0043B080	sub_43B080	hash	1.000	no: callee 0x0040C530 unmatched or matched elsewhere	51	51	yes	1.000
+0x00440980	sub_440980	0x0043B110	sub_43B110	hash	1.000	yes	311	311	yes	1.000
+0x00440CF0	sub_440CF0	0x0043B480	sub_43B480	callers	0.635	no: the code differs	153	164	yes	0.414
+0x004411A0	sub_4411A0	0x0043B980	sub_43B980	hash	1.000	yes	10	10	yes	1.000
+0x004411C0	sub_4411C0	0x0043B9A0	sub_43B9A0	hash	1.000	yes	13	13	yes	1.000
+0x004411E0	sub_4411E0	0x0043B9C0	sub_43B9C0	hash	1.000	yes	9	9	yes	1.000
+0x00441200	sub_441200	0x0043B9E0	sub_43B9E0	calls	0.420	no: the code differs	34	26	yes	0.111
+0x00441270	sub_441270	0x0043BA40	sub_43BA40	hash	1.000	yes	26	26	yes	1.000
+0x004412E0	sub_4412E0	0x0043BAB0	sub_43BAB0	hash	1.000	yes	46	46	yes	1.000
+0x00441370	sub_441370	0x0043BB40	sub_43BB40	hash	1.000	yes	27	27	yes	1.000
+0x004413B0	sub_4413B0	0x0043BB80	sub_43BB80	hash	1.000	yes	29	29	yes	1.000
+0x004413F0	sub_4413F0	0x0043BBC0	sub_43BBC0	hash	1.000	yes	13	13	yes	1.000
+0x00441410	sub_441410	0x0043BBE0	sub_43BBE0	hash	1.000	yes	57	57	yes	1.000
+0x00441490	sub_441490	0x0043BC60	sub_43BC60	hash	1.000	yes	16	16	yes	1.000
+0x004414C0	sub_4414C0	0x0043BC90	sub_43BC90	hash	1.000	yes	17	17	yes	1.000
+0x004414F0	sub_4414F0	0x0043BCC0	sub_43BCC0	hash	1.000	yes	70	70	yes	1.000
+0x004415A0	sub_4415A0	0x0043BD70	sub_43BD70	hash	1.000	yes	56	56	yes	1.000
+0x00441670	sub_441670	0x0043BE40	sub_43BE40	hash	1.000	yes	24	24	yes	1.000
+0x004416C0	sub_4416C0	0x0043BE90	sub_43BE90	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	83	83	yes	1.000
+0x004417F0	sub_4417F0	0x0043BFC0	sub_43BFC0	calls	0.393	no: the code differs	56	54	yes	0.000
+0x004418D0	sub_4418D0	0x0043C090	sub_43C090	hash	1.000	yes	20	20	yes	1.000
+0x00441990	sub_441990	0x0043C0D0	sub_43C0D0	shape	0.970	no: the code differs	134	134	yes	1.000
+0x00441C80	sub_441C80	0x0043C3C0	sub_43C3C0	callers	0.761	no: the code differs	193	101	yes	0.760
+0x00441DE0	sub_441DE0	0x0043C520	sub_43C520	callers	1.000	no: the code differs	29	29	yes	1.000
+0x00441E50	sub_441E50	0x0043C590	sub_43C590	callers	1.000	no: the code differs	29	29	yes	1.000
+0x00441F30	sub_441F30	0x0043C670	sub_43C670	callers	1.000	no: the code differs	29	29	yes	1.000
+0x00442020	sub_442020	0x0043C760	sub_43C760	shape	0.970	no: the code differs	31	31	yes	1.000
+0x004420E0	sub_4420E0	0x0043C820	sub_43C820	callers	0.965	no: the code differs	122	122	yes	0.941
+0x00442280	sub_442280	0x0043C9C0	sub_43C9C0	anchor	0.968	no: the code differs	134	134	yes	0.947
+0x00442490	sub_442490	0x0043CBD0	sub_43CBD0	hash	1.000	yes	13	13	yes	1.000
+0x004424C0	sub_4424C0	0x0043CC00	sub_43CC00	hash	1.000	yes	12	12	yes	1.000
+0x004424E0	sub_4424E0	0x0043CC20	sub_43CC20	shape	0.970	no: the code differs	202	202	yes	1.000
+0x004427B0	sub_4427B0	0x0043CEF0	sub_43CEF0	shape	0.970	no: the code differs	96	96	yes	1.000
+0x00442920	sub_442920	0x0043D050	sub_43D050	anchor	0.942	no: the code differs	250	249	yes	0.905
+0x00442C50	sub_442C50	0x0043D370	sub_43D370	hash	1.000	yes	103	103	yes	1.000
+0x00442D50	sub_442D50	0x0043D470	sub_43D470	shape	0.970	no: the code differs	68	68	yes	1.000
+0x00442E10	sub_442E10	0x0043D530	sub_43D530	callers	0.549	no: the code differs	198	197	yes	0.250
+0x004432E0	sub_4432E0	0x0043DA30	sub_43DA30	callers	0.518	no: the code differs	427	207	yes	0.369
+0x00443520	sub_443520	0x0043DD20	sub_43DD20	callers	0.527	no: the code differs	36	49	yes	0.300
+0x004435C0	sub_4435C0	0x0043DED0	sub_43DED0	callers	0.527	no: the code differs	36	49	yes	0.300
+0x00443700	sub_443700	0x0043DFA0	sub_43DFA0	neighbours	0.495	no: the code differs	36	55	yes	0.273
+0x00443840	sub_443840	0x0043E080	sub_43E080	callers	0.517	no: the code differs	35	53	yes	0.308
+0x00443CB0	sub_443CB0	0x0043E3D0	sub_43E3D0	callers	0.615	no: the code differs	311	221	yes	0.455
+0x00444450	sub_444450	0x0043F000	sub_43F000	hash	1.000	yes	25	25	yes	1.000
+0x004444D0	sub_4444D0	0x0043F080	sub_43F080	shape	0.970	no: the code differs	23	23	yes	1.000
+0x00444520	sub_444520	0x0043F0D0	sub_43F0D0	hash	1.000	no: callee 0x00444950 unmatched or matched elsewhere	60	60	yes	1.000
+0x004445B0	sub_4445B0	0x0043F160	sub_43F160	shape	0.970	no: the code differs	41	41	yes	1.000
+0x004449B0	sub_4449B0	0x0043F880	sub_43F880	hash	1.000	yes	49	49	yes	1.000
+0x00444A70	sub_444A70	0x0043F940	sub_43F940	shape	0.970	no: the code differs	93	93	yes	1.000
+0x00444BA0	sub_444BA0	0x0043FA70	sub_43FA70	anchor	0.609	no: the code differs	247	268	yes	0.375
+0x00444EC0	sub_444EC0	0x0043FDE0	sub_43FDE0	neighbours	0.310	no: the code differs	146	195	yes	0.000
+0x004450E0	sub_4450E0	0x004400A0	sub_4400A0	callers	0.923	no: the code differs	285	297	yes	0.885
+0x004454E0	sub_4454E0	0x004404D0	sub_4404D0	neighbours	0.372	no: the code differs	50	58	yes	0.000
+0x004455D0	sub_4455D0	0x004405C0	sub_4405C0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	24	24	yes	1.000
+0x00445800	sub_445800	0x004407F0	sub_4407F0	callers	0.674	no: the code differs	242	243	yes	0.458
+0x00445B20	sub_445B20	0x00440B20	sub_440B20	callers	0.911	no: the code differs	63	62	yes	0.857
+0x00445C20	sub_445C20	0x00440C20	sub_440C20	callers	0.911	no: the code differs	62	61	yes	0.857
+0x00445D20	sub_445D20	0x00440D20	sub_440D20	callers	0.877	no: the code differs	58	57	yes	0.800
+0x00445E10	sub_445E10	0x00440E10	sub_440E10	callers	0.877	no: the code differs	58	57	yes	0.800
+0x00445F00	sub_445F00	0x00440F00	sub_440F00	callers	0.910	no: the code differs	44	43	yes	0.857
+0x00445FB0	sub_445FB0	0x00440FB0	sub_440FB0	callers	0.910	no: the code differs	45	44	yes	0.857
+0x00446060	sub_446060	0x00441060	sub_441060	neighbours	0.444	no: the code differs	42	68	yes	0.200
+0x00446120	sub_446120	0x00441160	sub_441160	anchor	0.604	no: the code differs	310	278	yes	0.375
+0x004465D0	sub_4465D0	0x00441590	sub_441590	callers	0.561	no: the code differs	81	42	yes	0.429
+0x004466C0	sub_4466C0	0x00441680	sub_441680	callers	0.530	no: the code differs	513	629	yes	0.458
+0x00446E40	sub_446E40	0x00441F70	sub_441F70	calls	0.961	no: the code differs	67	65	yes	0.944
+0x00446F30	sub_446F30	0x00442050	sub_442050	callers	0.646	no: the code differs	52	38	yes	0.500
+0x00446FD0	sub_446FD0	0x004420F0	sub_4420F0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	18	18	yes	1.000
+0x00447010	sub_447010	0x00442130	sub_442130	callers	0.810	no: the code differs	357	346	yes	0.720
+0x004474D0	sub_4474D0	0x004425C0	sub_4425C0	anchor	0.898	no: the code differs	258	255	yes	0.833
+0x00447880	sub_447880	0x00442960	sub_442960	hash	1.000	yes	23	23	yes	1.000
+0x004478D0	sub_4478D0	0x004429B0	sub_4429B0	neighbours	0.378	no: the code differs	45	40	yes	0.000
+0x00447970	sub_447970	0x00442A40	sub_442A40	callers	0.867	no: the code differs	31	29	yes	0.800
+0x004479D0	sub_4479D0	0x00442AA0	sub_442AA0	callers	0.788	no: the code differs	33	31	yes	0.667
+0x00447A40	sub_447A40	0x00442B10	sub_442B10	callers	0.918	no: the code differs	57	55	yes	0.875
+0x00447AF0	sub_447AF0	0x00442BC0	sub_442BC0	hash	1.000	yes	53	53	yes	1.000
+0x00447BD0	sub_447BD0	0x00442CA0	sub_442CA0	callers	0.569	no: the code differs	64	59	yes	0.308
+0x00449780	sub_449780	0x004858D0	sub_4858D0	similarity	0.613	no: the code differs	15	13	no	0.400
+0x0044BAC0	sub_44BAC0	0x00442F40	sub_442F40	callers	0.675	no: the code differs	312	367	yes	0.509
+0x0044C090	sub_44C090	0x00443450	sub_443450	callers	0.571	no: the code differs	76	74	yes	0.294
+0x0044C1B0	sub_44C1B0	0x00443670	sub_443670	callers	0.570	no: the code differs	120	96	no	0.350
+0x0044C350	sub_44C350	0x00443570	sub_443570	callers	0.574	no: the code differs	84	67	yes	0.357
+0x0044C4A0	sub_44C4A0	0x004438E0	sub_4438E0	callers	0.722	no: the code differs	65	56	yes	0.583
+0x0044C590	sub_44C590	0x004439A0	sub_4439A0	callers	0.714	no: the code differs	67	55	yes	0.583
+0x0044C680	sub_44C680	0x00443A60	sub_443A60	neighbours	0.455	no: the code differs	48	71	yes	0.200
+0x0044C750	sub_44C750	0x00443B70	sub_443B70	callers	0.592	no: the code differs	19	25	yes	0.400
+0x0044C7A0	sub_44C7A0	0x00443BD0	sub_443BD0	callers	0.548	no: the code differs	428	433	yes	0.250
+0x0044CDC0	sub_44CDC0	0x004441A0	sub_4441A0	callers	0.738	no: the code differs	50	47	yes	0.583
+0x0044CED0	sub_44CED0	0x004442B0	sub_4442B0	callers	0.615	no: the code differs	769	781	yes	0.543
+0x0044D940	sub_44D940	0x00444DB0	sub_444DB0	neighbours	0.587	no: the code differs	58	62	yes	0.333
+0x0044D9D0	sub_44D9D0	0x00444E50	sub_444E50	hash	1.000	yes	13	13	yes	1.000
+0x0044DC10	sub_44DC10	0x00444F60	sub_444F60	hash	1.000	yes	18	18	yes	1.000
+0x0044DF20	sub_44DF20	0x0044A250	sub_44A250	callers	0.600	no: the code differs	10	10	no	0.333
+0x0044E080	sub_44E080	0x004455A0	sub_4455A0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	13	13	yes	1.000
+0x0044E0C0	sub_44E0C0	0x004455E0	sub_4455E0	callers	0.790	no: the code differs	482	493	yes	0.657
+0x0044E760	sub_44E760	0x00445C90	sub_445C90	callers	0.565	no: the code differs	100	106	yes	0.294
+0x0044E950	sub_44E950	0x00445E90	sub_445E90	callers	0.563	no: the code differs	95	102	yes	0.294
+0x0044EB30	sub_44EB30	0x00446090	sub_446090	callers	0.532	no: the code differs	118	95	yes	0.286
+0x0044ECE0	sub_44ECE0	0x00446260	sub_446260	callers	0.552	no: the code differs	85	94	yes	0.286
+0x0044EE90	sub_44EE90	0x00446420	sub_446420	callers	0.523	no: the code differs	106	76	yes	0.300
+0x0044EFC0	sub_44EFC0	0x00446550	sub_446550	callers	0.612	no: the code differs	73	73	yes	0.353
+0x0044F100	sub_44F100	0x00446680	sub_446680	neighbours	0.450	no: the code differs	14	7	yes	0.250
+0x0044F130	sub_44F130	0x004466A0	sub_4466A0	callers	0.575	no: the code differs	28	21	yes	0.375
+0x0044F190	sub_44F190	0x00446700	sub_446700	callers	0.696	no: the code differs	610	616	yes	0.719
+0x0044FA60	sub_44FA60	0x00446FE0	sub_446FE0	callers	0.579	no: the code differs	70	66	yes	0.318
+0x0044FB70	sub_44FB70	0x00447100	sub_447100	callers	0.691	no: the code differs	1091	1042	yes	0.520
+0x00450B10	sub_450B10	0x00448020	sub_448020	shape	0.970	no: the code differs	173	173	yes	1.000
+0x00450D20	sub_450D20	0x00448230	sub_448230	callers	0.689	no: the code differs	70	45	yes	0.600
+0x00450DD0	sub_450DD0	0x004482E0	sub_4482E0	shape	0.970	no: the code differs	42	42	yes	1.000
+0x00450E50	sub_450E50	0x00448360	sub_448360	callers	0.599	no: the code differs	214	198	yes	0.357
+0x004510F0	sub_4510F0	0x004485F0	sub_4485F0	neighbours	0.344	no: the code differs	18	13	yes	0.000
+0x00451160	sub_451160	0x00448650	sub_448650	calls	0.595	no: the code differs	37	36	yes	0.333
+0x004513D0	sub_4513D0	0x00448840	sub_448840	callers	0.782	no: the code differs	270	233	yes	0.682
+0x004517D0	sub_4517D0	0x00448BB0	sub_448BB0	shape	0.970	no: the code differs	19	19	yes	1.000
+0x00451820	sub_451820	0x00448C00	sub_448C00	hash	1.000	yes	17	17	yes	1.000
+0x00451860	sub_451860	0x00448C40	sub_448C40	shape	0.970	no: the code differs	9	9	yes	1.000
+0x00451890	sub_451890	0x00448C70	sub_448C70	hash	1.000	yes	9	9	yes	1.000
+0x004518C0	sub_4518C0	0x00448CA0	sub_448CA0	callers	0.905	no: the code differs	67	64	yes	0.857
+0x004519C0	sub_4519C0	0x00448DA0	sub_448DA0	callers	0.908	no: the code differs	68	66	yes	0.857
+0x00451B30	sub_451B30	0x00448EB0	sub_448EB0	hash	1.000	yes	10	10	yes	1.000
+0x00451D30	sub_451D30	0x00449050	sub_449050	hash	1.000	yes	28	28	yes	1.000
+0x00451DA0	sub_451DA0	0x004490C0	sub_4490C0	callers	0.638	no: the code differs	678	741	yes	0.500
+0x00452890	sub_452890	0x0044AF30	sub_44AF30	callers	0.880	no: the code differs	52	52	yes	0.800
+0x00452970	sub_452970	0x0044B010	sub_44B010	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	25	25	yes	1.000
+0x004529D0	sub_4529D0	0x0044B070	sub_44B070	callers	0.956	no: the code differs	358	364	yes	0.932
+0x00452EA0	sub_452EA0	0x0044B560	sub_44B560	shape	0.970	no: the code differs	94	94	yes	1.000
+0x00453020	sub_453020	0x0044B6E0	sub_44B6E0	hash	1.000	yes	87	87	yes	1.000
+0x00453180	sub_453180	0x0044B840	sub_44B840	shape	0.970	no: the code differs	53	53	yes	1.000
+0x00453270	sub_453270	0x0044B930	sub_44B930	hash	1.000	yes	63	63	yes	1.000
+0x00453360	sub_453360	0x0044BA20	sub_44BA20	callers	0.926	no: the code differs	110	107	yes	0.886
+0x00453510	sub_453510	0x0044BBD0	sub_44BBD0	callers	0.821	no: the code differs	106	110	yes	0.714
+0x004536D0	sub_4536D0	0x0044BDA0	sub_44BDA0	callers	0.912	no: the code differs	194	208	yes	0.875
+0x004539C0	sub_4539C0	0x0044C0E0	sub_44C0E0	callers	0.917	no: the code differs	23	24	yes	0.875
+0x00453A40	sub_453A40	0x0044C160	sub_44C160	callers	0.900	no: the code differs	1004	1013	yes	0.886
+0x004548D0	sub_4548D0	0x0044D010	sub_44D010	hash	1.000	yes	15	15	yes	1.000
+0x00454910	sub_454910	0x0044D050	sub_44D050	hash	1.000	yes	12	12	yes	1.000
+0x00454970	sub_454970	0x0044D2D0	sub_44D2D0	shape	0.970	no: the code differs	184	184	yes	1.000
+0x00454B80	sub_454B80	0x0044D4E0	sub_44D4E0	hash	1.000	yes	21	21	yes	1.000
+0x00454BC0	sub_454BC0	0x0044D520	sub_44D520	shape	0.970	no: the code differs	44	44	yes	1.000
+0x00454C40	sub_454C40	0x0044D5A0	sub_44D5A0	shape	0.970	no: the code differs	20	20	yes	1.000
+0x00454C70	sub_454C70	0x0044D5D0	sub_44D5D0	shape	0.970	no: the code differs	22	22	yes	1.000
+0x00454CC0	sub_454CC0	0x0044D620	sub_44D620	hash	1.000	yes	16	16	yes	1.000
+0x00454CF0	sub_454CF0	0x0044D650	sub_44D650	hash	1.000	yes	17	17	yes	1.000
+0x00454D20	sub_454D20	0x0044D680	sub_44D680	hash	1.000	yes	14	14	yes	1.000
+0x00454D50	sub_454D50	0x0044D6B0	sub_44D6B0	hash	1.000	yes	15	15	yes	1.000
+0x00454D80	sub_454D80	0x0044D6E0	sub_44D6E0	shape	0.970	no: the code differs	167	167	yes	1.000
+0x00454FC0	sub_454FC0	0x0044D920	sub_44D920	neighbours	0.397	no: the code differs	65	64	yes	0.000
+0x004550E0	sub_4550E0	0x0044DA40	sub_44DA40	shape	0.970	no: the code differs	22	22	yes	1.000
+0x00455140	sub_455140	0x0044DAA0	sub_44DAA0	neighbours	0.365	no: the code differs	57	47	yes	0.000
+0x00455240	sub_455240	0x0044DBC0	sub_44DBC0	hash	1.000	yes	204	204	yes	1.000
+0x00455580	sub_455580	0x0044DF00	sub_44DF00	hash	1.000	yes	63	63	yes	1.000
+0x00455670	sub_455670	0x0044DFF0	sub_44DFF0	hash	1.000	yes	57	57	yes	1.000
+0x00455740	sub_455740	0x0044E0C0	sub_44E0C0	hash	1.000	yes	57	57	yes	1.000
+0x00455830	sub_455830	0x0044E1B0	sub_44E1B0	hash	1.000	yes	44	44	yes	1.000
+0x004558E0	sub_4558E0	0x0044E260	sub_44E260	hash	1.000	yes	56	56	yes	1.000
+0x004559B0	sub_4559B0	0x0044E330	sub_44E330	hash	1.000	yes	110	110	yes	1.000
+0x00455B20	sub_455B20	0x0044E4A0	sub_44E4A0	shape	0.970	no: the code differs	351	351	yes	1.000
+0x00456050	sub_456050	0x0044E9D0	sub_44E9D0	hash	1.000	yes	30	30	yes	1.000
+0x004560E0	sub_4560E0	0x0044EA60	sub_44EA60	callers	0.638	no: the code differs	862	892	yes	0.474
+0x00456D80	sub_456D80	0x0044F770	sub_44F770	hash	1.000	yes	34	34	yes	1.000
+0x00456DE0	sub_456DE0	0x0044F7D0	sub_44F7D0	hash	1.000	yes	13	13	yes	1.000
+0x00456E10	sub_456E10	0x0044F800	sub_44F800	hash	1.000	yes	79	79	yes	1.000
+0x00456EF0	sub_456EF0	0x0044F8E0	sub_44F8E0	shape	0.970	no: the code differs	17	17	yes	1.000
+0x00456F30	sub_456F30	0x0044F920	sub_44F920	hash	1.000	yes	90	90	yes	1.000
+0x00457050	sub_457050	0x0044FA40	sub_44FA40	hash	1.000	yes	71	71	yes	1.000
+0x00457100	sub_457100	0x0044FAF0	sub_44FAF0	shape	0.970	no: the code differs	148	148	yes	1.000
+0x00457340	sub_457340	0x0044FD30	sub_44FD30	anchor	0.471	no: the code differs	215	195	yes	0.150
+0x004575E0	sub_4575E0	0x0044FF90	sub_44FF90	hash	1.000	yes	14	14	yes	1.000
+0x00457610	sub_457610	0x0044FFC0	sub_44FFC0	hash	1.000	yes	8	8	yes	1.000
+0x00457630	sub_457630	0x0044FFE0	sub_44FFE0	hash	1.000	yes	235	235	yes	1.000
+0x004578C0	sub_4578C0	0x00450270	sub_450270	hash	1.000	yes	22	22	yes	1.000
+0x00457900	sub_457900	0x004502B0	sub_4502B0	shape	0.970	no: the code differs	102	102	yes	1.000
+0x00457A50	sub_457A50	0x00450400	sub_450400	callers	0.783	no: the code differs	47	43	yes	0.667
+0x00457B00	sub_457B00	0x00450490	sub_450490	hash	1.000	yes	26	26	yes	1.000
+0x00457B50	sub_457B50	0x004504E0	sub_4504E0	hash	1.000	yes	24	24	yes	1.000
+0x00457BA0	sub_457BA0	0x00450530	sub_450530	hash	1.000	yes	49	49	yes	1.000
+0x00457C20	sub_457C20	0x004505B0	sub_4505B0	hash	1.000	yes	50	50	yes	1.000
+0x00457CA0	sub_457CA0	0x00450630	sub_450630	hash	1.000	yes	48	48	yes	1.000
+0x00457D20	sub_457D20	0x004506B0	sub_4506B0	shape	0.970	no: the code differs	83	83	yes	1.000
+0x00457E10	sub_457E10	0x004507A0	sub_4507A0	hash	1.000	yes	72	72	yes	1.000
+0x00457F70	sub_457F70	0x00450900	sub_450900	hash	1.000	yes	65	65	yes	1.000
+0x00458040	sub_458040	0x004509D0	sub_4509D0	shape	0.970	no: the code differs	38	38	yes	1.000
+0x004580C0	sub_4580C0	0x00450A50	sub_450A50	hash	1.000	yes	15	15	yes	1.000
+0x004580F0	sub_4580F0	0x00450A80	sub_450A80	hash	1.000	yes	58	58	yes	1.000
+0x004581B0	sub_4581B0	0x00450B40	sub_450B40	shape	0.970	no: the code differs	7	7	yes	1.000
+0x004581D0	sub_4581D0	0x00450B60	sub_450B60	hash	1.000	yes	31	31	yes	1.000
+0x004582C0	sub_4582C0	0x00450BD0	sub_450BD0	callers	0.670	no: the code differs	34	40	yes	0.500
+0x00458330	sub_458330	0x00450C50	sub_450C50	shape	0.970	no: the code differs	245	245	yes	1.000
+0x00458670	sub_458670	0x00450F90	sub_450F90	neighbours	0.386	no: the code differs	247	93	yes	0.185
+0x00458A00	sub_458A00	0x00451100	sub_451100	shape	0.970	no: the code differs	140	140	yes	1.000
+0x00459640	sub_459640	0x00451540	sub_451540	callers	0.791	no: the code differs	47	45	yes	0.667
+0x004596E0	sub_4596E0	0x004515E0	sub_4515E0	callers	0.837	no: the code differs	116	114	yes	0.733
+0x00459830	sub_459830	0x00451730	sub_451730	neighbours	0.489	no: the code differs	25	36	yes	0.250
+0x00459880	sub_459880	0x004517A0	sub_4517A0	callers	1.000	no: the code differs	2	2	yes	1.000
+0x00459890	sub_459890	0x004517B0	sub_4517B0	callers	1.000	no: the code differs	7	7	yes	1.000
+0x004598B0	sub_4598B0	0x004517D0	sub_4517D0	callers	1.000	no: the code differs	4	4	yes	1.000
+0x004598C0	sub_4598C0	0x004517E0	sub_4517E0	callers	1.000	no: the code differs	6	6	yes	1.000
+0x004598E0	sub_4598E0	0x00451800	sub_451800	callers	1.000	no: the code differs	2	2	yes	1.000
+0x004598F0	sub_4598F0	0x00451810	sub_451810	callers	1.000	no: the code differs	7	7	yes	1.000
+0x00459910	sub_459910	0x00451830	sub_451830	callers	1.000	no: the code differs	4	4	yes	1.000
+0x00459920	sub_459920	0x00451840	sub_451840	callers	1.000	no: the code differs	6	6	yes	1.000
+0x00459940	sub_459940	0x004518A0	sub_4518A0	callers	1.000	no: the code differs	2	2	yes	1.000
+0x00459950	sub_459950	0x004518B0	sub_4518B0	callers	1.000	no: the code differs	2	2	yes	1.000
+0x00459960	sub_459960	0x004518C0	sub_4518C0	callers	1.000	no: the code differs	4	4	yes	1.000
+0x00459970	sub_459970	0x004518D0	sub_4518D0	callers	1.000	no: the code differs	2	2	yes	1.000
+0x00459980	sub_459980	0x004518E0	sub_4518E0	callers	1.000	no: the code differs	1	1	yes	1.000
+0x00459990	sub_459990	0x004518F0	sub_4518F0	hash	1.000	yes	4	4	yes	1.000
+0x004599A0	sub_4599A0	0x00451900	sub_451900	callers	1.000	no: the code differs	2	2	yes	1.000
+0x004599B0	sub_4599B0	0x00451910	sub_451910	callers	1.000	no: the code differs	2	2	yes	1.000
+0x004599C0	sub_4599C0	0x00451920	sub_451920	callers	1.000	no: the code differs	4	4	yes	1.000
+0x004599D0	sub_4599D0	0x00451930	sub_451930	callers	1.000	no: the code differs	2	2	yes	1.000
+0x00459AE0	sub_459AE0	0x00451A20	sub_451A20	shape	0.970	no: the code differs	29	29	yes	1.000
+0x00459B50	sub_459B50	0x00451A90	sub_451A90	hash	1.000	yes	23	23	yes	1.000
+0x00459BA0	sub_459BA0	0x00451AE0	sub_451AE0	hash	1.000	yes	14	14	yes	1.000
+0x00459BD0	sub_459BD0	0x00451B10	sub_451B10	anchor	0.441	no: the code differs	957	808	yes	0.175
+0x0045AAD0	sub_45AAD0	0x004527E0	sub_4527E0	neighbours	0.372	no: the code differs	719	624	yes	0.247
+0x0045B490	sub_45B490	0x004530A0	sub_4530A0	anchor	0.581	no: the code differs	106	117	yes	0.333
+0x0045B5C0	sub_45B5C0	0x00453200	sub_453200	anchor	0.430	no: the code differs	206	241	yes	0.209
+0x0045FA80	sub_45FA80	0x00456680	sub_456680	anchor	0.522	no: the code differs	1655	1070	yes	0.321
+0x004612D0	sub_4612D0	0x004576A0	sub_4576A0	calls	0.407	no: the code differs	1371	815	yes	0.147
+0x004626D0	sub_4626D0	0x004582B0	sub_4582B0	neighbours	0.474	no: the code differs	787	762	yes	0.134
+0x004632B0	sub_4632B0	0x00458DE0	sub_458DE0	callers	0.594	no: the code differs	812	816	yes	0.325
+0x00463ED0	sub_463ED0	0x004599B0	sub_4599B0	callers	0.626	no: the code differs	169	173	yes	0.385
+0x00464110	sub_464110	0x00459BF0	sub_459BF0	neighbours	0.384	no: the code differs	89	82	yes	0.000
+0x00464240	sub_464240	0x00459D10	sub_459D10	callers	0.592	no: the code differs	814	823	yes	0.545
+0x00464E70	sub_464E70	0x0045A980	sub_45A980	callers	0.533	no: the code differs	26	39	yes	0.333
+0x00465460	sub_465460	0x0045ADF0	sub_45ADF0	callers	0.570	no: the code differs	87	117	yes	0.368
+0x004655B0	sub_4655B0	0x0045B0E0	sub_45B0E0	shape	0.970	no: the code differs	58	58	yes	1.000
+0x00465660	sub_465660	0x0045B190	sub_45B190	shape	0.970	no: the code differs	75	75	yes	1.000
+0x00465750	sub_465750	0x0045B280	sub_45B280	callers	0.974	no: the code differs	240	240	yes	0.957
+0x00465A70	sub_465A70	0x0045B5A0	sub_45B5A0	shape	0.970	no: the code differs	20	20	yes	1.000
+0x00465AB0	sub_465AB0	0x0045B5E0	sub_45B5E0	shape	0.970	no: the code differs	30	30	yes	1.000
+0x00465B00	sub_465B00	0x0045B630	sub_45B630	neighbours	0.379	no: the code differs	384	343	yes	0.000
+0x00466290	sub_466290	0x0045BD10	sub_45BD10	hash	1.000	yes	32	32	yes	1.000
+0x00466310	sub_466310	0x0045BD90	sub_45BD90	callers	0.798	no: the code differs	194	196	yes	0.667
+0x004665A0	sub_4665A0	0x0045C010	sub_45C010	neighbours	0.495	no: the code differs	1385	1197	yes	0.203
+0x004679E0	sub_4679E0	0x0045D180	sub_45D180	shape	0.970	no: the code differs	75	75	yes	1.000
+0x00467AB0	sub_467AB0	0x0045D250	sub_45D250	hash	1.000	yes	26	26	yes	1.000
+0x00467B00	sub_467B00	0x0045D2A0	sub_45D2A0	hash	1.000	yes	34	34	yes	1.000
+0x00467B50	sub_467B50	0x0045D2F0	sub_45D2F0	hash	1.000	yes	57	57	yes	1.000
+0x00467C40	sub_467C40	0x0045D3E0	sub_45D3E0	calls	0.385	no: the code differs	38	41	yes	0.000
+0x00467CF0	sub_467CF0	0x0045D490	sub_45D490	neighbours	0.536	no: the code differs	98	144	yes	0.333
+0x00467E50	sub_467E50	0x0045D690	sub_45D690	callers	0.561	no: the code differs	145	134	yes	0.294
+0x00468480	sub_468480	0x0045D8F0	sub_45D8F0	anchor	0.622	no: the code differs	493	435	yes	0.410
+0x00468B20	sub_468B20	0x0045DEE0	sub_45DEE0	callers	0.655	no: the code differs	542	460	yes	0.690
+0x004692E0	sub_4692E0	0x0045E580	sub_45E580	callers	0.657	no: the code differs	76	51	yes	0.538
+0x00469410	sub_469410	0x0045E660	sub_45E660	shape	0.970	no: the code differs	92	92	yes	1.000
+0x004695B0	sub_4695B0	0x0045E7D0	sub_45E7D0	hash	1.000	yes	144	144	yes	1.000
+0x004697A0	sub_4697A0	0x0045E9C0	sub_45E9C0	hash	1.000	yes	29	29	yes	1.000
+0x00469810	sub_469810	0x0045EA30	sub_45EA30	shape	0.970	no: the code differs	17	17	yes	1.000
+0x00469860	sub_469860	0x0045EA80	sub_45EA80	callers	0.900	no: the code differs	43	43	yes	0.833
+0x00469930	sub_469930	0x0045EB40	sub_45EB40	neighbours	0.306	no: the code differs	175	93	yes	0.000
+0x00469BA0	sub_469BA0	0x0045EC60	sub_45EC60	hash	1.000	yes	4	4	yes	1.000
+0x00469BC0	sub_469BC0	0x0045EC80	sub_45EC80	similarity	0.769	no: the code differs	128	108	yes	0.667
+0x0046AA00	sub_46AA00	0x0045EDF0	sub_45EDF0	similarity	0.743	no: the code differs	58	37	yes	0.692
+0x0046AAE0	sub_46AAE0	0x0045EE70	sub_45EE70	similarity	0.739	no: the code differs	105	97	yes	0.591
+0x0046AC40	sub_46AC40	0x0045EFB0	sub_45EFB0	shape	0.970	no: the code differs	38	38	yes	1.000
+0x0046ACB0	sub_46ACB0	0x0045F020	sub_45F020	callers	0.929	no: the code differs	68	68	yes	0.882
+0x0046B210	sub_46B210	0x0045F0F0	sub_45F0F0	calls	0.367	no: the code differs	30	25	yes	0.000
+0x0046B260	sub_46B260	0x0045F130	sub_45F130	hash	1.000	yes	42	42	yes	1.000
+0x0046B2E0	sub_46B2E0	0x0045F1B0	sub_45F1B0	anchor	0.938	no: the code differs	89	90	yes	0.900
+0x0046B3D0	sub_46B3D0	0x0045F2A0	sub_45F2A0	callers	0.765	no: the code differs	779	655	yes	0.662
+0x0046BFB0	sub_46BFB0	0x0045FC60	sub_45FC60	callers	0.747	no: the code differs	1319	1165	yes	0.618
+0x0046D180	sub_46D180	0x00460C40	sub_460C40	neighbours	0.385	no: the code differs	700	410	yes	0.113
+0x0046DB70	sub_46DB70	0x00461240	sub_461240	neighbours	0.441	no: the code differs	769	460	yes	0.202
+0x0046E630	sub_46E630	0x00461900	sub_461900	callers	0.692	no: the code differs	104	81	yes	0.560
+0x0046E820	sub_46E820	0x00461A30	sub_461A30	callers	0.587	no: the code differs	142	112	yes	0.382
+0x0046EAC0	sub_46EAC0	0x00461C10	sub_461C10	callers	0.506	no: the code differs	319	258	yes	0.240
+0x0046F100	sub_46F100	0x004620D0	sub_4620D0	callers	0.876	no: the code differs	168	157	yes	0.816
+0x0046F380	sub_46F380	0x00462320	sub_462320	hash	1.000	yes	30	30	yes	1.000
+0x0046F400	sub_46F400	0x004623A0	sub_4623A0	hash	1.000	yes	30	30	yes	1.000
+0x0046F480	sub_46F480	0x00462420	sub_462420	calls	0.796	no: the code differs	53	52	yes	0.667
+0x0046F530	sub_46F530	0x004624C0	sub_4624C0	calls	0.900	no: the code differs	30	30	yes	0.833
+0x0046F590	sub_46F590	0x00462510	sub_462510	neighbours	0.475	no: the code differs	120	70	yes	0.265
+0x0046F760	sub_46F760	0x00462630	sub_462630	neighbours	0.380	no: the code differs	121	66	yes	0.118
+0x0046F920	sub_46F920	0x00462740	sub_462740	anchor	0.465	no: the code differs	2202	1655	yes	0.430
+0x00472C60	sub_472C60	0x00464DA0	sub_464DA0	hash	1.000	yes	7	7	yes	1.000
+0x00472C90	sub_472C90	0x00464DD0	sub_464DD0	hash	1.000	yes	43	43	yes	1.000
+0x00472D00	sub_472D00	0x00464E40	sub_464E40	hash	1.000	yes	35	35	yes	1.000
+0x00473270	sub_473270	0x00465170	sub_465170	shape	0.970	no: the code differs	25	25	yes	1.000
+0x00473880	sub_473880	0x00465480	sub_465480	shape	0.970	no: the code differs	87	87	yes	1.000
+0x004739B0	sub_4739B0	0x004655B0	sub_4655B0	anchor	0.587	no: the code differs	317	307	yes	0.321
+0x00473E10	sub_473E10	0x004659C0	sub_4659C0	neighbours	0.474	no: the code differs	413	337	yes	0.185
+0x004743C0	sub_4743C0	0x00465E50	sub_465E50	anchor	0.640	no: the code differs	238	238	yes	0.400
+0x00474AF0	sub_474AF0	0x00466190	sub_466190	anchor	0.718	no: the code differs	260	260	yes	0.529
+0x00475680	sub_475680	0x00466950	sub_466950	anchor	0.465	no: the code differs	215	217	yes	0.111
+0x00475940	sub_475940	0x00466C00	sub_466C00	anchor	0.638	no: the code differs	245	247	yes	0.400
+0x00475CB0	sub_475CB0	0x00466F70	sub_466F70	neighbours	0.458	no: the code differs	394	560	yes	0.195
+0x00476200	sub_476200	0x00467710	sub_467710	neighbours	0.461	no: the code differs	294	249	yes	0.263
+0x00476650	sub_476650	0x00467AC0	sub_467AC0	callers	0.864	no: the code differs	99	99	yes	0.857
+0x004767D0	sub_4767D0	0x00467C50	sub_467C50	callers	0.570	no: the code differs	165	153	yes	0.308
+0x004776B0	sub_4776B0	0x00468930	sub_468930	shape	0.970	no: the code differs	117	117	yes	1.000
+0x00477850	sub_477850	0x00468AD0	sub_468AD0	shape	0.970	no: the code differs	125	125	yes	1.000
+0x00477A00	sub_477A00	0x00468C80	sub_468C80	callers	0.530	no: the code differs	150	144	yes	0.231
+0x00478070	sub_478070	0x00469080	sub_469080	shape	0.970	no: the code differs	115	115	yes	1.000
+0x00478210	sub_478210	0x00469220	sub_469220	shape	0.970	no: the code differs	68	68	yes	1.000
+0x00478330	sub_478330	0x00469340	sub_469340	shape	0.970	no: the code differs	103	103	yes	1.000
+0x00478590	sub_478590	0x00469620	sub_469620	hash	1.000	yes	14	14	yes	1.000
+0x00479220	sub_479220	0x004698E0	sub_4698E0	calls	0.355	no: the code differs	95	42	yes	0.111
+0x00479820	sub_479820	0x00444F00	sub_444F00	similarity	0.633	no: the code differs	16	24	no	0.500
+0x00479860	sub_479860	0x00469D20	sub_469D20	anchor	0.722	no: the code differs	4994	4669	yes	0.583
+0x0047E270	sub_47E270	0x0046E0B0	sub_46E0B0	anchor	0.923	no: the code differs	92	91	yes	0.875
+0x0047E3A0	sub_47E3A0	0x0046E1E0	sub_46E1E0	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	40	40	yes	1.000
+0x0047E6D0	sub_47E6D0	0x0046E4D0	sub_46E4D0	callers	1.000	no: the code differs	23	23	yes	1.000
+0x0047E720	sub_47E720	0x0046E520	sub_46E520	neighbours	0.381	no: the code differs	148	118	yes	0.036
+0x0047E930	sub_47E930	0x0046E6A0	sub_46E6A0	calls	0.386	no: the code differs	28	26	yes	0.000
+0x0047E9C0	sub_47E9C0	0x0046E730	sub_46E730	callers	0.757	no: the code differs	84	80	yes	0.833
+0x0047EAF0	sub_47EAF0	0x0046E850	sub_46E850	similarity	1.000	no: the code differs	4	4	yes	1.000
+0x0047F210	sub_47F210	0x0046EE60	sub_46EE60	shape	0.970	no: the code differs	126	126	yes	1.000
+0x0047F3E0	sub_47F3E0	0x0046F030	sub_46F030	callers	0.510	no: the code differs	149	146	yes	0.190
+0x0047F5C0	sub_47F5C0	0x0046F1F0	sub_46F1F0	callers	0.778	no: the code differs	254	226	yes	0.667
+0x0047FA00	sub_47FA00	0x0046F5B0	sub_46F5B0	neighbours	0.453	no: the code differs	114	87	yes	0.500
+0x0047FB90	sub_47FB90	0x0046F6E0	sub_46F6E0	callers	0.703	no: the code differs	110	104	yes	0.524
+0x0047FF60	sub_47FF60	0x0046F850	sub_46F850	shape	0.970	no: the code differs	39	39	yes	1.000
+0x0047FFD0	sub_47FFD0	0x0046F8C0	sub_46F8C0	neighbours	0.464	no: the code differs	500	386	yes	0.516
+0x004807B0	sub_4807B0	0x0046FF00	sub_46FF00	callers	0.816	no: the code differs	70	58	yes	0.750
+0x004808C0	sub_4808C0	0x0046FFE0	sub_46FFE0	calls	1.000	no: the code differs	3	3	yes	1.000
+0x004808D0	sub_4808D0	0x0046FFF0	sub_46FFF0	callers	0.521	no: the code differs	158	103	yes	0.317
+0x00480B10	sub_480B10	0x00470180	sub_470180	calls	0.895	no: the code differs	112	111	yes	0.829
+0x00480C60	sub_480C60	0x004702E0	sub_4702E0	calls	0.932	no: the code differs	50	53	yes	0.905
+0x00480CF0	sub_480CF0	0x00470380	sub_470380	anchor	0.957	no: the code differs	162	164	yes	0.932
+0x00480F30	sub_480F30	0x004705C0	sub_4705C0	callers	0.713	no: the code differs	162	144	yes	0.559
+0x00481170	sub_481170	0x004707B0	sub_4707B0	callers	0.566	no: the code differs	35	29	yes	0.333
+0x00481200	sub_481200	0x00470820	sub_470820	shape	0.970	no: the code differs	29	29	yes	1.000
+0x00481270	sub_481270	0x00470890	sub_470890	shape	0.970	no: the code differs	11	11	yes	1.000
+0x004812A0	sub_4812A0	0x004708C0	sub_4708C0	shape	0.970	no: the code differs	14	14	yes	1.000
+0x004812E0	sub_4812E0	0x00470900	sub_470900	calls	1.000	no: the code differs	3	3	yes	1.000
+0x004812F0	sub_4812F0	0x00470910	sub_470910	callers	0.622	no: the code differs	120	86	yes	0.464
+0x00481460	sub_481460	0x00470A10	sub_470A10	calls	0.847	no: the code differs	76	60	yes	0.815
+0x00481540	sub_481540	0x00470AC0	sub_470AC0	callers	0.579	no: the code differs	278	244	yes	0.672
+0x004818E0	sub_4818E0	0x00470E20	sub_470E20	calls	0.613	no: the code differs	141	100	yes	0.452
+0x00481AB0	sub_481AB0	0x00470F70	sub_470F70	shape	0.970	no: the code differs	36	36	yes	1.000
+0x00481B20	sub_481B20	0x00470FE0	sub_470FE0	shape	0.970	no: the code differs	51	51	yes	1.000
+0x00481BC0	sub_481BC0	0x00471080	sub_471080	shape	0.970	no: the code differs	25	25	yes	1.000
+0x00481C10	sub_481C10	0x004710D0	sub_4710D0	shape	0.970	no: the code differs	104	104	yes	1.000
+0x00481DB0	sub_481DB0	0x00471270	sub_471270	shape	0.970	no: the code differs	159	159	yes	1.000
+0x00481FF0	sub_481FF0	0x004714B0	sub_4714B0	callers	0.945	no: the code differs	51	51	yes	0.909
+0x00482080	sub_482080	0x00471540	sub_471540	callers	0.628	no: the code differs	203	191	yes	0.400
+0x00482350	sub_482350	0x004717D0	sub_4717D0	similarity	1.000	no: the code differs	4	4	yes	1.000
+0x00482360	sub_482360	0x004717E0	sub_4717E0	neighbours	1.000	no: the code differs	4	4	yes	1.000
+0x00482370	sub_482370	0x004717F0	sub_4717F0	callers	0.970	no: the code differs	205	204	yes	0.952
+0x00482650	sub_482650	0x00471AD0	sub_471AD0	callers	0.961	no: the code differs	188	187	yes	0.938
+0x004828E0	sub_4828E0	0x00471D60	sub_471D60	callers	0.963	no: the code differs	161	160	yes	0.941
+0x00482B40	sub_482B40	0x00471FC0	sub_471FC0	callers	0.932	no: the code differs	145	144	yes	0.889
+0x00482D70	sub_482D70	0x004721F0	sub_4721F0	callers	0.896	no: the code differs	170	167	yes	0.833
+0x00482FC0	sub_482FC0	0x00472430	sub_472430	shape	0.970	no: the code differs	49	49	yes	1.000
+0x00483060	sub_483060	0x004724D0	sub_4724D0	callers	0.913	no: the code differs	155	154	yes	0.857
+0x004832A0	sub_4832A0	0x00472710	sub_472710	hash	1.000	yes	5	5	yes	1.000
+0x004832C0	sub_4832C0	0x00472730	sub_472730	callers	0.872	no: the code differs	184	165	yes	0.821
+0x00483490	sub_483490	0x004728D0	sub_4728D0	calls	1.000	no: the code differs	5	5	yes	1.000
+0x004834A0	sub_4834A0	0x004728E0	sub_4728E0	callers	0.863	no: the code differs	245	244	yes	0.773
+0x00483830	sub_483830	0x00472C70	sub_472C70	shape	0.970	no: the code differs	30	30	yes	1.000
+0x00483B70	sub_483B70	0x00472CE0	sub_472CE0	callers	0.586	no: the code differs	243	226	yes	0.333
+0x00483ED0	sub_483ED0	0x00473010	sub_473010	callers	0.831	no: the code differs	121	104	yes	0.765
+0x004840A0	sub_4840A0	0x004731A0	sub_4731A0	callers	0.725	no: the code differs	280	277	yes	0.545
+0x004844B0	sub_4844B0	0x004735B0	sub_4735B0	callers	0.879	no: the code differs	424	417	yes	0.804
+0x00484B20	sub_484B20	0x00473C10	sub_473C10	callers	0.945	no: the code differs	602	601	yes	0.909
+0x004854B0	sub_4854B0	0x004745B0	sub_4745B0	callers	0.756	no: the code differs	370	339	yes	0.621
+0x00485AD0	sub_485AD0	0x00474B60	sub_474B60	hash	1.000	yes	22	22	yes	1.000
+0x00485B10	sub_485B10	0x00474BA0	sub_474BA0	callers	0.952	no: the code differs	187	187	yes	0.920
+0x00485DD0	sub_485DD0	0x00474E60	sub_474E60	callers	0.963	no: the code differs	96	97	yes	0.941
+0x00485F30	sub_485F30	0x00474FC0	sub_474FC0	callers	0.795	no: the code differs	74	72	yes	0.667
+0x00486030	sub_486030	0x004750C0	sub_4750C0	shape	0.970	no: the code differs	37	37	yes	1.000
+0x004860D0	sub_4860D0	0x00475180	sub_475180	shape	0.970	no: the code differs	18	18	yes	1.000
+0x00486110	sub_486110	0x004751C0	sub_4751C0	callers	0.834	no: the code differs	261	255	yes	0.731
+0x00487BF0	sub_487BF0	0x00475590	sub_475590	callers	1.000	no: the code differs	23	23	yes	1.000
+0x00488BB0	sub_488BB0	0x00476160	sub_476160	shape	0.970	no: the code differs	32	32	yes	1.000
+0x00488C20	sub_488C20	0x004761D0	sub_4761D0	shape	0.970	no: the code differs	39	39	yes	1.000
+0x00488CA0	sub_488CA0	0x00476250	sub_476250	shape	0.970	no: the code differs	45	45	yes	1.000
+0x00488D40	sub_488D40	0x004762F0	sub_4762F0	shape	0.970	no: the code differs	17	17	yes	1.000
+0x00488F50	sub_488F50	0x004763D0	sub_4763D0	callers	0.858	no: the code differs	155	158	yes	0.769
+0x00489180	sub_489180	0x00476780	sub_476780	shape	0.970	no: the code differs	80	80	yes	1.000
+0x00489260	sub_489260	0x00476860	sub_476860	shape	0.970	no: the code differs	41	41	yes	1.000
+0x004892D0	sub_4892D0	0x004768D0	sub_4768D0	shape	0.970	no: the code differs	15	15	yes	1.000
+0x00489300	sub_489300	0x00476900	sub_476900	shape	0.970	no: the code differs	7	7	yes	1.000
+0x00489350	sub_489350	0x004769A0	sub_4769A0	shape	0.970	no: the code differs	31	31	yes	1.000
+0x004893C0	sub_4893C0	0x00476A10	sub_476A10	shape	0.970	no: the code differs	21	21	yes	1.000
+0x00489410	sub_489410	0x00476A60	sub_476A60	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	11	11	yes	1.000
+0x00489750	sub_489750	0x00476A80	sub_476A80	calls	0.810	no: the code differs	250	222	yes	0.721
+0x00489B00	sub_489B00	0x00476DB0	sub_476DB0	calls	0.814	no: the code differs	340	332	yes	0.698
+0x0048A010	sub_48A010	0x00477290	sub_477290	shape	0.970	no: the code differs	123	123	yes	1.000
+0x0048A180	sub_48A180	0x00477400	sub_477400	shape	0.970	no: the code differs	196	196	yes	1.000
+0x0048A420	sub_48A420	0x004776A0	sub_4776A0	hash	1.000	yes	25	25	yes	1.000
+0x0048A470	sub_48A470	0x004776F0	sub_4776F0	hash	1.000	yes	8	8	yes	1.000
+0x0048A490	sub_48A490	0x00477710	sub_477710	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	43	43	yes	1.000
+0x0048A500	sub_48A500	0x00477780	sub_477780	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	45	45	yes	1.000
+0x0048A580	sub_48A580	0x00477800	sub_477800	hash	1.000	yes	12	12	yes	1.000
+0x0048A5B0	sub_48A5B0	0x00477830	sub_477830	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	72	72	yes	1.000
+0x0048A6A0	sub_48A6A0	0x00477920	sub_477920	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	67	67	yes	1.000
+0x0048A770	sub_48A770	0x004779F0	sub_4779F0	hash	1.000	yes	13	13	yes	1.000
+0x0048A810	sub_48A810	0x00477A20	sub_477A20	callers	0.603	no: the code differs	87	82	yes	0.357
+0x0048A930	sub_48A930	0x00477B40	sub_477B40	hash	1.000	yes	39	39	yes	1.000
+0x0048A9C0	sub_48A9C0	0x00477BD0	sub_477BD0	shape	0.970	no: the code differs	68	68	yes	1.000
+0x0048AA80	sub_48AA80	0x00477C90	sub_477C90	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	224	224	yes	1.000
+0x0048AD00	sub_48AD00	0x00477F10	sub_477F10	hash	1.000	no: callee 0x0043DA70 unmatched or matched elsewhere	182	182	yes	1.000
+0x0048AF00	sub_48AF00	0x00478110	sub_478110	hash	1.000	no: callee 0x0043DAB0 unmatched or matched elsewhere	78	78	yes	1.000
+0x0048B010	sub_48B010	0x00478220	sub_478220	shape	0.970	no: the code differs	11	11	yes	1.000
+0x0048B040	sub_48B040	0x00478250	sub_478250	neighbours	0.394	no: the code differs	36	35	yes	0.000
+0x0048B100	sub_48B100	0x00478300	sub_478300	shape	0.970	no: the code differs	11	11	yes	1.000
+0x0048B130	sub_48B130	0x00478330	sub_478330	neighbours	1.000	no: the code differs	3	3	yes	1.000
+0x0048B140	sub_48B140	0x00478340	sub_478340	shape	0.970	no: the code differs	10	10	yes	1.000
+0x0048B1C0	sub_48B1C0	0x00478370	sub_478370	shape	0.970	no: the code differs	3	3	yes	1.000
+0x0048B1D0	sub_48B1D0	0x00478380	sub_478380	neighbours	0.300	no: the code differs	28	14	yes	0.000
+0x0048B230	sub_48B230	0x004783B0	sub_4783B0	shape	0.970	no: the code differs	16	16	yes	1.000
+0x0048B3A0	sub_48B3A0	0x004784A0	sub_4784A0	shape	0.970	no: the code differs	68	68	yes	1.000
+0x0048B4A0	sub_48B4A0	0x004785A0	sub_4785A0	shape	0.970	no: the code differs	5	5	yes	1.000
+0x0048B4C0	sub_48B4C0	0x004785C0	sub_4785C0	shape	0.970	no: the code differs	13	13	yes	1.000
+0x0048B500	sub_48B500	0x00478600	sub_478600	shape	0.970	no: the code differs	7	7	yes	1.000
+0x0048B520	sub_48B520	0x00478620	sub_478620	shape	0.970	no: the code differs	29	29	yes	1.000
+0x0048B570	sub_48B570	0x00478670	sub_478670	hash	1.000	yes	12	12	yes	1.000
+0x0048B590	sub_48B590	0x00478690	sub_478690	neighbours	1.000	no: the code differs	2	2	yes	1.000
+0x0048B5A0	sub_48B5A0	0x004786A0	sub_4786A0	neighbours	1.000	no: the code differs	2	2	yes	1.000
+0x0048B5B0	sub_48B5B0	0x004786B0	sub_4786B0	similarity	1.000	no: the code differs	2	2	yes	1.000
+0x0048B5C0	sub_48B5C0	0x004786C0	sub_4786C0	neighbours	1.000	no: the code differs	2	2	yes	1.000
+0x0048B5D0	sub_48B5D0	0x004786D0	sub_4786D0	neighbours	1.000	no: the code differs	2	2	yes	1.000
+0x0048B5E0	sub_48B5E0	0x004786E0	sub_4786E0	calls	1.000	no: the code differs	2	2	yes	1.000
+0x0048B5F0	sub_48B5F0	0x004786F0	sub_4786F0	shape	0.970	no: the code differs	8	8	yes	1.000
+0x0048B610	sub_48B610	0x00478710	sub_478710	calls	0.790	no: the code differs	31	25	yes	0.714
+0x0048B680	sub_48B680	0x00478770	sub_478770	shape	0.970	no: the code differs	2	2	yes	1.000
+0x0048B720	sub_48B720	0x004787C0	sub_4787C0	shape	0.970	no: the code differs	3	3	yes	1.000
+0x0048B730	sub_48B730	0x004787D0	sub_4787D0	calls	1.000	no: the code differs	5	5	yes	1.000
+0x0048B750	sub_48B750	0x004787F0	sub_4787F0	shape	0.970	no: the code differs	15	15	yes	1.000
+0x0048BA10	sub_48BA10	0x00478AC0	sub_478AC0	shape	0.970	no: the code differs	3	3	yes	1.000
+0x0048BA30	sub_48BA30	0x00478B20	sub_478B20	shape	0.970	no: the code differs	2	2	yes	1.000
+0x0048BA40	sub_48BA40	0x00478B30	sub_478B30	shape	0.970	no: the code differs	2	2	yes	1.000
+0x0048F390	sub_48F390	0x0047BA80	sub_47BA80	callers	0.507	no: the code differs	501	502	yes	0.179
+0x0048FE60	sub_48FE60	0x0047C1F0	sub_47C1F0	shape	0.970	no: the code differs	303	303	yes	1.000
+0x00490390	sub_490390	0x0047C690	sub_47C690	shape	0.970	no: the code differs	4	4	yes	1.000
+0x004903B0	sub_4903B0	0x0047C6B0	sub_47C6B0	callers	0.816	no: the code differs	231	192	yes	0.750
+0x004906F0	sub_4906F0	0x0047C950	sub_47C950	neighbours	0.472	no: the code differs	225	203	yes	0.486
+0x00490A30	sub_490A30	0x0047CC40	sub_47CC40	neighbours	1.000	no: the code differs	3	3	yes	1.000
+0x00490A40	sub_490A40	0x0047CC50	sub_47CC50	neighbours	1.000	no: the code differs	3	3	yes	1.000
+0x00490A50	sub_490A50	0x0047CC60	sub_47CC60	shape	0.970	no: the code differs	60	60	yes	1.000
+0x00490F90	sub_490F90	0x0047CE70	sub_47CE70	shape	0.970	no: the code differs	3	3	yes	1.000
+0x00490FA0	sub_490FA0	0x0047CE80	sub_47CE80	similarity	1.000	no: the code differs	8	8	yes	1.000
+0x00490FC0	sub_490FC0	0x0047CEA0	sub_47CEA0	neighbours	1.000	no: the code differs	4	4	yes	1.000
+0x00490FD0	sub_490FD0	0x0047CEB0	sub_47CEB0	neighbours	0.325	no: the code differs	8	5	yes	0.000
+0x00490FF0	sub_490FF0	0x0047CEC0	sub_47CEC0	calls	0.407	no: the code differs	35	12	yes	0.231
+0x004910A0	sub_4910A0	0x0047CF00	sub_47CF00	calls	1.000	no: the code differs	5	5	yes	1.000
+0x004910C0	sub_4910C0	0x0047CF20	sub_47CF20	callers	0.775	no: the code differs	219	232	yes	0.643
+0x00491690	sub_491690	0x0047D350	sub_47D350	calls	0.673	no: the code differs	172	149	yes	0.500
+0x00491A00	sub_491A00	0x0047D640	sub_47D640	calls	0.739	no: the code differs	101	97	yes	0.800
+0x00491B90	sub_491B90	0x0047D7D0	sub_47D7D0	shape	0.970	no: the code differs	5	5	yes	1.000
+0x00491BB0	sub_491BB0	0x0047D7F0	sub_47D7F0	shape	0.970	no: the code differs	6	6	yes	1.000
+0x00491BD0	sub_491BD0	0x0047D810	sub_47D810	shape	0.970	no: the code differs	6	6	yes	1.000
+0x00491BF0	sub_491BF0	0x0047D830	sub_47D830	shape	0.970	no: the code differs	8	8	yes	1.000
+0x00491C20	sub_491C20	0x0047D860	sub_47D860	neighbours	1.000	no: the code differs	3	3	yes	1.000
+0x00491C30	sub_491C30	0x0047D870	sub_47D870	neighbours	1.000	no: the code differs	3	3	yes	1.000
+0x00491C40	sub_491C40	0x0047D880	sub_47D880	similarity	1.000	no: the code differs	5	5	yes	1.000
+0x00491C60	sub_491C60	0x0047D8A0	sub_47D8A0	calls	1.000	no: the code differs	4	4	yes	1.000
+0x00491C70	sub_491C70	0x0047D8B0	sub_47D8B0	shape	0.970	no: the code differs	7	7	yes	1.000
+0x00491C90	sub_491C90	0x0047D8D0	sub_47D8D0	shape	0.970	no: the code differs	4	4	yes	1.000
+0x00491D60	sub_491D60	0x0047D950	sub_47D950	similarity	0.918	no: the code differs	49	52	yes	0.882
+0x00491E10	sub_491E10	0x0047DA10	sub_47DA10	shape	0.970	no: the code differs	36	36	yes	1.000
+0x00491E90	sub_491E90	0x0047DA90	sub_47DA90	shape	0.970	no: the code differs	8	8	yes	1.000
+0x00493D50	sub_493D50	0x0047E580	sub_47E580	similarity	0.888	no: the code differs	16	17	yes	0.833
+0x00493E20	sub_493E20	0x0047E5C0	sub_47E5C0	shape	0.970	no: the code differs	37	37	yes	1.000
+0x00494770	sub_494770	0x0047E880	sub_47E880	similarity	0.760	no: the code differs	64	64	yes	0.600
+0x00495330	sub_495330	0x0047F150	sub_47F150	calls	0.430	no: the code differs	251	145	yes	0.190
+0x00495670	sub_495670	0x0047F380	sub_47F380	shape	0.970	no: the code differs	7	7	yes	1.000
+0x00495690	sub_495690	0x0047F3A0	sub_47F3A0	shape	0.970	no: the code differs	4	4	yes	1.000
+0x004956B0	sub_4956B0	0x0047F3C0	sub_47F3C0	shape	0.970	no: the code differs	106	106	yes	1.000
+0x00495870	sub_495870	0x0047F580	sub_47F580	shape	0.970	no: the code differs	97	97	yes	1.000
+0x00495A00	sub_495A00	0x0047F710	sub_47F710	shape	0.970	no: the code differs	128	128	yes	1.000
+0x00495BF0	sub_495BF0	0x0047F900	sub_47F900	neighbours	1.000	no: the code differs	3	3	yes	1.000
+0x00495C00	sub_495C00	0x0047F910	sub_47F910	neighbours	1.000	no: the code differs	2	2	yes	1.000
+0x00495C10	sub_495C10	0x0047F920	sub_47F920	calls	0.400	no: the code differs	5	5	yes	0.000
+0x00495C20	sub_495C20	0x0047F940	sub_47F940	calls	0.472	no: the code differs	278	225	yes	0.184
+0x00495FF0	sub_495FF0	0x0047FC40	sub_47FC40	callers	0.637	no: the code differs	373	340	yes	0.425
+0x00496510	sub_496510	0x004800F0	sub_4800F0	calls	0.791	no: the code differs	47	45	yes	0.667
+0x004965D0	sub_4965D0	0x004801A0	sub_4801A0	shape	0.970	no: the code differs	28	28	yes	1.000
+0x00496650	sub_496650	0x00480220	sub_480220	callers	0.506	no: the code differs	863	588	yes	0.283
+0x00497350	sub_497350	0x00480AE0	sub_480AE0	callers	0.766	no: the code differs	185	167	yes	0.643
+0x004975E0	sub_4975E0	0x00480D40	sub_480D40	callers	0.926	no: the code differs	127	125	yes	0.882
+0x00497790	sub_497790	0x00480EE0	sub_480EE0	similarity	0.622	no: the code differs	121	106	yes	0.412
+0x00497900	sub_497900	0x00481010	sub_481010	neighbours	0.336	no: the code differs	913	755	yes	0.284
+0x00498560	sub_498560	0x00481A40	sub_481A40	neighbours	0.387	no: the code differs	527	407	yes	0.387
+0x00498CB0	sub_498CB0	0x00481FB0	sub_481FB0	similarity	1.000	no: the code differs	5	5	yes	1.000
+0x00498CC0	sub_498CC0	0x00481FC0	sub_481FC0	similarity	1.000	no: the code differs	5	5	yes	1.000
+0x00498CE0	sub_498CE0	0x00481FD0	sub_481FD0	shape	0.970	no: the code differs	26	26	yes	1.000
+0x00498DF0	sub_498DF0	0x004820A0	sub_4820A0	shape	0.970	no: the code differs	182	182	yes	1.000
+0x00499060	sub_499060	0x00482310	sub_482310	callers	0.509	no: the code differs	472	371	yes	0.254
+0x00499760	sub_499760	0x00482840	sub_482840	calls	0.462	no: the code differs	436	391	yes	0.138
+0x00499DC0	sub_499DC0	0x00482DA0	sub_482DA0	callers	0.963	no: the code differs	70	68	yes	0.947
+0x00499EB0	sub_499EB0	0x00482E80	sub_482E80	shape	0.970	no: the code differs	6	6	yes	1.000
+0x00499EC0	sub_499EC0	0x00482E90	sub_482E90	shape	0.970	no: the code differs	17	17	yes	1.000
+0x00499EF0	sub_499EF0	0x00482EC0	sub_482EC0	shape	0.970	no: the code differs	20	20	yes	1.000
+0x00499F40	sub_499F40	0x00482F10	sub_482F10	callers	0.873	no: the code differs	29	28	yes	0.800
+0x00499FA0	sub_499FA0	0x00482F70	sub_482F70	calls	0.696	no: the code differs	30	23	yes	0.571
+0x0049A000	sub_49A000	0x00482FC0	sub_482FC0	shape	0.970	no: the code differs	53	53	yes	1.000
+0x0049A0E0	sub_49A0E0	0x004830A0	sub_4830A0	callers	0.694	no: the code differs	94	83	yes	0.529
+0x0049A220	sub_49A220	0x004831C0	sub_4831C0	callers	0.604	no: the code differs	392	358	yes	0.369
+0x0049A830	sub_49A830	0x00483700	sub_483700	shape	0.970	no: the code differs	79	79	yes	1.000
+0x0049A950	sub_49A950	0x00483820	sub_483820	neighbours	0.325	no: the code differs	5	8	yes	0.000
+0x0049A970	sub_49A970	0x00483840	sub_483840	similarity	0.733	no: the code differs	15	10	yes	0.667
+0x0049A9C0	sub_49A9C0	0x00483870	sub_483870	calls	1.000	no: the code differs	11	11	yes	1.000
+0x0049A9F0	sub_49A9F0	0x004838A0	sub_4838A0	calls	1.000	no: the code differs	11	11	yes	1.000
+0x0049AA60	sub_49AA60	0x004838D0	sub_4838D0	callers	0.948	no: the code differs	174	171	yes	0.919
+0x0049ACC0	sub_49ACC0	0x00483B30	sub_483B30	callers	0.935	no: the code differs	176	173	yes	0.897
+0x0049AF40	sub_49AF40	0x00483DB0	sub_483DB0	callers	0.918	no: the code differs	156	153	yes	0.870
+0x0049B160	sub_49B160	0x00483FD0	sub_483FD0	neighbours	1.000	no: the code differs	3	3	yes	1.000
+0x0049B170	sub_49B170	0x00483FE0	sub_483FE0	neighbours	1.000	no: the code differs	3	3	yes	1.000
+0x0049B180	sub_49B180	0x00483FF0	sub_483FF0	shape	0.970	no: the code differs	10	10	yes	1.000
+0x0049B1B0	sub_49B1B0	0x00484020	sub_484020	callers	0.796	no: the code differs	94	96	yes	0.667
+0x0049B330	sub_49B330	0x004841B0	sub_4841B0	shape	0.970	no: the code differs	33	33	yes	1.000
+0x0049B3B0	sub_49B3B0	0x00484230	sub_484230	callers	0.939	no: the code differs	196	193	yes	0.903
+0x0049B680	sub_49B680	0x00484500	sub_484500	similarity	0.880	no: the code differs	24	24	yes	0.800
+0x0049C440	sub_49C440	0x00484550	sub_484550	hash	1.000	yes	18	18	yes	1.000
+0x0049C480	sub_49C480	0x00484590	sub_484590	hash	1.000	yes	4	4	yes	1.000
+0x0049C490	sub_49C490	0x004845A0	sub_4845A0	anchor	0.855	no: the code differs	51	48	yes	0.778
+0x0049C520	sub_49C520	0x00484620	sub_484620	hash	1.000	yes	14	14	yes	1.000
+0x0049C5E0	sub_49C5E0	0x004846F0	sub_4846F0	anchor	0.782	no: the code differs	10	11	no	0.667
+0x0049C890	sub_49C890	0x004846D0	sub_4846D0	similarity	0.704	no: the code differs	17	11	yes	0.625
+0x0049C8F0	sub_49C8F0	0x004010D0	sub_4010D0	calls	0.536	no: the code differs	11	2	no	0.500
+0x0049C920	sub_49C920	0x00484DC0	sub_484DC0	callers	1.000	no: the code differs	1	1	yes	1.000
+0x0049C930	sub_49C930	0x00484ED0	sub_484ED0	callers	0.853	no: the code differs	52	55	yes	0.857
+0x0049C9B0	sub_49C9B0	0x004866A0	sub_4866A0	hash	1.000	yes	3	3	no	1.000
+0x0049C9C0	sub_49C9C0	0x004866B0	sub_4866B0	hash	1.000	yes	3	3	no	1.000
+0x0049CA10	sub_49CA10	0x00484F60	sub_484F60	anchor	0.798	no: the code differs	195	197	yes	0.667
+0x0049CD00	sub_49CD00	0x00485290	sub_485290	hash	1.000	yes	12	12	yes	1.000
+0x0049CD30	sub_49CD30	0x004852C0	sub_4852C0	hash	1.000	yes	10	10	yes	1.000
+0x0049CD60	sub_49CD60	0x00486A30	sub_486A30	hash	1.000	yes	7	7	no	1.000
+0x0049CD80	sub_49CD80	0x004852F0	sub_4852F0	hash	1.000	yes	31	31	yes	1.000
+0x0049CE40	_AIL_shutdown@0	0x00485330	_AIL_serve@0	similarity	0.800	no: the code differs	1	1	yes	1.000
+0x0049D000	sub_49D000	0x00485460	sub_485460	anchor	0.879	no: the code differs	38	34	yes	0.833
+0x0049D1A0	sub_49D1A0	0x004854B0	sub_4854B0	callers	0.598	no: the code differs	137	128	yes	0.686
+0x0049D3B0	sub_49D3B0	0x00480AD0	sub_480AD0	hash	1.000	yes	2	2	no	1.000
+0x0049D430	sub_49D430	0x00485960	sub_485960	callers	1.000	no: the code differs	23	23	yes	1.000
+0x0049D480	sub_49D480	0x004859B0	sub_4859B0	hash	1.000	yes	202	202	yes	1.000
+0x0049D6F0	sub_49D6F0	0x00485C20	sub_485C20	hash	1.000	yes	56	56	yes	1.000
+0x0049D790	sub_49D790	0x00485CC0	sub_485CC0	hash	1.000	yes	3	3	yes	1.000
+0x0049D7A0	sub_49D7A0	0x00485CD0	sub_485CD0	hash	1.000	yes	3	3	yes	1.000
+0x0049D7B0	sub_49D7B0	0x00485CE0	sub_485CE0	hash	1.000	yes	156	156	yes	1.000
+0x0049D960	sub_49D960	0x00485E90	sub_485E90	hash	1.000	yes	57	57	yes	1.000
+0x0049DAB0	sub_49DAB0	0x00485FE0	sub_485FE0	hash	1.000	yes	32	32	yes	1.000
+0x0049DB00	sub_49DB00	0x00486030	sub_486030	hash	1.000	yes	33	33	yes	1.000
+0x0049DB50	sub_49DB50	0x00486080	sub_486080	hash	1.000	yes	73	73	yes	1.000
+0x0049DC30	sub_49DC30	0x00486160	sub_486160	hash	1.000	yes	10	10	yes	1.000
+0x0049DC60	sub_49DC60	0x00486190	sub_486190	hash	1.000	yes	7	7	yes	1.000
+0x0049DC80	sub_49DC80	0x004861B0	sub_4861B0	hash	1.000	yes	9	9	yes	1.000
+0x0049DCA0	sub_49DCA0	0x004861D0	sub_4861D0	hash	1.000	yes	27	27	yes	1.000
+0x0049DCE0	sub_49DCE0	0x00486210	sub_486210	hash	1.000	yes	34	34	yes	1.000
+0x0049DD30	sub_49DD30	0x00486260	sub_486260	hash	1.000	yes	9	9	yes	1.000
+0x0049DD50	sub_49DD50	0x00486280	sub_486280	hash	1.000	yes	10	10	yes	1.000
+0x0049DD70	sub_49DD70	0x004862A0	sub_4862A0	hash	1.000	yes	2	2	yes	1.000
+0x0049DD80	sub_49DD80	0x004862B0	sub_4862B0	hash	1.000	yes	130	130	yes	1.000
+0x0049DF00	sub_49DF00	0x00486430	sub_486430	hash	1.000	yes	32	32	yes	1.000
+0x0049DF60	sub_49DF60	0x00486490	sub_486490	hash	1.000	yes	80	80	yes	1.000
+0x0049E060	sub_49E060	0x00401110	sub_401110	calls	0.536	no: the code differs	11	2	no	0.500
+0x0049E0B0	sub_49E0B0	0x004865A0	sub_4865A0	callers	1.000	no: the code differs	1	1	yes	1.000
+0x0049E0C0	sub_49E0C0	0x004865B0	sub_4865B0	hash	1.000	yes	31	31	yes	1.000
+0x0049E120	sub_49E120	0x00486610	sub_486610	anchor	0.396	no: the code differs	57	56	yes	0.000
+0x0049E1B0	sub_49E1B0	0x004866C0	sub_4866C0	hash	1.000	yes	42	42	yes	1.000
+0x0049E220	sub_49E220	0x00486730	sub_486730	hash	1.000	yes	132	132	yes	1.000
+0x0049E350	sub_49E350	0x00486860	sub_486860	anchor	1.000	no: the code differs	48	48	yes	1.000
+0x0049E3D0	sub_49E3D0	0x004868E0	sub_4868E0	calls	0.560	no: the code differs	15	9	yes	0.400
+0x0049E400	sub_49E400	0x00486900	sub_486900	anchor	0.605	no: the code differs	80	89	yes	0.375
+0x0049E4F0	sub_49E4F0	0x00486A10	sub_486A10	hash	1.000	yes	6	6	yes	1.000
+0x0049E530	sub_49E530	0x00486A50	sub_486A50	hash	1.000	yes	9	9	yes	1.000
+0x0049E550	sub_49E550	0x00486A70	sub_486A70	hash	1.000	yes	27	27	yes	1.000
+0x004A0030	DirectDrawCreate	0x00486AB0	DirectDrawCreate	anchor	1.000	no: the code differs	1	1	yes	1.000
+0x004A1058	DirectInputCreateA	0x00487AD8	DirectInputCreateA	anchor	1.000	no: the code differs	1	1	yes	1.000
+0x004A105E	ImmIsIME	0x00487ADE	ImmIsIME	anchor	1.000	no: the code differs	1	1	yes	1.000
+0x004A10E8	sub_4A10E8	0x00489654	sub_489654	hash	1.000	yes	15	15	yes	1.000
+0x004A110F	sub_4A110F	0x00489680	sub_489680	similarity	0.691	no: the code differs	22	23	yes	0.500
+0x004A1143	sub_4A1143	0x004896C0	sub_4896C0	calls	1.000	no: the code differs	4	4	yes	1.000
+0x004A114A	sub_4A114A	0x004896D0	sub_4896D0	similarity	1.000	no: the code differs	4	4	yes	1.000
+0x004A1151	sub_4A1151	0x004896E0	sub_4896E0	calls	0.381	no: the code differs	29	32	yes	0.000
+0x004A11A0	sub_4A11A0	0x00489740	sub_489740	calls	0.374	no: the code differs	27	31	yes	0.000
+0x004A11D6	sub_4A11D6	0x00489780	sub_489780	neighbours	0.344	no: the code differs	26	36	yes	0.000
+0x004A122A	sub_4A122A	0x004897F0	sub_4897F0	neighbours	0.307	no: the code differs	16	30	yes	0.000
+0x004A124F	sub_4A124F	0x00489830	sub_489830	callers	0.756	no: the code differs	56	57	yes	0.600
+0x004A1303	sub_4A1303	0x00489900	sub_489900	callers	0.549	no: the code differs	47	53	yes	0.286
+0x004A1378	sub_4A1378	0x00489990	sub_489990	calls	0.656	no: the code differs	51	57	yes	0.462
+0x004A13F4	sub_4A13F4	0x00489A20	sub_489A20	hash	1.000	yes	18	18	yes	1.000
+0x004A1414	sub_4A1414	0x00489A40	sub_489A40	hash	1.000	yes	9	9	yes	1.000
+0x004A1436	sub_4A1436	0x00489A62	sub_489A62	hash	1.000	yes	33	33	yes	1.000
+0x004A149E	sub_4A149E	0x00489ACA	sub_489ACA	hash	1.000	yes	10	10	yes	1.000
+0x004A14C1	sub_4A14C1	0x00489AED	sub_489AED	hash	1.000	no: callee 0x004A14D4 unmatched or matched elsewhere	4	4	yes	1.000
+0x004A14CA	sub_4A14CA	0x00489AF6	sub_489AF6	hash	1.000	yes	10	10	yes	1.000
+0x004A14E2	sub_4A14E2	0x00489B10	sub_489B10	neighbours	0.300	no: the code differs	3	6	yes	0.000
+0x004A14EC	sub_4A14EC	0x00489B20	sub_489B20	neighbours	0.327	no: the code differs	7	11	yes	0.000
+0x004A150A	sub_4A150A	0x00489B50	sub_489B50	neighbours	0.360	no: the code differs	8	10	yes	0.000
+0x004A151B	sub_4A151B	0x00489B70	sub_489B70	anchor	0.379	no: the code differs	75	103	yes	0.056
+0x004A16B0	sub_4A16B0	0x00489EB0	sub_489EB0	calls	0.991	no: the code differs	270	269	yes	0.986
+0x004A1A50	sub_4A1A50	0x0048A6C0	sub_48A6C0	hash	1.000	no: callee 0x004A3976 unmatched or matched elsewhere	66	66	no	1.000
+0x004A1B52	sub_4A1B52	0x0048B390	sub_48B390	anchor	0.345	no: the code differs	21	29	no	0.000
+0x004A1B81	sub_4A1B81	0x0048A1F0	sub_48A1F0	calls	0.376	no: the code differs	94	107	yes	0.000
+0x004A1C50	sub_4A1C50	0x0048A330	sub_48A330	calls	0.360	no: the code differs	12	15	yes	0.000
+0x004A1C7D	sub_4A1C7D	0x0048A370	sub_48A370	neighbours	0.320	no: the code differs	6	10	yes	0.000
+0x004A1C8E	sub_4A1C8E	0x0048A390	sub_48A390	neighbours	0.320	no: the code differs	6	10	yes	0.000
+0x004A1C9F	sub_4A1C9F	0x0048A3B0	sub_48A3B0	anchor	0.366	no: the code differs	49	59	yes	0.000
+0x004A1D38	sub_4A1D38	0x0048A490	sub_48A490	calls	0.350	no: the code differs	12	16	yes	0.000
+0x004A1D52	sub_4A1D52	0x0048B1C0	sub_48B1C0	anchor	0.366	no: the code differs	115	156	no	0.030
+0x004A1E72	sub_4A1E72	0x0048A4C0	sub_48A4C0	calls	0.489	no: the code differs	44	52	yes	0.200
+0x004A1EF4	sub_4A1EF4	0x0048A560	sub_48A560	calls	0.489	no: the code differs	42	54	yes	0.222
+0x004A1F74	sub_4A1F74	0x0048A610	sub_48A610	calls	0.367	no: the code differs	35	42	yes	0.000
+0x004A1FE8	sub_4A1FE8	0x00496960	sub_496960	calls	0.397	no: the code differs	59	88	no	0.105
+0x004A20A7	start	0x0048A740	start	anchor	0.359	no: the code differs	78	98	yes	0.000
+0x004A219D	sub_4A219D	0x0048A8A0	sub_48A8A0	callers	0.543	no: the code differs	10	14	yes	0.333
+0x004A21C2	sub_4A21C2	0x0048A8D0	sub_48A8D0	anchor	0.488	no: the code differs	9	13	yes	0.250
+0x004A21F8	sub_4A21F8	0x0048D1B0	sub_48D1B0	calls	0.360	no: the code differs	24	30	yes	0.000
+0x004A2236	sub_4A2236	0x0048D210	sub_48D210	anchor	0.318	no: the code differs	13	22	yes	0.000
+0x004A235D	sub_4A235D	0x0048D470	sub_48D470	anchor	0.346	no: the code differs	115	157	yes	0.000
+0x004A2624	sub_4A2624	0x0048D930	sub_48D930	callers	0.516	no: the code differs	29	40	yes	0.286
+0x004A2675	sub_4A2675	0x0048D990	sub_48D990	calls	0.389	no: the code differs	18	19	yes	0.000
+0x004A269A	sub_4A269A	0x0048D9C0	sub_48D9C0	calls	0.376	no: the code differs	61	88	yes	0.063
+0x004A2735	sub_4A2735	0x0048DAB0	sub_48DAB0	calls	0.371	no: the code differs	146	219	yes	0.063
+0x004A28DC	sub_4A28DC	0x0048DD50	sub_48DD50	neighbours	0.326	no: the code differs	67	106	yes	0.000
+0x004A2984	sub_4A2984	0x0048DE70	sub_48DE70	calls	0.359	no: the code differs	42	69	yes	0.063
+0x004A2DF4	sub_4A2DF4	0x0048E540	sub_48E540	calls	0.370	no: the code differs	39	46	yes	0.000
+0x004A2E5B	sub_4A2E5B	0x0048E5D0	sub_48E5D0	neighbours	0.311	no: the code differs	15	27	yes	0.000
+0x004A2E80	sub_4A2E80	0x0048E620	sub_48E620	hash	1.000	yes	34	34	yes	1.000
+0x004A2ECC	sub_4A2ECC	0x0048E670	sub_48E670	calls	0.400	no: the code differs	37	37	yes	0.000
+0x004A2F78	sub_4A2F78	0x0048E790	sub_48E790	calls	0.466	no: the code differs	65	75	yes	0.154
+0x004A3970	sub_4A3970	0x00490A10	sub_490A10	hash	1.000	yes	89	89	no	1.000
+0x004A3A47	sub_4A3A47	0x0048B440	sub_48B440	anchor	0.460	no: the code differs	20	25	no	0.167
+0x004A3A83	sub_4A3A83	0x0048B490	sub_48B490	calls	0.350	no: the code differs	15	20	no	0.000
+0x004A3AC1	sub_4A3AC1	0x0048B4F0	sub_48B4F0	calls	0.382	no: the code differs	14	29	no	0.143
+0x004A3AEC	sub_4A3AEC	0x0048B5B0	sub_48B5B0	anchor	0.317	no: the code differs	264	453	no	0.000
+0x004A3E17	sub_4A3E17	0x0048BB80	sub_48BB80	neighbours	0.347	no: the code differs	275	427	no	0.030
+0x004A4120	sub_4A4120	0x0048C0C0	sub_48C0C0	anchor	0.396	no: the code differs	53	78	no	0.100
+0x004A41D1	sub_4A41D1	0x0048C1D0	sub_48C1D0	anchor	0.349	no: the code differs	85	149	no	0.059
+0x004A46AD	sub_4A46AD	0x0048FAE0	sub_48FAE0	anchor	0.321	no: the code differs	258	425	yes	0.000
+0x004A4E0D	sub_4A4E0D	0x00490750	sub_490750	similarity	0.614	no: the code differs	36	51	yes	0.455
+0x004A4F20	sub_4A4F20	0x004923E0	sub_4923E0	calls	0.974	no: the code differs	270	268	no	0.959
+0x004A5260	sub_4A5260	0x00490924	sub_490924	hash	1.000	yes	73	73	yes	1.000
+0x004A531D	sub_4A531D	0x004909E1	sub_4909E1	hash	1.000	yes	11	11	yes	1.000
+0x004A5338	sub_4A5338	0x0048D0D0	sub_48D0D0	calls	0.359	no: the code differs	46	58	no	0.000
+0x004A53B0	sub_4A53B0	0x00497390	sub_497390	hash	1.000	yes	19	19	no	1.000
+0x004A53E4	sub_4A53E4	0x00490AD0	sub_490AD0	anchor	0.482	no: the code differs	89	110	yes	0.200
+0x004A5679	sub_4A5679	0x00490EF0	sub_490EF0	calls	0.355	no: the code differs	62	69	yes	0.125
+0x004A5712	sub_4A5712	0x00490FD0	sub_490FD0	neighbours	0.320	no: the code differs	187	360	yes	0.026
+0x004A58C6	sub_4A58C6	0x00491400	sub_491400	anchor	0.354	no: the code differs	132	173	yes	0.057
+0x004A5BA3	sub_4A5BA3	0x00491930	sub_491930	calls	0.475	no: the code differs	18	19	yes	0.143
+0x004A5BDC	sub_4A5BDC	0x00491980	sub_491980	anchor	0.330	no: the code differs	100	131	yes	0.000
+0x004A6350	sub_4A6350	0x00491DE0	sub_491DE0	hash	1.000	no: callee 0x004A63C1 unmatched or matched elsewhere	3	3	yes	1.000
+0x004A6360	sub_4A6360	0x00491DF0	sub_491DF0	hash	1.000	yes	84	84	yes	1.000
+0x004A64B7	sub_4A64B7	0x00493540	sub_493540	calls	0.388	no: the code differs	34	32	yes	0.000
+0x004A65E0	sub_4A65E0	0x0048A930	sub_48A930	hash	1.000	yes	40	40	no	1.000
+0x004A6640	sub_4A6640	0x00491C60	sub_491C60	hash	1.000	yes	44	44	no	1.000
+0x004A6728	sub_4A6728	0x004937E0	sub_4937E0	anchor	0.350	no: the code differs	12	16	yes	0.000
+0x004A6744	sub_4A6744	0x00493810	sub_493810	neighbours	0.350	no: the code differs	12	16	yes	0.000
+0x004A6760	sub_4A6760	0x00493840	sub_493840	anchor	0.357	no: the code differs	11	14	yes	0.000
+0x004A6780	sub_4A6780	0x00493870	sub_493870	hash	1.000	yes	56	56	yes	1.000
+0x004A681B	sub_4A681B	0x00493920	sub_493920	calls	0.433	no: the code differs	5	12	yes	0.250
+0x004A6830	sub_4A6830	0x00493950	sub_493950	anchor	0.306	no: the code differs	196	251	yes	0.000
+0x004A6A8E	sub_4A6A8E	0x00493CD0	sub_493CD0	neighbours	0.338	no: the code differs	149	246	yes	0.029
+0x004A6C3A	sub_4A6C3A	0x00493FD0	sub_493FD0	neighbours	0.385	no: the code differs	101	145	yes	0.077
+0x004A6D7A	sub_4A6D7A	0x004941D0	sub_4941D0	anchor	0.348	no: the code differs	51	69	yes	0.000
+0x004A70A0	sub_4A70A0	0x00494710	sub_494710	hash	1.000	yes	43	43	yes	1.000
+0x004A7110	sub_4A7110	0x00494780	sub_494780	hash	1.000	yes	44	44	yes	1.000
+0x004A736A	sub_4A736A	0x00492720	sub_492720	anchor	0.390	no: the code differs	123	148	no	0.040
+0x004A74F5	sub_4A74F5	0x00494B60	sub_494B60	anchor	0.334	no: the code differs	135	217	yes	0.016
+0x004A768E	sub_4A768E	0x00494E60	sub_494E60	anchor	0.343	no: the code differs	15	21	yes	0.000
+0x004A76D8	sub_4A76D8	0x00494EC0	sub_494EC0	neighbours	0.346	no: the code differs	19	26	yes	0.000
+0x004A770B	sub_4A770B	0x00494F40	sub_494F40	neighbours	0.317	no: the code differs	17	29	yes	0.000
+0x004A7734	sub_4A7734	0x00494FC0	sub_494FC0	anchor	0.359	no: the code differs	124	175	yes	0.029
+0x004A78D5	sub_4A78D5	0x00492220	sub_492220	anchor	0.435	no: the code differs	50	54	no	0.083
+0x004A7960	sub_4A7960	0x004922E0	sub_4922E0	hash	1.000	yes	109	109	no	1.000
+0x004A7A5E	sub_4A7A5E	0x00495300	sub_495300	anchor	0.360	no: the code differs	193	263	yes	0.021
+0x004A831F	sub_4A831F	0x00496440	sub_496440	anchor	0.370	no: the code differs	232	386	yes	0.083
+0x004A8724	sub_4A8724	0x00496A60	sub_496A60	calls	0.381	no: the code differs	51	69	yes	0.056
+0x004A87A1	sub_4A87A1	0x00496B30	sub_496B30	calls	0.383	no: the code differs	26	37	yes	0.071
+0x004A8808	sub_4A8808	0x00496BC0	sub_496BC0	anchor	0.398	no: the code differs	45	58	yes	0.071
+0x004A8882	sub_4A8882	0x00496C90	sub_496C90	neighbours	0.323	no: the code differs	16	26	yes	0.000
+0x004A88BF	sub_4A88BF	0x00496CF0	sub_496CF0	anchor	0.304	no: the code differs	26	50	yes	0.000
+0x004A8970	__alloca_probe	0x00491FD0	__alloca_probe	hash	1.000	yes	17	17	no	1.000
+0x004A8C3B	sub_4A8C3B	0x004973D0	sub_4973D0	calls	0.350	no: the code differs	24	32	yes	0.000
+0x004A8C7A	sub_4A8C7A	0x00497420	sub_497420	calls	0.385	no: the code differs	58	66	yes	0.182
+0x004A8CE8	sub_4A8CE8	0x004974D0	sub_4974D0	anchor	0.378	no: the code differs	66	74	yes	0.000
+0x004A9328	RtlUnwind	0x00497FC6	RtlUnwind	anchor	1.000	no: the code differs	1	1	yes	1.000
+0x00409D70	sub_409D70			unmatched		no: unmatched	2			
+0x00409D80	sub_409D80			unmatched		no: unmatched	2			
+0x00409D90	sub_409D90			unmatched		no: unmatched	4			
+0x00409DA0	sub_409DA0			unmatched		no: unmatched	2			
+0x00409DB0	sub_409DB0			unmatched		no: unmatched	1			
+0x00409DC0	sub_409DC0			unmatched		no: unmatched	2			
+0x00409DD0	sub_409DD0			unmatched		no: unmatched	2			
+0x0040A120	sub_40A120			unmatched		no: unmatched	4			
+0x0040A130	sub_40A130			unmatched		no: unmatched	2			
+0x0040B060	sub_40B060			unmatched		no: unmatched	98			
+0x0040B180	sub_40B180			unmatched		no: unmatched	90			
+0x0040B270	sub_40B270			unmatched		no: unmatched	98			
+0x0040C530	sub_40C530			unmatched		no: unmatched	15			
+0x0040C560	nullsub_1			unmatched		no: unmatched	1			
+0x0040D130	sub_40D130			unmatched		no: unmatched	2			
+0x0040D140	sub_40D140			unmatched		no: unmatched	8			
+0x0040D170	sub_40D170			unmatched		no: unmatched	180			
+0x0040D390	sub_40D390			unmatched		no: unmatched	8			
+0x00411830	sub_411830			unmatched		no: unmatched	36			
+0x00411FD0	sub_411FD0			unmatched		no: unmatched	87			
+0x004120A0	sub_4120A0			unmatched		no: unmatched	90			
+0x004121C0	sub_4121C0			unmatched		no: unmatched	378			
+0x004172A0	sub_4172A0			unmatched		no: unmatched	174			
+0x00417880	sub_417880			unmatched		no: unmatched	119			
+0x00423630	sub_423630			unmatched		no: unmatched	10			
+0x00423670	sub_423670			unmatched		no: unmatched	130			
+0x00423830	sub_423830			unmatched		no: unmatched	324			
+0x00423D40	sub_423D40			unmatched		no: unmatched	512			
+0x00424620	sub_424620			unmatched		no: unmatched	462			
+0x00424E40	sub_424E40			unmatched		no: unmatched	845			
+0x00425B10	sub_425B10			unmatched		no: unmatched	314			
+0x00425FF0	sub_425FF0			unmatched		no: unmatched	369			
+0x004265B0	sub_4265B0			unmatched		no: unmatched	448			
+0x00426C80	sub_426C80			unmatched		no: unmatched	229			
+0x00427070	sub_427070			unmatched		no: unmatched	5			
+0x00428880	sub_428880			unmatched		no: unmatched	12			
+0x00429790	sub_429790			unmatched		no: unmatched	336			
+0x00429BA0	sub_429BA0			unmatched		no: unmatched	42			
+0x0042A7D0	sub_42A7D0			unmatched		no: unmatched	770			
+0x0042B1B0	sub_42B1B0			unmatched		no: unmatched	2			
+0x0042B1C0	sub_42B1C0			unmatched		no: unmatched	33			
+0x0042B250	sub_42B250			unmatched		no: unmatched	1			
+0x0042B260	sub_42B260			unmatched		no: unmatched	50			
+0x0042B2E0	sub_42B2E0			unmatched		no: unmatched	35			
+0x0042B350	sub_42B350			unmatched		no: unmatched	35			
+0x0042B3D0	sub_42B3D0			unmatched		no: unmatched	35			
+0x0042B430	sub_42B430			unmatched		no: unmatched	22			
+0x00433590	sub_433590			unmatched		no: unmatched	58			
+0x00433620	sub_433620			unmatched		no: unmatched	14			
+0x00433650	sub_433650			unmatched		no: unmatched	61			
+0x004364D0	sub_4364D0			unmatched		no: unmatched	15			
+0x00436510	sub_436510			unmatched		no: unmatched	128			
+0x00436770	sub_436770			unmatched		no: unmatched	29			
+0x004367D0	sub_4367D0			unmatched		no: unmatched	4			
+0x00436810	sub_436810			unmatched		no: unmatched	90			
+0x00436B80	sub_436B80			unmatched		no: unmatched	31			
+0x00436BD0	sub_436BD0			unmatched		no: unmatched	60			
+0x00437920	sub_437920			unmatched		no: unmatched	102			
+0x00437AA0	sub_437AA0			unmatched		no: unmatched	87			
+0x00437BB0	sub_437BB0			unmatched		no: unmatched	54			
+0x00437E00	sub_437E00			unmatched		no: unmatched	3			
+0x00437E10	sub_437E10			unmatched		no: unmatched	3			
+0x00437E20	sub_437E20			unmatched		no: unmatched	78			
+0x00438010	sub_438010			unmatched		no: unmatched	2			
+0x004380F0	sub_4380F0			unmatched		no: unmatched	107			
+0x00438220	sub_438220			unmatched		no: unmatched	92			
+0x00438320	sub_438320			unmatched		no: unmatched	107			
+0x00438450	sub_438450			unmatched		no: unmatched	94			
+0x0043C950	sub_43C950			unmatched		no: unmatched	11			
+0x0043DA70	sub_43DA70			unmatched		no: unmatched	25			
+0x0043F110	sub_43F110			unmatched		no: unmatched	176			
+0x0043F3B0	sub_43F3B0			unmatched		no: unmatched	49			
+0x0043F4A0	sub_43F4A0			unmatched		no: unmatched	1303			
+0x00440570	sub_440570			unmatched		no: unmatched	46			
+0x004408C0	sub_4408C0			unmatched		no: unmatched	72			
+0x00441910	sub_441910			unmatched		no: unmatched	24			
+0x00441960	sub_441960			unmatched		no: unmatched	9			
+0x00441980	sub_441980			unmatched		no: unmatched	2			
+0x004438F0	sub_4438F0			unmatched		no: unmatched	19			
+0x00443D40	sub_443D40			unmatched		no: unmatched	509			
+0x00444630	sub_444630			unmatched		no: unmatched	224			
+0x00444950	sub_444950			unmatched		no: unmatched	28			
+0x00445640	sub_445640			unmatched		no: unmatched	60			
+0x00447CA0	sub_447CA0			unmatched		no: unmatched	81			
+0x00447DF0	sub_447DF0			unmatched		no: unmatched	25			
+0x00447E40	sub_447E40			unmatched		no: unmatched	83			
+0x00447F60	sub_447F60			unmatched		no: unmatched	39			
+0x00448010	sub_448010			unmatched		no: unmatched	15			
+0x00448060	sub_448060			unmatched		no: unmatched	369			
+0x00448520	sub_448520			unmatched		no: unmatched	81			
+0x00448630	sub_448630			unmatched		no: unmatched	55			
+0x00448700	sub_448700			unmatched		no: unmatched	57			
+0x004487C0	sub_4487C0			unmatched		no: unmatched	46			
+0x00448860	sub_448860			unmatched		no: unmatched	64			
+0x00448940	sub_448940			unmatched		no: unmatched	63			
+0x00448A20	sub_448A20			unmatched		no: unmatched	28			
+0x00448AA0	sub_448AA0			unmatched		no: unmatched	126			
+0x00448CB0	sub_448CB0			unmatched		no: unmatched	32			
+0x00448D20	sub_448D20			unmatched		no: unmatched	87			
+0x00448E60	sub_448E60			unmatched		no: unmatched	172			
+0x00449080	sub_449080			unmatched		no: unmatched	237			
+0x00449390	sub_449390			unmatched		no: unmatched	141			
+0x00449560	sub_449560			unmatched		no: unmatched	101			
+0x004496B0	sub_4496B0			unmatched		no: unmatched	60			
+0x004497B0	sub_4497B0			unmatched		no: unmatched	12			
+0x004497E0	sub_4497E0			unmatched		no: unmatched	22			
+0x00449840	sub_449840			unmatched		no: unmatched	282			
+0x00449BE0	sub_449BE0			unmatched		no: unmatched	221			
+0x00449EB0	sub_449EB0			unmatched		no: unmatched	140			
+0x0044A080	sub_44A080			unmatched		no: unmatched	1011			
+0x0044AD70	sub_44AD70			unmatched		no: unmatched	62			
+0x0044AE10	sub_44AE10			unmatched		no: unmatched	134			
+0x0044AF80	sub_44AF80			unmatched		no: unmatched	12			
+0x0044AFB0	sub_44AFB0			unmatched		no: unmatched	27			
+0x0044B020	sub_44B020			unmatched		no: unmatched	184			
+0x0044B270	sub_44B270			unmatched		no: unmatched	58			
+0x0044B340	sub_44B340			unmatched		no: unmatched	51			
+0x0044B3D0	sub_44B3D0			unmatched		no: unmatched	47			
+0x0044B450	sub_44B450			unmatched		no: unmatched	14			
+0x0044B480	sub_44B480			unmatched		no: unmatched	8			
+0x0044B4A0	sub_44B4A0			unmatched		no: unmatched	36			
+0x0044B530	sub_44B530			unmatched		no: unmatched	40			
+0x0044B670	sub_44B670			unmatched		no: unmatched	172			
+0x0044B940	sub_44B940			unmatched		no: unmatched	37			
+0x0044B9C0	sub_44B9C0			unmatched		no: unmatched	37			
+0x0044BA70	sub_44BA70			unmatched		no: unmatched	15			
+0x0044BF50	sub_44BF50			unmatched		no: unmatched	84			
+0x0044DA00	sub_44DA00			unmatched		no: unmatched	102			
+0x0044DB90	sub_44DB90			unmatched		no: unmatched	36			
+0x0044DC60	sub_44DC60			unmatched		no: unmatched	22			
+0x0044DD40	sub_44DD40			unmatched		no: unmatched	58			
+0x0044DE10	sub_44DE10			unmatched		no: unmatched	21			
+0x0044DE70	sub_44DE70			unmatched		no: unmatched	21			
+0x0044DEC0	sub_44DEC0			unmatched		no: unmatched	20			
+0x0044DF50	sub_44DF50			unmatched		no: unmatched	2			
+0x0044DF60	sub_44DF60			unmatched		no: unmatched	53			
+0x00451210	sub_451210			unmatched		no: unmatched	124			
+0x00451AD0	sub_451AD0			unmatched		no: unmatched	23			
+0x00451B60	sub_451B60			unmatched		no: unmatched	133			
+0x00452800	sub_452800			unmatched		no: unmatched	49			
+0x00454930	sub_454930			unmatched		no: unmatched	20			
+0x00458240	sub_458240			unmatched		no: unmatched	35			
+0x00458BB0	sub_458BB0			unmatched		no: unmatched	158			
+0x00458D80	sub_458D80			unmatched		no: unmatched	17			
+0x00458DC0	sub_458DC0			unmatched		no: unmatched	31			
+0x00458E30	sub_458E30			unmatched		no: unmatched	126			
+0x00458FD0	sub_458FD0			unmatched		no: unmatched	19			
+0x00459010	sub_459010			unmatched		no: unmatched	105			
+0x00459170	sub_459170			unmatched		no: unmatched	3			
+0x00459180	sub_459180			unmatched		no: unmatched	23			
+0x004591E0	sub_4591E0			unmatched		no: unmatched	5			
+0x00459200	sub_459200			unmatched		no: unmatched	148			
+0x004593C0	sub_4593C0			unmatched		no: unmatched	71			
+0x004594B0	sub_4594B0			unmatched		no: unmatched	23			
+0x004594F0	sub_4594F0			unmatched		no: unmatched	96			
+0x004599E0	sub_4599E0			unmatched		no: unmatched	82			
+0x0045B8D0	sub_45B8D0			unmatched		no: unmatched	428			
+0x0045BEA0	sub_45BEA0			unmatched		no: unmatched	3025			
+0x0045EE20	sub_45EE20			unmatched		no: unmatched	871			
+0x00464ED0	sub_464ED0			unmatched		no: unmatched	398			
+0x004655A0	sub_4655A0			unmatched		no: unmatched	2			
+0x00468000	sub_468000			unmatched		no: unmatched	55			
+0x004680A0	sub_4680A0			unmatched		no: unmatched	148			
+0x004682B0	sub_4682B0			unmatched		no: unmatched	125			
+0x00468440	sub_468440			unmatched		no: unmatched	4			
+0x00468460	sub_468460			unmatched		no: unmatched	4			
+0x00469D80	sub_469D80			unmatched		no: unmatched	131			
+0x00469F30	sub_469F30			unmatched		no: unmatched	23			
+0x00469F80	sub_469F80			unmatched		no: unmatched	15			
+0x00469FB0	sub_469FB0			unmatched		no: unmatched	26			
+0x0046A000	sub_46A000			unmatched		no: unmatched	222			
+0x0046A320	sub_46A320			unmatched		no: unmatched	486			
+0x0046A930	sub_46A930			unmatched		no: unmatched	42			
+0x0046A9A0	sub_46A9A0			unmatched		no: unmatched	37			
+0x0046AD80	sub_46AD80			unmatched		no: unmatched	2			
+0x0046AD90	sub_46AD90			unmatched		no: unmatched	40			
+0x0046AE10	sub_46AE10			unmatched		no: unmatched	151			
+0x0046AFE0	sub_46AFE0			unmatched		no: unmatched	5			
+0x0046AFF0	sub_46AFF0			unmatched		no: unmatched	2			
+0x0046B000	sub_46B000			unmatched		no: unmatched	49			
+0x0046B0C0	sub_46B0C0			unmatched		no: unmatched	93			
+0x0046B200	sub_46B200			unmatched		no: unmatched	5			
+0x00471E80	sub_471E80			unmatched		no: unmatched	772			
+0x004729B0	sub_4729B0			unmatched		no: unmatched	184			
+0x00472D50	sub_472D50			unmatched		no: unmatched	238			
+0x00473150	sub_473150			unmatched		no: unmatched	81			
+0x004732D0	sub_4732D0			unmatched		no: unmatched	428			
+0x00474710	sub_474710			unmatched		no: unmatched	275			
+0x00474E80	sub_474E80			unmatched		no: unmatched	234			
+0x004751D0	sub_4751D0			unmatched		no: unmatched	135			
+0x004753C0	sub_4753C0			unmatched		no: unmatched	194			
+0x00476A90	sub_476A90			unmatched		no: unmatched	123			
+0x00476CB0	sub_476CB0			unmatched		no: unmatched	608			
+0x00477C40	sub_477C40			unmatched		no: unmatched	203			
+0x00477EE0	sub_477EE0			unmatched		no: unmatched	111			
+0x004784D0	sub_4784D0			unmatched		no: unmatched	65			
+0x004785C0	sub_4785C0			unmatched		no: unmatched	160			
+0x004787F0	sub_4787F0			unmatched		no: unmatched	44			
+0x00478880	sub_478880			unmatched		no: unmatched	44			
+0x00478900	sub_478900			unmatched		no: unmatched	47			
+0x00478990	sub_478990			unmatched		no: unmatched	228			
+0x00478C50	sub_478C50			unmatched		no: unmatched	272			
+0x00478FA0	sub_478FA0			unmatched		no: unmatched	195			
+0x00479360	sub_479360			unmatched		no: unmatched	387			
+0x0047E420	sub_47E420			unmatched		no: unmatched	56			
+0x0047E450	sub_47E450			unmatched		no: unmatched	69			
+0x0047E660	sub_47E660			unmatched		no: unmatched	34			
+0x0047EB10	sub_47EB10			unmatched		no: unmatched	4			
+0x0047EB30	sub_47EB30			unmatched		no: unmatched	111			
+0x0047ECC0	sub_47ECC0			unmatched		no: unmatched	45			
+0x0047ED60	sub_47ED60			unmatched		no: unmatched	188			
+0x0047EFE0	sub_47EFE0			unmatched		no: unmatched	159			
+0x0047FD20	sub_47FD20			unmatched		no: unmatched	136			
+0x0047FF00	sub_47FF00			unmatched		no: unmatched	27			
+0x004838A0	sub_4838A0			unmatched		no: unmatched	206			
+0x004864C0	sub_4864C0			unmatched		no: unmatched	9			
+0x004864F0	sub_4864F0			unmatched		no: unmatched	3			
+0x00486500	sub_486500			unmatched		no: unmatched	8			
+0x00486520	sub_486520			unmatched		no: unmatched	4			
+0x00486530	sub_486530			unmatched		no: unmatched	4			
+0x00486540	sub_486540			unmatched		no: unmatched	12			
+0x00486570	sub_486570			unmatched		no: unmatched	17			
+0x004865B0	sub_4865B0			unmatched		no: unmatched	12			
+0x004865E0	sub_4865E0			unmatched		no: unmatched	9			
+0x00486600	sub_486600			unmatched		no: unmatched	19			
+0x00486640	sub_486640			unmatched		no: unmatched	42			
+0x004866C0	sub_4866C0			unmatched		no: unmatched	25			
+0x00486700	sub_486700			unmatched		no: unmatched	3			
+0x00486710	sub_486710			unmatched		no: unmatched	60			
+0x004867F0	sub_4867F0			unmatched		no: unmatched	245			
+0x00486B60	sub_486B60			unmatched		no: unmatched	55			
+0x00486C40	sub_486C40			unmatched		no: unmatched	119			
+0x00486E10	sub_486E10			unmatched		no: unmatched	36			
+0x00486E90	sub_486E90			unmatched		no: unmatched	52			
+0x00486F40	sub_486F40			unmatched		no: unmatched	123			
+0x00487090	sub_487090			unmatched		no: unmatched	29			
+0x004870F0	sub_4870F0			unmatched		no: unmatched	38			
+0x00487160	sub_487160			unmatched		no: unmatched	3			
+0x00487170	sub_487170			unmatched		no: unmatched	2			
+0x00487180	sub_487180			unmatched		no: unmatched	12			
+0x004871A0	sub_4871A0			unmatched		no: unmatched	12			
+0x004871C0	sub_4871C0			unmatched		no: unmatched	10			
+0x00487200	sub_487200			unmatched		no: unmatched	125			
+0x004873C0	sub_4873C0			unmatched		no: unmatched	150			
+0x004875E0	sub_4875E0			unmatched		no: unmatched	2			
+0x004875F0	sub_4875F0			unmatched		no: unmatched	4			
+0x00487600	sub_487600			unmatched		no: unmatched	3			
+0x00487610	sub_487610			unmatched		no: unmatched	153			
+0x004877A0	sub_4877A0			unmatched		no: unmatched	199			
+0x00487A70	sub_487A70			unmatched		no: unmatched	10			
+0x00487A90	sub_487A90			unmatched		no: unmatched	88			
+0x00487B90	sub_487B90			unmatched		no: unmatched	31			
+0x00487C40	sub_487C40			unmatched		no: unmatched	85			
+0x00487D60	sub_487D60			unmatched		no: unmatched	85			
+0x00487E90	sub_487E90			unmatched		no: unmatched	62			
+0x00487F80	sub_487F80			unmatched		no: unmatched	27			
+0x00487FE0	sub_487FE0			unmatched		no: unmatched	694			
+0x00488AB0	sub_488AB0			unmatched		no: unmatched	14			
+0x00488AF0	sub_488AF0			unmatched		no: unmatched	24			
+0x00488B30	sub_488B30			unmatched		no: unmatched	38			
+0x00488D80	sub_488D80			unmatched		no: unmatched	145			
+0x00489320	sub_489320			unmatched		no: unmatched	15			
+0x00489430	sub_489430			unmatched		no: unmatched	6			
+0x00489440	sub_489440			unmatched		no: unmatched	20			
+0x00489490	sub_489490			unmatched		no: unmatched	141			
+0x004896C0	sub_4896C0			unmatched		no: unmatched	3			
+0x004896D0	sub_4896D0			unmatched		no: unmatched	13			
+0x004896F0	sub_4896F0			unmatched		no: unmatched	6			
+0x00489710	sub_489710			unmatched		no: unmatched	12			
+0x0048A7A0	sub_48A7A0			unmatched		no: unmatched	36			
+0x0048B170	sub_48B170			unmatched		no: unmatched	5			
+0x0048B190	sub_48B190			unmatched		no: unmatched	9			
+0x0048B280	sub_48B280			unmatched		no: unmatched	35			
+0x0048B310	sub_48B310			unmatched		no: unmatched	38			
+0x0048B690	sub_48B690			unmatched		no: unmatched	33			
+0x0048B790	sub_48B790			unmatched		no: unmatched	3			
+0x0048B7A0	sub_48B7A0			unmatched		no: unmatched	113			
+0x0048B9D0	sub_48B9D0			unmatched		no: unmatched	7			
+0x0048BA00	sub_48BA00			unmatched		no: unmatched	2			
+0x0048BA50	sub_48BA50			unmatched		no: unmatched	2			
+0x0048BA60	sub_48BA60			unmatched		no: unmatched	982			
+0x0048CA10	sub_48CA10			unmatched		no: unmatched	2799			
+0x0048FB20	sub_48FB20			unmatched		no: unmatched	221			
+0x004902D0	sub_4902D0			unmatched		no: unmatched	3			
+0x004902E0	sub_4902E0			unmatched		no: unmatched	43			
+0x00490380	sub_490380			unmatched		no: unmatched	2			
+0x00490B50	sub_490B50			unmatched		no: unmatched	66			
+0x00490C80	sub_490C80			unmatched		no: unmatched	40			
+0x00490D20	sub_490D20			unmatched		no: unmatched	166			
+0x00491450	sub_491450			unmatched		no: unmatched	199			
+0x00491CA0	sub_491CA0			unmatched		no: unmatched	4			
+0x00491CB0	sub_491CB0			unmatched		no: unmatched	4			
+0x00491CC0	sub_491CC0			unmatched		no: unmatched	4			
+0x00491CD0	sub_491CD0			unmatched		no: unmatched	4			
+0x00491CE0	sub_491CE0			unmatched		no: unmatched	4			
+0x00491CF0	sub_491CF0			unmatched		no: unmatched	7			
+0x00491D10	sub_491D10			unmatched		no: unmatched	12			
+0x00491D40	sub_491D40			unmatched		no: unmatched	8			
+0x00491EB0	sub_491EB0			unmatched		no: unmatched	3			
+0x00491EC0	sub_491EC0			unmatched		no: unmatched	303			
+0x00492380	sub_492380			unmatched		no: unmatched	553			
+0x00492BC0	sub_492BC0			unmatched		no: unmatched	1001			
+0x00493AD0	sub_493AD0			unmatched		no: unmatched	199			
+0x00493CD0	sub_493CD0			unmatched		no: unmatched	29			
+0x00493D90	sub_493D90			unmatched		no: unmatched	16			
+0x00493DC0	sub_493DC0			unmatched		no: unmatched	24			
+0x00493EB0	sub_493EB0			unmatched		no: unmatched	546			
+0x004946E0	sub_4946E0			unmatched		no: unmatched	53			
+0x00494840	sub_494840			unmatched		no: unmatched	660			
+0x00498CD0	sub_498CD0			unmatched		no: unmatched	5			
+0x00498D40	sub_498D40			unmatched		no: unmatched	27			
+0x00498DB0	sub_498DB0			unmatched		no: unmatched	11			
+0x0049A9B0	sub_49A9B0			unmatched		no: unmatched	3			
+0x0049AA20	sub_49AA20			unmatched		no: unmatched	7			
+0x0049AA40	sub_49AA40			unmatched		no: unmatched	7			
+0x0049B6D0	sub_49B6D0			unmatched		no: unmatched	12			
+0x0049B700	sub_49B700			unmatched		no: unmatched	52			
+0x0049B7D0	sub_49B7D0			unmatched		no: unmatched	2			
+0x0049B7E0	sub_49B7E0			unmatched		no: unmatched	9			
+0x0049B800	sub_49B800			unmatched		no: unmatched	2			
+0x0049B810	sub_49B810			unmatched		no: unmatched	90			
+0x0049B960	sub_49B960			unmatched		no: unmatched	4			
+0x0049B980	sub_49B980			unmatched		no: unmatched	2			
+0x0049B990	sub_49B990			unmatched		no: unmatched	2			
+0x0049B9A0	sub_49B9A0			unmatched		no: unmatched	2			
+0x0049B9B0	sub_49B9B0			unmatched		no: unmatched	2			
+0x0049B9C0	sub_49B9C0			unmatched		no: unmatched	2			
+0x0049B9D0	sub_49B9D0			unmatched		no: unmatched	59			
+0x0049BAB0	sub_49BAB0			unmatched		no: unmatched	32			
+0x0049BB50	sub_49BB50			unmatched		no: unmatched	134			
+0x0049BE20	sub_49BE20			unmatched		no: unmatched	162			
+0x0049C0D0	sub_49C0D0			unmatched		no: unmatched	117			
+0x0049C290	sub_49C290			unmatched		no: unmatched	2			
+0x0049C2A0	nullsub_2			unmatched		no: unmatched	1			
+0x0049C2B0	sub_49C2B0			unmatched		no: unmatched	2			
+0x0049C2C0	sub_49C2C0			unmatched		no: unmatched	3			
+0x0049C2D0	sub_49C2D0			unmatched		no: unmatched	18			
+0x0049C310	sub_49C310			unmatched		no: unmatched	10			
+0x0049C340	sub_49C340			unmatched		no: unmatched	4			
+0x0049C350	sub_49C350			unmatched		no: unmatched	5			
+0x0049C370	sub_49C370			unmatched		no: unmatched	6			
+0x0049C390	sub_49C390			unmatched		no: unmatched	4			
+0x0049C3A0	sub_49C3A0			unmatched		no: unmatched	31			
+0x0049C410	sub_49C410			unmatched		no: unmatched	4			
+0x0049C420	sub_49C420			unmatched		no: unmatched	7			
+0x0049C550	sub_49C550			unmatched		no: unmatched	37			
+0x0049C600	sub_49C600			unmatched		no: unmatched	138			
+0x0049C7B0	sub_49C7B0			unmatched		no: unmatched	20			
+0x0049C800	sub_49C800			unmatched		no: unmatched	36			
+0x0049C8B0	sub_49C8B0			unmatched		no: unmatched	11			
+0x0049C8E0	sub_49C8E0			unmatched		no: unmatched	2			
+0x0049C900	sub_49C900			unmatched		no: unmatched	4			
+0x0049C910	sub_49C910			unmatched		no: unmatched	2			
+0x0049C9D0	sub_49C9D0			unmatched		no: unmatched	21			
+0x0049CC20	sub_49CC20			unmatched		no: unmatched	48			
+0x0049CCA0	sub_49CCA0			unmatched		no: unmatched	39			
+0x0049CDC0	sub_49CDC0			unmatched		no: unmatched	2			
+0x0049CDD0	sub_49CDD0			unmatched		no: unmatched	13			
+0x0049CE10	j__AIL_shutdown@0			unmatched		no: unmatched	1			
+0x0049CE20	sub_49CE20			unmatched		no: unmatched	6			
+0x0049CE50	sub_49CE50			unmatched		no: unmatched	2			
+0x0049CE60	sub_49CE60			unmatched		no: unmatched	52			
+0x0049CF20	sub_49CF20			unmatched		no: unmatched	76			
+0x0049D060	sub_49D060			unmatched		no: unmatched	25			
+0x0049D0C0	sub_49D0C0			unmatched		no: unmatched	73			
+0x0049D310	sub_49D310			unmatched		no: unmatched	34			
+0x0049D370	sub_49D370			unmatched		no: unmatched	16			
+0x0049D3C0	sub_49D3C0			unmatched		no: unmatched	2			
+0x0049D3D0	sub_49D3D0			unmatched		no: unmatched	28			
+0x0049E050	sub_49E050			unmatched		no: unmatched	2			
+0x0049E070	sub_49E070			unmatched		no: unmatched	4			
+0x0049E080	sub_49E080			unmatched		no: unmatched	2			
+0x0049E510	sub_49E510			unmatched		no: unmatched	9			
+0x0049E590	sub_49E590			unmatched		no: unmatched	15			
+0x0049E5D0	sub_49E5D0			unmatched		no: unmatched	32			
+0x0049E660	sub_49E660			unmatched		no: unmatched	15			
+0x0049E6A0	sub_49E6A0			unmatched		no: unmatched	47			
+0x0049E740	sub_49E740			unmatched		no: unmatched	58			
+0x0049E7F0	sub_49E7F0			unmatched		no: unmatched	7			
+0x0049E800	sub_49E800			unmatched		no: unmatched	39			
+0x0049E910	sub_49E910			unmatched		no: unmatched	127			
+0x0049EA80	sub_49EA80			unmatched		no: unmatched	112			
+0x0049EBB0	sub_49EBB0			unmatched		no: unmatched	178			
+0x0049EFC0	sub_49EFC0			unmatched		no: unmatched	4			
+0x0049EFE0	sub_49EFE0			unmatched		no: unmatched	3			
+0x0049EFF0	sub_49EFF0			unmatched		no: unmatched	252			
+0x0049F3D0	sub_49F3D0			unmatched		no: unmatched	77			
+0x0049F4D0	sub_49F4D0			unmatched		no: unmatched	17			
+0x0049F510	sub_49F510			unmatched		no: unmatched	30			
+0x0049F580	sub_49F580			unmatched		no: unmatched	53			
+0x0049F640	sub_49F640			unmatched		no: unmatched	233			
+0x0049F920	sub_49F920			unmatched		no: unmatched	77			
+0x0049FA20	sub_49FA20			unmatched		no: unmatched	51			
+0x0049FAB0	sub_49FAB0			unmatched		no: unmatched	162			
+0x0049FCA0	sub_49FCA0			unmatched		no: unmatched	170			
+0x0049FE60	sub_49FE60			unmatched		no: unmatched	88			
+0x0049FF60	sub_49FF60			unmatched		no: unmatched	69			
+0x004A0010	sub_4A0010			unmatched		no: unmatched	6			
+0x004A1070	sub_4A1070			unmatched		no: unmatched	5			
+0x004A1080	j__AIL_shutdown@0_0			unmatched		no: unmatched	1			
+0x004A1090	_AIL_shutdown@0_0			unmatched		no: unmatched	1			
+0x004A1096	sub_4A1096			unmatched		no: unmatched	6			
+0x004A10AD	nullsub_7			unmatched		no: unmatched	1			
+0x004A10AE	sub_4A10AE			unmatched		no: unmatched	8			
+0x004A15F7	sub_4A15F7			unmatched		no: unmatched	32			
+0x004A1664	sub_4A1664			unmatched		no: unmatched	8			
+0x004A1676	sub_4A1676			unmatched		no: unmatched	14			
+0x004A19E5	sub_4A19E5			unmatched		no: unmatched	31			
+0x004A1A36	sub_4A1A36			unmatched		no: unmatched	4			
+0x004A1AD0	sub_4A1AD0			unmatched		no: unmatched	6			
+0x004A1ADE	sub_4A1ADE			unmatched		no: unmatched	6			
+0x004A1AF0	sub_4A1AF0			unmatched		no: unmatched	16			
+0x004A1B1C	sub_4A1B1C			unmatched		no: unmatched	21			
+0x004A1FD2	sub_4A1FD2			unmatched		no: unmatched	7			
+0x004A2073	sub_4A2073			unmatched		no: unmatched	4			
+0x004A207E	sub_4A207E			unmatched		no: unmatched	17			
+0x004A21E6	sub_4A21E6			unmatched		no: unmatched	6			
+0x004A225F	sub_4A225F			unmatched		no: unmatched	37			
+0x004A22B9	sub_4A22B9			unmatched		no: unmatched	38			
+0x004A2307	sub_4A2307			unmatched		no: unmatched	11			
+0x004A231F	sub_4A231F			unmatched		no: unmatched	29			
+0x004A2461	sub_4A2461			unmatched		no: unmatched	92			
+0x004A253F	sub_4A253F			unmatched		no: unmatched	63			
+0x004A25DA	sub_4A25DA			unmatched		no: unmatched	9			
+0x004A2601	sub_4A2601			unmatched		no: unmatched	8			
+0x004A29E1	sub_4A29E1			unmatched		no: unmatched	56			
+0x004A2A7F	sub_4A2A7F			unmatched		no: unmatched	50			
+0x004A2AFA	sub_4A2AFA			unmatched		no: unmatched	89			
+0x004A2C06	sub_4A2C06			unmatched		no: unmatched	15			
+0x004A2C30	sub_4A2C30			unmatched		no: unmatched	169			
+0x004A2F22	sub_4A2F22			unmatched		no: unmatched	37			
+0x004A303A	sub_4A303A			unmatched		no: unmatched	105			
+0x004A314F	sub_4A314F			unmatched		no: unmatched	595			
+0x004A3890	sub_4A3890			unmatched		no: unmatched	25			
+0x004A38C5	sub_4A38C5			unmatched		no: unmatched	22			
+0x004A38F6	sub_4A38F6			unmatched		no: unmatched	27			
+0x004A392E	sub_4A392E			unmatched		no: unmatched	5			
+0x004A393B	sub_4A393B			unmatched		no: unmatched	6			
+0x004A394B	sub_4A394B			unmatched		no: unmatched	5			
+0x004A3A2C	sub_4A3A2C			unmatched		no: unmatched	13			
+0x004A42CC	sub_4A42CC			unmatched		no: unmatched	259			
+0x004A45C2	sub_4A45C2			unmatched		no: unmatched	32			
+0x004A4615	sub_4A4615			unmatched		no: unmatched	60			
+0x004A4960	sub_4A4960			unmatched		no: unmatched	189			
+0x004A4B77	sub_4A4B77			unmatched		no: unmatched	49			
+0x004A4BFF	sub_4A4BFF			unmatched		no: unmatched	10			
+0x004A4C25	sub_4A4C25			unmatched		no: unmatched	13			
+0x004A4C4A	sub_4A4C4A			unmatched		no: unmatched	22			
+0x004A4C77	sub_4A4C77			unmatched		no: unmatched	10			
+0x004A4C89	sub_4A4C89			unmatched		no: unmatched	16			
+0x004A4CB2	sub_4A4CB2			unmatched		no: unmatched	35			
+0x004A4D0C	sub_4A4D0C			unmatched		no: unmatched	72			
+0x004A4DCD	sub_4A4DCD			unmatched		no: unmatched	7			
+0x004A4DDB	sub_4A4DDB			unmatched		no: unmatched	8			
+0x004A4DEA	sub_4A4DEA			unmatched		no: unmatched	15			
+0x004A4E63	sub_4A4E63			unmatched		no: unmatched	59			
+0x004A4F08	sub_4A4F08			unmatched		no: unmatched	5			
+0x004A5525	sub_4A5525			unmatched		no: unmatched	22			
+0x004A5568	sub_4A5568			unmatched		no: unmatched	39			
+0x004A55C0	sub_4A55C0			unmatched		no: unmatched	71			
+0x004A59F8	sub_4A59F8			unmatched		no: unmatched	143			
+0x004A5D2F	sub_4A5D2F			unmatched		no: unmatched	24			
+0x004A5D64	sub_4A5D64			unmatched		no: unmatched	8			
+0x004A5D7A	sub_4A5D7A			unmatched		no: unmatched	58			
+0x004A5E0C	sub_4A5E0C			unmatched		no: unmatched	53			
+0x004A5E95	sub_4A5E95			unmatched		no: unmatched	78			
+0x004A5F60	sub_4A5F60			unmatched		no: unmatched	36			
+0x004A5FA9	sub_4A5FA9			unmatched		no: unmatched	43			
+0x004A5FFF	sub_4A5FFF			unmatched		no: unmatched	71			
+0x004A608B	sub_4A608B			unmatched		no: unmatched	13			
+0x004A60A6	sub_4A60A6			unmatched		no: unmatched	8			
+0x004A60B2	sub_4A60B2			unmatched		no: unmatched	13			
+0x004A60CD	sub_4A60CD			unmatched		no: unmatched	64			
+0x004A615A	sub_4A615A			unmatched		no: unmatched	138			
+0x004A62C6	sub_4A62C6			unmatched		no: unmatched	6			
+0x004A62DC	sub_4A62DC			unmatched		no: unmatched	6			
+0x004A62F2	sub_4A62F2			unmatched		no: unmatched	21			
+0x004A631F	sub_4A631F			unmatched		no: unmatched	21			
+0x004A6440	sub_4A6440			unmatched		no: unmatched	57			
+0x004A651B	sub_4A651B			unmatched		no: unmatched	70			
+0x004A66BB	sub_4A66BB			unmatched		no: unmatched	4			
+0x004A66C4	TopLevelExceptionFilter			unmatched		no: unmatched	24			
+0x004A670A	sub_4A670A			unmatched		no: unmatched	4			
+0x004A671B	sub_4A671B			unmatched		no: unmatched	3			
+0x004A6E14	sub_4A6E14			unmatched		no: unmatched	139			
+0x004A6FC1	sub_4A6FC1			unmatched		no: unmatched	19			
+0x004A7005	sub_4A7005			unmatched		no: unmatched	12			
+0x004A702B	sub_4A702B			unmatched		no: unmatched	37			
+0x004A7185	sub_4A7185			unmatched		no: unmatched	2			
+0x004A7188	sub_4A7188			unmatched		no: unmatched	29			
+0x004A71C3	sub_4A71C3			unmatched		no: unmatched	40			
+0x004A721F	sub_4A721F			unmatched		no: unmatched	4			
+0x004A7228	sub_4A7228			unmatched		no: unmatched	45			
+0x004A7295	sub_4A7295			unmatched		no: unmatched	52			
+0x004A7312	sub_4A7312			unmatched		no: unmatched	34			
+0x004A74B3	sub_4A74B3			unmatched		no: unmatched	6			
+0x004A74C4	sub_4A74C4			unmatched		no: unmatched	16			
+0x004A78B9	sub_4A78B9			unmatched		no: unmatched	7			
+0x004A7C82	sub_4A7C82			unmatched		no: unmatched	20			
+0x004A7CAD	sub_4A7CAD			unmatched		no: unmatched	15			
+0x004A7CCE	sub_4A7CCE			unmatched		no: unmatched	38			
+0x004A7D2C	sub_4A7D2C			unmatched		no: unmatched	21			
+0x004A7D5A	sub_4A7D5A			unmatched		no: unmatched	21			
+0x004A7D87	sub_4A7D87			unmatched		no: unmatched	76			
+0x004A7E4E	sub_4A7E4E			unmatched		no: unmatched	417			
+0x004A85B2	sub_4A85B2			unmatched		no: unmatched	109			
+0x004A86DF	sub_4A86DF			unmatched		no: unmatched	22			
+0x004A8916	sub_4A8916			unmatched		no: unmatched	35			
+0x004A899F	sub_4A899F			unmatched		no: unmatched	177			
+0x004A8BBF	sub_4A8BBF			unmatched		no: unmatched	52			
+0x004A8D9B	sub_4A8D9B			unmatched		no: unmatched	17			
+0x004A8DC6	sub_4A8DC6			unmatched		no: unmatched	239			
+0x004A9043	sub_4A9043			unmatched		no: unmatched	155			
+0x004A91CA	sub_4A91CA			unmatched		no: unmatched	35			
+0x004A9222	sub_4A9222			unmatched		no: unmatched	49			
+0x004A9289	sub_4A9289			unmatched		no: unmatched	49			
+0x004A92FC	sub_4A92FC			unmatched		no: unmatched	23			

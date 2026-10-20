@@ -1,0 +1,4 @@
+af_at_start=0xDFFFFFF7 flirt=1
+af_after_clear=0xDF7FFFF7
+af_final=0xDF7FFFF7 flirt=0
+func_count=1620 unknown_libname=0 func_lib=1 unowned_heads=1398 regions=125 noncode_nonpad=97 indirect=892

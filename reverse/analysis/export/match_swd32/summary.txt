@@ -1,0 +1,7 @@
+a functions 1700, b functions 1553
+matched 1183 (74.5% of a's instructions), unmatched 517
+by method: hash 444, shape 166, anchor 108, calls 102, callers 207, similarity 31, neighbours 125
+reusable 369
+in address order 1094 of 1183
+globals mapped 731, consistent 731
+offset pairs 218

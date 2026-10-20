@@ -1,0 +1,5354 @@
+[
+ {
+  "func": "0x00404320",
+  "ea": "0x00404387",
+  "insn": "jmp     ds:jpt_404387[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00404920",
+  "ea": "0x004049C9",
+  "insn": "jmp     ds:jpt_4049C9[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00405220",
+  "ea": "0x00405288",
+  "insn": "jmp     ds:jpt_405288[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00405220",
+  "ea": "0x004055D2",
+  "insn": "jmp     ds:jpt_4055D2[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00405220",
+  "ea": "0x00405A41",
+  "insn": "jmp     ds:jpt_405A41[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00406CD0",
+  "ea": "0x00406D13",
+  "insn": "call    esi ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00406CD0",
+  "ea": "0x00406D3D",
+  "insn": "call    esi ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00406EC0",
+  "ea": "0x00407819",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00406EC0",
+  "ea": "0x004078C8",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00406EC0",
+  "ea": "0x00408081",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x00406EC0",
+  "ea": "0x004080E1",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00408B40",
+  "ea": "0x00408BAE",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x004093C0",
+  "ea": "0x004093CC",
+  "insn": "jmp     ds:jpt_4093CC[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00409480",
+  "ea": "0x00409513",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00409480",
+  "ea": "0x00409573",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00409480",
+  "ea": "0x0040976A",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00409480",
+  "ea": "0x004097A3",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00409480",
+  "ea": "0x004097D0",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x004098C0",
+  "ea": "0x00409912",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00409AC0",
+  "ea": "0x00409B0E",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A15B",
+  "insn": "call    esi ; FindWindowExA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A179",
+  "insn": "call    esi ; FindWindowExA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A18D",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A1F9",
+  "insn": "call    edi ; LoadIconA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A202",
+  "insn": "call    edi ; LoadIconA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A2B8",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A2FA",
+  "insn": "call    esi ; PeekMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A308",
+  "insn": "call    edi ; GetMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A140",
+  "ea": "0x0040A313",
+  "insn": "call    ebp ; TranslateMessage",
+  "switch": false
+ },
+ {
+  "func": "0x0040A380",
+  "ea": "0x0040A40F",
+  "insn": "jmp     ds:jpt_40A40F[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0040A380",
+  "ea": "0x0040A57B",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AB04",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AB08",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AB21",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AB25",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AB3E",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AB42",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040ABE7",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040ABEB",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AC04",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AC08",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AC21",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AC25",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040A7B0",
+  "ea": "0x0040AE65",
+  "insn": "jmp     ds:jpt_40AE65[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040AF7C",
+  "insn": "call    dword ptr [ecx+6Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040AF87",
+  "insn": "call    dword ptr [edx+6Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040AFA7",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040AFAC",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040AFC5",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040AFCA",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040AFE3",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040AFE8",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040AEC0",
+  "ea": "0x0040B024",
+  "insn": "call    dword ptr [ecx+38h]",
+  "switch": false
+ },
+ {
+  "func": "0x0040BB90",
+  "ea": "0x0040BD2D",
+  "insn": "call    edi ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x0040BB90",
+  "ea": "0x0040BD38",
+  "insn": "call    edi ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x0040BEA0",
+  "ea": "0x0040BED1",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x0040BEA0",
+  "ea": "0x0040BED4",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x0040BEA0",
+  "ea": "0x0040BED7",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x0040F0D0",
+  "ea": "0x0040F2F4",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0040F380",
+  "ea": "0x0040F39E",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040F380",
+  "ea": "0x0040F3E8",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040F380",
+  "ea": "0x0040F44C",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040F680",
+  "ea": "0x0040F6A1",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040F680",
+  "ea": "0x0040F6A6",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0040FC25",
+  "insn": "jmp     ds:jpt_40FC25[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0040FC98",
+  "insn": "jmp     ds:jpt_40FC98[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0040FD6F",
+  "insn": "jmp     ds:jpt_40FD6F[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0040FE1B",
+  "insn": "call    edi ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0040FE4C",
+  "insn": "jmp     ds:jpt_40FE4C[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0040FEC0",
+  "insn": "call    edi ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0040FEEE",
+  "insn": "call    edi ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410014",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410028",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410036",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041003E",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410046",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041004E",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410056",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410094",
+  "insn": "call    ebx ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004100D1",
+  "insn": "call    ebx ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410115",
+  "insn": "call    ebx ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041016F",
+  "insn": "call    ebx ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004101AC",
+  "insn": "call    ebx ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041028B",
+  "insn": "call    ebx ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004102C8",
+  "insn": "call    ebx ; GetDlgItemTextA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041030C",
+  "insn": "call    ebx ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410320",
+  "insn": "call    ebx ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041032E",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410336",
+  "insn": "call    ebx ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041033E",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410346",
+  "insn": "call    ebx ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041034E",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041039C",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004103B3",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004103CD",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004103DE",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004103F8",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410409",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410423",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410434",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041044E",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041045F",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410479",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041048A",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004104A4",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004104B5",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004104CF",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004104E0",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004104FA",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410506",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410520",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410538",
+  "insn": "call    ebx ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041054F",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410560",
+  "insn": "call    ebx ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041056C",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410574",
+  "insn": "call    ebx ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410580",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410588",
+  "insn": "call    ebx ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410594",
+  "insn": "call    esi ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004105C4",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004105DB",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004105EC",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x004105F8",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410604",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410610",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410627",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410632",
+  "insn": "call    ebx ; EnableWindow",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041063A",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041063F",
+  "insn": "call    ebx ; EnableWindow",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410647",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041064C",
+  "insn": "call    ebx ; EnableWindow",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410654",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410659",
+  "insn": "call    ebx ; EnableWindow",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041066A",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041066F",
+  "insn": "call    ebx ; EnableWindow",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410677",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x0041067C",
+  "insn": "call    ebx ; EnableWindow",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410684",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410689",
+  "insn": "call    ebx ; EnableWindow",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410691",
+  "insn": "call    edi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x0040FBE0",
+  "ea": "0x00410696",
+  "insn": "call    ebx ; EnableWindow",
+  "switch": false
+ },
+ {
+  "func": "0x00410710",
+  "ea": "0x004107B9",
+  "insn": "call    ebp ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x004107E0",
+  "ea": "0x0041082B",
+  "insn": "call    ebx ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x004107E0",
+  "ea": "0x00410851",
+  "insn": "call    ebx ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x004107E0",
+  "ea": "0x0041087F",
+  "insn": "call    ebx ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x004107E0",
+  "ea": "0x004108AD",
+  "insn": "call    ebx ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x004107E0",
+  "ea": "0x0041092F",
+  "insn": "call    ebx ; SendMessageA",
+  "switch": false
+ },
+ {
+  "func": "0x00410950",
+  "ea": "0x004109A6",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00410950",
+  "ea": "0x004109D4",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00410950",
+  "ea": "0x00410A14",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00410950",
+  "ea": "0x00410A2C",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00410950",
+  "ea": "0x00410A45",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00410A80",
+  "ea": "0x00410AB5",
+  "insn": "jmp     ds:jpt_410AB5[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00411390",
+  "ea": "0x0041139E",
+  "insn": "jmp     ds:jpt_41139E[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004115D0",
+  "ea": "0x004115DD",
+  "insn": "jmp     ds:jpt_4115DD[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00411D10",
+  "ea": "0x00411D5A",
+  "insn": "call    ebx",
+  "switch": false
+ },
+ {
+  "func": "0x00411F20",
+  "ea": "0x00411FC6",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x00411FD0",
+  "ea": "0x00411FDF",
+  "insn": "call    esi ; SetErrorMode",
+  "switch": false
+ },
+ {
+  "func": "0x00411FD0",
+  "ea": "0x0041201F",
+  "insn": "call    esi ; SetErrorMode",
+  "switch": false
+ },
+ {
+  "func": "0x004121C0",
+  "ea": "0x00412366",
+  "insn": "jmp     ds:jpt_412366[ebp*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004121C0",
+  "ea": "0x004123E2",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004121C0",
+  "ea": "0x0041246D",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004121C0",
+  "ea": "0x004124EA",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x004121C0",
+  "ea": "0x00412591",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004121C0",
+  "ea": "0x0041261D",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x004126A0",
+  "ea": "0x00412D4A",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x00415960",
+  "ea": "0x004159D2",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004160E0",
+  "ea": "0x0041634D",
+  "insn": "jmp     ds:jpt_41634D[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00417740",
+  "ea": "0x0041776E",
+  "insn": "call    dword ptr [ecx+64h]",
+  "switch": false
+ },
+ {
+  "func": "0x00417790",
+  "ea": "0x0041779C",
+  "insn": "call    dword ptr [ecx+80h]",
+  "switch": false
+ },
+ {
+  "func": "0x00417A60",
+  "ea": "0x00417AB9",
+  "insn": "call    dword_4EC198[eax*4]",
+  "switch": false
+ },
+ {
+  "func": "0x00417A60",
+  "ea": "0x00417E49",
+  "insn": "call    dword_4EC198[ebx*4]",
+  "switch": false
+ },
+ {
+  "func": "0x00418310",
+  "ea": "0x00418441",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x00418880",
+  "ea": "0x004189A8",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x00419F30",
+  "ea": "0x0041A3B2",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x00419F30",
+  "ea": "0x0041A5D7",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x00419F30",
+  "ea": "0x0041A7C4",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x00419F30",
+  "ea": "0x0041A9E7",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041AD70",
+  "ea": "0x0041B214",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041AD70",
+  "ea": "0x0041B439",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041AD70",
+  "ea": "0x0041B64D",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041AD70",
+  "ea": "0x0041B889",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041C3B0",
+  "ea": "0x0041C866",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041C3B0",
+  "ea": "0x0041CBB9",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041C3B0",
+  "ea": "0x0041CEF6",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041C3B0",
+  "ea": "0x0041D22E",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041DD00",
+  "ea": "0x0041E144",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041DD00",
+  "ea": "0x0041E496",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041DD00",
+  "ea": "0x0041E7D2",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041DD00",
+  "ea": "0x0041EB09",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041EF80",
+  "ea": "0x0041F3EA",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041EF80",
+  "ea": "0x0041F737",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041EF80",
+  "ea": "0x0041FA73",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x0041EF80",
+  "ea": "0x0041FE04",
+  "insn": "jmp     ebx",
+  "switch": false
+ },
+ {
+  "func": "0x00424E40",
+  "ea": "0x00425203",
+  "insn": "jmp     ds:jpt_425203[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00424E40",
+  "ea": "0x0042561D",
+  "insn": "jmp     ds:jpt_42561D[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004271D0",
+  "ea": "0x0042720C",
+  "insn": "call    dword ptr [eax+64h]",
+  "switch": false
+ },
+ {
+  "func": "0x004271D0",
+  "ea": "0x00427228",
+  "insn": "call    dword ptr [edx+80h]",
+  "switch": false
+ },
+ {
+  "func": "0x004271D0",
+  "ea": "0x00427263",
+  "insn": "call    dword ptr [ecx+54h]",
+  "switch": false
+ },
+ {
+  "func": "0x004271D0",
+  "ea": "0x004274C1",
+  "insn": "jmp     ds:jpt_4274C1[ebp*4]; switch 5 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004271D0",
+  "ea": "0x0042753B",
+  "insn": "call    off_4B1E84",
+  "switch": false
+ },
+ {
+  "func": "0x004271D0",
+  "ea": "0x00427548",
+  "insn": "call    off_4B1E84",
+  "switch": false
+ },
+ {
+  "func": "0x004271D0",
+  "ea": "0x00427555",
+  "insn": "call    off_4B1E84",
+  "switch": false
+ },
+ {
+  "func": "0x00427680",
+  "ea": "0x0042768A",
+  "insn": "call    off_4B1E84",
+  "switch": false
+ },
+ {
+  "func": "0x004276A0",
+  "ea": "0x004276AA",
+  "insn": "call    off_4B1E88",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427AEC",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427B07",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427B11",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427B2E",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427B37",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427B48",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427B51",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427B5F",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004278C0",
+  "ea": "0x00427B68",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428248",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428257",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428267",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x0042826E",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428287",
+  "insn": "call    edi ; SetWindowPos",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004282A4",
+  "insn": "call    ebp ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004282A7",
+  "insn": "call    edi ; SetWindowPos",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004282C3",
+  "insn": "call    ebp ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004282C6",
+  "insn": "call    edi ; SetWindowPos",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004282E2",
+  "insn": "call    ebp ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004282E5",
+  "insn": "call    edi ; SetWindowPos",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428301",
+  "insn": "call    ebp ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428304",
+  "insn": "call    edi ; SetWindowPos",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428320",
+  "insn": "call    ebp ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428323",
+  "insn": "call    edi ; SetWindowPos",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x0042833F",
+  "insn": "call    ebp ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x00428342",
+  "insn": "call    edi ; SetWindowPos",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004283C1",
+  "insn": "jmp     ds:jpt_4283C1[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x0042869B",
+  "insn": "call    esi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286A4",
+  "insn": "call    edi ; ShowWindow",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286B4",
+  "insn": "call    esi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286B7",
+  "insn": "call    edi ; ShowWindow",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286C7",
+  "insn": "call    esi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286CA",
+  "insn": "call    edi ; ShowWindow",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286DA",
+  "insn": "call    esi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286DD",
+  "insn": "call    edi ; ShowWindow",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286ED",
+  "insn": "call    esi ; GetDlgItem",
+  "switch": false
+ },
+ {
+  "func": "0x00428210",
+  "ea": "0x004286F0",
+  "insn": "call    edi ; ShowWindow",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x00428773",
+  "insn": "call    esi ; RegOpenKeyExA",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x004287AA",
+  "insn": "call    ebp ; RegQueryValueExA",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x004287B7",
+  "insn": "call    edi ; RegCloseKey",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x004287D9",
+  "insn": "call    ebx ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x004287F1",
+  "insn": "call    esi ; RegOpenKeyExA",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x00428822",
+  "insn": "call    ebp ; RegQueryValueExA",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x00428829",
+  "insn": "call    edi ; RegCloseKey",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x0042885A",
+  "insn": "call    ebx ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00428750",
+  "ea": "0x00428866",
+  "insn": "call    ebx ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x004288B0",
+  "ea": "0x00428A18",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x004288B0",
+  "ea": "0x00428A1E",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00428EC0",
+  "ea": "0x00428FFD",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x004291B0",
+  "ea": "0x00429210",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004291B0",
+  "ea": "0x004293CA",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004291B0",
+  "ea": "0x0042945F",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004296B0",
+  "ea": "0x00429710",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0042BD5D",
+  "insn": "jmp     ds:jpt_42BD5D[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0042C891",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0042DC3C",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0042F0C1",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0042F466",
+  "insn": "jmp     ds:jpt_42F466[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0042F7CE",
+  "insn": "jmp     ds:jpt_42F7CE[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0042FA52",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0042FA88",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0043047C",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x004306A1",
+  "insn": "call    ebx ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x00430767",
+  "insn": "call    ebx ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x00430A52",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x00430B43",
+  "insn": "jmp     ds:jpt_430B43[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x00430C3C",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x00430D06",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x004315F4",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0042BAF0",
+  "ea": "0x0043205B",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00433C10",
+  "ea": "0x00434E7D",
+  "insn": "call    edi ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00433C10",
+  "ea": "0x00434ECE",
+  "insn": "call    edi ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00433C10",
+  "ea": "0x00434F48",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x00436050",
+  "ea": "0x00436067",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00436050",
+  "ea": "0x00436080",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004360C0",
+  "ea": "0x004361BB",
+  "insn": "jmp     ds:jpt_4361BB[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004360C0",
+  "ea": "0x00436268",
+  "insn": "jmp     ds:jpt_436268[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x00436543",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x00436555",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x00436573",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x0043657F",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x0043659D",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x004365A9",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x004365C7",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x004365D3",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x004365F1",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x004365FD",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x0043661B",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x00436627",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00436510",
+  "ea": "0x00436658",
+  "insn": "call    ebp ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x004366B0",
+  "ea": "0x004366C9",
+  "insn": "call    edi ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x004366B0",
+  "ea": "0x004366EB",
+  "insn": "call    edi ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x00436C80",
+  "ea": "0x004370B3",
+  "insn": "jmp     ds:jpt_4370B3[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x004377CF",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x004377E1",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x004377FF",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x0043780B",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x00437829",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x00437835",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x00437853",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x0043785F",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x0043787D",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x00437889",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x004378A7",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004377B0",
+  "ea": "0x004378B3",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x00437940",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x00437952",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x00437970",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x0043797C",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x0043799A",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x004379A6",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x004379C4",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x004379D0",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x004379EE",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x004379FA",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x00437A18",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00437920",
+  "ea": "0x00437A24",
+  "insn": "call    edi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00437D80",
+  "ea": "0x00437D95",
+  "insn": "call    edi ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x004380F0",
+  "ea": "0x00438177",
+  "insn": "call    edi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x004380F0",
+  "ea": "0x00438198",
+  "insn": "call    edi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00438320",
+  "ea": "0x004383A7",
+  "insn": "call    edi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00438320",
+  "ea": "0x004383C8",
+  "insn": "call    edi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00438A30",
+  "ea": "0x00438A87",
+  "insn": "jmp     ds:jpt_438A87[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00439BA0",
+  "ea": "0x00439BDC",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00439BA0",
+  "ea": "0x00439BE0",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00439D00",
+  "ea": "0x00439D58",
+  "insn": "call    dword ptr [edx+58h]",
+  "switch": false
+ },
+ {
+  "func": "0x00439D80",
+  "ea": "0x00439D8D",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x00439DA0",
+  "ea": "0x00439DAA",
+  "insn": "call    dword ptr [ecx+60h]",
+  "switch": false
+ },
+ {
+  "func": "0x00439DA0",
+  "ea": "0x00439DBA",
+  "insn": "call    dword ptr [edx+6Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x00439DA0",
+  "ea": "0x00439DD5",
+  "insn": "call    dword ptr [ecx+44h]",
+  "switch": false
+ },
+ {
+  "func": "0x00439DA0",
+  "ea": "0x00439DF3",
+  "insn": "call    ebx ; SelectObject",
+  "switch": false
+ },
+ {
+  "func": "0x00439DA0",
+  "ea": "0x00439E5C",
+  "insn": "call    ebx ; SelectObject",
+  "switch": false
+ },
+ {
+  "func": "0x00439DA0",
+  "ea": "0x00439E6C",
+  "insn": "call    dword ptr [eax+68h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BB63",
+  "insn": "call    dword ptr [ecx+0Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BB8A",
+  "insn": "call    dword ptr [edx+2Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BBB6",
+  "insn": "call    dword ptr [ecx+34h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BBD8",
+  "insn": "call    dword ptr [eax+1Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BC07",
+  "insn": "call    dword ptr [ecx+0Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BC2E",
+  "insn": "call    dword ptr [edx+2Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BC5A",
+  "insn": "call    dword ptr [edx+34h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BCB5",
+  "insn": "call    dword ptr [ecx+30h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BCED",
+  "insn": "call    dword ptr [ecx+18h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BD1E",
+  "insn": "call    dword ptr [ecx+1Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BA70",
+  "ea": "0x0043BD43",
+  "insn": "call    dword ptr [edx+24h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BD70",
+  "ea": "0x0043BD7F",
+  "insn": "call    dword ptr [edx+24h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BDD0",
+  "ea": "0x0043BDF1",
+  "insn": "call    dword ptr [ecx+24h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BEF0",
+  "ea": "0x0043BF3A",
+  "insn": "call    dword ptr [ecx+24h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BFA0",
+  "ea": "0x0043BFBA",
+  "insn": "call    dword ptr [ecx+20h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BFA0",
+  "ea": "0x0043BFC6",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BFA0",
+  "ea": "0x0043BFE0",
+  "insn": "call    dword ptr [ecx+20h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BFA0",
+  "ea": "0x0043BFEC",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043BFA0",
+  "ea": "0x0043C002",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C0D0",
+  "ea": "0x0043C115",
+  "insn": "call    dword ptr [edx]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C0D0",
+  "ea": "0x0043C127",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C140",
+  "ea": "0x0043C154",
+  "insn": "call    dword ptr [ecx+50h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C140",
+  "ea": "0x0043C172",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C190",
+  "ea": "0x0043C1AB",
+  "insn": "call    dword ptr [ecx+54h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C190",
+  "ea": "0x0043C1CA",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C1E0",
+  "ea": "0x0043C1F2",
+  "insn": "call    dword ptr [ecx+10h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C1E0",
+  "ea": "0x0043C21A",
+  "insn": "call    dword ptr [ecx+20h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C1E0",
+  "ea": "0x0043C235",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C1E0",
+  "ea": "0x0043C243",
+  "insn": "call    dword ptr [ecx+70h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C1E0",
+  "ea": "0x0043C25E",
+  "insn": "call    dword ptr [eax+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C1E0",
+  "ea": "0x0043C267",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C1E0",
+  "ea": "0x0043C26F",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C2EC",
+  "insn": "call    dword ptr [ecx+18h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C30D",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C32D",
+  "insn": "call    dword ptr [edx]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C338",
+  "insn": "call    dword ptr [eax+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C34F",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C399",
+  "insn": "call    dword ptr [ecx+58h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C3F5",
+  "insn": "call    dword ptr [ecx+18h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C401",
+  "insn": "call    dword ptr [eax+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C421",
+  "insn": "call    dword ptr [ecx]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C42C",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C443",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C476",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C47D",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C484",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C489",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C4B9",
+  "insn": "call    dword ptr [ecx+58h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C290",
+  "ea": "0x0043C4EE",
+  "insn": "call    dword ptr [edx+58h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C510",
+  "ea": "0x0043C529",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C510",
+  "ea": "0x0043C539",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C510",
+  "ea": "0x0043C549",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C510",
+  "ea": "0x0043C559",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C510",
+  "ea": "0x0043C569",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C510",
+  "ea": "0x0043C57A",
+  "insn": "call    dword ptr [edx+4Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C590",
+  "ea": "0x0043C599",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C5A0",
+  "ea": "0x0043C5AF",
+  "insn": "call    dword ptr [ecx+60h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C5A0",
+  "ea": "0x0043C5BF",
+  "insn": "call    dword ptr [edx+6Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C5A0",
+  "ea": "0x0043C5CB",
+  "insn": "call    dword ptr [ecx+58h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C5A0",
+  "ea": "0x0043C5D8",
+  "insn": "call    dword ptr [edx+2Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C5A0",
+  "ea": "0x0043C5F9",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C5A0",
+  "ea": "0x0043C60D",
+  "insn": "call    dword ptr [ecx+6Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C5A0",
+  "ea": "0x0043C616",
+  "insn": "call    dword ptr [edx+6Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C620",
+  "ea": "0x0043C67A",
+  "insn": "call    dword ptr [ecx+18h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C6C0",
+  "ea": "0x0043C6F2",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C700",
+  "ea": "0x0043C72C",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C740",
+  "ea": "0x0043C768",
+  "insn": "call    dword ptr [eax+44h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C740",
+  "ea": "0x0043C796",
+  "insn": "call    dword ptr [ecx+68h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C740",
+  "ea": "0x0043C7B5",
+  "insn": "call    dword ptr [eax+64h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C740",
+  "ea": "0x0043C7CD",
+  "insn": "call    dword ptr [edx+64h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C740",
+  "ea": "0x0043C7F9",
+  "insn": "call    dword ptr [eax+80h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C740",
+  "ea": "0x0043C80C",
+  "insn": "call    dword ptr [ecx+44h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C740",
+  "ea": "0x0043C829",
+  "insn": "call    dword ptr [ecx+68h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C840",
+  "ea": "0x0043C86D",
+  "insn": "call    dword ptr [ecx+30h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C880",
+  "ea": "0x0043C89E",
+  "insn": "call    dword ptr [edx+5Ch]",
+  "switch": false
+ },
+ {
+  "func": "0x0043C8F0",
+  "ea": "0x0043C911",
+  "insn": "call    dword ptr [ecx+54h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043CB10",
+  "ea": "0x0043CB4F",
+  "insn": "call    edi ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x0043CB10",
+  "ea": "0x0043CB75",
+  "insn": "call    edi ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x0043CC30",
+  "ea": "0x0043CC5B",
+  "insn": "call    ebx ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x0043CC30",
+  "ea": "0x0043CC6C",
+  "insn": "call    ebx ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x0043D120",
+  "ea": "0x0043D199",
+  "insn": "call    ebx ; MessageBoxA",
+  "switch": false
+ },
+ {
+  "func": "0x0043D550",
+  "ea": "0x0043D561",
+  "insn": "call    ebx ; CharNextA",
+  "switch": false
+ },
+ {
+  "func": "0x0043D550",
+  "ea": "0x0043D57A",
+  "insn": "call    ebx ; CharNextA",
+  "switch": false
+ },
+ {
+  "func": "0x0043D620",
+  "ea": "0x0043D66B",
+  "insn": "jmp     ds:jpt_43D66B[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0043EB10",
+  "ea": "0x0043EC11",
+  "insn": "call    dword_50B35C[ecx*4]",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043EF79",
+  "insn": "call    eax ; dword_50A118",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043EF7C",
+  "insn": "call    dword_50B018",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043EF98",
+  "insn": "call    dword_50B2D4",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043EFC2",
+  "insn": "call    dword_50B2D4",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043EFF0",
+  "insn": "call    dword_50B2D8",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043F007",
+  "insn": "call    dword_50A8D8",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043F028",
+  "insn": "call    dword_50B2C4",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043F049",
+  "insn": "call    dword_50AE9C",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043F06A",
+  "insn": "call    dword_50A8D4",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043F08B",
+  "insn": "call    dword_50A35C",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043F0B3",
+  "insn": "call    dword_50A414",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043F0DB",
+  "insn": "call    dword_50B21C",
+  "switch": false
+ },
+ {
+  "func": "0x0043EF70",
+  "ea": "0x0043F103",
+  "insn": "call    dword_50AD6C",
+  "switch": false
+ },
+ {
+  "func": "0x0043F110",
+  "ea": "0x0043F1D9",
+  "insn": "call    dword_50A81C",
+  "switch": false
+ },
+ {
+  "func": "0x0043F110",
+  "ea": "0x0043F381",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FC9B",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FCDC",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FD1B",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FD57",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FDD9",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FE07",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FE38",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FE66",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FE95",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FEBF",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FF12",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FF6A",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0043FFC3",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0044001B",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0044006F",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x004400A5",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x004400DE",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x00440114",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0044014D",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x00440272",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x004402AD",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x00440305",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x00440338",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x00440373",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x004403CB",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x00440406",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x0044045E",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x00440499",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0043F4A0",
+  "ea": "0x004404F1",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00440980",
+  "ea": "0x00440A47",
+  "insn": "jmp     ds:jpt_440A47[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004416C0",
+  "ea": "0x00441776",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004417F0",
+  "ea": "0x00441821",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x004424E0",
+  "ea": "0x004424F3",
+  "insn": "call    ebp ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004424E0",
+  "ea": "0x00442551",
+  "insn": "call    ebp ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442934",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442942",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442950",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x0044295C",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442968",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442974",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442980",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x0044298C",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442998",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x004429DD",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x004429FF",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442A1E",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442B05",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442B12",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442B20",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442B6C",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442BB6",
+  "insn": "call    ebp ; lstrcmpA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442BC4",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442C0A",
+  "insn": "call    ebp ; lstrcmpA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442C18",
+  "insn": "call    ebp ; lstrcmpA",
+  "switch": false
+ },
+ {
+  "func": "0x00442920",
+  "ea": "0x00442C25",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004432E0",
+  "ea": "0x004439A0",
+  "insn": "jmp     ds:jpt_4439A0[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00443CB0",
+  "ea": "0x00443CBB",
+  "insn": "jmp     ds:jpt_443CBB[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00443CB0",
+  "ea": "0x004439A0",
+  "insn": "jmp     ds:jpt_4439A0[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00443D40",
+  "ea": "0x00443FA2",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00443D40",
+  "ea": "0x004440D3",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00443D40",
+  "ea": "0x0044410C",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00446120",
+  "ea": "0x0044613E",
+  "insn": "jmp     ds:jpt_44613E[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004465D0",
+  "ea": "0x004465E6",
+  "insn": "jmp     ds:jpt_4465E6[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x00447061",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x004470A0",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x00447148",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x00447194",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x004471D1",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x00447277",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x004472BD",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x004472FC",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x00447396",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x00447401",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x0044743C",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00447010",
+  "ea": "0x0044748F",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00448AA0",
+  "ea": "0x00448AC7",
+  "insn": "jmp     ds:jpt_448AC7[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00449080",
+  "ea": "0x004492C5",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0044B530",
+  "ea": "0x0044B553",
+  "insn": "jmp     ds:jpt_44B553[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044B670",
+  "ea": "0x0044B6E6",
+  "insn": "jmp     ds:jpt_44B6E6[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044B670",
+  "ea": "0x0044B721",
+  "insn": "jmp     ds:jpt_44B721[esi*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044C7A0",
+  "ea": "0x0044C7BA",
+  "insn": "jmp     ds:jpt_44C7BA[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044CDC0",
+  "ea": "0x0044CDD7",
+  "insn": "jmp     ds:jpt_44CDD7[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044DD40",
+  "ea": "0x0044DDBC",
+  "insn": "call    dword_50A1A0[edx*4]",
+  "switch": false
+ },
+ {
+  "func": "0x0044DEC0",
+  "ea": "0x0044DEF7",
+  "insn": "call    dword_50B35C[ecx*4]",
+  "switch": false
+ },
+ {
+  "func": "0x0044DF50",
+  "ea": "0x0044DF55",
+  "insn": "jmp     dword_50A8B0[eax*4]",
+  "switch": false
+ },
+ {
+  "func": "0x0044E760",
+  "ea": "0x0044E785",
+  "insn": "jmp     ds:jpt_44E785[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044E950",
+  "ea": "0x0044E975",
+  "insn": "jmp     ds:jpt_44E975[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044EB30",
+  "ea": "0x0044EB55",
+  "insn": "jmp     ds:jpt_44EB55[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044ECE0",
+  "ea": "0x0044ED05",
+  "insn": "jmp     ds:jpt_44ED05[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044F190",
+  "ea": "0x0044F1BC",
+  "insn": "jmp     ds:jpt_44F1BC[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0044F190",
+  "ea": "0x0044F56E",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0044FB70",
+  "ea": "0x00450075",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0044FB70",
+  "ea": "0x004500BD",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0044FB70",
+  "ea": "0x00450171",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0044FB70",
+  "ea": "0x00450769",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x0044FB70",
+  "ea": "0x00450781",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004518C0",
+  "ea": "0x004518E3",
+  "insn": "jmp     ds:jpt_4518E3[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00451DA0",
+  "ea": "0x00451E8A",
+  "insn": "jmp     ds:jpt_451E8A[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00451DA0",
+  "ea": "0x0045210A",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00451DA0",
+  "ea": "0x004521CE",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00451DA0",
+  "ea": "0x00452253",
+  "insn": "jmp     ds:jpt_452253[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00452EA0",
+  "ea": "0x00452EBB",
+  "insn": "jmp     ds:jpt_452EBB[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00453020",
+  "ea": "0x0045303D",
+  "insn": "jmp     ds:jpt_45303D[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00453180",
+  "ea": "0x0045319B",
+  "insn": "jmp     ds:jpt_45319B[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00453270",
+  "ea": "0x0045328E",
+  "insn": "jmp     ds:jpt_45328E[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00453360",
+  "ea": "0x0045337D",
+  "insn": "jmp     ds:jpt_45337D[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00453360",
+  "ea": "0x004533E9",
+  "insn": "jmp     ds:jpt_4533E9[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004536D0",
+  "ea": "0x004536EF",
+  "insn": "jmp     ds:jpt_4536EF[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004539C0",
+  "ea": "0x004539DB",
+  "insn": "jmp     ds:jpt_4539DB[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00453A40",
+  "ea": "0x00453F74",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00453A40",
+  "ea": "0x00454042",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00453A40",
+  "ea": "0x004540C5",
+  "insn": "jmp     ds:jpt_4540C5[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004558E0",
+  "ea": "0x004558F0",
+  "insn": "jmp     ds:jpt_4558F0[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004559B0",
+  "ea": "0x004559C1",
+  "insn": "jmp     ds:jpt_4559C1[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00455B20",
+  "ea": "0x00455B32",
+  "insn": "jmp     ds:jpt_455B32[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00456050",
+  "ea": "0x0045605B",
+  "insn": "jmp     ds:jpt_45605B[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004560E0",
+  "ea": "0x00456477",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004560E0",
+  "ea": "0x0045648F",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x004560E0",
+  "ea": "0x004569DE",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004560E0",
+  "ea": "0x00456AF0",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004560E0",
+  "ea": "0x00456BE6",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004560E0",
+  "ea": "0x00456C5E",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004560E0",
+  "ea": "0x00456D17",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004560E0",
+  "ea": "0x00456D6F",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x00459B50",
+  "ea": "0x00459B5F",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00459B50",
+  "ea": "0x00459B64",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00459BA0",
+  "ea": "0x00459BAF",
+  "insn": "call    dword ptr [ecx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045AB2D",
+  "insn": "call    dword ptr [esi+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045AC35",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045AF2C",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045AFDA",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045B00E",
+  "insn": "call    dword ptr [esi+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045B13D",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045B179",
+  "insn": "call    dword ptr [esi+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045B1CA",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045AAD0",
+  "ea": "0x0045B1EE",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045B490",
+  "ea": "0x0045B4AA",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0045B490",
+  "ea": "0x0045B4AF",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0045B490",
+  "ea": "0x0045B4E8",
+  "insn": "call    dword ptr [eax+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045B490",
+  "ea": "0x0045B55F",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045B490",
+  "ea": "0x0045B58E",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045B490",
+  "ea": "0x0045B5AE",
+  "insn": "call    dword ptr [edx+8]",
+  "switch": false
+ },
+ {
+  "func": "0x0045B5C0",
+  "ea": "0x0045B860",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045B8D0",
+  "ea": "0x0045BB95",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045B8D0",
+  "ea": "0x0045BDE8",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0045BEA0",
+  "ea": "0x0045BF75",
+  "insn": "jmp     ds:jpt_45BF75[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0045BEA0",
+  "ea": "0x0045E521",
+  "insn": "jmp     ds:jpt_45E521[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0045EE20",
+  "ea": "0x0045EED6",
+  "insn": "jmp     ds:jpt_45EED6[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x004684F2",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x00468520",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x00468549",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x004685AC",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x00468627",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x00468667",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x004686BE",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x0046871D",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x0046875F",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468480",
+  "ea": "0x004688A1",
+  "insn": "call    ebx ; Sleep",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00468BC1",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00468C37",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00468CCA",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00468D62",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00468DFF",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00468E61",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00468F8A",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00468FD1",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x0046900A",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00469051",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00469091",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x004690CA",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00469106",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00469146",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00469188",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x004691C7",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00469216",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x00469247",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00468B20",
+  "ea": "0x0046927F",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00469410",
+  "ea": "0x0046944B",
+  "insn": "jmp     ds:jpt_46944B[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004695B0",
+  "ea": "0x00469678",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x004695B0",
+  "ea": "0x00469726",
+  "insn": "call    dword ptr [edx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x0046A320",
+  "ea": "0x0046A344",
+  "insn": "jmp     ds:jpt_46A344[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046B2E0",
+  "ea": "0x0046B339",
+  "insn": "call    ebp ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x0046B2E0",
+  "ea": "0x0046B3AA",
+  "insn": "call    ebp ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x0046BFB0",
+  "ea": "0x0046C050",
+  "insn": "jmp     ds:jpt_46C050[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046D180",
+  "ea": "0x0046D1A6",
+  "insn": "jmp     ds:jpt_46D1A6[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046DB70",
+  "ea": "0x0046DB96",
+  "insn": "jmp     ds:jpt_46DB96[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046E630",
+  "ea": "0x0046E652",
+  "insn": "jmp     ds:jpt_46E652[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046E820",
+  "ea": "0x0046E842",
+  "insn": "jmp     ds:jpt_46E842[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046EAC0",
+  "ea": "0x0046EB84",
+  "insn": "jmp     ds:jpt_46EB84[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046F380",
+  "ea": "0x0046F397",
+  "insn": "jmp     ds:jpt_46F397[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046F400",
+  "ea": "0x0046F417",
+  "insn": "jmp     ds:jpt_46F417[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046F920",
+  "ea": "0x0046F95E",
+  "insn": "jmp     ds:jpt_46F95E[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0046F920",
+  "ea": "0x0046FC32",
+  "insn": "jmp     ds:jpt_46FC32[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00471E80",
+  "ea": "0x00471F25",
+  "insn": "jmp     ds:jpt_471F25[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00475CB0",
+  "ea": "0x00475CE2",
+  "insn": "jmp     ds:jpt_475CE2[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00476200",
+  "ea": "0x0047657E",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476200",
+  "ea": "0x004765C1",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476200",
+  "ea": "0x00476601",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00476DCD",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00476E08",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00476E45",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00476E88",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00476EC7",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00476F09",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00476F49",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x0047711B",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x004771F1",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x004772D4",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x004773BE",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00477491",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x00477570",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00476CB0",
+  "ea": "0x0047764B",
+  "insn": "call    esi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004776B0",
+  "ea": "0x00477705",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004776B0",
+  "ea": "0x00477715",
+  "insn": "call    ebp ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x004776B0",
+  "ea": "0x004777FC",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x004776B0",
+  "ea": "0x00477806",
+  "insn": "call    ebp ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00477850",
+  "ea": "0x004778C1",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00477850",
+  "ea": "0x004778D1",
+  "insn": "call    ebp ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00477850",
+  "ea": "0x004779B6",
+  "insn": "call    ebx ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00477850",
+  "ea": "0x004779C0",
+  "insn": "call    ebp ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477C7D",
+  "insn": "call    edi ; lstrcmpA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477C98",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477CB9",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477CC9",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477D3D",
+  "insn": "call    edi ; lstrcmpA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477D5D",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477D67",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477DAA",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477DB4",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477DF6",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477E00",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477E41",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00477C40",
+  "ea": "0x00477E4B",
+  "insn": "call    ebx ; lstrlenA",
+  "switch": false
+ },
+ {
+  "func": "0x00477EE0",
+  "ea": "0x00477F8E",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00477EE0",
+  "ea": "0x00478022",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00477EE0",
+  "ea": "0x0047805C",
+  "insn": "call    esi ; lstrcpyA",
+  "switch": false
+ },
+ {
+  "func": "0x00478990",
+  "ea": "0x00478AD0",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478990",
+  "ea": "0x00478B10",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478990",
+  "ea": "0x00478B4E",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478990",
+  "ea": "0x00478B8E",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478990",
+  "ea": "0x00478BCC",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478990",
+  "ea": "0x00478C08",
+  "insn": "call    ebp ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478C50",
+  "ea": "0x00478DA0",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478C50",
+  "ea": "0x00478DDC",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478C50",
+  "ea": "0x00478E4D",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478C50",
+  "ea": "0x00478E87",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478C50",
+  "ea": "0x00478EF8",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00478C50",
+  "ea": "0x00478F34",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00479860",
+  "ea": "0x00479878",
+  "insn": "jmp     ds:jpt_479878[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00479860",
+  "ea": "0x0047CA1D",
+  "insn": "call    esi ; lstrcmpA",
+  "switch": false
+ },
+ {
+  "func": "0x00479860",
+  "ea": "0x0047D2C8",
+  "insn": "call    esi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x00479860",
+  "ea": "0x0047D2D4",
+  "insn": "call    esi ; lstrcatA",
+  "switch": false
+ },
+ {
+  "func": "0x0047E270",
+  "ea": "0x0047E306",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x0047E270",
+  "ea": "0x0047E31F",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x0047E270",
+  "ea": "0x0047E33C",
+  "insn": "call    ebx ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x0047E270",
+  "ea": "0x0047E353",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x0047E270",
+  "ea": "0x0047E391",
+  "insn": "call    ebx ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x0047F3E0",
+  "ea": "0x0047F3F9",
+  "insn": "jmp     ds:jpt_47F3F9[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0047F5C0",
+  "ea": "0x0047F5ED",
+  "insn": "jmp     ds:jpt_47F5ED[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00481C10",
+  "ea": "0x00481D5F",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00481C10",
+  "ea": "0x00481D64",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00486B60",
+  "ea": "0x00486B76",
+  "insn": "jmp     ds:jpt_486B76[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00489750",
+  "ea": "0x004897D0",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00489750",
+  "ea": "0x004897ED",
+  "insn": "call    ebx ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x00489750",
+  "ea": "0x0048980E",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00489750",
+  "ea": "0x00489824",
+  "insn": "call    ebx ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x00489750",
+  "ea": "0x0048983C",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00489750",
+  "ea": "0x0048986B",
+  "insn": "call    ebx ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x00489750",
+  "ea": "0x004898B5",
+  "insn": "jmp     ds:jpt_4898B5[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00489B00",
+  "ea": "0x00489BED",
+  "insn": "call    edi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00489B00",
+  "ea": "0x00489C09",
+  "insn": "call    ebp ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x00489B00",
+  "ea": "0x00489C24",
+  "insn": "call    edi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00489B00",
+  "ea": "0x00489C3B",
+  "insn": "call    ebp ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x00489B00",
+  "ea": "0x00489C52",
+  "insn": "call    edi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x00489B00",
+  "ea": "0x00489C84",
+  "insn": "call    ebp ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x00489B00",
+  "ea": "0x00489CD0",
+  "insn": "jmp     ds:jpt_489CD0[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0048A010",
+  "ea": "0x0048A0A5",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x0048A010",
+  "ea": "0x0048A0C2",
+  "insn": "call    ebp ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x0048A010",
+  "ea": "0x0048A0D9",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x0048A010",
+  "ea": "0x0048A107",
+  "insn": "call    ebp ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x0048A180",
+  "ea": "0x0048A217",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x0048A180",
+  "ea": "0x0048A234",
+  "insn": "call    ebx ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x0048A180",
+  "ea": "0x0048A24B",
+  "insn": "call    esi ; SetFilePointer",
+  "switch": false
+ },
+ {
+  "func": "0x0048A180",
+  "ea": "0x0048A281",
+  "insn": "call    ebx ; ReadFile",
+  "switch": false
+ },
+ {
+  "func": "0x0048A420",
+  "ea": "0x0048A439",
+  "insn": "call    esi ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x0048A420",
+  "ea": "0x0048A454",
+  "insn": "call    esi ; CloseHandle",
+  "switch": false
+ },
+ {
+  "func": "0x0048CA10",
+  "ea": "0x0048CBD2",
+  "insn": "jmp     ds:jpt_48CBD2[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0048CA10",
+  "ea": "0x0048CEA0",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0048CA10",
+  "ea": "0x0048CEA4",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0048CA10",
+  "ea": "0x0048DA07",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0048CA10",
+  "ea": "0x0048DA0B",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0048CA10",
+  "ea": "0x0048EB96",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0048CA10",
+  "ea": "0x0048EB9A",
+  "insn": "call    edi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x00491450",
+  "ea": "0x00491462",
+  "insn": "jmp     ds:jpt_491462[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00492380",
+  "ea": "0x00492661",
+  "insn": "jmp     ds:jpt_492661[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00492D83",
+  "insn": "jmp     ds:jpt_492D83[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00492DD8",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00492EA9",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00492F57",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493025",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x004930F3",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493257",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x004932C9",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x0049345F",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493689",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493745",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493837",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493871",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493948",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493983",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00492BC0",
+  "ea": "0x00493A75",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00493CD0",
+  "ea": "0x00493CEC",
+  "insn": "jmp     ds:jpt_493CEC[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x004948BE",
+  "insn": "jmp     ds:jpt_4948BE[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494AC5",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494B3B",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494BD7",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494C34",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494C90",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494CF1",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494D52",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494DA0",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494DEF",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494E97",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494F0A",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494F60",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00494FCE",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00495028",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00495083",
+  "insn": "jmp     ds:jpt_495083[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x004950A6",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x0049510F",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00495179",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x004951E3",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00494840",
+  "ea": "0x00495246",
+  "insn": "call    edi ; wsprintfA",
+  "switch": false
+ },
+ {
+  "func": "0x00496650",
+  "ea": "0x00496D45",
+  "insn": "jmp     ds:jpt_496D45[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00497900",
+  "ea": "0x00497F8E",
+  "insn": "jmp     ds:jpt_497F8E[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x00498560",
+  "ea": "0x00498665",
+  "insn": "jmp     ds:jpt_498665[edx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0049A000",
+  "ea": "0x0049A035",
+  "insn": "jmp     ds:jpt_49A035[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0049B1B0",
+  "ea": "0x0049B30F",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0049B1B0",
+  "ea": "0x0049B314",
+  "insn": "call    esi ; GetSystemMetrics",
+  "switch": false
+ },
+ {
+  "func": "0x0049BAB0",
+  "ea": "0x0049BAD8",
+  "insn": "jmp     ds:jpt_49BAD8[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0049BB50",
+  "ea": "0x0049BBBD",
+  "insn": "jmp     ds:jpt_49BBBD[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0049BE20",
+  "ea": "0x0049BE6B",
+  "insn": "jmp     ds:jpt_49BE6B[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0049CD80",
+  "ea": "0x0049CD9C",
+  "insn": "call    edi ; AIL_sequence_user_data(x,x); AIL_sequence_user_data(x,x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049CD80",
+  "ea": "0x0049CDA3",
+  "insn": "call    edi ; AIL_sequence_user_data(x,x); AIL_sequence_user_data(x,x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049D000",
+  "ea": "0x0049D041",
+  "insn": "call    ebp ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049D480",
+  "ea": "0x0049D572",
+  "insn": "call    edi ; AIL_get_preference(x); AIL_get_preference(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049D480",
+  "ea": "0x0049D643",
+  "insn": "call    edi ; AIL_get_preference(x); AIL_get_preference(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049D6F0",
+  "ea": "0x0049D725",
+  "insn": "call    ebx ; AIL_end_sample(x); AIL_end_sample(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049D6F0",
+  "ea": "0x0049D72A",
+  "insn": "call    ebp ; AIL_release_sample_handle(x); AIL_release_sample_handle(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049D6F0",
+  "ea": "0x0049D753",
+  "insn": "call    ebx ; AIL_end_sample(x); AIL_end_sample(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049D6F0",
+  "ea": "0x0049D758",
+  "insn": "call    ebp ; AIL_release_sample_handle(x); AIL_release_sample_handle(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DB50",
+  "ea": "0x0049DBB8",
+  "insn": "call    ebp ; AIL_set_sample_volume(x,x); AIL_set_sample_volume(x,x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DCA0",
+  "ea": "0x0049DCBC",
+  "insn": "call    ebx ; AIL_sample_user_data(x,x); AIL_sample_user_data(x,x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DCE0",
+  "ea": "0x0049DD03",
+  "insn": "call    ebp ; AIL_sample_user_data(x,x); AIL_sample_user_data(x,x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DD80",
+  "ea": "0x0049DE03",
+  "insn": "call    ebp ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DD80",
+  "ea": "0x0049DE10",
+  "insn": "call    esi ; AIL_mem_alloc_lock(x); AIL_mem_alloc_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DD80",
+  "ea": "0x0049DE39",
+  "insn": "call    esi ; AIL_mem_alloc_lock(x); AIL_mem_alloc_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DD80",
+  "ea": "0x0049DEE9",
+  "insn": "call    ebp ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DF00",
+  "ea": "0x0049DF2A",
+  "insn": "call    ebx ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049DF00",
+  "ea": "0x0049DF3E",
+  "insn": "call    ebx ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E0C0",
+  "ea": "0x0049E0E6",
+  "insn": "call    ebx ; AIL_mem_alloc_lock(x); AIL_mem_alloc_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E120",
+  "ea": "0x0049E158",
+  "insn": "call    ebx ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E120",
+  "ea": "0x0049E15D",
+  "insn": "call    ebp ; AIL_close_stream(x); AIL_close_stream(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E120",
+  "ea": "0x0049E160",
+  "insn": "call    ebx ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E120",
+  "ea": "0x0049E187",
+  "insn": "call    ebx ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E120",
+  "ea": "0x0049E18C",
+  "insn": "call    ebp ; AIL_close_stream(x); AIL_close_stream(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E120",
+  "ea": "0x0049E18F",
+  "insn": "call    ebx ; AIL_mem_free_lock(x); AIL_mem_free_lock(x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E400",
+  "ea": "0x0049E480",
+  "insn": "jmp     ds:jpt_49E480[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0049E550",
+  "ea": "0x0049E56C",
+  "insn": "call    ebx ; AIL_stream_user_data(x,x); AIL_stream_user_data(x,x)",
+  "switch": false
+ },
+ {
+  "func": "0x0049E800",
+  "ea": "0x0049E80D",
+  "insn": "jmp     ds:jpt_49E80D[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0049EBB0",
+  "ea": "0x0049EC67",
+  "insn": "jmp     ds:jpt_49EC67[esi*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x0049F920",
+  "ea": "0x0049FA0E",
+  "insn": "call    dword ptr [ecx+14h]",
+  "switch": false
+ },
+ {
+  "func": "0x004A110F",
+  "ea": "0x004A113A",
+  "insn": "jmp     eax",
+  "switch": false
+ },
+ {
+  "func": "0x004A1143",
+  "ea": "0x004A1148",
+  "insn": "jmp     eax",
+  "switch": false
+ },
+ {
+  "func": "0x004A114A",
+  "ea": "0x004A114F",
+  "insn": "jmp     eax",
+  "switch": false
+ },
+ {
+  "func": "0x004A124F",
+  "ea": "0x004A12C9",
+  "insn": "call    dword_579AD8",
+  "switch": false
+ },
+ {
+  "func": "0x004A1303",
+  "ea": "0x004A136D",
+  "insn": "jmp     dword ptr [ebx+18h]",
+  "switch": false
+ },
+ {
+  "func": "0x004A1436",
+  "ea": "0x004A148A",
+  "insn": "call    dword ptr [ebx+esi*4+8]",
+  "switch": false
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A16E5",
+  "insn": "jmp     ds:jpt_4A16E5[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A16FD",
+  "insn": "jmp     dword ptr ds:loc_4A170C+4[eax*4]",
+  "switch": false
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A1704",
+  "insn": "jmp     dword ptr ds:loc_4A1808[ecx*4]; jumptable 004A16E5 case 0",
+  "switch": false
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A170C",
+  "insn": "jmp     ds:jpt_4A170C[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A1742",
+  "insn": "jmp     ds:jpt_4A16E5[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A1768",
+  "insn": "jmp     ds:jpt_4A16E5[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A1782",
+  "insn": "jmp     ds:jpt_4A16E5[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A17EF",
+  "insn": "jmp     ds:jpt_4A16E5[edx*4]; jumptable 004A170C case 0",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A1867",
+  "insn": "jmp     ds:jpt_4A1894[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A1872",
+  "insn": "jmp     ds:jpt_4A1872[ecx*4]; switch 1 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A188D",
+  "insn": "jmp     dword ptr ds:loc_4A1894+4[eax*4]",
+  "switch": false
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A1894",
+  "insn": "jmp     ds:jpt_4A1894[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A18BE",
+  "insn": "jmp     ds:jpt_4A1894[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A18E8",
+  "insn": "jmp     ds:jpt_4A1894[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A191A",
+  "insn": "jmp     ds:jpt_4A1894[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A16B0",
+  "ea": "0x004A1987",
+  "insn": "jmp     ds:jpt_4A1894[edx*4]; jumptable 004A1872 case 0",
+  "switch": true
+ },
+ {
+  "func": "0x004A1C50",
+  "ea": "0x004A1C59",
+  "insn": "call    eax ; sub_4A1096",
+  "switch": false
+ },
+ {
+  "func": "0x004A1C9F",
+  "ea": "0x004A1CF1",
+  "insn": "call    eax",
+  "switch": false
+ },
+ {
+  "func": "0x004A1D38",
+  "ea": "0x004A1D49",
+  "insn": "call    eax",
+  "switch": false
+ },
+ {
+  "func": "0x004A1E72",
+  "ea": "0x004A1EAD",
+  "insn": "call    [ebp+arg_C]",
+  "switch": false
+ },
+ {
+  "func": "0x004A1EF4",
+  "ea": "0x004A1F36",
+  "insn": "call    [ebp+arg_C]",
+  "switch": false
+ },
+ {
+  "func": "0x004A1F74",
+  "ea": "0x004A1FAB",
+  "insn": "call    [ebp+arg_C]",
+  "switch": false
+ },
+ {
+  "func": "0x004A219D",
+  "ea": "0x004A21B9",
+  "insn": "call    off_4C04F4",
+  "switch": false
+ },
+ {
+  "func": "0x004A2236",
+  "ea": "0x004A2257",
+  "insn": "call    eax",
+  "switch": false
+ },
+ {
+  "func": "0x004A269A",
+  "ea": "0x004A270B",
+  "insn": "call    ecx",
+  "switch": false
+ },
+ {
+  "func": "0x004A2E80",
+  "ea": "0x004A2EA5",
+  "insn": "call    eax",
+  "switch": false
+ },
+ {
+  "func": "0x004A2ECC",
+  "ea": "0x004A2F05",
+  "insn": "call    eax ; dword_579ADC",
+  "switch": false
+ },
+ {
+  "func": "0x004A2F22",
+  "ea": "0x004A2F5B",
+  "insn": "call    eax ; sub_4A2ECC",
+  "switch": false
+ },
+ {
+  "func": "0x004A314F",
+  "ea": "0x004A31BD",
+  "insn": "jmp     ds:jpt_4A31BD[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004A314F",
+  "ea": "0x004A34F9",
+  "insn": "call    off_4C04FC",
+  "switch": false
+ },
+ {
+  "func": "0x004A314F",
+  "ea": "0x004A351A",
+  "insn": "call    off_4C0508",
+  "switch": false
+ },
+ {
+  "func": "0x004A314F",
+  "ea": "0x004A3531",
+  "insn": "call    off_4C0500",
+  "switch": false
+ },
+ {
+  "func": "0x004A3A2C",
+  "ea": "0x004A3A39",
+  "insn": "call    eax ; dword_579AE4",
+  "switch": false
+ },
+ {
+  "func": "0x004A3AEC",
+  "ea": "0x004A3D43",
+  "insn": "call    edi ; VirtualFree",
+  "switch": false
+ },
+ {
+  "func": "0x004A3AEC",
+  "ea": "0x004A3D9E",
+  "insn": "call    edi ; VirtualFree",
+  "switch": false
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A4F55",
+  "insn": "jmp     ds:jpt_4A4F55[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A4F6D",
+  "insn": "jmp     dword ptr ds:loc_4A4F7C+4[eax*4]",
+  "switch": false
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A4F74",
+  "insn": "jmp     dword ptr ds:loc_4A5078[ecx*4]; jumptable 004A4F55 case 0",
+  "switch": false
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A4F7C",
+  "insn": "jmp     ds:jpt_4A4F7C[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A4FB2",
+  "insn": "jmp     ds:jpt_4A4F55[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A4FD8",
+  "insn": "jmp     ds:jpt_4A4F55[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A4FF2",
+  "insn": "jmp     ds:jpt_4A4F55[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A505F",
+  "insn": "jmp     ds:jpt_4A4F55[edx*4]; jumptable 004A4F7C case 0",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A50D7",
+  "insn": "jmp     ds:jpt_4A5104[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A50E2",
+  "insn": "jmp     ds:jpt_4A50E2[ecx*4]; switch 1 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A50FD",
+  "insn": "jmp     dword ptr ds:loc_4A5104+4[eax*4]",
+  "switch": false
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A5104",
+  "insn": "jmp     ds:jpt_4A5104[ecx*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A512E",
+  "insn": "jmp     ds:jpt_4A5104[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A5158",
+  "insn": "jmp     ds:jpt_4A5104[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A518A",
+  "insn": "jmp     ds:jpt_4A5104[edx*4]; switch 4 cases",
+  "switch": true
+ },
+ {
+  "func": "0x004A4F20",
+  "ea": "0x004A51F7",
+  "insn": "jmp     ds:jpt_4A5104[edx*4]; jumptable 004A50E2 case 0",
+  "switch": true
+ },
+ {
+  "func": "0x004A5260",
+  "ea": "0x004A52A7",
+  "insn": "call    dword ptr [edi+ecx*4+4]",
+  "switch": false
+ },
+ {
+  "func": "0x004A5260",
+  "ea": "0x004A52E3",
+  "insn": "call    dword ptr [edi+ecx*4+8]",
+  "switch": false
+ },
+ {
+  "func": "0x004A53E4",
+  "ea": "0x004A54F7",
+  "insn": "call    ebx",
+  "switch": false
+ },
+ {
+  "func": "0x004A53E4",
+  "ea": "0x004A5509",
+  "insn": "call    ebx",
+  "switch": false
+ },
+ {
+  "func": "0x004A58C6",
+  "ea": "0x004A58E1",
+  "insn": "call    ebp ; GetEnvironmentStringsW",
+  "switch": false
+ },
+ {
+  "func": "0x004A58C6",
+  "ea": "0x004A5921",
+  "insn": "call    ebp ; GetEnvironmentStringsW",
+  "switch": false
+ },
+ {
+  "func": "0x004A58C6",
+  "ea": "0x004A5959",
+  "insn": "call    edi ; WideCharToMultiByte",
+  "switch": false
+ },
+ {
+  "func": "0x004A58C6",
+  "ea": "0x004A597B",
+  "insn": "call    edi ; WideCharToMultiByte",
+  "switch": false
+ },
+ {
+  "func": "0x004A5BA3",
+  "ea": "0x004A5BCE",
+  "insn": "call    eax ; dword_579C00",
+  "switch": false
+ },
+ {
+  "func": "0x004A66C4",
+  "ea": "0x004A66FC",
+  "insn": "call    lpfn",
+  "switch": false
+ },
+ {
+  "func": "0x004A6830",
+  "ea": "0x004A68FD",
+  "insn": "call    esi ; WideCharToMultiByte",
+  "switch": false
+ },
+ {
+  "func": "0x004A6830",
+  "ea": "0x004A6937",
+  "insn": "call    esi ; WideCharToMultiByte",
+  "switch": false
+ },
+ {
+  "func": "0x004A78D5",
+  "ea": "0x004A78FF",
+  "insn": "call    esi ; GetProcAddress",
+  "switch": false
+ },
+ {
+  "func": "0x004A78D5",
+  "ea": "0x004A7910",
+  "insn": "call    esi ; GetProcAddress",
+  "switch": false
+ },
+ {
+  "func": "0x004A78D5",
+  "ea": "0x004A791D",
+  "insn": "call    esi ; GetProcAddress",
+  "switch": false
+ },
+ {
+  "func": "0x004A78D5",
+  "ea": "0x004A792D",
+  "insn": "call    eax ; dword_579D08",
+  "switch": false
+ },
+ {
+  "func": "0x004A78D5",
+  "ea": "0x004A793F",
+  "insn": "call    eax ; dword_579D0C",
+  "switch": false
+ },
+ {
+  "func": "0x004A78D5",
+  "ea": "0x004A7950",
+  "insn": "call    dword_579D04",
+  "switch": false
+ },
+ {
+  "func": "0x004A7E4E",
+  "ea": "0x004A7EB1",
+  "insn": "jmp     ds:jpt_4A7EB1[eax*4]; switch jump",
+  "switch": true
+ },
+ {
+  "func": "0x004A85B2",
+  "ea": "0x004A86B1",
+  "insn": "call    esi ; dword_579D3C",
+  "switch": false
+ },
+ {
+  "func": "0x004A85B2",
+  "ea": "0x004A86B8",
+  "insn": "call    esi ; dword_579D3C",
+  "switch": false
+ },
+ {
+  "func": "0x004A8C7A",
+  "ea": "0x004A8C9D",
+  "insn": "call    ebx ; WideCharToMultiByte",
+  "switch": false
+ },
+ {
+  "func": "0x004A8C7A",
+  "ea": "0x004A8CBF",
+  "insn": "call    ebx ; WideCharToMultiByte",
+  "switch": false
+ },
+ {
+  "func": "0x004A8DC6",
+  "ea": "0x004A8FB0",
+  "insn": "call    esi ; MultiByteToWideChar",
+  "switch": false
+ },
+ {
+  "func": "0x004A8DC6",
+  "ea": "0x004A8FC3",
+  "insn": "call    esi ; MultiByteToWideChar",
+  "switch": false
+ }
+]

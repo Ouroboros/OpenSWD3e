@@ -1,0 +1,226 @@
+永远使用中文和我交互。
+
+# 逆向还原工作规则
+
+## 执行边界
+
+Skill负责准备工作区、AGENTS.md、GOAL.md及最小构建配置，并完成IDAT初步分析。交付前必须等待自动分析完成，将工作数据库（IDB／I64）保存至reverse/analysis/，正常关闭后用IDAT重开，确认输入身份及函数、汇编可读取；同时记录输入基线、结构概览和范围缺口，从数据库填写真实初始函数表。新函数为pending_implementation、验证次数为0，源码映射留空；已有工作与进度保留。准备结果及数据库入口写入GOAL后，Skill结束。
+
+由用户自行START GOAL，接续已保存的分析成果。函数实现、逐函数一致性验证与成品构建在GOAL启动后执行；初步分析不计入函数验证次数。
+
+IDAT、构建工具、脚本与 WSL 中的单元测试由 Agent 运行。Agent 不得启动游戏：原程序（swd3e.exe 及同目录其他游戏程序）与重建出的游戏可执行文件只能由用户启动；Windows 目标由 Agent 交叉编译，Windows 单元测试与试玩由用户运行，Agent 提供命令与脚本并根据用户回传的结果继续。单元测试与工具不得弹出窗口或对话框（错误对话框经注入的错误报告接口，测试使用只记录的实现）。
+
+用户的每个提问都必须同时在两处回答，顺序固定：先在 Agent 对话中回答——收到提问后尽快结束当前轮，把回答写在该轮最终回复里（过程说明会被折叠，不算回答）；然后用 TG 发送同一回答（`python3 /mnt/d/Dev/Source/Project/stockkit/scripts/tg_notify.py "…"`，以托管进程运行）。不得只在其中一处回答。
+
+TG 进度消息用固定的多行格式，段落之间空一行，不写成一整段：第一行“OpenSWD3e <阶段>：<结果>（<提交>）。”；第二段“实现：”写做了什么、用户能看到的变化；第三段“进度：”写已实现数／总数、测试与构建结果，并以“下一项：”结尾。模板：
+
+```text
+OpenSWD3e <模块>：<结果>（<提交>）。
+
+实现：<做了什么>；<用户能看到的变化>。
+
+进度：已实现 <已实现数>/<总数>，Linux <测试数> 项测试通过，Windows 构建通过。下一项：<下一步>。
+```
+
+临时文件、临时数据库与中间产物一律放在工作区tmp/目录，不使用/tmp或其他系统临时目录；用完即删。运行工具时显式设置其临时目录参数或TMPDIR、TMP、TEMP等环境变量，指向工作区tmp/的绝对路径；跨平台调用使用对应平台可访问的路径。需要保留的分析资料和验证证据归档到reverse/。
+
+后台进程（IDAT、构建、测试、烟雾测试、脚本）启动时设置完成与失败通知，由 Pi 的唤醒机制通知结果；严禁用 sleep、循环查看日志或 bg_wait 等方式等待进程退出。等待期间只做不依赖其结果的工作，没有可做的就结束本轮，收到唤醒后再读输出。
+
+## Git 仓库
+
+工作区根目录是Git仓库顶层，远端为`git@github.com:Ouroboros/OpenSWD3e.git`。保留分支、历史、暂存区及用户改动。维护.gitignore，忽略工作区/tmp/和实际构建产物目录，保留已有规则，不整目录忽略reverse/。提交与推送只在用户要求时进行。
+
+## 核心流程
+
+目标：原程序逻辑100%一致，包含原有逻辑BUG，即bug-for-bug compatibility。越界读写、破坏内存类BUG不复现，读取未初始化内存时改为确定初值；这类偏差及显示方式、平台API替换须在reverse/analysis/deviations.md逐条记录（类别见reverse/analysis/architecture.md）。实现语言由用户指定，记录在根目录GOAL.md中。
+
+1. 读取Skill已保存的IDAT工作数据库、输入基线、结构概览和范围缺口，核对GOAL停点。
+2. 按已有模块与函数表推进，补充未决分析，在reverse/functions.tsv维护module；无法确认归属的暂记unknown。
+3. 按模块推进，以原函数为最小单位，从汇编还原为指定语言的完整代码。
+4. 还原中根据新识别的职责和依赖，修正未知及划错模块的函数归属，同步源码位置和相关引用。函数实现后立即标记“已实现、未验证”。
+5. 循环选择函数、还原逻辑和修正归属，直到所有函数实现。未知模块中的函数同样纳入处理。
+6. 函数全集全部实现且范围缺口处理完毕后，从函数表第一项开始第二遍汇编验证。逐函数修正差异，通过后再继续下一函数。
+
+在reverse/analysis/中记录扫描范围、未识别代码与间接调用缺口及其处理依据，不能仅凭表内函数全部实现或通过验证就认定范围完整。验证中发现遗漏函数时，先补表并完成还原，再继续验证。
+
+## 输入与工具
+
+- target（目标目录）：`/mnt/e/Game/swd3e`（Windows：`E:\Game\swd3e`）
+- main（主程序名）：`swd3e.exe`，主程序路径为`/mnt/e/Game/swd3e/swd3e.exe`
+- idat（IDAT路径）：`D:\Dev\Crack\IDA\idat.exe`（WSL：`/mnt/d/Dev/Crack/IDA/idat.exe`，IDA Professional 9.3）
+- lang（实现语言）：C++20
+
+参数采用key=value格式，含空格的值使用引号。四项输入均为必填。已有明确输入直接使用；缺失时询问补齐，不自行猜测主程序。启动分析前核实目录、主程序和IDAT路径有效，并将输入记入reverse/analysis/的输入基线资料。
+
+反汇编、数据库分析及IDAPython执行只使用指定的IDAT。禁止启动GUI版IDA，也不得用GUI可执行文件的批处理模式替代IDAT。IDAT不可用时报告原因并要求修正路径或环境，不得回退到GUI版本。
+
+工作数据库只有一个：reverse/analysis/swd3e.i64（输入为工作副本reverse/analysis/work/swd3e.exe），已禁用FLIRT（AF_FLIRT关闭；新建时`-dANALYSIS=0xDF7FFFF7`，脚本内`auto_wait()`前再次清除并核对）。不得重新启用FLIRT，不得并列保留多份IDB／I64；需要试验时只在工作区tmp/建立一个临时库，结束后删除。IDAT批处理调用方式见reverse/analysis/input-baseline.md与reverse/analysis/scripts/。
+
+## 与 swd3-rebuild 的结构对齐
+
+本工程是独立仓库。正传重制工程`/mnt/e/Game/swd3/swd3-rebuild`（主程序swd32.exe，免DVD版）只读参考：不修改其文件，不引用其源码或构建产物，需要的代码、脚本复制到本仓库后按本规则处理。函数对照依据为reverse/analysis/swd32-mapping.md与reverse/analysis/export/match_swd32/。
+
+- 已配对函数：src/的目录、文件、类名和函数名与swd3-rebuild对应源码平行，函数写法尽量一致；差异只落在swd3e汇编证实的不同处。
+- 函数表notes记录`swd32=<地址> method=<配对方法>`；非hash配对只表示对应关系，使用前核对，`order_consistent=no`的配对先核实再采用。
+- 结构体：保留swd3-rebuild的类型名与成员名；布局、大小和偏移以swd3e汇编为准，用`static_assert`锁定`sizeof`与关键`offsetof`。
+- 未配对及外传新增函数：按swd3e的调用关系与地址区间归入最相近的模块；无对应时新建模块并注明依据。
+- swd3-rebuild重建时挪动或偏离原程序的部分（其deviations.md所列、funclet归属与source不一致处）以swd3e原程序结构为准。
+- 复制或改写自swd3-rebuild的代码只记implemented_pending_review，不计验证次数，验证照常对照swd3e汇编。
+- 暂不建立两工程共享库；外传结构布局还原后再评估。
+
+## 平台层与第三方依赖
+
+使用SDL3负责跨平台窗口、画面呈现、键盘／鼠标／手柄输入和音频输出；FFmpeg使用9.0（n9.0）最小LGPL静态构建，仅启用Bink视频与音频、MP3的解封装和解码、本地文件读取及必要的音频重采样和像素格式转换，构建脚本参照swd3-rebuild的scripts/deps/。原程序的游戏逻辑、资源格式解析、绘制规则、播放控制和逻辑时序仍依据原汇编还原并保留原有BUG。
+
+SDL3与FFmpeg由构建脚本自行下载源码并构建，不查找或复用本机其他位置的现成副本。FFmpeg启用x86／x86_64汇编，汇编器为nasm（WSL中`/opt/nasm`，`/usr/local/bin/nasm`链接；Windows目标在WSL中交叉编译，同样使用该nasm）。
+
+平台定位：Windows（x64；x86保留为可选构建）是主平台，最终产物必须能正常游玩，画面内容、输入、音频、视频播放与原程序一致。显示改为窗口化：逻辑画面640×480与窗口大小分离，窗口默认1280×960、可用鼠标拉伸，最近邻任意比例等比缩放，不成原比例时留黑边，Alt+Enter切换无边框全屏，鼠标坐标换算到逻辑画面。平台层是C++类（Display、Surface、Input、AudioDevice、MediaDecoder、GlyphRasterizer、FileSystem），在调用处替换原平台调用，不模拟Win32、DirectDraw、DirectInput、Miles与GDI的API。每一处平台替换登记在reverse/analysis/deviations.md，类别写“平台替换”。Linux只要求编译通过、单元测试通过并可用于代码验证，不要求音频输出或可正常游玩。
+
+## 动态采集
+
+遇到必须启动原游戏、通过动态DUMP才能验证的数据，编写Frida辅助采集脚本，并提供运行方法、游戏操作步骤、采集时机和输出位置。由用户启动游戏并完成操作，Agent根据采集结果继续分析和验证；采集脚本与原始输出统一保存在reverse/下。尚未取得所需数据时，保留待验证状态，不以推测代替结果。
+
+## CRT 与命名
+
+已识别的静态链接MSVC CRT函数直接使用当前版本的C/C++运行库，不重写MSVC的CRT（包括`rand`／`srand`、`_ftol`、`difftime`、`vsprintf`等的原实现），游戏调用的入口最多在src/crt/中包装一层。函数表中CRT函数的source记录对应的平台CRT调用。
+
+类名、函数名和变量名不必照搬原名，使用本项目的命名风格，并与swd3-rebuild保持平行；每个还原函数定义前写`// swd3e.exe 0x<地址>`，函数表source记录`路径:符号`。
+
+## 汇编依据与代码结构
+
+原程序的机器码、汇编和原数据是逻辑依据。IDAT用于分析，IDAPython通过IDAT执行必要查询；反编译辅助理解。名称、已有代码和测试结果不能单独证明原行为。
+
+反编译常把调试输出的空函数（nullsub）显示为无参数调用，也会省略只写不读的计算与跳转表。核对调试日志、错误日志和间接跳转时以汇编为准：日志文字取exe中的原字符串（Big5转UTF-8，换行等控制字符照原样保留），标题与正文两个字符串以一个空格连接。
+
+尽量还原原模块、函数归属、数据结构和接口。结合符号、调用关系、共享状态与生命周期组织src目录和文件；推断注明依据与未决项。函数是工作粒度，相关函数按原模块组织。
+
+代码按reverse/analysis/architecture.md组织（对齐阶段参照swd3-rebuild的同名文件建立），要求如下：
+
+- 每个原模块是正经的C++类或一组相关类型（头文件加命名空间），原全局变量是所属类的成员，由根对象Game持有。不允许可写的自由全局变量、全局状态结构、数据镜像，也不允许C风格的逐句转写。
+- 记录与文件格式定义为带命名字段的struct；含义未定的字段在类型内以unkXX（XX为偏移）占位并注明读写者。不得按数字偏移访问记录。
+- 只读常量表与可写全局的初值写成带类型的constexpr表或成员默认值，并以单元测试与exe字节比对。
+- 常量、模式、状态、旗标位、物品与角色编号、声音编号写成具名常量或enum class，不在代码中直接写魔数；含义先从游戏数据（mon.dat名称、maps.dat、剧本、资源）或调用关系查明再命名，查不明的用unkXX式占位名并注明依据。函数指针表按用途改写为虚函数、成员函数指针或枚举分派。此要求适用于整个工程（src/与tests/的全部代码）。生成的数据表（如big5_table.h）与按exe字节比对的constexpr常量表不在此列。
+- 命名写出依据（读写它的函数、取值范围、对应的界面行为）；推断与已确认结论分开标注。
+- 提交前运行scripts/format.sh（clang-format加空行规则，配置为.clang-format）与scripts/check_style.sh（成员前缀、地址占位名、匈牙利前缀、C风格内存管理），并检查改动文件没有数字偏移访问。函数登记用scripts/register.sh。这些脚本在对齐阶段从swd3-rebuild复制并按本工程调整。
+
+## 代码风格
+
+命名：
+
+- 类型（class、struct、enum class、别名）、函数与成员函数用PascalCase，例如`TextFont`、`DrawGlyph`。
+- 成员变量、局部变量与参数用camelCase，不加前缀或后缀：不用`m_`、`g_`、`s_`、尾下划线，也不用匈牙利前缀（`dw`、`n`、`p`、`lp`、`sz`、`b`、`h`等）。
+- 不带限定名使用的常量（命名空间作用域与函数内的`constexpr`）用`k`加PascalCase，例如`kTableEnd`；经类型限定使用的常量（类内`static constexpr`、枚举值）用PascalCase，不加`k`，例如`Display::Width`、`TalkWindow::Typed`。
+- 属于某个类型字段的取值（旗标位、掩码、模式、种类、特殊值）写在该类型内：成组的位与掩码写成类型内带底层类型的`enum`（例如`enum Flag : u32`，用法`Role::Solid`），封闭的取值集合写成`enum class`，单个特殊值写成`static constexpr`。不为常量另建命名空间。
+- 命名空间用小写（`swd3e`）；文件与目录用小写下划线（`text_font.cpp`）。
+- 名字表达含义；原地址只写在注释里，不进入标识符。
+- 整数类型用项目别名（src/core/types.h）：`u8`、`u16`、`u32`、`u64`、`i8`、`i16`、`i32`、`i64`，不写`std::uint16_t`等；不用宽度随平台变化的`long`、`unsigned long`，也不用返回它们的函数（如`std::lround`，改用`std::round`再转换），只在C库或系统接口的参数处按签名转换；显示像素用`Pixel`。有领域含义的值优先定义具名类型（结构体、`enum class`或别名）。这些基础别名沿用标准库式的小写，是类型名PascalCase规则的例外。
+
+写法：
+
+- 在成员函数内访问本类成员变量与成员函数一律显式写`this->`，例如`this->width`、`this->Present(screen)`。静态成员与类内常量用类名限定，例如`Display::Width`。
+- 每个还原函数的定义前写`// swd3e.exe 0x<地址>`注释，可附简要说明（行为、保留的原有BUG、偏差）。默认实现的构造函数也写出定义以附注释。
+- 用C++类型转换（`static_cast`等），不用C风格转换；不用裸`new`／`delete`与`malloc`／`free`，用容器与`std::unique_ptr`；不用宏（单元测试框架除外）。
+- 头文件用`#pragma once`，不在头文件中写`using namespace`。
+- 字符串不用`char*`／`const char*`／`char[]`表示：参数与成员用`std::string_view`、`std::string`，常量用`constexpr std::string_view`。中文文本一律以繁体UTF-8的`u8"…"`字面量写出（`constexpr std::u8string_view kLeLe = u8"樂樂";`），不写八进制或十六进制转义；接口一律以UTF-8（`std::u8string_view`／`std::u8string`）接收文本，不以Big5作参数：需要Big5的实现（如字形绘制、与游戏数据或exe字节比较）在内部经`Big5()`（src/text/big5.h，CP950表）转换，调试输出、错误框等直接使用UTF-8；调用处不得写`Big5(...)`再传给接口。游戏数据中读出的Big5字节按数据处理，显示或输出前在接口内部转换。测试按转换结果与exe字节比对。只有系统API边界（SDL、fopen、getenv）可以就地取`.c_str()`／`.data()`。
+- 缩进4空格，行宽120；`switch`的`case`缩进一级。
+- 大括号单独占一行（Allman），包括函数、类、命名空间、控制语句与lambda；所有控制语句都带大括号，不写单行函数体或单行块。
+- 每个大括号块前后各空一行：
+
+  ```cpp
+  statement;
+
+  if (condition)
+  {
+      body;
+  }
+
+  nextStatement;
+  ```
+
+  块位于外层块开头或结尾时不加空行；`}`与其后续部分（`else`、`catch`、do-while的`while`、右括号）之间不加空行；前导注释与函数头之间不加空行。
+- 函数调用一行写不下（超过120列）时，参数每个一行、缩进4，右括号单独一行与语句起始对齐：
+
+  ```cpp
+  result = Function(
+      argument1,
+      argument2,
+      argument3
+  );
+  ```
+
+  函数声明与定义的参数表一行写不下时用同样的格式。不使用按左括号对齐的续行。
+- 构造函数的初始化列表按同样的换行规则：冒号起头，每个成员初始化单独一行、行尾逗号；成员的构造实参一行写不下时每个一行：
+
+  ```cpp
+  Game::Game(std::string installDirectory)
+      : screen(Display::Width, Display::Height),
+        input(this->inputDevice),
+        battleHud(
+            this->painter,
+            this->archive
+        ),
+  ```
+- 代码注释用英文，说明原行为与依据；不写逐行翻译汇编的注释。
+
+## C++ 构建要求
+
+### 工具建议
+
+- CMake：项目配置与构建目标管理。
+- Ninja：构建执行。
+- LLVM：编译工具链。
+
+### 工作环境与平台
+
+- 日常工作环境为WSL。
+- Linux目标在WSL中构建为x86_64静态程序（与Windows x64相同的整数与指针宽度）：`cmake --preset linux`、`cmake --build --preset linux`，构建目录build/linux/；单元测试`ctest --preset linux`；工具链文件cmake/toolchain-linux-x64-clang.cmake。32位的`linux-i386`预设保留（构建目录build/linux-i386/，sysroot为`/opt/sysroot-i386`，工具链文件cmake/toolchain-linux-i386-clang.cmake）。
+- Windows目标使用clang-cl／lld-link交叉构建x64产物（MSVC 14.44与Windows SDK 10.0.26100头文件和库，取自Windows主机`/mnt/c`下的Visual Studio 2022与Windows Kits）：`cmake --preset windows`、`cmake --build --preset windows`，构建目录build/windows/，工具链文件cmake/toolchain-windows-x64-clang-cl.cmake。32位的`windows-x86`预设保留（构建目录build/windows-x86/，工具链文件cmake/toolchain-windows-x86-clang-cl.cmake）。依赖按平台名安装到third_party/install/<平台>：windows、linux（x64），windows-x86、linux-i386（32位）。
+- 两个平台分别使用独立的构建目录。工具链文件与依赖脚本在对齐阶段参照swd3-rebuild的cmake/与scripts/deps/建立。
+
+### 构建记录
+
+分别记录Linux、Windows的构建入口和实际结果。GOAL最终交付时：Linux构建与单元测试通过；Windows构建通过且可正常游玩。构建结果、测试结果与函数汇编验证结论分别记录；测试结果辅助验证，不能代替逐函数汇编对照。
+
+单元测试源码放在tests/，由CTest运行。
+
+## 函数状态与验证次数
+
+reverse/functions.tsv是唯一函数状态表，以binary和address标识原函数。binary相对原始输入目录；source和evidence路径相对工作区根目录。module记录当前归属，unknown表示未知模块；归属调整保留原函数身份、实现状态和验证次数，更新源码位置与依据。
+
+函数实现与验证状态：
+
+- pending_implementation：待还原。
+- implemented_pending_review：已实现，尚未通过验证；次数为0表示未验证。
+- assembly_exact：完整函数已通过汇编验证，包括原有BUG。
+
+verification_count是该函数通过汇编验证的遍数。“一遍”指对函数表从头到尾完整对照一次；第N遍中函数对照为exact（含发现差异、修正后复核通过）时记为N，同一遍内复核多次只记一次；发现差异的diff轮不计数，编译和测试不计数。用scripts/mark_verified.py记录，第N遍加`--pass N`（默认1）。各轮结论及对应源码修订记入reverse/evidence/。
+
+展示状态时带次数，例如“已实现、未验证（0次）”“已通过1遍，第2遍发现差异待复核”“已通过3遍”。次数不能代替通过结论。
+
+第二遍先从汇编独立推导，再对照源码，覆盖全部分支与出口、位宽、溢出、调用顺序、随机数消费、状态副作用和逻辑时序。差异修正后重新核对完整函数，直到整轮无剩余差异。源码或依赖数据、资源的修改使本函数或其他已验证函数的结论失效时，将受影响函数恢复为implemented_pending_review并在当前这一遍重新验证，次数保留已通过的遍数。
+
+逐函数验证同时核对所依赖的常量表、全局数据的内容、布局与初值，以及资源的内容和使用关系。依赖项尚未核对或仍有差异时，函数不能标记为assembly_exact。共享数据与资源的原始依据、还原或复用位置及核对结果记入现有reverse/analysis/与reverse/evidence/，由相关函数证据引用；范围内未被函数证据覆盖的数据与资源也须核对并留存证据。
+
+## GOAL编写与更新
+
+根目录GOAL.md是整体执行计划，只回答：要干什么、不要干什么、现在干什么、下一步干什么、整体完成了多少，以及怎样算完成。
+
+- 要写：目标与范围、明确不做的事项、整体阶段与顺序、当前工作、下一步、整体进度和完成条件。当前模块或函数只保留定位所需的简短停点；阻塞只写影响与恢复条件。
+- 不写：模块或函数的详细计划、任务操作步骤、汇编推导、字段与代码细节、逐轮验证记录、构建与测试日志、执行流水账和历史进度堆积。
+- 详细计划与结构分析放在reverse/analysis/中；函数归属、状态和验证次数放在reverse/functions.tsv中；逐函数验证与差异记录放在reverse/evidence/中。GOAL只保留必要摘要和入口引用。
+
+工作推进后，根据reverse/functions.tsv原位更新GOAL的整体进度、当前工作、阻塞和下一步，替换旧状态，不追加流水账。总范围未确定时写待确定；目标、范围、整体计划或验收条件变化时更新版本。
+
+已实现数为implemented_pending_review与assembly_exact之和，已验证数仅计assembly_exact。待实现数为总数减已实现数，待验证数为总数减已验证数。
+
+AGENTS只保存长期规则，当前进度和断点写在GOAL及函数表中。
+
+## 工作入口与资料
+
+文中工作区路径均相对工作区根目录。AGENTS.md与GOAL.md保留在根目录；逆向函数表、分析资料、详细计划和验证证据统一放在reverse/。源码、头文件、构建配置及其他工程内容放在reverse/之外，按所选语言组织。
+
+开始或恢复工作时，读取AGENTS.md、GOAL.md、reverse/functions.tsv、reverse/analysis/中的范围与缺口记录、当前函数及其依赖数据和资源的证据、拟修改文件，核对当前状态和已有差异。
+
+原程序与数据保留原貌，在工作副本上分析，核对输入身份与加载关系。修改保持聚焦，保留用户已有改动。
+
+src/保存源码，include/按语言需要保存头文件；reverse/analysis/保存输入基线、范围记录、详细计划、结构分析、工作库、汇编导出及必要查询脚本；reverse/evidence/保存逐函数验证、数据与资源核对记录、样本和日志；Frida采集脚本与原始输出保存在reverse/下。记录事实、依据、验证结果与未决项，区分推断和已确认结论。

@@ -1,0 +1,1769 @@
+{
+ "actions": [
+  {
+   "action": "code_to_string",
+   "ea": "0x004A5258",
+   "size": 8,
+   "ok": true,
+   "evidence": "bytes VC20XC00 (MSVC EH magic), no xrefs, not reachable by flow"
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A11A0",
+   "ok": true,
+   "end": "0x004A11D6",
+   "evidence": "common jmp target of __ehhandler stubs (mov eax, offset FuncInfo; jmp) = __CxxFrameHandler"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9338",
+   "end": "0x004A9342",
+   "parent": "0x004061B0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD010 referenced by parent via __ehhandler stub 0x004A9338"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9330",
+   "end": "0x004A9338",
+   "parent": "0x004061B0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD010 referenced by parent via __ehhandler stub 0x004A9338"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9358",
+   "end": "0x004A9362",
+   "parent": "0x00406780",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD038 referenced by parent via __ehhandler stub 0x004A9358"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9350",
+   "end": "0x004A9358",
+   "parent": "0x00406780",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD038 referenced by parent via __ehhandler stub 0x004A9358"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9378",
+   "end": "0x004A9382",
+   "parent": "0x00406EC0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD060 referenced by parent via __ehhandler stub 0x004A9378"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9370",
+   "end": "0x004A9378",
+   "parent": "0x00406EC0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD060 referenced by parent via __ehhandler stub 0x004A9378"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9398",
+   "end": "0x004A93A2",
+   "parent": "0x00409320",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD088 referenced by parent via __ehhandler stub 0x004A9398"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9390",
+   "end": "0x004A9398",
+   "parent": "0x00409320",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD088 referenced by parent via __ehhandler stub 0x004A9398"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A93B8",
+   "end": "0x004A93C2",
+   "parent": "0x00409480",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD0B0 referenced by parent via __ehhandler stub 0x004A93B8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A93B0",
+   "end": "0x004A93B8",
+   "parent": "0x00409480",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD0B0 referenced by parent via __ehhandler stub 0x004A93B8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A93D8",
+   "end": "0x004A93E2",
+   "parent": "0x004098C0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD0D8 referenced by parent via __ehhandler stub 0x004A93D8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A93D0",
+   "end": "0x004A93D8",
+   "parent": "0x004098C0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD0D8 referenced by parent via __ehhandler stub 0x004A93D8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A93F8",
+   "end": "0x004A9402",
+   "parent": "0x00409AC0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD100 referenced by parent via __ehhandler stub 0x004A93F8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A93F0",
+   "end": "0x004A93F8",
+   "parent": "0x00409AC0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD100 referenced by parent via __ehhandler stub 0x004A93F8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9418",
+   "end": "0x004A9422",
+   "parent": "0x00409B90",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD128 referenced by parent via __ehhandler stub 0x004A9418"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9410",
+   "end": "0x004A9418",
+   "parent": "0x00409B90",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD128 referenced by parent via __ehhandler stub 0x004A9418"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9438",
+   "end": "0x004A9442",
+   "parent": "0x00409C80",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD150 referenced by parent via __ehhandler stub 0x004A9438"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9430",
+   "end": "0x004A9438",
+   "parent": "0x00409C80",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD150 referenced by parent via __ehhandler stub 0x004A9438"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9458",
+   "end": "0x004A9462",
+   "parent": "0x0040A380",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD178 referenced by parent via __ehhandler stub 0x004A9458"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9450",
+   "end": "0x004A9458",
+   "parent": "0x0040A380",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD178 referenced by parent via __ehhandler stub 0x004A9458"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A947B",
+   "end": "0x004A9485",
+   "parent": "0x004120A0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD1A0 referenced by parent via __ehhandler stub 0x004A947B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9470",
+   "end": "0x004A947B",
+   "parent": "0x004120A0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD1A0 referenced by parent via __ehhandler stub 0x004A947B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A949B",
+   "end": "0x004A94A5",
+   "parent": "0x004277E0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD1C8 referenced by parent via __ehhandler stub 0x004A949B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9490",
+   "end": "0x004A949B",
+   "parent": "0x004277E0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD1C8 referenced by parent via __ehhandler stub 0x004A949B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A94BB",
+   "end": "0x004A94C5",
+   "parent": "0x004278C0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD1F0 referenced by parent via __ehhandler stub 0x004A94BB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A94B0",
+   "end": "0x004A94BB",
+   "parent": "0x004278C0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD1F0 referenced by parent via __ehhandler stub 0x004A94BB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A94DB",
+   "end": "0x004A94E5",
+   "parent": "0x00427BD0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD218 referenced by parent via __ehhandler stub 0x004A94DB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A94D0",
+   "end": "0x004A94DB",
+   "parent": "0x00427BD0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD218 referenced by parent via __ehhandler stub 0x004A94DB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A94FB",
+   "end": "0x004A9505",
+   "parent": "0x00427D80",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD240 referenced by parent via __ehhandler stub 0x004A94FB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A94F0",
+   "end": "0x004A94FB",
+   "parent": "0x00427D80",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD240 referenced by parent via __ehhandler stub 0x004A94FB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9531",
+   "end": "0x004A953B",
+   "parent": "0x004291B0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD268 referenced by parent via __ehhandler stub 0x004A9531"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9510",
+   "end": "0x004A951B",
+   "parent": "0x004291B0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD268 referenced by parent via __ehhandler stub 0x004A9531"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A951B",
+   "end": "0x004A9526",
+   "parent": "0x004291B0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD268 referenced by parent via __ehhandler stub 0x004A9531"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9526",
+   "end": "0x004A9531",
+   "parent": "0x004291B0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD268 referenced by parent via __ehhandler stub 0x004A9531"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A954B",
+   "end": "0x004A9555",
+   "parent": "0x00429520",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD2A0 referenced by parent via __ehhandler stub 0x004A954B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9540",
+   "end": "0x004A954B",
+   "parent": "0x00429520",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD2A0 referenced by parent via __ehhandler stub 0x004A954B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A956B",
+   "end": "0x004A9575",
+   "parent": "0x004295F0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD2C8 referenced by parent via __ehhandler stub 0x004A956B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9560",
+   "end": "0x004A956B",
+   "parent": "0x004295F0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD2C8 referenced by parent via __ehhandler stub 0x004A956B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A958B",
+   "end": "0x004A9595",
+   "parent": "0x004296B0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD2F0 referenced by parent via __ehhandler stub 0x004A958B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9580",
+   "end": "0x004A958B",
+   "parent": "0x004296B0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD2F0 referenced by parent via __ehhandler stub 0x004A958B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A95BE",
+   "end": "0x004A95C8",
+   "parent": "0x00429C20",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD318 referenced by parent via __ehhandler stub 0x004A95BE"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A95A0",
+   "end": "0x004A95AB",
+   "parent": "0x00429C20",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD318 referenced by parent via __ehhandler stub 0x004A95BE"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A95AB",
+   "end": "0x004A95B3",
+   "parent": "0x00429C20",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD318 referenced by parent via __ehhandler stub 0x004A95BE"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A95B3",
+   "end": "0x004A95BE",
+   "parent": "0x00429C20",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD318 referenced by parent via __ehhandler stub 0x004A95BE"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A95D8",
+   "end": "0x004A95E2",
+   "parent": "0x0042A180",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD350 referenced by parent via __ehhandler stub 0x004A95D8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A95D0",
+   "end": "0x004A95D8",
+   "parent": "0x0042A180",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD350 referenced by parent via __ehhandler stub 0x004A95D8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A95F8",
+   "end": "0x004A9602",
+   "parent": "0x0042A670",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD378 referenced by parent via __ehhandler stub 0x004A95F8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A95F0",
+   "end": "0x004A95F8",
+   "parent": "0x0042A670",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD378 referenced by parent via __ehhandler stub 0x004A95F8"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A963C",
+   "end": "0x004A9646",
+   "parent": "0x0042BAF0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD3A0 referenced by parent via __ehhandler stub 0x004A963C"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9610",
+   "end": "0x004A961B",
+   "parent": "0x0042BAF0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD3A0 referenced by parent via __ehhandler stub 0x004A963C"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A961B",
+   "end": "0x004A9626",
+   "parent": "0x0042BAF0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD3A0 referenced by parent via __ehhandler stub 0x004A963C"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9626",
+   "end": "0x004A9631",
+   "parent": "0x0042BAF0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD3A0 referenced by parent via __ehhandler stub 0x004A963C"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9631",
+   "end": "0x004A963C",
+   "parent": "0x0042BAF0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD3A0 referenced by parent via __ehhandler stub 0x004A963C"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9658",
+   "end": "0x004A9662",
+   "parent": "0x00432630",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD3E0 referenced by parent via __ehhandler stub 0x004A9658"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9650",
+   "end": "0x004A9658",
+   "parent": "0x00432630",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD3E0 referenced by parent via __ehhandler stub 0x004A9658"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9678",
+   "end": "0x004A9682",
+   "parent": "0x00432800",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD408 referenced by parent via __ehhandler stub 0x004A9678"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9670",
+   "end": "0x004A9678",
+   "parent": "0x00432800",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD408 referenced by parent via __ehhandler stub 0x004A9678"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9698",
+   "end": "0x004A96A2",
+   "parent": "0x004352D0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD430 referenced by parent via __ehhandler stub 0x004A9698"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9690",
+   "end": "0x004A9698",
+   "parent": "0x004352D0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD430 referenced by parent via __ehhandler stub 0x004A9698"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A96D1",
+   "end": "0x004A96DB",
+   "parent": "0x00451B60",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD458 referenced by parent via __ehhandler stub 0x004A96D1"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A96B0",
+   "end": "0x004A96BB",
+   "parent": "0x00451B60",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD458 referenced by parent via __ehhandler stub 0x004A96D1"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A96BB",
+   "end": "0x004A96C6",
+   "parent": "0x00451B60",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD458 referenced by parent via __ehhandler stub 0x004A96D1"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A96C6",
+   "end": "0x004A96D1",
+   "parent": "0x00451B60",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD458 referenced by parent via __ehhandler stub 0x004A96D1"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A96EB",
+   "end": "0x004A96F5",
+   "parent": "0x0045BEA0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD490 referenced by parent via __ehhandler stub 0x004A96EB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A96E0",
+   "end": "0x004A96EB",
+   "parent": "0x0045BEA0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD490 referenced by parent via __ehhandler stub 0x004A96EB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A970B",
+   "end": "0x004A9715",
+   "parent": "0x0045EE20",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD4B8 referenced by parent via __ehhandler stub 0x004A970B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9700",
+   "end": "0x004A970B",
+   "parent": "0x0045EE20",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD4B8 referenced by parent via __ehhandler stub 0x004A970B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9728",
+   "end": "0x004A9732",
+   "parent": "0x0047E660",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD4E0 referenced by parent via __ehhandler stub 0x004A9728"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9720",
+   "end": "0x004A9728",
+   "parent": "0x0047E660",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD4E0 referenced by parent via __ehhandler stub 0x004A9728"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9748",
+   "end": "0x004A9752",
+   "parent": "0x0047E6D0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD508 referenced by parent via __ehhandler stub 0x004A9748"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9740",
+   "end": "0x004A9748",
+   "parent": "0x0047E6D0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD508 referenced by parent via __ehhandler stub 0x004A9748"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9768",
+   "end": "0x004A9772",
+   "parent": "0x00487B90",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD530 referenced by parent via __ehhandler stub 0x004A9768"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9760",
+   "end": "0x004A9768",
+   "parent": "0x00487B90",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD530 referenced by parent via __ehhandler stub 0x004A9768"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9788",
+   "end": "0x004A9792",
+   "parent": "0x00487BF0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD558 referenced by parent via __ehhandler stub 0x004A9788"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9780",
+   "end": "0x004A9788",
+   "parent": "0x00487BF0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD558 referenced by parent via __ehhandler stub 0x004A9788"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A97AB",
+   "end": "0x004A97B5",
+   "parent": "0x0049B9D0",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD580 referenced by parent via __ehhandler stub 0x004A97AB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A97A0",
+   "end": "0x004A97AB",
+   "parent": "0x0049B9D0",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD580 referenced by parent via __ehhandler stub 0x004A97AB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A97CB",
+   "end": "0x004A97D5",
+   "parent": "0x0049C600",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD5A8 referenced by parent via __ehhandler stub 0x004A97CB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A97C0",
+   "end": "0x004A97CB",
+   "parent": "0x0049C600",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD5A8 referenced by parent via __ehhandler stub 0x004A97CB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A97EB",
+   "end": "0x004A97F5",
+   "parent": "0x0049CA10",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD5D0 referenced by parent via __ehhandler stub 0x004A97EB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A97E0",
+   "end": "0x004A97EB",
+   "parent": "0x0049CA10",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD5D0 referenced by parent via __ehhandler stub 0x004A97EB"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9808",
+   "end": "0x004A9812",
+   "parent": "0x0049D430",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD5F8 referenced by parent via __ehhandler stub 0x004A9808"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9800",
+   "end": "0x004A9808",
+   "parent": "0x0049D430",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD5F8 referenced by parent via __ehhandler stub 0x004A9808"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A982B",
+   "end": "0x004A9835",
+   "parent": "0x0049E910",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD620 referenced by parent via __ehhandler stub 0x004A982B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9820",
+   "end": "0x004A982B",
+   "parent": "0x0049E910",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD620 referenced by parent via __ehhandler stub 0x004A982B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A984B",
+   "end": "0x004A9855",
+   "parent": "0x0049EA80",
+   "kind": "ehhandler",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD648 referenced by parent via __ehhandler stub 0x004A984B"
+  },
+  {
+   "action": "append_tail",
+   "ea": "0x004A9840",
+   "end": "0x004A984B",
+   "parent": "0x0049EA80",
+   "kind": "unwind",
+   "ok": true,
+   "evidence": "FuncInfo 0x004AD648 referenced by parent via __ehhandler stub 0x004A984B"
+  },
+  {
+   "action": "extend_func",
+   "ea": "0x004189AA",
+   "end": "0x00418D06",
+   "parent": "0x00418880",
+   "ok": true,
+   "evidence": "external refs only from parent 0x00418880"
+  },
+  {
+   "action": "extend_func",
+   "ea": "0x004360B4",
+   "end": "0x004360B7",
+   "parent": "0x00436050",
+   "ok": true,
+   "evidence": "no refs; previous insn 'int     3; Trap to Debugger' in parent is non-returning/indirect"
+  },
+  {
+   "action": "extend_func",
+   "ea": "0x004A113C",
+   "end": "0x004A1143",
+   "parent": "0x004A110F",
+   "ok": true,
+   "evidence": "no refs; previous insn 'jmp     eax' in parent is non-returning/indirect"
+  },
+  {
+   "action": "extend_func",
+   "ea": "0x004A2192",
+   "end": "0x004A219D",
+   "parent": "0x004A20A7",
+   "ok": true,
+   "evidence": "SEH __except block (mov esp,[ebp-18h]) referenced from scope table 0x004ACA50"
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409D70",
+   "end": "0x00409D7A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF004"
+   ],
+   "last_insn": "jmp     loc_409D90",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409D90",
+   "end": "0x00409D9C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409D75 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409DA0",
+   "end": "0x00409DAA",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x00409D90"
+   ],
+   "last_insn": "jmp     loc_43D1B0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409DB0",
+   "end": "0x00409DB5",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF008"
+   ],
+   "last_insn": "jmp     loc_409DC0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409DC0",
+   "end": "0x00409DCA",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409DB0 (target after flow break)"
+   ],
+   "last_insn": "jmp     loc_49E7F0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409DD0",
+   "end": "0x00409DDA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF00C"
+   ],
+   "last_insn": "jmp     loc_409E00",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409E00",
+   "end": "0x00409E0C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409DD5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409E20",
+   "end": "0x00409E2A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF010"
+   ],
+   "last_insn": "jmp     loc_409E40",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409E40",
+   "end": "0x00409E4C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409E25 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409E50",
+   "end": "0x00409E5A",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x00409E40"
+   ],
+   "last_insn": "jmp     loc_439BF0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409E60",
+   "end": "0x00409E6A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF014"
+   ],
+   "last_insn": "jmp     loc_409E80",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409E80",
+   "end": "0x00409E8C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409E65 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409E90",
+   "end": "0x00409E9A",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x00409E80"
+   ],
+   "last_insn": "jmp     loc_439BF0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409EA0",
+   "end": "0x00409EAA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF018"
+   ],
+   "last_insn": "jmp     loc_409EC0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409EC0",
+   "end": "0x00409ECC",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409EA5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409ED0",
+   "end": "0x00409EDA",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x00409EC0"
+   ],
+   "last_insn": "jmp     loc_439BF0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409EE0",
+   "end": "0x00409EEA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF01C"
+   ],
+   "last_insn": "jmp     loc_409F00",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409F00",
+   "end": "0x00409F0C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409EE5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409F20",
+   "end": "0x00409F2A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF020"
+   ],
+   "last_insn": "jmp     loc_409F40",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409F40",
+   "end": "0x00409F4C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409F25 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409F60",
+   "end": "0x00409F6A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF024"
+   ],
+   "last_insn": "jmp     loc_409F80",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409F80",
+   "end": "0x00409F8C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409F65 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409FA0",
+   "end": "0x00409FAA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF028"
+   ],
+   "last_insn": "jmp     loc_409FC0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409FC0",
+   "end": "0x00409FCC",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409FA5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00409FE0",
+   "end": "0x00409FEA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF02C"
+   ],
+   "last_insn": "jmp     loc_40A000",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A000",
+   "end": "0x0040A00C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409FE5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A020",
+   "end": "0x0040A02A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF030"
+   ],
+   "last_insn": "jmp     loc_40A040",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A040",
+   "end": "0x0040A04C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0040A025 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A060",
+   "end": "0x0040A06A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF034"
+   ],
+   "last_insn": "jmp     loc_40A080",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A080",
+   "end": "0x0040A08C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0040A065 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A0A0",
+   "end": "0x0040A0AA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF038"
+   ],
+   "last_insn": "jmp     loc_40A0C0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A0C0",
+   "end": "0x0040A0CC",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0040A0A5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A0E0",
+   "end": "0x0040A0E5",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF03C"
+   ],
+   "last_insn": "jmp     loc_40A0F0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A0F0",
+   "end": "0x0040A0FA",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0040A0E0 (target after flow break)"
+   ],
+   "last_insn": "jmp     loc_43C020",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A100",
+   "end": "0x0040A10A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF040"
+   ],
+   "last_insn": "jmp     loc_40A120",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A120",
+   "end": "0x0040A12C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0040A105 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0040A130",
+   "end": "0x0040A13A",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x0040A120"
+   ],
+   "last_insn": "jmp     loc_43BA60",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0042B1B0",
+   "end": "0x0042B1BA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF044"
+   ],
+   "last_insn": "jmp     loc_42B1D0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0042B480",
+   "end": "0x0042B48A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF048"
+   ],
+   "last_insn": "jmp     loc_42B4A0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0042B4A0",
+   "end": "0x0042B4AC",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0042B485 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00439BF0",
+   "end": "0x00439C18",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409E55 (target after flow break)",
+    "jmp from 0x00409E95 (target after flow break)",
+    "jmp from 0x00409ED5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0043BA60",
+   "end": "0x0043BA65",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0040A135 (target after flow break)"
+   ],
+   "last_insn": "jmp     sub_43BFA0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0043C020",
+   "end": "0x0043C02D",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0040A0F5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0043D1B0",
+   "end": "0x0043D2C3",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409DA5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0044C4A0",
+   "end": "0x0044C588",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x00440E30"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0044DF60",
+   "end": "0x0044E078",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x0044DCA6"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00451860",
+   "end": "0x00451883",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x00441154"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004519C0",
+   "end": "0x00451AAE",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x0044114A"
+   ],
+   "last_insn": "retn; jumptable 004519E3 default case",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00453510",
+   "end": "0x004536A4",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x00440FAF"
+   ],
+   "last_insn": "retn; jumptable 0045352D default case, cases 3,4",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00459880",
+   "end": "0x0045988A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF04C"
+   ],
+   "last_insn": "jmp     loc_4598B0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004598B0",
+   "end": "0x004598BC",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00459885 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004598C0",
+   "end": "0x004598D7",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x004598B0"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004598E0",
+   "end": "0x004598EA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF050"
+   ],
+   "last_insn": "jmp     loc_459910",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00459910",
+   "end": "0x0045991C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x004598E5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00459920",
+   "end": "0x00459937",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x00459910"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00459940",
+   "end": "0x0045994A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF054"
+   ],
+   "last_insn": "jmp     loc_459960",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00459960",
+   "end": "0x0045996C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00459945 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00459980",
+   "end": "0x00459985",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF058"
+   ],
+   "last_insn": "jmp     loc_459990",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x00459990",
+   "end": "0x004599A0",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00459980 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004599A0",
+   "end": "0x004599AA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF05C"
+   ],
+   "last_insn": "jmp     loc_4599C0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004599C0",
+   "end": "0x004599CC",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x004599A5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049C8E0",
+   "end": "0x0049C8EA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF060"
+   ],
+   "last_insn": "jmp     loc_49C900",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049C900",
+   "end": "0x0049C90C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0049C8E5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_postponed",
+   "ea": "0x0049C910",
+   "round": 0,
+   "swallowed": [
+    "0x0049C920",
+    "0x0049C930"
+   ]
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049C920",
+   "end": "0x0049C925",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0049C915 (target after flow break)"
+   ],
+   "last_insn": "jmp     loc_49C930",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049C930",
+   "end": "0x0049C9AF",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0049C920 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049CDC0",
+   "end": "0x0049CDCA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF064"
+   ],
+   "last_insn": "jmp     loc_49CDE0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049CE50",
+   "end": "0x0049CE5A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF068"
+   ],
+   "last_insn": "jmp     loc_49CE70",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049D3C0",
+   "end": "0x0049D3CA",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF06C"
+   ],
+   "last_insn": "jmp     loc_49D3E0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049E050",
+   "end": "0x0049E05A",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF070"
+   ],
+   "last_insn": "jmp     loc_49E070",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049E070",
+   "end": "0x0049E07C",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0049E055 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049E080",
+   "end": "0x0049E08A",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x0049E070"
+   ],
+   "last_insn": "jmp     loc_49E0B0",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049E0B0",
+   "end": "0x0049E0B5",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x0049E085 (target after flow break)"
+   ],
+   "last_insn": "jmp     sub_49E120",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049E7F0",
+   "end": "0x0049E7FE",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x00409DC5 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A1676",
+   "end": "0x004A16A5",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF07C"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A22B9",
+   "end": "0x004A2307",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x004A10B3"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A2307",
+   "end": "0x004A231F",
+   "round": 0,
+   "evidence": [
+    "offset from insn 0x004A10D6"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A4E63",
+   "end": "0x004A4F08",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF080"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A4F08",
+   "end": "0x004A4F1C",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF094"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A531D",
+   "end": "0x004A5338",
+   "round": 0,
+   "evidence": [
+    "no xref; starts after 'retn' (orphan)"
+   ],
+   "last_insn": "retn    4",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A53B0",
+   "end": "0x004A53E4",
+   "round": 0,
+   "evidence": [
+    "no xref; starts after 'align 10h' (orphan)"
+   ],
+   "last_insn": "retn    10h",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A670A",
+   "end": "0x004A671B",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF088"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A671B",
+   "end": "0x004A6728",
+   "round": 0,
+   "evidence": [
+    "data ptr 0x004AF0A0"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x004A7312",
+   "end": "0x004A736A",
+   "round": 0,
+   "evidence": [
+    "jmp from 0x004A4F16 (target after flow break)"
+   ],
+   "last_insn": "retn",
+   "chunks": 1
+  },
+  {
+   "action": "create_func",
+   "ea": "0x0049C910",
+   "end": "0x0049C91A",
+   "round": 1,
+   "evidence": [
+    "offset from insn 0x0049C900"
+   ],
+   "last_insn": "jmp     sub_49C920",
+   "chunks": 1
+  }
+ ],
+ "remaining_regions": []
+}

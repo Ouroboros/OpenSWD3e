@@ -1,0 +1,69 @@
+
+  bytes   pages size description
+--------- ----- ---- --------------------------------------------
+  3284992   401 8192 allocating memory for b-tree...
+  3178496   388 8192 allocating memory for virtual array...
+   262144    32 8192 allocating memory for name pointers...
+-----------------------------------------------------------------
+  6725632            total memory allocated
+
+
+LoadLibrary(D:\Dev\Crack\IDA\procs\mc6864.dll) error: The specified module could not be found.
+Loading processor module D:\Dev\Crack\IDA\procs\pc.dll for metapc...OK
+Loading type libraries...
+Autoanalysis subsystem has been initialized.
+Database for file 'swd3e.exe' has been loaded.
+Hex-Rays Decompiler plugin has been loaded (v9.3.0.260213)
+  The hotkeys are F5: decompile, Ctrl-F5: decompile all.
+
+  Please check the Edit/Plugins menu for more information.
+Hex-rays version 9.3.0.260213 has been detected, gooMBA plugin ready to use
+Using type parser: legacy
+af_at_start=0xDF7FFFF7 flirt=0
+af_final=0xDF7FFFF7 flirt=0
+func_count=1705 unknown_libname=0 func_lib=1 unowned_heads=0 regions=0 noncode_nonpad=98 indirect=898
+entry_probe:
+0x004A20A7  push    ebp
+0x004A20A8  mov     ebp, esp
+0x004A20AA  push    0FFFFFFFFh
+0x004A20AC  push    offset stru_4ACA48
+0x004A20B1  push    offset sub_4A5260
+0x004A20B6  mov     eax, large fs:0
+0x004A20BC  push    eax
+0x004A20BD  mov     large fs:0, esp
+Flushing buffers, please wait...ok
+Unloading IDP module D:\Dev\Crack\IDA\procs\pc.dll...
+  bytes   pages size description
+--------- ----- ---- --------------------------------------------
+  3284992   401 8192 allocating memory for b-tree...
+  3178496   388 8192 allocating memory for virtual array...
+   262144    32 8192 allocating memory for name pointers...
+-----------------------------------------------------------------
+  6725632            total memory allocated
+
+
+LoadLibrary(D:\Dev\Crack\IDA\procs\mc6864.dll) error: The specified module could not be found.
+Loading processor module D:\Dev\Crack\IDA\procs\pc.dll for metapc...OK
+Loading type libraries...
+Autoanalysis subsystem has been initialized.
+Database for file 'swd3e.exe' has been loaded.
+Hex-Rays Decompiler plugin has been loaded (v9.3.0.260213)
+  The hotkeys are F5: decompile, Ctrl-F5: decompile all.
+
+  Please check the Edit/Plugins menu for more information.
+Hex-rays version 9.3.0.260213 has been detected, gooMBA plugin ready to use
+Using type parser: legacy
+af_at_start=0xDF7FFFF7 flirt=0
+af_final=0xDF7FFFF7 flirt=0
+func_count=1700 unknown_libname=0 func_lib=1 unowned_heads=0 regions=0 noncode_nonpad=94 indirect=898
+entry_probe:
+0x004A20A7  push    ebp
+0x004A20A8  mov     ebp, esp
+0x004A20AA  push    0FFFFFFFFh
+0x004A20AC  push    offset stru_4ACA48
+0x004A20B1  push    offset sub_4A5260
+0x004A20B6  mov     eax, large fs:0
+0x004A20BC  push    eax
+0x004A20BD  mov     large fs:0, esp
+Flushing buffers, please wait...ok
+Unloading IDP module D:\Dev\Crack\IDA\procs\pc.dll...

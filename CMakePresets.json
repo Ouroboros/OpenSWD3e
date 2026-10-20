@@ -1,0 +1,30 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "linux",
+      "displayName": "Linux (WSL, LLVM)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/linux",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "windows",
+      "displayName": "Windows (clang-cl cross, LLVM)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/windows",
+      "toolchainFile": "${sourceDir}/cmake/windows-clang-cl.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "linux", "configurePreset": "linux" },
+    { "name": "windows", "configurePreset": "windows" }
+  ]
+}

@@ -1,0 +1,33 @@
+[
+ {
+  "check": "DIDATAFORMAT",
+  "ok": true
+ },
+ {
+  "check": "entries",
+  "bad": []
+ },
+ {
+  "ea": "0x004A0C64",
+  "had_func": true,
+  "del_func": true
+ },
+ {
+  "ea": "0x004A0C74",
+  "had_func": true,
+  "del_func": true
+ },
+ {
+  "ea": "0x004A0CE4",
+  "had_func": true,
+  "del_func": true
+ },
+ {
+  "ea": "0x004A0CF4",
+  "had_func": true,
+  "del_func": true
+ },
+ {
+  "remaining_code_in_table": []
+ }
+]
