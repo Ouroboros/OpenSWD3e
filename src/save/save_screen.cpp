@@ -9,6 +9,7 @@
 
 #include "core/byte_reader.h"
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "core/words.h"
 #include "crt/msvc.h"
@@ -162,7 +163,7 @@ constexpr int kPlaceCharWidth = 3;
 constexpr int kPlaceChars = 0x20;
 // swd32.exe 0x0049E0DC (unmatched in swd3e): the low word of the converted primary text colour 5
 constexpr std::size_t kPlaceColor = 5;
-constexpr u16 kAbsentRole = 0xFFFF;     // SavePreviewRole::maxHitPoints of a role not in the party
+constexpr u16 kAbsentRole = 0xFFFF;  // SavePreviewRole::maxHitPoints of a role not in the party
 constexpr int kFaceStep = 0x48;
 constexpr int kFaceX = 0xE0;
 constexpr int kFaceTop = 0x88;
@@ -1658,8 +1659,10 @@ void Game::DrawSlotsPage()
 
     if (this->acts.Run(pointer) == 0)
     {
-        DebugLog(
-            u8"Act Err(RefrashCursor) 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+        ErrorBox(
+            this->errors,
+            u8"Act Err(RefrashCursor)",
+            u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
             this->scene.pointerRole.id,
             pointer.id,
             pointer.action,

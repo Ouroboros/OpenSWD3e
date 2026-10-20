@@ -5,6 +5,7 @@
 #include <string>
 
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "draw/painter.h"
 #include "font/text_font.h"
@@ -1670,8 +1671,10 @@ void Menu::AltarPrepareMorph()
 
         if (owner.acts.Run(this->gauge) == 0)
         {
-            DebugLog(
-                u8"Act Err(Botl::GetOriginal%d) 設定錯誤 \nact[%d] qq[%d] dir[%d]",
+            ErrorBox(
+                owner.errors,
+                u8"Act Err(Botl::GetOriginal%d)",
+                u8"設定錯誤 \nact[%d] qq[%d] dir[%d]",
                 step,
                 this->gauge.id,
                 this->gauge.action,

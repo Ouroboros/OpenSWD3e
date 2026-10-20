@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "game/game.h"
 #include "talk/script_text.h"
@@ -450,22 +451,22 @@ bool Talk::SetupDialog(
         frame = 0;
     }
 
-    auto runAct = [&owner](ActState& act, std::u8string_view error)
+    auto runAct = [&owner](ActState& act, std::u8string_view title)
     {
         if (owner.acts.Run(act) == 0)
         {
-            DebugLog(error, act.id, act.action, act.direction);
+            ErrorBox(owner.errors, title, u8"設定錯誤 \nact[%d] qq[%d] dir[%d]", act.id, act.action, act.direction);
         }
     };
 
     window.frameAct = &owner.scene.dialogFrameActs[frame];
-    runAct(owner.scene.dialogFrameActs[frame], u8"Act Err(Dialog:Frame) 設定錯誤 \nact[%d] qq[%d] dir[%d]");
+    runAct(owner.scene.dialogFrameActs[frame], u8"Act Err(Dialog:Frame)");
 
     if (!name.empty())
     {
         window.nameAct = &owner.scene.captionActs[frame];
         window.name = std::string(name.substr(0, this->dialogName.size() - 1));
-        runAct(owner.scene.captionActs[frame], u8"Act Err(Dialog:Caption) 設定錯誤 \nact[%d] qq[%d] dir[%d]");
+        runAct(owner.scene.captionActs[frame], u8"Act Err(Dialog:Caption)");
     }
 
     window.role = static_cast<u16>(speaker);

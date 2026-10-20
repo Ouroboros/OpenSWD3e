@@ -155,7 +155,8 @@ void FieldView::PanCamera()
 }
 
 // swd3e.exe 0x00414EC0: the quake: the camera is offset by the pairs of the shake table (0x004ACE70, ended by 0xCFCF)
-// in turn, each held for 0x004AD0D0 frames (not on map 0x16); the camera before it is kept to be restored
+// in turn, each held for 0x004C6880 frames (on every map: swd3e drops swd32's exception of map 0x16); the camera
+// before it is kept to be restored
 void FieldView::ShakeCamera()
 {
     Field& field = this->game.field;
@@ -163,7 +164,7 @@ void FieldView::ShakeCamera()
 
     this->shakeShift = {0, 0};
 
-    if (view.shake[0] == Scene::ShakeEnd || this->game.currentMap == Field::DemonRefiningPot)
+    if (view.shake[0] == Scene::ShakeEnd)
     {
         return;
     }
@@ -616,8 +617,10 @@ void FieldView::Render()
 
         if (slot.id != 0 && owner.acts.Run(slot) == 0)
         {
-            DebugLog(
-                u8"Act Err(picPaint:HeadSgn) 頭定符號設定錯誤 \nact[%d] qq[%d] dir[%d]",
+            ErrorBox(
+                owner.errors,
+                u8"Act Err(picPaint:HeadSgn)",
+                u8"頭定符號設定錯誤 \nact[%d] qq[%d] dir[%d]",
                 slot.id,
                 slot.action,
                 slot.direction
@@ -727,8 +730,10 @@ void FieldView::Render()
 
         if (owner.acts.Run(role.act) == 0)
         {
-            DebugLog(
-                u8"Act Err(picPaint:PathMove) 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+            ErrorBox(
+                owner.errors,
+                u8"Act Err(picPaint:PathMove)",
+                u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
                 role.id,
                 role.act.id,
                 role.act.action,
@@ -789,8 +794,10 @@ void FieldView::Render()
 
         if (owner.acts.Run(role.act) == 0)
         {
-            DebugLog(
-                u8"Act Err(picPaint:CompanyMove) 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+            ErrorBox(
+                owner.errors,
+                u8"Act Err(picPaint:CompanyMove)",
+                u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
                 role.id,
                 role.act.id,
                 role.act.action,
@@ -838,8 +845,10 @@ void FieldView::Render()
 
     if ((player.flags & Role::Stepping) == 0 && (player.flags & Role::StepsAct) != 0 && owner.acts.Run(player.act) == 0)
     {
-        DebugLog(
-            u8"Act Err(PicPaint:Render:MRl) 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+        ErrorBox(
+            owner.errors,
+            u8"Act Err(PicPaint:Render:MRl)",
+            u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
             player.id,
             player.act.id,
             player.act.action,

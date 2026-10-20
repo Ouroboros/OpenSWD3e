@@ -17,6 +17,7 @@
 #include "core/byte_reader.h"
 #include "core/debug_log.h"
 #include "core/divide.h"
+#include "core/error_box.h"
 #include "core/words.h"
 #include "crt/msvc.h"
 #include "draw/weave.h"
@@ -39,6 +40,8 @@ constexpr u32 kNoFrame = 0xFFFF;                  // the frame of a role without
 constexpr int kPerMille = 1000;                   // random.Below(kPerMille): the chances are in thousandths
 constexpr int kSoundRange = 0x200;                // the distance (pixels) a role is heard from
 constexpr int kSoundScale = 0x80;                 // the volume and the distance kept for the sounds
+constexpr int kPlayOnce = 0;  // SoundEffects::Play loops: a once-only role sound plays unlooped in swd3e (0x004143B0)
+constexpr int kPlayLooped = 1;
 
 // The screen effects whose elements move continuously (FieldView::MoveEffect), and the key of an element: its
 // kind in the top byte, its index (or its node's address) below.

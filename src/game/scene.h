@@ -306,6 +306,8 @@ struct Scene
     static constexpr int PointerAct = 0x2329;
     static constexpr int InterfaceAct = 0x232A;  // the loading screen and the menus
     static constexpr int EffectAct = 0x232B;
+    static constexpr int WeatherAct =
+        0x232A;  // swd3e: the weather particles (0x004160E0; swd32 drew them from EffectAct)
     static constexpr int TimerAct = 0x232C;
     // Actions of the pointer act besides the directions 0..7.
     static constexpr i32 TalkPointer = 9;
@@ -359,11 +361,11 @@ struct Scene
     std::array<i32, MusicSlots> musicTunes = {};  // swd32 0x004B7C74 by MusicSlot
     // swd32 0x004B9F68 stepped every map frame; a talk command may attach one to a role
     std::array<ActState, 8> screenActs;
-    ActState menuButtonAct;              // 0x004E4B78 the system button at the top right
+    ActState menuButtonAct;  // 0x004E4B78 the system button at the top right
     // swd32 0x004C8BE0 the leader's act kept by the home warp, given back after the pot
     i32 warpLeaderAct = 0;
-    u16 rolesTableBytes = 0;             // swd32 0x004C8BD4 the bytes of maps.dat's table 1
-    Role pointerButtonRole;              // swd32 0x004C96C8 (action 0xC)
+    u16 rolesTableBytes = 0;                  // swd32 0x004C8BD4 the bytes of maps.dat's table 1
+    Role pointerButtonRole;                   // swd32 0x004C96C8 (action 0xC)
     std::array<MapParticle, 4> weather = {};  // 0x004E5550 the weather particles (filled with 0x0F bytes)
     u32 recipesTable = 0;                     // swd32 0x004C97E4 the altar's recipes in maps.dat (its table 0x18)
     std::array<ActState, 4> dialogFrameActs;  // swd32 0x004CAA78 the frames of the talk windows
@@ -371,8 +373,8 @@ struct Scene
     Role pointerPageRole;                     // swd32 0x004CADA0 (action 0xE)
     // swd32 0x004CAE78 the battle groups, records of 8 words from maps.dat's table 0x12,
     std::vector<u16> encounterGroups;
-                                       // their count first
-    i32 returnMap = 0;                 // swd32 0x004CAE88 the map to go back to from Field::DemonRefiningPot (0: none)
+    // their count first
+    i32 returnMap = 0;  // swd32 0x004CAE88 the map to go back to from Field::DemonRefiningPot (0: none)
 
     // Set by LoadCity (0x0040C130).
     i32 layerFrames = 0;       // swd32 0x0049E0BC frames each tile layer shows (debug keys Tab and +/- change it)

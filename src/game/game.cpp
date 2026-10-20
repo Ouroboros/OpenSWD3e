@@ -1,4 +1,5 @@
 #include "game/game.h"
+#include "core/error_box.h"
 #include "core/format.h"
 
 #include <array>
@@ -1012,29 +1013,33 @@ void Game::NewGame()
         return this->acts.Run(role.act) != 0;
     };
 
-    auto logPointer = [](std::u8string_view error, const Role& role)
+    auto logPointer = [this](std::u8string_view title, const Role& role)
     {
-        DebugLog(error, role.id, role.act.id, role.act.action, role.act.direction);
+        ErrorBox(
+            this->errors,
+            title,
+            u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+            role.id,
+            role.act.id,
+            role.act.action,
+            role.act.direction
+        );
     };
 
     if (!setPointer(scene.pointerRole, 0))
     {
-        logPointer(u8"Act Err(Misc:Init:Mouse:Norm) 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]", scene.pointerRole);
+        logPointer(u8"Act Err(Misc:Init:Mouse:Norm)", scene.pointerRole);
     }
 
     if (!setPointer(scene.pointerButtonRole, Scene::ButtonPointer))
     {
-        logPointer(u8"Act Err(Misc:Init:Mouse:Btn) 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]", scene.pointerButtonRole);
+        logPointer(u8"Act Err(Misc:Init:Mouse:Btn)", scene.pointerButtonRole);
     }
 
     // The original reports the page pointer with the values of the button pointer.
     if (!setPointer(scene.pointerPageRole, Scene::PagePointer))
     {
-        logPointer(
-            u8"Act Err(Misc:Init:Mouse:n"
-            u8"Page) 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
-            scene.pointerButtonRole
-        );
+        logPointer(u8"Act Err(Misc:Init:Mouse:nPage)", scene.pointerButtonRole);
     }
 
     scene.timerDigits = ActState{};
@@ -1264,8 +1269,10 @@ void Game::StepPointer()
 
     if (this->acts.Run(pointer.act) == 0)
     {
-        DebugLog(
-            u8"Act Err(RefrashCursor) 設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+        ErrorBox(
+            this->errors,
+            u8"Act Err(RefrashCursor)",
+            u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
             static_cast<u32>(pointer.id),
             pointer.act.id,
             pointer.act.action,

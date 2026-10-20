@@ -189,7 +189,8 @@ int FieldView::DrawRole(Role& role)
 }
 
 // swd3e.exe 0x004143B0: the sound of a role near the controlled one (within 512 pixels while visible): it is played
-// once its timer runs out (a period of 0xFFFF holds it, marked by flag 0x1000000) at a volume and pan by the distance;
+// once its timer runs out (a period of 0xFFFF plays it once unlooped, marked by flag 0x1000000) at a volume (not scaled
+// by the sound volume setting in swd3e) and pan by the distance;
 // out of range a held sound is stopped
 void FieldView::UpdateRoleSound(Role& role)
 {
@@ -239,9 +240,12 @@ void FieldView::UpdateRoleSound(Role& role)
         if ((reloaded & Role::SoundPeriodMask) == Role::SoundPlaysOnce)
         {
             role.flags |= Role::SoundOnce;
+            effects.Play(role.sound, 0, 0, kPlayOnce);
         }
-
-        effects.Play(role.sound, 0, 0, 1);
+        else
+        {
+            effects.Play(role.sound, 0, 0, kPlayLooped);
+        }
 
         if (index < view.soundDistance.size())
         {
@@ -252,10 +256,7 @@ void FieldView::UpdateRoleSound(Role& role)
         }
     }
 
-    effects.SetVolume(
-        role.sound,
-        this->game.config.soundVolume * (kSoundScale - distance * kSoundScale / kSoundRange) / Config::MaxVolume
-    );
+    effects.SetVolume(role.sound, kSoundScale - distance * kSoundScale / kSoundRange);
     effects.SetPan(role.sound, (role.x - player.x) * kPanScale / kSoundRange);
 }
 
@@ -585,8 +586,10 @@ void FieldView::DrawRoleHeads()
 
         if (owner.acts.Run(head.act) == 0)
         {
-            DebugLog(
-                u8"Act Err(PicPaint:drawRoleHead) 設定錯誤 \nact[%d] qq[%d] dir[%d]",
+            ErrorBox(
+                owner.errors,
+                u8"Act Err(PicPaint:drawRoleHead)",
+                u8"設定錯誤 \nact[%d] qq[%d] dir[%d]",
                 head.act.id,
                 head.act.action,
                 head.act.direction

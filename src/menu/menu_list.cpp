@@ -2,6 +2,7 @@
 
 #include "config/config.h"
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "crt/msvc.h"
 #include "game/databases.h"
 #include "game/game.h"
@@ -316,12 +317,12 @@ void Menu::DrawScrollBar(int x, int y, int height, int arrows, float from, float
     bar.top = y;
     bar.bottom = y + height;
 
-    // A failed act is reported and still drawn with the picture it had (format 0x0049FD0C).
+    // A failed act is reported in the error box (text 0x004B0D58) and still drawn with the picture it had.
     auto tile = [&owner](ActState& act, std::u8string_view failed, int left, int from, int to)
     {
         if (owner.acts.Run(act) == 0)
         {
-            DebugLog(std::u8string(failed) + u8" 設定錯誤 \nact[%d] qq[%d] dir[%d]", act.id, act.action, act.direction);
+            ErrorBox(owner.errors, failed, u8"設定錯誤 \nact[%d] qq[%d] dir[%d]", act.id, act.action, act.direction);
         }
 
         const Picture* picture = owner.archive.GetPicture(act.frame, act.picture);

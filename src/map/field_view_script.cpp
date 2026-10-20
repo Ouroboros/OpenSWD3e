@@ -42,8 +42,10 @@ void FieldView::DrawAnimations(std::unique_ptr<ScriptAnimation>& list)
 
         if (owner.acts.Run(animation.act) == 0)
         {
-            DebugLog(
-                u8"Act Err(PicPaint:PlayAct) 設定錯誤 \nact[%d] qq[%d] dir[%d]",
+            ErrorBox(
+                owner.errors,
+                u8"Act Err(PicPaint:PlayAct)",
+                u8"設定錯誤 \nact[%d] qq[%d] dir[%d]",
                 animation.act.id,
                 animation.act.action,
                 animation.act.direction
@@ -127,8 +129,10 @@ void FieldView::DrawSprites()
 
         if (owner.acts.Run(sprite.act) == 0)
         {
-            DebugLog(
-                u8"Act Err(PicPaint:DrawTObj) 設定錯誤 \nact[%d] qq[%d] dir[%d]",
+            ErrorBox(
+                owner.errors,
+                u8"Act Err(PicPaint:DrawTObj)",
+                u8"設定錯誤 \nact[%d] qq[%d] dir[%d]",
                 sprite.act.id,
                 sprite.act.action,
                 sprite.act.direction

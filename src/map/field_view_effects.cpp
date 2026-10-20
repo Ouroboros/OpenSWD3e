@@ -360,7 +360,7 @@ void FieldView::DrawWeather()
             );
         }
 
-        view.effectAct.id = Scene::EffectAct;
+        view.effectAct.id = Scene::WeatherAct;
         view.effectAct.action = motion.action;
         owner.acts.Run(view.effectAct);
         const Picture* picture = owner.archive.GetPicture(view.effectAct.frame, view.effectAct.picture);
