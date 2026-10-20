@@ -12,10 +12,4 @@ int CheatDialog::Run()
     return 0;
 }
 
-int CheatDialog::RunNameDialog()
-{
-    LogWarning(u8"the name dialog is only available on Windows");
-    return 0;
-}
-
 }  // namespace swd3e

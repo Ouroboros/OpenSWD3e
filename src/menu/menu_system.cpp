@@ -43,6 +43,7 @@ constexpr int kTitleMusic = 0xA;
 constexpr int kNameBoxX = 300;
 constexpr int kNameBoxY = 0xE6;
 constexpr int kNameLength = 8;
+constexpr std::size_t kGivenBytes = sizeof(RoleName::given);  // swd32 flow kept until the swd3e page is rebuilt
 constexpr u32 kScreenPixels = Display::Pixels;
 constexpr std::size_t kScreenBytes = sizeof(Pixel) * Display::Pixels;
 constexpr int kTextStyle = TextFont::BoldShadow;
@@ -759,9 +760,9 @@ void Menu::SystemSelect()
         this->face.action = kFaceIdle;
         this->face.direction = 0;
         this->nameReply = 0;
-        this->enteredNames.assign(2 * Party::NameBytes, 0);
+        this->enteredNames.assign(2 * kGivenBytes, 0);
         ++this->systemRow;
-        owner.textInput = std::make_unique<TextInput>(Party::RoleNames[0], kNameLength, kNameBoxX, kNameBoxY);
+        owner.textInput = std::make_unique<TextInput>(Party::DefaultNames[0].given, kNameLength, kNameBoxX, kNameBoxY);
     }
     else if (this->systemCursor == kSettingsEntry)
     {
@@ -1010,27 +1011,28 @@ bool Menu::DrawNameEntry()
 
     if (result == TextInput::Enter)
     {
-        owner.party.names = Party::DefaultNames();
-        const std::string name = owner.textInput->CopyText(Party::NameBytes);
-        const auto at = Party::NameBytes * static_cast<std::size_t>(this->systemRow - kFirstName);
+        owner.party.ResetNames();
+        const std::string name = owner.textInput->CopyText(kGivenBytes);
+        const auto at = kGivenBytes * static_cast<std::size_t>(this->systemRow - kFirstName);
         std::copy_n(
             name.begin(),
-            std::min<std::size_t>(name.size(), Party::NameBytes),
+            std::min<std::size_t>(name.size(), kGivenBytes),
             this->enteredNames.begin() + static_cast<std::ptrdiff_t>(at)
         );
         owner.textInput.reset();
 
         if (++this->systemRow == kSecondName)
         {
-            owner.textInput = std::make_unique<TextInput>(Party::RoleNames[1], kNameLength, kNameBoxX, kNameBoxY);
+            owner.textInput =
+                std::make_unique<TextInput>(Party::DefaultNames[1].given, kNameLength, kNameBoxX, kNameBoxY);
             this->face.id = kSecondRoleAct;
             this->face.action = kFaceIdle;
         }
 
         if (this->systemRow == kFadeOut)
         {
-            std::copy_n(this->enteredNames.begin(), Party::NameBytes, owner.party.names[0].begin());
-            std::copy_n(this->enteredNames.begin() + Party::NameBytes, Party::NameBytes, owner.party.names[1].begin());
+            std::copy_n(this->enteredNames.begin(), kGivenBytes, owner.party.names[0].given.begin());
+            std::copy_n(this->enteredNames.begin() + kGivenBytes, kGivenBytes, owner.party.names[1].given.begin());
             this->enteredNames.clear();
             owner.state.ClearGameFlag(kNameEntryFlag);
         }
@@ -1078,7 +1080,6 @@ void Menu::ActOnEntry()
             owner.saveScreenPage = 1;
             owner.slotsLoad = 1;
             owner.ResetSaveSlots();
-            owner.party.ApplyNameCheats();
             owner.LoadFameFile();
             break;
 

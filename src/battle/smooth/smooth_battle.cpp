@@ -481,7 +481,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
         }
 
         const int nameX = kNameX[partyRole];
-        const std::string_view name = NameOf(game.party.names[partyRole]);
+        const std::string_view name = NameOf(battle.roleNames[partyRole]);
 
         if (!unit.IsDefeated())
         {

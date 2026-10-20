@@ -56,7 +56,6 @@ public:
     // DialogBoxParamA(0x6A): the dialog until it is closed; its result (0 when it could not be shown).
     int Run();
     // DialogBoxParamA(0x70): the name of the first role asked for; 1 when one was given.
-    int RunNameDialog();
 
     // The value column of a row (part of 0x00410490 and 0x00410600): "" without a value, the value alone without a
     // maximum (its percent sign written and then overwritten), "value/maximum" over a maximum of 1, the text before it

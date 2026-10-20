@@ -2099,12 +2099,12 @@ void Menu::ItemsDraw()
                 textColor = static_cast<Pixel>(painter.MakeColor(kTargetRed, kTargetGreen, kTargetBlue));
             }
 
-            const Party::Name& name = owner.party.names[static_cast<std::size_t>(role)];
+            const std::string name = owner.party.names[static_cast<std::size_t>(role)].FullName();
             owner.mediumFont.DrawText(
                 owner.drawSurface,
                 shift + kRoleNameX,
                 y + shift + kRoleNameDown,
-                std::string_view(name.data(), strnlen(name.data(), name.size())),
+                name,
                 textColor,
                 kPanelStyle
             );

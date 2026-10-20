@@ -158,7 +158,7 @@ constexpr std::u8string_view kExperienceLine = u8"每人得到經驗值:%d";   /
 constexpr std::u8string_view kGoldLine = u8"得到銀幣:%d";               // swd32.exe 0x004A7A0C (unmatched in swd3e)
 constexpr std::u8string_view kProficiencyLine = u8"得到法寶經驗值:%d";  // swd32.exe 0x004A79F8 (unmatched in swd3e)
 constexpr int kLevelUpTitleX = 0x108;
-constexpr std::u8string_view kLevelUpTitle = u8"升級";       // swd32.exe 0x004A7A44 (unmatched in swd3e)
+constexpr std::u8string_view kLevelUpTitle = u8"升級";  // swd32.exe 0x004A7A44 (unmatched in swd3e)
 // swd32.exe 0x004A7A38 (unmatched in swd3e): the name and the new level
 constexpr std::u8string_view kLevelUpLine = u8"%s升第%d級";
 constexpr int kLevelUpBodyBottom = 0xF4;
@@ -1630,7 +1630,7 @@ void TurnFrame::DrawLevelUpPanelAdvance(Scene& scene)
     }
 
     const auto role = static_cast<std::size_t>(battle.partyRoles[battle.levelUpRole]);
-    const Party::Name& name = game.party.names[role];
+    const auto& name = battle.roleNames[role];
     const std::string roleName(name.data(), std::find(name.begin(), name.end(), '\0') - name.begin());
     const std::string text = WinFormat(kLevelUpLine, {roleName, static_cast<i32>(game.party.roles[role].level)});
     font.DrawText(game.drawSurface, kVictoryTextX, kLevelUpTextY, text, kTitleColor, TextFont::BoldOutline);
@@ -1657,7 +1657,7 @@ void TurnFrame::DrawLearnedBoxAdvance(std::u8string_view line, bool sound, Scene
     }
 
     const auto role = static_cast<std::size_t>(battle.partyRoles[battle.levelUpRole]);
-    const Party::Name& roleName = game.party.names[role];
+    const auto& roleName = battle.roleNames[role];
     const std::string name(roleName.data(), std::find(roleName.begin(), roleName.end(), '\0') - roleName.begin());
     const std::string text = WinFormat(line, {name});
     const int halves = static_cast<int>(text.size()) / 2;
@@ -1743,7 +1743,7 @@ void TurnFrame::DrawLevelUpStatsAdvance(Scene& scene)
         kListFrameBorder,
         scene
     );
-    const Party::Name& name = game.party.names[partyRole];
+    const auto& name = battle.roleNames[partyRole];
     const std::string roleName(name.data(), std::find(name.begin(), name.end(), '\0') - name.begin());
     font.DrawText(game.drawSurface, kStatsTitleX, kStatsTitleTop, roleName, kTitleColor, TextFont::BoldOutline);
     WindowFrame(
@@ -2107,8 +2107,8 @@ void TurnFrame::DrawCommandPanelAdvance(i32 nameIndex, Scene& scene)
     SceneFont font(game.mediumFont, scene);
     font.SetShadow(0);
     font.SetBackground(TextFont::NoBackground);
-    const Party::Name& name =
-        game.party.names[static_cast<std::size_t>(battle.partyRoles[static_cast<std::size_t>(nameIndex)])];
+    const auto& name =
+        battle.roleNames[static_cast<std::size_t>(battle.partyRoles[static_cast<std::size_t>(nameIndex)])];
     const std::string text(name.data(), std::find(name.begin(), name.end(), '\0') - name.begin());
     const int halfLength = static_cast<int>(text.size()) >> 1;
     const int x = battle.menuX + kMenuNameStep * (kMenuNameCenter - (halfLength - kMenuNameShift));

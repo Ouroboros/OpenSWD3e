@@ -159,11 +159,11 @@ public:
     // Scene::pointerPageRole (0x004CADE0): EndAct() and NextAct().
     ActState& EndAct();
     ActState& NextAct();
-    MarchingRect marker;                // 0x004E6D30 around the chosen choice
-    std::vector<std::string> history;   // swd32 0x004C99FC the texts kept by the talk log
+    MarchingRect marker;               // 0x004E6D30 around the chosen choice
+    std::vector<std::string> history;  // swd32 0x004C99FC the texts kept by the talk log
     // swd32 0x004A135C the place of the next talk window (NoOriginX: by its speaker)
     u32 dialogOrigin = Talk::NoOrigin;
-    u32 dialogOptions = Talk::AllOff;   // swd32 0x004A1360 its options, a cleared bit turns one on
+    u32 dialogOptions = Talk::AllOff;          // swd32 0x004A1360 its options, a cleared bit turns one on
     u32 dialogTimeout = Talk::DefaultTimeout;  // swd32 0x004A1364
     i32 dialogOffsetX = 0;                     // swd32 0x004CF730
     i32 dialogOffsetY = 0;                     // swd32 0x004CF734
@@ -197,6 +197,7 @@ private:
     bool RunRoleCommand(EventRun& run);
     bool PanCamera(EventRun& run);
     bool PlaceRole(EventRun& run);
+    int ReadNamePlate(u32 index, std::span<char> plate);
     bool LoadName(EventRun& run);
     bool OpenMapMovie(EventRun& run);
     bool CopyMedia(EventRun& run);

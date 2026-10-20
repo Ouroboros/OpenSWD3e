@@ -190,6 +190,9 @@ public:
     u16 animated = 0;                     // swd32 0x0053BDDC the background is animated
     u16 scene = 0;                        // swd32 0x0053BF10 1..4 at random
     std::array<i32, Party::Roles> partyRoles = {0, 1, 2, 3};  // swd32 0x004A75C8 the party role of each battle role
+    // 0x0050ECB4 (swd3e) the names the battle shows for the party roles: the nonzero bytes of the first ten of each
+    // RoleName (the surname and given name), set by StartBattle
+    std::array<std::array<char, sizeof(RoleName)>, Party::Roles> roleNames = {};
     // swd32 0x00521398 the four roles are in the party (story flags 0x1E..)
     std::array<u8, Party::Roles> inParty = {};
     std::array<u8, Guests> guestUsed = {};               // swd32 0x004FDF80

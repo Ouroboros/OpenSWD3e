@@ -31,7 +31,6 @@ namespace
 
 // The dialogs of swd32.exe's resources.
 constexpr WORD kCheatDialogId = 0x6A;
-constexpr WORD kNameDialogId = 0x70;
 
 // The controls of the cheat dialog.
 constexpr int kCloseButton = 0x3E8;
@@ -73,14 +72,6 @@ constexpr std::u8string_view kInsertFailed = u8"物品插入發生錯誤";  // s
 constexpr std::u8string_view kDeleteFailed = u8"物品刪除發生錯誤";  // swd32.exe 0x004A023C (unmatched in swd3e)
 
 // The name dialog.
-constexpr int kNameField = 0x40A;
-constexpr int kNameCancel = 0x40C;
-constexpr int kNameBytes = 8;
-constexpr UINT kNameUnknownMessage = 0x46A;  // sent to the field as the original does
-constexpr WPARAM kNameUnknownWord = 1;
-constexpr LPARAM kNameUnknownLong = 0x42;
-constexpr std::u8string_view kNoName = u8"請輸入一個字以上";  // swd32.exe 0x004A10E4 (unmatched in swd3e)
-constexpr std::u8string_view kNameTitle = u8"姓名";           // swd32.exe 0x004A10F8 (unmatched in swd3e)
 
 std::wstring Wide(std::string_view big5)
 {
@@ -131,7 +122,6 @@ void SetItemText(HWND list, int row, int column, const std::string& big5)
 }
 
 INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM data);
-INT_PTR CALLBACK NameProcedure(HWND dialog, UINT message, WPARAM word, LPARAM data);
 
 // The window of the game, the owner of the dialogs.
 HWND GameWindow(const CheatDialog& cheat)
@@ -180,11 +170,6 @@ int RunDialog(CheatDialog& cheat, WORD id, DLGPROC procedure)
 int CheatDialog::Run()
 {
     return RunDialog(*this, kCheatDialogId, &CheatProcedure);
-}
-
-int CheatDialog::RunNameDialog()
-{
-    return RunDialog(*this, kNameDialogId, &NameProcedure);
 }
 
 namespace
@@ -369,8 +354,7 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
 
             for (int role = 0; role < Party::Roles; ++role)
             {
-                const Party::Name& name = cheat->party.names[static_cast<std::size_t>(role)];
-                const std::string text(name.data(), strnlen(name.data(), name.size()));
+                const std::string text = cheat->party.names[static_cast<std::size_t>(role)].FullName();
                 labels[static_cast<std::size_t>(CheatDialog::FirstSkillsTab + role)] = text + Big5(kSkillsSuffix);
                 labels[static_cast<std::size_t>(CheatDialog::FirstAttributesTab + role)] =
                     text + Big5(kAttributesSuffix);
@@ -592,68 +576,6 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
 
             Fill(*cheat, list);
             ClearFields(dialog);
-            return FALSE;
-        }
-
-        default:
-            return FALSE;
-    }
-}
-
-// swd32.exe 0x00425470 (unmatched in swd3e): the name dialog: the field (eight bytes) starts with the first role's
-// default name; OK takes
-// a name of at least one byte as the first role's name, Cancel and closing give up
-INT_PTR CALLBACK NameProcedure(HWND dialog, UINT message, WPARAM word, LPARAM data)
-{
-    if (message == WM_INITDIALOG)
-    {
-        SetWindowLongPtrW(dialog, DWLP_USER, data);
-    }
-
-    auto* cheat = reinterpret_cast<CheatDialog*>(GetWindowLongPtrW(dialog, DWLP_USER));
-
-    switch (message)
-    {
-        case WM_CLOSE:
-            EndDialog(dialog, 0);
-            return TRUE;
-
-        case WM_INITDIALOG:
-        {
-            HWND field = GetDlgItem(dialog, kNameField);
-            SendMessageW(field, EM_LIMITTEXT, kNameBytes, 0);
-            SendMessageW(field, kNameUnknownMessage, kNameUnknownWord, kNameUnknownLong);
-            const Party::Name name = Party::DefaultNames()[0];
-            SetDlgItemTextW(
-                dialog,
-                kNameField,
-                Wide(std::string_view(name.data(), strnlen(name.data(), name.size()))).c_str()
-            );
-            return TRUE;
-        }
-
-        case WM_COMMAND:
-        {
-            if (LOWORD(word) == IDOK && cheat != nullptr)
-            {
-                std::string text;
-
-                if (!FieldText(dialog, kNameField, kNameBytes, text))
-                {
-                    MessageBoxW(dialog, Wide(kNoName).c_str(), Wide(kNameTitle).c_str(), MB_OK);
-                    return FALSE;
-                }
-
-                Party::Name& name = cheat->party.names[0];
-                name.fill('\0');
-                std::copy_n(text.begin(), std::min(text.size(), name.size() - 1), name.begin());
-                EndDialog(dialog, 1);
-            }
-            else if (LOWORD(word) == kNameCancel)
-            {
-                EndDialog(dialog, 0);
-            }
-
             return FALSE;
         }
 

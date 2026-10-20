@@ -4,8 +4,10 @@
 #include <cstring>
 
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/fault.h"
 #include "core/format.h"
+#include "file/file.h"
 #include "game/direction.h"
 #include "game/game.h"
 #include "platform/display.h"
@@ -21,6 +23,7 @@ namespace
 {
 
 constexpr u16 kListEnd = 0xFF00;
+constexpr std::u8string_view kCaptionTitle = u8"對話系統(Caption2)";  // 0x004B26F0
 constexpr u16 kPlaceAtTarget = 0x8000;  // in the y of HeadIn: the head is placed at its target
 constexpr u16 kEvenPixels = 0xFFFE;     // the line effects keep to even pixels
 
@@ -349,8 +352,39 @@ bool Talk::PlaceRole(EventRun& run)
     return true;
 }
 
-// Commands 0xA2 and 0x5B: the name plate of the next talk window from maps.dat's name table (0xA2: by script variable
-// 0xB or 0xC, which must be set; 0x5B: by role), the default names of the first two roles replaced by theirs.
+// swd3e.exe 0x004120A0: name plate `index` of namex.dat (its offset at 0x200 + 4 * index, the text after the 0x200
+// header) read into `plate` and cut at its "%Q"; the length up to there. The file is opened as OPEN_ALWAYS (a missing
+// one is created empty and the plate keeps its bytes). A plate without "%Q" has the original write to address 0;
+// here it stays as read.
+int Talk::ReadNamePlate(u32 index, std::span<char> plate)
+{
+    constexpr i32 kHeaderBytes = 0x200;
+    constexpr std::string_view kPlateEnd = "%Q";  // 0x004B2720
+    const std::u8string path = PathFormat("%snamex.dat", {this->game.config.installDirectory});
+    File file;
+    file.Open(path, File::Disposition::OpenAlways, File::Access::Read);
+    u32 bytes = sizeof(u32);
+    u32 offset = 0;
+    file.SeekBegin(static_cast<i32>(sizeof(u32) * index) + kHeaderBytes);
+    file.Read(&offset, bytes);
+    bytes = static_cast<u32>(plate.size());
+    file.SeekBegin(static_cast<i32>(offset) + kHeaderBytes);
+    file.Read(plate.data(), bytes);
+    file.Close();
+    const std::string_view text(plate.data(), strnlen(plate.data(), plate.size()));
+    const std::size_t end = text.find(kPlateEnd);
+
+    if (end == std::string_view::npos)
+    {
+        return static_cast<int>(text.size());
+    }
+
+    plate[end] = '\0';
+    return static_cast<int>(end);
+}
+
+// Commands 0xA2 and 0x5B: the name plate of the next talk window from namex.dat (0xA2: by script variable 0xB or
+// 0xC, which must be set; 0x5B: by role), its names put in by Talk::ExpandText.
 bool Talk::LoadName(EventRun& run)
 {
     Game& owner = this->game;
@@ -368,7 +402,7 @@ bool Talk::LoadName(EventRun& run)
 
         if (variable != Party::FirstNameVariable && variable != Party::SecondNameVariable)
         {
-            DebugLog(u8"對話系統(Caption2) 設定的變數(%d)和系統衝突", variable);  // 0x004A1708, the text 0x004A171C
+            ErrorBox(owner.errors, kCaptionTitle, u8"設定的變數(%d)和系統衝突", variable);  // 0x004B2704
             this->Next(run);
             return true;
         }
@@ -378,43 +412,19 @@ bool Talk::LoadName(EventRun& run)
 
         if (index == 0)
         {
-            DebugLog(u8"對話系統(Caption2) 設定的變數(0)和系統衝突");  // 0x004A1708, the text 0x004A16F0
+            ErrorBox(owner.errors, kCaptionTitle, u8"設定的變數(0)和系統衝突");  // 0x004B26D8
             this->Next(run);
             return true;
         }
     }
 
-    const std::vector<u8>& data = owner.databases.mapsData;
-    const u32 at = MapsDword(data, MapsTable(data, MapsDataTable::NamePlates) + sizeof(u32) * index);
-
-    for (std::size_t offset = 0; offset < this->dialogName.size(); ++offset)
-    {
-        this->dialogName[offset] = at + offset < data.size() ? static_cast<char>(data[at + offset]) : '\0';
-    }
-
-    const std::size_t end = TextEndAt(
-        std::span<const u8>(reinterpret_cast<const u8*>(this->dialogName.data()), this->dialogName.size()),
-        0
-    );
-
-    this->dialogName[end] = '\0';
+    this->ReadNamePlate(index, this->dialogName);
+    // The original expands in place, the text and its moves reaching past the 0x20 bytes of the plate; here the
+    // expansion is made on a copy and its first 0x20 bytes kept.
     std::string name(this->dialogName.data(), this->dialogName.size());
-    const Party& party = owner.party;
-    Talk::ReplacePrefix(
-        name,
-        0,
-        Big5(Party::RoleNames[0]),
-        std::string_view(party.names[0].data(), strnlen(party.names[0].data(), party.names[0].size())),
-        static_cast<int>(this->dialogName.size())
-    );
-    Talk::ReplacePrefix(
-        name,
-        0,
-        Big5(Party::RoleNames[1]),
-        std::string_view(party.names[1].data(), strnlen(party.names[1].data(), party.names[1].size())),
-        static_cast<int>(this->dialogName.size())
-    );
-    std::copy_n(name.begin(), this->dialogName.size(), this->dialogName.begin());
+    this->ExpandText(name);
+    std::fill(this->dialogName.begin(), this->dialogName.end(), '\0');
+    std::copy_n(name.begin(), std::min(name.size(), this->dialogName.size()), this->dialogName.begin());
     this->Next(run);
     return true;
 }

@@ -1589,12 +1589,12 @@ void Menu::SkillsDraw()
                 shift = -1;
             }
 
-            const Party::Name& name = owner.party.names[static_cast<std::size_t>(member)];
+            const std::string name = owner.party.names[static_cast<std::size_t>(member)].FullName();
             owner.mediumFont.DrawText(
                 owner.drawSurface,
                 shift + kRoleTextX,
                 shift + line + kRoleTextY,
-                std::string_view(name.data(), strnlen(name.data(), name.size())),
+                name,
                 roleColor,
                 kPanelStyle
             );

@@ -32,7 +32,6 @@ constexpr std::array<std::pair<swd3e::u32, std::u8string_view>, 6> kTexts = {{
 }};
 
 constexpr swd3e::u32 kDateTemplateAt = 0x0049FAA4;
-constexpr std::array<swd3e::u32, 2> kNameCopies = {0x0049E188, 0x0049E148};
 constexpr swd3e::u32 kInitialTabsAt = 0x004A6A38;
 constexpr swd3e::u32 kKeyNamesAt = 0x0049E470;
 constexpr swd3e::u32 kKeyNameBytes = 0x10;
@@ -40,11 +39,21 @@ constexpr swd3e::u32 kKeyRowsAt = 0x004A7230;
 constexpr swd3e::u32 kKeyRowBytes = 0xC;
 constexpr swd3e::u32 kKeyRowSlotsAt = 0x004A7210;
 
-constexpr swd3e::i16 kAttack = 3;
-constexpr swd3e::i16 kHeRanAttributes = 0x19;  // the name cheats of 何然, 寧采臣 and 小倩
-constexpr swd3e::i16 kNingCaiChenAttackLoss = 0xA;
-constexpr swd3e::i32 kNingCaiChenGold = 0x1F4;
-constexpr swd3e::i16 kXiaoQianValue = 5;
+// The texts 0x00429790 copies: the default names, then the names of the talk texts, three parts a role.
+constexpr std::array<std::array<swd3e::u32, 3>, swd3e::Party::Roles> kDefaultNamesAt = {{
+    {0x004B2188, 0x004B2180, 0x004B2178},
+    {0x004B2174, 0x004B216C, 0x004B2164},
+    {0x004B215C, 0x004B2154, 0x004B214C},
+    {0x004B2148, 0x004B2144, 0x004B213C},
+}};
+
+constexpr std::array<std::array<swd3e::u32, 3>, swd3e::Party::Roles> kNameTagsAt = {{
+    {0x004B2134, 0x004B2180, 0x004B2178},
+    {0x004B212C, 0x004B216C, 0x004B2164},
+    {0x004B215C, 0x004B2154, 0x004B214C},
+    {0x004B2148, 0x004B2144, 0x004B213C},
+}};
+
 constexpr std::size_t kYearDigits = 4;  // the date starts with the year
 constexpr swd3e::u16 kAbsentRole = 0xFFFF;
 
@@ -67,11 +76,6 @@ TEST_CASE("menu: texts, names and tabs match swd32.exe")
 
     CHECK(swd3etest::SameText(exe, kDateTemplateAt, swd3e::SaveSlots::DateTemplate));
 
-    for (const swd3e::u32 copy : kNameCopies)
-    {
-        CHECK(swd3etest::SameTable(exe, copy, swd3e::Party::DefaultNames()));
-    }
-
     static_assert(sizeof(swd3e::MenuTab) == 0x1C);
     CHECK(swd3etest::SameTable(exe, kInitialTabsAt, swd3e::Menu::InitialTabs));
 
@@ -90,21 +94,32 @@ TEST_CASE("menu: texts, names and tabs match swd32.exe")
     CHECK(swd3etest::SameTable(exe, kKeyRowSlotsAt, swd3e::Menu::KeyRowSlots));
 }
 
-TEST_CASE("menu: name cheats")
+TEST_CASE("party: the default names and those of the talk texts match swd3e.exe")
 {
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
+
+    if (exe.empty())
+    {
+        std::printf("  (swd3e.exe not found, skipped)\n");
+        return;
+    }
+
     swd3e::Party party;
-    party.roles[0].strength = kAttack;
-    party.names[0] = swd3e::Party::MakeName(swd3e::Big5(u8"何然"));
-    party.ApplyNameCheats();
-    CHECK_EQ(party.roles[0].strength, kHeRanAttributes);
-    CHECK_EQ(party.roles[0].agility, kHeRanAttributes);
-    party.names[0] = swd3e::Party::MakeName(swd3e::Big5(u8"寧采臣"));
-    party.ApplyNameCheats();
-    CHECK_EQ(party.variables[swd3e::Party::Gold], kNingCaiChenGold);
-    CHECK_EQ(party.roles[0].strength, kHeRanAttributes - kNingCaiChenAttackLoss);
-    party.names[1] = swd3e::Party::MakeName(swd3e::Big5(u8"小倩"));
-    party.ApplyNameCheats();
-    CHECK_EQ(party.roles[1].maxSpirit, kXiaoQianValue);
+    party.ResetNames();
+
+    for (std::size_t role = 0; role < swd3e::Party::Roles; ++role)
+    {
+        const swd3e::RoleName& name = party.names[role];
+        const swd3e::RoleName& tag = party.nameTags[role];
+        CHECK(swd3etest::SameText(exe, kDefaultNamesAt[role][0], name.Surname()));
+        CHECK(swd3etest::SameText(exe, kDefaultNamesAt[role][1], name.Given()));
+        CHECK(swd3etest::SameText(exe, kDefaultNamesAt[role][2], name.Nickname()));
+        CHECK(swd3etest::SameText(exe, kNameTagsAt[role][0], tag.Surname()));
+        CHECK(swd3etest::SameText(exe, kNameTagsAt[role][1], tag.Given()));
+        CHECK(swd3etest::SameText(exe, kNameTagsAt[role][2], tag.Nickname()));
+    }
+
+    CHECK(party.names[0].FullName() + party.names[0].Nickname() == swd3e::Big5(u8"陳靖仇阿仇"));
 }
 
 TEST_CASE("menu: the preview of a saved game")

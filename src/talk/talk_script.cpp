@@ -19,6 +19,9 @@ constexpr std::size_t kTextBytes = 0x200;
 constexpr int kExpandLimit = 0x1FE;     // the bytes a replacement may grow the text to
 constexpr std::size_t kItemDigits = 5;  // "%T" with this many digits or more fails
 constexpr int kSkippedCodeBytes = 4;    // an object name code that fails is passed over by this much
+constexpr std::size_t kNamedRoles = 3;  // the roles whose names ExpandText puts in
+constexpr std::size_t kNameParts = 3;   // surname, given name, nickname
+constexpr std::u8string_view kItemNameTitle = u8"物品名稱代換";  // 0x004B0E04
 
 // The script records of the talk windows: the speaker and the frame act, then by layout the place (Sized), the size
 // in cells (Sized, Record), then the text.
@@ -137,18 +140,15 @@ bool Talk::ReplacePrefix(
 }
 
 // swd3e.exe 0x0040BB90: the names in a talk text: "%T<object>." becomes the object's name (numbers of 5 digits and
-// more fail), the default names of the first two roles become their names (both advancing by the first name's
-// length); then the text is measured: the characters and the lines (20 characters a line; %N, %L, %K and %P end a
-// line; %B and %A skip only their code) as lines << 16 | characters
+// more fail, with an error box), the names the texts write for the first three roles (surname, given name and
+// nickname, Party::nameTags) become theirs (advancing past the name put in); then the text is measured: the characters
+// and the lines (20 characters a line; %N, %L, %K and %P end a line; %B and %A skip only their code) as lines << 16 |
+// characters
 u32 Talk::ExpandText(std::string& text)
 {
     Game& owner = this->game;
     std::size_t at = 0;
     int consumed = 0;
-    const std::string firstDefault = Big5(Party::RoleNames[0]);
-    const std::string secondDefault = Big5(Party::RoleNames[1]);
-    const std::string_view firstName(owner.party.names[0].data(), std::strlen(owner.party.names[0].data()));
-    const std::string_view secondName(owner.party.names[1].data(), std::strlen(owner.party.names[1].data()));
 
     while (ReadWord(text, at) != kTextEnd)
     {
@@ -173,7 +173,7 @@ u32 Talk::ExpandText(std::string& text)
             if (code.size() >= kCodeBytes + kItemDigits)
             {
                 number.push_back('.');
-                DebugLog(u8"物品名稱代換 !! 警告 !!\n號碼字串太長\n%s", code + ".");
+                ErrorBox(owner.errors, kItemNameTitle, u8"!! 警告 !!\n號碼字串太長\n%s", code + ".");
             }
 
             int id = static_cast<int>(code.size());
@@ -192,14 +192,14 @@ u32 Talk::ExpandText(std::string& text)
                 }
                 else
                 {
-                    DebugLog(u8"物品名稱代換 找不到物品 %d", id);
+                    ErrorBox(owner.errors, kItemNameTitle, u8"找不到物品 %d", id);
                     at += kSkippedCodeBytes;
                     consumed += kSkippedCodeBytes;
                 }
             }
             else
             {
-                DebugLog(u8"物品名稱代換 錯誤的號碼字串\n%s", code + ".");
+                ErrorBox(owner.errors, kItemNameTitle, u8"錯誤的號碼字串\n%s", code + ".");
                 at += kSkippedCodeBytes;
                 consumed += kSkippedCodeBytes;
             }
@@ -208,11 +208,24 @@ u32 Talk::ExpandText(std::string& text)
         }
 
         int skip = 0;
+        bool replaced = false;
 
-        if (Talk::ReplacePrefix(text, at, firstDefault, firstName, kExpandLimit - consumed) ||
-            Talk::ReplacePrefix(text, at, secondDefault, secondName, kExpandLimit - consumed))
+        for (std::size_t role = 0; role < kNamedRoles && !replaced; ++role)
         {
-            skip = static_cast<int>(firstName.size()) - 1;
+            const RoleName& tag = owner.party.nameTags[role];
+            const RoleName& name = owner.party.names[role];
+            const std::array<std::string, kNameParts> tags = {tag.Surname(), tag.Given(), tag.Nickname()};
+            const std::array<std::string, kNameParts> parts = {name.Surname(), name.Given(), name.Nickname()};
+
+            for (std::size_t part = 0; part < kNameParts; ++part)
+            {
+                if (Talk::ReplacePrefix(text, at, tags[part], parts[part], kExpandLimit - consumed))
+                {
+                    skip = static_cast<int>(parts[part].size()) - 1;
+                    replaced = true;
+                    break;
+                }
+            }
         }
 
         at += static_cast<std::size_t>(skip + 1);

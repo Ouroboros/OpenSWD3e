@@ -1250,15 +1250,8 @@ void Menu::EquipDraw()
         0,
         kFrameBorder
     );
-    const Party::Name& name = owner.party.names[std::min<std::size_t>(this->roleTab, Party::Roles - 1)];
-    owner.mediumFont.DrawText(
-        owner.drawSurface,
-        kNameX - slide,
-        kNameY - slide,
-        std::string_view(name.data(), strnlen(name.data(), name.size())),
-        color,
-        kPanelStyle
-    );
+    const std::string name = owner.party.names[std::min<std::size_t>(this->roleTab, Party::Roles - 1)].FullName();
+    owner.mediumFont.DrawText(owner.drawSurface, kNameX - slide, kNameY - slide, name, color, kPanelStyle);
     this->DrawBox(kHelpBoxX, slide + kHelpBoxY, kHelpBoxWidth, slide + kHelpBoxHeight, kHelpBoxMode, 0, 0, 0);
     this->DrawBox(
         page.listX + slide - kListBoxLeft,

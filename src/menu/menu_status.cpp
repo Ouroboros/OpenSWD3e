@@ -394,15 +394,8 @@ void Menu::StatusDraw()
         0,
         kFrameBorder
     );
-    const Party::Name& name = owner.party.names[role];
-    owner.mediumFont.DrawText(
-        owner.drawSurface,
-        kNameX,
-        kNameY,
-        std::string_view(name.data(), strnlen(name.data(), name.size())),
-        color,
-        kPanelStyle
-    );
+    const std::string name = owner.party.names[role].FullName();
+    owner.mediumFont.DrawText(owner.drawSurface, kNameX, kNameY, name, color, kPanelStyle);
     FillBox(owner.painter, kLeftBoxX, kLeftBoxY, kLeftBoxWidth, kLeftBoxHeight, 0, 0, 0, FillMode::Quarter);
     DrawWindowFrame(
         owner.painter,

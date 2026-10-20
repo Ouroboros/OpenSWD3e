@@ -762,9 +762,10 @@ void Game::ApplyHostPaths()
     }
 }
 
-// swd3e.exe 0x00428730
+// swd3e.exe 0x00428730: the names of the roles, then the drawing core
 void Game::StartGraphics()
 {
+    this->party.ResetNames();
     this->InitDrawKernel();
 }
 

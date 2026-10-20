@@ -17,13 +17,15 @@ namespace
 
 constexpr int kGuests = BattleState::Guests;
 constexpr int kMaxGuests = 2;
+constexpr std::size_t kBattleNameBytes = 10;   // the bytes of a RoleName a battle name is gathered from
 constexpr std::size_t kCommandClearBytes = 4;  // the original clears commandEnabled as two dwords
 // swd32.exe 0x004A7600 (unmatched in swd3e): the story flags of the guests who may join a battle, and 0x004A7610 their
 // mon.dat objects:
 // 薇達, 麥爾斯, 慧彥, 張客, 慧榮, 夜行裝林明, 鎮邪 and 悟緣.
 constexpr std::array<u16, kGuests> kGuestFlags = {34, 35, 38, 44, 45, 46, 47, 49};
 constexpr std::array<u16, kGuests> kGuestActs = {3, 4, 10, 33, 34, 37, 38, 40};
-// swd32.exe 0x004A75D8 (unmatched in swd3e): the battle act of each party role (賽特, 妮可, 卡瑪, 李靖), dwords read as words.
+// swd32.exe 0x004A75D8 (unmatched in swd3e): the battle act of each party role (賽特, 妮可, 卡瑪, 李靖), dwords read as
+// words.
 constexpr std::array<u32, Party::Roles> kRoleActs = {1, 2, 8, 0x11};
 constexpr i16 kGuestX = 0x2EE;
 constexpr i16 kGuestY = 0x136;
@@ -337,6 +339,22 @@ void Game::StartBattle(u16 number)
     SortItems(this->party.inventory);
     SortSkills(this->party.skills);
 
+    battle.roleNames = {};
+
+    for (std::size_t role = 0; role < Party::Roles; ++role)
+    {
+        const auto* bytes = reinterpret_cast<const char*>(&this->party.names[role]);
+        std::size_t length = 0;
+
+        for (std::size_t at = 0; at < kBattleNameBytes; ++at)
+        {
+            if (bytes[at] != '\0')
+            {
+                battle.roleNames[role][length++] = bytes[at];
+            }
+        }
+    }
+
     for (u32 role = 0; role < battle.roleCount && role < Party::Roles; ++role)
     {
         BattleRole& unit = this->battleRoles[role];
@@ -346,7 +364,7 @@ void Game::StartBattle(u16 number)
         unit.ApplyEquipment(slots, this->party.fame.lists[Fame::ProficiencyList], this->errors);
         unit.SetSkills(this->party.skills[member].get());
         unit.SetInventory(&this->party.inventory);
-        unit.SetDisplayName(this->party.names[member]);
+        unit.SetDisplayName(battle.roleNames[member]);
     }
 
     for (u32 role = 0; role < battle.roleCount && role < Party::Roles; ++role)

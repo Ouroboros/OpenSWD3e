@@ -5,6 +5,7 @@
 #include "text/big5.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <string_view>
 
@@ -59,186 +60,64 @@ void RoleRecord::Load(std::span<const u8> record)
 namespace
 {
 
-// The names that change the starting roles (swd32.exe 0x004A70F4..0x004A715C).
-constexpr std::u8string_view kHeRan = u8"何然";          // 0x004A715C
-constexpr std::u8string_view kJiangRuHong = u8"江如紅";  // 0x004A7154
-constexpr std::u8string_view kYangKunShuo = u8"楊坤碩";  // 0x004A714C
-constexpr std::u8string_view kGuYueSheng = u8"古月聖";   // 0x004A7144
-constexpr std::u8string_view kFuZiChe = u8"輔子徹";      // 0x004A713C
-constexpr std::u8string_view kWenJin = u8"紋錦";         // 0x004A7134
-constexpr std::u8string_view kZhuShiZi = u8"鑄石子";     // 0x004A712C
-constexpr std::u8string_view kLeLe = u8"樂樂";           // 0x004A7124
 constexpr u16 kPlainObjectLimit = 0x1B;  // ApplyObject: ObjectData::category up to it applies by useKind
 constexpr u16 kVitalsObject = 0;         // ObjectData::useKind
 constexpr u16 kMaximaObject = 0x100;
 constexpr u16 kPercentObject = 0x200;
 constexpr int kPercent = 100;
-constexpr std::u8string_view kDaMi = u8"大米";           // 0x004A711C
-constexpr std::u8string_view kZhenMeng = u8"真夢";       // 0x004A7114
-constexpr std::u8string_view kHongShanHu = u8"紅珊瑚";   // 0x004A710C
-constexpr std::u8string_view kNingCaiChen = u8"寧采臣";  // 0x004A7104
-constexpr std::u8string_view kYanChiXia = u8"燕赤霞";    // 0x004A70FC
-constexpr std::u8string_view kXiaoQian = u8"小倩";       // 0x004A70F4
 
 // The values the name codes set.
-constexpr i16 kHeRanAttributes = 0x19;
-constexpr i16 kJiangRuHongWisdom = 0x64;
-constexpr i16 kJiangRuHongSpirit = 0x12C;
-constexpr i16 kYangKunShuoAttack = 0x32;
-constexpr i16 kYangKunShuoHitPoints = 0xC8;
-constexpr u8 kGuYueShengResistance = 0xFB;
-constexpr i16 kFuZiCheAttributes = 0x1E;
-constexpr u8 kWenJinResistance = 0xF9;
-constexpr i16 kZhuShiZiDefense = 0x64;
-constexpr i16 kZhuShiZiStamina = 0x12C;
-constexpr i16 kLeLeWisdom = 0x46;
-constexpr i16 kLeLeSpirit = 0xFA;
-constexpr i16 kDaMiWisdom = 0x64;
-constexpr u8 kDaMiResistance = 2;
-constexpr i16 kZhenMengDefense = 0x64;
-constexpr i16 kZhenMengStamina = 0x12C;
-constexpr i16 kHongShanHuAttack = 0x32;
-constexpr i16 kHongShanHuHitPoints = 0xC8;
-constexpr i16 kNingCaiChenLoss = 5;
-constexpr i16 kNingCaiChenAttackLoss = 0xA;
-constexpr i32 kNingCaiChenGold = 0x1F4;
-constexpr i16 kXiaoQianValue = 5;
-
-bool Named(const Party::Name& name, std::u8string_view text)
-{
-    const std::string_view all(name.data(), name.size());
-    return all.substr(0, all.find('\0')) == Big5(text);
-}
 
 }  // namespace
 
-// swd32.exe 0x00449D80 (unmatched in swd3e): the codes typed as the names of the first two roles: each sets attributes
-// or hit points,
-// spirit and stamina of that role, one the gold
-void Party::ApplyNameCheats()
+// The text from the part at `offset` up to its NUL, within the record
+std::string RoleName::TextAt(std::size_t offset) const
 {
-    RoleRecord& first = this->roles[0];
-    RoleRecord& second = this->roles[1];
-    const Name& firstName = this->names[0];
-    const Name& secondName = this->names[1];
-
-    auto attributes = [](RoleRecord& role, i16 value)
-    {
-        role.strength = value;
-        role.endurance = value;
-        role.wisdom = value;
-        role.agility = value;
-    };
-
-    if (Named(firstName, kHeRan))
-    {
-        attributes(first, kHeRanAttributes);
-    }
-
-    if (Named(secondName, kJiangRuHong))
-    {
-        second.wisdom = kJiangRuHongWisdom;
-        second.spirit = kJiangRuHongSpirit;
-        second.maxSpirit = kJiangRuHongSpirit;
-    }
-
-    if (Named(firstName, kYangKunShuo))
-    {
-        first.strength = kYangKunShuoAttack;
-        first.hitPoints = kYangKunShuoHitPoints;
-        first.maxHitPoints = kYangKunShuoHitPoints;
-    }
-
-    if (Named(firstName, kGuYueSheng))
-    {
-        first.resistances.fill(kGuYueShengResistance);
-    }
-
-    if (Named(firstName, kFuZiChe))
-    {
-        attributes(first, kFuZiCheAttributes);
-    }
-
-    if (Named(secondName, kWenJin))
-    {
-        second.resistances.fill(kWenJinResistance);
-    }
-
-    if (Named(firstName, kZhuShiZi))
-    {
-        first.endurance = kZhuShiZiDefense;
-        first.stamina = kZhuShiZiStamina;
-        first.maxStamina = kZhuShiZiStamina;
-    }
-
-    if (Named(firstName, kLeLe))
-    {
-        first.wisdom = kLeLeWisdom;
-        first.spirit = kLeLeSpirit;
-        first.maxSpirit = kLeLeSpirit;
-    }
-
-    if (Named(firstName, kDaMi))
-    {
-        first.wisdom = kDaMiWisdom;
-        first.resistances.fill(kDaMiResistance);
-    }
-
-    if (Named(secondName, kZhenMeng))
-    {
-        second.endurance = kZhenMengDefense;
-        second.stamina = kZhenMengStamina;
-        second.maxStamina = kZhenMengStamina;
-    }
-
-    if (Named(secondName, kHongShanHu))
-    {
-        second.strength = kHongShanHuAttack;
-        second.hitPoints = kHongShanHuHitPoints;
-        second.maxHitPoints = kHongShanHuHitPoints;
-    }
-
-    if (Named(firstName, kNingCaiChen))
-    {
-        first.endurance = static_cast<i16>(first.endurance - kNingCaiChenLoss);
-        first.wisdom = static_cast<i16>(first.wisdom - kNingCaiChenLoss);
-        first.agility = static_cast<i16>(first.agility - kNingCaiChenLoss);
-        this->variables[Party::Gold] = kNingCaiChenGold;
-        first.strength = static_cast<i16>(first.strength - kNingCaiChenAttackLoss);
-    }
-
-    if (Named(firstName, kYanChiXia))
-    {
-        first.endurance = 0;
-        first.stamina = 0;
-        first.maxStamina = 0;
-    }
-
-    if (Named(secondName, kXiaoQian))
-    {
-        second.wisdom = kXiaoQianValue;
-        second.spirit = kXiaoQianValue;
-        second.maxSpirit = kXiaoQianValue;
-    }
+    const auto* bytes = reinterpret_cast<const char*>(this);
+    const std::string_view rest(bytes + offset, sizeof(RoleName) - offset);
+    return std::string(rest.substr(0, rest.find('\0')));
 }
 
-Party::Name Party::MakeName(std::string_view text)
+std::string RoleName::Surname() const
 {
-    Name name = {};
-    std::copy_n(text.begin(), std::min(text.size(), name.size() - 1), name.begin());
+    return this->TextAt(offsetof(RoleName, surname));
+}
+
+std::string RoleName::Given() const
+{
+    return this->TextAt(offsetof(RoleName, given));
+}
+
+std::string RoleName::Nickname() const
+{
+    return this->TextAt(offsetof(RoleName, nickname));
+}
+
+std::string RoleName::FullName() const
+{
+    return this->Surname() + this->Given();
+}
+
+RoleName RoleName::From(const Parts& parts)
+{
+    RoleName name;
+    const std::string surnameText = Big5(parts.surname);
+    const std::string givenText = Big5(parts.given);
+    const std::string nicknameText = Big5(parts.nickname);
+    std::copy_n(surnameText.begin(), std::min(surnameText.size(), name.surname.size() - 1), name.surname.begin());
+    std::copy_n(givenText.begin(), std::min(givenText.size(), name.given.size() - 1), name.given.begin());
+    std::copy_n(nicknameText.begin(), std::min(nicknameText.size(), name.nickname.size() - 1), name.nickname.begin());
     return name;
 }
 
-std::array<Party::Name, Party::Roles> Party::DefaultNames()
+// swd3e.exe 0x00429790: the default names of the roles and the names the talk texts write for them
+void Party::ResetNames()
 {
-    std::array<Name, Roles> names = {};
-
-    for (std::size_t role = 0; role < names.size(); ++role)
+    for (std::size_t role = 0; role < Party::Roles; ++role)
     {
-        names[role] = Party::MakeName(Big5(Party::RoleNames[role]));
+        this->names[role] = RoleName::From(Party::DefaultNames[role]);
+        this->nameTags[role] = RoleName::From(Party::NameTags[role]);
     }
-
-    return names;
 }
 
 // swd3e.exe 0x00411390: a field of role `role` set by number (0..0xD the words from +4, 0xE the experience, 0xF the

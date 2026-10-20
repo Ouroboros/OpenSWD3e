@@ -1676,7 +1676,7 @@ int Game::FightTalkSlide()
 }
 
 // Command 0x2A of FightTalkFrame (inline in the original): the speaker of the next window (up to 0x20 bytes before
-// %Q, none without it), a default role name turned into the role's name.
+// %Q, none without it), a nickname the texts write for a role turned into the role's; the battle does not run on.
 int Game::FightTalkSpeaker()
 {
     FightTalk& talk = this->fightTalk;
@@ -1701,43 +1701,47 @@ int Game::FightTalkSpeaker()
         }
     }
 
-    const std::array<Party::Name, Party::Roles> defaults = Party::DefaultNames();
-
     auto nameOf = [](const auto& buffer)
     {
         return std::string_view(buffer.data(), strnlen(buffer.data(), buffer.size()));
     };
 
+    // The speaker is compared with the first four bytes of the nickname the texts write for each role (a dword copied
+    // into a cleared buffer); a match has that nickname replaced by the role's.
     std::size_t role = 0;
+    talk.unk53CE90 = static_cast<i32>(static_cast<u32>(talk.unk53CE90) & kLowWordMask);
 
-    while (role < defaults.size() && nameOf(defaults[role]) != nameOf(talk.speaker))
+    while (role < Party::Roles)
     {
+        const std::string tag = this->party.nameTags[role].Nickname().substr(0, sizeof(u32));
+
+        if (nameOf(talk.speaker) == tag)
+        {
+            break;
+        }
+
         ++role;
+        talk.unk53CE90 = static_cast<i32>(
+            (static_cast<u32>(talk.unk53CE90) & kLowWordMask) | (static_cast<u32>(role) << kHighWordShift)
+        );
     }
 
-    talk.unk53CE90 = static_cast<i32>(
-        (static_cast<u32>(talk.unk53CE90) & kLowWordMask) | (static_cast<u32>(role) << kHighWordShift)
-    );
-
-    if (role < defaults.size())
+    if (role < Party::Roles)
     {
         std::string text(talk.speaker.data(), talk.speaker.size());
         Talk::ReplacePrefix(
             text,
             0,
-            nameOf(defaults[role]),
-            nameOf(this->party.names[role]),
+            this->party.nameTags[role].Nickname(),
+            this->party.names[role].Nickname(),
             static_cast<int>(talk.speaker.size())
         );
         std::copy_n(text.begin(), std::min(text.size(), talk.speaker.size()), talk.speaker.begin());
     }
 
-    talk.battleRuns = 0;
-    this->BattleFrame();
-    talk.unk53CE90 = static_cast<i32>(static_cast<u32>(talk.unk53CE90) & kLowWordMask);
     talk.textAt += length;
     talk.cursor = talk.textAt;
-    talk.battleRuns = 1;
+    talk.unk53CE90 = static_cast<i32>(static_cast<u32>(talk.unk53CE90) & kLowWordMask);
     return 1;
 }
 

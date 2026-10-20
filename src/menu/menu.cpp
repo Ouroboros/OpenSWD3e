@@ -862,7 +862,7 @@ void Menu::DrawRoleTabs(int offset)
             painter.Target(),
             x - kNameLeft,
             tab.y - kNameUp,
-            owner.party.names[index].data(),
+            owner.party.names[index].FullName(),
             color,
             kTabTextStyle
         );

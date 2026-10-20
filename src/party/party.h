@@ -3,6 +3,8 @@
 #include <array>
 #include <memory>
 #include <span>
+#include <string>
+#include <string_view>
 
 #include "core/types.h"
 #include "item/item_list.h"
@@ -59,6 +61,38 @@ struct RoleBattleBlock
     std::array<i32, 0x18> values = {};  // by the battle's constants (the special points, the next special, ...)
 };
 
+// A role's name in three parts (swd3e; 0x20 bytes a role, the party's at 0x004E4C30). The parts are typed in boxes of
+// 4, 4 and 8 bytes (talk command 209, the new game's name page); the menus show the surname and given name together.
+struct RoleName
+{
+    // The parts as texts of the defaults (0x00429790).
+    struct Parts
+    {
+        std::u8string_view surname;
+        std::u8string_view given;
+        std::u8string_view nickname;
+    };
+
+    std::array<char, 6> surname = {};      // +0x00
+    std::array<char, 6> given = {};        // +0x06
+    std::array<char, 0x14> nickname = {};  // +0x0C
+
+    // A name of `parts` (strcpy of the Big5 texts into the cleared record).
+    static RoleName From(const Parts& parts);
+    // The text from a part up to its NUL; the original strcpy reads on into the next part when a part has none, here
+    // the record ends it.
+    std::string Surname() const;
+    std::string Given() const;
+    std::string Nickname() const;
+    // The surname followed by the given name (strcpy and strcat of the menus).
+    std::string FullName() const;
+
+private:
+    std::string TextAt(std::size_t offset) const;
+};
+
+static_assert(sizeof(RoleName) == 0x20);
+
 // The data of the party saved with the game.
 class Party
 {
@@ -68,15 +102,21 @@ public:
     static constexpr std::array<u32, 11> SlotKinds =
         {0x100, 0x10000200, 0x40000200, 0x20000200, 0x80000200, 0x400, 0x400, 0x40, 0x40, 0x800, 0x800};
     static constexpr int Roles = 4;
-    static constexpr std::size_t NameBytes = 0x10;
-    using Name = std::array<char, NameBytes>;
-    // swd32.exe 0x0049E188 (unmatched in swd3e): the names a new game offers (the first two can be changed).
-    static constexpr std::array<std::u8string_view, Roles> RoleNames = {u8"賽特", u8"妮可", u8"卡瑪", u8"李靖"};
+    // The names ResetNames gives the roles (0x004B2188..0x004B213C) and those the talk texts write for them (the
+    // second set of 0x00429790; Talk::ExpandText puts the roles' names in their place).
+    static constexpr std::array<RoleName::Parts, Roles> DefaultNames = {{
+        {u8"陳", u8"靖仇", u8"阿仇"},
+        {u8"于", u8"小雪", u8"阿雪"},
+        {u8"拓跋", u8"玉兒", u8"阿玉"},
+        {u8"張", u8"烈", u8"阿烈"},
+    }};
 
-    // A name buffer holding a Big5 text (cut to keep its NUL).
-    static Name MakeName(std::string_view text);
-    // The default names as the Big5 name buffers.
-    static std::array<Name, Roles> DefaultNames();
+    static constexpr std::array<RoleName::Parts, Roles> NameTags = {{
+        {u8"▲▲", u8"靖仇", u8"阿仇"},
+        {u8"陳美", u8"小雪", u8"阿雪"},
+        {u8"拓跋", u8"玉兒", u8"阿玉"},
+        {u8"張", u8"烈", u8"阿烈"},
+    }};
 
     static constexpr int SlotsPerRole = 16;
     static constexpr int Variables = 64;
@@ -103,9 +143,10 @@ public:
     // 0x22..0x25)
     std::array<i32, Variables> variables = {};  // 0x004C6370 [0]: the gold
     Fame fame;
-    std::array<Name, Roles> names = Party::DefaultNames();  // swd32 0x0049E148
+    std::array<RoleName, Roles> names = {};     // 0x004E4C30
+    std::array<RoleName, Roles> nameTags = {};  // 0x004E4AF8 the names as the talk texts write them
 
-    void ApplyNameCheats();
+    void ResetNames();
     static constexpr int LastStat = 0x10;  // the attributes SetRoleStat and RoleStat know
     void SetRoleStat(int field, int value, int role, Database& database);
     int RoleStat(int field, int role) const;

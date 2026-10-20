@@ -37,7 +37,7 @@ struct SavePreview
     std::vector<u16> thumbnail;                       // +0x294 160 x 120 pixels
     std::string date;                                 // +0x298 "yyyy/mm/dd hh:mm"
     std::string location;                             // +0x29C
-    std::array<char, 0x40> names = {};                // +0x2A0
+    std::array<char, 0x80> names = {};                // +0x2A0 the RoleName records of the party
     std::string playTime;                             // +0x2A4
 };
 
