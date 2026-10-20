@@ -107,12 +107,27 @@ public:
         RawKeyed = 0x04,        // fill colour transparent
         RawGradient = 0x08,     // destination blended towards the first source pixel
         RawTranslucent = 0x14,  // blend at DrawOptions::alpha, fill colour transparent
+
+        // swd3e: the RLE source scaled by SetZoom, drawn without the clipping of DrawPicture (each clips itself). The
+        // modes from ZoomModes on (bits 2..29) select them; bits 0 and 1 still mirror and flip.
+        ZoomCopy = 0x80,
+        ZoomAddTinted = 0x84,       // the source added to the destination, then tinted
+        ZoomTint = 0x90,            // the destination under the picture tinted (a shadow)
+        ZoomTranslucent = 0x94,     // blend at DrawOptions::alpha
+        ZoomSilhouette = 0xA4,      // filled with ZoomFill
+        ZoomGray = 0xA8,            // the destination under the picture turned grey
+        ZoomSubtractTinted = 0xAC,  // the tinted source subtracted from the destination
+        PaletteCopy = 0xC0,         // unscaled 8-bit RLE through the palette
     };
 
-    static constexpr u32 RawBlitters = 0x80;  // the blitters of raw pictures follow the RLE ones
-    static constexpr int TileSide = 16;       // DrawTile16 and DrawTile8
-    static constexpr int MaxAlpha = 0xF;      // DrawOptions::alpha of a fully opaque blend
-    static constexpr int FractionBits = 10;   // the scale and shear steps are fixed point
+    static constexpr u32 RawBlitters = 0x40;  // the blitters of raw pictures follow the RLE ones (swd32: 0x80)
+    static constexpr u32 ZoomModes = 0x80;
+    static constexpr u32 ZoomModeMask = 0x3FFFFFFC;
+    static constexpr std::size_t ZoomTableSize = 0x500;  // the entries of the zoom tables (0x00423670)
+    static constexpr u16 ZoomFill = 0;                   // 0x004ED9DC, read by ZoomSilhouette and written by nothing
+    static constexpr int TileSide = 16;                  // DrawTile16 and DrawTile8
+    static constexpr int MaxAlpha = 0xF;                 // DrawOptions::alpha of a fully opaque blend
+    static constexpr int FractionBits = 10;              // the scale and shear steps are fixed point
     static constexpr int DitherPhases = 3;
     static constexpr u8 KeyIndex = 1;             // DrawTile8Keyed: the transparent palette index
     static constexpr int WaveRowBytes = 0x84;     // a row of the wave offsets (33 dwords)
@@ -169,6 +184,7 @@ public:
     int WavePhase() const;
     void SetWavePhase(int phase);
     void SetZoom(int anchorX, int anchorY, int zoomX, int zoomY);
+    void SetZoomSheared(int anchorX, int anchorY, int zoomX, int zoomY, int shear);
 
     // Drawing.
     int DrawPicture(int x, int y, int width, int height, u32 mode, const DrawArgument& argument = {});
@@ -177,6 +193,8 @@ public:
     void DrawTile16Keyed(int x, int y);
     void DrawTile8(int x, int y);
     void DrawTile8Keyed(int x, int y);
+    template <typename Write>
+    void ForTilePixels(int x, int y, Write&& write) const;
     void DrawZoomed(int x, int y, int width, int height);
     void DrawZoomedMirrored(int x, int y, int width, int height);
 
@@ -352,6 +370,21 @@ private:
     int BlitRawTranslucent(int x, int y, int width, int height, const DrawArgument& argument);
     int BlitRawGradient(int x, int y, int width, int height, const DrawArgument& argument);
 
+    // Zoomed blitters (swd3e), each with the mode for its mirror and flip bits.
+    using ZoomBlitter = int (Painter::*)(int x, int y, int width, int height, u32 mode);
+    void BuildZoomTables();
+    int DispatchZoom(u32 index, int x, int y, int width, int height, u32 mode);
+    template <typename PixelOp>
+    int BlitZoomed(int x, int y, int width, int height, u32 mode, bool keepsClipTop, PixelOp&& pixel);
+    int BlitZoomCopy(int x, int y, int width, int height, u32 mode);
+    int BlitZoomAddTinted(int x, int y, int width, int height, u32 mode);
+    int BlitZoomTint(int x, int y, int width, int height, u32 mode);
+    int BlitZoomTranslucent(int x, int y, int width, int height, u32 mode);
+    int BlitZoomSilhouette(int x, int y, int width, int height, u32 mode);
+    int BlitZoomGray(int x, int y, int width, int height, u32 mode);
+    int BlitZoomSubtractTinted(int x, int y, int width, int height, u32 mode);
+    int BlitPaletteCopy(int x, int y, int width, int height, u32 mode);
+
     // Display format.
     static const std::array<i32, 495> WaveTable;
     u32 displayRed = 0;
@@ -374,8 +407,8 @@ private:
     int screenPitch = 0;   // pixels
     int surfacePitch = 0;  // pixels of the last locked surface
     u16* target = nullptr;
-    // y * pitch for the screen rows; the rest of the 1024 entries stay 0, so rows below the screen land on row 0.
-    std::array<i32, 1024> rowOffsets{};
+    // 0x004E6D64: y * pitch for all 2048 rows (swd32 filled only the screen rows of 1024, leaving the rest 0).
+    std::array<i32, 0x800> rowOffsets{};
     int clipX = 0;
     int clipY = 0;
     int clipWidth = 0;
@@ -396,10 +429,20 @@ private:
     int wavePosition = 0;
     int waveEnd = 0;
     int smearCounter = 0;
-    int zoomAnchorX = 0x28;
-    int zoomAnchorY = 0x48;
-    int zoomX = 0x600;
-    int zoomY = 0x400;
+    int zoomAnchorX = 0;  // 0x004EC188 the point of the picture that stays in place
+    int zoomAnchorY = 0;  // 0x004ED9C4
+    int zoomX = 0x400;    // 0x004B1E7C in 1/1024
+    int zoomY = 0x400;    // 0x004B1E80
+    int zoomShear = 0;    // 0x004EEE74 the rows shifted sideways by zoomShears
+    // The zoom tables: the source column of each target column, the source line of each target line, the shift of
+    // each line; each rebuilt when its value changes (the values they were built for after them).
+    std::array<i32, ZoomTableSize> zoomColumns{};  // 0x004EAD6C
+    std::array<i32, ZoomTableSize> zoomRows{};     // 0x004EC5A0
+    std::array<i32, ZoomTableSize> zoomShears{};   // 0x004EDA4C
+    int zoomColumnsFor = 0;                        // 0x004EEE78
+    int zoomRowsFor = 0;                           // 0x004EEE7C
+    int zoomShearsFor = 0;                         // 0x004EEE80
+    std::array<ZoomBlitter, 0x100> zoomBlitters{};
 };
 
 struct Painter::DrawState
@@ -424,6 +467,7 @@ struct Painter::DrawState
     int zoomAnchorY = 0;
     int zoomX = 0;
     int zoomY = 0;
+    int zoomShear = 0;
 };
 
 }  // namespace swd3e

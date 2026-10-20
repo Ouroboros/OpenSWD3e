@@ -490,4 +490,92 @@ void RleCodec::ConvertTileTo16(std::vector<u8>& tile) const
     tile = std::move(out);
 }
 
+// swd3e.exe 0x00417880: the pixel at `column` of `line` of an RLE picture into `value` (when given; cleared first once
+// the line is within the height): true for a literal pixel, false for a transparent one or past the picture. Skip and
+// fill runs count their pixels; a run with only bit 14 (0x4000) counts none. Data read past the end counts as the end
+// of the picture.
+bool RleCodec::PixelAt(std::span<const u8> rle, int column, int line, u32* value)
+{
+    auto word = [rle](std::size_t at)
+    {
+        return at + sizeof(u16) <= rle.size() ? ReadWord(rle.data() + at) : u16{0};
+    };
+
+    if (line >= word(RleHeader::HeightAt))
+    {
+        return false;
+    }
+
+    if (value != nullptr)
+    {
+        *value = 0;
+    }
+
+    if (word(0) != RleHeader::Magic)
+    {
+        return false;
+    }
+
+    const bool trueColor = word(RleHeader::FormatAt) == RleHeader::TrueColor;
+    const std::size_t pixelBytes = trueColor ? sizeof(u16) : sizeof(u8);
+    std::size_t at = RleHeader::HeaderBytes;
+
+    // Lines are counted up until the count is `line`: a negative line runs into the end of the picture.
+    if (line != 0)
+    {
+        for (int skipped = 0;;)
+        {
+            if (word(at) == 0)
+            {
+                return false;
+            }
+
+            at += word(at) & kCountMask;
+
+            if (++skipped == line)
+            {
+                break;
+            }
+        }
+    }
+
+    at += sizeof(u16);
+    int position = 0;
+
+    for (;;)
+    {
+        const u16 code = word(at);
+        at += sizeof(u16);
+        const int count = code & kCountMask;
+        const int offset = column - position;
+        const u16 kind = code & kKindMask;
+
+        if (kind == kLiteral)
+        {
+            if (offset >= 0 && offset < count)
+            {
+                if (value != nullptr)
+                {
+                    const std::size_t pixel = at + pixelBytes * static_cast<std::size_t>(offset);
+                    *value = trueColor ? word(pixel) : (pixel < rle.size() ? rle[pixel] : 0u);
+                }
+
+                return true;
+            }
+
+            at += pixelBytes * static_cast<std::size_t>(count);
+            position += count;
+        }
+        else if (kind == kSkip || kind == kFill)
+        {
+            position += count;
+        }
+
+        if (word(at) == 0)
+        {
+            return false;
+        }
+    }
+}
+
 }  // namespace swd3e

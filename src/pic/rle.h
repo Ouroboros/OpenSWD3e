@@ -57,6 +57,7 @@ public:
     bool ConvertToDisplay(std::span<u8> rle, RleHeader& header) const;
     void ConvertTo16(Picture& picture) const;
     void ConvertTileTo16(std::vector<u8>& tile) const;
+    static bool PixelAt(std::span<const u8> rle, int column, int line, u32* value);
 
 private:
     const Painter& painter;

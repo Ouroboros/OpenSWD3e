@@ -175,7 +175,7 @@ TEST_CASE("painter: unassigned modes draw nothing")
     CHECK_EQ(screen.Row(kPictureY)[kPictureX], kBackground);
 }
 
-TEST_CASE("painter: rows below the screen land on row 0")
+TEST_CASE("painter: rows below the screen go on past it and are cut at the end of the target")
 {
     using swd3e::MapHeader;
     Surface screen(Display::Width, Display::Height);
@@ -185,9 +185,60 @@ TEST_CASE("painter: rows below the screen land on row 0")
     painter.SetTarget(screen.Pixels());
     std::vector<u16> tile(MapHeader::TileSize * MapHeader::TileSize, kTileColor);
     painter.SetSource(tile.data());
-    painter.DrawTile16(kTileX, Display::Height);
-    CHECK_EQ(screen.Row(0)[kTileX], kTileColor);
-    CHECK_EQ(screen.Row(MapHeader::TileFraction)[kTileX + MapHeader::TileFraction], kTileColor);
+    painter.DrawTile16(kTileX, Display::Height - MapHeader::TileFraction);
+    CHECK_EQ(screen.Row(Display::Height - 1)[kTileX], kTileColor);
+    CHECK_EQ(screen.Row(0)[kTileX], 0);
+}
+
+TEST_CASE("painter: a zoomed copy at twice the size repeats every pixel and line")
+{
+    Surface screen(Display::Width, Display::Height);
+    screen.Fill(kBackground);
+    Painter painter;
+    painter.Init(screen);
+    painter.SetTarget(screen.Pixels());
+    const std::vector<u16> pixels = {kPixelA, kPixelB};
+    const auto width = static_cast<int>(pixels.size());
+    const auto picture = RlePicture(width, {{static_cast<u16>(width), kPixelA, kPixelB}});
+    constexpr int kTwice = 0x800;
+    painter.SetZoom(0, 0, kTwice, kTwice);
+    painter.SetSource(picture.data());
+    painter.DrawPicture(kPictureX, kPictureY, width, 1, Painter::ZoomCopy);
+
+    for (int row = kPictureY; row <= kPictureY + 1; ++row)
+    {
+        const u16* line = screen.Row(row);
+        CHECK_EQ(line[kPictureX], kPixelA);
+        CHECK_EQ(line[kPictureX + 1], kPixelA);
+        CHECK_EQ(line[kPictureX + 2], kPixelB);
+        CHECK_EQ(line[kPictureX + 3], kPixelB);
+        CHECK_EQ(line[kPictureX + 4], kBackground);
+    }
+
+    CHECK_EQ(screen.Row(kPictureY + 2)[kPictureX], kBackground);
+}
+
+TEST_CASE("rle: PixelAt reads literal pixels, counts skip and fill runs and not runs of bit 14 alone")
+{
+    constexpr u16 kPixelC = 0xCCCC;
+    constexpr u16 kBit14Run = swd3e::RleHeader::FillRun | 1;
+    constexpr u16 kTwoLiterals = 2;
+    constexpr u16 kOneLiteral = 1;
+    const auto data = RlePicture(4, {{kSkipTwo, kTwoLiterals, kPixelA, kPixelB}, {kBit14Run, kOneLiteral, kPixelC}});
+    const std::span<const u8> rle(reinterpret_cast<const u8*>(data.data()), data.size() * sizeof(u16));
+    u32 value = 1;
+    CHECK(swd3e::RleCodec::PixelAt(rle, 2, 0, &value));
+    CHECK_EQ(value, kPixelA);
+    CHECK(swd3e::RleCodec::PixelAt(rle, 3, 0, &value));
+    CHECK_EQ(value, kPixelB);
+    CHECK(!swd3e::RleCodec::PixelAt(rle, 0, 0, &value));
+    CHECK_EQ(value, 0u);
+    CHECK(swd3e::RleCodec::PixelAt(rle, 0, 1, &value));
+    CHECK_EQ(value, kPixelC);
+    value = 1;
+    CHECK(!swd3e::RleCodec::PixelAt(rle, 0, 2, &value));
+    CHECK_EQ(value, 1u);
+    CHECK(!swd3e::RleCodec::PixelAt(rle, 0, -1, &value));
 }
 
 TEST_CASE("painter: skip runs of the mirrored alpha map leave the destination")

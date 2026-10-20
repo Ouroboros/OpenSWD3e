@@ -136,9 +136,9 @@ bool Painter::Init(Surface& screen)
     this->clipY = 0;
     this->clipHeight = this->screenHeight;
 
-    for (int y = 0; y < this->screenHeight && static_cast<std::size_t>(y) < this->rowOffsets.size(); ++y)
+    for (std::size_t y = 0; y < this->rowOffsets.size(); ++y)
     {
-        this->rowOffsets[static_cast<std::size_t>(y)] = y * this->screenPitch;
+        this->rowOffsets[y] = static_cast<i32>(y) * this->screenPitch;
     }
 
     this->BuildBlitTables();
@@ -154,11 +154,10 @@ void Painter::SetScreen(int width, int height)
     this->clipY = 0;
     this->clipWidth = width;
     this->clipHeight = height;
-    this->rowOffsets.fill(0);
 
-    for (int y = 0; y < height && static_cast<std::size_t>(y) < this->rowOffsets.size(); ++y)
+    for (std::size_t y = 0; y < this->rowOffsets.size(); ++y)
     {
-        this->rowOffsets[static_cast<std::size_t>(y)] = y * width;
+        this->rowOffsets[y] = static_cast<i32>(y) * width;
     }
 }
 
@@ -202,6 +201,17 @@ void Painter::BuildBlitTables()
     this->blitters[kRaw + (Painter::RawKeyed | Painter::Mirror)] = &Painter::BlitRawKeyedMirrored;
     this->blitters[kRaw + Painter::RawGradient] = &Painter::BlitRawGradient;
     this->blitters[kRaw + Painter::RawTranslucent] = &Painter::BlitRawTranslucent;
+
+    // swd3e: the zoomed blitters in the same table from mode 0x80 on.
+    this->zoomBlitters.fill(nullptr);
+    this->zoomBlitters[Painter::ZoomCopy] = &Painter::BlitZoomCopy;
+    this->zoomBlitters[Painter::ZoomAddTinted] = &Painter::BlitZoomAddTinted;
+    this->zoomBlitters[Painter::ZoomTint] = &Painter::BlitZoomTint;
+    this->zoomBlitters[Painter::ZoomTranslucent] = &Painter::BlitZoomTranslucent;
+    this->zoomBlitters[Painter::ZoomSilhouette] = &Painter::BlitZoomSilhouette;
+    this->zoomBlitters[Painter::ZoomGray] = &Painter::BlitZoomGray;
+    this->zoomBlitters[Painter::ZoomSubtractTinted] = &Painter::BlitZoomSubtractTinted;
+    this->zoomBlitters[Painter::PaletteCopy] = &Painter::BlitPaletteCopy;
 }
 
 // swd3e.exe 0x004271D0: PixelFormatInit. Detects the converter of the display format; masks of an unknown format
@@ -471,10 +481,10 @@ void Painter::SetSource(const void* data)
 Painter::DrawState Painter::SaveDrawState() const
 {
     return DrawState{
-        this->target,       this->clipX,       this->clipY,       this->clipWidth,    this->clipHeight,
-        this->source,       this->palette,     this->options,     this->placement,    this->mirrorStart,
-        this->waveMode,     this->wavePhase,   this->waveStart,   this->wavePosition, this->waveEnd,
-        this->smearCounter, this->zoomAnchorX, this->zoomAnchorY, this->zoomX,        this->zoomY,
+        this->target,    this->clipX,        this->clipY,     this->clipWidth,    this->clipHeight,  this->source,
+        this->palette,   this->options,      this->placement, this->mirrorStart,  this->waveMode,    this->wavePhase,
+        this->waveStart, this->wavePosition, this->waveEnd,   this->smearCounter, this->zoomAnchorX, this->zoomAnchorY,
+        this->zoomX,     this->zoomY,        this->zoomShear,
     };
 }
 
@@ -500,6 +510,8 @@ void Painter::RestoreDrawState(const DrawState& state)
     this->zoomAnchorY = state.zoomAnchorY;
     this->zoomX = state.zoomX;
     this->zoomY = state.zoomY;
+    this->zoomShear = state.zoomShear;
+    this->BuildZoomTables();
 }
 
 const void* Painter::Source() const
@@ -532,15 +544,7 @@ void Painter::SetWavePhase(int phase)
     this->wavePhase = phase;
 }
 
-void Painter::SetZoom(int anchorX, int anchorY, int zoomX, int zoomY)
-{
-    this->zoomAnchorX = anchorX;
-    this->zoomAnchorY = anchorY;
-    this->zoomX = zoomX;
-    this->zoomY = zoomY;
-}
-
-// The original indexes its row table directly; indices outside the table (negative or from 1024 on) count as 0 here.
+// The original indexes its row table directly; indices outside the table (negative or from 2048 on) count as 0 here.
 std::ptrdiff_t Painter::RowOffset(int y) const
 {
     if (y < 0 || static_cast<std::size_t>(y) >= this->rowOffsets.size())
@@ -604,6 +608,12 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
     if (ReadPixel(this->source) == this->rleColors.magic && this->palette == nullptr)
     {
         mode |= Painter::RleSource;
+    }
+
+    // swd3e: the zoomed blitters clip for themselves, and the options stay set after them.
+    if ((mode & Painter::ZoomModeMask) >= Painter::ZoomModes)
+    {
+        return this->DispatchZoom(mode & Painter::ZoomModeMask, x, y, width, height, mode);
     }
 
     if ((mode & Painter::EffectMask) == Painter::Translucent)
@@ -788,81 +798,99 @@ int Painter::Dispatch(u32 index, int x, int y, int width, int height, const Draw
     return (this->*this->blitters[index])(x, y, width, height, argument);
 }
 
+// The tiles are not clipped: a pixel goes wherever its row offset and column put it in the target, except where that
+// lies outside the whole target (the original writes past the surface for rows below the screen).
+template <typename Write>
+void Painter::ForTilePixels(int x, int y, Write&& write) const
+{
+    const std::ptrdiff_t size = static_cast<std::ptrdiff_t>(this->screenPitch) * this->screenHeight;
+    std::ptrdiff_t line = this->RowOffset(y) + x;
+
+    for (int row = 0; row < Painter::TileSide; ++row, line += this->screenPitch)
+    {
+        for (int column = 0; column < Painter::TileSide; ++column)
+        {
+            const std::ptrdiff_t at = line + column;
+
+            if (at >= 0 && at < size)
+            {
+                write(this->target[at], row * Painter::TileSide + column);
+            }
+        }
+    }
+}
+
 // swd3e.exe 0x00417E90: 16x16 tile of 16-bit pixels, not clipped
 void Painter::DrawTile16(int x, int y)
 {
-    u16* dest = this->Pixel(x, y);
     const u8* tile = this->source;
 
-    for (int row = 0; row < Painter::TileSide; ++row)
-    {
-        std::memcpy(dest, tile, Painter::TileSide * sizeof(u16));
-        tile += Painter::TileSide * sizeof(u16);
-        dest += this->screenPitch;
-    }
+    this->ForTilePixels(
+        x,
+        y,
+        [tile](u16& dest, int index)
+        {
+            dest = ReadPixel(tile + sizeof(u16) * static_cast<std::size_t>(index));
+        }
+    );
 }
 
 // swd3e.exe 0x00417EF0: 16x16 tile of 16-bit pixels, the fill colour transparent
 void Painter::DrawTile16Keyed(int x, int y)
 {
-    u16* dest = this->Pixel(x, y);
     const u8* tile = this->source;
     const u16 key = static_cast<u16>(this->fillColorPair);
 
-    for (int row = 0; row < Painter::TileSide; ++row)
-    {
-        for (int column = 0; column < Painter::TileSide; ++column)
+    this->ForTilePixels(
+        x,
+        y,
+        [tile, key](u16& dest, int index)
         {
-            const u16 pixel = ReadPixel(tile);
-            tile += sizeof(u16);
+            const u16 pixel = ReadPixel(tile + sizeof(u16) * static_cast<std::size_t>(index));
 
             if (pixel != key)
             {
-                dest[column] = pixel;
+                dest = pixel;
             }
         }
-
-        dest += this->screenPitch;
-    }
+    );
 }
 
 // swd3e.exe 0x00417F70: 16x16 tile of palette indices
 void Painter::DrawTile8(int x, int y)
 {
-    u16* dest = this->Pixel(x, y);
     const u8* tile = this->source;
+    const u16* palette = this->palette;
 
-    for (int row = 0; row < Painter::TileSide; ++row)
-    {
-        for (int column = 0; column < Painter::TileSide; ++column)
+    this->ForTilePixels(
+        x,
+        y,
+        [tile, palette](u16& dest, int index)
         {
-            dest[column] = this->palette[*tile++];
+            dest = palette[tile[index]];
         }
-
-        dest += this->screenPitch;
-    }
+    );
 }
 
 // swd3e.exe 0x00418010: 16x16 tile of palette indices, index 1 transparent
 void Painter::DrawTile8Keyed(int x, int y)
 {
-    u16* dest = this->Pixel(x, y);
     const u8* tile = this->source;
+    const u16* palette = this->palette;
 
-    for (int row = 0; row < Painter::TileSide; ++row)
-    {
-        for (int column = 0; column < Painter::TileSide; ++column)
+    this->ForTilePixels(
+        x,
+        y,
+        [tile, palette](u16& dest, int index)
         {
-            const u8 index = *tile++;
+            const u8 entry = tile[index];
 
-            if (index != Painter::KeyIndex)
+            if (entry != Painter::KeyIndex)
             {
-                dest[column] = this->palette[index];
+                dest = palette[entry];
             }
         }
-
-        dest += this->screenPitch;
-    }
+    );
 }
 
 u32 Painter::FillColorPair() const
