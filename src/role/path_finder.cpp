@@ -1,6 +1,7 @@
 #include "role/path_finder.h"
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
 
 #include "core/debug_log.h"
@@ -44,9 +45,25 @@ enum Neighbour : int
 
 constexpr std::size_t kDeltaOffset = 1;  // DeltaX and DeltaY are indexed by the step plus kDeltaOffset
 constexpr int kDeltaCenter = 4;          // DirectionByDelta by DeltaY + DeltaX + kDeltaCenter
-// "!!! 危險 步數超過510 !!!" and "路徑計算" (swd32.exe 0x0049F520, 0x0049F53C).
+// "!!! 危險 步數超過510 !!!" and "路徑計算" (swd3e.exe 0x004AF0F8, 0x004AF114).
 constexpr std::u8string_view kOverflowText = u8"!!! 危險 步數超過510 !!!";
 constexpr std::u8string_view kOverflowCaption = u8"路徑計算";
+
+// swd3e.exe 0x004AF0B0: the length Propagate adds to reach each child slot, a diagonal one for the even slots (the
+// literal 1.414214, not the square root of 2).
+constexpr double kDiagonalStep = 1.414214;
+constexpr std::array<double, 8> kChildSteps = {
+    kDiagonalStep,
+    1.0,
+    kDiagonalStep,
+    1.0,
+    kDiagonalStep,
+    1.0,
+    kDiagonalStep,
+    1.0,
+};
+
+static_assert(std::bit_cast<u64>(kDiagonalStep) == 0x3FF6A09EDBF8B9BBull);
 
 void AttachChild(PathNode& parent, PathNode& child)
 {
@@ -289,21 +306,23 @@ PathNode* PathFinder::Search(int fromX, int fromY, int toX, int toY)
     target->x = toX;
     target->y = toY;
     this->open->listNext = target;
+    this->closest = target;
     PathNode* node = this->PopBest();
 
     while (node != nullptr)
     {
         if (node->tile == originTile)
         {
-            break;
+            this->result = node;
+            return node;
         }
 
         this->Expand(*node, fromX, fromY);
         node = this->PopBest();
     }
 
-    this->result = node;
-    return node;
+    this->result = this->closest;
+    return nullptr;
 }
 
 // swd3e.exe 0x00402020
@@ -371,16 +390,28 @@ void PathFinder::Expand(PathNode& node, int targetX, int targetY)
     }
 }
 
-// swd3e.exe 0x00402180: an improved open node keeps its place in the open list; for a closed node the direction is
-// written to the parent's first child instead of the node
+// swd3e.exe 0x00402180: the neighbour at (x, y) the length of the step on from `parent`; an improved open node keeps
+// its place in the open list; for a closed node the direction is written to the parent's first child instead of the
+// node. Every node met may become the closest to the origin.
 void PathFinder::TryNeighbour(PathNode& parent, int x, int y, int targetX, int targetY, int direction)
 {
-    const double g = parent.g + 1.0;
+    const auto stepX = static_cast<double>(x - parent.x);
+    const auto stepY = static_cast<double>(y - parent.y);
+    const double g = std::sqrt(stepY * stepY + stepX * stepX) + parent.g;
     const int tile = this->TileIndex(x, y);
+
+    auto nearer = [this](PathNode& node)
+    {
+        if (this->closest->h > node.h)
+        {
+            this->closest = &node;
+        }
+    };
 
     if (PathNode* openNode = this->FindOpen(tile))
     {
         AttachChild(parent, *openNode);
+        nearer(*openNode);
 
         if (g < openNode->g)
         {
@@ -396,6 +427,7 @@ void PathFinder::TryNeighbour(PathNode& parent, int x, int y, int targetX, int t
     if (PathNode* closedNode = this->FindClosed(tile))
     {
         AttachChild(parent, *closedNode);
+        nearer(*closedNode);
 
         if (g < closedNode->g)
         {
@@ -424,6 +456,7 @@ void PathFinder::TryNeighbour(PathNode& parent, int x, int y, int targetX, int t
     node->f = h + g;
     this->InsertOpen(*node);
     AttachChild(parent, *node);
+    nearer(*node);
 }
 
 // swd3e.exe 0x00402460
@@ -476,19 +509,22 @@ void PathFinder::InsertOpen(PathNode& node)
     previous->listNext = &node;
 }
 
-// swd3e.exe 0x004024E0: pushes improved costs down to the children of `node`
+// swd3e.exe 0x004024E0: pushes improved lengths down to the children of `node`, each child slot a step of
+// kChildSteps (by its slot, whatever side the child lies on)
 void PathFinder::Propagate(PathNode& node)
 {
     auto relax = [this](PathNode& parent)
     {
-        for (PathNode* child : parent.children)
+        for (std::size_t slot = 0; slot < parent.children.size(); ++slot)
         {
+            PathNode* const child = parent.children[slot];
+
             if (child == nullptr)
             {
                 break;
             }
 
-            const double g = parent.g + 1.0;
+            const double g = parent.g + kChildSteps[slot];
 
             if (g < child->g)
             {

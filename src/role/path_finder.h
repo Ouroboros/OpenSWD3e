@@ -14,23 +14,21 @@ namespace swd3e
 class ErrorReporter;
 struct BlockingMap;
 
-// An A* search node (0x60 bytes in the original pool).
+// An A* search node (0x58 bytes in the original pool; swd32's had two more words, at +0x00 and +0x14).
 struct PathNode
 {
-    i32 unk00 = 0;
-    i32 x = 0;          // +0x04 pixels
-    i32 y = 0;          // +0x08
-    i32 tile = 0;       // +0x0C
-    i32 direction = 0;  // +0x10 the direction from the parent
-    i32 unk14 = 0;
-    double f = 0;                            // +0x18 g + h
-    double h = 0;                            // +0x20 the distance to the target
-    double g = 0;                            // +0x28 steps from the search origin
-    PathNode* poolNext = nullptr;            // +0x30 the free pool, or the nodes owned by a search
-    PathNode* parent = nullptr;              // +0x34
-    PathNode* listNext = nullptr;            // +0x38 the open or closed list
-    std::array<PathNode*, 8> children = {};  // +0x3C
-    i32 unk5C = 0;
+    i32 x = 0;                               // +0x00 pixels
+    i32 y = 0;                               // +0x04
+    i32 tile = 0;                            // +0x08
+    i32 direction = 0;                       // +0x0C the direction from the parent
+    double f = 0;                            // +0x10 g + h
+    double h = 0;                            // +0x18 the distance to the target
+    double g = 0;                            // +0x20 the length from the search origin
+    PathNode* poolNext = nullptr;            // +0x28 the free pool, or the nodes owned by a search
+    PathNode* parent = nullptr;              // +0x2C
+    PathNode* listNext = nullptr;            // +0x30 the open or closed list
+    std::array<PathNode*, 8> children = {};  // +0x34
+    i32 unk54 = 0;                           // +0x54 nothing reads it
 };
 
 // The node pool shared by every path finder (0x004CB1F0..0x004CB1FC): a free list growing on demand.
@@ -55,7 +53,9 @@ private:
     PathNode* head = nullptr;  // 0x004C15C8
 };
 
-// An A* path finder over the blocking map for a footprint of width x height tiles (0x48 bytes in the original).
+// An A* path finder over the blocking map for a footprint of width x height tiles (0x4C bytes in the original). It
+// searches from the target back to the origin; when the origin cannot be reached the path leads to the node of the
+// search nearest it.
 class PathFinder
 {
 public:
@@ -93,15 +93,16 @@ public:
 
     PathNode* open = nullptr;      // +0x00 sentinel; its poolNext chains every node of the search
     PathNode* closed = nullptr;    // +0x04 sentinel
-    PathNode* result = nullptr;    // +0x08 the node reached at the search origin
-    std::vector<PathNode*> stack;  // +0x0C
-    i32 found = 0;                 // +0x10 1 after a successful FindPath, 0 after an impossible one
-    i32 unk14 = 0;
+    PathNode* result = nullptr;    // +0x08 the node reached at the search origin (or `closest`)
+    PathNode* closest = nullptr;   // +0x0C the node of the search nearest the origin (smallest h)
+    std::vector<PathNode*> stack;  // +0x10
+    i32 found = 0;                 // +0x14 1 after a successful FindPath, 0 after an impossible one
     i32 unk18 = 0;
-    i32 width = 0;                                      // +0x1C tiles
-    i32 height = 0;                                     // +0x20
-    u32 mask = MapHeader::Wall | MapHeader::Unk800000;  // +0x24 blocking bits
-    std::array<u32, 8> blocked = {};                    // +0x28 N, NE, E, SE, S, SW, W, NW
+    i32 unk1C = 0;
+    i32 width = 0;                                      // +0x20 tiles
+    i32 height = 0;                                     // +0x24
+    u32 mask = MapHeader::Wall | MapHeader::Unk800000;  // +0x28 blocking bits
+    std::array<u32, 8> blocked = {};                    // +0x2C N, NE, E, SE, S, SW, W, NW
 
 private:
     PathNodePool& pool;
