@@ -16,6 +16,7 @@
 #include "draw/painter.h"
 #include "font/text_font.h"
 #include "game/game.h"
+#include "ghost/talisman_ghost.h"
 #include "map/map_cache.h"
 #include "platform/display.h"
 #include "platform/system_info.h"
@@ -95,7 +96,7 @@ constexpr std::size_t kFirstBlockAt =
 constexpr std::size_t kBlockHeaderBytes = 2 * sizeof(u32);  // a packed block: its packed and its unpacked size
 constexpr u32 kMapsHeaderBytes = 0x200;                     // maps.dat before GameDatabases::mapsData
 constexpr int kTileShift = 4;                               // map pixels to tiles
-constexpr std::size_t kRoleRecordBytes = 0x16;              // a record of maps.dat's role table
+constexpr std::size_t kRoleRecordBytes = 0x18;              // a record of maps.dat's role table (12 words)
 constexpr std::size_t kRecordMap = 0;                       // its words
 constexpr std::size_t kRecordId = 1;
 constexpr std::size_t kRecordAct = 2;
@@ -106,16 +107,18 @@ constexpr std::size_t kRecordY = 6;
 constexpr std::size_t kRecordEvent = 7;
 constexpr std::size_t kRecordTalk = 8;
 constexpr std::size_t kRecordSetBits = 10;
-constexpr std::size_t kPlaceMapAt = 4;  // the seven dwords of the place after the role table
+constexpr std::size_t kRecordVariables = 11;  // swd3e: the role variables word
+constexpr std::size_t kPlaceMapAt = 4;        // the seven dwords of the place after the role table
 constexpr std::size_t kPlaceXAt = 8;
 constexpr std::size_t kPlaceYAt = 0xC;
 constexpr std::size_t kPlaceActAt = 0x10;
 constexpr std::size_t kPlaceActionAt = 0x14;
 constexpr std::size_t kPlaceDirectionAt = 0x18;
 constexpr std::size_t kPlaceBytes = 0x1C;
-constexpr std::size_t kPartyBufferScale = 2;  // the party block is unpacked into twice its size
-constexpr u16 kPendingBit = 0x8000;           // an inventory entry of a pending count
-constexpr std::size_t kMusicRecordBytes = 8;  // a scene music record of maps.dat
+constexpr std::size_t kPartyBufferScale = 2;                 // the party block is unpacked into twice its size
+constexpr u16 kPendingBit = 0x8000;                          // an inventory entry of a pending count
+constexpr std::size_t kMusicRecordBytes = 8;                 // a scene music record of maps.dat
+constexpr std::u8string_view kGhostFile = u8"swdghost.dat";  // swd3e: the talisman ghosts by kind
 constexpr std::size_t kMusicCueAt = 6;
 constexpr u16 kMusicKept = 0x800;  // a record with this cue bit is not loaded back
 constexpr std::size_t kReturnBytes = 0x40;
@@ -834,7 +837,6 @@ void Game::SaveGame()
         static_cast<i16>(static_cast<u32>(leader.x) >> kTileShift),
         static_cast<i16>(static_cast<u32>(leader.y) >> kTileShift)
     );
-    this->audioDevice.Serve();
     File file;
 
     if (file.Open(
@@ -843,6 +845,14 @@ void Game::SaveGame()
             File::Access::ReadWrite
         ))
     {
+        const i32 ghost = this->party.variables[Party::GhostVariable];
+
+        // swd3e: the talisman ghost chosen is kept in its slot of swdghost.dat first
+        if (ghost != 0 && static_cast<u32>(ghost) <= TalismanGhost::Kinds)
+        {
+            this->talismanGhost.Save(this->config.installDirectory, kGhostFile);
+        }
+
         this->WriteSave(file);
         file.Close();
     }
@@ -882,14 +892,12 @@ void Game::WriteSave(File& file)
     file.SeekBegin(0);
     file.Truncate();
     const LocalDateTime now = LocalTime();
-    this->audioDevice.Serve();
     const std::string date = WinFormat(kSaveDateFormat, {now.year, now.month, now.day, now.hour, now.minute})
                                  .substr(0, SaveSlots::HeaderBytes);
     write(date.data(), SaveSlots::HeaderBytes);
     this->BeginMapCanvas();
     this->fieldView.Paint();
     this->EndMapCanvas();
-    this->audioDevice.Serve();
     ShrinkScreenQuarter(*this->offscreen);
     const std::span<u16> thumbnail(this->drawSurface, SaveSlots::ThumbnailPixels);
     this->painter.ConvertPixelsBack(thumbnail);
@@ -898,8 +906,8 @@ void Game::WriteSave(File& file)
     const auto& name = this->state.map.name;
     std::copy_n(name.begin(), std::min(strnlen(name.data(), name.size()), location.size()), location.begin());
     write(location.data(), location.size());
-    this->audioDevice.Serve();
-    writeBlock(this->state.flags, GameState::FlagBytes);
+    // swd3e writes 0 as the unpacked size of the flags (reading uses only the packed size)
+    writeBlock(this->state.flags, 0);
     const std::vector<u8>& maps = this->databases.mapsData;
     const std::size_t rolesAt = std::min<std::size_t>(this->scene.rolesTable, maps.size());
     const std::size_t rolesBytes = std::min<std::size_t>(this->scene.rolesTableBytes, maps.size() - rolesAt);
@@ -913,7 +921,6 @@ void Game::WriteSave(File& file)
     file.WriteDword(static_cast<u32>(leader.act.action));
     file.WriteDword(static_cast<u32>(leader.act.direction));
     const std::vector<u8> party = this->PackParty();
-    this->audioDevice.Serve();
     writeBlock(party, static_cast<u32>(party.size()));
     write(this->party.names.data(), sizeof(this->party.names));
     this->playSeconds += static_cast<i32>(crt::Ftol(crt::Difftime(crt::Time(), this->playClockStart)));
@@ -1060,7 +1067,6 @@ void Game::LoadGame()
     File& maps = this->databases.maps;
     u32 mapsBytes = maps.Size() - kMapsHeaderBytes;
     maps.SeekBegin(kMapsHeaderBytes);
-    this->audioDevice.Serve();
     this->databases.mapsData.assign(mapsBytes, 0);
     maps.Read(this->databases.mapsData.data(), mapsBytes);
     view.rolesTable = MapsDword(this->databases.mapsData, sizeof(u32));
@@ -1154,7 +1160,8 @@ void Game::ReadSave(File& file)
             word(kRecordTalk),
             word(kRecordSetBits),
             0,
-            word(kRecordMap)
+            word(kRecordMap),
+            word(kRecordVariables)
         );
     }
 
@@ -1257,6 +1264,15 @@ void Game::ReadSave(File& file)
     file.UnmapView(mapped);
     file.CloseMapping();
     file.Close();
+    // swd3e: the talisman ghost is made anew (kind 0), then the one chosen read from its slot of swdghost.dat
+    this->talismanGhost.Reset(0);
+    const i32 ghost = this->party.variables[Party::GhostVariable];
+
+    if (ghost != 0 && static_cast<u32>(ghost) <= TalismanGhost::Kinds)
+    {
+        this->talismanGhost.Load(this->config.installDirectory, kGhostFile, ghost - 1);
+    }
+
     this->state.leader.FillUnused();
     this->LoadFameFile();
     this->LoadCity(
@@ -1324,7 +1340,13 @@ void Game::UnpackParty(std::span<const u8> data)
             }
             else
             {
-                DebugLog(u8"載入道具 位置(%d)裝備了沒有定義的物品號碼(%d)", static_cast<i32>(index), id);
+                ErrorBox(
+                    this->errors,
+                    u8"載入道具",
+                    u8"位置(%d)裝備了沒有定義的物品號碼(%d)",
+                    static_cast<i32>(index),
+                    id
+                );  // 0x004AF5FC, 0x004AF608
                 slot->record.description.reset();
                 slot->id = ItemNode::Empty;
             }
@@ -1362,7 +1384,13 @@ void Game::UnpackParty(std::span<const u8> data)
             }
             else
             {
-                DebugLog(u8"載入法術 角色(%d)擁有未定義的法術(%d)", static_cast<i32>(list), id);
+                ErrorBox(
+                    this->errors,
+                    u8"載入法術",
+                    u8"角色(%d)擁有未定義的法術(%d)",
+                    static_cast<i32>(list),
+                    id
+                );  // 0x004AF5D0, 0x004AF5DC
             }
         }
 
