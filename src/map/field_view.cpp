@@ -6,6 +6,8 @@ namespace swd3e
 namespace
 {
 
+constexpr double kGhostOffsetX = 16.0;   // 0x004AA5E4: the talisman ghost drifts to 16 right of the role
+constexpr double kGhostOffsetUp = 64.0;  // 0x004AA5E8 and 64 above it
 // swd32.exe 0x00499534 (unmatched in swd3e) and 0x00499554: the cell step of each path direction.
 constexpr std::array<i32, 8> kCellX = {1, 0, -1, -1, -1, 0, 1, 1};
 constexpr std::array<i32, 8> kCellY = {1, 1, 1, 0, -1, -1, -1, 0};
@@ -196,8 +198,9 @@ void FieldView::ShakeCamera()
 }
 
 // swd3e.exe 0x00412F60: the frame of the map: the movie, or the overlays, the tiles (8-bit maps through their palette),
-// reflections, roles, animations, sprites and the screen effects (all but the spotlight left out with story flag
-// 0x48); then the lines, the talk windows, the role heads, the gold, the pointer, the fade and the notices
+// roles, animations, sprites and the screen effects (all but the spotlight left out with story flag 0x48); the fade
+// over the map; then the lines, the talk windows, the role heads, the gold, the name boxes of talk command 209, the
+// pointer and the notices
 void FieldView::Paint()
 {
     Game& owner = this->game;
@@ -244,16 +247,27 @@ void FieldView::Paint()
     }
 
     const bool capture = owner.smoothMotion;
-
-    if (capture)
-    {
-        this->CaptureLayer(this->worldLayer);
-    }
-
     owner.DrawOnMapScreen();
 
+    // swd3e fades the map alone, before the lines and the interface (swd32 faded the whole frame at its end).
     if (capture)
     {
+        const ColorFade& fade = view.fade;
+        this->fadeTinted = fade.stepRed != 0.0F || fade.stepGreen != 0.0F || fade.stepBlue != 0.0F;
+    }
+
+    this->FadeColors(1);
+
+    if (capture)
+    {
+        const ColorFade& fade = view.fade;
+        this->fadeLevels = {
+            static_cast<int>(crt::Ftol(fade.red)),
+            static_cast<int>(crt::Ftol(fade.green)),
+            static_cast<int>(crt::Ftol(fade.blue)),
+        };
+
+        this->CaptureLayer(this->worldLayer);
         this->StartRecord(this->talkRecord);
     }
 
@@ -298,9 +312,8 @@ void FieldView::Paint()
     }
 
     owner.NameBoxFrame();
-    const bool pointer = (!state.GameFlag(GameState::NoPointer) && !state.GameFlag(GameState::NoChoicePointer) &&
-                          !state.GameFlag(GameState::HideHud)) ||
-                         owner.input.IsKeyDown(Input::C) != 0;
+    const bool pointer = !state.GameFlag(GameState::NoPointer) && !state.GameFlag(GameState::NoChoicePointer) &&
+                         !state.GameFlag(GameState::HideHud);
 
     // The pointer may lie beside the 640x480 screen when the map fills the window: it is drawn on the whole canvas.
     const bool beside = field.screenX != 0 || field.screenY != 0;
@@ -337,11 +350,9 @@ void FieldView::Paint()
             owner.StepPointer();
         }
 
-        const ColorFade& fade = view.fade;
         this->CaptureLayer(this->interfaceLayer);
         this->MarkChanges(this->headsLayer, this->interfaceSpans);
         this->interfaceRedrawn = this->FinishRecord(this->interfaceRecord, this->interfaceLayer);
-        this->fadeTinted = fade.stepRed != 0.0F || fade.stepGreen != 0.0F || fade.stepBlue != 0.0F;
         this->pointerShown = pointer;
 
         if (pointer)
@@ -363,17 +374,8 @@ void FieldView::Paint()
         }
     }
 
-    this->FadeColors(1);
-
     if (capture)
     {
-        const ColorFade& fade = view.fade;
-        this->fadeLevels = {
-            static_cast<int>(crt::Ftol(fade.red)),
-            static_cast<int>(crt::Ftol(fade.green)),
-            static_cast<int>(crt::Ftol(fade.blue)),
-        };
-
         this->CaptureLayer(this->fadedLayer);
         this->StartRecord(this->finalRecord);
     }
@@ -396,7 +398,7 @@ void FieldView::ClipToSpotlight()
     );
 }
 
-// The map part of the frame without a movie (part of 0x00412930): the overlays, the tiles, reflections, roles,
+// The map part of the frame without a movie (part of 0x00412F60): the overlays, the tiles, reflections, roles,
 // animations, sprites and the screen effects.
 void FieldView::PaintWorld()
 {
@@ -450,11 +452,7 @@ void FieldView::PaintWorld()
 
         painter.SetPalette(nullptr);
 
-        if (!state.GameFlag(GameState::HideActRoles))
-        {
-            this->DrawReflections();
-        }
-
+        // swd3e reads story flag 0xB here and does nothing with it (swd32 drew the reflections without it).
         this->DrawRoles();
         this->DrawAnimations(view.animationsA);
         this->DrawSprites();
@@ -612,20 +610,14 @@ void FieldView::Render()
     Scene& view = owner.scene;
     Field& field = owner.field;
 
+    // swd3e steps them without a report of a failure.
     for (std::size_t act = view.screenActs.size(); act-- > 0;)
     {
         ActState& slot = view.screenActs[act];
 
-        if (slot.id != 0 && owner.acts.Run(slot) == 0)
+        if (slot.id != 0)
         {
-            ErrorBox(
-                owner.errors,
-                u8"Act Err(picPaint:HeadSgn)",
-                u8"頭定符號設定錯誤 \nact[%d] qq[%d] dir[%d]",
-                slot.id,
-                slot.action,
-                slot.direction
-            );
+            owner.acts.Run(slot);
         }
     }
 
@@ -811,18 +803,30 @@ void FieldView::Render()
 
     this->PanCamera();
     this->ShakeCamera();
-    owner.audioDevice.Serve();
     owner.BeginMapCanvas();
     this->CapturePlaces();
     this->Paint();
     this->DrawTimer(kTimerX, kTimerY, 0);
+    // swd3e: the talisman ghost drifts towards a point beside the controlled role and is drawn over the frame; then the
+    // first two pixels of every row are cleared.
+    owner.ghostFollower.Follow(
+        static_cast<float>(static_cast<double>(static_cast<u32>(player.x)) + kGhostOffsetX),
+        static_cast<float>(static_cast<double>(static_cast<u32>(player.y)) - kGhostOffsetUp)
+    );
+    owner.ghostFollower.Draw(owner.acts, owner.archive, owner.painter, field.cameraLeft, field.cameraTop);
+    Pixel* screen = owner.painter.Target();
+    const int pitch = owner.painter.ScreenPitch();
+
+    for (int row = 0; row < Display::Height; ++row)
+    {
+        screen[static_cast<std::ptrdiff_t>(pitch) * row] = 0;
+        screen[static_cast<std::ptrdiff_t>(pitch) * row + 1] = 0;
+    }
 
     if (owner.config.debugMode == 1)
     {
         this->DrawDebug(field.cameraLeft, field.cameraTop);
     }
-
-    owner.audioDevice.Serve();
 
     if (owner.smoothMotion)
     {
@@ -839,7 +843,7 @@ void FieldView::Render()
         owner.scrollStepX != 0 || owner.scrollStepY != 0 || owner.walkStepX != 0 || owner.walkStepY != 0;
 
     if ((player.x & MapHeader::TileFraction) == 0 && (player.y & MapHeader::TileFraction) == 0 &&
-        (!owner.smoothMotion || !stepping))
+        (player.flags & Role::Visible) != 0 && (!owner.smoothMotion || !stepping))
     {
         this->SettlePlayer();
     }
@@ -873,7 +877,7 @@ void FieldView::Render()
         view.layerOffset = layer * view.layerTiles;
     }
 
-    if (view.shake[0] != Scene::ShakeEnd && owner.currentMap != Field::DemonRefiningPot)
+    if (view.shake[0] != Scene::ShakeEnd)
     {
         field.cameraLeft = view.quakeCameraLeft;
         field.cameraTop = view.quakeCameraTop;

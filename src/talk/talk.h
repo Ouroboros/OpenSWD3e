@@ -66,6 +66,14 @@ class Talk
     friend class smooth::TalkFrame;  // the rebuild's smooth battle: Draw split (battle/smooth/smooth_talk.h)
 
 public:
+    // The role variables of the maps.dat role table (swd3e): Talk::RoleVariable reads (ReadVariable) or sets
+    // (WriteVariable) variable 1 (the low byte) or 2 (the high byte) of a role's record.
+    static constexpr int ReadVariable = 1;
+    static constexpr int WriteVariable = 2;
+    static constexpr std::size_t NoRecord = static_cast<std::size_t>(-1);
+    std::size_t FindRoleRecord(u32 id) const;
+    u32 RoleVariable(u32 id, int variable, i32& value, int mode);
+
     static constexpr u16 Current =
         0xFFF0;  // an operand standing for the role of the event, the controlled role or the map
     static constexpr u16 Keep = 0xFFFF;  // an operand that leaves its value as it is

@@ -25,6 +25,7 @@
 #include "game/notices.h"
 #include "game/scene.h"
 #include "gfx/graphics.h"
+#include "ghost/ghost_follower.h"
 #include "input/controls.h"
 #include "input/input.h"
 #include "launcher/launcher.h"
@@ -600,6 +601,7 @@ private:
     RoleControl roleControl;
     RolePath rolePath;
     AscentGame ascentGame;
+    GhostFollower ghostFollower;
 
     GameDatabases databases;
     PathNodePool pathNodes;

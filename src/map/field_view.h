@@ -129,8 +129,6 @@ public:
     int DrawRole(Role& role);
     void UpdateRoleSound(Role& role);
     void DrawShadow(const Role& role, const Picture& picture, int x, int y, int kind, int tint, int scale);
-    void DrawReflections();
-    int DrawReflection(const Role& role);
     void DrawBubbles(int x, int y, u16 role);
     void FadeColors(int step);
     void DrawAnimations(std::unique_ptr<ScriptAnimation>& list);

@@ -359,8 +359,8 @@ struct Scene
     std::optional<std::string> noExitWarpText;    // swd32 0x004B74F4
     std::optional<std::string> noTownWarpText;    // swd32 0x004B751C
     std::array<i32, MusicSlots> musicTunes = {};  // swd32 0x004B7C74 by MusicSlot
-    // swd32 0x004B9F68 stepped every map frame; a talk command may attach one to a role
-    std::array<ActState, 8> screenActs;
+    // 0x004D34C0 stepped every map frame; a talk command may attach one to a role (swd3e: 12 of them, swd32 8)
+    std::array<ActState, 12> screenActs;
     ActState menuButtonAct;  // 0x004E4B78 the system button at the top right
     // swd32 0x004C8BE0 the leader's act kept by the home warp, given back after the pot
     i32 warpLeaderAct = 0;

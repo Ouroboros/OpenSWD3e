@@ -38,7 +38,7 @@ struct MapsRecord
     static constexpr u16 TableEnd = 0xFFFF;
     static constexpr u16 NameEnd = 0x5125;  // "%Q" ends a Big5 name
 
-    // Table 1: a role, in words.
+    // Table 1: a role, in words (swd3e: 12 of them, 0x18 bytes; swd32 11).
     enum RoleWord : std::size_t
     {
         RoleMap,
@@ -52,6 +52,7 @@ struct MapsRecord
         RolePath,
         RoleStep,
         RoleFlags,
+        RoleVariables,  // swd3e: two bytes the talk commands read and set by number (Talk::RoleVariable)
         RoleWords,
     };
 

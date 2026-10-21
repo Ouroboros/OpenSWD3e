@@ -85,6 +85,87 @@ bool Talk::CopyMedia(EventRun& run)
     return true;
 }
 
+// swd3e.exe 0x00433620: where role `id`'s record lies in maps.dat's role table (records of 0x18 bytes from
+// Scene::rolesTable up to one starting with a dword of -1), NoRecord when it has none
+std::size_t Talk::FindRoleRecord(u32 id) const
+{
+    constexpr u32 kTableEnd = 0xFFFFFFFFu;
+    constexpr std::size_t kRecordBytes = sizeof(u16) * MapsRecord::RoleWords;
+    const std::vector<u8>& data = this->game.databases.mapsData;
+    std::size_t at = this->game.scene.rolesTable;
+
+    if (MapsDword(data, at) == kTableEnd)
+    {
+        return Talk::NoRecord;
+    }
+
+    while (MapsWord(data, at + sizeof(u16) * MapsRecord::RoleId) != id)
+    {
+        at += kRecordBytes;
+
+        // The rebuild: the data ending without the end mark ends the search.
+        if (at >= data.size() || MapsDword(data, at) == kTableEnd)
+        {
+            return Talk::NoRecord;
+        }
+    }
+
+    return at;
+}
+
+// swd3e.exe 0x00433590: variable `variable` (1: the low byte, 2: the high byte of the record's RoleVariables word) of
+// role `id` read into `value` or set from its low byte by `mode`; 0 when the role has no record, else `id`
+u32 Talk::RoleVariable(u32 id, int variable, i32& value, int mode)
+{
+    constexpr int kLowByte = 1;
+    constexpr int kHighByte = 2;
+    const std::size_t record = this->FindRoleRecord(id);
+
+    if (record == Talk::NoRecord)
+    {
+        return 0;
+    }
+
+    std::vector<u8>& data = this->game.databases.mapsData;
+    const std::size_t at = record + sizeof(u16) * MapsRecord::RoleVariables;
+
+    // The rebuild: a record cut by the end of the data reads as 0 and is not written.
+    if (at + 1 >= data.size())
+    {
+        if (mode == Talk::ReadVariable && (variable == kLowByte || variable == kHighByte))
+        {
+            value = 0;
+        }
+
+        return id;
+    }
+
+    if (mode == Talk::ReadVariable)
+    {
+        if (variable == kLowByte)
+        {
+            value = data[at];
+        }
+        else if (variable == kHighByte)
+        {
+            value = data[at + 1];
+        }
+    }
+    else if (mode == Talk::WriteVariable)
+    {
+        if (variable == kLowByte)
+        {
+            data[at] = static_cast<u8>(value);
+        }
+        else if (variable == kHighByte)
+        {
+            data[at + 1] = static_cast<u8>(value);
+        }
+    }
+
+    return id;
+}
+
 // Commands 0x64..0x8F: the roles' events and flags, the talk window settings, waits for windows and animations, the
 // music, the talk log, the items and skills, the party's state and the timers.
 bool Talk::RunStateCommand(EventRun& run)

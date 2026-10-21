@@ -35,7 +35,6 @@ namespace
 constexpr int kScreenColumns = Display::Width / MapHeader::TileSize;
 constexpr int kScreenRows = Display::Height / MapHeader::TileSize;
 constexpr int kRoleMarginX = Display::Width / 2;  // roles this far beside the screen are still drawn
-constexpr int kReflectionRowsAbove = 5;           // the reflections are drawn from this many rows above the camera
 constexpr u32 kNoFrame = 0xFFFF;                  // the frame of a role without an act
 constexpr int kPerMille = 1000;                   // random.Below(kPerMille): the chances are in thousandths
 constexpr int kSoundRange = 0x200;                // the distance (pixels) a role is heard from
@@ -210,8 +209,6 @@ constexpr int kZoomUnit = 1 << Painter::FractionBits;  // a scale of 1:1
 constexpr int kDrawnRoleMargin = 0x190;  // swd3e: roles this far beside the 640-pixel screen are still drawn
 constexpr int kAttachedShift = 0x14;     // swd3e: an attached act is drawn this far right
 
-constexpr int kReflectionAlpha = 4;
-constexpr int kReflectionDrop = 8;
 constexpr u32 kQuarterChance = kPerMille / 4;
 constexpr u32 kTenthChance = kPerMille * 9 / 10;
 constexpr int kHeadAcceleration = 3;  // a leaving head triples its speed every frame
@@ -236,6 +233,8 @@ constexpr std::size_t kRoleLineColor = 3;
 constexpr int kOverlapColumns = 3;  // roles this near the pointer are counted as overlapping it
 constexpr int kOverlapRows = 4;
 constexpr int kOverlapRoles = 2;
+constexpr int kOverlapLineRows = 2;  // swd3e: the overlap line is two rows above the story line of the role
+constexpr int kFirstVariable = 1;    // DrawDebug shows role variable 1 (Talk::RoleVariable)
 constexpr int kFastFactor = 2;
 constexpr int kTimerX = 0x190;
 constexpr int kTimerY = 8;

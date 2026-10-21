@@ -509,10 +509,16 @@ void FieldView::PaintBetween(Surface& out)
 
             this->PaintWorld();
 
-            // The interface of the last game frame: the lines and talk windows it drew over its map, its role heads
-            // drawn again where they glide, what it drew after them, its fade, then what it drew after the fade. It
-            // lies on the 640x480 screen in the canvas.
+            // The fade of the last game frame over its map (swd3e fades the map alone), then its interface: the lines
+            // and talk windows it drew, its role heads drawn again where they glide, what it drew after them, then
+            // what it drew after the pointer. It lies on the 640x480 screen in the canvas.
             const std::span<Pixel> screen(part.Pixels(), canvasPixels);
+
+            if (this->fadeTinted)
+            {
+                painter.TintPixelsFast(screen, this->fadeLevels.red, this->fadeLevels.green, this->fadeLevels.blue);
+            }
+
             this->LayLayer(this->talkRecord, this->talkRedrawn, this->talkSpans, this->talkLayer, screen);
             owner.drawSurface = screen.data() + this->ScreenAt();
             painter.SetTarget(owner.drawSurface);
@@ -540,11 +546,6 @@ void FieldView::PaintBetween(Surface& out)
                 painter.SetClipClamped(0, 0, width, height);
                 owner.DrawPointer(mouseX + field.screenX + sway[0] + act.x, mouseY + field.screenY + sway[1] + act.y);
                 putBack();
-            }
-
-            if (this->fadeTinted)
-            {
-                painter.TintPixelsFast(screen, this->fadeLevels.red, this->fadeLevels.green, this->fadeLevels.blue);
             }
 
             this->LayLayer(this->finalRecord, this->finalRedrawn, this->finalSpans, this->finalLayer, screen);
