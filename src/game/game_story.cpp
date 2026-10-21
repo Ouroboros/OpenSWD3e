@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "game/game.h"
 #include "platform/display.h"
 
@@ -14,9 +15,11 @@ namespace swd3e
 namespace
 {
 
+constexpr std::size_t kLegacyRoleBytes = 0x16;                 // LeaveParty: swd32's role records
+constexpr std::u8string_view kLeavePartyTitle = u8"解除夥伴";  // 0x004B1058
+
 constexpr i32 kTimerFrames = 30;  // the timers count frames, 30 a second
 constexpr i32 kSecondsPerMinute = 60;
-constexpr std::u8string_view kBink = u8"bik";  // .avi and .mpg movies are played as .bik
 
 }  // namespace
 
@@ -74,8 +77,10 @@ void Game::LeaveParty(u16 id, u16 path, u16 event, i32 act, i32 action, i32 dire
     {
         std::vector<u8>& data = this->databases.mapsData;
 
-        for (std::size_t at = view.rolesTable; MapsWord(data, at) != MapsRecord::TableEnd;
-             at += sizeof(u16) * MapsRecord::RoleWords)
+        // swd3e still steps through the table by swd32's records of 11 words (its records have 12), so after the
+        // first it compares and clears the words at shifting places in the records (a bug kept).
+        for (std::size_t at = view.rolesTable; at < data.size() && MapsWord(data, at) != MapsRecord::TableEnd;
+             at += kLegacyRoleBytes)
         {
             if (MapsWord(data, at + sizeof(u16) * MapsRecord::RoleId) == id)
             {
@@ -88,7 +93,7 @@ void Game::LeaveParty(u16 id, u16 path, u16 event, i32 act, i32 action, i32 dire
             }
         }
 
-        DebugLog(u8"解除夥伴 角色(%d)不存在", id);
+        ErrorBox(this->errors, kLeavePartyTitle, u8"角色(%d)不存在", id);  // 0x004B1048
         return;
     }
 
@@ -101,7 +106,7 @@ void Game::LeaveParty(u16 id, u16 path, u16 event, i32 act, i32 action, i32 dire
 
     if (follower == view.followers.size() || index >= GameState::Roles)
     {
-        DebugLog(u8"解除夥伴 角色(%d)不是夥伴", id);
+        ErrorBox(this->errors, kLeavePartyTitle, u8"角色(%d)不是夥伴", id);  // 0x004B1064
         return;
     }
 
@@ -214,16 +219,15 @@ void Game::StartTimer(int minutes, int seconds, int event, int which)
     this->state.SetGameFlag(GameState::TimerEvent);
 }
 
-// swd32.exe 0x00484730 (unmatched in swd3e): the movie named in the script at `cursor` (up to "%Q", the event offset
-// `pc` moving along;
-// .avi and .mpg become .bik) from the video folder of the installation, at the music volume. The original first
-// checks for the CD (0x004118B0); the rebuild never does (see deviations.md).
-// swd32.exe 0x004983D0 (unmatched in swd3e) (EH unwind: the new object freed (operator delete))
-// swd32.exe 0x004983DB (unmatched in swd3e) (EH handler of 0x00484730)
+// swd3e.exe 0x0049C600: the movie named in the script after the command word (up to "%Q", the event offset `pc`
+// moving along) from the video folder (by the installation type the installation's Video\, the CD's swd3e\Video\
+// after a CD check, or the name alone; the rebuild reads the installation's, see deviations.md), at volume 100; the
+// frames then take the place of the map's (flag 0x20). A movie already open is closed here (the original leaves it
+// open behind the new one, deviations.md).
 bool Game::PlayVideo(std::size_t& cursor, u16& pc)
 {
+    constexpr int kVideoVolume = 0x64;
     const std::span<const u8> script(this->databases.script);
-    std::u8string path = this->config.installDirectory + u8"video\\";
     std::string name;
 
     auto word = [&script](std::size_t at)
@@ -234,7 +238,7 @@ bool Game::PlayVideo(std::size_t& cursor, u16& pc)
     pc = static_cast<u16>(pc + sizeof(u16));
     cursor += sizeof(u16);
 
-    while (word(cursor) != MapsRecord::NameEnd && cursor < script.size())
+    while (cursor < script.size() && word(cursor) != MapsRecord::NameEnd)
     {
         ++pc;
         name.push_back(static_cast<char>(script[cursor]));
@@ -243,45 +247,59 @@ bool Game::PlayVideo(std::size_t& cursor, u16& pc)
 
     pc = static_cast<u16>(pc + sizeof(u16));
     cursor += sizeof(u16);
-    path += PathFormat("%s", {name});
-
-    for (const std::u8string_view extension : {std::u8string_view(u8".avi"), std::u8string_view(u8".mpg")})
-    {
-        const std::size_t found = path.find(extension);
-
-        if (found != std::u8string::npos)
-        {
-            path.replace(found + 1, kBink.size(), kBink);
-        }
-    }
-
+    const std::u8string path = this->config.installDirectory + u8"Video\\" + PathFormat("%s", {name});
     LogInfo(u8"video %s", path);
-
     this->movie.Close();
-    this->movie.Open(path, this->config.musicVolume * Movie::MaxVolume / Config::MaxVolume);
+    this->movie.Open(path, kVideoVolume);
+    this->videoLoaded = true;
     this->systemFlags |= Game::VideoPlaying;
     return true;
 }
 
-// swd32.exe 0x00484DA0 (unmatched in swd3e): the frame of the playing movie (-1 without one)
+// swd3e.exe 0x0049C890: the frame of the movie, negated past its last; -1 without one
 int Game::VideoPosition() const
 {
-    return this->movie.Position();
+    return this->videoLoaded ? this->movie.Position() : -1;
 }
 
-// swd32.exe 0x00484920 (unmatched in swd3e): the movie closed and its flag cleared
+// swd3e.exe 0x0049C8B0: two values a script gives at a frame of the movie (talk command 0xC3); false without a movie.
+// Nothing reads them.
+bool Game::SetVideoMarks(i32 first, i32 second)
+{
+    if (!this->videoLoaded)
+    {
+        return false;
+    }
+
+    this->videoMarkA = first;
+    this->videoMarkB = second;
+    return true;
+}
+
+// swd3e.exe 0x0049C7B0: the movie closed and freed; a requested quit closes the window; flag 0x20 cleared
 void Game::StopVideo()
 {
     this->movie.Close();
+    this->videoLoaded = false;
+
+    if ((this->systemFlags & Game::QuitRequested) != 0)
+    {
+        this->Destroy();
+    }
+
     this->systemFlags &= ~Game::VideoPlaying;
 }
 
-// swd32.exe 0x00484950 (unmatched in swd3e): the next frame of the movie (unless it waits for its time) centred on the
-// frame drawn and
-// shown; after its last frame the movie stops. (The original reports every failed blit of the frame in a message box;
-// the emulated blit cannot fail.) A movie that did not open stops at once.
+// swd3e.exe 0x0049C800: the next frame of the movie (unless it waits for its time) copied to the top left of the
+// screen surface and shown; after its last frame the movie stops. The original crashes on a movie Bink could not open;
+// the rebuild stops it (deviations.md).
 void Game::VideoFrame()
 {
+    if (!this->videoLoaded)
+    {
+        return;
+    }
+
     if (!this->movie.IsOpen())
     {
         this->StopVideo();
@@ -293,10 +311,7 @@ void Game::VideoFrame()
         return;
     }
 
-    const int y = (Display::Height - this->movie.Height()) / 2;
-    const int x = (Display::Width - this->movie.Width()) / 2;
-    const int left = this->movie.Frame(*this->offscreen, x, y, this->errors);
-    // 0x004849C2 calls nullsub_1 without arguments: nothing to log.
+    const int left = this->movie.Frame(*this->offscreen);
     this->ShowFrame();
 
     if (left <= 0)

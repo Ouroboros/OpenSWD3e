@@ -23,6 +23,8 @@ namespace
 {
 
 constexpr u16 kListEnd = 0xFF00;
+constexpr double kFadeLimit = 31.0;  // FadeColors (swd3e): the levels and targets are kept within these
+constexpr i32 kFadeTargetLimit = 0x1F;
 constexpr std::u8string_view kCaptionTitle = u8"對話系統(Caption2)";  // 0x004B26F0
 constexpr u16 kPlaceAtTarget = 0x8000;  // in the y of HeadIn: the head is placed at its target
 constexpr u16 kEvenPixels = 0xFFFE;     // the line effects keep to even pixels
@@ -73,7 +75,7 @@ bool Talk::PanCamera(EventRun& run)
 
     if ((across | down) != 0)
     {
-        DebugLog(u8"對話系統(Scroll_map) 前一個捲動指令還沒有結束");  // 0x004A1A20 + 0x004A1A38
+        ErrorBox(this->game.errors, u8"對話系統(Scroll_map)", u8"前一個捲動指令還沒有結束");  // 0x004B2A5C, 0x004B2A74
     }
 
     if (run.code == EventCommand::PanCamera)
@@ -133,7 +135,12 @@ bool Talk::PanCamera(EventRun& run)
 
     if (view.panAcross != 0 && view.panAcross % stepX != 0)
     {
-        DebugLog(u8"對話系統(Scroll_map) 捲動間距請設為二的次方倍(X..%d)", stepX);  // 0x004A1A00
+        ErrorBox(
+            this->game.errors,
+            u8"對話系統(Scroll_map)",
+            u8"捲動間距請設為二的次方倍(X..%d)",
+            stepX
+        );  // 0x004B2A5C, 0x004B2A3C
         pixelsDown = view.panDown;
         stepY = view.panStepY;
         stepX = kDefaultPanStep;
@@ -147,7 +154,12 @@ bool Talk::PanCamera(EventRun& run)
 
     if (pixelsDown != 0 && pixelsDown % stepY != 0)
     {
-        DebugLog(u8"對話系統(Scroll_map) 捲動間距請設為二的次方倍(Y..%d)", stepY);  // 0x004A19E0
+        ErrorBox(
+            this->game.errors,
+            u8"對話系統(Scroll_map)",
+            u8"捲動間距請設為二的次方倍(Y..%d)",
+            stepY
+        );  // 0x004B2A5C, 0x004B2A1C
         pixelsDown = view.panDown;
         stepX = view.panStepX;
         stepY = kDefaultPanStep;
@@ -214,9 +226,10 @@ bool Talk::PanCamera(EventRun& run)
     if (clamped)
     {
         // 0x004A1A20 + 0x004A1994: the four operand words as they stand (sign-extended) and the camera in tiles
-        DebugLog(
-            u8"對話系統(Scroll_map) 捲動將超出螢幕範圍\n(捲動值) L%d.T%d.R%d.B%d\n(目前螢幕位置) "
-            u8"L%d.T%d.R%d.B%d",
+        ErrorBox(
+            this->game.errors,
+            u8"對話系統(Scroll_map)",
+            u8"捲動將超出螢幕範圍\n(捲動值) L%d.T%d.R%d.B%d\n(目前螢幕位置) L%d.T%d.R%d.B%d",
             static_cast<i16>(this->Word(run, kFirstOperand)),
             static_cast<i16>(this->Word(run, kFirstOperand + 1)),
             static_cast<i16>(this->Word(run, kFirstOperand + 2)),
@@ -225,7 +238,7 @@ bool Talk::PanCamera(EventRun& run)
             field.cameraTop >> MapHeader::TileShift,
             field.cameraRight >> MapHeader::TileShift,
             field.cameraBottom >> MapHeader::TileShift
-        );
+        );  // 0x004B2A5C, 0x004B29D0
     }
 
     const int length = CommandBytes(run.code);
@@ -274,6 +287,8 @@ bool Talk::PlaceRole(EventRun& run)
         owner.field.ClearRoleCells(role, owner.partyLeaderId);
         role.flags |= Role::Removed;
         event = static_cast<i16>(role.event);
+        // swd3e also takes the role off its line of the map (0x00411830).
+        owner.field.UnlinkRole(role, static_cast<int>(role.flags & Role::LayerMask));
     }
 
     run.code = EventCommand::None;
@@ -286,8 +301,8 @@ bool Talk::PlaceRole(EventRun& run)
 
     if (!owner.UpdateRoleRecord(id, act, action, direction, tileX, tileY, event, talk, setBits, Game::KeepValue, map))
     {
-        // 0x0042986A: nullsub_1 with 0x0049FF9C and 0x004A194C, then the text formatted again and logged alone
-        DebugLog(u8"!!! 警告 !!! Maps沒有定義角色[%d]", operand);
+        // 0x0042DC22: the error box, then the text formatted again and logged alone
+        ErrorBox(this->game.errors, u8"!!! 警告 !!!", u8"Maps沒有定義角色[%d]", operand);  // 0x004B0FE0, 0x004B2988
         DebugLog(u8"Maps沒有定義角色[%d]", operand);
         this->Advance(run, CommandBytes(EventCommand::PlaceRoleOnMap));
         return true;
@@ -440,6 +455,8 @@ bool Talk::OpenMapMovie(EventRun& run)
     MapMovie& film = owner.fieldView.movie;
     const std::vector<u8>& script = owner.databases.script;
     constexpr int kMovieFrameInterval = 0x46;  // milliseconds a frame while a map movie plays
+    // swd3e closes HUGE.lmf while the movie plays; command 0x61 opens it again.
+    owner.mapCache.lmf.Close();
     state.ClearFrameInterval();
     state.SetFrameInterval(kMovieFrameInterval);
     film.options = 0;
@@ -481,17 +498,14 @@ bool Talk::OpenMapMovie(EventRun& run)
     run.context.eventCursor = static_cast<u16>(run.context.eventCursor + kWordBytes);
     copy[end] = 0;
     const std::string name(reinterpret_cast<const char*>(copy.data()), end);
-    ErrorLog(u8"Talk:ani_open:cd:%s:%s", std::string(), name);
-    // The original looks in the CD's swd3\Video\ (after a CD check) when the installation lacks the movie; the
-    // rebuild only reads the installation (see deviations.md).
-    owner.audioDevice.Serve();
+    // By the installation type the original reads the installation's Video\, the CD's swd3e\Video\ (after a CD
+    // check) or the name alone; the rebuild reads the installation's (see deviations.md).
     const std::u8string path = PathFormat("%sVideo\\%s", {owner.config.installDirectory, name});
     ErrorLog(u8"Talk:Ani_Open::%s", path);
-    owner.audioDevice.Serve();
 
     if (!film.file.Open(path, File::Disposition::OpenExisting, File::Access::Read))
     {
-        DebugLog(u8"MAni Open Failure! MAni File Error!\n%s", name);
+        ErrorBox(this->game.errors, u8"MAni Open Failure!", u8"MAni File Error!\n%s", name);  // 0x004B27BC, 0x004B27D0
         return false;
     }
 
@@ -611,12 +625,25 @@ bool Talk::RunSceneCommand(EventRun& run)
         {
             ColorFade& fade = view.fade;
             Operands operands = this->OperandsOf(run);
-            fade.red = static_cast<float>(static_cast<i16>(operands.Word()));
-            fade.green = static_cast<float>(static_cast<i16>(operands.Word()));
-            fade.blue = static_cast<float>(static_cast<i16>(operands.Word()));
-            const i32 red = static_cast<i16>(operands.Word());
-            const i32 green = static_cast<i16>(operands.Word());
-            const i32 blue = static_cast<i16>(operands.Word());
+
+            // swd3e keeps both the levels and the targets within -31..31.
+            auto level = [](i16 value)
+            {
+                const auto shade = static_cast<double>(value);
+                return static_cast<float>(std::clamp(shade, -kFadeLimit, kFadeLimit));
+            };
+
+            auto target = [](i16 value)
+            {
+                return std::clamp(static_cast<i32>(value), -kFadeTargetLimit, kFadeTargetLimit);
+            };
+
+            fade.red = level(static_cast<i16>(operands.Word()));
+            fade.green = level(static_cast<i16>(operands.Word()));
+            fade.blue = level(static_cast<i16>(operands.Word()));
+            const i32 red = target(static_cast<i16>(operands.Word()));
+            const i32 green = target(static_cast<i16>(operands.Word()));
+            const i32 blue = target(static_cast<i16>(operands.Word()));
             run.valueA = red;
             run.valueB = green;
             fade.startRed = static_cast<float>(red);
@@ -777,7 +804,7 @@ bool Talk::RunSceneCommand(EventRun& run)
 
             if (count > kMaxShakes)
             {
-                DebugLog(u8"對話系統(Shack_screen) 參數太長");  // 0x004A1928 + 0x004A1940
+                ErrorBox(this->game.errors, u8"對話系統(Shack_screen)", u8"參數太長");  // 0x004B2964, 0x004B297C
                 return false;
             }
 
@@ -819,13 +846,14 @@ bool Talk::RunSceneCommand(EventRun& run)
 
         case EventCommand::LeaveFollowers:
         {
+            // swd3e's operands: the role, its act, action and direction, then its event and path, then its flags.
             Operands operands = this->OperandsOf(run);
             const u16 id = operands.Word();
-            const u16 path = operands.Word();
-            const u16 event = operands.Word();
             const u16 act = operands.Word();
             const u16 action = operands.Word();
             const u16 direction = operands.Word();
+            const u16 event = operands.Word();
+            const u16 path = operands.Word();
             const u16 flags = operands.Word();
             owner.LeaveParty(id, path, event, act, action, direction, flags);
             this->Next(run);
@@ -1017,15 +1045,14 @@ bool Talk::RunSceneCommand(EventRun& run)
         case EventCommand::FixSpeed:
         case EventCommand::FreeSpeed:
         {
-            // The length is left in valueB only when the role is found; otherwise the last one is used (an
-            // original bug).
+            // swd3e: nothing happens for a role not on the map (swd32 showed a message).
             Operands operands = this->OperandsOf(run);
             const u16 id = this->EventRoleId(run, operands.Word());
+            run.valueB = CommandBytes(run.code);
 
             if (state.FindRoleOrPlayer(id, run.found))
             {
                 Role& role = state.roles[run.found];
-                run.valueB = CommandBytes(run.code);
 
                 if (run.code == EventCommand::FixSpeed)
                 {
@@ -1043,11 +1070,6 @@ bool Talk::RunSceneCommand(EventRun& run)
                 {
                     ReportActError(owner.errors, u8"Act Err(Talk:SetRoleSpd)", role);
                 }
-            }
-            else
-            {
-                const std::u8string text = Utf8Format(u8"要設速度的角色(%d)不在地圖上%%Q", {id});
-                this->ShowMessage(static_cast<u16>(owner.rolePath.RoleId(static_cast<u32>(state.playerRole))), text);
             }
 
             this->Advance(run, run.valueB);
@@ -1153,11 +1175,13 @@ bool Talk::RunSceneCommand(EventRun& run)
 
             if (mode > ScriptEffect::NumberMask)
             {
-                DebugLog(
-                    u8"對話系統(GAON) Talk(%d) ,代碼值太大(%d)",
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(GAON)",
+                    u8"Talk(%d) ,代碼值太大(%d)",
                     run.context.event,
                     mode
-                );  // 0x004A186C + 0x004A187C
+                );  // 0x004B28C8, 0x004B28D8
                 this->Next(run);
                 return true;
             }
@@ -1197,13 +1221,15 @@ bool Talk::RunSceneCommand(EventRun& run)
             if (effect->x < 0 || effect->y < 0 || effect->limit + effect->x > Display::Width ||
                 effect->count + effect->y > Display::Height)
             {
-                DebugLog(
-                    u8"對話系統(GAON) Talk(%d) ,位置超出螢幕(x%d ,y%d ,w%d ,h%d)",
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(GAON)",
+                    u8"Talk(%d) ,位置超出螢幕(x%d ,y%d ,w%d ,h%d)",
                     effect->x,
                     effect->y,
                     effect->limit,
                     effect->count
-                );  // 0x004A186C + 0x004A1840 (read from the node already freed)
+                );  // 0x004B28C8, 0x004B289C
                 this->Next(run);
                 return true;
             }
@@ -1248,11 +1274,13 @@ bool Talk::RunSceneCommand(EventRun& run)
 
             if (mode > ScriptEffect::NumberMask)
             {
-                DebugLog(
-                    u8"對話系統(G_AREA_OFF) Talk(%d)代碼值太大(%d)",
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(G_AREA_OFF)",
+                    u8"Talk(%d)代碼值太大(%d)",
                     run.context.id,
                     mode
-                );  // 0x004A1810 + 0x004A1828
+                );  // 0x004B286C, 0x004B2884
                 this->Next(run);
                 return true;
             }
@@ -1309,15 +1337,10 @@ bool Talk::RunSceneCommand(EventRun& run)
             return true;
         }
 
-        case EventCommand::PlayVideo:
-            if (owner.offscreen != nullptr)
-            {
-                owner.offscreen->Fill(0);
-            }
-
-            owner.ShowFrame();
-            owner.audioDevice.Serve();
-            owner.PlayVideo(run.cursor, run.context.eventCursor);
+        case EventCommand::ObsoleteVideo:
+            // swd3e: an obsolete command; the error box shows the scratch text buffer (0x004C4658) as it was left,
+            // here nothing (deviations.md), and the script stays on the command.
+            ErrorBox(this->game.errors, u8"對話系統(Play_avi) ,過期的指令", u8"");  // 0x004B284C
             return false;
 
         case EventCommand::ChangeHead:
@@ -1395,7 +1418,12 @@ bool Talk::RunSceneCommand(EventRun& run)
 
             if (run.found >= Party::Roles)
             {
-                DebugLog(u8"對話系統(Addd_FMan) 人物號碼不對", run.found);  // 0x004A17EC + 0x004A1800
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(Addd_FMan)",
+                    u8"人物號碼不對",
+                    run.found
+                );  // 0x004B2828, 0x004B283C
             }
 
             this->SetStoryFlag(static_cast<int>(run.found + GameState::InParty), run.code == EventCommand::SetInParty);
@@ -1425,9 +1453,17 @@ bool Talk::RunSceneCommand(EventRun& run)
             this->Next(run);
             state.ClearFrameInterval();
             state.SetFrameInterval(Game::FrameInterval);
+
+            if (!this->keepArchiveClosed)
+            {
+                owner.field.ReopenArchive();
+            }
+
+            this->keepArchiveClosed = false;
             return true;
 
-        case EventCommand::Skip:
+        case EventCommand::SetMovieFrame:
+            owner.fieldView.movie.frameIndex = this->OperandsOf(run).Word();
             this->Next(run);
             return false;
 

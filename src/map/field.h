@@ -104,6 +104,7 @@ public:
     Field(GameState& state, MapCache& cache, const Config& config, const RleCodec& codec, ErrorReporter& errors);
 
     bool LoadMap(u32 map, u32& systemFlags);
+    void ReopenArchive();
     void ResetRows();
     void InsertRole(Role& role, int layer);
     Role* RemoveRole(u16 id, int layer, int row, int keep);

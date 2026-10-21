@@ -350,6 +350,7 @@ private:
     void StartTimer(int minutes, int seconds, int event, int which);
     bool PlayVideo(std::size_t& cursor, u16& pc);
     int VideoPosition() const;
+    bool SetVideoMarks(i32 first, i32 second);
     void StopVideo();
     void VideoFrame();
     void StartBattle(u16 battle);
@@ -592,6 +593,9 @@ private:
     AudioDevice audioDevice;
     AudioManager audio;
     Movie movie;
+    bool videoLoaded = false;  // 0x00578624 is set: a movie object exists (from PlayVideo to StopVideo)
+    i32 videoMarkA = 0;        // 0x004C30E0 SetVideoMarks
+    i32 videoMarkB = 0;        // 0x004C30E8
     Random random;
     crt::Random crtRandom;
     GameState state;

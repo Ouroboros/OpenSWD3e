@@ -1,6 +1,6 @@
 #include "movie/movie.h"
 
-#include "platform/message_box.h"
+#include <algorithm>
 
 namespace swd3e
 {
@@ -13,24 +13,18 @@ void Movie::Init(bool, bool)
 // swd3e.exe 0x0049C480
 Movie::Movie() = default;
 
-// swd3e.exe 0x0049C490: a failed open keeps Bink's error text and a zero summary
+// swd3e.exe 0x0049C490: a failed open keeps Bink's error text and a zero summary; the volume is held within 0..0x7F
 void Movie::Open(const std::u8string& path, int volume)
 {
+    constexpr int kBinkVolumeShift = 15;
+
     if (!this->decoder.Open(path))
     {
         this->error = this->decoder.Error();
     }
 
-    this->width = this->decoder.Width();
-    this->height = this->decoder.Height();
-
-    if (volume < 0)
-    {
-        this->decoder.SetVolume(0);
-        return;
-    }
-
-    this->decoder.SetVolume(volume > Movie::MaxVolume ? Movie::MaxVolume : volume);
+    const int held = std::clamp(volume, 0, Movie::MaxVolume);
+    this->decoder.SetVolume((held << kBinkVolumeShift) / Movie::MaxVolume);
 }
 
 // swd3e.exe 0x0049C520
@@ -45,31 +39,24 @@ bool Movie::Close()
     return true;
 }
 
-// swd32.exe 0x00484650 (unmatched in swd3e): shows the current frame at (x, y) and advances; the frame count, negated
-// once the last frame
-// is shown
-int Movie::Frame(Surface& surface, int x, int y, ErrorReporter& reporter)
+// swd3e.exe 0x0049C550: the current frame copied to the top left of `surface` (its first 480 rows) and the next one
+// taken: 1 while frames are left, -1 once the last one is shown
+int Movie::Frame(Surface& surface)
 {
     this->decoder.DecodeFrame();
+    this->decoder.CopyTo(surface, 0, 0);
+    int result = -1;
 
-    if (!this->decoder.CopyTo(surface, x, y))
+    if (this->decoder.Frames() > this->decoder.FrameNum())
     {
-        reporter.ShowError(u8"fail", u8"BinkCopyToBuffer Fial");
-    }
-
-    const u32 frames = this->decoder.Frames();
-    int result = -static_cast<int>(frames);
-
-    if (frames > this->decoder.FrameNum())
-    {
-        result = static_cast<int>(frames);
+        result = 1;
         this->decoder.NextFrame();
     }
 
     return result;
 }
 
-// A movie is open (the original keeps one behind 0x0053D070 from 0x00484730 to 0x00484920).
+// A movie is open (Bink gave a handle).
 bool Movie::IsOpen() const
 {
     return this->decoder.IsOpen();
@@ -97,18 +84,6 @@ int Movie::Position() const
 bool Movie::Waiting() const
 {
     return this->decoder.IsOpen() && this->decoder.Wait();
-}
-
-// swd32.exe 0x00484710 (unmatched in swd3e)
-int Movie::Width() const
-{
-    return this->decoder.IsOpen() ? this->width : 0;
-}
-
-// swd32.exe 0x00484720 (unmatched in swd3e)
-int Movie::Height() const
-{
-    return this->decoder.IsOpen() ? this->height : 0;
 }
 
 const std::string& Movie::Error() const

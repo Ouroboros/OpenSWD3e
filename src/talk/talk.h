@@ -136,7 +136,6 @@ public:
     void HandlePointer();
     void DrawColoredText(u16* pixels, int x, int y, int color, int shade, std::string_view text, int style);
     static bool ParseNumber(std::string_view text, int& value);
-    void ShowMessage(u16 role, std::u8string_view text);
     bool SetupDialog(
         TalkWindow& window,
         std::span<const u8> record,
@@ -178,9 +177,11 @@ public:
     i32 dialogTimed = 0;                       // swd32 0x004CF738 dialogTimeout applies
     i32 dialogCentred = 0;                     // swd32 0x004CF73C
     std::array<char, 0x20> dialogName = {};    // swd32 0x004CF6B8 the name plate
-    u32 lastCommand = 0;                       // swd32 0x004CF6D8
-    u32 waitLength = 0;                        // swd32 0x004CF6B0 command 0x43
-    u32 waitStart = 0;                         // swd32 0x004CF6B4
+    u32 lastCommand = 0;                       // 0x004F47E0
+    // 0x004F484C swd3e: set by command 0xD6, the next command 0x61 or 0xC4 leaves HUGE.lmf closed (once)
+    bool keepArchiveClosed = false;
+    u32 waitLength = 0;  // swd32 0x004CF6B0 command 0x43
+    u32 waitStart = 0;   // swd32 0x004CF6B4
 
 private:
     Operands OperandsOf(const EventRun& run) const;
@@ -207,8 +208,8 @@ private:
     bool PlaceRole(EventRun& run);
     int ReadNamePlate(u32 index, std::span<char> plate);
     bool LoadName(EventRun& run);
+    bool OpenNameBoxes(EventRun& run);
     bool OpenMapMovie(EventRun& run);
-    bool CopyMedia(EventRun& run);
     bool RunSceneCommand(EventRun& run);
     bool RunStateCommand(EventRun& run);
     bool RunSystemCommand(EventRun& run);

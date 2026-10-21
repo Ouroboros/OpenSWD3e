@@ -80,7 +80,7 @@ void Talk::RunEvent(Role& context)
 
         if (!story.Open(path, File::Disposition::OpenExisting, File::Access::Read))
         {
-            DebugLog(u8"SWD3-Talk 找不到 Talk%d", file + 1);  // 0x00427A1F (nullsub_1 with the text 0x004A1C00)
+            ErrorBox(this->game.errors, u8"SWD3-Talk", u8"找不到 Talk%d", file + 1);  // 0x004B2C30, 0x004B2C3C
             owner.Destroy();
             return;
         }
@@ -277,8 +277,17 @@ void Talk::SetStoryFlag(int flag, bool value)
 bool Talk::UnknownCommand(EventRun& run)
 {
     PlaySystemBeep();
-    // 0x0042B0A2 (nullsub_1 with the title 0x004A1738 and the text 0x004A1430)
-    DebugLog(u8"對話系統 沒有指令(%d,%x),(%d,%x)", static_cast<u16>(run.code), this->lastCommand);
+    // The text formats four values from the two passed; the original prints what lies on the stack after them, here
+    // 0 (deviations.md).
+    ErrorBox(
+        this->game.errors,
+        u8"對話系統",
+        u8"沒有指令(%d,%x),(%d,%x)",
+        static_cast<u16>(run.code),
+        this->lastCommand,
+        0,
+        0
+    );  // 0x004B2724, 0x004B240C
     return false;
 }
 
@@ -355,11 +364,13 @@ void Talk::EndEvent(EventRun& run)
             if (run.found >= GameState::Roles)
             {
                 // 0x0042D29D (nullsub_1 with the title 0x004A01B4 and the text 0x004A01C8)
-                DebugLog(
-                    u8"對話系統(TalkEnd) GUID(%d)\n陣列索引錯誤(crID %d) (manMax %d) ",
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(TalkEnd)",
+                    u8"GUID(%d)\n陣列索引錯誤(crID %d) (manMax %d) ",
                     run.found,
                     state.roleCount
-                );
+                );  // 0x004B11E0, 0x004B11F4
             }
 
             Role& role = state.roles[run.found];
@@ -626,7 +637,7 @@ bool Talk::MoveRoles(EventRun& run)
 
             if (!state.FindRoleOrPlayer(id, run.found))
             {
-                DebugLog(u8"Bmove 無效的角色\nGUID %d", id);  // the text 0x004A174C
+                ErrorBox(this->game.errors, u8"Bmove", u8"無效的角色\nGUID %d", id);  // 0x004B2730, 0x004B2738
                 continue;
             }
 
@@ -721,7 +732,8 @@ bool Talk::MoveRoles(EventRun& run)
 }
 
 // Commands 0x1D..0x21 and 0xB5..0xB9: a script variable (0..0x3F) set, raised, lowered (not below 0) or compared
-// (a jump when at least or at most the value); the second set takes a dword. The gold never stays negative.
+// (a jump when at least or at most the value); the second set takes a dword. The gold never stays negative; setting
+// variable 2 loads the talisman ghost it names (swd3e).
 bool Talk::ChangeVariable(EventRun& run)
 {
     Party& party = this->game.party;
@@ -735,7 +747,7 @@ bool Talk::ChangeVariable(EventRun& run)
 
     if (index < 0 || index >= Party::Variables)
     {
-        DebugLog(u8"對話系統 變數不合法(%d)(%d)\n", index, value);  // the title 0x004A1738, the text 0x0049F7C4
+        ErrorBox(this->game.errors, u8"對話系統", u8"變數不合法(%d)(%d)\n", index, value);  // 0x004B2724, 0x004AF3F8
         return false;
     }
 
@@ -747,6 +759,13 @@ bool Talk::ChangeVariable(EventRun& run)
         case EventCommand::SetVariable:
         case EventCommand::SetVariableWide:
             variable = value;
+
+            // swd3e: choosing the talisman ghost loads it from its slot of swdghost.dat.
+            if (index == static_cast<i32>(Party::GhostVariable))
+            {
+                this->game.talismanGhost.Load(this->game.config.installDirectory, u8"swdghost.dat", variable - 1);
+            }
+
             break;
 
         case EventCommand::AddVariable:
@@ -916,7 +935,7 @@ bool Talk::RunRoleCommand(EventRun& run)
 
             if (!state.FindRoleOrPlayer(id, run.found))
             {
-                DebugLog(u8"setpos 無效的角色\nGUID[%d]", id);  // nullsub_1 with the text 0x004A1B78
+                ErrorBox(this->game.errors, u8"setpos", u8"無效的角色\nGUID[%d]", id);  // 0x004B2BAC, 0x004B2BB4
                 this->Next(run);
 
                 if (static_cast<i32>(run.found) == state.playerRole)
@@ -971,11 +990,13 @@ bool Talk::RunRoleCommand(EventRun& run)
             }
             else
             {
-                DebugLog(
-                    u8"Talk(Step) 角色號碼(GUID:%d)不存在此地圖(%d)",
+                ErrorBox(
+                    this->game.errors,
+                    u8"Talk(Step)",
+                    u8"角色號碼(GUID:%d)不存在此地圖(%d)",
                     id,
                     owner.currentMap
-                );  // the text 0x004A1B4C
+                );  // 0x004B2B7C, 0x004B2B88
             }
 
             this->Next(run);
@@ -1445,11 +1466,13 @@ bool Talk::RunRoleCommand(EventRun& run)
 
             if (this->choice > count)
             {
-                DebugLog(
-                    u8"對話系統(BTN_JUMP) GUID(%d) 輸入值(%d)大於分支數量",
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(BTN_JUMP)",
+                    u8"GUID(%d) 輸入值(%d)大於分支數量",
                     this->Word(run, kCodeWord),
                     this->choice
-                );
+                );  // 0x004B2B30, 0x004B2B44
                 choice = 0;
             }
 
@@ -1513,7 +1536,13 @@ bool Talk::RunRoleCommand(EventRun& run)
 
                 if (act == 0)
                 {
-                    DebugLog(u8"對話系統(Chanmg_act) 請設定正確的圖列碼GUID(%d)act(%d)", id, 0);
+                    ErrorBox(
+                        this->game.errors,
+                        u8"對話系統(Chanmg_act)",
+                        u8"請設定正確的圖列碼GUID(%d)act(%d)",
+                        id,
+                        0
+                    );  // 0x004B2AC4, 0x004B2ADC
                 }
 
                 role.act.id = act;

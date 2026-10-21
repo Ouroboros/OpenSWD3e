@@ -301,37 +301,6 @@ void Talk::AppendWindow(std::unique_ptr<TalkWindow> window)
     *link = std::move(window);
 }
 
-// swd32.exe 0x0040AF70 (unmatched in swd3e): a message in a plain window (frame act 0x232D, 40 x 10 cells, no name)
-// over role `role`
-void Talk::ShowMessage(u16 role, std::u8string_view message)
-{
-    constexpr u16 kFrameAct = 0x232D;
-    constexpr u16 kCellX = 4;
-    constexpr u16 kCellY = 3;
-    constexpr u16 kColumns = 0x28;
-    constexpr u16 kRows = 0xA;
-    constexpr std::size_t kTextAt = kWordBytes * kSizedWords;  // the text after the header words
-    constexpr std::size_t kRecordBytes = 0x100;
-    const std::string text = Big5(message);
-    std::array<u8, kRecordBytes> record = {};
-    const std::array<u16, kSizedWords> header = {role, kFrameAct, kCellX, kCellY, kColumns, kRows};
-
-    for (std::size_t index = 0; index < header.size(); ++index)
-    {
-        record[kWordBytes * index] = static_cast<u8>(header[index]);
-        record[kWordBytes * index + 1] = static_cast<u8>(header[index] >> CHAR_BIT);
-    }
-
-    std::copy_n(
-        text.begin(),
-        std::min<std::size_t>(text.size(), record.size() - kTextAt - 1),
-        record.begin() + kTextAt
-    );
-    auto window = std::make_unique<TalkWindow>();
-    this->SetupDialog(*window, record, "", Talk::SizedLayout, 0, 0);
-    this->AppendWindow(std::move(window));
-}
-
 // swd3e.exe 0x0040B370: a talk window from a script record (role, frame act, place, text ending with "%Q"): the text is
 // copied into a 0x200-byte buffer, its names put in and measured; the size follows the text (16 x 6, 18 x 8 or 20 x 10
 // cells), a single line (option 0x10000), or the record (options 1 and 2); the window grows out of its speaker and is

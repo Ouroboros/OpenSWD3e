@@ -473,6 +473,19 @@ i32 Field::ScreenTop() const
     return this->cameraTop + this->screenY;
 }
 
+// swd3e.exe 0x00433650: HUGE.lmf opened again after a map movie or command 0xC2 closed it (the minimal installation's
+// from the CD after a CD check in the original; the rebuild reads the installation's, see deviations.md). A file that
+// cannot be opened is only logged.
+void Field::ReopenArchive()
+{
+    const std::u8string path = PathFormat("%s%s", {this->config.installDirectory, kLmf});
+
+    if (!this->cache.lmf.Open(path, File::Disposition::OpenExisting, File::Access::Read))
+    {
+        ErrorLog(u8"LMF can't open:%s", path);
+    }
+}
+
 // swd3e.exe 0x0042A7D0: map `map` of HUGE.lmf (MSF3; the CD's for the small installation): its header, the cached
 // unit of its pixels, the tiles (a word kept of each dword, one more than the map's), the blocks, the regions, the
 // object table, the roles, the overlays and the depth scale. False on a missing file or map (a missing map also ends
