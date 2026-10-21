@@ -178,7 +178,10 @@ public:
         Fireflies = 0x16,
         Unk17 = 0x17,           // cleared by a new game
         EventUnderfoot = 0x18,  // swd3e: a step runs the event of the cell under the controlled role (0x00402AA0)
-        InParty = 0x1E,         // 0x1E..0x21: the four roles are in the party
+        // swd3e: cleared on entering a map, set by a first visit listed in maps.dat's table 0x19; the talisman ghost
+        // then appears beside the controlled role (0x0040C570)
+        GhostAppears = 0x19,
+        InParty = 0x1E,  // 0x1E..0x21: the four roles are in the party
         NoLoadingScreen = 0x46,
         PlainScreen = 0x48,   // the spotlight, the bubbles, the ripples and the screen effects are off
         SwappedPages = 0x49,  // the menu shows its pages in the other order

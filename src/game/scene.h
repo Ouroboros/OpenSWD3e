@@ -296,9 +296,10 @@ struct Scene
     };
 
     // `playerHold`: the controlled role does not move while it is nonzero.
-    static constexpr i32 HoldLocked = 0x8000;     // set by the talk commands that hold it
-    static constexpr i32 HoldCountMask = 0x7FFF;  // the blocking talk windows still open
-    static constexpr u16 WeatherFirstAction = 0x40;
+    static constexpr i32 HoldLocked = 0x8000;            // set by the talk commands that hold it
+    static constexpr i32 HoldCountMask = 0x7FFF;         // the blocking talk windows still open
+    static constexpr u16 GlowWeatherFirstAction = 0x60;  // swd3e (swd32: 0x40 for both)
+    static constexpr u16 ShadeWeatherFirstAction = 0x40;
     static constexpr u16 GlowWeatherActions = 4;   // the weather added to the screen
     static constexpr u16 ShadeWeatherActions = 8;  // the weather subtracted from it
     static constexpr int SpotlightRadius = 0xC0;   // half the side of the lit square
@@ -403,7 +404,6 @@ struct Scene
     std::array<i32, 0x20> trailX = {};                 // swd32 0x004B7A18
     i32 layerTiles = 0;                                // swd32 0x004B7A98 the tiles of a layer
     std::array<i32, 8> followers = {};                 // swd32 0x004B7C8C the roles following the leader
-    i32 weatherKind = 0;                               // 0x004D183C
     std::array<MapParticle, 4> leaves = {};            // 0x004D1C40 (x MapParticle::Unplaced: to be placed)
     i32 layerOffset = 0;                               // 0x004D1C84 the first tile of the layer shown
     i32 mapStory = 0;        // swd32 0x004B88C0 bit 15: the leader takes the story act; below it the followers' story

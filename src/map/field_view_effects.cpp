@@ -280,7 +280,7 @@ void FieldView::DrawWeather()
             motion.speedTarget = roll / kWeatherSpeedStep + 1;
             motion.action = view.weatherAction + roll * view.weatherActions / kPerMille;
 
-            switch (view.weatherKind)
+            switch (owner.field.shadowKind)
             {
                 case kWeatherFromBelow:
                     drop.x = static_cast<i32>(random.Below(static_cast<u32>(MapHeader::TileSize * width)));

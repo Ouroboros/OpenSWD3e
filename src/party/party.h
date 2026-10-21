@@ -127,8 +127,9 @@ public:
     static constexpr int ExperienceStat = 0xE;
     static constexpr int TotalExperienceStat = 0xF;
     static constexpr int LevelStat = 0x10;
-    static constexpr std::size_t Gold = 0;      // the variable that holds the gold
-    static constexpr int FirstRoleFlag = 0x1E;  // story flag FirstRoleFlag + n: party role n has joined
+    static constexpr std::size_t Gold = 0;           // the variable that holds the gold
+    static constexpr std::size_t GhostVariable = 2;  // swd3e: the talisman ghost chosen (1..5, 0: none)
+    static constexpr int FirstRoleFlag = 0x1E;       // story flag FirstRoleFlag + n: party role n has joined
     // The variables talk command VariableNamePlate may name a plate by.
     static constexpr u16 FirstNameVariable = 0xB;
     static constexpr u16 SecondNameVariable = 0xC;

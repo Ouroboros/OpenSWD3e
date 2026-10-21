@@ -9,6 +9,7 @@
 #include <SDL3/SDL.h>
 
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/fault.h"
 #include "core/format.h"
 #include "core/words.h"
@@ -37,10 +38,9 @@ constexpr u8 kOverlaysFirst = 0x80;
 
 constexpr int kSceneFadeLength = 0xF;  // the fade of the scene music when the map changes it
 constexpr int kLoadingAction = 0x4F;
-constexpr int kLoadingBarWidth = 0x18A;
+constexpr int kLoadingBarWidth = 0x174;
 constexpr std::size_t kScreenBytes = sizeof(Pixel) * Display::Pixels;
 constexpr u16 kPartyLeader = 1;
-constexpr u16 kSpecialItem = 0x192;
 
 // The loading screen: the bar shades from (kBarRed, kBarGreen, kBarBlue) by the steps per column in 1/kColorFraction
 // (8-bit channels, kChannelDrop bits dropped for the display); the runner walks at its end.
@@ -48,21 +48,22 @@ constexpr int kLoadingStart = -1;
 constexpr int kLoadingSettings = 2;  // the progress of LoadCity
 constexpr int kLoadingCleared = 10;
 constexpr int kLoadingNamed = 85;
-constexpr int kLoadingPlaced = 90;
-constexpr int kLoadingCentered = 95;
+constexpr int kLoadingWeather = 90;
+constexpr int kLoadingRoles = 95;
 constexpr int kLoadingDone = 100;
 constexpr u32 kRunners = 2;  // the runner is act 1 or 2
 constexpr i32 kBarRed = 0x1F;
 constexpr i32 kBarGreen = 0x73;
 constexpr i32 kBarBlue = 0xFF;
-constexpr int kBarRedStep = 0x246;
-constexpr int kBarGreenStep = 0xDA;
-constexpr int kBarBlueFall = 0x296;
+constexpr int kBarRedStep = 0x268;
+constexpr int kBarGreenStep = 0xE7;
+constexpr int kBarBlueFall = 0x2BD;
 constexpr int kColorFraction = 0x400;
 constexpr int kChannelDrop = 3;
 constexpr int kBarLeft = 0x7B;
 constexpr int kBarTop = 0x1BD;
 constexpr int kBarHeight = 0x1E;
+constexpr u16 kLoadingPicture = 0x23AF;  // swd3e: the picture of the bar, drawn straight
 constexpr int kPictureX = 0x78;
 constexpr int kPictureY = 0x1BA;
 constexpr int kStartPictureY = 0xCA;  // the picture before the screen is cleared
@@ -82,11 +83,14 @@ constexpr int kStartDrift = 2;
 constexpr u16 kEveryMapRole = 10000;  // records of these roles (and of none) belong to every map
 constexpr u16 kEveryMapRole2 = 10001;
 constexpr u16 kLeaderFlags = Role::Visible | Role::Solid | Role::StepsAct | Role::CellEffects;
-constexpr u16 kStoryActMark = 0x8000;  // in mapStory: the party leader takes a story act
-constexpr i32 kLeaderStoryAct = 0x60;
-constexpr i32 kLeaderSpecialAct = 0x5F;  // with kSpecialItem on the maps of the journey
-constexpr u32 kFollowUnlisted = 1;       // a flagged role not in the follower table follows
-constexpr u32 kFollowStory = 2;          // a listed one follows for the story values it lists
+constexpr u16 kStoryActMark = 0x8000;            // in mapStory: the party leader takes a story act
+constexpr std::size_t kFirstVisitPairBytes = 4;  // table 0x19: a map and a story flag
+constexpr i32 kGhostFirstAct = 0x5A;             // the talisman ghost's act: its variable added to it
+constexpr i32 kGhostAction = 1;
+constexpr float kGhostUnk14 = 2.0F;  // GhostFollower::Spawn's last two values
+constexpr float kGhostUnk18 = 4.0F;
+constexpr std::u8string_view kLoadMapTitle = u8"載入地圖";  // 0x004B0F7C
+constexpr std::u8string_view kRolesTitle = u8"讀取路人";    // 0x004B0ED0
 
 constexpr int kSoundRange = 0x200;  // pixels a map sound is heard within
 constexpr int kSoundScale = 0x80;
@@ -103,8 +107,8 @@ constexpr i32 kTileMask = 0xF;       // ReleaseRole: the pixels within a tile
 
 }  // namespace
 
-// swd3e.exe 0x0040F0D0: the loading screen: a bar of `percent` (its colour shading along it) under the picture of act
-// 0x232A, a random runner (1 or 2) at its end; -1 starts it, 100 ends it. Nothing while flag 0x46 is set.
+// swd3e.exe 0x0040F0D0: the loading screen: a bar of `percent` (its colour shading along it) under picture 0x23AF, a
+// random runner (1 or 2) at its end; -1 starts it, 100 ends it. Nothing while flag 0x46 is set.
 void Game::ShowLoading(int percent)
 {
     Scene& view = this->scene;
@@ -160,12 +164,7 @@ void Game::ShowLoading(int percent)
         }
 
         this->loadingPercent = shown;
-        view.loadingPicture.id = Scene::InterfaceAct;
-        view.loadingPicture.action = kLoadingAction;
-        view.loadingPicture.direction = 0;
-        view.loadingPicture.x = 0;
-        view.loadingPicture.y = 0;
-        this->actDrawer.Draw(view.loadingPicture, kPictureX, kPictureY);
+        this->actDrawer.DrawPicture(kLoadingPicture, 0, kPictureX, kPictureY);
         this->loadingAct.id = this->loadingRunner;
         this->loadingAct.action = Role::RunAction;
         this->loadingAct.direction = ActState::Right;
@@ -378,8 +377,8 @@ bool Game::MapName(int map, std::string& name) const
     return true;
 }
 
-// swd3e.exe 0x0040D7C0: changes the record of role `id` in maps.dat's role table (0xFFFF leaves a value; the act's
-// new action clears its step); false when the table lacks it
+// swd3e.exe 0x0040D7C0: changes the record of role `id` in maps.dat's role table (0xFFFF leaves a value, 0x8080 the
+// role variables; the act's new action clears its step); false when the table lacks it
 bool Game::UpdateRoleRecord(
     u16 id,
     i16 act,
@@ -391,7 +390,8 @@ bool Game::UpdateRoleRecord(
     i16 talk,
     i16 setBits,
     i16 clearBits,
-    i16 map
+    i16 map,
+    i16 variables
 )
 {
     std::vector<u8>& data = this->databases.mapsData;
@@ -470,6 +470,11 @@ bool Game::UpdateRoleRecord(
                 put(MapsRecord::RoleMap, map);
             }
 
+            if (variables != Game::KeepVariables)
+            {
+                put(MapsRecord::RoleVariables, variables);
+            }
+
             return true;
         }
     }
@@ -517,8 +522,10 @@ void Game::SaveRoleStates(i16 x, i16 y)
                                     static_cast<u32>(MapHeader::TileSize * this->state.map.width) ||
                                 move.y > MapHeader::TileSize * this->state.map.height)
                             {
-                                DebugLog(
-                                    u8"角色回寫 角色(%d)\n終點位置(%d,%d)\n不在地圖(%d,%d)內",
+                                ErrorBox(
+                                    this->errors,
+                                    u8"角色回寫",
+                                    u8"角色(%d)\n終點位置(%d,%d)\n不在地圖(%d,%d)內",
                                     copy.id,
                                     move.x,
                                     move.y,
@@ -628,16 +635,17 @@ void Game::FollowLeader(int index)
 // deviations.md)
 
 // swd3e.exe 0x0040C570: enters map `map` with the leader at (x, y) tiles in act `act`, action and direction. The map's
-// settings (table 3: its unit of HUGE.lmf, the story flags of its effects, its speeds), the music, the old map's roles
+// settings (table 3: its unit of HUGE.lmf, its kind, the story flags of its effects, its speeds and tints), the music,
+// the talisman ghost removed, the story flags of table 0x19 for a first visit (with flag 0x19), the old map's roles
 // written back (option bit 0), every scene list and role cleared, the map loaded (8-bit maps take their palette from
-// the unit), its name, the weather, the encounter areas, the roles of maps.dat's role table on this map (the leader
-// moved to the entrance, followers, marks), the camera. A map missing from the tables ends the game.
+// the unit), its name, the weather, the encounter areas, then the roles of maps.dat's role table on this map: the
+// leader moved to the entrance and made the controlled role with its trail (the ghost appears with it after flag
+// 0x19), followers, bubbles; the roles enter, the camera is centred. A map missing from the tables ends the game.
 void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, int options)
 {
     Scene& view = this->scene;
     GameState& game = this->state;
-    const int previous = this->currentMap;
-    LogInfo(u8"map %d at (%d, %d) from map %d", map, x, y, previous);
+    LogInfo(u8"map %d at (%d, %d) from map %d", map, x, y, this->currentMap);
     game.ClearFrameInterval();
 
     if (this->drawSurface != nullptr)
@@ -652,7 +660,6 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
     }
 
     view.screenFlags = 0;
-    this->AudioPump();
     game.ClearGameFlag(GameState::Weather);
     game.ClearGameFlag(GameState::Leaves);
 
@@ -676,10 +683,9 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
     view.spotlightStepX = 0;
     view.spotlightStepY = 0;
     this->acts.CloseAll();
-    this->archive.CloseAll();
+    this->archive.Flush();
     this->audio.StopAllSounds();
-    this->audioDevice.Serve();
-    const std::vector<u8>& data = this->databases.mapsData;
+    std::vector<u8>& data = this->databases.mapsData;
     u16 unit = MapsRecord::TableEnd;
 
     for (u32 at = MapsTable(data, MapsDataTable::MapSettings); MapsWord(data, at) != MapsRecord::TableEnd;
@@ -694,7 +700,7 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
         const u8 kind = data[at + MapsRecord::SettingsKindAt];
         const u8 effects = data[at + MapsRecord::SettingsEffectsAt];
         const u16 speeds = MapsWord(data, at + MapsRecord::SettingsSpeedsAt);
-        view.weatherKind = kind & kNibbleMask;
+        this->field.shadowKind = kind & kNibbleMask;
         view.mapWalkSpeed = data[at + MapsRecord::SettingsSpeedsAt] & kNibbleMask;
         view.layerFrames = MapsWord(data, at + MapsRecord::SettingsUnk49E0BCAt);
         view.encounterGroup = MapsWord(data, at + MapsRecord::SettingsUnk4B896CAt);
@@ -707,7 +713,7 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
             game.SetGameFlag(GameState::OverlaysFirst);
         }
 
-        view.weatherAction = Scene::WeatherFirstAction;
+        view.weatherAction = Scene::GlowWeatherFirstAction;
         view.weatherActions = Scene::GlowWeatherActions;
         game.ClearGameFlag(GameState::Weather);
 
@@ -719,7 +725,7 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
         if ((effects & kShadeWeather) != 0)
         {
             game.SetGameFlag(GameState::Weather);
-            view.weatherAction = Scene::WeatherFirstAction;
+            view.weatherAction = Scene::ShadeWeatherFirstAction;
             view.weatherActions = Scene::ShadeWeatherActions;
         }
 
@@ -759,7 +765,7 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
         if (!view.encounterGroups.empty() &&
             static_cast<i16>(view.encounterGroup) > static_cast<i16>(view.encounterGroups.front()))
         {
-            DebugLog(u8"載入地圖 錯誤的戰鬥機率組[%d]", view.encounterGroup);
+            ErrorBox(this->errors, kLoadMapTitle, u8"錯誤的戰鬥機率組[%d]", view.encounterGroup);  // 0x004B0F88
             view.encounterGroup = 1;
         }
 
@@ -767,16 +773,29 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
     }
 
     this->MusicZone(map);
+    this->ghostFollower.Remove();
+    game.ClearGameFlag(GameState::GhostAppears);
+
+    // Table 0x19 (swd3e): pairs of a map and a story flag, ended by map 0. A first visit sets the flag and 0x19.
+    for (u32 at = MapsTable(data, MapsDataTable::FirstVisitFlags); MapsWord(data, at) != 0; at += kFirstVisitPairBytes)
+    {
+        const u16 flag = MapsWord(data, at + sizeof(u16));
+
+        if (MapsWord(data, at) == static_cast<u16>(map) && !game.GameFlag(flag))
+        {
+            game.SetGameFlag(flag);
+            game.SetGameFlag(GameState::GhostAppears);
+        }
+    }
 
     if (unit == MapsRecord::TableEnd)
     {
-        DebugLog(u8"遊戲初始 找不到設定的起始地圖碼 (%d)", map);
+        ErrorBox(this->errors, u8"遊戲初始", u8"找不到設定的起始地圖碼 (%d)", map);  // 0x004B0F54, 0x004B0F60
         this->Destroy();
         return;
     }
 
     this->ShowLoading(kLoadingSettings);
-    this->AudioPump();
     this->currentMap = map;
     view.layerDirection = 1;
     game.SetGameFlag(map + GameState::MapEntered);
@@ -814,17 +833,15 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
         move.Clear();
     }
 
-    this->audioDevice.Serve();
     this->field.overlays.reset();
     this->notices.head.next.reset();
     this->ShowLoading(kLoadingCleared);
-    this->AudioPump();
     game.roleCount = 1;
     this->field.palette.clear();
 
     if (!this->field.LoadMap(unit, this->systemFlags))
     {
-        DebugLog(u8"載入地圖 過程發生錯誤");
+        ErrorBox(this->errors, kLoadMapTitle, u8"過程發生錯誤");  // 0x004B0F44
         this->Destroy();
         return;
     }
@@ -851,14 +868,14 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
 
     if (!this->MapName(this->currentMap, name))
     {
-        DebugLog(u8"讀取地圖名稱 MapName.txt中找不到地圖[%d]名稱", unit);
+        ErrorBox(this->errors, u8"讀取地圖名稱", u8"MapName.txt中找不到地圖[%d]名稱", unit);  // 0x004B0EF8, 0x004B0F08
         name = Big5(Game::UnknownPlace);
     }
 
     header.name = {};
     std::copy_n(name.begin(), std::min(name.size(), header.name.size() - 1), header.name.begin());
     this->ShowLoading(kLoadingNamed);
-    this->AudioPump();
+    this->ShowLoading(kLoadingWeather);
 
     if (game.GameFlag(GameState::Weather))
     {
@@ -882,44 +899,9 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
     view.mapRight = MapHeader::TileSize * header.width;
     view.mapBottom = MapHeader::TileSize * header.height;
     this->BuildTriggers(view.triggers);
-    view.followerCount = 1;
-    this->PlaceRoles(map, x, y, act, action, direction, previous);
-    this->ShowLoading(kLoadingPlaced);
-    this->AudioPump();
-
-    for (int index = 1; index < game.roleCount; ++index)
-    {
-        this->InitRole(game.roles[static_cast<std::size_t>(index)]);
-    }
-
-    this->field.CenterCamera();
-    DebugLog(
-        u8"\n"
-        u8"MapName[%s] id[%d]",
-        std::string_view(header.name.data(), header.name.size()),
-        this->currentMap
-    );
-    DebugLog(
-        u8"\n"
-        u8"TotalRole[%d]",
-        game.roleCount
-    );
-    this->ShowLoading(kLoadingCentered);
-    this->ShowLoading(kLoadingDone);
-    game.SetFrameInterval(Game::FrameInterval);
-}
-
-// The roles of maps.dat's role table on map `map` (part of 0x0040C130): records repeating an earlier role are skipped,
-// records of no role and of roles 10000 and 10001 belong to every map; the leader is moved to the entrance and becomes
-// the controlled role with its trail; roles past the map's edge are moved inside and left out; the party leader takes
-// its act from the story; flagged roles follow the leader unless the story lists them; roles with flag 9 get a mark.
-void Game::PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction, int previous)
-{
-    GameState& game = this->state;
-    Scene& view = this->scene;
-    std::vector<u8>& data = this->databases.mapsData;
     const std::size_t table = view.rolesTable;
-    const MapHeader& header = game.map;
+    this->ShowLoading(kLoadingRoles);
+    view.followerCount = 1;
 
     auto word = [&data, table](std::size_t index)
     {
@@ -947,7 +929,12 @@ void Game::PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction,
         {
             if (word(record + MapsRecord::RoleId) == word(earlier * MapsRecord::RoleWords + MapsRecord::RoleId))
             {
-                DebugLog(u8"讀取路人 重複定義角色(%d)", word(earlier * MapsRecord::RoleWords + MapsRecord::RoleId));
+                ErrorBox(
+                    this->errors,
+                    kRolesTitle,
+                    u8"重複定義角色(%d)",
+                    word(earlier * MapsRecord::RoleWords + MapsRecord::RoleId)
+                );  // 0x004B0EDC
                 record += MapsRecord::RoleWords;
             }
         }
@@ -959,9 +946,8 @@ void Game::PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction,
             put(record + MapsRecord::RoleMap, static_cast<u16>(map));
         }
 
-        if (static_cast<i32>(id) == this->partyLeaderId)
+        if (static_cast<i32>(word(record + MapsRecord::RoleId)) == this->partyLeaderId)
         {
-            this->AudioPump();
             put(record + MapsRecord::RoleMap, static_cast<u16>(map));
             put(record + MapsRecord::RoleAct, static_cast<u16>(act));
             put(record + MapsRecord::RoleAction, static_cast<u16>(action));
@@ -972,13 +958,13 @@ void Game::PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction,
             put(record + MapsRecord::RolePath, 0);
             put(record + MapsRecord::RoleStep, 0);
             put(record + MapsRecord::RoleFlags, kLeaderFlags);
-            game.playerRole = placed + game.roleCount;
-            view.followers[0] = placed + game.roleCount;
+            game.playerRole = game.roleCount + placed;
+            view.followers[0] = game.roleCount + placed;
             view.trailY.fill(MapHeader::TileSize * y);
             view.trailX.fill(MapHeader::TileSize * x);
         }
 
-        if (static_cast<int>(word(record)) != map)
+        if (static_cast<int>(word(record + MapsRecord::RoleMap)) != map)
         {
             record += MapsRecord::RoleWords;
             continue;
@@ -986,13 +972,16 @@ void Game::PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction,
 
         const u16 column = word(record + MapsRecord::RoleColumn);
         const u16 row = word(record + MapsRecord::RoleRow);
-        const int slot = placed + game.roleCount;
+        const int slot = game.roleCount + placed;
 
+        // The rebuild also leaves out a role past the last slot (deviations.md).
         if (column > static_cast<u32>(header.width) || row > static_cast<u32>(header.height) ||
             slot >= GameState::Roles)
         {
-            DebugLog(
-                u8"讀取路人 地圖(%d)啟動對話(%d)\n路人(%d)位置超出地圖\n地圖(%d,%d)\n路人(%d,%d)",
+            ErrorBox(
+                this->errors,
+                kRolesTitle,
+                u8"地圖(%d)啟動對話(%d)\n路人(%d)位置超出地圖\n地圖(%d,%d)\n路人(%d,%d)",
                 map,
                 game.leader.event,
                 word(record + MapsRecord::RoleId),
@@ -1000,7 +989,7 @@ void Game::PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction,
                 header.height,
                 column,
                 row
-            );
+            );  // 0x004B0E68
             put(record + MapsRecord::RoleColumn, static_cast<u16>(header.width - 1));
             put(record + MapsRecord::RoleRow, static_cast<u16>(header.height - 1));
             record += MapsRecord::RoleWords;
@@ -1027,82 +1016,46 @@ void Game::PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction,
         this->LoadRoleSound(role);
         this->field.InsertRole(role, static_cast<int>(role.flags & Role::LayerMask));
 
-        if (role.id == kPartyLeader)
+        if (role.id == kPartyLeader && game.GameFlag(GameState::GhostAppears) &&
+            this->party.variables[Party::GhostVariable] != 0)
         {
-            if (previous == Field::DemonRefiningPot && this->currentMap != Field::DemonRefiningPot &&
-                view.warpLeaderAct != 0)
-            {
-                role.act.id = view.warpLeaderAct;
-            }
-
-            if ((view.mapStory & kStoryActMark) != 0)
-            {
-                role.act.id = kLeaderStoryAct;
-
-                if (this->currentMap == Field::TwoRiversPlain || this->currentMap == Field::WesternRegions ||
-                    this->currentMap == Field::MediterraneanEastCoast)
-                {
-                    for (const ItemNode* item = this->party.inventory.get(); item != nullptr; item = item->next.get())
-                    {
-                        if (item->id == kSpecialItem)
-                        {
-                            role.act.id = kLeaderSpecialAct;
-                            break;
-                        }
-                    }
-                }
-            }
+            this->ghostFollower.Spawn(
+                this->party.variables[Party::GhostVariable] + kGhostFirstAct,
+                kGhostAction,
+                static_cast<float>(static_cast<u32>(role.x)),
+                static_cast<float>(static_cast<u32>(role.y)),
+                kGhostUnk14,
+                kGhostUnk18
+            );
         }
 
         if ((role.flags & Role::Follower) != 0)
         {
-            u32 follow = kFollowUnlisted;
-            const u32 story = static_cast<u32>(view.mapStory) & ~kStoryActMark;
+            this->FollowLeader(slot);
+            role.flags |= Role::Visible;
 
-            for (std::size_t list = MapsTable(data, MapsDataTable::Followers);
-                 MapsWord(data, list) != MapsRecord::TableEnd;
-                 list += MapsRecord::FollowerBytes)
+            if (this->currentMap == Field::DemonRefiningPot || (view.mapStory & kStoryActMark) != 0)
             {
-                if (MapsWord(data, list) == role.id)
-                {
-                    follow &= ~kFollowUnlisted;
-
-                    for (std::size_t value = 1; value <= MapsRecord::FollowerStories; ++value)
-                    {
-                        if (story == MapsWord(data, list + sizeof(u16) * value))
-                        {
-                            follow |= kFollowStory;
-                        }
-                    }
-                }
-            }
-
-            if (follow != 0)
-            {
-                this->FollowLeader(slot);
-                role.flags |= Role::Visible;
-
-                if (this->currentMap == Field::DemonRefiningPot || (view.mapStory & kStoryActMark) != 0)
-                {
-                    role.flags &= ~Role::Visible;
-                }
+                role.flags &= ~Role::Visible;
             }
         }
 
-        if ((role.flags & Role::Bubbles) != 0 && mark >= view.marks.size())
+        if ((role.flags & Role::Bubbles) != 0)
         {
-            DebugLog(u8"讀取路人 地圖(%d)定義煙囪物件數量超過四個", map);
-        }
-
-        if ((role.flags & Role::Bubbles) != 0 && mark < view.marks.size())
-        {
-            RoleMark& entry = view.marks[mark++];
-            entry.role = role.id;
-            entry.x = static_cast<u16>(role.x);
-            entry.y = static_cast<u16>(role.y);
-            entry.unk08 = 0;
-            entry.flags = 0;
-            entry.unk0E = 0;
+            if (mark >= view.marks.size())
+            {
+                ErrorBox(this->errors, kRolesTitle, u8"地圖(%d)定義煙囪物件數量超過四個", map);  // 0x004B0EAC
+            }
+            else
+            {
+                RoleMark& entry = view.marks[mark++];
+                entry.role = role.id;
+                entry.x = static_cast<u16>(role.x);
+                entry.y = static_cast<u16>(role.y);
+                entry.unk08 = 0;
+                entry.flags = 0;
+                entry.unk0E = 0;
+            }
         }
 
         record += MapsRecord::RoleWords;
@@ -1110,6 +1063,26 @@ void Game::PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction,
     }
 
     game.roleCount += placed;
+    this->ShowLoading(kLoadingDone);
+
+    for (int index = 1; index < game.roleCount; ++index)
+    {
+        this->InitRole(game.roles[static_cast<std::size_t>(index)]);
+    }
+
+    this->field.CenterCamera();
+    DebugLog(
+        u8"\n"
+        u8"MapName[%s] id[%d]",
+        std::string_view(header.name.data(), header.name.size()),
+        this->currentMap
+    );
+    DebugLog(
+        u8"\n"
+        u8"TotalRole[%d]",
+        game.roleCount
+    );
+    game.SetFrameInterval(Game::FrameInterval);
 }
 
 // swd3e.exe 0x0040D720: a role written into its record of maps.dat's role table (its act, place in tiles, event, talk,
@@ -1126,10 +1099,12 @@ void Game::StoreRole(const Role& role)
         {
             if (this->state.GameFlag(GameState::DebugReports))
             {
-                DebugLog(
-                    u8"!!! 警告 !!! 角色編號(%d)\n資料歸鍵時\n找不到符合的位置\n可能是定義錯誤或是角色不存在了",
+                ErrorBox(
+                    this->errors,
+                    u8"!!! 警告 !!!",
+                    u8"角色編號(%d)\n資料歸鍵時\n找不到符合的位置\n可能是定義錯誤或是角色不存在了",
                     role.id
-                );
+                );  // 0x004B0FE0, 0x004B0FF0
             }
 
             return;

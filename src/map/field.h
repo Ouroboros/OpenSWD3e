@@ -133,11 +133,13 @@ public:
     u32 unitBase = 0;                             // 0x004F01B8 the map in HUGE.lmf
     std::array<MapObject, Objects> objects = {};  // 0x004F0DBC, 0x004F25BC, 0x004F19BC, 0x004F31BC
     MapScale scale;                               // 0x004F3DC0
-    i32 shadowKind = 0;                           // 0x004D183C the map header's, how the roles' shadows fall
-    i32 cameraLeft = 0;                           // 0x004C5118
-    i32 cameraTop = 0;                            // 0x004C511C
-    i32 cameraRight = 0;                          // 0x004C5120
-    i32 cameraBottom = 0;                         // 0x004C5124
+    // 0x004D183C the map's kind: set from maps.dat table 3 by LoadCity, then from the MSF3 header by LoadMap; how the
+    // roles' shadows fall and where the weather comes from
+    i32 shadowKind = 0;
+    i32 cameraLeft = 0;    // 0x004C5118
+    i32 cameraTop = 0;     // 0x004C511C
+    i32 cameraRight = 0;   // 0x004C5120
+    i32 cameraBottom = 0;  // 0x004C5124
     // The rebuild (deviations.md): the canvas the map is drawn to, which the camera spans (the 640x480 screen unless
     // the map fills the window), and where the game's 640x480 screen lies on it (the interface is drawn there).
     i32 viewWidth = Display::Width;

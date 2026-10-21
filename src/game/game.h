@@ -310,7 +310,9 @@ private:
     void BuildTriggers(MapTrigger& head);
     void InitRole(Role& role);
     bool MapName(int map, std::string& name) const;
-    static constexpr i16 KeepValue = -1;      // an UpdateRoleRecord argument that leaves its field
+    static constexpr i16 KeepValue = -1;  // an UpdateRoleRecord argument that leaves its field
+    // swd3e: UpdateRoleRecord's `variables` (the role variables word) left as it is
+    static constexpr i16 KeepVariables = static_cast<i16>(0x8080);
     static constexpr u32 ClockFrames = 0x14;  // frames between the ticks of Party::clock, less one
     bool UpdateRoleRecord(
         u16 id,
@@ -323,7 +325,8 @@ private:
         i16 talk,
         i16 setBits,
         i16 clearBits,
-        i16 map
+        i16 map,
+        i16 variables = Game::KeepVariables
     );
     void SaveRoleStates(i16 x, i16 y);
     void ReleaseRole(int index);
@@ -331,7 +334,6 @@ private:
     void FollowLeader(int index);
     static constexpr int SaveRoles = 1;  // LoadCity option: the roles of the map left are written back
     void LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, int options);
-    void PlaceRoles(int map, int x, int y, i16 act, i16 action, i16 direction, int previous);
     void Destroy();
     void DrawPauseBanner();
     static int CheckStart();

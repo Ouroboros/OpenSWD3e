@@ -148,7 +148,7 @@ enum class MapsDataTable : int
     ExitWarps = 0x16,  // 0x0043BE40
     Towns = 0x17,      // 0x0043BE90
     Unk18 = 0x18,
-    Followers = 0x19,
+    FirstVisitFlags = 0x19,  // swd3e: a map and a story flag set on its first visit (swd32: the followers)
 };
 
 // The offset of `table` of maps.dat (the dwords at its start); `entry` picks among the per-role tables.
