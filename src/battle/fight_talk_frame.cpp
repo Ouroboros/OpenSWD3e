@@ -14,7 +14,8 @@ namespace swd3e
 namespace
 {
 
-constexpr u16 kTalkEnd = 0xFFFF;  // FightTalkFrame: the commands of the battle talk
+constexpr int kBattleMusicId = 1;  // the id the battle tune plays as (MusicQueue::SetSlot)
+constexpr u16 kTalkEnd = 0xFFFF;   // FightTalkFrame: the commands of the battle talk
 constexpr u16 kTalkWait = 1;
 constexpr u16 kTalkWindow = 2;
 constexpr u16 kTalkStep = 3;
@@ -2701,7 +2702,8 @@ int Game::FightTalkAddLoot()
 }
 
 // Command 0x3C of FightTalkFrame (inline in the original): the battle music becomes music\<name> (the text after it,
-// ended by %Q).
+// ended by %Q): the music stops, the tune becomes the third list and plays at once; BattleIntro then keeps it
+// (BattleState::MusicGiven).
 int Game::FightTalkMusic()
 {
     BattleState& battle = this->battleState;
@@ -2729,9 +2731,13 @@ int Game::FightTalkMusic()
     talk.textAt += length + 2;
     talk.cursor = talk.textAt;
     battle.battleMusic = PathFormat("%smusic\\%s", {this->config.installDirectory, std::string_view(name.c_str())});
-    this->audio.StopMusic();
-    this->PlayMusic(battle.battleMusic);
-    this->audio.SetMusicVolume(this->config.musicVolume);
+    MusicQueue& queue = this->audio.Queue();
+    queue.Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
+    queue.SetSlot(battle.battleMusic, kBattleMusicId, 0, MusicQueue::ThirdList);
+    queue.Switch(MusicQueue::ThirdList, MusicQueue::RepeatList, 0);
+    queue.SetVolume(MusicQueue::MaxVolume * this->config.musicVolume / Config::MaxVolume);
+    this->AudioPump();
+    battle.panelFlags |= BattleState::MusicGiven;
     return 1;
 }
 

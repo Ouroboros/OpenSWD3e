@@ -35,6 +35,7 @@ constexpr int kTooManySteps = 5000;  // more steps than the volume: the step sta
 constexpr std::size_t kFormAt = 8;   // a rebuilt RIFF image: "WAVEfmt " after the RIFF header, "data" after the format
 constexpr std::size_t kDataAt = 0x24;
 constexpr int kMixFrames = 256;
+constexpr int kTuneId = 0x1E;
 constexpr int kMusicVolume = 0x60;
 constexpr int kFadeFrames = 3;
 constexpr int kMidiVolume = 100;
@@ -99,16 +100,17 @@ TEST_CASE("audio: all.snd index, RIFF rebuild and sample bookkeeping")
     std::vector<i16> mixed;
     device.Mix(mixed, kMixFrames);
     CHECK_EQ(mixed.size(), static_cast<std::size_t>(kMixFrames) * swd3e::kMixChannels);
-    CHECK_EQ(audio.StopSound(static_cast<swd3e::u16>(id)), 1);
+    CHECK_EQ(audio.StopSound(static_cast<swd3e::u16>(id)), 0);
     CHECK(effects.Find(id) == nullptr);
     CHECK(effects.Close());
 }
 
-TEST_CASE("audio: music stream plays, fades out and is retired")
+TEST_CASE("audio: the music queue plays a list, fades it out on a switch and goes silent")
 {
     using swd3e::AudioManager;
+    using swd3e::MusicQueue;
 
-    if (swd3etest::ReadGameFile("Music/Battle_Arab01.mp3").empty())
+    if (swd3etest::ReadGameFile("Music/Battle01.mp3").empty())
     {
         std::printf("  (music not found, skipped)\n");
         return;
@@ -118,22 +120,28 @@ TEST_CASE("audio: music stream plays, fades out and is retired")
     swd3e::AudioDevice device;
     AudioManager audio(device);
     CHECK(audio.Streams().Open());
-    const std::u8string file = swd3etest::GameFile("Music/Battle_Arab01.mp3");
-    CHECK_EQ(audio.Streams().Play(file, AudioManager::MusicId, kMusicVolume, 0), AudioManager::MusicId);
-    CHECK(!audio.IsMusicStopped());
-    CHECK_EQ(audio.Streams().Play(file, AudioManager::MusicId, kMusicVolume, 0), 0);
-    CHECK_EQ(audio.SetMusicVolume(swd3e::Config::MaxVolume), swd3e::SequenceNode::MaxLevel);
-    CHECK_EQ(audio.SetMusicFade(AudioManager::FadeOverLength, kFadeFrames), kFadeFrames);
-    audio.UpdateMusicFade();
+    MusicQueue& queue = audio.Queue();
+    CHECK_EQ(MusicQueue::TypeOf(u8"x.mp3"), swd3e::MusicSlot::Stream);
+    CHECK_EQ(MusicQueue::TypeOf(u8"x.xmi"), swd3e::MusicSlot::Midi);
+    CHECK_EQ(MusicQueue::TypeOf(u8"x.mid"), 0);
+    const std::u8string file = swd3etest::GameFile("Music/Battle01.mp3");
+    queue.SetSlot(file, kTuneId, 0, MusicQueue::ThirdList);
+    queue.Switch(MusicQueue::ThirdList, MusicQueue::RepeatList, 0);
+    CHECK_EQ(queue.Mode(), MusicQueue::Silence);
+    audio.Update();
+    CHECK_EQ(queue.Mode(), MusicQueue::ThirdList);
+    CHECK(!queue.IsStopped());
+    CHECK(!audio.Streams().IsStopped(kTuneId));
+    queue.Switch(MusicQueue::Silence, MusicQueue::RepeatList, kFadeFrames);
 
-    for (int update = 0; update < kFadeFrames; ++update)
+    for (int update = 0; update <= kFadeFrames && !queue.IsStopped(); ++update)
     {
-        audio.Streams().Update();
+        audio.Update();
     }
 
-    CHECK(audio.IsMusicStopped());
-    CHECK_EQ(audio.PollMusicFade(), 1);
-    CHECK_EQ(audio.PollMusicFade(), 0);
+    CHECK(queue.IsStopped());
+    audio.Update();
+    CHECK_EQ(queue.Mode(), MusicQueue::NoList);
 }
 
 TEST_CASE("audio: no MIDI device")

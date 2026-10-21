@@ -228,8 +228,8 @@ private:
     // to use, and written to [display] of the program's settings file.
     void ApplyDisplay();
     void StoreDisplay() const;
+    std::string MusicName(int index) const;
     std::u8string MusicPath(int index) const;
-    void PlayMusic(const std::u8string& path);
     void ResetSaveSlots();
     void StartStory(int withMap);
     void LoadFameFile();
@@ -297,7 +297,7 @@ private:
     void RunTimers();
     void EnterBattle();
     void BattleMainFrame();
-    void MusicCue();
+    bool MusicCue();
     void AudioPump();
     void HandleEvent(const SDL_Event& event);
     void LoopFrame();

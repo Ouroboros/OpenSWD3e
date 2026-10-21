@@ -644,30 +644,34 @@ void Game::ReturnBattleItems()
     battle.givenBack[2] = 0;
 }
 
-// swd3e.exe 0x004692E0: with every party role down (unk53BF5C set) the field fades out (endFade), then the music
-// stops, the objects return and frameResult becomes 2 (0 for a battle state of 0x68 or UnkPanel8); with every enemy
-// down or wonByTalk set it fades out too, the objects return and frameResult becomes 0.
+// swd3e.exe 0x004692E0: with every party role down (unk53BF5C set; besides the escorts and guests, unk5770D4 more
+// roles are left out) the field fades out (endFade), then the objects return and frameResult becomes 2 (0, with the
+// music before the battle back, for a battle state of 0x68 or UnkPanel8); with every enemy down or wonByTalk set it
+// fades out too, the battle music stops, the music before the battle comes back, the objects return and frameResult
+// becomes 0.
 void Game::CheckBattleEnd()
 {
     BattleState& battle = this->battleState;
+    MusicQueue& queue = this->audio.Queue();
 
-    if (battle.defeatedRoles >= battle.roleCount - battle.escortCount - battle.guestCount)
+    if (battle.defeatedRoles >= battle.roleCount - battle.unk5770D4 - battle.escortCount - battle.guestCount)
     {
         battle.unk53BF5C = 1;
 
         if (battle.endFade == 1 && this->FadeFieldOut() == 1)
         {
-            this->audio.StopMusic();
             this->ReturnBattleItems();
             battle.frameResult = kLostEnd;
 
             if (battle.result == kLostQuietly)
             {
+                queue.Switch(battle.musicBeforeBattle, MusicQueue::RepeatList, 0);
                 battle.frameResult = 0;
             }
 
             if ((battle.panelFlags & BattleState::UnkPanel8) != 0)
             {
+                queue.Switch(battle.musicBeforeBattle, MusicQueue::RepeatList, 0);
                 battle.frameResult = 0;
             }
         }
@@ -679,6 +683,8 @@ void Game::CheckBattleEnd()
 
         if (battle.endFade == 1 && this->FadeFieldOut() == 1)
         {
+            queue.Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
+            queue.Switch(battle.musicBeforeBattle, MusicQueue::RepeatList, 0);
             this->ReturnBattleItems();
             battle.frameResult = 0;
         }
@@ -1851,10 +1857,9 @@ void Game::DrawSpecialList(int x, int y, int cursor)
     scene.Show(this->battleServices);
 }
 
-// swd32.exe 0x004667B0 (unmatched in swd3e): the 佈置護駕 panel: the panel act run on, a shade with a title frame (佈置護駕)
-// and a body
-// frame, a gradient bar on row guardCursor at (x, y), and the names of the escorts (the last escortCount battle roles)
-// in white at an 18-pixel advance, with 無 below a lone escort.
+// swd32.exe 0x004667B0 (unmatched in swd3e): the 佈置護駕 panel: the panel act run on, a shade with a title frame
+// (佈置護駕) and a body frame, a gradient bar on row guardCursor at (x, y), and the names of the escorts (the last
+// escortCount battle roles) in white at an 18-pixel advance, with 無 below a lone escort.
 void Game::DrawEscortList(int x, int y)
 {
     smooth::Scene scene;
@@ -2618,7 +2623,7 @@ int Game::BattleDebugKeys()
         {
             if (pressed(Input::F3))
             {
-                this->audio.StopMusic();
+                this->audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
             }
 
             if (pressed(Input::F1))
@@ -2704,6 +2709,8 @@ int Game::BattleDebugKeys()
 
             if (pressed(Input::E))
             {
+                this->audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
+                this->audio.Queue().Switch(battle.musicBeforeBattle, MusicQueue::RepeatList, 0);
                 return 0;
             }
 
@@ -2725,12 +2732,6 @@ int Game::BattleDebugKeys()
                 {
                     battle.hitsAllRoles = 0;
                 }
-            }
-
-            if (pressed(Input::F5))
-            {
-                this->audio.StopMusic();
-                this->PlayMusic(battle.battleMusic);
             }
 
             if (pressed(Input::F2))

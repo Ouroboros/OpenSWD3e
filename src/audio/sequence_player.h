@@ -68,10 +68,16 @@ public:
 
     bool Open(int unused);
     int Close();
+    int SetMasterVolume(int volume);
     int Play(const std::u8string& fileName, int id, int volume, int loops);
-    bool Update();
+    int FadeOut(int id, int milliseconds);
     bool IsStopped(int id);
     SequenceNode* Find(int id);
+
+private:
+    int SetFadeStep(SequenceNode& node, int milliseconds);
+
+    int masterVolume = SequenceNode::MaxLevel;  // the XMIDI master volume (no MIDI device: kept only)
 };
 
 // Streamed music (MP3 files of Music\) with two slots.
@@ -88,6 +94,7 @@ public:
     int FadeOut(int id, int steps);
     bool Update();
     bool IsStopped(int id);
+    int FirstId() const;
     SequenceNode* Find(int id);
 };
 

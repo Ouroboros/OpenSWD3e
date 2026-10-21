@@ -27,23 +27,11 @@ private:
     std::u8string redistDirectory;
 };
 
-// The game's audio: Miles, the MIDI and stream players, the sound effects, the music queue, and the wrappers the game
-// calls (volumes 0..11 of the options scaled to 0..128, the music as stream 100 with its fade state).
+// The game's audio: Miles, the MIDI and stream players, the sound effects, the music queue, the sound wrappers the game
+// calls (volumes 0..11 of the options scaled to 0..128) and the fade the talk commands give the music.
 class AudioManager
 {
 public:
-    static constexpr int MusicId = 100;
-
-    // The modes of `musicFadeMode`.
-    enum MusicFade : int
-    {
-        NoFade = 0,
-        StopAtOnce = 1,      // the music stops on the next UpdateMusicFade
-        FadeOverLength = 2,  // it fades out over musicFadeLength
-    };
-
-    static constexpr int ShortestFade = 1;  // the fade length of StopAtOnce
-
     explicit AudioManager(AudioDevice& device);
 
     AudioSystem& System();
@@ -53,22 +41,14 @@ public:
     MusicQueue& Queue();
 
     int PlaySound(u16 id, int volume);
-    int SetSoundPan(u16 id, int pan);
-    int PlaySoundAt(u16 id, u16 volume);
-    int StopMusic();
     int StopSound(u16 id);
     int StopAllSounds();
-    bool IsMusicStopped();
-    int SetMusicVolume(int volume);
-    int UpdateMusicFade();
-    int PollMusicFade();
-    int SetMusicFade(int mode, int length);
-    // The fade globals as a new game sets them.
-    void SetFadeState(int mode, int length, int fading);
+    int SetSoundPan(u16 id, int pan);
+    void Update();
     void SetFadeMode(int mode);
     void SetFadeLength(int length);
     int FadeMode() const;
-    int Fading() const;
+    int FadeLength() const;
     // The rebuild's smooth motion: no sound is played while a menu frame is painted again between frames.
     void SetMuted(bool value);
 
@@ -78,9 +58,8 @@ private:
     StreamPlayer streams;
     SoundEffects effects;
     MusicQueue queue;
-    int musicFadeMode = 0;    // swd32 0x004B7380
-    int musicFadeLength = 0;  // swd32 0x004B74F0
-    int musicFading = 0;      // swd32 0x004B7378
+    int musicFadeMode = 0;    // 0x004D0B8C talk command MusicFade (a new game sets 1)
+    int musicFadeLength = 0;  // 0x004D0E58 the updates the next switch of the music fades over
     bool muted = false;
 };
 

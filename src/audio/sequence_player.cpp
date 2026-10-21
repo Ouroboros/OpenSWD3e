@@ -1,5 +1,7 @@
 #include "audio/sequence_player.h"
 
+#include <algorithm>
+
 #include "file/file.h"
 
 namespace swd3e
@@ -186,13 +188,14 @@ int MidiPlayer::Close()
 }
 
 // swd3e.exe 0x0049CA10: loads a MIDI file and starts it as sequence `id`. A file that cannot be opened loses the node;
-// an initialization result of -1 is reported but played anyway. (Without a MIDI device the player never opens.)
+// an initialization result of -1 is reported but played anyway. (Without a MIDI device the player never opens and has
+// no free node.)
 // swd3e.exe EH funclet (tail) of 0x0049CA10, swd32 0x004983F0 (EH unwind: frees the node allocated for the sequence,
 // held by its unique_ptr)
 // swd3e.exe EH funclet (tail) of 0x0049CA10, swd32 0x004983FB (EH handler of 0x00484F60)
 int MidiPlayer::Play(const std::u8string& fileName, int id, int volume, int loops)
 {
-    if (!this->IsOpen() || !this->IsEnabled() || id == 0)
+    if (id == 0)
     {
         return 0;
     }
@@ -236,75 +239,53 @@ int MidiPlayer::Play(const std::u8string& fileName, int id, int volume, int loop
     return id;
 }
 
-// swd32.exe 0x00485180 (unmatched in swd3e): fades and retires sequences. A sequence in an unexpected state is retired
-// when the one before
-// it was; the original seeds that flag with an uninitialised stack slot, here it starts false (see deviations.md).
-bool MidiPlayer::Update()
+// swd3e.exe 0x0049C9D0: the XMIDI master volume (0..0x7F) and the volume the driver reports back; 0 while closed
+int MidiPlayer::SetMasterVolume(int volume)
 {
-    if (!this->IsOpen() || !this->IsEnabled())
+    if (!this->IsOpen())
     {
-        return false;
+        return 0;
     }
 
-    bool retiredLast = false;
+    this->masterVolume = ClampVolume(volume);
+    return this->masterVolume;
+}
 
-    for (auto node = this->active.begin(); node != this->active.end();)
+// swd3e.exe 0x0049CCA0: the fade step of `node` from the time asked, kept within the time left and 0x1E..0xF000 ms
+int MidiPlayer::SetFadeStep(SequenceNode& node, int milliseconds)
+{
+    constexpr int kFadeRange = 0x800;
+    constexpr int kLongestShift = 11;
+    int total = 0;
+    int current = 0;
+    this->device.Position(node.voice, total, current);
+    int span = std::min(milliseconds, total - current);
+    const int unit = this->unknown4;
+    span = std::max(span, unit);
+    span = std::min(span, unit << kLongestShift);
+    node.fadeStep = kFadeRange / (span / unit);
+    return node.fadeStep;
+}
+
+// swd3e.exe 0x0049CC20: sequence `id` marked fading over `milliseconds`; swd3e has no MIDI update, so its volume never
+// falls. 0 while closed or disabled, for id 0 or a sequence not playing.
+int MidiPlayer::FadeOut(int id, int milliseconds)
+{
+    if (!this->IsOpen() || !this->IsEnabled() || id == 0)
     {
-        bool retire = false;
-        SequenceNode& sequence = **node;
-
-        if ((sequence.flags & SequencePlayer::Fading) == 0)
-        {
-            switch (this->device.Status(sequence.voice))
-            {
-                case VoiceStatus::Free:
-                case VoiceStatus::Done:
-                    retire = true;
-                    break;
-
-                case VoiceStatus::Playing:
-                case VoiceStatus::Stopped:
-                case VoiceStatus::PlayingButReleased:
-                    retiredLast = false;
-                    break;
-
-                default:
-                    retire = retiredLast;
-                    break;
-            }
-        }
-        else
-        {
-            sequence.volume -= sequence.fadeStep;
-            const int volume = ClampVolume(sequence.volume / SequenceNode::VolumeScale);
-
-            if (volume != 0)
-            {
-                this->device.SetVolume(sequence.voice, volume);
-                retiredLast = false;
-            }
-            else
-            {
-                retire = true;
-            }
-        }
-
-        if (!retire)
-        {
-            ++node;
-            continue;
-        }
-
-        retiredLast = true;
-        this->device.End(sequence.voice);
-        sequence.midi.clear();
-        sequence.fadeStep = 0;
-        sequence.flags = 0;
-        this->free.push_back(std::move(*node));
-        node = this->active.erase(node);
+        return 0;
     }
 
-    return false;
+    SequenceNode* node = this->Find(id);
+
+    if (node == nullptr)
+    {
+        return 0;
+    }
+
+    node->flags |= SequencePlayer::Fading;
+    this->SetFadeStep(*node, milliseconds);
+    return id;
 }
 
 // swd3e.exe 0x0049CD00: without an id, whether nothing plays
@@ -535,6 +516,12 @@ bool StreamPlayer::Update()
 bool StreamPlayer::IsStopped(int id)
 {
     return this->Find(id) == nullptr;
+}
+
+// swd3e.exe 0x0049E510: the id of the stream at the head of the active list (the latest started), 0 without one
+int StreamPlayer::FirstId() const
+{
+    return this->active.empty() ? 0 : this->active.front()->id;
 }
 
 // swd3e.exe 0x0049E550

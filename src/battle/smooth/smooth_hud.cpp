@@ -669,7 +669,7 @@ int HudFrame::DrawCoinTossAdvance(Scene& scene)
         {
             countdown = delay;
             hud.coinState = MakeWords(HighWord(hud.coinState), LowWord(hud.coinState) == 0 ? u16{1} : u16{0});
-            hud.audio.PlaySoundAt(kCoinSound, kCoinVolume);
+            hud.audio.PlaySound(kCoinSound, kCoinVolume);
         }
 
         hud.coinDelay = MakeWords(countdown, LowWord(hud.coinDelay));

@@ -94,7 +94,6 @@ void Game::Activate(int state)
         return;
     }
 
-    this->audio.StopMusic();
     this->audio.StopAllSounds();
     this->AudioPump();
 
@@ -152,6 +151,7 @@ void Game::ReleaseGame()
 {
     LogInfo(u8"game released");
     this->mapBehind = false;
+    this->ghostFollower.RemoveUnused();
     this->largeFont.Shutdown();
     this->mediumFont.Shutdown();
     this->smallFont.Shutdown();
@@ -180,7 +180,6 @@ void Game::ReleaseGame()
     this->FreeItemLists();
     this->acts.CloseAll();
     this->archive.CloseAll();
-    this->audio.StopMusic();
     this->audio.StopAllSounds();
     this->scene.encounterGroups.clear();
     this->offscreen.reset();

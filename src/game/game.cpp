@@ -28,6 +28,8 @@ namespace swd3e
 namespace
 {
 
+constexpr int kNewGameFadeMode = 1;     // NewGame: the music fade mode a new game starts with (0x004D0B8C)
+constexpr int kNewGameMusicFade = 0xA;  // and the updates the old music fades over
 constexpr Uint64 kSlowIteration = 100;  // milliseconds: a longer message loop iteration is logged
 constexpr u32 kCatchUpFrames = 4;       // a game frame this many intervals late restarts the frame clock
 constexpr u64 kNanosecondsPerMillisecond = 1000000;
@@ -54,7 +56,6 @@ constexpr std::u8string_view kDirectDrawFailed = u8"DDraw init Failed.";
 constexpr std::u8string_view kTimerFailed = u8"mmTimer init Failed.";
 constexpr std::u8string_view kErrorTitle = u8"SWD3";
 constexpr u32 kStopVideoButtons = kLeftButton | kRightButton | kControlKey | kMiddleButton;
-constexpr std::size_t kMusicPathLimit = 0x400;  // MusicPath: a longer path is reported (the original buffer)
 constexpr u32 kScreenshotDiskMegabytes = 0x40;  // key P: a screenshot needs more free space than this
 constexpr int kScreenshotNames = 0x1869E;       // ScrnShot\00000.bmp..ScrnShot\99997.bmp
 constexpr std::string_view kScreenshotName = "%sScrnShot\\%05d.bmp";  // swd32.exe 0x0049FB3C (unmatched in swd3e)
@@ -134,8 +135,6 @@ constexpr u16 kLeaderCursorLimit = 8;  // the leader's event this far along hide
 constexpr i32 kCounterHidden = 0x400;
 constexpr i32 kCounterOpaque = 0x10;
 
-constexpr int kStreamVolume = 0x80;
-constexpr int kPlayOnce = 1;
 constexpr std::size_t kFameWords = 0x200;  // Fame.dat
 constexpr int kFameCounters = 500;
 
@@ -797,7 +796,7 @@ void Game::InitDrawKernel()
     this->InitDevices();
     this->input.SetSensitivity(2.0);
     this->input.SetMousePosition(kStartPointerX, kStartPointerY);
-    this->audio.SetMusicVolume(this->config.musicVolume);
+    this->audio.Queue().SetVolume(MusicQueue::MaxVolume * this->config.musicVolume / Config::MaxVolume);
 
     if (this->offscreen == nullptr || !this->painter.Init(*this->offscreen))
     {
@@ -1014,8 +1013,10 @@ void Game::NewGame()
 
     scene.musicTunes = {};
     scene.unk4AB788 = 1;
-    this->audio.SetFadeState(1, 0, 0);
+    this->audio.SetFadeMode(kNewGameFadeMode);
+    this->audio.SetFadeLength(0);
     scene.musicCue = 0;
+    this->audio.Queue().Switch(MusicQueue::FirstList, MusicQueue::RepeatList, kNewGameMusicFade);
     scene.unk4A94B0 = kStartUnk4A94B0;
     scene.shake.fill(Scene::ShakeEnd);
     scene.unk4ACDB8 = kStartUnk4ACDB8;
@@ -1656,39 +1657,28 @@ bool Game::PresentBetween()
     return true;
 }
 
-// swd32.exe 0x0040EB60 (unmatched in swd3e): <install directory>Music\<name>.mp3 for tune `index` of the name list of
-// maps.dat's table 2 (the list its first dword points at); the name is copied up to the next dot after its first byte
-std::u8string Game::MusicPath(int index) const
+// swd3e.exe 0x0040D390: the file name of tune `index` (with its extension) in the name list of maps.dat's table 2 (the
+// list its first dword points at; each entry's name follows a dword)
+std::string Game::MusicName(int index) const
 {
     const std::vector<u8>& data = this->databases.mapsData;
     const u32 names = MapsDword(data, MapsTable(data, MapsDataTable::Music));
     const u32 entry = MapsDword(data, names + sizeof(u32) * static_cast<u32>(index));
-    const std::u8string directory = this->config.installDirectory + u8"Music\\";
-    std::string name;  // game text (the path in UTF-8 converts it)
-    std::size_t at = static_cast<std::size_t>(entry) + MapsRecord::MusicNameAt;
+    std::string name;
 
-    do
+    for (std::size_t at = static_cast<std::size_t>(entry) + MapsRecord::MusicNameAt; at < data.size() && data[at] != 0;
+         ++at)
     {
-        name.push_back(at < data.size() ? static_cast<char>(data[at]) : '\0');
-        ++at;
+        name.push_back(static_cast<char>(data[at]));
+    }
 
-        if (directory.size() + name.size() > kMusicPathLimit)
-        {
-            DebugLog(u8"Music String 太長,%s", PathFormat("%s%s", {directory, name}));
-        }
-    } while (at < data.size() && data[at] != '.');
-
-    return PathFormat("%s%s.mp3", {directory, name});
+    return name;
 }
 
-// swd32.exe 0x004856C0 (unmatched in swd3e): the tune as stream 100 (once) while story flag 3 allows music
-void Game::PlayMusic(const std::u8string& path)
+// <install directory>music\<name> of tune `index` as the game builds it (strcpy, strcat "music\", strcat the name)
+std::u8string Game::MusicPath(int index) const
 {
-    if (this->state.GameFlag(GameState::Music))
-    {
-        this->audio.Streams()
-            .Play(path, AudioManager::MusicId, this->config.musicVolume * kStreamVolume / Config::MaxVolume, kPlayOnce);
-    }
+    return this->config.installDirectory + u8"music\\" + PathFormat("%s", {this->MusicName(index)});
 }
 
 // swd3e.exe 0x00406B50: the keys and the save screen cleared, the previews of the newest slot's page
@@ -1963,71 +1953,16 @@ bool Game::NameBoxFrame()
     return true;
 }
 
-// swd32.exe 0x0040CF10 (unmatched in swd3e): the music queue, the streams, the MIDI player and the sound effects
+// swd3e.exe 0x0040D140: the music queue, the streams and the sound effects
 void Game::AudioPump()
 {
-    this->audio.Queue().Update();
-    this->audio.Streams().Update();
-    this->audio.Midi().Update();
-    this->audio.Effects().Update();
+    this->audio.Update();
 }
 
-// swd32.exe 0x0040CDD0 (unmatched in swd3e): when no tune plays, the next of the scene's tunes (bit 23 of the cue word
-// picks the second set; a negative entry first sets the fade mode)
-void Game::MusicCue()
+// swd3e.exe 0x0040D130: nothing (swd32 started the scene's next tune here; swd3e's music queue does it itself)
+bool Game::MusicCue()
 {
-    this->audio.PollMusicFade();
-
-    if (!this->audio.IsMusicStopped())
-    {
-        return;
-    }
-
-    Scene& view = this->scene;
-    u32 cue = view.musicCue;
-    const bool second = (cue & Scene::StoryMusic) != 0;
-    const u32 thirdMark = second ? Scene::StoryLoops : Scene::SceneLoops;
-    const u32 secondMark = second ? Scene::StoryRepeatFirst : Scene::SceneRepeatFirst;
-    auto& tunes = view.musicTunes;
-
-    if (tunes[Scene::StoryFade] < 0)
-    {
-        this->audio.SetFadeMode(tunes[Scene::StoryFade] & Scene::FadeModeMask);
-        tunes[Scene::StoryFade] &= ~static_cast<i32>(Scene::FadePending);
-    }
-
-    if (tunes[Scene::SceneFade] < 0)
-    {
-        this->audio.SetFadeMode(tunes[Scene::SceneFade] & Scene::FadeModeMask);
-        tunes[Scene::SceneFade] &= ~static_cast<i32>(Scene::FadePending);
-    }
-
-    int next = static_cast<int>(cue & Scene::TrackMask) + 1;
-
-    if (next > static_cast<int>(Scene::SceneSecond))
-    {
-        if ((cue & thirdMark) == 0)
-        {
-            view.musicCue = (cue & ~Scene::TrackByte) | Scene::MusicStopped;
-            return;
-        }
-
-        next = static_cast<int>((cue & secondMark) != 0 ? Scene::SceneFirst : Scene::SceneSecond);
-    }
-
-    if (next >= 1)
-    {
-        const i32 tune = tunes[static_cast<std::size_t>(next) + (second ? Scene::StoryFade : Scene::SceneFade)];
-
-        if (tune != 0 && (tune & Scene::NoTune) == 0)
-        {
-            this->PlayMusic(this->MusicPath(tune));
-            this->audio.SetMusicVolume(this->config.musicVolume);
-            cue = view.musicCue & ~Scene::UnkMusic200000;
-        }
-    }
-
-    view.musicCue = (cue & ~Scene::TrackByte) | static_cast<u32>(next);
+    return true;
 }
 
 // swd3e.exe 0x0040A7B0: a frame of the game, at most one every frameInterval milliseconds while the window is active:
@@ -2252,7 +2187,7 @@ void Game::RunTimers()
 void Game::EnterBattle()
 {
     MapCache& cache = this->mapCache;
-    this->audio.StopMusic();
+    this->musicBeforeBattle = this->audio.Queue().Mode();
     this->audio.StopAllSounds();
     this->acts.CloseAll();
     this->archive.CloseAll();
@@ -2302,7 +2237,7 @@ void Game::BattleMainFrame()
         this->SetupFont(this->smallFont, kSmallFontSize);
         this->talk.unit = kTalkUnit;
         remap();
-        this->audio.StopMusic();
+        this->audio.Queue().Switch(this->musicBeforeBattle, MusicQueue::RepeatList, 1);
         return;
     }
 

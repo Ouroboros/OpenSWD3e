@@ -41,7 +41,6 @@ constexpr i32 kHiddenGlow = -0x10;
 constexpr i32 kEffectsOffFlag = GameState::PlainScreen;
 constexpr i32 kNameEntryFlag = GameState::TextBox;
 constexpr int kVolumeSound = 0x2E;
-constexpr int kTitleMusic = 0xA;
 constexpr u32 kScreenPixels = Display::Pixels;
 constexpr std::size_t kScreenBytes = sizeof(Pixel) * Display::Pixels;
 constexpr int kTextStyle = TextFont::BoldShadow;
@@ -139,8 +138,7 @@ constexpr i32 kReplyFrames = 0x28;
 constexpr i32 kReplyEnd = 2;  // the face changes back when this many frames are left
 constexpr int kFaceX = 0xDC;
 constexpr int kFaceY = 0xFE;
-constexpr int kQuitFadeMode = 0x10;
-constexpr int kQuitFadeLength = 0x19;
+constexpr int kQuitFadeSteps = 0xF;  // quitting fades the music out over these updates
 
 // In game (modes 1 and 2) the page fades over the saved screen.
 constexpr i32 kGrayEnd = -0x5A;  // mode 1: darkened until here, plain, then darkened again from kRedarken
@@ -166,8 +164,7 @@ int RowY(i32 row)
 }  // namespace
 
 // swd3e.exe 0x00451210: the entries hidden, fading in from -6 (in game, modes 1 and 2, the page fades over a copy of
-// the screen; mode 3 chooses entry 1 at once); the title music in mode 0 when no music plays. The music calls go
-// through the rebuild's AudioManager until the music object (0x00578A70) is rebuilt.
+// the screen; mode 3 chooses entry 1 at once).
 void Menu::SystemEnter()
 {
     Game& owner = this->game;
@@ -193,12 +190,8 @@ void Menu::SystemEnter()
 
     owner.unk4A9484 = 0;
 
-    if (this->mode == Menu::TitleMode && owner.audio.IsMusicStopped())
-    {
-        owner.audio.StopMusic();
-        owner.PlayMusic(owner.MusicPath(kTitleMusic));
-        owner.audio.SetMusicVolume(owner.config.musicVolume);
-    }
+    // The title music (the first list from tune 10) is started only when 0x00411F10 returns true; it always returns 0,
+    // so the original never starts it.
 
     this->sampleDelay = 0;
     this->sampleLength = 0;
@@ -362,7 +355,7 @@ void Menu::SystemFrame()
         if (onBar)
         {
             settings.musicVolume = static_cast<i32>(std::min<u32>(step, Config::MaxVolume));
-            owner.audio.SetMusicVolume(settings.musicVolume);
+            owner.audio.Queue().SetVolume(MusicQueue::MaxVolume * settings.musicVolume / Config::MaxVolume);
         }
 
         return;
@@ -509,8 +502,7 @@ void Menu::SystemFirst()
 }
 
 // swd3e.exe 0x004518C0: on the settings: sound volume down (with sound 0x2E), music volume down, cache size down to
-// 60 MB, effects off, text slower (up to 4). The music volume goes through the rebuild's AudioManager until the music
-// object (0x00578A70) is rebuilt.
+// 60 MB, effects off, text slower (up to 4).
 void Menu::SystemLeft()
 {
     Game& owner = this->game;
@@ -567,7 +559,7 @@ void Menu::SystemLeft()
                 settings.musicVolume = 0;
             }
 
-            owner.audio.SetMusicVolume(volume);
+            owner.audio.Queue().SetVolume(MusicQueue::MaxVolume * volume / Config::MaxVolume);
             break;
         }
 
@@ -662,7 +654,7 @@ void Menu::SystemRight()
                 settings.musicVolume = kMusicFallback;
             }
 
-            owner.audio.SetMusicVolume(volume);
+            owner.audio.Queue().SetVolume(MusicQueue::MaxVolume * volume / Config::MaxVolume);
             break;
         }
 
@@ -741,7 +733,7 @@ void Menu::SystemEnd()
 
 // swd3e.exe 0x00451B60: the chosen entry fades out; entry 0 first asks for the first role's name in three boxes
 // (flag 0x50 routes the keyboard to the current one; they start with the default name), entry 2 opens the settings,
-// entry 3 also fades the music out (through the rebuild's AudioManager until the music object is rebuilt).
+// entry 3 also stops the music after a fade of 15 updates.
 void Menu::SystemSelect()
 {
     Game& owner = this->game;
@@ -812,8 +804,7 @@ void Menu::SystemSelect()
     }
     else if (this->systemCursor == kQuitEntry)
     {
-        owner.audio.SetMusicFade(kQuitFadeMode, kQuitFadeLength);
-        owner.audio.PollMusicFade();
+        owner.audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, kQuitFadeSteps);
     }
 }
 

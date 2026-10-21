@@ -36,7 +36,8 @@ constexpr u8 kShadeWeather = 0x20;
 constexpr u8 kGlowWeather = 0x40;
 constexpr u8 kOverlaysFirst = 0x80;
 
-constexpr int kSceneFadeLength = 0xF;  // the fade of the scene music when the map changes it
+constexpr int kSceneFadeSteps = 0xF;  // MusicZone: the updates the playing piece fades over
+constexpr int kSceneRepeatMask = 3;   // how the scene tunes repeat (MusicQueue::Switch), in the marks of a map
 constexpr int kLoadingAction = 0x4F;
 constexpr int kLoadingBarWidth = 0x174;
 constexpr std::size_t kScreenBytes = sizeof(Pixel) * Display::Pixels;
@@ -178,12 +179,14 @@ void Game::ShowLoading(int percent)
     }
 }
 
-// swd32.exe 0x0040CF40 (unmatched in swd3e): the music of map `map` (maps.dat's music table): a new pair of tunes fades
-// the playing one out
-// unless the music is held; bits 13..15 of the entry set the cue marks
+// swd3e.exe 0x0040D170: the music of map `map` (maps.dat's music table: its two tunes and how they repeat). The same
+// tunes only take back the music from a story tune that ends (story repeat 1); new tunes become the first list of the
+// music queue (<install>music\<name>) and play after the current piece fades over 15 updates, unless a story tune
+// plays that does not end. A map without music clears the scene's tunes and its cue bits.
 void Game::MusicZone(int map)
 {
     Scene& view = this->scene;
+    MusicQueue& queue = this->audio.Queue();
     const std::vector<u8>& data = this->databases.mapsData;
     const u32 lists = MapsTable(data, MapsDataTable::Music);
     u32 at = MapsDword(data, MapsDword(data, lists + sizeof(u32) * MapsRecord::SceneMusicItem));
@@ -206,43 +209,48 @@ void Game::MusicZone(int map)
         }
     }
 
+    const i32 marks = MapsWord(data, at + MapsRecord::MusicMarksAt);
     const i32 first = MapsWord(data, at + MapsRecord::MusicFirstAt);
     const i32 second = MapsWord(data, at + MapsRecord::MusicSecondAt);
+    const int repeat = marks & kSceneRepeatMask;
 
-    if (first != view.musicTunes[Scene::SceneFirst] || second != view.musicTunes[Scene::SceneSecond])
+    auto endStory = [&view, &queue, repeat]
     {
-        view.musicTunes[Scene::SceneFirst] = first;
-        view.musicTunes[Scene::SceneSecond] = second;
+        queue.Switch(MusicQueue::FirstList, repeat, kSceneFadeSteps);
+        view.musicTunes[Scene::StoryFade] = 0;
+        view.musicTunes[Scene::StoryFirst] = 0;
+        view.musicTunes[Scene::StorySecond] = 0;
+    };
 
-        if ((view.musicCue & Scene::StoryMusic) == 0)
+    if (first == view.musicTunes[Scene::SceneFirst] && second == view.musicTunes[Scene::SceneSecond])
+    {
+        if (queue.Mode() == MusicQueue::SecondList && view.musicTunes[Scene::StoryFade] == 1)
         {
-            view.musicCue = 0;
-
-            if (!this->audio.IsMusicStopped())
-            {
-                this->audio.SetMusicFade(AudioManager::FadeOverLength, kSceneFadeLength);
-                this->audio.UpdateMusicFade();
-            }
-
-            DebugLog(u8"StreamStartOut");
+            endStory();
         }
 
-        view.musicCue &= Scene::StoryMusic | (Scene::UnkMusic100000 - 1);
-        const u16 marks = MapsWord(data, at + MapsRecord::MusicMarksAt);
-        view.musicCue &= ~(Scene::SceneLoops | Scene::SceneRepeatFirst);
+        return;
+    }
 
-        if ((marks & Scene::MarksNone) == 0)
-        {
-            if ((marks & Scene::MarkRepeatFirst) != 0)
-            {
-                view.musicCue |= Scene::SceneLoops | Scene::SceneRepeatFirst;
-            }
+    view.musicTunes[Scene::SceneFade] = marks;
+    view.musicTunes[Scene::SceneFirst] = first;
+    view.musicTunes[Scene::SceneSecond] = second;
 
-            if ((marks & Scene::MarkLoops) != 0)
-            {
-                view.musicCue |= Scene::SceneLoops;
-            }
-        }
+    for (std::size_t piece = 0; piece < MusicQueue::Pieces; ++piece)
+    {
+        const i32 tune = view.musicTunes[Scene::SceneFirst + piece];
+        queue.SetSlot(this->MusicPath(tune), tune, piece, MusicQueue::FirstList);
+    }
+
+    view.musicCue = 0;
+
+    if (queue.Mode() != MusicQueue::SecondList)
+    {
+        queue.Switch(MusicQueue::FirstList, repeat, kSceneFadeSteps);
+    }
+    else if (view.musicTunes[Scene::StoryFade] == 1)
+    {
+        endStory();
     }
 }
 

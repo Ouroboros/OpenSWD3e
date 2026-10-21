@@ -29,6 +29,7 @@ namespace swd3e
 namespace
 {
 
+constexpr int kLoadMusicFade = 0xF;    // LoadGame: the updates a story tune fades over
 constexpr i32 kKeyBlockLimit = 0x3E8;  // Game::slotMouseBlock past this is reset
 constexpr i32 kKeyBlockFrames = 0x78;  // a key or click blocks the mouse slot choice this long
 constexpr i32 kSaveSlotsShown = 1;     // Game::storyState once the save screen runs
@@ -134,8 +135,7 @@ constexpr u32 kFileNamesBytes = 2 * kFileNameBytes;
 constexpr std::size_t kFileNamesBuffer = 0xA8;
 constexpr std::array<int, 6> kKeptFlags = {5, 6, 7, 8, 0x13, 0x16};  // keep their saved values across LoadCity
 constexpr int kClearedOnLoadFlag = 0xA;
-constexpr u32 kLoadedCueMask = 0xFF5CFF00;  // Scene::musicCue bits kept when a game is loaded over story music
-constexpr u32 kGameSavedFlag = 2;           // Menu::flags
+constexpr u32 kGameSavedFlag = 2;  // Menu::flags
 
 // The slots page.
 constexpr u16 kUnk4CC2AALimit = 0xD;
@@ -1038,28 +1038,21 @@ std::vector<u8> Game::PackParty() const
     return data;
 }
 
-// The slot chosen loaded (inline in 0x004070A0; the layout is in reverse/analysis/save-format.md): the scene music
-// fade stopped, the scene effects and the music ended, the screen cleared, maps.dat read again, then the save read
-// section by section while the file lasts and the map entered at the saved place. Flags 5..8, 0x13 and 0x16 keep the
-// values the save has across the map's start; flag 0xA is cleared. A slot that does not open leaves the screen only.
+// The slot chosen loaded (inline in 0x00406EC0; the layout is in reverse/analysis/save-format.md): a story tune
+// stopped, the scene effects ended, the screen cleared, maps.dat read again, then the save read section by section
+// while the file lasts and the map entered at the saved place. Flags 5..8, 0x13 and 0x16 keep the values the save has
+// across the map's start; flag 0xA is cleared. A slot that does not open leaves the screen only.
 void Game::LoadGame()
 {
     Scene& view = this->scene;
 
-    if ((view.musicCue & Scene::StoryMusic) != 0)
+    // swd3e: a story tune playing stops after a fade of 15 updates; the map's music follows from the map entered.
+    if (this->audio.Queue().Mode() == MusicQueue::SecondList)
     {
-        this->audio.SetFadeMode(AudioManager::NoFade);
-        this->audio.SetFadeLength(0);
-        this->audio.UpdateMusicFade();
-        view.musicTunes[Scene::SceneFade] = static_cast<i32>(Scene::FadePending | AudioManager::StopAtOnce);
-        view.musicTunes[Scene::StoryFade] = 0;
-        view.musicTunes[Scene::StoryFirst] = 0;
-        view.musicTunes[Scene::StorySecond] = 0;
-        view.musicCue &= kLoadedCueMask;
+        this->audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, kLoadMusicFade);
     }
 
     view.ResetEffects();
-    this->audio.StopMusic();
     this->slotPrompt = kBrowsing;
     std::fill_n(this->drawSurface, static_cast<std::size_t>(Display::Width) * Display::Height, u16{0});
     this->ShowFrame();

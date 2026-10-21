@@ -113,7 +113,8 @@ public:
         UnkPanel8 = 8,        // the battle ends with frameResult 0 even when lost (CheckBattleEnd)
         UnkPanel100 = 0x100,  // the screen quakes all the time (QuakeFrame)
         ResistancePanel = 0x20,
-        NoRetreat = 0x200,  // the party cannot retreat
+        NoRetreat = 0x200,   // the party cannot retreat
+        MusicGiven = 0x400,  // swd3e: a battle talk set the battle music (BattleIntro keeps it, then clears this)
     };
 
     // Bits of spellStage.
@@ -195,16 +196,20 @@ public:
     std::array<std::array<char, sizeof(RoleName)>, Party::Roles> roleNames = {};
     // swd32 0x00521398 the four roles are in the party (story flags 0x1E..)
     std::array<u8, Party::Roles> inParty = {};
-    std::array<u8, Guests> guestUsed = {};               // swd32 0x004FDF80
-    u16 guestCount = 0;                                  // 0x005771F4
-    u8 defeatedRoles = 0;                                // swd32 0x0053BEFF the party roles entering defeated
-    i32 result = 0;                                      // 0x00576FAC 0x67: the battle is lost before it starts
-    i32 mirrored = 0;                                    // 0x00577304 the sides are swapped
-    u16 timingWindow = DefaultTimingWindow;              // swd32 0x004A762A
-    u16 lightColor = 0;                                  // swd32 0x004FF104
-    u16 darkColor = 0;                                   // swd32 0x005240BC
-    i32 pointerX = 0;                                    // swd32 0x005028A0
-    i32 pointerY = 0;                                    // swd32 0x005028A4
+    std::array<u8, Guests> guestUsed = {};  // swd32 0x004FDF80
+    u16 guestCount = 0;                     // 0x005771F4
+    // 0x005770D4 low word: party roles the battle's checks leave out (read by 0x004612D0, 0x0045FA80 and
+    // CheckBattleEnd; its writer is not rebuilt yet); the high word is a role slot
+    u16 unk5770D4 = 0;
+    i32 musicBeforeBattle = 0;               // 0x005770C8 the music queue's mode when the battle started (StartBattle)
+    u8 defeatedRoles = 0;                    // swd32 0x0053BEFF the party roles entering defeated
+    i32 result = 0;                          // 0x00576FAC 0x67: the battle is lost before it starts
+    i32 mirrored = 0;                        // 0x00577304 the sides are swapped
+    u16 timingWindow = DefaultTimingWindow;  // swd32 0x004A762A
+    u16 lightColor = 0;                      // swd32 0x004FF104
+    u16 darkColor = 0;                       // swd32 0x005240BC
+    i32 pointerX = 0;                        // swd32 0x005028A0
+    i32 pointerY = 0;                        // swd32 0x005028A4
     std::array<UnitPlacement, Enemies> enemyPlaces;      // swd32 0x005213A0
     std::array<UnitPlacement, RoleUnits> rolePlaces;     // swd32 0x0053AF70
     std::array<i32, 2 * Party::Roles> panelPlaces = {};  // swd32 0x004FF558 the x and y of the four role panels

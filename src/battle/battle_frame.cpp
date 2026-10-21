@@ -73,18 +73,8 @@ constexpr int kIntroZoomBase = 0x40;
 constexpr int kIntroScaleDivisor = 0xA;
 constexpr u32 kIntroUnusedDraw = 3;
 
-struct BattleMusicRange
-{
-    u16 first;
-    u16 last;
-    std::string_view path;
-};
-
-constexpr std::array<BattleMusicRange, 3> kBattleMusic = {{
-    {1, 0x70, "music\\Battle_Europa01.mp3"},     // swd32.exe 0x004A776C (unmatched in swd3e)
-    {0x72, 0xB9, "music\\Battle_Arab01.mp3"},    // swd32.exe 0x004A7754 (unmatched in swd3e)
-    {0xC6, 0x10E, "music\\Battle_China01.mp3"},  // swd32.exe 0x004A7738 (unmatched in swd3e)
-}};
+constexpr std::u8string_view kBattleMusic = u8"music\\Battle01.mp3";  // 0x0045AAD0
+constexpr int kBattleMusicId = 1;                                     // the id the battle tune plays as
 
 constexpr i32 kNoFirstStrike = 0x40;  // FirstStrike
 constexpr u32 kFirstStrikeSides = 2;
@@ -142,12 +132,6 @@ int Game::BattleFrame()
     BattleState& battle = this->battleState;
     BattleHud& hud = this->battleHud;
     battle.frameResult = 1;
-
-    if (this->audio.IsMusicStopped() && battle.unk53C4C0 == 0)
-    {
-        this->PlayMusic(battle.battleMusic);
-        this->audio.SetMusicVolume(this->config.musicVolume);
-    }
 
     // The rebuild (deviations.md): a press is a role's own; when another role (or the same one's next turn) is to be
     // given a command, what is held from before counts only once let go and pressed again.
@@ -586,7 +570,6 @@ void Game::EndBattle()
     this->archive.CloseAll();
     this->acts.CloseAll();
     this->audio.StopAllSounds();
-    this->audio.StopMusic();
     this->database.CloseFiles();
     battle.learnedPending = 0;
     battle.lastLearned = LearnedSkill{};
@@ -765,31 +748,27 @@ void Game::BattleIntro(u16 style)
     battle.unk53BFC0 = 0;
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     this->StartBattleMusic();
+    battle.panelFlags &= ~BattleState::MusicGiven;
     this->FirstStrike();
 }
 
-// The battle music of BattleIntro (inline in the original); see there.
+// The battle music of BattleIntro (inline in 0x0045AAD0): unless a battle talk gave it (MusicGiven, then cleared by
+// BattleIntro), music\Battle01.mp3 becomes the third list of the music queue and plays once the playing piece has
+// stopped, at the options' volume.
 void Game::StartBattleMusic()
 {
     BattleState& battle = this->battleState;
 
-    if (!this->audio.IsMusicStopped())
+    if ((battle.panelFlags & BattleState::MusicGiven) != 0)
     {
         return;
     }
 
-    battle.battleMusic = this->config.installDirectory;
-
-    for (const auto& [first, last, path] : kBattleMusic)
-    {
-        if (battle.battle >= first && battle.battle <= last)
-        {
-            battle.battleMusic += Utf8Bytes(path);
-        }
-    }
-
-    this->PlayMusic(battle.battleMusic);
-    this->audio.SetMusicVolume(this->config.musicVolume);
+    MusicQueue& queue = this->audio.Queue();
+    battle.battleMusic = this->config.installDirectory + std::u8string(kBattleMusic);
+    queue.SetSlot(battle.battleMusic, kBattleMusicId, 0, MusicQueue::ThirdList);
+    queue.Switch(MusicQueue::ThirdList, MusicQueue::RepeatList, 0);
+    queue.SetVolume(MusicQueue::MaxVolume * this->config.musicVolume / Config::MaxVolume);
 }
 
 // The first strike of BattleIntro (inline in the original); see there.

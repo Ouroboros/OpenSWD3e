@@ -1455,7 +1455,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
 
     if ((battle.unk53BF12 & kGoldGiven) == 0)
     {
-        game.audio.StopMusic();
+        game.audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
         game.audio.StopAllSounds();
         game.audio.PlaySound(kVictorySound, game.config.soundVolume);
 

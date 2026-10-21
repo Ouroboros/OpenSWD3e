@@ -101,7 +101,6 @@ constexpr i32 kQuitFadeFrom = 0x1E;
 constexpr i32 kQuitFadeEnd = 0x3C;
 constexpr i32 kEndGame = 1;  // OptionsPage::quitKind
 constexpr i32 kRestart = 2;
-constexpr int kQuitMusicFade = 0x1E;
 
 // The sounds.
 constexpr int kMoveSound = 0x2E;
@@ -791,7 +790,7 @@ void Menu::OptionsFrame()
                 case kMusicRow:
                     step = std::min(step, Config::MaxVolume);
                     settings.musicVolume = step;
-                    owner.audio.SetMusicVolume(step);
+                    owner.audio.Queue().SetVolume(MusicQueue::MaxVolume * step / Config::MaxVolume);
                     break;
 
                 case kCacheRow:
@@ -1233,7 +1232,7 @@ void Menu::OptionsLeft()
                         settings.musicVolume = 0;
                     }
 
-                    owner.audio.SetMusicVolume(volume);
+                    owner.audio.Queue().SetVolume(MusicQueue::MaxVolume * volume / Config::MaxVolume);
                     return;
                 }
 
@@ -1381,7 +1380,7 @@ void Menu::OptionsRight()
                         settings.musicVolume = Config::MaxVolume;
                     }
 
-                    owner.audio.SetMusicVolume(volume);
+                    owner.audio.Queue().SetVolume(MusicQueue::MaxVolume * volume / Config::MaxVolume);
                     return;
                 }
 
@@ -1573,9 +1572,6 @@ void Menu::OptionsSelect()
 
             page.locked = 1;
             page.choice = kQuitFadeFrom;
-            owner.audio.SetMusicFade(AudioManager::FadeOverLength, kQuitMusicFade);
-            owner.audio.UpdateMusicFade();
-            owner.scene.musicTunes = {};
             return;
 
         case kKeys:
