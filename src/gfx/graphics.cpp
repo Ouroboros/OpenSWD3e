@@ -393,6 +393,20 @@ u32 Graphics::DetectPixelFormat()
     return Surface::GreenMask;
 }
 
+// swd3e.exe 0x0043C950: the pitch in bytes and the height of the primary surface, each when asked for
+void Graphics::PrimarySize(i32* pitch, i32* height) const
+{
+    if (pitch != nullptr)
+    {
+        *pitch = this->primaryPitch;
+    }
+
+    if (height != nullptr)
+    {
+        *height = this->primaryHeight;
+    }
+}
+
 // swd3e.exe 0x0043C970: pitch in bytes
 i32 Graphics::BackSize(i32& pitch, i32& height) const
 {

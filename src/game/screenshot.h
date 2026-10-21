@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <span>
 #include <string_view>
 
@@ -16,8 +15,7 @@ int SaveScreenshot(
     std::span<const u16> pixels,
     int width,
     int height,
-    std::u8string_view fileName,
-    const std::function<void()>& serveAudio
+    std::u8string_view fileName
 );
 
 }  // namespace swd3e

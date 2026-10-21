@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "core/log.h"
 #include "game/game.h"
@@ -50,8 +50,8 @@ constexpr int kValueLimit = 4;
 constexpr int kFieldBytes = 0xA;  // GetDlgItemTextA reads at most nine bytes
 constexpr i16 kFullStock = 0x5A;  // the top up and the counts set fill to 90
 constexpr i16 kDeleteAll = -0x400;
-constexpr u16 kFirstSkill = 0x5DD;  // the skill tabs take ids 0x5DD..0x7CF
-constexpr u16 kSkillsEnd = 0x7D0;
+constexpr u16 kFirstSkill = 0x1771;  // the skill tabs take ids 0x1771..0x1963 (swd3e)
+constexpr u16 kSkillsEnd = 0x1964;
 constexpr int kLastVariable = 0x3F;
 constexpr int kLastAttribute = 0x10;
 
@@ -59,17 +59,18 @@ constexpr int kLastAttribute = 0x10;
 constexpr std::array<std::u8string_view, 4> kColumns = {u8"物品", u8"數量", u8"號碼", u8"附加值"};  // 0x004A020C..
 constexpr std::array<int, 4> kColumnWidths = {0x78, 0x40, 0x40, 0x60};
 constexpr int kColumnTextSize = 4;
-constexpr std::u8string_view kItemsTab = u8"物品";          // swd32.exe 0x004A020C (unmatched in swd3e)
-constexpr std::u8string_view kAttributesSuffix = u8"屬性";  // the end of "%s屬性" (swd32.exe 0x004A01FC)
-constexpr std::u8string_view kSkillsSuffix = u8"法術";      // the end of "%s法術" (swd32.exe 0x004A0204)
-constexpr std::u8string_view kVariablesTab = u8"變數";      // swd32.exe 0x004A01F4 (unmatched in swd3e)
-constexpr std::u8string_view kMoneyLabel = u8"錢";          // the first variable (swd32.exe 0x004A0288)
-constexpr std::string_view kCompanyA = "Cmpy1";             // variables 11 and 12
+constexpr std::u8string_view kItemsTab = u8"物品";          // 0x004B1238
+constexpr std::u8string_view kAttributesSuffix = u8"屬性";  // the end of "%s屬性" (0x004B1228)
+constexpr std::u8string_view kSkillsSuffix = u8"法術";      // the end of "%s法術" (0x004B1230)
+constexpr std::u8string_view kVariablesTab = u8"變數";      // 0x004B1220
+constexpr std::u8string_view kMoneyLabel = u8"錢";          // the first variable (0x004B12BC)
+constexpr std::u8string_view kGhostLabel = u8"符鬼";        // swd3e: variable 2 (0x004B12B4)
+constexpr std::string_view kCompanyA = "Cmpy1";             // variables 11 and 12 (0x004B12AC, 0x004B12A4)
 constexpr std::string_view kCompanyB = "Cmpy2";
 constexpr std::size_t kCompanyAVariable = 11;
 constexpr std::size_t kCompanyBVariable = 12;
-constexpr std::u8string_view kInsertFailed = u8"物品插入發生錯誤";  // swd32.exe 0x004A0214 (unmatched in swd3e)
-constexpr std::u8string_view kDeleteFailed = u8"物品刪除發生錯誤";  // swd32.exe 0x004A023C (unmatched in swd3e)
+constexpr std::u8string_view kInsertFailed = u8"物品插入發生錯誤";  // 0x004B1240
+constexpr std::u8string_view kDeleteFailed = u8"物品刪除發生錯誤";  // 0x004B1268
 
 // The name dialog.
 
@@ -232,6 +233,10 @@ void Fill(CheatDialog& cheat, HWND list)
             if (variable == 0)
             {
                 label = Big5(kMoneyLabel);
+            }
+            else if (variable == Party::GhostVariable)
+            {
+                label = Big5(kGhostLabel);
             }
             else if (variable == kCompanyAVariable)
             {
@@ -467,7 +472,7 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
 
             if (node == nullptr)
             {
-                DebugLog(kInsertFailed);
+                ErrorBox(cheat->errors, u8"CheatDialog", kInsertFailed);
             }
             else if (!skill)
             {
@@ -500,7 +505,7 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
             if (node != nullptr &&
                 AddItem(*link, node->id, kDeleteAll, ItemCountMode::Pending, cheat->database) != nullptr)
             {
-                DebugLog(kDeleteFailed);
+                ErrorBox(cheat->errors, u8"CheatDialog", kDeleteFailed);
             }
 
             Fill(*cheat, list);

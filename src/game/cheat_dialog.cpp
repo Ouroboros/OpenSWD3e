@@ -28,6 +28,7 @@ bool HasKind(u32 kind, u32 slot)
 
 CheatDialog::CheatDialog(Game& game)
     : game(game),
+      errors(game.errors),
       party(game.party),
       database(game.database),
       running(game.running),

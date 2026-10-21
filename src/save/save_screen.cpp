@@ -143,9 +143,7 @@ constexpr u32 kTextRed = 0x1D;
 constexpr u32 kTextGreen = 0x17;
 constexpr u32 kTextBlue = 0x10;
 constexpr i32 kSlotsAct = 0x232A;
-constexpr i32 kSaveTitleAction = 0x4C;
-constexpr i32 kLoadTitleAction = 0x4D;
-constexpr int kTitleY = 4;
+constexpr i32 kLoadPageAction = 0xC;  // swd3e: the background of the load page (the save page has action 0)
 constexpr int kSlotStep = static_cast<int>(kSlotHeight);
 constexpr int kInfoX = 0xC0;
 constexpr int kInfoTop = 0x32;
@@ -167,7 +165,6 @@ constexpr u16 kAbsentRole = 0xFFFF;  // SavePreviewRole::maxHitPoints of a role 
 constexpr int kFaceStep = 0x48;
 constexpr int kFaceX = 0xE0;
 constexpr int kFaceTop = 0x88;
-constexpr int kSecondFaceDrop = 0x10;
 constexpr std::u8string_view kLevelFormat = u8"%d級";  // swd32.exe 0x0049FA84 (unmatched in swd3e)
 constexpr int kDigitWidth = 4;
 constexpr int kLevelStep = 0x12;
@@ -202,10 +199,14 @@ constexpr int kArrowReach = 2;  // the arrows show while slots lie this far beyo
 constexpr int kArrowX = 0x130;
 constexpr int kDownArrowY = 0x1C0;
 constexpr int kUpArrowY = 4;
-constexpr u16 kDownArrow = 0x2460;
-constexpr u16 kDownArrowLit = 0x2462;
-constexpr u16 kUpArrow = 0x245F;
-constexpr u16 kUpArrowLit = 0x2461;
+constexpr u16 kArrows = 0x235B;  // swd3e: the four arrow pictures in one file
+constexpr u16 kDownArrow = 0;
+constexpr u16 kDownArrowLit = 1;
+constexpr u16 kUpArrow = 2;
+constexpr u16 kUpArrowLit = 3;
+constexpr u16 kEmblemFiles = 0x2357;  // swd3e: a loaded slot shows picture file 0x2357 + SavePreview::unk24
+constexpr int kEmblemX = 0x25A;
+constexpr int kEmblemTop = 0x82;
 
 u16 ReadWord(std::span<const u8> bytes, std::size_t at)
 {
@@ -1422,8 +1423,9 @@ void Game::UnpackParty(std::span<const u8> data)
     }
 }
 
-// swd3e.exe 0x00408CC0: the slots page: the background and the title (saving or loading), the three slots of the page
-// (the chosen one darker with frames: date, thumbnail, place, the roles' faces and levels, the gold and the play time;
+// swd3e.exe 0x00408CC0: the slots page: the background (action 0 saving, 0xC loading), the three slots of the page (the
+// chosen one darker with frames: date, thumbnail, place, the roles' faces and levels, the gold, the emblem of unk24 and
+// the play time;
 // "沒有存檔資訊" for a free slot; the number), the overwrite prompt when saving, the arrows of the pages beyond (lit
 // under the pointer, pressed a few frames after paging) and the pointer
 void Game::DrawSlotsPage()
@@ -1435,12 +1437,17 @@ void Game::DrawSlotsPage()
 
     const auto color = static_cast<Pixel>(this->painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
     this->menu.background.id = kSlotsAct;
-    this->menu.background.action = 0;
+
+    if (this->slotsLoad == 0)
+    {
+        this->menu.background.action = 0;
+    }
+    else if (this->slotsLoad == 1)
+    {
+        this->menu.background.action = kLoadPageAction;
+    }
+
     this->actDrawer.Draw(this->menu.background, 0, 0);
-    this->slotsTitle.id = kSlotsAct;
-    this->slotsTitle.action = this->slotsLoad != 0 ? kLoadTitleAction : kSaveTitleAction;
-    this->slotsTitle.direction = 0;
-    this->actDrawer.Draw(this->slotsTitle, 0, kTitleY);
     const int first = SaveSlots::Visible * (this->saveSlots.newest / SaveSlots::Visible);
     ActState& panel = this->battleMessages.panelAct;
     const int pitch = this->painter.ScreenPitch();
@@ -1529,7 +1536,7 @@ void Game::DrawSlotsPage()
                 this->actDrawer.Draw(
                     this->saveSlots.acts[static_cast<std::size_t>(index)][static_cast<std::size_t>(role)],
                     kFaceStep * role + kFaceX,
-                    (role == 1 ? kSecondFaceDrop : 0) + y + kFaceTop
+                    y + kFaceTop
                 );
                 const std::string level = WinFormat(kLevelFormat, {static_cast<i32>(entry.level)});
                 this->mediumFont.DrawText(
@@ -1543,6 +1550,7 @@ void Game::DrawSlotsPage()
             }
 
             this->actDrawer.DrawCounter(kGoldRight, y + kGoldTop, static_cast<u32>(preview.gold), this->counterAlpha);
+            this->actDrawer.DrawPicture(static_cast<u16>(preview.unk24 + kEmblemFiles), 0, kEmblemX, y + kEmblemTop);
             this->mediumFont.DrawText(
                 this->drawSurface,
                 kPlayTimeRight - kPlayTimeCharWidth * static_cast<int>(preview.playTime.size()),
@@ -1619,22 +1627,22 @@ void Game::DrawSlotsPage()
 
     if (this->saveSlots.newest + kArrowReach <= SaveGames::LastSlot)
     {
-        this->actDrawer.DrawPicture(kDownArrow, 0, kArrowX, kDownArrowY);
+        this->actDrawer.DrawPicture(kArrows, kDownArrow, kArrowX, kDownArrowY);
 
         if (this->state.pointerY < static_cast<i32>(kDownArrowBottom) &&
             this->state.pointerY > static_cast<i32>(kDownArrowTop))
         {
-            this->actDrawer.DrawPicture(kDownArrowLit, 0, kArrowX, this->downArrowPress + kDownArrowY);
+            this->actDrawer.DrawPicture(kArrows, kDownArrowLit, kArrowX, this->downArrowPress + kDownArrowY);
         }
     }
 
     if (this->saveSlots.newest - kArrowReach >= 0)
     {
-        this->actDrawer.DrawPicture(kUpArrow, 0, kArrowX, kUpArrowY);
+        this->actDrawer.DrawPicture(kArrows, kUpArrow, kArrowX, kUpArrowY);
 
         if (static_cast<u32>(this->state.pointerY) <= kUpArrowBottom)
         {
-            this->actDrawer.DrawPicture(kUpArrowLit, 0, kArrowX, kUpArrowY - this->upArrowPress);
+            this->actDrawer.DrawPicture(kArrows, kUpArrowLit, kArrowX, kUpArrowY - this->upArrowPress);
         }
     }
 
@@ -1652,14 +1660,15 @@ void Game::DrawSlotsPage()
 
     if (this->acts.Run(pointer) == 0)
     {
+        // Only the GUID is passed: act, qq and dir take what is on the stack (0 here, see deviations.md).
         ErrorBox(
             this->errors,
             u8"Act Err(RefrashCursor)",
             u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
             this->scene.pointerRole.id,
-            pointer.id,
-            pointer.action,
-            pointer.direction
+            0,
+            0,
+            0
         );
     }
 

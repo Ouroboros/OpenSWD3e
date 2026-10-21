@@ -83,15 +83,22 @@ TEST_CASE("launcher: resources of swd3e.exe and the hover hotspots")
     launcher.Draw(screen);
 }
 
-TEST_CASE("launcher: the window icon and cursor of swd32.exe")
+TEST_CASE("launcher: the window icon and cursor of swd3e.exe")
 {
-    constexpr int kSide = 32;
-    constexpr std::u8string_view kIconFile = u8"101.ico";  // Game::WindowIcon; its last member has 24 bits
+    constexpr int kSide = 32;      // the cursor
+    constexpr int kIconSide = 48;  // the icon member the window takes: the first with the most bits (8)
+    constexpr std::u8string_view kIconFile = u8"125.ico";  // Game::WindowIcon
+    constexpr std::size_t kEntriesAt = 6;
+    constexpr std::size_t kEntryBytes = 16;
+    constexpr std::size_t kMemberAtField = 12;
+    constexpr std::size_t kChosenEntry = 1;
     constexpr std::size_t kHeaderBytes = 40;
     constexpr std::size_t kBitsAt = 14;  // biBitCount
-    constexpr std::size_t kPixelBytes = 3;
-    constexpr std::size_t kMaskBytes = kSide * kSide / CHAR_BIT;
-    constexpr std::size_t kMemberBytes = kHeaderBytes + kPixelBytes * kSide * kSide + kMaskBytes;
+    constexpr std::size_t kIndexBits = 8;
+    constexpr std::size_t kPaletteBytes = 4 * 256;
+    constexpr std::size_t kMaskRowBytes = 8;  // 48 bits padded to a dword boundary
+    constexpr std::size_t kPixelsAt = kHeaderBytes + kPaletteBytes;
+    constexpr std::size_t kMaskAt = kPixelsAt + kIconSide * kIconSide;
     constexpr swd3e::u32 kOpaque = 0xFF000000u;
     swd3e::ExeResources resources;
     resources.Open(swd3e::AssetDirectory() + std::u8string(swd3e::ExeResources::Subdirectory));
@@ -108,19 +115,29 @@ TEST_CASE("launcher: the window icon and cursor of swd32.exe")
         return;
     }
 
-    CHECK_EQ(icon.width, kSide);
-    CHECK_EQ(icon.height, kSide);
-    CHECK_EQ(icon.pixels.size(), static_cast<std::size_t>(kSide * kSide));
+    CHECK_EQ(icon.width, kIconSide);
+    CHECK_EQ(icon.height, kIconSide);
+    CHECK_EQ(icon.pixels.size(), static_cast<std::size_t>(kIconSide * kIconSide));
 
-    CHECK(file.size() > kMemberBytes);
-    const std::span<const swd3e::u8> member = std::span<const swd3e::u8>(file).last(kMemberBytes);
+    const std::size_t field = kEntriesAt + kEntryBytes * kChosenEntry + kMemberAtField;
+    const std::size_t memberAt = static_cast<std::size_t>(file[field]) | static_cast<std::size_t>(file[field + 1]) << 8;
+    CHECK(file.size() > memberAt + kMaskAt + kMaskRowBytes * kIconSide - 1);
+    const std::span<const swd3e::u8> member = std::span<const swd3e::u8>(file).subspan(memberAt);
     CHECK_EQ(member[0], kHeaderBytes);
-    CHECK_EQ(member[kBitsAt], kPixelBytes * CHAR_BIT);
+    CHECK_EQ(member[kBitsAt], kIndexBits);
+    // Shown: the pixels the mask leaves, and the masked ones of a colour (they invert the screen, drawn black).
     std::size_t clear = 0;
 
-    for (std::size_t at = member.size() - kMaskBytes; at < member.size(); ++at)
+    for (std::size_t row = 0; row < kIconSide; ++row)
     {
-        clear += static_cast<std::size_t>(CHAR_BIT - std::popcount(member[at]));
+        for (std::size_t column = 0; column < kIconSide; ++column)
+        {
+            const swd3e::u8 bits = member[kMaskAt + kMaskRowBytes * row + column / CHAR_BIT];
+            const std::size_t index = member[kPixelsAt + kIconSide * row + column];
+            const std::size_t entry = kHeaderBytes + 4 * index;
+            const bool coloured = (member[entry] | member[entry + 1] | member[entry + 2]) != 0;
+            clear += (bits >> (CHAR_BIT - 1 - column % CHAR_BIT) & 1) == 0 || coloured ? 1 : 0;
+        }
     }
 
     const auto opaque = static_cast<std::size_t>(std::count_if(
@@ -133,9 +150,10 @@ TEST_CASE("launcher: the window icon and cursor of swd32.exe")
     ));
     CHECK_EQ(opaque, clear);
 
-    const std::size_t topLeft = kHeaderBytes + kPixelBytes * kSide * (kSide - 1);
-    const swd3e::u32 color = static_cast<swd3e::u32>(member[topLeft + 2]) << 16 |
-                             static_cast<swd3e::u32>(member[topLeft + 1]) << 8 | member[topLeft];
+    const std::size_t topLeft = member[kPixelsAt + static_cast<std::size_t>(kIconSide) * (kIconSide - 1)];
+    const std::size_t entry = kHeaderBytes + 4 * topLeft;
+    const swd3e::u32 color = static_cast<swd3e::u32>(member[entry + 2]) << 16 |
+                             static_cast<swd3e::u32>(member[entry + 1]) << 8 | member[entry];
     CHECK_EQ(icon.pixels.front() & ~kOpaque, (icon.pixels.front() >= kOpaque ? color : 0));
 
     swd3e::IconImage cursor;

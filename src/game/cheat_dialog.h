@@ -12,6 +12,7 @@ struct SDL_Window;
 namespace swd3e
 {
 
+class ErrorReporter;
 class Database;
 class ExeResources;
 class Game;
@@ -71,6 +72,7 @@ public:
     SDL_Window* Window() const;
 
     Game& game;
+    ErrorReporter& errors;  // the game's error boxes
     Party& party;
     Database& database;
     i32& running;

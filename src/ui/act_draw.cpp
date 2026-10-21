@@ -13,6 +13,7 @@ namespace swd3e
 namespace
 {
 
+constexpr u32 kWhitePair = 0xFFFFFFFF;  // the silhouette colour of DrawBordered (two white pixels)
 constexpr u32 kTranslucent = Painter::Translucent;
 constexpr u32 kDecimal = 10;
 constexpr int kLabelLeft = 0x18;
@@ -122,6 +123,37 @@ void ActDrawer::DrawGhost(ActState& state, int x, int y, int alpha, double alpha
         picture->height,
         (state.flags & 0x80000003u) | kTranslucent
     );
+}
+
+// swd3e.exe 0x004408C0: the act with a white edge: its silhouette at the four diagonal neighbours, then the act copied
+// over it
+void ActDrawer::DrawBordered(ActState& state, int x, int y)
+{
+    if (this->acts.Run(state) == 0)
+    {
+        ErrorBox(
+            this->errors,
+            u8"Act Err(Menu::DrawActBorder)",
+            u8"設定錯誤 \nact[%d] qq[%d] dir[%d]",
+            state.id,
+            state.action,
+            state.direction
+        );  // 0x004B0D58
+        return;
+    }
+
+    const Picture* picture = this->archive.GetPicture(state.frame, state.picture);
+
+    if (picture == nullptr)
+    {
+        return;
+    }
+
+    DrawArgument white;
+    white.colorPair = kWhitePair;
+    this->painter.SetSource(picture->data.data());
+    this->painter.DrawOutline(x - state.x, y - state.y, picture->width, picture->height, Painter::Copy, white);
+    this->painter.DrawPicture(x - state.x, y - state.y, picture->width, picture->height, Painter::Copy);
 }
 
 // swd3e.exe 0x0040F030: `mode` with the mirror bits of the script's mode, at the translucency of 'SG'

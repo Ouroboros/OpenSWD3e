@@ -54,6 +54,7 @@ public:
     Graphics& Device();
     Surface* GdiSurface();
     u32 DetectPixelFormat();
+    void PrimarySize(i32* pitch, i32* height) const;
     i32 BackSize(i32& pitch, i32& height) const;
 
     int Width() const;

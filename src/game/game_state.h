@@ -195,13 +195,14 @@ public:
         HideHud = 0x51,           // the gold counter and the pointer are not drawn
         DebugKeys = 0x52,         // the debug keys work
         SecondDisc = 0x53,        // the minimal installation reads the second disc file
+        Unk5A = 0x5A,             // swd3e: cleared by a new game
         UnkC9 = 0xC9,             // the battle start sets panel flag 2
         MapEntered = 0x1388,      // + the map number: the map has been entered
         MapNoEncounter = 0x1770,  // + the map number: no enemies on that map
         Unk1BB0 = 0x1BB0,         // the timing window of the battle is 0x12 frames instead of 0x3C
     };
 
-    static constexpr int Roles = 256;
+    static constexpr int Roles = 300;  // 0x004D3FC8..0x004E4AF8 (0x0040FA20 reports an index from 0x12C on)
     static constexpr int Moves = 72;
     static constexpr int FlagBytes = 0x400;
     // 1 << n (swd32.exe 0x004994EC).

@@ -170,7 +170,7 @@ void Game::LeaveParty(u16 id, u16 path, u16 event, i32 act, i32 action, i32 dire
 }
 
 // swd3e.exe 0x00433490: a scripted change of map: the keys and steps stop, the map frame is hidden while LoadCity
-// runs (Talk::Keep keeps the controlled role's act, action or direction)
+// runs (Talk::Keep keeps the controlled role's tile, act, action or direction)
 bool Game::ChangeMap(int map, int x, int y, int act, int action, int direction, int options)
 {
     const Role& player = this->state.roles[static_cast<std::size_t>(this->state.playerRole)];
@@ -183,10 +183,12 @@ bool Game::ChangeMap(int map, int x, int y, int act, int action, int direction, 
     const i32 newAct = act == Talk::Keep ? player.act.id : act;
     const i32 newAction = action == Talk::Keep ? player.act.action : action;
     const i32 newDirection = direction == Talk::Keep ? player.act.direction : direction;
+    const int column = x == Talk::Keep ? static_cast<int>(static_cast<u32>(player.x) >> MapHeader::TileShift) : x;
+    const int row = y == Talk::Keep ? static_cast<int>(static_cast<u32>(player.y) >> MapHeader::TileShift) : y;
     this->LoadCity(
         map,
-        x,
-        y,
+        column,
+        row,
         static_cast<i16>(newAct),
         static_cast<i16>(newAction),
         static_cast<i16>(newDirection),
@@ -253,6 +255,7 @@ bool Game::PlayVideo(std::size_t& cursor, u16& pc)
     this->movie.Open(path, kVideoVolume);
     this->videoLoaded = true;
     this->systemFlags |= Game::VideoPlaying;
+    this->graphics.PrimarySize(&this->videoPitch, nullptr);
     return true;
 }
 

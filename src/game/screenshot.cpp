@@ -26,8 +26,7 @@ constexpr i32 kPixelsAtField = 0xA;
 constexpr u32 kPixelsAt = kFileHeaderBytes + kInfoHeaderBytes;
 constexpr int kBytesPerPixel = 3;
 constexpr int kRowAlign = 4;
-constexpr int kRowsPerPump = 0xF;  // the audio is served every 15 rows
-constexpr int kBlueShift = 3;      // RGB555 to 8-bit channels
+constexpr int kBlueShift = 3;  // RGB555 to 8-bit channels
 constexpr int kGreenShift = 2;
 constexpr int kRedShift = 7;
 constexpr u8 kChannelMask = 0xF8;
@@ -49,8 +48,8 @@ void PutDword(std::array<u8, Size>& bytes, std::size_t at, u32 value)
 }  // namespace
 
 // swd3e.exe 0x004352D0: the `width` x `height` picture `pixels` saved as a 24-bit BMP named `fileName` (the pixels
-// converted back to RGB555 in a copy, rows bottom up padded to 4 bytes, `serveAudio` (AIL_serve) every 15 rows and at
-// the end); the file size and the pixel offset are written into the header last. 0 when the file does not open.
+// converted back to RGB555 in a copy, rows bottom up padded to 4 bytes; swd3e no longer serves the audio while it
+// writes); the file size and the pixel offset are written into the header last. 0 when the file does not open.
 // swd3e.exe EH funclet (tail) of 0x004352D0, swd32 0x004982F0 (EH unwind: the cFile, closed by its destructor)
 // swd3e.exe EH funclet (tail) of 0x004352D0, swd32 0x004982F8 (EH handler of 0x004303D0)
 int SaveScreenshot(
@@ -58,8 +57,7 @@ int SaveScreenshot(
     std::span<const u16> pixels,
     int width,
     int height,
-    std::u8string_view fileName,
-    const std::function<void()>& serveAudio
+    std::u8string_view fileName
 )
 {
     const auto count = static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
@@ -104,11 +102,6 @@ int SaveScreenshot(
 
         bytes = stride;
         file.Write(row.data(), bytes);
-
-        if (line % kRowsPerPump == 0)
-        {
-            serveAudio();
-        }
     }
 
     u32 size = static_cast<u32>(count) * 2;
@@ -118,7 +111,6 @@ int SaveScreenshot(
     file.SeekBegin(kPixelsAtField);
     file.WriteDword(kPixelsAt);
     file.Close();
-    serveAudio();
     return 1;
 }
 

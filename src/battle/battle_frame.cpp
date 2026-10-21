@@ -337,17 +337,7 @@ int Game::BattleFrame()
             this->drawSurface,
             static_cast<std::size_t>(this->painter.ScreenPitch()) * Display::Height
         );
-        SaveScreenshot(
-            this->painter,
-            pixels,
-            Display::Width,
-            Display::Height,
-            name,
-            [this]
-            {
-                this->audioDevice.Serve();
-            }
-        );
+        SaveScreenshot(this->painter, pixels, Display::Width, Display::Height, name);
         battle.snapNext = 0;
     }
 

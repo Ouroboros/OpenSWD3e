@@ -1,6 +1,6 @@
 #include "game/databases.h"
 
-#include "core/debug_log.h"
+#include "core/error_box.h"
 #include "item/item_list.h"
 #include "platform/message_box.h"
 #include "text/big5.h"
@@ -11,23 +11,24 @@ namespace swd3e
 namespace
 {
 
-constexpr std::u8string_view kNoDescription = u8"無";  // swd32.exe 0x0049F9FC (unmatched in swd3e)
+constexpr std::u8string_view kNoDescription = u8"無";  // swd3e.exe 0x004AF630
 
 }  // namespace
 
 // swd3e.exe 0x0040F380: maps.dat, path.dat (mapped) and talk1.dat; false when one is missing (the window is then
-// closed). Only a missing talk1.dat is reported, in a box with its title and text swapped.
+// closed). A missing maps.dat or path.dat is an error box; a missing talk1.dat a message box with its title and text
+// swapped.
 bool GameDatabases::Open(const std::u8string& installDirectory, ErrorReporter& errors)
 {
     if (!this->maps.Open(installDirectory + u8"maps.dat", File::Disposition::OpenExisting, File::Access::Read))
     {
-        DebugLog(u8"SWD3 RoleDataBase init Failed.");
+        ErrorBox(errors, u8"SWD3", u8"RoleDataBase init Failed.");
         return false;
     }
 
     if (!this->paths.Open(installDirectory + u8"path.dat", File::Disposition::OpenExisting, File::Access::Read))
     {
-        DebugLog(u8"SWD3 PathDataBase init Failed.");
+        ErrorBox(errors, u8"SWD3", u8"PathDataBase init Failed.");
         return false;
     }
 

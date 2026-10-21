@@ -315,8 +315,8 @@ struct Scene
     static constexpr i32 ExaminePointer = 0xA;
     static constexpr i32 RegionPointer = 0xB;
     static constexpr i32 ButtonPointer = 0xC;  // also the end act of a battle
-    static constexpr i32 PagePointer = 0xE;
-    static constexpr i32 WaitPointer = 0xF;  // while the wait key is held
+    static constexpr int PageAct = 0x2391;     // swd3e: the next page and end marks of the talk windows (action 0)
+    static constexpr i32 WaitPointer = 0xF;    // while the wait key is held
     static constexpr i32 ChoicePointer = 0xD;
     static constexpr u32 PointerFlags = 0x9000;
 
@@ -329,19 +329,19 @@ struct Scene
     i32 returnColumn = 0;                 // swd32 0x004A9930 its tile
     i32 returnRow = 0;                    // swd32 0x004A9938
     ActState timerDigits;                 // 0x004C31B0 the digits of the timers
-    std::array<ActState, 4> captionActs;  // swd32 0x004A9120 the name plates of the talk windows
+    std::array<ActState, 4> captionActs;  // 0x004C27B8 the name plates of the talk windows
     ActState loadingPicture;              // swd32 0x004A93E8 the picture of the loading screen
-    u32 unk4A94B0 = 0;
-    i32 unk4AB788 = 0;
+    u32 unk4A94B0 = 0;                    // 0x004C2B88
+    i32 unk4D0B84 = 0;        // 0x004D0B84 cleared by NewGame; its other reader is the save screen (0x00406EC0)
     ActState effectAct;       // 0x004C6290 the act of the weather particles
     i32 viewWidth = 0;        // swd32 0x004ACBC0
     i32 viewHeight = 0;       // swd32 0x004ACBC4
     i32 menuButtonSlide = 0;  // 0x004C6368 how far the system button lies out of the top right (0 to -0x20)
     i32 menuButtonWait = 0;   // 0x004C636C frames before it slides in
     Role pointerRole;         // swd32 0x004ACCD8 the mouse pointer (act 0x2329, action 0)
-    i32 unk4ACDB8 = 0;
-    u32 musicCue = 0;                         // swd32 0x004ACDBC MusicCue bits and the tune playing
-    u32 rolesTable = 0;                       // 0x004C65F0 the roles of maps.dat (its table 1)
+    i32 unk4ACDB8 = 0;        // 0x004C6564
+    u32 musicCue = 0;         // 0x004C6568 MusicCue bits and the tune playing
+    u32 rolesTable = 0;       // 0x004C65F0 the roles of maps.dat (its table 1)
     std::array<i16, 0x40> shake = {};         // 0x004C6624 camera offsets of the quake in pairs, ended by ShakeEnd
     i32 shakeIndex = 0;                       // swd32 0x004B7EB0
     i32 shakeFrames = 0;                      // swd32 0x004A94A4
@@ -369,9 +369,9 @@ struct Scene
     Role pointerButtonRole;                   // swd32 0x004C96C8 (action 0xC)
     std::array<MapParticle, 4> weather = {};  // 0x004E5550 the weather particles (filled with 0x0F bytes)
     u32 recipesTable = 0;                     // swd32 0x004C97E4 the altar's recipes in maps.dat (its table 0x18)
-    std::array<ActState, 4> dialogFrameActs;  // swd32 0x004CAA78 the frames of the talk windows
+    std::array<ActState, 4> dialogFrameActs;  // 0x004E6880 the frames of the talk windows
     i32 timerFrames = 0;                      // 0x004E6B50 the frames left on the first timer (-1: stopped)
-    Role pointerPageRole;                     // swd32 0x004CADA0 (action 0xE)
+    Role pointerPageRole;                     // 0x004E6BD8 (act PageAct, action 0)
     // swd32 0x004CAE78 the battle groups, records of 8 words from maps.dat's table 0x12,
     std::vector<u16> encounterGroups;
     // their count first

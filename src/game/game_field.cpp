@@ -1211,8 +1211,8 @@ u32 Game::RollEncounter(int steps, int force)
         return 0;
     }
 
-    const auto column = static_cast<i32>(static_cast<u32>(player.x) >> MapHeader::TileShift);
-    const auto row = static_cast<i32>(static_cast<u32>(player.y) >> MapHeader::TileShift);
+    const i32 column = player.x >> MapHeader::TileShift;  // arithmetic shifts (sar) in the original
+    const i32 row = player.y >> MapHeader::TileShift;
     const MapTrigger* area = view.triggers.next.get();
 
     while (area != nullptr && (column < area->left || column > area->right || row < area->top || row > area->bottom))
@@ -1279,7 +1279,15 @@ void Game::ReleaseRole(int index)
 
     if (index >= GameState::Roles)
     {
-        DebugLog(u8"對話系統(TalkEnd) GUID(%d)\n陣列索引錯誤(crID %d) (manMax %d) ", index, this->state.roleCount);
+        // Two values for three %d: manMax takes what is on the stack (0 here, see deviations.md).
+        ErrorBox(
+            this->errors,
+            u8"對話系統(TalkEnd)",
+            u8"GUID(%d)\n陣列索引錯誤(crID %d) (manMax %d) ",
+            index,
+            this->state.roleCount,
+            0
+        );  // 0x004B11E0, 0x004B11F4
     }
 
     if ((role.flags & Role::FacesTalker) != 0)

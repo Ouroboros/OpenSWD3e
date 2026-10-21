@@ -95,12 +95,12 @@ class Game
     friend class smooth::TalkFrame;
 
 public:
-    static constexpr std::u8string_view WindowTitle = u8"軒轅劍參 DVD";                    // swd32 0x0049FAC4
-    static constexpr std::u8string_view Title = u8"軒轅劍三";                              // swd32 0x004A0F78
-    static constexpr std::u8string_view DirectInputFailed = u8"DirectInput 初始化錯誤%n";  // swd32 0x004A0F5C
+    static constexpr std::u8string_view WindowTitle = u8"軒轅劍參 外傳";                   // swd3e 0x004B0BAC
+    static constexpr std::u8string_view Title = u8"軒轅劍三";                              // swd3e 0x004B1F98
+    static constexpr std::u8string_view DirectInputFailed = u8"DirectInput 初始化錯誤%n";  // swd3e 0x004B1F7C
     static constexpr u32 StartSound = 0x78;
-    static constexpr u32 WindowIcon = 0x65;    // the icon group of the window class (swd32.exe 0x00409F49)
-    static constexpr u32 WindowCursor = 0x67;  // the cursor group (swd32.exe 0x00409F52)
+    static constexpr u32 WindowIcon = 0x7D;    // the icon group of the window class (0x0040A140)
+    static constexpr u32 WindowCursor = 0x67;  // the cursor group (0x0040A140)
     static constexpr int FrameInterval = 0x23;
     static constexpr int AutoRenderScale = 0;  // renderScaleSetting: the largest whole scale the window shows
     static constexpr int MaxRenderScale = MaxWeaveScale;  // DisplaySettings::MaximumRenderScale
@@ -133,6 +133,7 @@ public:
         UnkSystem1 = 1,       // the map frame is skipped (no setter is known)
         MovieOpened = 2,      // a map movie plays (talk command MapMovie)
         QuitRequested = 4,    // the game ends after the frame
+        DiscWait = 0x10,      // swd3e: the frame is skipped while the disc check waits (0x004121C0, removed: never set)
         VideoPlaying = 0x20,  // a full-screen video plays
         // swd3e: the name boxes of talk command 209 are open (set by it in 0x0042BAF0, cleared by 0x004172A0 when the
         // name is taken or given up); the controlled role is not driven (0x00402AA0)
@@ -594,8 +595,12 @@ private:
     AudioManager audio;
     Movie movie;
     bool videoLoaded = false;  // 0x00578624 is set: a movie object exists (from PlayVideo to StopVideo)
-    i32 videoMarkA = 0;        // 0x004C30E0 SetVideoMarks
-    i32 videoMarkB = 0;        // 0x004C30E8
+    // 0x0057861C the primary surface's pitch PlayVideo takes for Bink's copy; the platform copy uses the target
+    // surface's own pitch (the same value)
+    i32 videoPitch = 0;
+    i32 ghostFrames = 0;  // 0x004E4C1C frames since the talisman ghost last ticked (MainFrame)
+    i32 videoMarkA = 0;   // 0x004C30E0 SetVideoMarks
+    i32 videoMarkB = 0;   // 0x004C30E8
     Random random;
     crt::Random crtRandom;
     GameState state;
@@ -644,7 +649,6 @@ private:
     i32 flagCursor = 0;      // 0x004C27A8 the flag chosen in the flag view
     u32 saveFrames = 0;      // 0x004C27B0 frames since the save screen opened
     u16 unk4CC2AA = 0;       // swd32 0x004CC2AA
-    ActState slotsTitle;     // swd32 0x004CC168 the title of the slots page (act 0x232A)
     u8 downArrowPress = 0;   // 0x004C2650 frames the lit down arrow of the slots stays pressed down
     u8 upArrowPress = 0;     // 0x004C2651 and the up arrow up
     i32 slotPrompt = 0;      // 0x004C27A4 browsing, the overwrite answer or the slot chosen

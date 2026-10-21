@@ -58,7 +58,7 @@ int Game::CheckStart()
 
 // swd3e.exe 0x0040AEC0: the game made active (`state` 1: the frame interval cleared, the painter set on the frame
 // again, the three fonts made again, the battle surfaces again in battle, the frames at their interval) or inactive
-// (0: the music and the sounds stopped, the battle surfaces and the fonts released). The original also restores or
+// (0: the sounds stopped, the battle surfaces and the fonts released). The original also restores or
 // minimises its window and restores the lost DirectDraw surfaces, waiting for the primary's flip chain; the window
 // stays as it is here.
 void Game::Activate(int state)
@@ -95,7 +95,6 @@ void Game::Activate(int state)
     }
 
     this->audio.StopAllSounds();
-    this->AudioPump();
 
     if (this->inBattle == kInBattle)
     {
@@ -143,8 +142,9 @@ void Game::ReleaseBattle()
 }
 
 // swd3e.exe 0x00428EC0: the game released as its window is destroyed: the fonts, the save previews, the battle, the
-// counters, the map's lists and roles, the item lists, the archives, the music and sounds, the surfaces and the
-// devices, the files (failures logged), the databases, the map cache marked clean, the pointer shown. The original
+// counters, the map's lists and roles, the item lists, the act archives, the picture cache flushed, the sounds, the
+// surfaces and the devices, the files (failures logged), the databases, the map cache marked clean, the pointer shown,
+// the picture archives closed, then the stream player, the sound effects and Miles. The original
 // frees the map's 8-bit palette twice (its pointer 0x004CD764 and 0x004B7404) after an 8-bit map; it is freed once
 // here.
 void Game::ReleaseGame()
@@ -179,7 +179,7 @@ void Game::ReleaseGame()
 
     this->FreeItemLists();
     this->acts.CloseAll();
-    this->archive.CloseAll();
+    this->archive.Flush();
     this->audio.StopAllSounds();
     this->scene.encounterGroups.clear();
     this->offscreen.reset();
@@ -235,6 +235,10 @@ void Game::ReleaseGame()
     this->field.regions.next.reset();
     this->mapCache.MarkClean();
     SDL_ShowCursor();
+    this->archive.CloseAll();
+    this->audio.Streams().Close();
+    this->audio.Effects().Close();
+    this->audio.System().Shutdown();
 }
 
 }  // namespace swd3e

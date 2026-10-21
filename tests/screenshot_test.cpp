@@ -29,7 +29,6 @@ constexpr std::size_t kPlanesAt = 0x1A;
 constexpr std::size_t kBitsAt = 0x1C;
 constexpr swd3e::u32 kInfoBytes = 0x28;
 constexpr swd3e::u32 kBits = 0x18;
-constexpr int kServes = 2;  // the first row and the end
 constexpr std::string_view kFileName = "swd3_screenshot_test.bmp";
 
 swd3e::u32 Dword(const std::vector<swd3e::u8>& bytes, std::size_t at)
@@ -45,20 +44,8 @@ TEST_CASE("screenshot: a 24-bit BMP written bottom up")
     swd3e::Painter painter;
     const std::array<swd3e::u16, kSide * kSide> pixels = {kWhite, kBlue, kRed, kBlack};
     const std::filesystem::path path = std::filesystem::temp_directory_path() / kFileName;
-    int serves = 0;
-    const int saved = swd3e::SaveScreenshot(
-        painter,
-        pixels,
-        kSide,
-        kSide,
-        path.u8string(),
-        [&serves]
-        {
-            ++serves;
-        }
-    );
+    const int saved = swd3e::SaveScreenshot(painter, pixels, kSide, kSide, path.u8string());
     CHECK_EQ(saved, 1);
-    CHECK_EQ(serves, kServes);
     std::ifstream file(path, std::ios::binary);
     const std::vector<swd3e::u8> bytes{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
     file.close();

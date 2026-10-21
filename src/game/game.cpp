@@ -55,7 +55,6 @@ constexpr std::u8string_view kDrawKernelFailed = u8"DrawKernel init Failed.";
 constexpr std::u8string_view kDirectDrawFailed = u8"DDraw init Failed.";
 constexpr std::u8string_view kTimerFailed = u8"mmTimer init Failed.";
 constexpr std::u8string_view kErrorTitle = u8"SWD3";
-constexpr u32 kStopVideoButtons = kLeftButton | kRightButton | kControlKey | kMiddleButton;
 constexpr u32 kScreenshotDiskMegabytes = 0x40;  // key P: a screenshot needs more free space than this
 constexpr int kScreenshotNames = 0x1869E;       // ScrnShot\00000.bmp..ScrnShot\99997.bmp
 constexpr std::string_view kScreenshotName = "%sScrnShot\\%05d.bmp";  // swd32.exe 0x0049FB3C (unmatched in swd3e)
@@ -65,8 +64,8 @@ constexpr i32 kDefaultBattleSpeed = 0xB;
 constexpr u64 kTileCacheShare = 6;  // a sixth of the physical memory
 constexpr int kMegabyteShift = 20;
 constexpr u32 kMegabyte = 1u << kMegabyteShift;
-constexpr int kStartPointerX = 0x1E0;
-constexpr int kStartPointerY = 0x168;
+constexpr int kStartPointerX = 0x140;
+constexpr int kStartPointerY = 0xF0;
 constexpr u32 kInputFailed = 2;  // Game::deviceFlags
 constexpr int kDisplayBits = 16;
 
@@ -83,17 +82,20 @@ constexpr i32 kTimerStopped = -1;  // Scene::timerFrames and secondTimerFrames o
 constexpr int kBattleOver = 0;     // FightTalkFrame: the battle and its talk are over
 constexpr int kBattleLost = 2;
 constexpr int kBattleEscaped = 3;
+constexpr u16 kDefeatEvent = 0x63;       // the event the leader runs after a lost battle (0x0040A7B0)
+constexpr i32 kGhostTickFrames = 0x384;  // frames between two ticks of the talisman ghost (0x0040A7B0)
+constexpr i32 kGhostFallBase = 3;        // unk110 falls by 3 plus Below(5) a tick
+constexpr u32 kGhostFallRange = 5;
 
 // A new game.
-constexpr std::array<int, 5> kNewGameFlags = {
+constexpr std::array<int, 4> kNewGameFlags = {
     GameState::Running,
     GameState::Music,
     GameState::SoundEffects,
-    GameState::NoPointer,
     GameState::NoLoadingScreen,
 };
 
-constexpr std::array<int, 19> kNewGameClearedFlags = {
+constexpr std::array<int, 23> kNewGameClearedFlags = {
     GameState::Unk0,
     GameState::DebugReports,
     GameState::Weather,
@@ -101,6 +103,7 @@ constexpr std::array<int, 19> kNewGameClearedFlags = {
     GameState::HeatHaze,
     GameState::Lightning,
     GameState::NoChoicePointer,
+    GameState::NoPointer,
     GameState::HideActRoles,
     GameState::Encounters,
     GameState::UnkD,
@@ -113,6 +116,9 @@ constexpr std::array<int, 19> kNewGameClearedFlags = {
     GameState::NoSlide,
     GameState::Fireflies,
     GameState::Unk17,
+    GameState::EventUnderfoot,
+    GameState::GhostAppears,
+    GameState::Unk5A,
 };
 
 constexpr i32 kStartGold = 100;
@@ -121,9 +127,9 @@ constexpr i32 kStartUnk4ACDB8 = 3;
 constexpr i32 kStartUnk4ACBC8 = 2;
 constexpr int kStartWalkSpeed = 0x10;
 constexpr int kUnk232EAct = 0x232E;
-constexpr int kUnk232EActs = 4;
+constexpr int kUnk232EActs = 12;
 constexpr int kUnk4C83A8Action = 8;
-constexpr i32 kUnk4ACAF8Action = 0x38;
+constexpr i32 kUnk4ACAF8Action = 0x60;
 constexpr u32 kGroupSlackBytes = 0x80;  // the encounter groups get 0x10 spare words
 constexpr u16 kOpeningEvent = 100;      // the leader's event of a new story
 
@@ -344,9 +350,10 @@ Game::Game(std::u8string installDirectory)
 }
 
 // swd3e.exe 0x0040A140: creates the window (WM_CREATE ends it when the start check fails), sends itself the start
-// message and runs the message loop: the frames while the game runs, the pause banner while F8 holds it. The original
-// first leaves when a window of its class is open already, and handles an installation's command line alone (the
-// rebuild ignores the command line, see deviations.md).
+// message and runs the message loop: the movie's frames while one plays, the frames while the game runs, the pause
+// banner while F8 holds it. The original first leaves when a window of its class is open already, asks a running
+// Ghost.exe window ("SsSwd3eg") to close (message 0x401, then waits a second), and handles an installation's command
+// line alone (the rebuild does neither, see deviations.md).
 int Game::Run([[maybe_unused]] std::u8string_view commandLine)
 {
     ErrorLog(kLogSeparator);
@@ -481,7 +488,6 @@ void Game::LoopFrame()
     if (this->running != 0 && (this->systemFlags & Game::VideoPlaying) != 0)
     {
         this->VideoFrame();
-        this->AudioPump();
     }
     else if (this->running != 0 && (this->systemFlags & Game::UnkSystem1) == 0 && this->inactive == 0)
     {
@@ -812,11 +818,12 @@ void Game::InitDrawKernel()
     {
         SDL_Delay(kLowDiskPause);
         PlaySystemBeep();
-        // 0x00424C79 (nullsub_1 with the title 0x004A0EEC and the text 0x004A0EFC)
-        DebugLog(
-            u8"!!! 注意 !!! 遊戲過程中,磁碟空間不足\n請確認至少剩餘 %dM磁碟空間.",
+        ErrorBox(
+            this->errors,
+            u8"!!! 注意 !!!",
+            u8"遊戲過程中,磁碟空間不足\n請確認至少剩餘 %dM磁碟空間.",
             static_cast<int>(neededMegabytes)
-        );
+        );  // 0x004B1F0C, 0x004B1F1C
     }
 
     this->mapCache.MarkDirty();
@@ -862,11 +869,15 @@ void Game::InitDrawKernel()
     this->menuState = Game::TitleMenu;
 }
 
-// swd3e.exe 0x00428C20: DirectInput, Miles with the sound effects, the MIDI and stream players, the display (640 x 480
-// in 16 bits) with the frame surface, and Bink
+// swd3e.exe 0x00428C20: Miles with the sound effects and the stream player, DirectInput, the display (640 x 480 in 16
+// bits) with the frame surface, and Bink
 bool Game::InitDevices()
 {
     this->deviceFlags = 0;
+    // swd3e opens Miles, the sound effects and the stream player first; the MIDI player is never opened
+    this->audio.System().Startup(this->config.installDirectory);
+    this->audio.Effects().Open(this->config.installDirectory);
+    this->audio.Streams().Open();
 
     if (this->input.Init() != 0)
     {
@@ -875,11 +886,6 @@ bool Game::InitDevices()
         this->Destroy();
         return false;
     }
-
-    this->audio.System().Startup(this->config.installDirectory);
-    this->audio.Effects().Open(this->config.installDirectory);
-    this->audio.Midi().Open(this->audio.Effects().HasDriver() ? 1 : 0);
-    this->audio.Streams().Open();
 
     if (!this->graphics.Init(Graphics::FullScreen, Display::Width, Display::Height, kDisplayBits))
     {
@@ -1012,9 +1018,9 @@ void Game::NewGame()
     }
 
     scene.musicTunes = {};
-    scene.unk4AB788 = 1;
     this->audio.SetFadeMode(kNewGameFadeMode);
     this->audio.SetFadeLength(0);
+    scene.unk4D0B84 = 0;
     scene.musicCue = 0;
     this->audio.Queue().Switch(MusicQueue::FirstList, MusicQueue::RepeatList, kNewGameMusicFade);
     scene.unk4A94B0 = kStartUnk4A94B0;
@@ -1023,11 +1029,11 @@ void Game::NewGame()
     scene.talkWindows.reset();
     game.SetWalkSpeed(kStartWalkSpeed);
 
-    auto setPointer = [this](Role& role, int action)
+    auto setPointer = [this](Role& role, int act, int action)
     {
         role = Role{};
         ResetPlayback(role.act);
-        role.act.id = Scene::PointerAct;
+        role.act.id = act;
         role.act.action = action;
         role.flags = Scene::PointerFlags;
         return this->acts.Run(role.act) != 0;
@@ -1046,18 +1052,18 @@ void Game::NewGame()
         );
     };
 
-    if (!setPointer(scene.pointerRole, 0))
+    if (!setPointer(scene.pointerRole, Scene::PointerAct, 0))
     {
         logPointer(u8"Act Err(Misc:Init:Mouse:Norm)", scene.pointerRole);
     }
 
-    if (!setPointer(scene.pointerButtonRole, Scene::ButtonPointer))
+    if (!setPointer(scene.pointerButtonRole, Scene::PointerAct, Scene::ButtonPointer))
     {
         logPointer(u8"Act Err(Misc:Init:Mouse:Btn)", scene.pointerButtonRole);
     }
 
     // The original reports the page pointer with the values of the button pointer.
-    if (!setPointer(scene.pointerPageRole, Scene::PagePointer))
+    if (!setPointer(scene.pointerPageRole, Scene::PageAct, 0))
     {
         logPointer(
             u8"Act Err(Misc:Init:Mouse:n"
@@ -1093,7 +1099,7 @@ void Game::NewGame()
     ResetPlayback(scene.spotlightAct);
     ResetPlayback(scene.loadingPicture);
     constexpr std::array<int, 4> kScreenActs = {0x232D, 0x232F, 0x2330, 0x2331};
-    constexpr std::array<int, 4> kPanelActs = {0x2337, 0x2339, 0x233A, 0x233B};
+    constexpr std::array<int, 4> kPanelActs = {0x2337, 0x2337, 0x2337, 0x2337};
 
     for (std::size_t index = 0; index < kScreenActs.size(); ++index)
     {
@@ -1129,7 +1135,7 @@ void Game::NewGame()
 
     if (words % MapsRecord::GroupWords != 0)
     {
-        DebugLog(u8"戰鬥機率讀取 設定數質量必須是 8 的倍數");
+        ErrorBox(this->errors, u8"戰鬥機率讀取", u8"設定數質量必須是 8 的倍數");  // 0x004B1078, 0x004B1088
     }
 
     if (words % MapsRecord::GroupWords == 0)
@@ -1735,7 +1741,6 @@ void Game::StartStory(int withMap)
 void Game::LoadFameFile()
 {
     std::array<u16, kFameWords> values = {};
-    this->audioDevice.Serve();
     File file;
 
     if (file.Open(
@@ -1971,6 +1976,11 @@ bool Game::MusicCue()
 // again; a lost battle opens the game over page), the menus and the shop, or the map with its events and the clock
 void Game::MainFrame()
 {
+    if ((this->systemFlags & Game::DiscWait) != 0)
+    {
+        return;
+    }
+
     if (this->active == 0)
     {
         SleepMilliseconds(0);
@@ -2025,6 +2035,17 @@ void Game::MainFrame()
     this->controls.Poll(this->input, this->config, this->state, static_cast<i32>(this->frameStart));
     this->scene.pointerRole.act.action = Scene::ChoicePointer;
 
+    if ((this->systemFlags & Game::AscentRunning) != 0)
+    {
+        if (this->ascentGame.Frame())
+        {
+            this->systemFlags &= ~Game::AscentRunning;
+        }
+
+        this->EndMainFrame();
+        return;
+    }
+
     if (this->storyState != Game::StoryRunning)
     {
         this->counterWait = kCounterHidden;
@@ -2059,7 +2080,6 @@ void Game::MainFrame()
     {
         this->counterWait = kCounterHidden;
         this->counterAlpha = kCounterOpaque;
-        this->AudioPump();
         this->largeFont.SetAdvance(kMapLargeAdvance);
         this->mediumFont.SetAdvance(kMediumFontAdvance);
         this->smallFont.SetAdvance(kMapSmallAdvance);
@@ -2084,6 +2104,26 @@ void Game::MainFrame()
 
         this->EndMainFrame();
         return;
+    }
+
+    // swd3e: while a talisman ghost is chosen, every 900 frames its unkC8 steps round unkC4 and its unk110 falls by 3
+    // to 7 (at least to 0)
+    if (this->party.variables[Party::GhostVariable] != 0 && ++this->ghostFrames >= kGhostTickFrames)
+    {
+        TalismanGhost& ghost = this->talismanGhost;
+        this->ghostFrames = 0;
+
+        if (++ghost.unkC8 >= ghost.unkC4)
+        {
+            ghost.unkC8 = 0;
+        }
+
+        ghost.unk110 += -kGhostFallBase - static_cast<i32>(this->random.Below(kGhostFallRange));
+
+        if (ghost.unk110 < 0)
+        {
+            ghost.unk110 = 0;
+        }
     }
 
     this->talk.HandlePointer();
@@ -2113,7 +2153,7 @@ void Game::MainFrame()
 
     this->talk.RunEvent(this->state.leader);
 
-    if ((this->systemFlags & (Game::UnkSystem1 | Game::QuitRequested)) == 0)
+    if ((this->systemFlags & (Game::UnkSystem1 | Game::QuitRequested | Game::VideoPlaying)) == 0)
     {
         this->rolePath.Update();
         this->largeFont.SetAdvance(kMapLargeAdvance);
@@ -2126,7 +2166,7 @@ void Game::MainFrame()
     this->EndMainFrame();
 }
 
-// The end of a frame (inline in 0x0040A570): the audio served; a requested quit closes the window.
+// The end of a frame (inline in 0x0040A7B0): the audio served; a requested quit closes the window.
 void Game::EndMainFrame()
 {
     this->AudioPump();
@@ -2137,7 +2177,7 @@ void Game::EndMainFrame()
     }
 }
 
-// The event timers (inline in 0x0040A570, outside the menus). The first (flag 0x10) counts down while no event runs
+// The event timers (inline in 0x0040A7B0, outside the menus). The first (flag 0x10) counts down while no event runs
 // and the save screen is closed; at its end the scene's lists are freed, every role but the first released and its
 // talk ended, and the leader set to run the timer's event. The second (flag 0x4A) only sets flag 0x4B at its end.
 void Game::RunTimers()
@@ -2182,15 +2222,16 @@ void Game::RunTimers()
     }
 }
 
-// A battle requested by the map started (inline in 0x0040A570): the music and the sounds stopped, the archives closed,
-// the map's view released, the battle started and the roles' one-shot sounds rearmed.
+// A battle requested by the map started (inline in 0x0040A7B0): the music's list kept, the sounds stopped, the act
+// archives closed and the picture cache flushed, the map's view released, the battle started and the roles' one-shot
+// sounds rearmed.
 void Game::EnterBattle()
 {
     MapCache& cache = this->mapCache;
     this->musicBeforeBattle = this->audio.Queue().Mode();
     this->audio.StopAllSounds();
     this->acts.CloseAll();
-    this->archive.CloseAll();
+    this->archive.Flush();
 
     if (!cache.unitFile.UnmapView(cache.view))
     {
@@ -2208,14 +2249,14 @@ void Game::EnterBattle()
     }
 }
 
-// A frame of the battle from the map (inline in 0x0040A570): the battle talk runs it. At its end (0) the fonts are set
-// up again and the map's view mapped again; a lost battle (2) ends the timed event and opens the game over page; an
-// escape (3) maps the map again.
+// A frame of the battle from the map (inline in 0x0040A7B0): the battle talk runs it. At its end (0) the fonts are set
+// up again, the map's view mapped again and the music from before the battle comes back; a lost battle (2) ends the
+// timed event, sets everything up again the same way and has the leader run event 0x63 as the party's leader; an
+// escape (3) maps the map again. The audio is pumped last.
 void Game::BattleMainFrame()
 {
     MapCache& cache = this->mapCache;
     const int result = this->FightTalkFrame();
-    this->AudioPump();
 
     auto remap = [&cache]
     {
@@ -2228,42 +2269,47 @@ void Game::BattleMainFrame()
         }
     };
 
-    if (result == kBattleOver)
+    auto setUp = [this]
     {
-        this->battleRequest = 0;
-        this->inBattle = 0;
         this->SetupFont(this->largeFont, kLargeFontSize);
         this->SetupFont(this->mediumFont, kMediumFontSize);
         this->SetupFont(this->smallFont, kSmallFontSize);
         this->talk.unit = kTalkUnit;
+    };
+
+    if (result == kBattleOver)
+    {
+        this->battleRequest = 0;
+        this->inBattle = 0;
+        setUp();
         remap();
         this->audio.Queue().Switch(this->musicBeforeBattle, MusicQueue::RepeatList, 1);
-        return;
     }
-
-    if (result == kBattleLost)
+    else if (result == kBattleLost)
     {
         this->state.ClearGameFlag(GameState::Timer);
         this->state.ClearGameFlag(GameState::TimerEvent);
         this->state.SetGameFlag(GameState::TimerExpired);
         this->inBattle = 0;
         this->battleRequest = 0;
-        this->menuState = Game::MenuEntering | Game::SystemMenuA;
-        this->storyState = Game::StoryRunning;
-        this->ResetSaveSlots();
-        this->saveScreenPage = 0;
-        this->slotsLoad = 0;
-        this->menuMode = Menu::NoSlotsMode;
-        return;
+        setUp();
+        remap();
+        Role& leader = this->state.leader;
+        leader.eventOffset = 0;
+        leader.eventCursor = 0;
+        leader.event = kDefeatEvent;
+        leader.id = static_cast<u16>(this->partyLeaderId);
+        leader.flags = 0;
     }
-
-    if (result == kBattleEscaped)
+    else if (result == kBattleEscaped)
     {
         this->inBattle = 0;
         this->battleRequest = 0;
         this->state.ClearGameFlag(GameState::TimerExpired);
         remap();
     }
+
+    this->AudioPump();
 }
 
 // A window message to the text box (WndProc, flag 0x50).
@@ -2317,33 +2363,13 @@ void Game::HandleEvent(const SDL_Event& event)
     }
     else if (event.type == SDL_EVENT_KEY_UP && event.key.key == SDLK_F8)
     {
-        this->running = ((this->systemFlags & Game::VideoPlaying) != 0 || this->running == 0) ? 1 : 0;
+        this->running = this->running == 0 ? 1 : 0;
     }
 
     if (event.type == SDL_EVENT_KEY_UP && this->state.GameFlag(GameState::Running) &&
         (this->systemFlags & Game::UnkSystem1) == 0 && event.key.key == SDLK_P)
     {
         this->TakeScreenshot();
-    }
-
-    // WM_LBUTTONDOWN: the original compares its key state (wParam) with VK_ESCAPE, so 0x1B (the left, right and middle
-    // buttons with Ctrl) stops a movie.
-    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT &&
-        (this->systemFlags & Game::VideoPlaying) != 0)
-    {
-        const SDL_MouseButtonFlags buttons = SDL_GetMouseState(nullptr, nullptr);
-        const SDL_Keymod modifiers = SDL_GetModState();
-        u32 held = 0;
-        held |= (buttons & SDL_BUTTON_LMASK) != 0 ? kLeftButton : 0u;
-        held |= (buttons & SDL_BUTTON_RMASK) != 0 ? kRightButton : 0u;
-        held |= (modifiers & SDL_KMOD_SHIFT) != 0 ? kShiftKey : 0u;
-        held |= (modifiers & SDL_KMOD_CTRL) != 0 ? kControlKey : 0u;
-        held |= (buttons & SDL_BUTTON_MMASK) != 0 ? kMiddleButton : 0u;
-
-        if (held == kStopVideoButtons)
-        {
-            this->StopVideo();
-        }
     }
 
     if (!this->state.GameFlag(GameState::TextBox))
@@ -2413,15 +2439,14 @@ void Game::HandleEvent(const SDL_Event& event)
     }
 }
 
-// The first free name of ScrnShot\00000.bmp..ScrnShot\99997.bmp (AIL_serve before each try; with every name taken
-// the last one, written over).
+// The first free name of ScrnShot\00000.bmp..ScrnShot\99997.bmp (with every name taken the last one, written
+// over).
 std::u8string Game::ScreenshotPath()
 {
     std::u8string path;
 
     for (int index = 0; index < kScreenshotNames; ++index)
     {
-        this->audioDevice.Serve();
         path = PathFormat(kScreenshotName, {this->config.installDirectory, index});
         File file;
 
@@ -2436,7 +2461,7 @@ std::u8string Game::ScreenshotPath()
     return path;
 }
 
-// Key P on the map (inline in 0x0040A0D0): with more than 64 MB free, a beep and the screen saved under the first free
+// Key P on the map (inline in 0x0040A380): with more than 64 MB free, a beep and the screen saved under the first free
 // name of the screenshots (ScreenshotPath).
 void Game::TakeScreenshot()
 {
@@ -2448,17 +2473,7 @@ void Game::TakeScreenshot()
     PlaySystemBeep();
     const std::u8string path = this->ScreenshotPath();
     const std::span<const u16> pixels(this->drawSurface, static_cast<std::size_t>(Display::Width) * Display::Height);
-    SaveScreenshot(
-        this->painter,
-        pixels,
-        Display::Width,
-        Display::Height,
-        path,
-        [this]
-        {
-            this->audioDevice.Serve();
-        }
-    );
+    SaveScreenshot(this->painter, pixels, Display::Width, Display::Height, path);
 }
 
 }  // namespace swd3e
