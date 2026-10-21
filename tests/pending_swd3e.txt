@@ -42,7 +42,6 @@ game state: constant tables match swd32.exe
 # input_test.cpp
 controls: the click sequence matches swd32.exe
 # launcher_test.cpp
-launcher: resources of swd32.exe and the hover hotspots
 # lzo_test.cpp
 lzo encoder: recompressing the blocks of original saves gives the same bytes
 # menu_test.cpp

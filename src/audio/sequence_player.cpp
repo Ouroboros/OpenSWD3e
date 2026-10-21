@@ -48,11 +48,11 @@ int ClampPan(int pan)
     return value;
 }
 
-// swd3e.exe 0x0049E3D0: the volume removed per update to fade out in `steps` updates (at least 1). The original
-// divides by zero for 0 steps; it fades by 1 here.
+// swd3e.exe 0x0049E3D0: the volume removed per update to fade out in `steps` updates (0 steps count as 1: the whole
+// volume at once), at least 1
 int SetFadeStep(SequenceNode& node, int steps)
 {
-    const int step = steps != 0 ? node.volume / steps : 0;
+    const int step = node.volume / (steps != 0 ? steps : 1);
     node.fadeStep = step;
 
     if (step == 0)
@@ -440,8 +440,9 @@ int StreamPlayer::FadeOut(int id, int steps)
     return id;
 }
 
-// swd3e.exe 0x0049E400: like the MIDI update for streams; a finished stream is muted before it closes. The open and
-// enabled flags are not checked.
+// swd3e.exe 0x0049E400: fades and retires the streams (a finished or faded out stream is closed); a stream in an
+// unexpected state is retired when the one before it was, a flag the original seeds with an uninitialised stack slot
+// (false here, see deviations.md). The open and enabled flags are not checked.
 bool StreamPlayer::Update()
 {
     if (this->active.empty())
@@ -461,7 +462,6 @@ bool StreamPlayer::Update()
             switch (this->device.Status(stream.voice))
             {
                 case VoiceStatus::Done:
-                    this->device.SetVolume(stream.voice, 0);
                     retire = true;
                     break;
 
@@ -499,7 +499,6 @@ bool StreamPlayer::Update()
         }
 
         retiredLast = true;
-        this->device.SetVolume(stream.voice, 0);
         this->device.End(stream.voice);
         stream.voice = nullptr;
         stream.name.clear();

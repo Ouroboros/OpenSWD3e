@@ -94,10 +94,11 @@ private:
 };
 
 // A line of two fill pixels (the default fill colour 0x26B), two literals, a skip pixel (0x319F) and a literal, and
-// its RLE: the header, the line header with its byte length, the runs and literal runs, the line and picture ends.
+// its RLE: the header (bit 15 of the format set by the fill run), the line header with its byte length, the runs and
+// literal runs, the line and picture ends.
 constexpr std::array<u16, 6> kLinePixels = {0x26B, 0x26B, 0x1111, 0x2222, 0x319F, 0x3333};
 constexpr std::array<u16, 14> kEncodedLine =
-    {0xFFFF, 6, 1, 0x10, 18, 0xC002, 0x0002, 0x1111, 0x2222, 0x8001, 0x0001, 0x3333, 0x0000, 0x0000};
+    {0xFFFF, 6, 1, 0x8010, 18, 0xC002, 0x0002, 0x1111, 0x2222, 0x8001, 0x0001, 0x3333, 0x0000, 0x0000};
 
 }  // namespace
 

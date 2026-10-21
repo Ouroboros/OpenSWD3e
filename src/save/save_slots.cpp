@@ -175,7 +175,7 @@ void SaveSlots::LoadPreview(SavePreview& preview, int slot, const std::u8string&
     preview.state = SavePreview::Loaded;
 }
 
-// swd3e.exe 0x00409A30: the frames of the three previews (acts 1, 2, 8 and 0x11), lit (action 8) for the newest slot
+// swd3e.exe 0x00409A30: the frames of the three previews (acts 1 to 4), lit (action 8) for the newest slot
 void SaveSlots::ResetActs()
 {
     for (int slot = 0; slot < SaveSlots::Visible; ++slot)

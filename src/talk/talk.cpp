@@ -19,6 +19,7 @@ namespace swd3e
 namespace
 {
 
+constexpr i32 kRightPressMask = 0xF;  // 0x0042B4C0 tests these bits of the right button's press count
 constexpr int kDecimalBase = 0xA;
 constexpr int kMaxDigits = 9;  // ParseNumber takes at most this many digits
 
@@ -107,11 +108,12 @@ void Talk::Draw()
 }
 
 // swd3e.exe 0x0042B4C0: the pointer over the map. With no event running and the controlled role standing, a visible
-// role with an event under the pointer shows pointer 9 (0xA for flag 0x40, which then blocks map events); a left click
-// on it turns both to face each other and starts its event. Otherwise a clickable region of the map under the pointer
-// shows pointer 0xB and a click starts its event; elsewhere the pointer shows the direction from the controlled role,
-// the right button walks that way and a left click stands for the space key while a talk window is open. With choices
-// on screen the pointer picks the choice under it and a click ends them.
+// role (not Untalkable) with an event under the pointer (signed compares) shows pointer 9 (0xA for flag 0x40, which
+// then blocks map events); a left click on it turns both to face each other and starts its event. Otherwise a
+// clickable region of the map under the pointer shows pointer 0xB and a click starts its event; elsewhere the pointer
+// shows the direction from the controlled role, the right button walks that way (when the low four bits of its press
+// count are not all clear) and a left click stands for the space key while a talk window is open. With choices on
+// screen the pointer picks the choice under it and a click ends them.
 void Talk::HandlePointer()
 {
     Game& owner = this->game;
@@ -133,7 +135,8 @@ void Talk::HandlePointer()
         {
             const Role& role = state.roles[found];
 
-            if ((role.flags & Role::Visible) == 0 || role.event == 0 || role.talkState != Role::NoTalk)
+            if ((role.flags & Role::Visible) == 0 || (role.flags & Role::Untalkable) != 0 || role.event == 0 ||
+                role.talkState != Role::NoTalk)
             {
                 continue;
             }
@@ -142,8 +145,6 @@ void Talk::HandlePointer()
             const int x = role.x - role.act.x - cameraLeft;
             const int y = role.y - role.act.y - cameraTop;
 
-            // The rebuild compares signed (the original's unsigned places miss a role across the screen's left or
-            // top edge, which the map filling the window shows whole).
             if (picture != nullptr && state.pointerX > x && state.pointerX < x + picture->width && state.pointerY > y &&
                 state.pointerY < y + picture->height)
             {
@@ -266,8 +267,8 @@ void Talk::HandlePointer()
 
         const ButtonState& right = controls.At(Button::MouseRight);
 
-        if (((player.x | player.y) & MapHeader::TileFraction) == 0 && owner.scene.playerHold == 0 && right.press != 0 &&
-            distance >= MapHeader::TileSize)
+        if (((player.x | player.y) & MapHeader::TileFraction) == 0 && owner.scene.playerHold == 0 &&
+            (right.press & kRightPressMask) != 0 && distance >= MapHeader::TileSize)
         {
             if (direction == ActState::Up || direction == ActState::UpLeft || direction == ActState::UpRight)
             {

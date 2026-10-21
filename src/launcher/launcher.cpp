@@ -23,7 +23,7 @@ constexpr i16 kWebsiteCommand = 0x3FF;
 constexpr i16 kReadmeCommand = 0x400;
 constexpr i16 kExitCommand = 0x401;
 constexpr i16 kCommand3 = 0x402;
-constexpr int kReadmeItem = 3;
+constexpr std::size_t kReadmeItem = 3;
 
 }  // namespace
 
@@ -61,7 +61,7 @@ void Launcher::Init()
     this->litBefore = {};
 }
 
-// swd3e.exe 0x00428210 (WM_MOUSEMOVE, WM_LBUTTONDOWN): lights the hotspot under the mouse (the first only with a saved
+// swd3e.exe 0x00428210 (WM_MOUSEMOVE, WM_LBUTTONDOWN): lights the picture under the mouse (the first only with a saved
 // game), sounds when one newly lights, and acts on a held left button: the first two end the launcher, the third
 // opens the website, the fourth the Readme, the fifth exits. Moving with the button held acts again.
 Launcher::Choice Launcher::OnMouse(u32 buttons, int x, int y)
@@ -73,52 +73,50 @@ Launcher::Choice Launcher::OnMouse(u32 buttons, int x, int y)
     const auto column = static_cast<u16>(x);
     const auto row = static_cast<u16>(y);
 
-    if (row >= Launcher::HotTop && row <= Launcher::HotBottom)
+    for (std::size_t item = 0; item < Launcher::Layout.size(); ++item)
     {
-        for (std::size_t item = 0; item < Launcher::Layout.size(); ++item)
+        const Item& place = Launcher::Layout[item];
+
+        if (column < place.x || column >= place.x + Launcher::ItemWidth || row < place.y ||
+            row >= place.y + Launcher::ItemHeight)
         {
-            const Item& place = Launcher::Layout[item];
+            continue;
+        }
 
-            if (column < place.left || column >= place.right)
-            {
-                continue;
-            }
+        if (item == kContinueItem && !this->state.GameFlag(Launcher::SavedGameFlag))
+        {
+            continue;
+        }
 
-            if (item == 0 && !this->state.GameFlag(Launcher::SavedGameFlag))
-            {
-                continue;
-            }
+        this->lit[item] = Launcher::Shown;
+        newlyLit = newlyLit || this->litBefore[item] == 0;
 
-            this->lit[item] = Launcher::Shown;
-            newlyLit = newlyLit || this->litBefore[item] == 0;
+        if (buttons != kLeftButton)
+        {
+            continue;
+        }
 
-            if (buttons != kLeftButton)
-            {
-                continue;
-            }
+        switch (item)
+        {
+            case kContinueItem:
+                choice = Choice::Continue;
+                break;
 
-            switch (item)
-            {
-                case kContinueItem:
-                    choice = Choice::Continue;
-                    break;
+            case kStartItem:
+                choice = Choice::Start;
+                break;
 
-                case kStartItem:
-                    choice = Choice::Start;
-                    break;
+            case kWebsiteItem:
+                Launcher::RunBrowser(std::string(Launcher::Website));
+                break;
 
-                case kWebsiteItem:
-                    Launcher::RunBrowser(std::string(Launcher::Website));
-                    break;
+            case kReadmeItem:
+                Launcher::RunTextViewer(Concat({this->installDirectory, Launcher::Readme}));
+                break;
 
-                case kReadmeItem:
-                    Launcher::RunTextViewer(Concat({this->installDirectory, Launcher::Readme}));
-                    break;
-
-                default:
-                    choice = Choice::Exit;
-                    break;
-            }
+            default:
+                choice = Choice::Exit;
+                break;
         }
     }
 
@@ -169,53 +167,40 @@ Launcher::Choice Launcher::OnClose()
     return Choice::Exit;
 }
 
-// The dialog as the window shows it: the picture, then the visible highlights (a 40 x 182 picture centred in its
-// 39 x 180 static control).
+// The dialog as the window shows it: the picture, then the visible highlights.
 void Launcher::Draw(Surface& screen) const
 {
-    auto blit = [&screen](const Surface& source, int left, int top, int width, int height)
+    auto blit = [&screen](const Surface& source, int left, int top)
     {
-        const int offsetX = (width - source.Width()) / 2;
-        const int offsetY = (height - source.Height()) / 2;
-
-        for (int row = 0; row < height; ++row)
+        for (int row = 0; row < source.Height(); ++row)
         {
-            const int sourceRow = row - offsetY;
             const int targetRow = top + row;
 
-            if (sourceRow < 0 || sourceRow >= source.Height() || targetRow < 0 || targetRow >= screen.Height())
+            if (targetRow < 0 || targetRow >= screen.Height())
             {
                 continue;
             }
 
-            for (int column = 0; column < width; ++column)
+            for (int column = 0; column < source.Width(); ++column)
             {
-                const int sourceColumn = column - offsetX;
                 const int targetColumn = left + column;
 
-                if (sourceColumn >= 0 && sourceColumn < source.Width() && targetColumn >= 0 &&
-                    targetColumn < screen.Width())
+                if (targetColumn >= 0 && targetColumn < screen.Width())
                 {
-                    screen.Row(targetRow)[targetColumn] = source.Row(sourceRow)[sourceColumn];
+                    screen.Row(targetRow)[targetColumn] = source.Row(row)[column];
                 }
             }
         }
     };
 
     screen.Fill(0);
-    blit(this->background, 0, 0, this->background.Width(), this->background.Height());
+    blit(this->background, 0, 0);
 
     for (std::size_t item = 0; item < Launcher::Layout.size(); ++item)
     {
         if (this->shown[item])
         {
-            blit(
-                this->pictures[item],
-                Launcher::Layout[item].x,
-                Launcher::ItemY,
-                Launcher::ItemWidth,
-                Launcher::ItemHeight
-            );
+            blit(this->pictures[item], Launcher::Layout[item].x, Launcher::Layout[item].y);
         }
     }
 }
@@ -226,7 +211,7 @@ void Launcher::RunBrowser(const std::string& address)
     OpenWebsite(address);
 }
 
-// swd32.exe 0x00424A60 (unmatched in swd3e)
+// swd3e.exe 0x00428880
 void Launcher::RunTextViewer(const std::u8string& path)
 {
     OpenTextFile(path);

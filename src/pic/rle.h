@@ -27,7 +27,7 @@ struct RleHeader
     static constexpr std::size_t HeightAt = 2 * sizeof(u16);
     static constexpr std::size_t FormatAt = FormatWord * sizeof(u16);
     static constexpr u16 FormatMask = 0x7FFF;
-    static constexpr u16 FormatFlag15 = 0x8000;  // a format flag kept when a picture is converted
+    static constexpr u16 FormatFlag15 = 0x8000;  // the picture has fill runs (Encode); kept when converted
     static constexpr u16 TrueColor = 0x10;       // format: 16-bit pixels
     static constexpr u16 Indexed = 8;            // format: palette indices
     static constexpr u16 LengthMask = 0x7FFF;    // a line header: its byte length

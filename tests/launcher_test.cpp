@@ -24,17 +24,16 @@ using swd3e::Launcher;
 namespace
 {
 
-constexpr std::size_t kDialogBytes = 274;  // the launcher dialog template and its hover sound in swd32.exe
+constexpr std::size_t kDialogBytes = 274;  // the launcher dialog template and its hover sound in swd3e.exe
 constexpr std::size_t kHoverSoundBytes = 2348;
 constexpr int kNoSuchWave = 0x99;
-constexpr int kHighlightWidth = 40;  // a highlight picture, a little larger than its static control
-constexpr int kHighlightHeight = 182;
-constexpr int kOutside = 300;  // below the hot rows
-constexpr int kInsideY = 50;
+constexpr int kHighlightWidth = 0x70;  // a highlight picture, the size of its static control
+constexpr int kHighlightHeight = 0x28;
+constexpr int kOutside = 0;  // above and left of every picture
 
 }  // namespace
 
-TEST_CASE("launcher: resources of swd32.exe and the hover hotspots")
+TEST_CASE("launcher: resources of swd3e.exe and the hover hotspots")
 {
     swd3e::ExeResources resources;
     resources.Open(swd3e::AssetDirectory() + std::u8string(swd3e::ExeResources::Subdirectory));
@@ -64,16 +63,20 @@ TEST_CASE("launcher: resources of swd32.exe and the hover hotspots")
     CHECK(launcher.shown[0]);
     CHECK(launcher.OnMouse(0, kOutside, kOutside) == Launcher::Choice::None);
     CHECK(!launcher.shown[0]);
-    CHECK(launcher.OnMouse(1, Launcher::Layout.front().x, kInsideY) == Launcher::Choice::None);
+    const Launcher::Item& first = Launcher::Layout.front();
+    const Launcher::Item& start = Launcher::Layout[1];
+    const Launcher::Item& last = Launcher::Layout.back();
+    CHECK(launcher.OnMouse(1, first.x, first.y) == Launcher::Choice::None);
     CHECK_EQ(launcher.lit[0], 0);
     state.SetGameFlag(Launcher::SavedGameFlag);
-    CHECK(launcher.OnMouse(0, Launcher::Layout.front().x, kInsideY) == Launcher::Choice::None);
+    CHECK(launcher.OnMouse(0, first.x, first.y) == Launcher::Choice::None);
     CHECK_EQ(launcher.lit.front(), Launcher::Shown);
     CHECK(launcher.shown[0]);
-    CHECK(launcher.OnMouse(1, Launcher::Layout.front().x, kInsideY) == Launcher::Choice::Continue);
-    CHECK(launcher.OnMouse(1, Launcher::Layout[1].x, Launcher::HotBottom) == Launcher::Choice::Start);
-    CHECK(launcher.OnMouse(1, Launcher::Layout[1].x, Launcher::HotBottom + 1) == Launcher::Choice::None);
-    CHECK(launcher.OnMouse(1, Launcher::Layout.back().x, kInsideY) == Launcher::Choice::Exit);
+    CHECK(launcher.OnMouse(1, first.x, first.y) == Launcher::Choice::Continue);
+    CHECK(launcher.OnMouse(1, start.x, start.y + kHighlightHeight - 1) == Launcher::Choice::Start);
+    CHECK(launcher.OnMouse(1, start.x + kHighlightWidth, start.y) == Launcher::Choice::None);
+    CHECK(launcher.OnMouse(1, start.x - 1, start.y) == Launcher::Choice::None);
+    CHECK(launcher.OnMouse(1, last.x, last.y) == Launcher::Choice::Exit);
     CHECK_EQ(launcher.lit.back(), Launcher::Shown);
     CHECK(launcher.OnClose() == Launcher::Choice::Exit);
     swd3e::Surface screen(swd3e::Display::Width, swd3e::Display::Height);
@@ -132,7 +135,7 @@ TEST_CASE("launcher: the window icon and cursor of swd32.exe")
 
     const std::size_t topLeft = kHeaderBytes + kPixelBytes * kSide * (kSide - 1);
     const swd3e::u32 color = static_cast<swd3e::u32>(member[topLeft + 2]) << 16 |
-                            static_cast<swd3e::u32>(member[topLeft + 1]) << 8 | member[topLeft];
+                             static_cast<swd3e::u32>(member[topLeft + 1]) << 8 | member[topLeft];
     CHECK_EQ(icon.pixels.front() & ~kOpaque, (icon.pixels.front() >= kOpaque ? color : 0));
 
     swd3e::IconImage cursor;

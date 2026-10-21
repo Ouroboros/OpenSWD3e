@@ -43,16 +43,27 @@ void AppendWord(std::vector<u8>& out, u16 value)
 }
 
 // Encoder of one picture line. Fill and skip pixels become runs, everything else literal runs. A pixel equal to both
-// colours counts as skip (the fill test of the original requires it to differ from the skip colour).
+// colours counts as skip (the fill test of the original requires it to differ from the skip colour). The line starts
+// flagged as literal unless its first pixel, widened to 16 bits, equals `flagFill` or `flagSkip` (the 16-bit colours
+// for both pixel sizes in swd3e). `filled` is set once a fill run is written.
 template <typename Pixel>
-void EncodeLine(const Pixel*& source, int width, Pixel fill, Pixel skip, bool fillOnlyFlag, std::vector<u8>& out)
+void EncodeLine(
+    const Pixel*& source,
+    int width,
+    Pixel fill,
+    Pixel skip,
+    u16 flagFill,
+    u16 flagSkip,
+    bool& filled,
+    std::vector<u8>& out
+)
 {
     const std::size_t header = out.size();
     AppendWord(out, 0);
     u32 lineBytes = sizeof(u16);  // the line header
     u16 flag = kStartsWithLiteral;
 
-    if (*source == fill || (!fillOnlyFlag && *source == skip))
+    if (static_cast<u16>(*source) == flagFill || static_cast<u16>(*source) == flagSkip)
     {
         flag = 0;
     }
@@ -103,7 +114,9 @@ void EncodeLine(const Pixel*& source, int width, Pixel fill, Pixel skip, bool fi
             ++length;
         }
 
-        AppendWord(out, static_cast<u16>(length | (run == fill && fill != skip ? kFill : kSkip)));
+        const bool fillRun = run == fill && fill != skip;
+        filled = filled || fillRun;
+        AppendWord(out, static_cast<u16>(length | (fillRun ? kFill : kSkip)));
         lineBytes += sizeof(u16);
         source += length;
         x += length;
@@ -121,8 +134,8 @@ RleCodec::RleCodec(const Painter& painter)
 }
 
 // swd3e.exe 0x00401000: format 0x10 encodes 16-bit pixels, any other format bytes (its value goes into the header).
-// A 16-bit line is flagged as starting with literal pixels unless its first pixel is the fill or the skip colour; an
-// 8-bit line only checks the fill colour.
+// A line is flagged as starting with literal pixels unless its first pixel is the 16-bit fill or skip colour (an 8-bit
+// pixel is compared with the 16-bit colours too, as in the original). A picture with a fill run gets FormatFlag15.
 std::vector<u8> RleCodec::Encode(const void* pixels, int width, int height, int format) const
 {
     const RleColors& colors = this->painter.Rle();
@@ -131,6 +144,7 @@ std::vector<u8> RleCodec::Encode(const void* pixels, int width, int height, int 
     AppendWord(out, static_cast<u16>(width));
     AppendWord(out, static_cast<u16>(height));
     AppendWord(out, static_cast<u16>(format == RleHeader::TrueColor ? RleHeader::TrueColor : format));
+    bool filled = false;
 
     if (format == RleHeader::TrueColor)
     {
@@ -138,7 +152,7 @@ std::vector<u8> RleCodec::Encode(const void* pixels, int width, int height, int 
 
         for (int row = 0; row < height; ++row)
         {
-            EncodeLine<u16>(source, width, colors.fill16, colors.skip16, false, out);
+            EncodeLine<u16>(source, width, colors.fill16, colors.skip16, colors.fill16, colors.skip16, filled, out);
         }
     }
     else
@@ -147,8 +161,16 @@ std::vector<u8> RleCodec::Encode(const void* pixels, int width, int height, int 
 
         for (int row = 0; row < height; ++row)
         {
-            EncodeLine<u8>(source, width, colors.fill8, colors.skip8, true, out);
+            EncodeLine<u8>(source, width, colors.fill8, colors.skip8, colors.fill16, colors.skip16, filled, out);
         }
+    }
+
+    if (filled)
+    {
+        WriteWord(
+            out.data() + RleHeader::FormatAt,
+            static_cast<u16>(ReadWord(out.data() + RleHeader::FormatAt) | RleHeader::FormatFlag15)
+        );
     }
 
     AppendWord(out, 0);
@@ -171,7 +193,7 @@ std::optional<RawPicture> RleCodec::Decode(std::span<const u8> rle) const
     RawPicture picture;
     picture.width = ReadWord(rle.data() + RleHeader::WidthAt);
     picture.height = ReadWord(rle.data() + RleHeader::HeightAt);
-    picture.format = ReadWord(rle.data() + RleHeader::FormatAt) & RleHeader::CountMask;
+    picture.format = ReadWord(rle.data() + RleHeader::FormatAt) & RleHeader::FormatMask;
 
     if (picture.format != RleHeader::TrueColor && picture.format != RleHeader::Indexed)
     {
@@ -310,9 +332,10 @@ bool RleCodec::ConvertToDisplay(std::span<u8> rle, RleHeader& header) const
     return true;
 }
 
-// swd3e.exe 0x00401780: an 8-bit picture becomes a 16-bit one through its palette (converted to the display format)
-// and loses the palette; the new line headers hold the plain length. A 16-bit picture is converted in place and
-// takes its size from the header. Malformed data (a literal of count 0, data running past its end) stops at the end.
+// swd3e.exe 0x00401780: an 8-bit picture becomes a 16-bit one through its palette (converted to the display format);
+// swd3e keeps the palette (swd32 freed it); the new line headers hold the plain length. A 16-bit picture is converted
+// in place and takes its size from the header. Malformed data (a literal of count 0, data running past its end) stops
+// at the end.
 void RleCodec::ConvertTo16(Picture& picture) const
 {
     const u8* source = picture.data.data();
@@ -398,7 +421,6 @@ void RleCodec::ConvertTo16(Picture& picture) const
     // The original counts two bytes beyond the end and copies them from its fresh work buffer (0xCD in the debug heap).
     AppendWord(out, kDebugHeapFill);
     picture.data = std::move(out);
-    picture.palette.clear();
 }
 
 // swd3e.exe 0x00401950: a map tile (a 256-entry palette followed by an 8-bit RLE picture) becomes a 16-bit RLE

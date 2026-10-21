@@ -414,7 +414,12 @@ bool Talk::SetupDialog(
 
     if (word(0) != TalkWindow::NoRole && !fixed && !state.FindRoleOrPlayer(word(0), speaker))
     {
-        DebugLog(u8"設定對話窗(SetupDialog) 無效的角色號碼 或不在地圖上GUID(%d)", word(0));
+        ErrorBox(
+            owner.errors,
+            u8"設定對話窗(SetupDialog)",
+            u8"無效的角色號碼 或不在地圖上GUID(%d)",
+            word(0)
+        );  // 0x004B0DA4, 0x004B0DBC
         window = TalkWindow{};
         window.page = TalkWindow::Closed;
         return false;
@@ -429,15 +434,16 @@ bool Talk::SetupDialog(
 
     if (frame == owner.scene.dialogFrameActs.size())
     {
-        DebugLog(u8"SetupDialog 設定錯誤的對話框(act:%d)", word(1));
+        ErrorBox(owner.errors, u8"SetupDialog", u8"設定錯誤的對話框(act:%d)", word(1));  // 0x004B0D88
         frame = 0;
     }
 
+    // The original passes only the act number: qq and dir take what is on the stack (0 here, see deviations.md).
     auto runAct = [&owner](ActState& act, std::u8string_view title)
     {
         if (owner.acts.Run(act) == 0)
         {
-            ErrorBox(owner.errors, title, u8"設定錯誤 \nact[%d] qq[%d] dir[%d]", act.id, act.action, act.direction);
+            ErrorBox(owner.errors, title, u8"設定錯誤 \nact[%d] qq[%d] dir[%d]", act.id, 0, 0);  // 0x004B0D58
         }
     };
 
@@ -633,7 +639,6 @@ bool Talk::SetupDialog(
 // swd3e.exe 0x00433140: the script continues at `offset` of the open talk file (0x8000 bytes read from it)
 bool Talk::SeekScript(Role& context, u32 offset)
 {
-    this->game.audioDevice.Serve();
     context.eventOffset = static_cast<i32>(offset);
     context.eventCursor = 0;
     this->game.databases.story.SeekBegin(static_cast<i32>(offset + Talk::FileHeaderBytes));
@@ -650,14 +655,14 @@ bool Talk::OpenScript(Role& context, u32 index)
     this->game.databases.story.Close();
     const std::u8string path =
         PathFormat("%sTalk%d.dat", {owner.config.installDirectory, index / Talk::EventsPerFile + 1});
-    owner.audioDevice.Serve();
 
     if (!this->game.databases.story.Open(path, File::Disposition::OpenExisting, File::Access::Read))
     {
-        // 0x0042E4D7: 0x004A1D58 copied over FileName, its digit (0x004AAED9) set to the file number
+        // 0x004B2D94 copied into the error buffer 0x004C4658, its digit (0x004C4661) set to the file number, and the
+        // buffer formatted onto itself; no argument fills the %s (empty here, see deviations.md)
         std::u8string message = u8"劇情資料(1)無法讀取/%s";
         message[message.find(u8'1')] = static_cast<char8_t>(index / Talk::EventsPerFile + u8'1');
-        DebugLog(u8"檔案開啟 %s", message);
+        ErrorBox(owner.errors, u8"檔案開啟", message, std::u8string_view{});  // 0x004B2D88
         owner.Destroy();
         return false;
     }
@@ -669,11 +674,9 @@ bool Talk::OpenScript(Role& context, u32 index)
     this->game.databases.story.ReadDword(offset);
     context.eventOffset = static_cast<i32>(offset);
     context.eventCursor = 0;
-    owner.audioDevice.Serve();
     this->game.databases.story.SeekBegin(static_cast<i32>(offset + Talk::FileHeaderBytes));
     u32 bytes = static_cast<u32>(this->game.databases.script.size());
     this->game.databases.story.Read(this->game.databases.script.data(), bytes);
-    owner.audioDevice.Serve();
     return true;
 }
 

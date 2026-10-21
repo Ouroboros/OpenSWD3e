@@ -38,27 +38,24 @@ public:
         Exit = 6,
     };
 
-    // Where the highlight pictures are placed (WM_INITDIALOG) and the mouse ranges that light them, in client pixels.
+    // Where the highlight pictures are placed (WM_INITDIALOG, 0x70 x 0x28 controls); the mouse lights an item inside
+    // its picture's rectangle (client pixels).
     struct Item
     {
         u32 picture = 0;
         int x = 0;
-        int left = 0;
-        int right = 0;
+        int y = 0;
     };
 
     static constexpr i8 Shown = 5;  // `lit` of an item under the mouse (SW_SHOW)
-    static constexpr int ItemY = 4;
-    static constexpr int ItemWidth = 0x27;
-    static constexpr int ItemHeight = 0xB4;
-    static constexpr int HotTop = 7;
-    static constexpr int HotBottom = 0xBB;
+    static constexpr int ItemWidth = 0x70;
+    static constexpr int ItemHeight = 0x28;
     static constexpr std::array<Item, Items> Layout = {{
-        {0x72, 0x30, 0x2B, 0x52},
-        {0x73, 0x5C, 0x57, 0x7E},
-        {0x74, 0x1E9, 0x1E4, 0x20B},
-        {0x75, 0x213, 0x20E, 0x235},
-        {0x76, 0x23A, 0x235, 0x25C},
+        {0x72, 0xB8, 0x140},   // continue (control 0x40E)
+        {0x73, 0xB8, 0x168},   // start (0x40F)
+        {0x74, 0x160, 0x140},  // website (0x410)
+        {0x75, 0x160, 0x168},  // Readme (0x411)
+        {0x76, 0x110, 0x1A0},  // exit (0x412)
     }};
 
     Launcher(const ExeResources& resources, const GameState& state, SystemSound& sound, std::u8string installDirectory);
@@ -74,8 +71,8 @@ public:
     static void RunBrowser(const std::string& address);
     static void RunTextViewer(const std::u8string& path);
 
-    std::array<i8, Items> lit = {};        // swd32 0x004CDE94 (4 bytes), 0x004CDE98: SW_SHOW (5) under the mouse
-    std::array<i8, Items> litBefore = {};  // swd32 0x004CDE99 (4 bytes), 0x004CDE9D
+    std::array<i8, Items> lit = {};        // 0x004EF5A4 (4 bytes), 0x004EF5A8: SW_SHOW (5) under the mouse
+    std::array<i8, Items> litBefore = {};  // 0x004EF5A9 (4 bytes), 0x004EF5AD
     std::array<bool, Items> shown = {true, true, true, true, true};  // the highlight windows (visible at first)
 
 private:
