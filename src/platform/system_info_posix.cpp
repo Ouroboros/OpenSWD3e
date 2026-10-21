@@ -1,5 +1,6 @@
 #include "platform/system_info.h"
 
+#include <chrono>
 #include <csignal>
 #include <ctime>
 #include <initializer_list>
@@ -49,10 +50,24 @@ void SleepMilliseconds(u32 milliseconds)
 
 LocalDateTime LocalTime()
 {
-    const std::time_t now = std::time(nullptr);
+    const auto clock = std::chrono::system_clock::now();
+    const std::time_t now = std::chrono::system_clock::to_time_t(clock);
+    const auto milliseconds = static_cast<int>(
+        static_cast<u64>(std::chrono::duration_cast<std::chrono::milliseconds>(clock.time_since_epoch()).count()) %
+        kMillisecondsPerSecond
+    );
     std::tm local{};
     localtime_r(&now, &local);
-    return {local.tm_year + kTmYearBase, local.tm_mon + kTmMonthBase, local.tm_mday, local.tm_hour, local.tm_min};
+    return {
+        local.tm_year + kTmYearBase,
+        local.tm_mon + kTmMonthBase,
+        local.tm_mday,
+        local.tm_hour,
+        local.tm_min,
+        local.tm_wday,
+        local.tm_sec,
+        milliseconds,
+    };
 }
 
 u32 ProcessId()

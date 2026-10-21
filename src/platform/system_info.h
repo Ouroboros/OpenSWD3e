@@ -16,7 +16,7 @@ u32 SystemUptime();
 // newer Windows ticks at 15.6 ms, which spaced the 35 ms frames 47 ms apart). Nothing elsewhere.
 void UseFineTimer();
 
-// GetLocalTime(): the local date and time to the minute.
+// GetLocalTime(): the local date and time (the fields of a SYSTEMTIME).
 struct LocalDateTime
 {
     int year = 0;
@@ -24,6 +24,9 @@ struct LocalDateTime
     int day = 0;
     int hour = 0;
     int minute = 0;
+    int dayOfWeek = 0;  // 0: Sunday
+    int second = 0;
+    int milliseconds = 0;
 };
 
 LocalDateTime LocalTime();

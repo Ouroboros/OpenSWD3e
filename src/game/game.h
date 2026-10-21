@@ -26,6 +26,7 @@
 #include "game/scene.h"
 #include "gfx/graphics.h"
 #include "ghost/ghost_follower.h"
+#include "ghost/talisman_ghost.h"
 #include "input/controls.h"
 #include "input/input.h"
 #include "launcher/launcher.h"
@@ -604,6 +605,7 @@ private:
     RolePath rolePath;
     AscentGame ascentGame;
     GhostFollower ghostFollower;
+    TalismanGhost talismanGhost;  // 0x004D0C10 the talisman ghost carried
 
     GameDatabases databases;
     PathNodePool pathNodes;

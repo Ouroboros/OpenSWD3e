@@ -57,7 +57,7 @@ LocalDateTime LocalTime()
     SYSTEMTIME now{};
     ::GetLocalTime(&now);
     const auto [year, month, dayOfWeek, day, hour, minute, second, milliseconds] = now;
-    return {year, month, day, hour, minute};
+    return {year, month, day, hour, minute, dayOfWeek, second, milliseconds};
 }
 
 u32 ProcessId()

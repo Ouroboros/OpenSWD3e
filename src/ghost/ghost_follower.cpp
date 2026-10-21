@@ -37,6 +37,12 @@ void GhostFollower::Spawn(i32 act, i32 action, float x, float y, float unk14, fl
     this->body->phase = kFirstPhase;
 }
 
+// swd3e.exe 0x0049E590: the second ghost slot freed (released with the game; the original never fills it)
+void GhostFollower::RemoveUnused()
+{
+    this->unused.reset();
+}
+
 // swd3e.exe 0x0049E660
 void GhostFollower::Remove()
 {

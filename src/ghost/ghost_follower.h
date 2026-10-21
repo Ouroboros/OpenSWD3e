@@ -20,6 +20,7 @@ class GhostFollower
 public:
     void Spawn(i32 act, i32 action, float x, float y, float unk14, float unk18);
     void Remove();
+    void RemoveUnused();
     void Follow(float x, float y);
     void Draw(ActArchive& acts, TswArchive& archive, Painter& painter, i32 cameraLeft, i32 cameraTop);
 
@@ -41,7 +42,8 @@ private:
         i32 phase = 0;    // +0x1C from -0x20 up to 0x40 a step: the fade in, the shown frames and the fade out
     };
 
-    std::unique_ptr<Body> body;  // 0x00579A10
+    std::unique_ptr<Body> body;    // 0x00579A10
+    std::unique_ptr<Body> unused;  // 0x00579A00 freed like `body` by RemoveUnused; nothing makes it
 };
 
 }  // namespace swd3e
