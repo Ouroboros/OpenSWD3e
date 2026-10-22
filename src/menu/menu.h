@@ -47,7 +47,7 @@ struct MenuTab
 struct Bestiary
 {
     static constexpr int Monsters = 0x1F4;
-    static constexpr int Categories = 0xC;
+    static constexpr int Categories = 0xB;
     static constexpr std::size_t Listed = 0x40;
     static constexpr int Rows = 0xF;
     static constexpr std::size_t Lines = 0x10;
@@ -773,19 +773,20 @@ public:
     std::array<MenuTab, Tabs> tabs = InitialTabs;
 
     ActState background;               // 0x0050A2A0
-    ActState hitPointBar;              // swd32 0x004FB810 the bars of the role tabs
-    ActState downArrowAct;             // swd32 0x004FB8D8 the down arrow of the lists (the shop's minus button)
-    ActState upArrowAct;               // swd32 0x004FBA18 the up arrow of the lists (the shop's plus button)
+    ActState hitPointBar;              // 0x0050A120 the bars of the role tabs
+    ActState barsTrack;                // 0x0050B020 the track under each of them (action 0x51)
+    ActState downArrowAct;             // 0x0050A1F8 the down arrow of the lists (the shop's minus button)
+    ActState upArrowAct;               // 0x0050A360 the up arrow of the lists (the shop's plus button)
     std::array<ActState, Tabs> items;  // 0x0050A900 the four entries of a page
-    ActState titleAct;                 // swd32 0x004FBEE0 the title of the page, lit and glowing
+    ActState titleAct;                 // 0x0050A830 the title of the page, lit and glowing
     ActState face;                     // 0x0050AB98 the face of the name entry
-    ActState barTrackAct;              // swd32 0x004FC328 the track of the scroll bars, repeated down
-    ActState spiritBar;                // swd32 0x004FC450
-    ActState staminaBar;               // swd32 0x004FC518
+    ActState barTrackAct;              // 0x0050ACC8 the track of the scroll bars, repeated down
+    ActState spiritBar;                // 0x0050ADF8
+    ActState staminaBar;               // 0x0050AEC8
     ActState gauge;                    // 0x0050B0C8 a step of the settings bars
-    ActState barThumbAct;              // swd32 0x004FC6E8 their thumb
-    ActState titleArrowAct;            // swd32 0x004FC790 the arrow beside the title
-    ActState tabsPanelAct;             // swd32 0x004FC840 the panel of the tabs (the shop's frame)
+    ActState barThumbAct;              // 0x0050B170 their thumb
+    ActState titleArrowAct;            // 0x0050B220 the arrow beside the title
+    ActState tabsPanelAct;             // 0x0050B2E0 the panel of the tabs (the shop's frame)
 
     // The system page (0x0050BE08..0x0050BE40).
     i32 systemClick = 0;           // 0x0050BE08 1: the confirm button clicked, 2: a right click

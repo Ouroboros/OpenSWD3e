@@ -4,7 +4,7 @@
 #include <string>
 
 #include "battle/battle_items.h"
-#include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "draw/painter.h"
 #include "font/text_font.h"
@@ -61,11 +61,10 @@ constexpr u16 kPoorSound = 0x8C;
 constexpr i32 kFaceAct = 0x232A;  // the acts of the shop page
 constexpr i32 kShopTitleAction = 0x16;
 constexpr i32 kShopFrameAction = 0x32;
-constexpr i32 kPlusAction = 0x1C;
-constexpr i32 kMinusAction = 0x1D;
+constexpr i32 kPlusAction = 0x1D;  // the plus arrow as the list draws it (0x00455140 starts the two the other way)
+constexpr i32 kMinusAction = 0x1C;
 constexpr i32 kFaceAction = 5;
 constexpr i32 kFaceChosenAction = 0xD;
-constexpr i32 kFaceUnusableAction = 0x39;  // the first role cannot use the equipment
 
 // The menu clicks (Menu::clicks).
 constexpr u32 kLeftClicks = 3;
@@ -76,7 +75,7 @@ constexpr u32 kAnyClick = 0xF;
 constexpr i32 kShopRepeatDelay = 7;  // ShopKeys: held frames before a key repeats every second frame
 constexpr u32 kKindTopBit = 0x8000;  // CompareEquipment clears it from the match
 constexpr u32 kEquipmentKinds = 0x700;
-constexpr i32 kPictureAction = 0x44;
+constexpr i32 kPictureAction = 0x3B;
 constexpr i16 kFaceSlideMost = 0x10;
 constexpr i16 kFaceSlideLeast = 8;
 constexpr int kSellRate = 0x3C;  // percent of the price paid for what is sold
@@ -93,21 +92,21 @@ constexpr u32 kLossRed = 0x1A;
 constexpr int kPanelStyle = 4;
 
 // The texts.
-constexpr std::u8string_view kGreeting = u8"客倌 您要買東西還是賣東西";  // swd32.exe 0x004A7490 (unmatched in swd3e)
-constexpr std::u8string_view kChoices = u8"買   賣   離開";              // swd32.exe 0x004A7480 (unmatched in swd3e)
-constexpr std::u8string_view kRun = u8"執行";                            // swd32.exe 0x004A7478 (unmatched in swd3e)
-constexpr std::u8string_view kBuyTitle = u8"購買";                       // swd32.exe 0x004A7470 (unmatched in swd3e)
-constexpr std::u8string_view kSellTitle = u8"賣出";                      // swd32.exe 0x004A7468 (unmatched in swd3e)
-constexpr std::u8string_view kTotalFormat = u8"總價 %d 餘額 %d";         // swd32.exe 0x004A7454 (unmatched in swd3e)
-constexpr std::u8string_view kSellTotal = u8"總共是 %d 銀幣 要賣嗎?";    // swd32.exe 0x004A7424 (unmatched in swd3e)
-constexpr std::u8string_view kBuyTotal = u8"總共是 %d 銀幣 要買嗎?";     // swd32.exe 0x004A743C (unmatched in swd3e)
-constexpr std::u8string_view kTotalAnswers = u8"確定  放棄";             // swd32.exe 0x004A6FD0 (unmatched in swd3e)
-constexpr std::u8string_view kEquipNow = u8"要馬上裝備嗎?";              // swd32.exe 0x004A7414 (unmatched in swd3e)
-constexpr std::u8string_view kEquipAnswers = u8" 確定  放棄 ";           // swd32.exe 0x004A7404 (unmatched in swd3e)
-constexpr std::u8string_view kTooPoor = u8"錢帶多一點再來吧";            // swd32.exe 0x004A73F0 (unmatched in swd3e)
-constexpr std::u8string_view kAttackLabel = u8"攻";                      // swd32.exe 0x004A74C4 (unmatched in swd3e)
-constexpr std::u8string_view kDefenseLabel = u8"防";                     // swd32.exe 0x004A74B0 (unmatched in swd3e)
-constexpr std::u8string_view kAgilityLabel = u8"敏";                     // swd32.exe 0x004A74AC (unmatched in swd3e)
+constexpr std::u8string_view kGreeting = u8"客倌 您要買東西還是賣東西";  // 0x004BEFBC
+constexpr std::u8string_view kChoices = u8"買   賣   離開";              // 0x004BEFAC
+constexpr std::u8string_view kRun = u8"執行";                            // 0x004BEFA4
+constexpr std::u8string_view kBuyTitle = u8"購買";                       // 0x004BEF9C
+constexpr std::u8string_view kSellTitle = u8"賣出";                      // 0x004BEF94
+constexpr std::u8string_view kTotalFormat = u8"總價 %d 餘額 %d";         // 0x004BEF80
+constexpr std::u8string_view kSellTotal = u8"總共是 %d 銀兩 要賣嗎?";    // 0x004BEF50
+constexpr std::u8string_view kBuyTotal = u8"總共是 %d 銀兩 要買嗎?";     // 0x004BEF68
+constexpr std::u8string_view kTotalAnswers = u8"確定  放棄";             // 0x004BEC18
+constexpr std::u8string_view kEquipNow = u8"要馬上裝備嗎?";              // 0x004BEF40
+constexpr std::u8string_view kEquipAnswers = u8" 確定  放棄 ";           // 0x004BEF30
+constexpr std::u8string_view kTooPoor = u8"錢帶多一點再來吧";            // 0x004BEF1C
+constexpr std::u8string_view kAttackLabel = u8"攻";                      // 0x004BEFF0
+constexpr std::u8string_view kDefenseLabel = u8"防";                     // 0x004BEFDC
+constexpr std::u8string_view kAgilityLabel = u8"敏";                     // 0x004BEFD8
 constexpr std::string_view kNoChange = "----";
 constexpr std::string_view kChangeFormat = "%c%d";
 constexpr std::string_view kNameFormat = "%-14s";
@@ -122,7 +121,9 @@ constexpr int kHighlightHeight = 0x18;
 constexpr int kHighlightRed = 0x14;
 constexpr int kHighlightGreen = 0xD;
 constexpr int kFaceX = 0xC;
-constexpr std::array<int, Party::Roles> kFaceTops = {0x48, 0xC0, 0x138, 0x1B0};
+constexpr u16 kFacesPicture = 0x23AE;  // the faces' column, drawn under them
+constexpr int kFaceTop = 0x66;
+constexpr int kFaceStep = 0xA0;
 constexpr int kHelpX = 0x96;
 constexpr int kHelpY = 0x1C0;
 constexpr int kHelpWidth = 0x1E4;
@@ -140,7 +141,7 @@ constexpr int kGoldBoxHeight = 0x1C;
 constexpr int kGoldBoxRight = 0x268;
 constexpr int kGoldBoxBottom = 0x22;
 constexpr int kGoldRight = 0x264;
-constexpr int kGoldY = 0x12;
+constexpr int kGoldY = 0x10;
 constexpr int kChoiceBoxX = 0xB0;
 constexpr int kChoiceBoxY = 0x128;
 constexpr int kChoiceBoxWidth = 0x130;
@@ -198,8 +199,8 @@ constexpr int kTotalTextX = 0x9C;
 constexpr int kBarX = 0x1EE;
 constexpr int kBarY = 0x42;
 constexpr int kBarHeight = 0x134;
-constexpr int kCompareTop = 0x35;
-constexpr int kCompareStep = 0x78;
+constexpr int kCompareTop = 0x4D;
+constexpr int kCompareStep = 0xA0;
 constexpr int kCompareLine = 0x14;
 constexpr int kCompareLabelX = 0x44;
 constexpr int kCompareValueX = 0x58;
@@ -258,11 +259,12 @@ constexpr i32 kBarDownBottom = 0x187;
 
 }  // namespace
 
-// swd3e.exe 0x00454FC0: the shop opened: the map drawn without the pointer, darkened and grey under it (two copies),
-// the list empty with its head as the first item shown, the choice page
+// swd3e.exe 0x00454FC0: the shop opened: the party roles with a tab listed, the map drawn without the pointer,
+// darkened and grey under it (two copies), the list empty with its head as the first item shown, the choice page
 void Game::OpenShop()
 {
     BattleState& shop = this->battleState;
+    this->menu.ListPartyRoles();
     this->state.SetGameFlag(GameState::NoPointer);
     this->BeginMapCanvas();
     this->fieldView.Paint();
@@ -292,8 +294,8 @@ void Game::OpenShop()
     shop.shopFlags = 0;
 }
 
-// swd3e.exe 0x00455140: the acts of the shop page at their first actions: the four faces (acts 1, 2, 8, 0x11), the
-// title, the frame and the plus and minus arrows
+// swd3e.exe 0x00455140: the acts of the shop page at their first actions: the faces of the roles with a tab (the act of
+// each role's number from 1), the title, the frame and the plus and minus arrows
 void Game::ResetShopActs()
 {
     Menu& menu = this->menu;
@@ -309,11 +311,12 @@ void Game::ResetShopActs()
     ResetPlayback(menu.tabsPanelAct);
     ResetPlayback(this->battleState.shopTitle);
 
-    for (std::size_t role = 0; role < menu.items.size(); ++role)
+    for (int slot = 0; slot < menu.VisibleCount() && static_cast<std::size_t>(slot) < menu.items.size(); ++slot)
     {
-        menu.items[role].action = kFaceAction;
-        menu.items[role].id = SaveSlots::FrameActs[role];
-        menu.items[role].direction = 0;
+        ActState& face = menu.items[static_cast<std::size_t>(slot)];
+        face.id = menu.VisibleRole(slot) + 1;
+        face.action = kFaceAction;
+        face.direction = 0;
     }
 
     auto set = [](ActState& act, i32 action)
@@ -325,8 +328,8 @@ void Game::ResetShopActs()
 
     set(this->battleState.shopTitle, kShopTitleAction);
     set(menu.tabsPanelAct, kShopFrameAction);
-    set(menu.upArrowAct, kPlusAction);
-    set(menu.downArrowAct, kMinusAction);
+    set(menu.upArrowAct, kMinusAction);
+    set(menu.downArrowAct, kPlusAction);
 }
 
 // swd3e.exe 0x004550E0: the shop closed: the goods of talk command ItemMenu, the screen copies and the list freed
@@ -715,7 +718,7 @@ void Game::ShopConfirm()
     }
 }
 
-// The list opened from the choice (inline in 0x0044E4A0, stage 1).
+// The list opened from the choice (inline in 0x00455B20, stage 1).
 void Game::ShopOpenList()
 {
     BattleState& shop = this->battleState;
@@ -762,9 +765,9 @@ void Game::ShopOpenList()
         {
             if (AddItem(goods, ids[at], kMaxCount, ItemCountMode::Count, this->database) == nullptr)
             {
-                // swd32.exe 0x0044E5CD (unmatched in swd3e): as the original, the id after the one that failed
+                // As the original, the id after the one that failed (0x004BEF0C, 0x004BE870).
                 const u16 next = at + 1 < ids.size() ? ids[at + 1] : u16{0};
-                DebugLog(u8"商店存貨設定 沒有定義物品號碼(%d)", next);  // 0x004A73E0 + 0x004A6BA0
+                ErrorBox(this->errors, u8"商店存貨設定", u8"沒有定義物品號碼(%d)", next);
             }
         }
 
@@ -772,7 +775,8 @@ void Game::ShopOpenList()
 
         if (goods != nullptr)
         {
-            DebugLog(u8"商店存貨設定 物品入庫發生錯誤");  // 0x004A73E0 + 0x004A73CC
+            // 0x004BEF0C, 0x004BEEF8
+            ErrorBox(this->errors, u8"商店存貨設定", u8"物品入庫發生錯誤");
         }
 
         const ItemNode* chosen = ItemAfter(shop.listTop + shop.listRow, shop.itemsHead.next);
@@ -795,7 +799,7 @@ void Game::ShopOpenList()
     this->CompareEquipment(ItemAt(shop.itemsHead.next, static_cast<u16>(shop.listTop + shop.listRow)));
 }
 
-// The total settled (inline in 0x0044E4A0, stage 3).
+// The total settled (inline in 0x00455B20, stage 3).
 void Game::ShopSettle()
 {
     BattleState& shop = this->battleState;
@@ -911,7 +915,7 @@ void Game::ShopSettle()
     this->ShopAnswered();
 }
 
-// The answers of the total and the equip prompt cleared (inline in 0x0044E4A0).
+// The answers of the total and the equip prompt cleared (inline in 0x00455B20).
 void Game::ShopAnswered()
 {
     this->battleState.mode &= ~kAnswerBits;
@@ -1221,23 +1225,20 @@ void Game::CompareEquipment(const ItemNode* item)
     }
 }
 
-// swd3e.exe 0x00457340: beside each party role's face its changes of attack (攻), defence (防) and agility (敏):
-// "+n" in white, "-n" in red, "----" when it cannot use the object or nothing changes
+// swd3e.exe 0x00457340: beside the face of each role with a tab its changes of attack (攻), defence (防) and agility
+// (敏): "+n" in white, "-n" in red, "----" when it cannot use the object or nothing changes
 void Game::DrawEquipmentCompare()
 {
+    Menu& menu = this->menu;
     const auto color = static_cast<Pixel>(this->painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
     const auto gain = static_cast<Pixel>(this->painter.MakeColor(kGainRed, kGainGreen, kGainBlue));
     const auto loss = static_cast<Pixel>(this->painter.MakeColor(kLossRed, 0, 0));
 
-    for (int role = 0; role < Party::Roles; ++role)
+    for (int slot = 0; slot < menu.VisibleCount(); ++slot)
     {
-        if (!this->state.GameFlag(Party::FirstRoleFlag + role))
-        {
-            continue;
-        }
-
+        const int role = std::clamp(menu.VisibleRole(slot), 0, Party::Roles - 1);
         const ShopComparison& comparison = this->battleState.comparisons[static_cast<std::size_t>(role)];
-        const int y = kCompareTop + kCompareStep * role;
+        const int y = kCompareTop + kCompareStep * slot;
         const std::array<std::pair<std::u8string_view, i32>, 3> lines = {{
             {kAttackLabel, comparison.attack},
             {kDefenseLabel, comparison.defense},
@@ -1333,19 +1334,16 @@ void Game::DrawShop()
 
     if (shop.shopStage > kShopChoice)
     {
-        this->actDrawer.Draw(menu.tabsPanelAct, 0, 0);
+        this->actDrawer.DrawPicture(kFacesPicture, 0, 0, 0);
 
-        for (int role = 0; role < Party::Roles; ++role)
+        for (int slot = 0; slot < menu.VisibleCount() && static_cast<std::size_t>(slot) < menu.items.size(); ++slot)
         {
-            if (this->state.GameFlag(Party::FirstRoleFlag + role))
-            {
-                const auto index = static_cast<std::size_t>(role);
-                this->actDrawer.Draw(
-                    menu.items[index],
-                    menu.Shown(Menu::FaceSlideValue + index, shop.faceSlides[index]) + kFaceX,
-                    kFaceTops[index]
-                );
-            }
+            const auto index = static_cast<std::size_t>(slot);
+            this->actDrawer.Draw(
+                menu.items[index],
+                menu.Shown(Menu::FaceSlideValue + index, shop.faceSlides[index]) + kFaceX,
+                kFaceStep * slot + kFaceTop
+            );
         }
 
         FillBox(this->painter, kHelpX, kHelpY, kHelpWidth, kHelpHeight, 0, 0, 0, FillMode::Quarter);
@@ -1757,16 +1755,20 @@ void Game::DrawShopChosen(const ItemNode& item, Pixel color)
 
     const u16 usable = item.record.data.usableBy;
 
-    for (int role = 0; role < Party::Roles; ++role)
+    // By tab: the face of a role that cannot use the equipment lowered (0x004560E0 reads the role bits from its
+    // stack, 0x8000 >> role).
+    for (int slot = 0; slot < menu.VisibleCount() && static_cast<std::size_t>(slot) < menu.items.size(); ++slot)
     {
-        if ((usable & (ObjectData::FirstRoleBit >> role)) != 0)
+        const int role = menu.VisibleRole(slot);
+
+        if (role >= 0 && (usable & (ObjectData::FirstRoleBit >> role)) != 0)
         {
             continue;
         }
 
-        i16& slide = shop.faceSlides[static_cast<std::size_t>(role)];
+        i16& slide = shop.faceSlides[static_cast<std::size_t>(slot)];
         slide = std::max<i16>(static_cast<i16>(slide - 2), kFaceSlideLeast);
-        menu.items[static_cast<std::size_t>(role)].action = role == 0 ? kFaceUnusableAction : kFaceAction;
+        menu.items[static_cast<std::size_t>(slot)].action = kFaceAction;
     }
 
     move();

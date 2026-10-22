@@ -44,7 +44,8 @@ constexpr i32 kFaceAction = 3;
 constexpr i32 kHitPointBarAction = 4;
 constexpr i32 kSpiritBarAction = 5;
 constexpr i32 kStaminaBarAction = 6;
-constexpr i32 kFirstTabAction = 8;  // the animations of the four tabs
+constexpr i32 kBarsTrackAction = 0x51;  // the track under the bars of the role tabs
+constexpr i32 kFirstTabAction = 8;      // the animations of the four tabs
 constexpr i32 kBarTrackAction = 0x18;
 constexpr i32 kBarThumbAction = 0x19;
 constexpr i32 kListUpArrowAction = 0x1A;
@@ -923,9 +924,9 @@ void Menu::DrawRoleTabs(int offset, int mode)
     auto tracks = [this, &owner, offset](int top)
     {
         const int x = kBarX - offset;
-        owner.actDrawer.Draw(this->barTrackAct, x, top + kHitPointBarDown);
-        owner.actDrawer.Draw(this->barTrackAct, x, top + kSpiritBarDown);
-        owner.actDrawer.Draw(this->barTrackAct, x, top + kStaminaBarDown);
+        owner.actDrawer.Draw(this->barsTrack, x, top + kHitPointBarDown);
+        owner.actDrawer.Draw(this->barsTrack, x, top + kSpiritBarDown);
+        owner.actDrawer.Draw(this->barsTrack, x, top + kStaminaBarDown);
     };
 
     auto bars = [this, &owner, &painter, offset](const RoleRecord& role, int top, int glow, double fraction)
@@ -1256,6 +1257,7 @@ void Menu::InitActs()
           &this->hitPointBar,
           &this->spiritBar,
           &this->staminaBar,
+          &this->barsTrack,
           &this->barTrackAct,
           &this->barThumbAct,
           &this->upArrowAct,
@@ -1283,6 +1285,7 @@ void Menu::InitActs()
          {&this->hitPointBar,
           &this->spiritBar,
           &this->staminaBar,
+          &this->barsTrack,
           &this->barTrackAct,
           &this->barThumbAct,
           &this->upArrowAct,
@@ -1295,6 +1298,7 @@ void Menu::InitActs()
     this->hitPointBar.action = kHitPointBarAction;
     this->spiritBar.action = kSpiritBarAction;
     this->staminaBar.action = kStaminaBarAction;
+    this->barsTrack.action = kBarsTrackAction;
     this->barTrackAct.action = kBarTrackAction;
     this->barThumbAct.action = kBarThumbAction;
     this->upArrowAct.action = kListUpArrowAction;

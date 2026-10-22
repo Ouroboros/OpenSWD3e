@@ -3,7 +3,7 @@
 #include <cstring>
 #include <string>
 
-#include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "draw/painter.h"
 #include "font/text_font.h"
@@ -21,17 +21,17 @@ namespace swd3e
 namespace
 {
 
-constexpr i32 kBestiaryBackground = 0x33;  // Menu::background actions
+constexpr i32 kBestiaryBackground = 0x32;  // Menu::background actions
 constexpr i32 kItemsBackground = 0x43;
 constexpr u16 kMoveSound = 0x2E;
-constexpr int kLastCategory = 0xB;
+constexpr int kLastCategory = 0xA;
 constexpr int kMouseLastCategory = 0xE;  // the mouse stops the categories here (past the twelve shown)
 constexpr std::size_t kItemLines = 9;    // Bestiary::lines: nine lines of values, then the three objects
 constexpr u16 kSubpageCode = 0x1F4;      // Menu::code while a subpage is open
 constexpr u16 kRolePagesCode = 2;
 
-// The categories shown in turn (the tabs 0..11) as values of a monster's category byte.
-constexpr std::array<i8, Bestiary::Categories> kCategoryValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xD, 0xE};
+// The categories shown in turn (the tabs 0..10) as values of a monster's category byte (0x00442280, on its stack).
+constexpr std::array<i8, Bestiary::Categories> kCategoryValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 0xA, 0x12};
 // 0x004AF94C: the names of the categories, ten bytes each (from 0x15 on all "奇物").
 constexpr std::array<std::u8string_view, 0x20> kCategoryNames = {
     u8"天神", u8"魔神", u8"仙靈", u8"神獸", u8"魔獸", u8"妖靈", u8"精怪", u8"鬼魂", u8"活屍",     u8"晶礦", u8"生物",
@@ -67,19 +67,19 @@ constexpr int kStaminaSkillB = 5;
 constexpr int kPercentPerDefeat = 5;
 
 constexpr std::string_view kUnknownShort = "????";
-constexpr std::u8string_view kUnknownLevel = u8"????級";  // swd32.exe 0x004A6C48 (unmatched in swd3e)
-constexpr std::u8string_view kLevelFormat = u8"%4d級";    // swd32.exe 0x004A6BF8 (unmatched in swd3e)
+constexpr std::u8string_view kUnknownLevel = u8"????級";  // 0x004BE908
+constexpr std::u8string_view kLevelFormat = u8"%4d級";    // 0x004BE8B8
 constexpr std::string_view kUnknownItem = "????????????";
 constexpr std::string_view kUnknownName = "????????";
 constexpr std::string_view kPercentFormat = "%3d%%";
 constexpr std::string_view kNameFormat = "%-12s";
 constexpr std::string_view kLabelFormat = "%4s  ";
-constexpr std::u8string_view kExactFormat = u8"%s 是 %4d";      // swd32.exe 0x004A6C80 (unmatched in swd3e)
-constexpr std::u8string_view kNearFormat = u8"%4s 大概是 %4d";  // swd32.exe 0x004A6C58 (unmatched in swd3e)
-constexpr std::u8string_view kFarFormat = u8"%4s 似乎是 %4d";   // swd32.exe 0x004A6C68 (unmatched in swd3e)
+constexpr std::u8string_view kExactFormat = u8"%s 是 %4d";      // 0x004BE940
+constexpr std::u8string_view kNearFormat = u8"%4s 大概是 %4d";  // 0x004BE918
+constexpr std::u8string_view kFarFormat = u8"%4s 似乎是 %4d";   // 0x004BE928
 constexpr std::string_view kUnknownValue = " ???";
 constexpr std::size_t kUnknownMark = 7;  // KnownValue: the original sets this byte to '?' for large maxima
-constexpr std::u8string_view kHitPointsLabel = u8"生命";  // swd32.exe 0x004A6BF0 (unmatched in swd3e)
+constexpr std::u8string_view kHitPointsLabel = u8"生命";  // 0x004BE8B0
 constexpr std::u8string_view kSpiritLabel = u8"靈力";
 constexpr std::u8string_view kStaminaLabel = u8"體力";
 constexpr std::u8string_view kAttackLabel = u8"攻擊";
@@ -109,7 +109,7 @@ constexpr int kDescriptionLines = 5;
 constexpr int kDescriptionWidth = 0x168;
 constexpr int kPictureX = 0x1FC;
 constexpr int kPictureY = 0x3C;
-constexpr i32 kPictureAction = 0x44;
+constexpr i32 kPictureAction = 0x3B;
 constexpr int kHighlightX = 0xE;
 constexpr int kHighlightWidth = 0xBD;
 constexpr int kHighlightHeight = 0x18;
@@ -123,12 +123,13 @@ constexpr u16 kScrollDown = 0x30;
 constexpr u16 kScrollUpMask = 0xF;
 constexpr u16 kScrollDownMask = 0xF0;
 constexpr int kNibbleShift = 4;
-constexpr u16 kTabsPicture = 0x2439;
-constexpr u16 kTabPicture = 0x243A;
+constexpr u16 kTabsPicture = 0x2346;
+constexpr u16 kTabPicture = 0x2362;
 constexpr int kTabsClipLeft = 0xA;
 constexpr int kTabsClipTop = 1;
 constexpr int kTabsClipRight = 0xCE;
-constexpr int kTabsClipBottom = 0x1DE;
+constexpr int kTabsClipBottom = 0x4E;
+constexpr int kClipBottom = 0x1DE;  // the clip left after the tabs
 constexpr int kTabsLeft = 6;
 constexpr int kTabsY = 0x3D;
 constexpr int kTabStep = 0x28;
@@ -310,7 +311,7 @@ void Menu::BestiaryEnter()
     book.scrollArrows = 0;
 }
 
-// swd32.exe 0x0043C2F0 (unmatched in swd3e): the bestiary closed: its tables freed, the items page's background back
+// swd3e.exe 0x00441BB0: the bestiary closed: its tables freed, the items page's background back
 void Menu::BestiaryLeave()
 {
     Bestiary& book = this->bestiary;
@@ -432,7 +433,7 @@ void Menu::BestiaryUp()
     this->BestiaryMoved(kScrollUp);
 }
 
-// swd32.exe 0x0043C600 (unmatched in swd3e): a page of fifteen on
+// swd3e.exe 0x00441EC0: a page of fifteen on
 void Menu::BestiaryPageDown()
 {
     Bestiary& book = this->bestiary;
@@ -448,7 +449,7 @@ void Menu::BestiaryPageUp()
     this->BestiaryMoved(kScrollUp);
 }
 
-// swd32.exe 0x0043C6E0 (unmatched in swd3e): the category before
+// swd3e.exe 0x00441FA0: the category before
 void Menu::BestiaryLeft()
 {
     Game& owner = this->game;
@@ -468,7 +469,7 @@ void Menu::BestiaryLeft()
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
-// swd3e.exe 0x00442020: the next category (up to the twelfth)
+// swd3e.exe 0x00442020: the next category (up to the eleventh)
 void Menu::BestiaryRight()
 {
     Game& owner = this->game;
@@ -488,7 +489,8 @@ void Menu::BestiaryRight()
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
-// Shift (and a click on the tabs): the next category, with a second sound (inline in 0x0044F100 and 0x0044F130)
+// swd3e.exe 0x004420A0: Shift (and a click on the tabs, and the items page's Shift and End): the next category, with
+// a second sound
 void Menu::BestiaryShift()
 {
     Game& owner = this->game;
@@ -496,7 +498,8 @@ void Menu::BestiaryShift()
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
-// swd32.exe 0x0043C800 (unmatched in swd3e): Escape from the bestiary opened as a subpage: back to the role pages
+// swd3e.exe 0x004420C0: Escape from the bestiary opened as a subpage (and the items page's Escape there): back to the
+// role pages
 void Menu::BestiaryCancel()
 {
     if (this->code == kSubpageCode)
@@ -634,7 +637,8 @@ void Menu::BestiaryList(int category)
             }
             else
             {
-                DebugLog(u8"怪物集合 物品資料無法讀取(%d)", id);  // 0x004A6B48 + 0x004A6B54
+                // 0x004BE818, 0x004BE824
+                ErrorBox(owner.errors, u8"怪物集合", u8"物品資料無法讀取(%d)", id);
             }
         }
     }
@@ -743,7 +747,8 @@ void Menu::BestiaryChoose(u32 id)
 
     if (!owner.database.LoadObject(book.monster.record, static_cast<u16>(id)))
     {
-        DebugLog(u8"讀取道具(book) 沒有定義物品號碼(%d)", id);  // 0x004A6B90 + 0x004A6BA0
+        // 0x004BE860, 0x004BE870
+        ErrorBox(owner.errors, u8"讀取道具(book)", u8"沒有定義物品號碼(%d)", id);
     }
 
     const ObjectData& data = book.monster.record.data;
@@ -940,7 +945,7 @@ void Menu::DrawBestiaryTabs()
         owner.painter.DrawPicture(kTabX, kTabY, chosen->width, chosen->height, 0);
     }
 
-    owner.painter.SetClipClamped(0, kTabsClipTop, Display::Width, kTabsClipBottom);
+    owner.painter.SetClipClamped(0, kTabsClipTop, Display::Width, kClipBottom);
 }
 
 // swd3e.exe 0x004424C0: the first listed shown: entry `top` of the list (a pointer into it in the original)

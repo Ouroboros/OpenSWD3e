@@ -37,7 +37,7 @@ struct Menu::FrameState
     std::array<i8, Menu::Tabs> tabGlow = {};
     std::array<MenuTab, Menu::Tabs> tabs = {};
     std::array<Handler, 13> handlers = {};
-    std::array<ActState, 18> acts;
+    std::array<ActState, 19> acts;
     MenuScrollBar scrollBar;
     MenuScrollBar townBar;
     MenuScrollBar unk4FBAB4;
@@ -168,24 +168,10 @@ void Menu::SaveFrame(FrameState& kept) const
     };
 
     kept.acts = {
-        this->background,
-        this->hitPointBar,
-        this->downArrowAct,
-        this->upArrowAct,
-        this->items[0],
-        this->items[1],
-        this->items[2],
-        this->items[3],
-        this->titleAct,
-        this->face,
-        this->barTrackAct,
-        this->spiritBar,
-        this->staminaBar,
-        this->gauge,
-        this->barThumbAct,
-        this->titleArrowAct,
-        this->tabsPanelAct,
-        this->buttonAct,
+        this->background,    this->hitPointBar,  this->downArrowAct, this->upArrowAct, this->items[0],
+        this->items[1],      this->items[2],     this->items[3],     this->titleAct,   this->face,
+        this->barTrackAct,   this->spiritBar,    this->staminaBar,   this->gauge,      this->barThumbAct,
+        this->titleArrowAct, this->tabsPanelAct, this->buttonAct,    this->barsTrack,
     };
 
     kept.scrollBar = this->scrollBar;
@@ -326,6 +312,7 @@ void Menu::LoadFrame(const FrameState& kept)
     this->titleArrowAct = kept.acts[15];
     this->tabsPanelAct = kept.acts[16];
     this->buttonAct = kept.acts[17];
+    this->barsTrack = kept.acts[18];
     this->scrollBar = kept.scrollBar;
     this->townBar = kept.townBar;
     this->unk4FBAB4 = kept.unk4FBAB4;
