@@ -1,6 +1,6 @@
 af_at_start=0xDF7FFFF7 flirt=0
 af_final=0xDF7FFFF7 flirt=0
-func_count=1700 unknown_libname=0 func_lib=1 unowned_heads=0 regions=0 noncode_nonpad=94 indirect=898
+func_count=1710 unknown_libname=0 func_lib=1 unowned_heads=0 regions=0 noncode_nonpad=94 indirect=897
 entry_probe:
 0x004A20A7  push    ebp
 0x004A20A8  mov     ebp, esp

@@ -2958,7 +2958,7 @@
   "switch": false
  },
  {
-  "func": "0x004432E0",
+  "func": "0x00443990",
   "ea": "0x004439A0",
   "insn": "jmp     ds:jpt_4439A0[eax*4]; switch jump",
   "switch": true
@@ -2967,12 +2967,6 @@
   "func": "0x00443CB0",
   "ea": "0x00443CBB",
   "insn": "jmp     ds:jpt_443CBB[eax*4]; switch jump",
-  "switch": true
- },
- {
-  "func": "0x00443CB0",
-  "ea": "0x004439A0",
-  "insn": "jmp     ds:jpt_4439A0[eax*4]; switch jump",
   "switch": true
  },
  {
@@ -5330,19 +5324,19 @@
  {
   "func": "0x004A78D5",
   "ea": "0x004A792D",
-  "insn": "call    eax ; dword_579D08",
+  "insn": "call    eax ; GetActiveWindow",
   "switch": false
  },
  {
   "func": "0x004A78D5",
   "ea": "0x004A793F",
-  "insn": "call    eax ; dword_579D0C",
+  "insn": "call    eax ; GetLastActivePopup",
   "switch": false
  },
  {
   "func": "0x004A78D5",
   "ea": "0x004A7950",
-  "insn": "call    dword_579D04",
+  "insn": "call    MessageBoxA_0",
   "switch": false
  },
  {

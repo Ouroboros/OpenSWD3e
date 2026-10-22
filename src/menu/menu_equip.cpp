@@ -288,7 +288,7 @@ void Menu::EquipEnter()
     page.listY = kListStartY;
 }
 
-// The equipment page left (the tail chunk 0x00445760 of 0x004465D0, also the page's leave handler): the list's
+// swd3e.exe 0x00445760: the equipment page left (also the end of Escape from the slots, 0x004465D0): the list's
 // objects back in the inventory, every slot's count 1 again
 void Menu::EquipLeave()
 {

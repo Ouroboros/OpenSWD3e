@@ -35,7 +35,7 @@
 - 工作副本：`reverse/analysis/work/swd3e.exe`，SHA-256 与原文件一致。原程序未改动。
 - 正式工作数据库：`reverse/analysis/swd3e.i64`（唯一正式库）。
 - 新建命令：`idat.exe -A -c -dANALYSIS=0xDF7FFFF7 -o<swd3e.i64> -S"ida_export.py initial <export>" <work\swd3e.exe>`，临时目录 `TMP/TEMP` 指向工作区 `tmp/`。
-- 重开核对：`ida_export.py reopen` 读取到相同 SHA-256、`AF=0xDF7FFFF7`、函数1700个，入口汇编可读（`reverse/analysis/export/ida_reopen_log.txt`、`info_reopen.json`）。
+- 重开核对：`ida_export.py reopen` 读取到相同 SHA-256、`AF=0xDF7FFFF7`、函数1710个（菜单处理入口拆分后，见 scope-and-gaps.md），入口汇编可读（`reverse/analysis/export/ida_reopen_log.txt`、`info_reopen.json`）。
 
 ## FLIRT 禁用
 
