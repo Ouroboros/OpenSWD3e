@@ -331,9 +331,9 @@ void Menu::EquipDescribeRow()
         chosen != nullptr ? ObjectDescription(this->game.databases.mapsData, chosen->id) : std::string();
 }
 
-// The party role of the tab raised (0x00441960 of Menu::roleTab, inline in the equipment page). Past the roles
-// listed the original reads before the party's records; here the first role is taken.
-int Menu::EquipRole() const
+// The party role of the tab raised (0x00441960 of Menu::roleTab, inline in the equipment and skills pages). Past the
+// roles listed the original reads before the party's records; here the first role is taken.
+int Menu::TabRole() const
 {
     const int role = this->VisibleRole(this->roleTab);
     return role >= 0 && role < Party::Roles ? role : 0;
@@ -342,7 +342,7 @@ int Menu::EquipRole() const
 // The object in the slot chosen of the role chosen (inline in the equipment page).
 ItemNode* Menu::EquipSlotNode()
 {
-    const auto at = static_cast<std::size_t>(Party::SlotsPerRole * this->EquipRole() + this->equip.slot);
+    const auto at = static_cast<std::size_t>(Party::SlotsPerRole * this->TabRole() + this->equip.slot);
     std::array<std::unique_ptr<ItemNode>, Party::Roles * Party::SlotsPerRole>& equipment = this->game.party.equipment;
     return at < equipment.size() ? equipment[at].get() : nullptr;
 }
@@ -355,7 +355,7 @@ void Menu::EquipTake(ItemLink& source, int slot)
     page.objects.reset();
     const u32 kind = Party::SlotKinds[static_cast<std::size_t>(std::clamp(slot, 0, kLastSlot))];
     // 0x004AACCC: the role bits by party role
-    const u16 role = static_cast<u16>(ObjectData::FirstRoleBit >> this->EquipRole());
+    const u16 role = static_cast<u16>(ObjectData::FirstRoleBit >> this->TabRole());
     ItemLink* link = &source;
 
     while (*link != nullptr)
@@ -446,7 +446,7 @@ void Menu::EquipComputeStats()
     }
 
     const ItemNode* tried = this->EquipTried();
-    this->EquipTryStats(this->EquipRole(), page.slot, page.stats[kTriedStats], tried);
+    this->EquipTryStats(this->TabRole(), page.slot, page.stats[kTriedStats], tried);
     this->EquipExtraStats(tried, page.stats[kTriedStats]);
     this->EquipSumBonuses();
     this->EquipResistances();
@@ -478,7 +478,7 @@ void Menu::EquipRoleStats(int role, EquipStats& stats)
 {
     Game& owner = this->game;
     EquipPage& page = this->equip;
-    page.worn = owner.party.roles[static_cast<std::size_t>(this->EquipRole())];
+    page.worn = owner.party.roles[static_cast<std::size_t>(this->TabRole())];
 
     for (int slot = 0; slot < Party::SlotsPerRole; ++slot)
     {
@@ -499,7 +499,7 @@ void Menu::EquipTryStats(int role, int slot, EquipStats& stats, const ItemNode* 
 {
     Game& owner = this->game;
     EquipPage& page = this->equip;
-    page.worn = owner.party.roles[static_cast<std::size_t>(this->EquipRole())];
+    page.worn = owner.party.roles[static_cast<std::size_t>(this->TabRole())];
     page.worn.attackBonus = 0;
     page.worn.defenseBonus = 0;
     stats.fill(0);
@@ -609,7 +609,7 @@ void Menu::EquipSwapVitals(const ItemNode* added, const ItemNode& removed)
 {
     Game& owner = this->game;
     EquipPage& page = this->equip;
-    RoleRecord& role = owner.party.roles[static_cast<std::size_t>(this->EquipRole())];
+    RoleRecord& role = owner.party.roles[static_cast<std::size_t>(this->TabRole())];
     page.worn = RoleRecord{};
 
     if (removed.id != ItemNode::Empty)
@@ -647,7 +647,7 @@ void Menu::EquipSumBonuses()
     for (int slot = 0; slot < Party::SlotsPerRole; ++slot)
     {
         const ItemNode* worn =
-            owner.party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * this->EquipRole() + slot)].get();
+            owner.party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * this->TabRole() + slot)].get();
 
         if (worn != nullptr)
         {
@@ -1547,7 +1547,7 @@ void Menu::EquipDrawSlots(int x, int y, int slide, int width, int chosen)
         int shift = 0;
         Pixel rowColor = color;
         const ItemNode* worn =
-            owner.party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * this->EquipRole() + slot)].get();
+            owner.party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * this->TabRole() + slot)].get();
         bool tint = page.stage > 0;
 
         if (chosen == slot)

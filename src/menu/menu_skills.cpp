@@ -31,17 +31,17 @@ constexpr i32 kNoTownWarp = 0x11;  // the town warp cannot be used here
 constexpr i32 kNoExitWarp = 0x12;
 constexpr u16 kTownCode = 0xF;  // Menu::code with the town list open as a subpage (as the original tests)
 
-constexpr int kRows = 0x18;  // the list's rows: two columns of twelve
+constexpr int kRows = 0x18;  // the cells shown: two columns of twelve
 constexpr int kColumns = 2;
 constexpr int kTownRows = 8;
-constexpr int kShownTabs = 3;
 constexpr int kBaseTabs = 3;
-constexpr int kFirstExtraTabFlag = 0x15;  // two flags a role add the fourth and fifth tab
+constexpr int kFirstExtraTabFlag = 0x15;  // two flags a role add to SkillsPage::tabs
 constexpr int kTabFlagsPerRole = 2;
-// swd32.exe 0x00499CDC (unmatched in swd3e): the skill kind (ObjectData::category) of each tab; kind 0 shows on every
-// tab.
-constexpr std::array<u16, 5> kTabKinds = {0x1C, 0x1B, 0x1F, 0x1D, 0x1E};
-constexpr u16 kRoleMask = 3;
+constexpr u16 kSkillKindA = 0x11;  // ObjectData::category of the skills the page lists
+constexpr u16 kSkillKindB = 0x14;
+constexpr u32 kHeadingKind = 0x80;  // ObjectData::kind: a heading across both columns
+constexpr int kOddCell = 1;
+constexpr u32 kEvenCells = 0xFFFE;   // the original clears bit 0 of the cell as a word
 constexpr u16 kSpiritCost = 0x8000;  // ObjectData::costBits: the cost in spirit (bit 15) or stamina (bit 14)
 constexpr u16 kSpiritMask = 0x7FFF;
 constexpr u16 kStaminaCost = 0x4000;
@@ -50,10 +50,10 @@ constexpr u16 kCostBits = 0xC000;
 constexpr u16 kUseMask = 0xF;  // ObjectData::usableBy's low nibble: 0 never, 1 in battle only, 2 and up also here
 constexpr u16 kFieldUse = 2;
 constexpr u16 kBattleOnly = 1;
-constexpr u16 kExitWarp = 0x619;
-constexpr u16 kTownWarp = 0x61E;
-constexpr int kExitWarpBlocked = 0x4E;
-constexpr int kTownWarpBlocked = 0x4D;
+constexpr u16 kExitWarp = 0x17B5;
+constexpr u16 kTownWarp = 0x17B4;
+constexpr int kExitWarpBlocked = GameState::FileNameB;
+constexpr int kTownWarpBlocked = GameState::FileNameA;
 constexpr u32 kWholeParty = 1;  // SkillScript::flags: the skill works on every party role
 constexpr int kTownFlags = 0x1388;
 constexpr i16 kWarpEvent = 0x52;
@@ -66,7 +66,6 @@ constexpr std::size_t kTownWords = 3;
 constexpr i32 kDescriptionSlide = 0x80;
 constexpr i32 kDescriptionHidden = 0x1E0;
 constexpr i32 kDescriptionUp = 0x168;
-constexpr i32 kPageBackground = 0x45;
 constexpr i32 kLeaveBackground = 0x36;
 constexpr i32 kPressedOffset = -1;
 constexpr int kMessageLines = 3;
@@ -90,15 +89,16 @@ constexpr u32 kRightClick = 4;
 constexpr u32 kLeftOrRight = 5;
 
 // The texts.
-// swd32.exe 0x004A6F80 (unmatched in swd3e)..0x004A6FA0: the names of the tabs.
-constexpr std::array<std::u8string_view, 5> kTabNames = {u8"魔法", u8"仙術", u8"絕技", u8"武術", u8"醫術"};
-constexpr std::u8string_view kCannotHere = u8"此地無法使用";  // swd32.exe 0x004A6F64 (unmatched in swd3e)
-constexpr std::u8string_view kEmptyName = u8"無";             // swd32.exe 0x0049F9FC (unmatched in swd3e)
+constexpr std::u8string_view kCannotHere = u8"此地無法使用";  // 0x004BEBA8
+constexpr std::u8string_view kEmptyName = u8"無";             // 0x004AF630
 constexpr std::string_view kNameFormat = "%-14s";
+constexpr std::string_view kHeadingFormat = "~~~~~~~~%-14s~~~~~~~~";
 constexpr std::string_view kCostFormat = "%3d";
-// The element picture of a skill (SkillScript::unk10) in pictures of 0x241C (-1: none).
-constexpr std::array<int, 12> kElementPictures = {8, 1, 2, 3, 4, -1, 5, 6, 7, -1, 9, 0xA};
-constexpr u16 kElementPictureFile = 0x241C;
+// The element picture of a skill by SkillScript::unk10 in pictures of 0x23AC (-1: none). The first entry is the
+// grey of the unusable rows, which the original keeps in the same stack slot.
+constexpr std::size_t kElementPictures = 10;
+constexpr std::array<i32, kElementPictures - 1> kElementPictureTail = {0, 1, 2, 3, 4, 5, 6, -1, -1};
+constexpr u16 kElementPictureFile = 0x23AC;
 
 // The layout.
 constexpr u32 kTextRed = 0x19;
@@ -119,16 +119,14 @@ constexpr u32 kRoleChosenBlue = 0xC;
 constexpr int kDim = -4;
 constexpr int kPanelStyle = 4;
 constexpr int kFrameBorder = static_cast<int>(0x80000008);
-constexpr int kTabsBoxX = 0xD0;
-constexpr int kTabsBoxY = 0x36;
-constexpr int kTabWidth = 0x3C;
-constexpr int kTabsBoxPad = 0x10;
-constexpr int kTabsBoxHeight = 0x1E;
-constexpr int kTabsShade = 0x10;
-constexpr int kTabsBlue = 0x6C;
-constexpr int kTabsFrameLeft = 0xD8;
-constexpr int kTabsFrameTop = 0x3E;
-constexpr int kTabsFrameBottom = 0x50;
+constexpr int kListBoxX = 0xD4;
+constexpr int kListBoxY = 0x6A;
+constexpr int kListBoxWidth = 0x18C;
+constexpr int kListBoxHeight = 0x134;
+constexpr int kListFrameLeft = 0xD8;
+constexpr int kListFrameTop = 0x70;
+constexpr int kListFrameRight = 0x258;
+constexpr int kListFrameBottom = 0x198;
 constexpr int kHelpBoxX = 0xD0;
 constexpr int kHelpBoxY = 0x1B5;
 constexpr int kHelpBoxWidth = 0x190;
@@ -137,8 +135,6 @@ constexpr int kHelpFrameLeft = 0xD8;
 constexpr int kHelpFrameTop = 0x1BD;
 constexpr int kHelpFrameRight = 0x258;
 constexpr int kHelpFrameBottom = 0x1D1;
-constexpr int kTabTextX = 0xE0;
-constexpr int kTabTextY = 0x3E;
 constexpr int kListX = 0xF0;
 constexpr int kListY = 0x72;
 constexpr int kColumnWidth = 0xC6;
@@ -153,6 +149,7 @@ constexpr int kHighlightX = 0xD3;
 constexpr int kHighlightY = 0x70;
 constexpr int kHighlightWidth = 0xC5;
 constexpr int kHighlightHeight = 0x18;
+constexpr int kHeadingHighlightX = 0x198;  // the second half of a heading's highlight
 constexpr int kHighlightRed = 0x14;
 constexpr int kHighlightGreen = 0xD;
 constexpr int kNoneX = 0xD8;
@@ -210,6 +207,8 @@ constexpr int kDescriptionBoxX = 0xD4;
 constexpr int kDescriptionBoxUp = 8;
 constexpr int kDescriptionBoxWidth = 0x188;
 constexpr int kDescriptionBoxBottom = 0x1E6;
+constexpr int kDescriptionShade = 0x10;
+constexpr int kDescriptionBlue = 0x6C;
 constexpr int kDescriptionTextX = 0xDC;
 constexpr int kDescriptionFrameRight = 0x254;
 constexpr int kDescriptionFrameBottom = 0x1D6;
@@ -217,10 +216,10 @@ constexpr int kDescriptionLines = 5;
 constexpr int kDescriptionWidth = 0x168;
 
 // The mouse areas.
-constexpr u32 kTownsLeft = 0x190;
-constexpr u32 kTownsRight = 0x226;
-constexpr u32 kTownsTop = 0xC4;
-constexpr u32 kTownsBottom = 0x18C;
+constexpr i32 kTownsLeft = 0x190;
+constexpr i32 kTownsRight = 0x226;
+constexpr i32 kTownsTop = 0xC4;
+constexpr i32 kTownsBottom = 0x18C;
 constexpr u32 kTownsBottomInside = 0x18B;
 constexpr u32 kTownsInnerRight = 0x222;
 constexpr u32 kTownsBarLeft = 0x228;
@@ -233,11 +232,6 @@ constexpr u32 kDescribeTop = 0x1D0;
 constexpr u32 kDescribeBottom = 0x1E0;
 constexpr u32 kDescribeLeft = 0x216;
 constexpr u32 kDescribeRight = 0x260;
-constexpr i32 kTabsTop = 0x3A;
-constexpr i32 kTabsBottom = 0x56;
-constexpr i32 kTabsLeft = 0xD4;
-constexpr i32 kTabsRight = 0x1F6;
-constexpr i32 kTabAreaWidth = 0x3A;
 constexpr i32 kRowsTop = 0x72;
 constexpr i32 kRowsBottom = 0x19E;
 constexpr i32 kRowsLeft = 0xD4;
@@ -253,14 +247,39 @@ constexpr i32 kRoleRowsTop = 0xD7;
 constexpr i32 kRoleRowsBottom = 0x13B;
 constexpr i32 kRoleRowsLeft = 0x158;
 constexpr i32 kRoleRowsRight = 0x1C6;
-constexpr i32 kFacesTop = 0xA;
-constexpr u32 kFacesBottom = 0x1D4;
-constexpr u32 kFacesLeft = 4;
-constexpr u32 kFacesRight = 0xBC;
-constexpr u32 kFaceHeight = 0x6E;
+constexpr u32 kTabsTop = 0x10;  // the role tabs above the page
+constexpr u32 kTabsBottom = 0x30;
+constexpr i32 kFirstTabLeft = 0x28;
+constexpr i32 kTabStep = 0x32;
+constexpr i32 kTabWidth = 0x20;
 
-// The cost of `skill` paid by `role` when it can be: true when every cost it has was met (the costs met are taken
-// even when another is not).
+// Whether `role` can pay `cost` (inline in 0x0044C7A0)
+bool CanPay(const RoleRecord& role, u16 cost)
+{
+    int costs = 0;
+    int met = 0;
+
+    if ((cost & kSpiritCost) != 0)
+    {
+        costs = 1;
+        met = role.spirit >= (cost & kSpiritMask) ? 1 : 0;
+    }
+
+    if ((cost & kStaminaCost) != 0)
+    {
+        ++costs;
+
+        if (role.stamina >= (cost & kStaminaMask))
+        {
+            ++met;
+        }
+    }
+
+    return met == costs && costs != 0;
+}
+
+// The costs of `cost` that `role` can pay taken from it (inline in 0x0044C7A0): true when every cost it has was met
+// (the costs met are taken even when another is not)
 bool PayCost(RoleRecord& role, u16 cost)
 {
     int costs = 0;
@@ -291,29 +310,13 @@ bool PayCost(RoleRecord& role, u16 cost)
     return paid == costs && costs != 0;
 }
 
-// Whether `role` can pay the cost (inline in 0x00443BD0).
-bool CanPay(const RoleRecord& role, u16 cost)
+// A filler node (0xB4 bytes in the original, of which only the id and count are set)
+std::unique_ptr<ItemNode> NewFiller()
 {
-    int costs = 0;
-    int met = 0;
-
-    if ((cost & kSpiritCost) != 0)
-    {
-        costs = 1;
-        met = role.spirit >= (cost & kSpiritMask) ? 1 : 0;
-    }
-
-    if ((cost & kStaminaCost) != 0)
-    {
-        ++costs;
-
-        if (role.stamina >= (cost & kStaminaMask))
-        {
-            ++met;
-        }
-    }
-
-    return met == costs && costs != 0;
+    auto filler = std::make_unique<ItemNode>();
+    filler->id = SkillsPage::FillerId;
+    filler->count = 1;
+    return filler;
 }
 
 u16 TableWord(const std::vector<u8>& data, std::size_t at)
@@ -323,12 +326,16 @@ u16 TableWord(const std::vector<u8>& data, std::size_t at)
 
 }  // namespace
 
-// swd32.exe 0x00442E40 (unmatched in swd3e): the skills page opened (on the first role when no tab is raised): the
-// first tab's list, the
-// roles counted, the first skill described
+// swd3e.exe 0x0044B9C0: the skills page opened (on the first tab when none is raised): the cell map allocated once,
+// the list of the tab's role made, its target's tabs counted, the cell chosen described
 void Menu::SkillsEnter()
 {
     SkillsPage& page = this->skills;
+
+    if (page.cells.empty())
+    {
+        page.cells.assign(SkillsPage::CellBytes, 0);
+    }
 
     if (this->roleTab == Menu::NoTab)
     {
@@ -338,38 +345,29 @@ void Menu::SkillsEnter()
     this->mode = static_cast<u16>(Menu::FirstPageMode + 2 * Menu::PageModeStep);
     page.target = 0;
     page.stage = kSkillList;
-    page.tab = 0;
+    page.unk50BAF4 = 0;
     this->SkillsFillList();
     this->SkillsCountTabs();
-    page.roles = 0;
-
-    for (const MenuTab& tab : this->tabs)
-    {
-        if (tab.role != Menu::NoRole)
-        {
-            ++page.roles;
-        }
-    }
-
     this->SkillsDescribe();
     page.buttonOffset = 0;
     page.descriptionSlide = 0;
     page.descriptionTop = kDescriptionHidden;
     page.skill = SkillScript{};
-    page.shownTabs = this->SkillsShownTabs(page.target);
     page.scrollArrows = 0;
-    this->background.action = kPageBackground;
 }
 
-// swd32.exe 0x00442F10 (unmatched in swd3e): the skills page left: the list's skills back with the role
+// swd3e.exe 0x0044BA70: the skills page left: the list's skills back with the role, the cell map freed
 void Menu::SkillsLeave()
 {
+    SkillsPage& page = this->skills;
     this->SkillsReturn();
-    this->skills.stage = 0;
+    page.stage = 0;
+    page.skill = SkillScript{};
     this->background.action = kLeaveBackground;
+    page.cells.clear();
 }
 
-// The description of the skill chosen (inline in the skills page).
+// The description of the cell chosen (0x00441200 of the node, inline in the skills page)
 void Menu::SkillsDescribe()
 {
     const SkillsPage& page = this->skills;
@@ -378,20 +376,41 @@ void Menu::SkillsDescribe()
         chosen != nullptr ? ObjectDescription(this->game.databases.mapsData, chosen->id) : std::string();
 }
 
-// swd3e.exe 0x0044D940: the skills of `source` of the tab's kind (or of kind 0) moved into the page's list in the order
-// of their ids
-void Menu::SkillsTake(ItemLink& source, int tab)
+// The kind of cell `cell` (SkillsPage::Cell). The original reads the map from 0x80 bytes in without a bound; outside
+// the map it is taken as no cell.
+int Menu::SkillsCell(int cell) const
+{
+    const std::vector<u8>& cells = this->skills.cells;
+    const i32 at = static_cast<i32>(SkillsPage::CellBase) + cell;
+    return at >= 0 && static_cast<std::size_t>(at) < cells.size() ? cells[static_cast<std::size_t>(at)]
+                                                                  : SkillsPage::NoCell;
+}
+
+// The skill list of the tab's role (0x004C2B68 by party role, inline in the skills page)
+ItemLink& Menu::SkillsRoleList()
+{
+    return this->game.party.skills[static_cast<std::size_t>(this->TabRole())];
+}
+
+// The record of the tab's role (inline in the skills page)
+RoleRecord& Menu::SkillsRole()
+{
+    return this->game.party.roles[static_cast<std::size_t>(this->TabRole())];
+}
+
+// swd3e.exe 0x0044D940: the skills of `source` of kinds 0x11 and 0x14 moved into the page's list in the order of their
+// ids
+void Menu::SkillsTake(ItemLink& source)
 {
     SkillsPage& page = this->skills;
     page.list.reset();
-    const u16 kind = kTabKinds[static_cast<std::size_t>(std::clamp(tab, 0, static_cast<int>(kTabKinds.size()) - 1))];
     ItemLink* link = &source;
 
     while (*link != nullptr)
     {
-        const u16 skillKind = (*link)->record.data.category;
+        const u16 kind = (*link)->record.data.category;
 
-        if (skillKind != kind && skillKind != 0)
+        if (kind != kSkillKindA && kind != kSkillKindB)
         {
             link = &(*link)->next;
             continue;
@@ -403,7 +422,7 @@ void Menu::SkillsTake(ItemLink& source, int tab)
     }
 }
 
-// swd3e.exe 0x0044D9D0: the rows shown from the first one shown (at most 24)
+// swd3e.exe 0x0044D9D0: the cells shown from the first one shown (at most 24)
 void Menu::SkillsCountShown()
 {
     SkillsPage& page = this->skills;
@@ -415,17 +434,17 @@ void Menu::SkillsCountShown()
     }
 }
 
-// swd32.exe 0x00444E80 (unmatched in swd3e): the list of the tab made from the role's skills (the empty entry when
-// none)
+// swd3e.exe 0x0044DA00: the list of the tab's role made (the empty entry when it has none) and laid out in cells: a
+// heading starts in the first column (a filler before it otherwise) and has a filler after it; the first skill cell of
+// the first column chosen
 void Menu::SkillsFillList()
 {
-    Game& owner = this->game;
     SkillsPage& page = this->skills;
-    std::unique_ptr<ItemNode>& head = owner.party.skills[std::min<std::size_t>(this->roleTab, Party::Roles - 1)];
+    ItemLink& head = this->SkillsRoleList();
 
     if (head != nullptr)
     {
-        this->SkillsTake(head->next, page.tab);
+        this->SkillsTake(head->next);
     }
 
     if (page.list == nullptr)
@@ -433,35 +452,99 @@ void Menu::SkillsFillList()
         page.list = NewEmptyItem();
     }
 
+    page.cells.assign(SkillsPage::CellBytes, SkillsPage::NoCell);
+    page.hasSkills = 0;
+    int cell = 0;
+    ItemLink* link = &page.list;
+
+    // The original writes past its map for lists of more cells; the cells past it are not kept here.
+    auto mark = [&page](int at, SkillsPage::Cell kind)
+    {
+        const std::size_t index = SkillsPage::CellBase + static_cast<std::size_t>(at);
+
+        if (index < page.cells.size())
+        {
+            page.cells[index] = kind;
+        }
+    };
+
+    for (ItemNode* node = page.list.get(); node != nullptr; node = node->next.get())
+    {
+        if ((node->record.data.kind & kHeadingKind) == 0)
+        {
+            if (node->id != SkillsPage::FillerId)
+            {
+                mark(cell, SkillsPage::SkillCell);
+                page.hasSkills = 1;
+            }
+            else
+            {
+                mark(cell, SkillsPage::FillerCell);
+            }
+        }
+        else
+        {
+            if ((cell & kOddCell) != 0)
+            {
+                std::unique_ptr<ItemNode> before = NewFiller();
+                before->next = std::move(*link);
+                *link = std::move(before);
+                mark(cell, SkillsPage::FillerCell);
+                link = &(*link)->next;
+                ++cell;
+            }
+
+            mark(cell, SkillsPage::HeadingCell);
+            std::unique_ptr<ItemNode> after = NewFiller();
+            after->next = std::move(node->next);
+            node->next = std::move(after);
+        }
+
+        link = &(*link)->next;
+        ++cell;
+    }
+
+    page.column = 0;
     page.count = CountItems(page.list);
     page.top = 0;
     page.row = 0;
     page.firstShown = page.list.get();
     this->SkillsCountShown();
+
+    if (page.hasSkills != 0)
+    {
+        while (this->SkillsCell(page.top + page.row) != SkillsPage::SkillCell &&
+               static_cast<std::size_t>(page.row) < SkillsPage::CellBytes)
+        {
+            page.row += kColumns;
+        }
+    }
 }
 
-// swd3e.exe 0x00479820: the list's skills back after the role's head one by one (their order turns around); the empty
-// entry freed
+// swd3e.exe 0x0044DB90: the list's skills back at the front of the role's list one by one (their order turns around);
+// the empty entry and the fillers freed
 void Menu::SkillsReturn()
 {
-    Game& owner = this->game;
     SkillsPage& page = this->skills;
-    std::unique_ptr<ItemNode>& head = owner.party.skills[std::min<std::size_t>(this->roleTab, Party::Roles - 1)];
+    ItemLink& head = this->SkillsRoleList();
 
     while (page.list != nullptr)
     {
         std::unique_ptr<ItemNode> node = std::move(page.list);
         page.list = std::move(node->next);
 
-        if (node->id != ItemNode::Empty && head != nullptr)
+        if (node->id == ItemNode::Empty || node->id == SkillsPage::FillerId || head == nullptr)
         {
-            node->next = std::move(head->next);
-            head->next = std::move(node);
+            continue;
         }
+
+        node->next = std::move(head->next);
+        head->next = std::move(node);
     }
 }
 
-// swd3e.exe 0x0044DC10: the tabs of the target role: three, and one for each of its two extra flags
+// swd3e.exe 0x0044DC10: three, and one for each of the two extra flags of the target slot (SkillsPage::tabs, never
+// read)
 void Menu::SkillsCountTabs()
 {
     SkillsPage& page = this->skills;
@@ -478,47 +561,8 @@ void Menu::SkillsCountTabs()
     }
 }
 
-// The list moved (inline in the skills page's keys): the first row shown again, the skill described.
-void Menu::SkillsMoved(u16 arrows, bool sound)
-{
-    Game& owner = this->game;
-    SkillsPage& page = this->skills;
-    SkipItems(page.top, page.list, page.firstShown);
-    CountShown(page.firstShown, page.shown, kRows);
-    this->SkillsDescribe();
-
-    if (sound)
-    {
-        page.scrollArrows = arrows;
-        owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
-    }
-}
-
-// The next party role among the tabs (inline in the skills page's keys on the role choice).
-int Menu::SkillsNextRole(int role, int step) const
-{
-    int next = role;
-
-    do
-    {
-        next += step;
-
-        if (next >= Party::Roles)
-        {
-            next = 0;
-        }
-
-        if (next < 0)
-        {
-            next = Party::Roles - 1;
-        }
-    } while (this->tabs[static_cast<std::size_t>(next)].role == Menu::NoRole);
-
-    return next;
-}
-
-// swd3e.exe 0x0044C090: down: on the list the row below (two columns), scrolling a line at the bottom; on the roles the
-// next party role; on the towns the next town
+// swd3e.exe 0x0044BF50: down: on the list the cell two on (a line down, scrolling a line at the bottom), in the column
+// left or right chose when that cell is a skill; on the roles the next one; on the towns the next town
 void Menu::SkillsDown()
 {
     Game& owner = this->game;
@@ -526,26 +570,32 @@ void Menu::SkillsDown()
 
     if (page.stage == kSkillList)
     {
-        page.row += kColumns;
-
-        if (page.row >= page.shown)
+        if (page.hasSkills == 0)
         {
-            if (page.shown + page.top < page.count)
+            return;
+        }
+
+        int cell = page.row + kColumns;
+
+        if (cell >= page.shown)
+        {
+            if (page.top + page.shown < page.count)
             {
                 page.top += kColumns;
             }
 
-            page.row -= kColumns;
+            cell = page.row;
+        }
+
+        page.row = cell & ~kOddCell;
+
+        if (this->SkillsCell((cell | kOddCell) + page.top) == SkillsPage::SkillCell && page.column != 0)
+        {
+            page.row = cell | kOddCell;
         }
 
         SkipItems(page.top, page.list, page.firstShown);
         CountShown(page.firstShown, page.shown, kRows);
-
-        if (page.row >= page.shown)
-        {
-            page.row -= kColumns;
-        }
-
         this->SkillsDescribe();
         page.scrollArrows = kScrollDown;
         owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
@@ -554,18 +604,23 @@ void Menu::SkillsDown()
 
     if (page.stage == kChooseRole)
     {
-        page.target = this->SkillsNextRole(page.target, 1);
+        if (++page.target >= this->VisibleCount())
+        {
+            page.target = this->VisibleCount() - 1;
+        }
+
         return;
     }
 
     if (page.stage == kChooseTown)
     {
         ListDown(static_cast<i32>(this->towns.size()), this->townTop, this->townRow, this->townShown);
-        page.scrollArrows = static_cast<u16>(page.scrollArrows | kTownScrollDown);
+        page.scrollArrows |= kTownScrollDown;
     }
 }
 
-// swd3e.exe 0x0044C350: up: on the list the row above, scrolling a line at the top; on the roles the role before
+// swd3e.exe 0x0044C090: up: on the list the cell two back (a line up, scrolling a line at the top), in the column left
+// or right chose when that cell is a skill; on the roles the one before; on the towns the town before
 void Menu::SkillsUp()
 {
     Game& owner = this->game;
@@ -573,17 +628,28 @@ void Menu::SkillsUp()
 
     if (page.stage == kSkillList)
     {
-        const i32 row = page.row - kColumns;
-        page.row = row;
-
-        if (page.row < 0)
+        if (page.hasSkills == 0)
         {
-            page.row = row + kColumns;
+            return;
+        }
+
+        int cell = page.row - kColumns;
+
+        if (cell < 0)
+        {
+            cell = page.row;
 
             if (page.top > 0)
             {
                 page.top -= kColumns;
             }
+        }
+
+        page.row = cell & ~kOddCell;
+
+        if (this->SkillsCell((cell | kOddCell) + page.top) == SkillsPage::SkillCell && page.column != 0)
+        {
+            page.row = cell | kOddCell;
         }
 
         SkipItems(page.top, page.list, page.firstShown);
@@ -596,19 +662,24 @@ void Menu::SkillsUp()
 
     if (page.stage == kChooseRole)
     {
-        page.target = this->SkillsNextRole(page.target, -1);
+        if (--page.target < 0)
+        {
+            page.target = 0;
+        }
+
         return;
     }
 
     if (page.stage == kChooseTown)
     {
         ListUp(this->townTop, this->townRow);
-        page.scrollArrows = static_cast<u16>(page.scrollArrows | kTownScrollUp);
+        page.scrollArrows |= kTownScrollUp;
     }
 }
 
-// swd3e.exe 0x0044C1B0: Page Down: on the list to the last row (in the column), from there a page of 24 on; on the
-// roles the last party role
+// swd3e.exe 0x0044C1B0: Page Down: on the list to the last line shown (first column; quietly), from there a page of
+// 24 cells on (the last line when there is none); on the roles the slot before the last (a loop kept from swd32 steps
+// back over tabs without a role: -1 with one role); on the towns a page of 8 on
 void Menu::SkillsPageDown()
 {
     Game& owner = this->game;
@@ -618,37 +689,42 @@ void Menu::SkillsPageDown()
     {
         if (page.stage == kChooseRole)
         {
-            int role = Party::Roles;
+            // Past the first tab the original reads the word before the tabs (0x004BE5B8, never written: 0).
+            int slot = this->VisibleCount() - 1;
 
             do
             {
-                --role;
-            } while (this->tabs[static_cast<std::size_t>(role)].role == Menu::NoRole);
+                --slot;
+            } while (slot >= 0 && this->tabs[static_cast<std::size_t>(slot)].role == Menu::NoRole);
 
-            page.target = role;
+            page.target = slot;
         }
         else if (page.stage == kChooseTown)
         {
-            i32 shown = this->townShown;
-            ListPageDown(static_cast<i32>(this->towns.size()), this->townTop, this->townRow, shown, kTownRows);
-            this->townShown = shown;
-            page.scrollArrows = static_cast<u16>(page.scrollArrows | kTownScrollDown);
+            ListPageDown(
+                static_cast<i32>(this->towns.size()),
+                this->townTop,
+                this->townRow,
+                this->townShown,
+                kTownRows
+            );
+            page.scrollArrows |= kTownScrollDown;
         }
 
         return;
     }
 
-    const i32 lastPair = page.shown - ((page.shown & 1) == 0 ? 1 : 0);
-    const i32 last = lastPair - 1;
+    page.row &= ~kOddCell;
+    const int last = page.shown - ((page.shown & kOddCell) == 0 ? 1 : 0);
 
-    if (page.row < last)
+    if (page.row < last - 1)
     {
-        const i32 column = page.row & 1;
-        page.row = column + lastPair - 1;
+        const int cell = (page.row & kOddCell) + last - 1;
+        page.row = cell;
 
-        if (page.row >= page.shown)
+        if (cell >= page.shown)
         {
-            page.row = column + lastPair - 3;
+            page.row = cell - kColumns;
         }
 
         return;
@@ -659,7 +735,7 @@ void Menu::SkillsPageDown()
     if (page.top >= page.count)
     {
         page.top -= kRows;
-        page.row = last;
+        page.row = last - 1;
     }
     else
     {
@@ -668,7 +744,7 @@ void Menu::SkillsPageDown()
 
         if (page.row >= page.shown)
         {
-            page.row = (page.row & 1) - ((page.shown & 1) == 0 ? 1 : 0) + page.shown - 1;
+            page.row = (page.row & kOddCell) - ((page.shown & kOddCell) == 0 ? 1 : 0) + page.shown - 1;
 
             if (page.row >= page.shown)
             {
@@ -679,14 +755,21 @@ void Menu::SkillsPageDown()
         }
     }
 
+    SkipItems(page.top, page.list, page.firstShown);
+    CountShown(page.firstShown, page.shown, kRows);
+
+    if (page.row >= page.shown)
+    {
+        page.row -= kColumns;
+    }
+
     this->SkillsDescribe();
-    owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
     page.scrollArrows = kScrollDown;
+    owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
-// swd32.exe 0x004437C0 (unmatched in swd3e): Page Up: on the list to the first line, from there a page of 24 back; on
-// the roles the first
-// party role
+// swd3e.exe 0x0044C350: Page Up: on the list to the first line shown (quietly), from there a page of 24 cells back
+// (the column kept); on the roles the first; on the towns a page of 8 back
 void Menu::SkillsPageUp()
 {
     Game& owner = this->game;
@@ -694,9 +777,11 @@ void Menu::SkillsPageUp()
 
     if (page.stage == kSkillList)
     {
+        page.row &= ~kOddCell;
+
         if (page.row > 1)
         {
-            page.row &= 1;
+            page.row &= kOddCell;
             return;
         }
 
@@ -706,11 +791,11 @@ void Menu::SkillsPageUp()
         {
             SkipItems(page.top, page.list, page.firstShown);
             this->SkillsCountShown();
-            page.row &= 1;
+            page.row &= kOddCell;
         }
         else
         {
-            page.row &= 1;
+            page.row &= kOddCell;
             page.top = 0;
             SkipItems(0, page.list, page.firstShown);
             this->SkillsCountShown();
@@ -719,47 +804,50 @@ void Menu::SkillsPageUp()
         this->SkillsDescribe();
         page.scrollArrows = kScrollUp;
         owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
+        SkipItems(page.top, page.list, page.firstShown);
+        CountShown(page.firstShown, page.shown, kRows);
+        this->SkillsDescribe();
         return;
     }
 
     if (page.stage == kChooseRole)
     {
-        int role = 0;
-
-        while (this->tabs[static_cast<std::size_t>(role)].role == Menu::NoRole)
-        {
-            ++role;
-        }
-
-        page.target = role;
+        page.target = 0;
         return;
     }
 
     if (page.stage == kChooseTown)
     {
         ListPageUp(this->townTop, this->townRow, kTownRows);
-        page.scrollArrows = static_cast<u16>(page.scrollArrows | kTownScrollUp);
+        page.scrollArrows |= kTownScrollUp;
     }
 }
 
-// The other column of the list (inline in 0x004438E0 and 0x004439A0).
+// The other column of the line (the last cell shown at most; the first column unless that cell is a skill), which
+// down and up then keep (inline in 0x0044C4A0 and 0x0044C590)
 void Menu::SkillsOtherColumn(u16 arrows)
 {
     Game& owner = this->game;
     SkillsPage& page = this->skills;
-    page.row += (page.row & 1) != 1 ? 1 : -1;
+    page.row += (page.row & kOddCell) != kOddCell ? 1 : -1;
 
     if (page.row >= page.shown)
     {
         page.row = page.shown - 1;
     }
 
+    if (this->SkillsCell(page.top + page.row) != SkillsPage::SkillCell)
+    {
+        page.row = static_cast<i32>(static_cast<u32>(page.row) & kEvenCells);
+    }
+
+    page.column = page.row & kOddCell;
     this->SkillsDescribe();
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
     page.scrollArrows = arrows;
 }
 
-// swd3e.exe 0x0044C4A0: left: the other column; on the roles the first party role; on the towns the town before
+// swd3e.exe 0x0044C4A0: left: on the list the other column; on the roles the one before; on the towns the town before
 void Menu::SkillsLeft()
 {
     SkillsPage& page = this->skills;
@@ -767,26 +855,27 @@ void Menu::SkillsLeft()
     if (page.stage == kSkillList)
     {
         this->SkillsOtherColumn(kScrollUp);
+        return;
     }
-    else if (page.stage == kChooseRole)
-    {
-        int role = 0;
 
-        while (this->tabs[static_cast<std::size_t>(role)].role == Menu::NoRole)
+    if (page.stage == kChooseRole)
+    {
+        if (--page.target < 0)
         {
-            ++role;
+            page.target = 0;
         }
 
-        page.target = role;
+        return;
     }
-    else if (page.stage == kChooseTown)
+
+    if (page.stage == kChooseTown)
     {
         ListUp(this->townTop, this->townRow);
-        page.scrollArrows = static_cast<u16>(page.scrollArrows | kTownScrollUp);
+        page.scrollArrows |= kTownScrollUp;
     }
 }
 
-// swd3e.exe 0x0044C590: right: the other column; on the roles the last party role; on the towns the next town
+// swd3e.exe 0x0044C590: right: on the list the other column; on the roles the next one; on the towns the next town
 void Menu::SkillsRight()
 {
     SkillsPage& page = this->skills;
@@ -794,26 +883,27 @@ void Menu::SkillsRight()
     if (page.stage == kSkillList)
     {
         this->SkillsOtherColumn(kScrollDown);
+        return;
     }
-    else if (page.stage == kChooseRole)
+
+    if (page.stage == kChooseRole)
     {
-        int role = Party::Roles;
-
-        do
+        if (++page.target >= this->VisibleCount())
         {
-            --role;
-        } while (this->tabs[static_cast<std::size_t>(role)].role == Menu::NoRole);
+            page.target = this->VisibleCount() - 1;
+        }
 
-        page.target = role;
+        return;
     }
-    else if (page.stage == kChooseTown)
+
+    if (page.stage == kChooseTown)
     {
         ListDown(static_cast<i32>(this->towns.size()), this->townTop, this->townRow, this->townShown);
-        page.scrollArrows = static_cast<u16>(page.scrollArrows | kTownScrollDown);
+        page.scrollArrows |= kTownScrollDown;
     }
 }
 
-// swd3e.exe 0x0044C680: Shift on the list: the next party role
+// swd3e.exe 0x0044C680: Shift on the list: the tab after SkillsPage::roleCycle (which it keeps), its list made
 void Menu::SkillsShift()
 {
     Game& owner = this->game;
@@ -824,55 +914,49 @@ void Menu::SkillsShift()
         return;
     }
 
+    page.roleCycle = (page.roleCycle + 1) % this->VisibleCount();
     this->SkillsReturn();
-    this->roleTab = static_cast<u16>(this->SkillsNextRole(this->roleTab, 1) & kRoleMask);
+    this->roleTab = static_cast<u16>(page.roleCycle);
+
+    if (static_cast<i16>(this->roleTab) >= this->VisibleCount())
+    {
+        this->roleTab = 0;
+    }
+
     this->SkillsCountTabs();
     this->SkillsFillList();
     FitListRow(page.count, page.top, page.row, page.shown);
     SkipItems(page.top, page.list, page.firstShown);
     CountShown(page.firstShown, page.shown, kRows);
     this->SkillsDescribe();
-    page.shownTabs = this->SkillsShownTabs(page.target);
     owner.audio.PlaySound(kRoleSound, owner.config.soundVolume);
 }
 
-// swd3e.exe 0x0044C750: End on the list: the next of the three tabs
+// swd3e.exe 0x0044C750: End on the list: the list made again
 void Menu::SkillsEnd()
 {
     Game& owner = this->game;
-    SkillsPage& page = this->skills;
 
-    if (page.stage != kSkillList)
+    if (this->skills.stage != kSkillList)
     {
         return;
     }
 
     this->SkillsReturn();
-
-    if (++page.tab == kShownTabs)
-    {
-        page.tab = 0;
-    }
-
     this->SkillsFillList();
     this->SkillsDescribe();
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
-// swd3e.exe 0x0044C7A0: Space or Enter. On the list a skill usable here whose cost the role can pay is used: the exit
-// warp (0x619) leaves the dungeon, the town warp (0x61E) lists the towns, a skill for the whole party is paid and works
-// on every party role, another asks for its role; a refused one sounds. On the roles the role chosen gets it if it is
-// paid; on the towns the party warps there; the description and the messages close.
+// swd3e.exe 0x0044C7A0: Space or Enter. On the list a skill usable here (the role not defeated) whose cost the role
+// can pay is used: the exit warp warps out at once (its spirit paid), the town warp opens the towns, one working on
+// every party role works on each (its costs paid), another asks for a role (Menu::code 3); on the roles the costs are
+// paid and the skill works on the role chosen; the description closes; on the towns the party warps (the spirit
+// paid); a refusal closes.
 void Menu::SkillsSelect()
 {
     Game& owner = this->game;
     SkillsPage& page = this->skills;
-    RoleRecord& role = owner.party.roles[std::min<std::size_t>(this->roleTab, Party::Roles - 1)];
-
-    auto refuse = [&owner]
-    {
-        owner.audio.PlaySound(kRefusedSound, owner.config.soundVolume);
-    };
 
     switch (page.stage)
     {
@@ -885,12 +969,13 @@ void Menu::SkillsSelect()
                 return;
             }
 
-            const ObjectData& data = chosen->record.data;
+            RoleRecord& role = this->SkillsRole();
+            const u16 cost = chosen->record.data.costBits;
 
-            if (static_cast<i16>(role.condition) < 0 || (data.usableBy & kUseMask) < kFieldUse ||
-                !CanPay(role, data.costBits))
+            if ((role.condition & RoleRecord::Defeated) != 0 || (chosen->record.data.usableBy & kUseMask) < kFieldUse ||
+                !CanPay(role, cost))
             {
-                refuse();
+                owner.audio.PlaySound(kRefusedSound, owner.config.soundVolume);
                 return;
             }
 
@@ -902,16 +987,16 @@ void Menu::SkillsSelect()
                 if (warp == 0)
                 {
                     page.stage = kNoExitWarp;
-                    refuse();
+                    owner.audio.PlaySound(kRefusedSound, owner.config.soundVolume);
                     return;
                 }
 
+                role.spirit = static_cast<i16>(role.spirit - (cost & kSpiritMask));
                 const std::vector<u8>& maps = owner.databases.mapsData;
-                role.spirit = static_cast<i16>(role.spirit - (data.costBits & kSpiritMask));
                 this->Warp(
-                    TableWord(maps, warp),
-                    TableWord(maps, warp + sizeof(u16)),
-                    TableWord(maps, warp + 2 * sizeof(u16)),
+                    MapsWord(maps, warp),
+                    MapsWord(maps, warp + sizeof(u16)),
+                    MapsWord(maps, warp + 2 * sizeof(u16)),
                     kWarpEvent
                 );
                 this->SkillsLeave();
@@ -924,21 +1009,27 @@ void Menu::SkillsSelect()
                 if (owner.state.GameFlag(kTownWarpBlocked) || owner.scene.townWarpAllowed != 1)
                 {
                     page.stage = kNoTownWarp;
-                    refuse();
+                    owner.audio.PlaySound(kRefusedSound, owner.config.soundVolume);
                     return;
                 }
 
                 page.stage = kChooseTown;
                 this->ListTowns();
+                this->townShown = kTownRows;
                 this->townTop = 0;
-                this->townShown = std::min<i32>(kTownRows, static_cast<i32>(this->towns.size()));
                 this->townRow = 0;
+
+                if (static_cast<i32>(this->towns.size()) < kTownRows)
+                {
+                    this->townShown = static_cast<i32>(this->towns.size());
+                }
+
                 return;
             }
 
             page.skill = SkillScript{};
 
-            if (!owner.database.LoadSkill(page.skill, data.skillScript))
+            if (!owner.database.LoadSkill(page.skill, chosen->record.data.skillScript))
             {
                 return;
             }
@@ -950,14 +1041,27 @@ void Menu::SkillsSelect()
                 return;
             }
 
-            PayCost(role, data.costBits);
+            if ((cost & kSpiritCost) != 0 && role.spirit >= (cost & kSpiritMask))
+            {
+                role.spirit = static_cast<i16>(role.spirit - (cost & kSpiritMask));
+            }
+
+            if ((cost & kStaminaCost) != 0 && role.stamina >= (cost & kStaminaMask))
+            {
+                role.stamina = static_cast<i16>(role.stamina - (cost & kStaminaMask));
+            }
+
             owner.audio.PlaySound(kUsedSound, owner.config.soundVolume);
 
             for (int member = 0; member < Party::Roles; ++member)
             {
                 if (owner.state.GameFlag(Party::FirstRoleFlag + member))
                 {
-                    ApplyObject(owner.party.roles[static_cast<std::size_t>(member)], data, owner.database);
+                    ApplyObject(
+                        owner.party.roles[static_cast<std::size_t>(member)],
+                        chosen->record.data,
+                        owner.database
+                    );
                 }
             }
 
@@ -968,24 +1072,19 @@ void Menu::SkillsSelect()
         {
             const ItemNode* chosen = ItemAfter(page.top + page.row, page.list);
 
-            if (chosen == nullptr)
+            if (chosen == nullptr || !PayCost(this->SkillsRole(), chosen->record.data.costBits))
             {
+                owner.audio.PlaySound(kRefusedSound, owner.config.soundVolume);
                 return;
             }
 
-            if (!PayCost(role, chosen->record.data.costBits))
-            {
-                refuse();
-                return;
-            }
+            // A target of -1 (Page Down with one role) reads the flag before the party's; its record is not
+            // written here.
+            const int target = this->VisibleRole(page.target);
 
-            if (owner.state.GameFlag(page.target + Party::FirstRoleFlag))
+            if (owner.state.GameFlag(target + Party::FirstRoleFlag) && target >= 0)
             {
-                ApplyObject(
-                    owner.party.roles[static_cast<std::size_t>(page.target)],
-                    chosen->record.data,
-                    owner.database
-                );
+                ApplyObject(owner.party.roles[static_cast<std::size_t>(target)], chosen->record.data, owner.database);
                 owner.audio.PlaySound(kUsedSound, owner.config.soundVolume);
             }
 
@@ -999,18 +1098,21 @@ void Menu::SkillsSelect()
 
         case kChooseTown:
         {
-            const ItemNode* chosen = ItemAfter(page.top + page.row, page.list);
-            role.spirit =
-                static_cast<i16>(role.spirit - ((chosen != nullptr ? chosen->record.data.costBits : 0) & kSpiritMask));
-            const std::size_t index = static_cast<std::size_t>(this->townTop + this->townRow);
+            if (const ItemNode* chosen = ItemAfter(page.top + page.row, page.list); chosen != nullptr)
+            {
+                RoleRecord& role = this->SkillsRole();
+                role.spirit = static_cast<i16>(role.spirit - (chosen->record.data.costBits & kSpiritMask));
+            }
+
+            const auto index = static_cast<std::size_t>(this->townTop + this->townRow);
 
             if (index < this->towns.size())
             {
-                const MenuTown& town = this->towns[index];
+                const MenuTown town = this->towns[index];
                 this->Warp(town.map, town.x, town.y, kWarpEvent);
             }
 
-            this->towns.clear();
+            this->ItemsFreeTowns();
             this->SkillsLeave();
             owner.menuState = Game::NoMenu;
             return;
@@ -1026,8 +1128,8 @@ void Menu::SkillsSelect()
     }
 }
 
-// swd3e.exe 0x0044CDC0: Escape: from the list the page closes; from the roles back to the list; the description, the
-// towns and the messages close
+// swd3e.exe 0x0044CDC0: Escape: from the list the page closes (the menu too when no page is left); from the roles back
+// to the list (Menu::code one less); the description closes; the towns close; a refusal closes
 void Menu::SkillsCancel()
 {
     Game& owner = this->game;
@@ -1036,7 +1138,7 @@ void Menu::SkillsCancel()
     switch (page.stage)
     {
         case kSkillList:
-            if (--this->code == 0)
+            if (static_cast<i16>(--this->code) <= 0)
             {
                 owner.menuState = Game::NoMenu;
             }
@@ -1046,9 +1148,9 @@ void Menu::SkillsCancel()
             return;
 
         case kChooseRole:
-            --this->code;
             page.stage = kSkillList;
             page.target = 0;
+            --this->code;
             return;
 
         case kDescribing:
@@ -1057,7 +1159,7 @@ void Menu::SkillsCancel()
             return;
 
         case kChooseTown:
-            this->towns.clear();
+            this->ItemsFreeTowns();
             page.stage = kSkillList;
             return;
 
@@ -1071,158 +1173,172 @@ void Menu::SkillsCancel()
     }
 }
 
-// swd3e.exe 0x0044BAC0: the mouse on the skills page: the messages close on a click or a right click; on the town list
-// opened as a subpage a click chooses a town (on the chosen one: warps). On the list the description button presses
-// the description key, a click on a tab chooses it, on a skill chooses it (a double click on the chosen one uses it);
-// a held left button on the scroll bar scrolls, on the towns their bar or a town (a double click on the chosen one
-// warps). On the roles a click chooses one (on the chosen one uses the skill); a click on a face changes the role; a
-// right click goes back.
+// swd3e.exe 0x0044BAC0: the mouse on the skills page: a refusal closes on a click; the towns opened as a subpage
+// (Menu::code 0xF) choose on a click; the description button presses the description key; on the list a click
+// chooses a cell (a double click on the chosen one uses it); the held left button on the list's or the towns' scroll
+// bar; a click on a town chooses it (on the chosen one, a double click warps); on the roles a click chooses (on the
+// chosen one, uses); a click on a role tab steps to it; a right click goes back
 void Menu::SkillsFrame()
 {
     Game& owner = this->game;
     SkillsPage& page = this->skills;
-    const u32 clicks = this->clicks;
-    const i32 x = owner.state.pointerX;
-    const i32 y = owner.state.pointerY;
-    const auto ux = static_cast<u32>(x);
-    const auto uy = static_cast<u32>(y);
+    u32 clicks = this->clicks;
+    i32 stage = page.stage;
     page.buttonOffset = 0;
 
-    if ((clicks & kLeftOrRight) != 0 && (page.stage == kNoTownWarp || page.stage == kNoExitWarp))
+    if ((clicks & kLeftOrRight) != 0 && (stage == kNoTownWarp || stage == kNoExitWarp))
     {
         this->SkillsSelect();
         return;
     }
 
-    if (this->code == kTownCode && x < static_cast<i32>(kTownsRight) && x > static_cast<i32>(kTownsLeft) &&
-        y < static_cast<i32>(kTownsBottom) && y > static_cast<i32>(kTownsTop) && (clicks & kLeftClicks) != 0)
+    i32 x = owner.state.pointerX;
+    i32 y = owner.state.pointerY;
+
+    if (this->code == kTownCode && x < kTownsRight && x > kTownsLeft && y < kTownsBottom && y > kTownsTop &&
+        (clicks & kLeftClicks) != 0)
     {
-        const auto row = static_cast<i32>((uy - kTownsTop) / static_cast<u32>(kRowHeight));
+        const auto row = static_cast<i32>(static_cast<u32>(y - kTownsTop) / kRowHeight);
 
         if (this->townRow == row)
         {
             this->SkillsSelect();
+            return;
+        }
+
+        this->townRow = row;
+        return;
+    }
+
+    bool cells = true;  // LABEL_20 in the original
+
+    if (stage == kSkillList && static_cast<u32>(y) < kDescribeBottom && static_cast<u32>(y) > kDescribeTop &&
+        static_cast<u32>(x) < kDescribeRight && static_cast<u32>(x) > kDescribeLeft)
+    {
+        page.buttonOffset = kPressedOffset;
+
+        if ((clicks & kLeftClicks) != 0)
+        {
+            owner.input.PressKey(owner.config.keys[static_cast<std::size_t>(Button::F1)]);
+            clicks = this->clicks;
+            stage = page.stage;
+            x = owner.state.pointerX;
+            y = owner.state.pointerY;
         }
         else
         {
-            this->townRow = row;
+            cells = false;
+        }
+    }
+
+    if (cells && (clicks & kLeftClicks) != 0 && stage == kSkillList && y < kRowsBottom && y > kRowsTop &&
+        x < kRowsRight && x > kRowsLeft)
+    {
+        const int cell = (x - kRowsLeft) / kRowsColumnWidth + kColumns * ((y - kRowsTop) / kRowHeight);
+
+        if (cell < page.shown)
+        {
+            if (cell == page.row)
+            {
+                if ((clicks & kDoubleClick) != 0)
+                {
+                    this->SkillsSelect();
+                }
+            }
+            else
+            {
+                page.row = cell;
+
+                if (this->SkillsCell(page.top + cell) != SkillsPage::SkillCell)
+                {
+                    page.row = cell & ~kOddCell;
+                }
+
+                this->SkillsDescribe();
+                owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
+            }
         }
 
         return;
     }
 
-    if (page.stage == kSkillList)
-    {
-        bool rest = false;
-
-        if (uy < kDescribeBottom && uy > kDescribeTop && ux < kDescribeRight && ux > kDescribeLeft)
-        {
-            page.buttonOffset = kPressedOffset;
-
-            if ((clicks & kLeftClicks) == 0)
-            {
-                rest = true;
-            }
-            else
-            {
-                owner.input.PressKey(owner.config.keys[static_cast<std::size_t>(Button::F1)]);
-            }
-        }
-
-        if (!rest && (clicks & kLeftClicks) != 0)
-        {
-            if (y < kTabsBottom && y > kTabsTop && x < kTabsRight && x > kTabsLeft)
-            {
-                const int tab = (x - kTabsLeft) / kTabAreaWidth;
-                int tabs = kBaseTabs;
-
-                if (owner.state.GameFlag(kTabFlagsPerRole * page.target + kFirstExtraTabFlag))
-                {
-                    tabs = kBaseTabs + 1;
-                }
-
-                if (owner.state.GameFlag(kTabFlagsPerRole * page.target + kFirstExtraTabFlag + 1))
-                {
-                    ++tabs;
-                }
-
-                if (tab < tabs)
-                {
-                    page.tab = tab - 1;
-                    this->SkillsEnd();
-                }
-
-                return;
-            }
-
-            if (y < kRowsBottom && y > kRowsTop && x < kRowsRight && x > kRowsLeft)
-            {
-                const int row = (x - kRowsLeft) / kRowsColumnWidth + kColumns * ((y - kRowsTop) / kRowHeight);
-
-                if (row >= page.shown)
-                {
-                    return;
-                }
-
-                if (row != page.row)
-                {
-                    page.row = row;
-                    this->SkillsDescribe();
-                    owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
-                    return;
-                }
-
-                if ((clicks & kDoubleClick) != 0)
-                {
-                    this->SkillsSelect();
-                }
-
-                return;
-            }
-        }
-    }
+    stage = page.stage;
 
     if (owner.controls.Repeating(Button::MouseLeft))
     {
-        if (page.stage == kSkillList)
-        {
-            if (page.count > kRows && ux < kBarRight && ux > kBarLeft)
-            {
-                const MenuScrollBar& bar = this->scrollBar;
+        const auto pointerX = static_cast<u32>(owner.state.pointerX);
 
-                if (y < kBarUpBottom && y > kBarUpTop)
+        if (stage == kSkillList && page.count > kRows && pointerX < kBarRight && pointerX > kBarLeft)
+        {
+            const MenuScrollBar& bar = this->scrollBar;
+            i32 pointerY = owner.state.pointerY;
+
+            if (pointerY < kBarUpBottom && pointerY > kBarUpTop)
+            {
+                this->SkillsUp();
+                pointerY = owner.state.pointerY;
+            }
+
+            if (pointerY < kBarDownBottom && pointerY > kBarDownTop)
+            {
+                this->SkillsDown();
+                pointerY = owner.state.pointerY;
+            }
+
+            if (pointerY < bar.thumbTop && pointerY > bar.top)
+            {
+                this->SkillsPageUp();
+                pointerY = owner.state.pointerY;
+            }
+
+            if (pointerY < bar.bottom && pointerY > bar.thumbBottom)
+            {
+                this->SkillsPageDown();
+            }
+
+            return;
+        }
+
+        if (stage == kChooseTown)
+        {
+            if (static_cast<i32>(this->towns.size()) > kTownRows && pointerX < kTownsBarRight &&
+                pointerX > kTownsBarLeft)
+            {
+                const MenuScrollBar& bar = this->townBar;
+                i32 pointerY = owner.state.pointerY;
+
+                if (pointerY < kTownsUpBottom && pointerY > kTownsUpTop)
                 {
                     this->SkillsUp();
+                    pointerY = owner.state.pointerY;
                 }
 
-                if (y < kBarDownBottom && y > kBarDownTop)
+                if (pointerY < kTownsDownBottom && pointerY > kTownsDownTop)
                 {
                     this->SkillsDown();
+                    pointerY = owner.state.pointerY;
                 }
 
-                if (y < bar.thumbTop && y > bar.top)
+                if (pointerY < bar.thumbTop && pointerY > bar.top)
                 {
                     this->SkillsPageUp();
+                    pointerY = owner.state.pointerY;
                 }
 
-                if (y < bar.bottom && y > bar.thumbBottom)
+                if (pointerY < bar.bottom && pointerY > bar.thumbBottom)
                 {
                     this->SkillsPageDown();
                 }
 
                 return;
             }
-        }
-        else if (page.stage == kChooseTown)
-        {
-            if (static_cast<i32>(this->towns.size()) <= kTownRows || ux >= kTownsBarRight || ux <= kTownsBarLeft)
-            {
-                if (ux >= kTownsInnerRight || ux <= kTownsLeft || uy >= kTownsBottomInside || uy <= kTownsTop)
-                {
-                    return;
-                }
 
-                i32 row = static_cast<i32>((uy - kTownsTop) / static_cast<u32>(kRowHeight));
+            const auto pointerY = static_cast<u32>(owner.state.pointerY);
+
+            if (pointerX < kTownsInnerRight && pointerX > static_cast<u32>(kTownsLeft) &&
+                pointerY < kTownsBottomInside && pointerY > static_cast<u32>(kTownsTop))
+            {
+                auto row = static_cast<i32>((pointerY - kTownsTop) / kRowHeight);
 
                 if (row >= this->townShown)
                 {
@@ -1231,7 +1347,7 @@ void Menu::SkillsFrame()
 
                 if (row != this->townRow)
                 {
-                    if ((clicks & kLeftClicks) != 0)
+                    if ((this->clicks & kLeftClicks) != 0)
                     {
                         this->townRow = row;
                     }
@@ -1239,82 +1355,61 @@ void Menu::SkillsFrame()
                     return;
                 }
 
-                if ((clicks & kDoubleClick) != 0)
+                if ((this->clicks & kDoubleClick) != 0)
                 {
                     this->SkillsSelect();
                 }
-
-                return;
-            }
-
-            const MenuScrollBar& bar = this->townBar;
-
-            if (y < kTownsUpBottom && y > kTownsUpTop)
-            {
-                this->SkillsUp();
-            }
-
-            if (y < kTownsDownBottom && y > kTownsDownTop)
-            {
-                this->SkillsDown();
-            }
-
-            if (y < bar.thumbTop && y > bar.top)
-            {
-                this->SkillsPageUp();
-            }
-
-            if (y < bar.bottom && y > bar.thumbBottom)
-            {
-                this->SkillsPageDown();
             }
 
             return;
         }
     }
 
-    if ((clicks & kLeftClicks) != 0 && page.stage == kChooseRole && y < kRoleRowsBottom && y > kRoleRowsTop &&
-        x < kRoleRowsRight && x > kRoleRowsLeft)
+    clicks = this->clicks;
+    x = owner.state.pointerX;
+    y = owner.state.pointerY;
+
+    if ((clicks & kLeftClicks) != 0 && page.stage == kChooseRole)
     {
-        const auto row = static_cast<i32>((uy - static_cast<u32>(kRoleRowsTop)) / static_cast<u32>(kRowHeight));
-
-        if (row < page.roles)
+        if (y < kRoleRowsBottom && y > kRoleRowsTop && x < kRoleRowsRight && x > kRoleRowsLeft)
         {
-            int role = 0;
+            const auto slot = static_cast<i32>(static_cast<u32>(y - kRoleRowsTop) / kRowHeight);
 
-            for (int step = 0; step < row; ++step)
+            if (slot < this->VisibleCount())
             {
-                do
+                if (page.target == slot)
                 {
-                    ++role;
-                } while (!owner.state.GameFlag(role + Party::FirstRoleFlag));
+                    this->SkillsSelect();
+                }
+
+                page.target = slot;
             }
 
-            if (page.target == role)
-            {
-                this->SkillsSelect();
-            }
-
-            page.target = role;
+            return;
         }
-
-        return;
     }
-
-    if ((clicks & kLeftClicks) != 0 && page.stage == kSkillList && uy < kFacesBottom &&
-        uy > static_cast<u32>(kFacesTop) && ux < kFacesRight && ux > kFacesLeft)
+    else if (
+        page.stage == kSkillList && (clicks & kLeftClicks) != 0 && static_cast<u32>(y) < kTabsBottom &&
+        static_cast<u32>(y) > kTabsTop
+    )
     {
-        const auto face = static_cast<u16>((uy - static_cast<u32>(kFacesTop)) / kFaceHeight);
+        int chosen = -1;
 
-        if (owner.state.GameFlag(face + Party::FirstRoleFlag))
+        for (int slot = 0, left = kFirstTabLeft; slot < this->VisibleCount(); ++slot, left += kTabStep)
         {
-            do
+            if (x < left + kTabWidth && x > left &&
+                owner.state.GameFlag(this->VisibleRole(slot) + Party::FirstRoleFlag))
             {
-                this->SkillsShift();
-            } while (this->roleTab != face);
+                chosen = slot;
+            }
         }
 
-        return;
+        if (chosen != -1)
+        {
+            page.roleCycle = chosen - 1;
+            this->SkillsShift();
+            return;
+        }
     }
 
     if ((clicks & kRightClick) != 0)
@@ -1323,56 +1418,54 @@ void Menu::SkillsFrame()
     }
 }
 
-// swd3e.exe 0x0044CED0: the skills page: the description key opens the description of the skill chosen; the tabs, the
-// two columns of skills (greyed when never usable, reddish in battle only; their cost; their element), the scroll bar,
-// the roles to choose, the help line, the towns with their bar, the messages, the description box
+// swd3e.exe 0x0044CED0: the skills page: the description key on the list opens the description of the cell chosen;
+// the list in two columns of cells (a heading between tildes across both, the unusable grey, those of battle red,
+// darker off the list; each skill's cost and element picture; the description button drawn with each cell) with its
+// scroll bar; on the roles their box; the chosen skill's description below; the towns; a refusal; the description
+// box sliding up or down.
 void Menu::SkillsDraw()
 {
     Game& owner = this->game;
+    Painter& painter = owner.painter;
     SkillsPage& page = this->skills;
-    const auto color = static_cast<Pixel>(owner.painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
-    const auto never = static_cast<Pixel>(owner.painter.MakeColor(kNeverRed, kNeverGreen, kNeverBlue));
-    const auto battleOnly = static_cast<Pixel>(owner.painter.MakeColor(kBattleRed, kBattleGreen, kBattleBlue));
     ActState& panel = owner.battleMessages.panelAct;
+    const auto color = static_cast<Pixel>(painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
+    Pixel textColor = color;
+    const u32 never = painter.MakeColor(kNeverRed, kNeverGreen, kNeverBlue);
+    const auto battle = static_cast<Pixel>(painter.MakeColor(kBattleRed, kBattleGreen, kBattleBlue));
+    std::array<i32, kElementPictures> elementPictures = {};
+    elementPictures[0] = static_cast<i32>(never);
+    std::copy(kElementPictureTail.begin(), kElementPictureTail.end(), elementPictures.begin() + 1);
 
     if (page.stage == kSkillList && owner.input.IsKeyDown(owner.config.keys[static_cast<std::size_t>(Button::F1)]) != 0)
     {
-        const ItemNode* chosen = ItemAfter(page.top + page.row, page.list);
+        ItemNode* described = nullptr;
+        SkipItems(page.top + page.row, page.list, described);
 
-        if (chosen != nullptr && chosen->id != ItemNode::Empty)
+        if (described != nullptr && described->id != ItemNode::Empty)
         {
             page.descriptionSlide = kDescriptionSlide;
             page.stage = kDescribing;
         }
     }
 
-    const ItemNode* described = nullptr;
+    const ItemNode* chosen = nullptr;
     owner.acts.Run(panel);
-    FillBox(
-        owner.painter,
-        kTabsBoxX,
-        kTabsBoxY,
-        kTabWidth * page.shownTabs + kTabsBoxPad,
-        kTabsBoxHeight,
-        kTabsShade,
-        kTabsShade,
-        kTabsBlue,
-        FillMode::Quarter
-    );
+    FillBox(painter, kListBoxX, kListBoxY, kListBoxWidth, kListBoxHeight, 0, 0, 0, FillMode::Quarter);
     DrawWindowFrame(
-        owner.painter,
+        painter,
         owner.archive,
         panel.frame,
-        kTabsFrameLeft,
-        kTabsFrameTop,
-        kTabWidth * page.shownTabs + kTabsFrameLeft,
-        kTabsFrameBottom,
+        kListFrameLeft,
+        kListFrameTop,
+        kListFrameRight,
+        kListFrameBottom,
         0,
         kFrameBorder
     );
-    FillBox(owner.painter, kHelpBoxX, kHelpBoxY, kHelpBoxWidth, kHelpBoxHeight, 0, 0, 0, FillMode::Quarter);
+    FillBox(painter, kHelpBoxX, kHelpBoxY, kHelpBoxWidth, kHelpBoxHeight, 0, 0, 0, FillMode::Quarter);
     DrawWindowFrame(
-        owner.painter,
+        painter,
         owner.archive,
         panel.frame,
         kHelpFrameLeft,
@@ -1383,40 +1476,25 @@ void Menu::SkillsDraw()
         kFrameBorder
     );
 
-    for (int tab = 0, x = 0; tab < kShownTabs; ++tab, x += kTabWidth)
-    {
-        Pixel tabColor = color;
-        owner.painter.TintPixels(std::span<u16>(&tabColor, 1), kDim, kDim, kDim);
-        int shift = 0;
-
-        if (page.tab == tab)
-        {
-            shift = -1;
-            tabColor = color;
-        }
-
-        owner.mediumFont.DrawText(
-            owner.drawSurface,
-            x + shift + kTabTextX,
-            shift + kTabTextY,
-            kTabNames[static_cast<std::size_t>(tab)],
-            tabColor,
-            kPanelStyle
-        );
-    }
-
     if (page.list != nullptr)
     {
+        std::string cost;  // the original's file name buffer, kept from cell to cell
         const ItemNode* node = page.firstShown;
 
-        for (int row = 0; row < page.shown && node != nullptr; ++row, node = node->next.get())
+        for (int cell = 0; cell < page.shown && node != nullptr; ++cell, node = node->next.get())
         {
-            Pixel rowColor = color;
-            int shift = 0;
-
-            if (row == page.row)
+            if (node->id == SkillsPage::FillerId)
             {
-                described = node;
+                continue;
+            }
+
+            const bool heading = (node->record.data.kind & kHeadingKind) != 0;
+            int shift = 0;
+            Pixel rowColor = color;
+
+            if (cell == page.row)
+            {
+                chosen = node;
                 shift = -1;
             }
 
@@ -1425,53 +1503,65 @@ void Menu::SkillsDraw()
             if (use == kBattleOnly)
             {
                 shift = 0;
-                rowColor = battleOnly;
+                rowColor = battle;
             }
 
             if (use == 0)
             {
                 shift = 0;
-                rowColor = never;
+                rowColor = static_cast<Pixel>(never);
             }
 
             if (page.stage > kSkillList)
             {
-                owner.painter.TintPixels(std::span<u16>(&rowColor, 1), kDim, kDim, kDim);
+                painter.TintPixels(std::span<u16>(&rowColor, 1), kDim, kDim, kDim);
             }
 
-            const int column = row & 1;
-            const int line = kRowHeight * (row / kColumns);
+            std::string text;
+
+            if (heading)
+            {
+                text = WinFormat(kHeadingFormat, {ObjectName(node->record)});
+                rowColor = color;
+                shift = 0;
+            }
+            else
+            {
+                text = WinFormat(kNameFormat, {ObjectName(node->record)});
+            }
+
+            const int column = cell & kOddCell;
+            const int line = kRowHeight * (cell / kColumns);
             owner.largeFont.DrawText(
                 owner.drawSurface,
                 shift + kColumnWidth * column + kListX,
                 shift + line + kListY,
-                WinFormat(kNameFormat, {ObjectName(node->record)}),
+                text,
                 rowColor,
                 kPanelStyle
             );
 
-            if (page.tab <= 1)
+            if (page.unk50BAF4 <= 1)
             {
-                const u16 cost = node->record.data.costBits;
-                std::string text;
+                const u16 costBits = node->record.data.costBits;
 
-                if ((cost & kSpiritCost) != 0)
+                if ((costBits & kSpiritCost) != 0)
                 {
-                    text = WinFormat(kCostFormat, {static_cast<i32>(cost & kSpiritMask)});
+                    cost = WinFormat(kCostFormat, {static_cast<i32>(costBits & kSpiritMask)});
                 }
 
-                if ((cost & kStaminaCost) != 0)
+                if ((costBits & kStaminaCost) != 0)
                 {
-                    text = WinFormat(kCostFormat, {static_cast<i32>(cost & kStaminaMask)});
+                    cost = WinFormat(kCostFormat, {static_cast<i32>(costBits & kStaminaMask)});
                 }
 
-                if ((cost & kCostBits) != 0)
+                if ((costBits & kCostBits) != 0)
                 {
                     owner.mediumFont.DrawText(
                         owner.drawSurface,
                         shift + kColumnWidth * column + kCostX,
                         shift + line + kListY + kCostDown,
-                        text,
+                        cost,
                         rowColor,
                         kPanelStyle
                     );
@@ -1482,30 +1572,28 @@ void Menu::SkillsDraw()
             this->buttonAct.action = kButtonAction;
             owner.actDrawer.Draw(this->buttonAct, page.buttonOffset + kButtonX, page.buttonOffset + kButtonY);
 
-            if (page.tab <= 1 && node->id != ItemNode::Empty)
+            if (page.unk50BAF4 <= 1 && node->id != ItemNode::Empty && !heading)
             {
-                SkillScript skill;
-                owner.database.LoadSkill(skill, node->record.data.skillScript);
-                const auto element = static_cast<std::size_t>(static_cast<u16>(skill.unk10));
-                const int picture = element < kElementPictures.size() ? kElementPictures[element] - 1 : -1;
+                owner.database.LoadSkill(page.skill, node->record.data.skillScript);
+                const auto element = static_cast<u16>(page.skill.unk10);
 
-                if (picture >= 0)
+                // Past the table the original reads its stack; a grey picture number (element 0) is not found and
+                // the original reads through a null picture there.
+                if (element < kElementPictures && elementPictures[element] >= 0)
                 {
                     owner.actDrawer.DrawPicture(
                         kElementPictureFile,
-                        static_cast<u16>(picture),
+                        static_cast<u16>(elementPictures[element]),
                         shift + kElementColumn * column + kElementX,
                         shift + line + kListY + kElementDown
                     );
                 }
-
-                page.skill = skill;
             }
 
-            if (row == page.row && page.stage == kSkillList)
+            if (cell == page.row && page.stage == kSkillList)
             {
                 FillBox(
-                    owner.painter,
+                    painter,
                     kHighlightColumn * column + kHighlightX,
                     line + kHighlightY,
                     kHighlightWidth,
@@ -1515,6 +1603,21 @@ void Menu::SkillsDraw()
                     0,
                     FillMode::Gradient
                 );
+
+                if (heading)
+                {
+                    FillBox(
+                        painter,
+                        kHeadingHighlightX,
+                        line + kHighlightY,
+                        kHighlightWidth,
+                        kHighlightHeight,
+                        kHighlightRed,
+                        kHighlightGreen,
+                        0,
+                        FillMode::Gradient
+                    );
+                }
             }
         }
     }
@@ -1533,12 +1636,13 @@ void Menu::SkillsDraw()
             arrows = 1;
         }
 
-        if ((page.scrollArrows & (kNibble << kNibbleShift)) != 0)
+        const u16 downMask = kNibble << kNibbleShift;
+
+        if ((page.scrollArrows & downMask) != 0)
         {
-            const int down = (page.scrollArrows >> kNibbleShift) & kNibble;
+            const int down = (page.scrollArrows & downMask) >> kNibbleShift;
             arrows |= 2;
-            page.scrollArrows =
-                static_cast<u16>((page.scrollArrows & ~(kNibble << kNibbleShift)) | ((down - 1) << kNibbleShift));
+            page.scrollArrows = static_cast<u16>((page.scrollArrows & ~downMask) | ((down - 1) << kNibbleShift));
         }
 
         const auto count = static_cast<double>(page.count);
@@ -1549,60 +1653,55 @@ void Menu::SkillsDraw()
 
     if (page.stage == kChooseRole)
     {
+        const int roles = this->VisibleCount();
         FillBox(
-            owner.painter,
+            painter,
             kRolesBoxX,
             kRolesBoxY,
             kRolesBoxWidth,
-            kRowHeight * page.roles + kRolesBoxPad,
+            kRowHeight * roles + kRolesBoxPad,
             kRolesBoxRed,
             kRolesBoxGreen,
             kRolesBoxBlue,
             FillMode::Eighth
         );
         DrawWindowFrame(
-            owner.painter,
+            painter,
             owner.archive,
             panel.frame,
             kRolesFrameLeft,
             kRolesFrameTop,
             kRolesFrameRight,
-            kRowHeight * page.roles + kRolesFrameTop,
+            kRowHeight * roles + kRolesFrameTop,
             0,
             kFrameBorder
         );
 
-        for (int member = 0, line = 0; member < Party::Roles; ++member)
+        for (int slot = 0, line = 0; slot < this->VisibleCount(); ++slot, line += kRowHeight)
         {
-            if (this->tabs[static_cast<std::size_t>(member)].role == Menu::NoRole)
-            {
-                continue;
-            }
-
-            Pixel roleColor = static_cast<Pixel>(owner.painter.MakeColor(kRoleRed, kRoleGreen, kRoleBlue));
             int shift = 0;
+            textColor = static_cast<Pixel>(painter.MakeColor(kRoleRed, kRoleGreen, kRoleBlue));
 
-            if (member == page.target)
+            if (slot == page.target)
             {
-                roleColor =
-                    static_cast<Pixel>(owner.painter.MakeColor(kRoleChosenRed, kRoleChosenGreen, kRoleChosenBlue));
+                textColor = static_cast<Pixel>(painter.MakeColor(kRoleChosenRed, kRoleChosenGreen, kRoleChosenBlue));
                 shift = -1;
             }
 
-            const std::string name = owner.party.names[static_cast<std::size_t>(member)].FullName();
+            const int role = std::clamp(this->VisibleRole(slot), 0, Party::Roles - 1);
             owner.mediumFont.DrawText(
                 owner.drawSurface,
                 shift + kRoleTextX,
-                shift + line + kRoleTextY,
-                name,
-                roleColor,
+                line + shift + kRoleTextY,
+                owner.party.names[static_cast<std::size_t>(role)].FullName(),
+                textColor,
                 kPanelStyle
             );
 
-            if (member == page.target)
+            if (slot == page.target)
             {
                 FillBox(
-                    owner.painter,
+                    painter,
                     kRoleHighlightX,
                     line + kRoleHighlightY,
                     kRoleHighlightWidth,
@@ -1613,29 +1712,34 @@ void Menu::SkillsDraw()
                     FillMode::Gradient
                 );
             }
-
-            line += kRowHeight;
         }
     }
 
-    if (described != nullptr && described->id != ItemNode::Empty)
+    if (chosen != nullptr && chosen->id != ItemNode::Empty)
     {
         owner.mediumFont.SetClip(kHelpTextClipX, kHelpTextClipY, kHelpTextClipWidth, kHelpTextClipHeight);
-        owner.mediumFont.DrawText(owner.drawSurface, kHelpTextX, kHelpTextY, this->description, color, kPanelStyle);
+        owner.mediumFont.DrawText(
+            owner.drawSurface,
+            kHelpTextX,
+            kHelpTextY,
+            this->description,
+            static_cast<Pixel>(painter.MakeColor(kTextRed, kTextGreen, kTextBlue)),
+            kPanelStyle
+        );
         owner.mediumFont.SetClip(0, 0, Display::Width, Display::Height);
     }
 
     if (page.stage == kChooseTown)
     {
-        this->SkillsDrawTowns(color);
+        this->SkillsDrawTowns(textColor);
     }
 
     if (page.stage == kNoTownWarp || page.stage == kNoExitWarp)
     {
-        const std::optional<std::string>& message =
+        const std::optional<std::string>& given =
             page.stage == kNoTownWarp ? owner.scene.noTownWarpText : owner.scene.noExitWarpText;
-        std::string text = message.value_or(Big5(kCannotHere));
-        text.resize(kMessageLines * kMessageLineBytes, '\0');
+        std::string text = given.value_or(Big5(kCannotHere));
+        text.resize(kMessageLineBytes * kMessageLines, '\0');
         this->DrawBox(kMessageX, kMessageY, kMessageWidth, kMessageHeight, kMessageBoxMode, 0, 0, 0);
 
         for (int line = 0; line < kMessageLines; ++line)
@@ -1646,7 +1750,7 @@ void Menu::SkillsDraw()
                 kMessageX,
                 kMessageY + kMessageLineHeight * line,
                 std::string_view(start, strnlen(start, kMessageLineBytes)),
-                color,
+                textColor,
                 kPanelStyle
             );
         }
@@ -1675,20 +1779,20 @@ void Menu::SkillsDraw()
 
         this->Move(SkillsDescriptionValue, page.descriptionTop, topBefore, page.descriptionTop);
         const i32 top = this->Shown(SkillsDescriptionValue, page.descriptionTop);
-        const ItemNode* chosen = ItemAfter(page.top + page.row, page.list);
+        const ItemNode* described = ItemAfter(page.top + page.row, page.list);
         FillBox(
-            owner.painter,
+            painter,
             kDescriptionBoxX,
             top - kDescriptionBoxUp,
             kDescriptionBoxWidth,
             kDescriptionBoxBottom - top,
-            kTabsShade,
-            kTabsShade,
-            kTabsBlue,
+            kDescriptionShade,
+            kDescriptionShade,
+            kDescriptionBlue,
             FillMode::Eighth
         );
         DrawWindowFrame(
-            owner.painter,
+            painter,
             owner.archive,
             panel.frame,
             kDescriptionTextX,
@@ -1699,7 +1803,7 @@ void Menu::SkillsDraw()
             kFrameBorder
         );
         owner.DrawWrappedText(
-            chosen != nullptr ? chosen->record.description.value_or(std::string()) : std::string(),
+            described != nullptr ? described->record.description.value_or(std::string()) : std::string(),
             kDescriptionTextX,
             top,
             kDescriptionLines,
@@ -1708,7 +1812,7 @@ void Menu::SkillsDraw()
     }
 }
 
-// The towns of the town warp with their bar (inline in 0x004442B0).
+// The towns of the town warp with their bar (inline in 0x0044CED0).
 void Menu::SkillsDrawTowns(Pixel color)
 {
     Game& owner = this->game;
@@ -1889,12 +1993,6 @@ void Menu::Warp(u16 map, u16 x, u16 y, i16 event)
     leader.flags = player.flags;
     leader.x = player.x;
     leader.y = player.y;
-}
-
-// swd32.exe 0x00444FB0 (unmatched in swd3e): the tabs shown for role `role`: always three
-int Menu::SkillsShownTabs([[maybe_unused]] int role) const
-{
-    return kShownTabs;
 }
 
 }  // namespace swd3e

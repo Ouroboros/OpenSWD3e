@@ -152,26 +152,42 @@ struct EquipPage
     i32 previousStage = 0;  // 0x0050B9B0 the stage a description returns to
 };
 
-// The skills page (role page 0xD; 0x004FCF98..0x004FD080): a role's skills of one tab in two columns, used on the
-// party or on one role; the town and exit warps.
+// The skills page (role page 0xD; 0x0050BAE0..0x0050BBD8, swd3e): the role's skills of kinds 0x11 and 0x14 in two
+// columns of cells, a heading (an object of kind bit 7) across both with a filler cell before it when it would start
+// in the second column and one after it; used on the party or on one role; the town and exit warps.
 struct SkillsPage
 {
-    ItemLink list;                   // swd32 0x004FCFC0 the skills of the tab, moved out of the role's list
+    // The kinds of the cells (SkillsPage::cells, set by 0x0044DA00).
+    enum Cell : u8
+    {
+        SkillCell = 1,
+        HeadingCell = 2,
+        FillerCell = 3,
+        NoCell = 4,
+    };
+
+    static constexpr std::size_t CellBytes = 0x400;  // the map's size
+    static constexpr std::size_t CellBase = 0x80;    // the map's byte of cell 0
+    static constexpr u16 FillerId = 0xFFF9;          // ItemNode::id of a filler node
+
+    ItemLink list;                   // 0x0050BB10 the skills taken from the role's list, with the fillers
     ItemNode* firstShown = nullptr;  // 0x0050BB0C
-    i32 top = 0;                     // swd32 0x004FCF98
-    i32 roles = 0;                   // swd32 0x004FCF9C the party roles
-    i32 shown = 0;                   // 0x0050BAEC at most 24
-    i32 buttonOffset = 0;            // swd32 0x004FCFA4 -1 while the description button is pressed
-    i32 tab = 0;                     // swd32 0x004FCFA8
-    i32 target = 0;                  // 0x0050BAF8 the role a skill is used on
-    i32 tabs = 0;                    // 0x0050BAFC the tabs of the target role (3..5)
-    i32 descriptionSlide = 0;        // swd32 0x004FCFB4
-    i32 count = 0;                   // swd32 0x004FCFB8
-    i32 row = 0;                     // swd32 0x004FD070
-    i32 shownTabs = 0;               // swd32 0x004FD074 always 3
-    i32 stage = 0;                   // swd32 0x004FD078
-    i32 descriptionTop = 0;          // swd32 0x004FD07C
-    u16 scrollArrows = 0;            // swd32 0x004FD080 the list's (bits 0..7) and the towns' (bits 8..15)
+    i32 top = 0;                     // 0x0050BAE0 the first cell shown (even)
+    i32 column = 0;                  // 0x0050BAE4 the column left or right chose last
+    i32 shown = 0;                   // 0x0050BAEC the cells shown, at most 24
+    i32 buttonOffset = 0;            // 0x0050BAF0 -1 while the description button is pressed
+    i32 unk50BAF4 = 0;               // 0x0050BAF4 only cleared; the costs and elements show while it is at most 1
+    i32 target = 0;                  // 0x0050BAF8 the slot of the visible role a skill is used on
+    i32 tabs = 0;                    // 0x0050BAFC three and the target's two extra flags (never read)
+    i32 hasSkills = 0;               // 0x0050BB00 a skill cell was made (the empty entry counts)
+    i32 descriptionSlide = 0;        // 0x0050BB04
+    i32 count = 0;                   // 0x0050BB08 the cells of the list
+    i32 row = 0;                     // 0x0050BBC4 the cell chosen among those shown
+    i32 roleCycle = 0;               // 0x0050BBC8 the tab Shift steps from (never reset)
+    i32 stage = 0;                   // 0x0050BBCC
+    i32 descriptionTop = 0;          // 0x0050BBD0
+    u16 scrollArrows = 0;            // 0x0050BBD4 the list's (bits 0..7) and the towns' (bits 8..15)
+    std::vector<u8> cells;           // 0x0050BBD8 the cell kinds from CellBase, allocated while the page is open
     SkillScript skill;               // 0x004D3F98 the skill loaded last
 };
 
@@ -522,7 +538,7 @@ public:
     void EquipSwapVitals(const ItemNode* added, const ItemNode& removed);
     void EquipSumBonuses();
     void EquipResistances();
-    int EquipRole() const;
+    int TabRole() const;
     void EquipListMoved(u16 arrows);
     void EquipSlotMoved();
     void EquipDown();
@@ -546,13 +562,14 @@ public:
     void SkillsEnter();
     void SkillsLeave();
     void SkillsDescribe();
-    void SkillsTake(ItemLink& source, int tab);
+    void SkillsTake(ItemLink& source);
     void SkillsCountShown();
     void SkillsFillList();
     void SkillsReturn();
     void SkillsCountTabs();
-    void SkillsMoved(u16 arrows, bool sound);
-    int SkillsNextRole(int role, int step) const;
+    int SkillsCell(int cell) const;
+    ItemLink& SkillsRoleList();
+    RoleRecord& SkillsRole();
     void SkillsDown();
     void SkillsUp();
     void SkillsPageDown();
@@ -569,7 +586,6 @@ public:
     void SkillsDrawTowns(Pixel color);
     std::size_t FindExitWarp(int map) const;
     void ListTowns();
-    int SkillsShownTabs(int role) const;
     void Warp(u16 map, u16 x, u16 y, i16 event);
 
     // The talisman ghost's feeding page (role page 0xF, swd3e).
