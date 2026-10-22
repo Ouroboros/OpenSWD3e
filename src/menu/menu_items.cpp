@@ -4,6 +4,7 @@
 #include <string>
 
 #include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "draw/painter.h"
 #include "font/text_font.h"
@@ -39,14 +40,13 @@ constexpr u16 kDiscardMode = 0x20;
 constexpr i32 kSortedGlow = 0x23;  // InventoryPage::glow counts on from here after sorting
 constexpr i32 kSortedGlowEnd = 0x26;
 
-// The objects with their own use.
-constexpr u16 kSaveItem = 0x2D9;
-constexpr u16 kBestiaryItem = 0x318;
-constexpr u16 kTownWarpItem = 0x2B9;
-constexpr u16 kExitWarpItem = 0x2B8;
-constexpr u16 kOtherExitWarpItem = 0x2BA;
-constexpr u16 kFollowerItem = 0x301;
-constexpr u16 kHomeItem = 0x2DB;
+// The objects with their own use (the cases of 0x0044F190).
+constexpr u16 kSaveItem = 0xC10;
+constexpr u16 kBestiaryItem = 0xC13;
+constexpr u16 kTownWarpItem = 0xBE6;
+constexpr u16 kExitWarpItem = 0xBE5;
+constexpr u16 kFollowerItem = 0xC16;
+constexpr u16 kHomeItem = 0x2DB;  // swd3e keeps the id of swd32
 constexpr int kTownWarpBlocked = GameState::FileNameA;
 constexpr int kExitWarpBlocked = GameState::FileNameB;
 constexpr int kHomeBlocked = GameState::Unk17;
@@ -66,16 +66,16 @@ constexpr u16 kRedUse = 1;
 constexpr u32 kKeptKind = 0x20;      // ObjectData::kind: cannot be discarded
 constexpr u32 kNotSpentKind = 0x80;  // not used up
 constexpr u32 kWholeParty = 1;       // SkillScript::flags: the object works on every party role
-// The kinds of the categories 1..6 (swd32.exe 0x0049E328; category 0 lists the pending counts).
-constexpr std::array<u32, 7> kCategoryKinds = {0x8000, 0x1003, 0x1C, 0x08000040, 0x700, 0x800, 0x20};
+// The kinds of the categories 1..6 (0x004AF904; category 0 lists the pending counts).
+constexpr std::array<u32, 7> kCategoryKinds = {0x8000, 0x1001, 0x1C, 0x08000040, 0x700, 0x800, 0x20};
 constexpr i32 kCategories = 7;
 constexpr i32 kOwnKindCategory = 3;  // categories 3 and 6 take their kinds alone, the others not with theirs
 constexpr i32 kLastCategory = 6;
-constexpr u16 kHeadId = 0;  // the id the sorted insertion reads before the first node (0x004FD1EC, always 0)
+constexpr u16 kHeadId = 0;  // the id the sorted insertion reads before the first node (0x0050BD54, always 0)
 
 // The followers.
-constexpr u16 kFirstFollower = 0x47;
-constexpr i32 kFollowerAct = 0x232B;
+constexpr u16 kFirstFollower = 0x281;  // the role record of the first follower
+constexpr i32 kFollowerAct = 0x281;
 constexpr i32 kFollowerActionStep = 4;
 constexpr i16 kGoneMap = 0x3E8;  // the map of a follower sent away
 constexpr u32 kFollowerFlagsKept = 0x3FFF;
@@ -252,7 +252,7 @@ constexpr int kCategoryIconY = 0x61;
 constexpr int kCategoryIconStep = 0x20;
 constexpr int kListClipGrowth = 0x13A;
 constexpr int kListClipTop = 0x7C;
-constexpr i32 kPictureAction = 0x44;
+constexpr i32 kPictureAction = 0x3B;
 constexpr int kPictureX = 0x204;
 constexpr int kPictureY = 0x76;
 constexpr int kHelpClipX = 0xD4;
@@ -277,7 +277,7 @@ constexpr int kRoleBoxX = 0x1B4;
 constexpr int kRoleBoxTop = 0x88;
 constexpr int kRoleBoxLowest = 0x168;
 constexpr int kRoleBoxWidth = 0x80;
-constexpr int kRoleBoxHeight = 0x68;
+constexpr int kRoleBoxExtra = 0x10;  // below the rows
 constexpr int kRoleBoxRed = 0x10;
 constexpr int kRoleBoxGreen = 0x10;
 constexpr int kRoleBoxBlue = 0x80;
@@ -285,7 +285,7 @@ constexpr int kRoleBoxClick = 2;  // InventoryPage::unk4FD148 is the box's top a
 constexpr int kRoleFrameLeft = 0x1BC;
 constexpr int kRoleFrameDown = 8;
 constexpr int kRoleFrameRight = 0x22C;
-constexpr int kRoleFrameBottom = 0x64;
+constexpr int kRoleFrameExtra = 0xC;
 constexpr int kRoleNameX = 0x1BC;
 constexpr int kRoleNameDown = 8;
 constexpr int kRoleHighlightX = 0x1B8;
@@ -344,29 +344,6 @@ constexpr int kNoticeWidth = 0xB0;
 constexpr int kNoticeHeight = 0x48;
 constexpr int kNoticeLineHeight = 0x18;
 
-// The first party role from `from` on, wrapping, whose tab is in use (stepping by `step`).
-int NextRole(const std::array<MenuTab, Menu::Tabs>& tabs, int from, int step)
-{
-    int role = from;
-
-    do
-    {
-        role += step;
-
-        if (role >= Menu::Tabs)
-        {
-            role = 0;
-        }
-
-        if (role < 0)
-        {
-            role = Menu::Tabs - 1;
-        }
-    } while (tabs[static_cast<std::size_t>(role)].role == Menu::NoRole);
-
-    return role;
-}
-
 }  // namespace
 
 // The description of the chosen row of the items page (the original describes the node, 0x0043B9E0; none past the
@@ -399,12 +376,10 @@ void Menu::ItemsMoved(u16 arrows)
     this->ItemsDescribe();
 }
 
-// swd32.exe 0x00445430 (unmatched in swd3e): the items page opened on the first category in the use mode: its list
-// taken from the
-// inventory, the party roles counted, the chosen row described
+// swd3e.exe 0x0044DF60: the items page opened on the first category in the use mode: its list taken from the
+// inventory, the chosen row described (the object script buffer the original allocates is Menu::skills.skill)
 void Menu::ItemsEnter()
 {
-    Game& owner = this->game;
     InventoryPage& page = this->itemsPage;
     this->roleTab = Menu::NoTab;
     page.openedAt = this->frames - 1;
@@ -422,16 +397,6 @@ void Menu::ItemsEnter()
     this->itemList.row = 0;
     this->ItemsFill();
     page.target = 0;
-    page.roles = 0;
-
-    for (int role = 0; role < Menu::Tabs; ++role)
-    {
-        if (owner.state.GameFlag(Party::FirstRoleFlag + role))
-        {
-            ++page.roles;
-        }
-    }
-
     this->ItemsDescribe();
     page.unk4FC3D4 = 0;
     page.unk4FC3D0 = InventoryPage::Unk4FC3D0;
@@ -649,29 +614,17 @@ void Menu::ItemsFrame()
         }
     }
     else if (
-        code == kRoleCode && y < page.unk4FD148 + kItemHeight * page.roles && y > page.unk4FD148 && x < kRolesRight &&
-        x > kRolesLeft
+        code == kRoleCode && y < page.unk4FD148 + kItemHeight * this->VisibleCount() && y > page.unk4FD148 &&
+        x < kRolesRight && x > kRolesLeft
     )
     {
-        y -= page.unk4FD148;
-        int role = 0;
-
         if ((clicks & kLeftClicks) != 0)
         {
-            for (int step = y / kItemHeight; step > 0; --step)
-            {
-                int flag = role + Party::FirstRoleFlag;
+            const auto slot = static_cast<i32>(static_cast<u32>(y - page.unk4FD148) / kItemHeight);
 
-                do
-                {
-                    ++role;
-                    ++flag;
-                } while (!owner.state.GameFlag(flag));
-            }
-
-            if (page.target != role)
+            if (page.target != slot)
             {
-                page.target = role;
+                page.target = slot;
                 return;
             }
 
@@ -816,7 +769,11 @@ void Menu::ItemsDown()
             break;
 
         case kRoleCode:
-            page.target = NextRole(this->tabs, page.target, 1);
+            if (++page.target >= this->VisibleCount())
+            {
+                page.target = this->VisibleCount() - 1;
+            }
+
             owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
             break;
 
@@ -876,7 +833,11 @@ void Menu::ItemsUp()
             break;
 
         case kRoleCode:
-            page.target = NextRole(this->tabs, page.target, -1);
+            if (--page.target < 0)
+            {
+                page.target = 0;
+            }
+
             owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
             break;
 
@@ -934,7 +895,7 @@ void Menu::ItemsPageDown()
             break;
 
         case kRoleCode:
-            page.target = NextRole(this->tabs, Menu::Tabs, -1);
+            page.target = this->VisibleCount() - 1;
             owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
             break;
 
@@ -994,7 +955,7 @@ void Menu::ItemsPageUp()
             break;
 
         case kRoleCode:
-            page.target = NextRole(this->tabs, -1, 1);
+            page.target = 0;
             owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
             break;
 
@@ -1152,7 +1113,7 @@ void Menu::ItemsRight()
     page.glow = this->mode;
 }
 
-// swd3e.exe 0x0044F100: Shift: on the bestiary its next category
+// swd3e.exe 0x0044F100: Shift: on the bestiary its next category (0x00442020 and a second sound)
 void Menu::ItemsShift()
 {
     if (this->code >= kBestiaryCode)
@@ -1164,7 +1125,8 @@ void Menu::ItemsShift()
     this->itemsPage.glow = this->mode;
 }
 
-// swd3e.exe 0x0044F130: End: the next mode tab (wrapping); on the bestiary its next category
+// swd3e.exe 0x0044F130: End: the next mode tab (wrapping); on the bestiary its next category (0x00442020 and a
+// second sound)
 void Menu::ItemsEnd()
 {
     Game& owner = this->game;
@@ -1195,8 +1157,8 @@ void Menu::ItemsFreeTowns()
     this->towns.clear();
 }
 
-// The object of the chosen row used in the use mode (inline in 0x00446700): the save crystal opens the save slots,
-// the bestiary book the bestiary, the town warp its towns, an exit warp warps out at once, the follower whistle the
+// The object of the chosen row used in the use mode (inline in 0x0044F190): the save crystal opens the save slots,
+// the bestiary book the bestiary, the town warp its towns, the exit warp warps out at once, the follower whistle the
 // followers, the home charm sends the party back (none spent); another object works on every party role when its
 // script says so (one spent), otherwise a role is chosen for it
 void Menu::ItemsUse(ItemNode& node)
@@ -1214,6 +1176,7 @@ void Menu::ItemsUse(ItemNode& node)
     switch (node.id)
     {
         case kSaveItem:
+            // As the original, the save slots are set up by 0x004510F0 and here again.
             this->ItemsSave();
             owner.menuMode = Menu::ItemSaveMode;
             owner.saveScreenPage = 1;
@@ -1249,7 +1212,6 @@ void Menu::ItemsUse(ItemNode& node)
             return;
 
         case kExitWarpItem:
-        case kOtherExitWarpItem:
         {
             const std::size_t warp = owner.state.GameFlag(kExitWarpBlocked) ? 0 : this->FindExitWarp(owner.currentMap);
 
@@ -1408,11 +1370,8 @@ void Menu::ItemsSelect()
             {
                 if (chosen != nullptr && (chosen->record.data.usableBy & kUseMask) >= kUsedOnRole)
                 {
-                    ApplyObject(
-                        owner.party.roles[static_cast<std::size_t>(std::clamp(page.target, 0, Menu::Tabs - 1))],
-                        chosen->record.data,
-                        owner.database
-                    );
+                    const int role = this->VisibleRole(page.target);
+                    ApplyObject(owner.party.roles[static_cast<std::size_t>(role)], chosen->record.data, owner.database);
 
                     if ((chosen->record.data.kind & kNotSpentKind) == 0 &&
                         AddItem(this->itemObjects, chosen->id, -1, ItemCountMode::Pending, owner.database) == nullptr)
@@ -1464,10 +1423,17 @@ void Menu::ItemsSelect()
         {
             Role role;
 
-            if (owner.LoadRoleRecord(role, static_cast<u16>(page.followerRow + kFirstFollower)) == GameState::NotFound)
+            const auto id = static_cast<u16>(page.followerRow + kFirstFollower);
+
+            if (owner.LoadRoleRecord(role, id) == GameState::NotFound)
             {
-                // swd32.exe 0x00446E7A (unmatched in swd3e): 0x004A6FA8 + 0x004A6FB8
-                DebugLog(u8"靈界指標問題 Maps找不到這個指標 [%d]", page.followerRow);
+                ErrorBox(
+                    owner.errors,
+                    u8"靈界指標問題",
+                    u8"Maps找不到這個指標 [%d] [角色號碼找不到 %d]",
+                    page.followerRow,
+                    page.followerRow + kFirstFollower
+                );
                 this->code = kListCode;
             }
             else
@@ -2057,7 +2023,7 @@ void Menu::ItemsDraw()
             kRoleBoxX,
             top,
             kRoleBoxWidth,
-            kRoleBoxHeight,
+            kItemHeight * this->VisibleCount() + kRoleBoxExtra,
             kRoleBoxRed,
             kRoleBoxGreen,
             kRoleBoxBlue,
@@ -2072,24 +2038,20 @@ void Menu::ItemsDraw()
             kRoleFrameLeft,
             top + kRoleFrameDown,
             kRoleFrameRight,
-            top + kRoleFrameBottom,
+            top + kItemHeight * this->VisibleCount() + kRoleFrameExtra,
             0,
             kFrameBorder
         );
         int y = top;
 
-        for (int role = 0; role < Menu::Tabs; ++role)
+        for (int slot = 0; slot < this->VisibleCount(); ++slot)
         {
-            if (this->tabs[static_cast<std::size_t>(role)].role == Menu::NoRole)
-            {
-                continue;
-            }
-
+            const int role = this->VisibleRole(slot);
             int shift = 0;
             owner.mediumFont.SetBackground(TextFont::NoBackground);
             textColor = gray;
 
-            if (role == page.target)
+            if (slot == page.target)
             {
                 if (this->code == kRoleCode)
                 {
@@ -2109,7 +2071,7 @@ void Menu::ItemsDraw()
                 kPanelStyle
             );
 
-            if (role == page.target && this->code == kRoleCode)
+            if (slot == page.target && this->code == kRoleCode)
             {
                 FillBox(
                     painter,
@@ -2185,9 +2147,8 @@ void Menu::ItemsDraw()
     }
 }
 
-// swd32.exe 0x00447FD0 (unmatched in swd3e): the rows shown from the first one shown (at most 13); the original also
-// numbers them from 100
-// in a table at 0x004A6A00, ended by 0, that nothing reads
+// The rows shown from the first one shown (at most 13); the original also numbers them from 100 in a table at
+// 0x004BE59C, ended by 0, that nothing reads (inline in 0x00450D20)
 void Menu::ItemsCountShown()
 {
     InventoryPage& page = this->itemsPage;
@@ -2346,9 +2307,9 @@ void Menu::ItemsReturn()
     }
 }
 
-// swd3e.exe 0x00450E50: the chosen follower (role 0x47 on) sent away (its record moved to map 1000, its roles on the
-// map removed; false) or called to the controlled role's tile (its action from its place in the list, the controlled
-// role's direction; its record on this map, placed on the map, replacing its role there; true)
+// swd3e.exe 0x00450E50: the chosen follower (role 0x281 on) sent away (its record moved to map 1000, its roles on the
+// map removed and taken off their lines; false) or called to the controlled role's tile (its action from its place in
+// the list, the controlled role's direction; its record on this map, placed on the map, replacing its role there; true)
 bool Menu::ItemsCallFollower()
 {
     Game& owner = this->game;
@@ -2391,6 +2352,7 @@ bool Menu::ItemsCallFollower()
                 owner.field.ClearRoleCells(placed, owner.partyLeaderId);
                 placed.flags |= Role::Removed;
                 owner.field.RemoveRole(placed.id, static_cast<int>(placed.flags & Role::LayerMask), 0, 1);
+                owner.field.UnlinkRole(placed, static_cast<int>(placed.flags & Role::LayerMask));
             }
         }
 
@@ -2440,11 +2402,12 @@ bool Menu::ItemsCallFollower()
     return true;
 }
 
-// swd3e.exe 0x004510F0: the save crystal used: the inventory and the page's list kept (the list back in the
-// inventory meanwhile), the save slots opened in the items page's mode
+// swd3e.exe 0x004510F0: the save crystal used: one crystal taken from the page's list, the inventory and the list
+// kept (the list back in the inventory meanwhile), the save slots opened in the items page's mode
 void Menu::ItemsSave()
 {
     Game& owner = this->game;
+    AddItem(this->itemObjects, kSaveItem, -1, ItemCountMode::Pending, owner.database);
     this->savedInventory = CopyItemList(owner.party.inventory);
     this->savedItems = CopyItemList(this->itemObjects);
     this->ItemsReturn();

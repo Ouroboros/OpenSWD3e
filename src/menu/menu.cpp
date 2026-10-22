@@ -391,6 +391,12 @@ int Menu::VisibleRole(int slot) const
     return this->visibleRoles[static_cast<std::size_t>(slot)];
 }
 
+// swd3e.exe 0x00441980: the roles with a tab (counted by ListPartyRoles)
+int Menu::VisibleCount() const
+{
+    return this->visibleCount;
+}
+
 // swd3e.exe 0x00440570: `text` in `font` with a shadow two pixels right and one down, the text drawn twice a pixel
 // apart (bold)
 void Menu::DrawShadowText(int x, int y, Pixel color, Pixel shadow, std::string_view text, TextFont& font)

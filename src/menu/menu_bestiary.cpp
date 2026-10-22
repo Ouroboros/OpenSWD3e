@@ -500,7 +500,7 @@ void Menu::BestiaryRight()
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
-// swd32.exe 0x0043C7E0 (unmatched in swd3e): Shift (and a click on the tabs): the next category, with a second sound
+// Shift (and a click on the tabs): the next category, with a second sound (inline in 0x0044F100 and 0x0044F130)
 void Menu::BestiaryShift()
 {
     Game& owner = this->game;

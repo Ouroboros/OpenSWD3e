@@ -218,23 +218,22 @@ struct InventoryPage
     static constexpr i32 Unk4FC3DC = 2;
     static constexpr u16 FirstRowNumber = 0x64;
 
-    i32 openedAt = 0;         // swd32 0x004FD088 the frame before the page opened
+    i32 openedAt = 0;         // 0x0050BBE0 the frame before the page opened
     i32 category = 0;         // 0x0050BBEC 0..6
     i32 unk4FD160 = 0;        // 0x0050BCC4 (only cleared)
-    i32 roles = 0;            // swd32 0x004FD09C the party roles
-    i32 target = 0;           // swd32 0x004FD0A0 the role an object is used on
-    i32 followers = 0;        // swd32 0x004FD090 the followers that can be called
-    i32 followerRow = 0;      // swd32 0x004FD0A4
-    i32 followerPresent = 0;  // swd32 0x004FD154 the follower chosen is called
-    i32 discardChoice = 0;    // swd32 0x004FD144 0: yes, 1: no
-    i32 unk4FD148 = 0;        // swd32 0x004FD148 the top of the role box below its first row, the follower box's choice
-    i32 glow = 0;             // swd32 0x004FD14C the mode tab drawn raised (0x23..0x26 after sorting)
-    u16 arrows = 0;           // swd32 0x004FD158 frames the arrows stay pressed: the list's (bits 0..7), the towns'
+    i32 target = 0;           // 0x0050BBF8 the slot of the visible role an object is used on
+    i32 followers = 0;        // 0x0050BBE8 the followers that can be called
+    i32 followerRow = 0;      // 0x0050BBFC
+    i32 followerPresent = 0;  // 0x0050BCB8 the follower chosen is called
+    i32 discardChoice = 0;    // 0x0050BCA8 0: yes, 1: no
+    i32 unk4FD148 = 0;        // 0x0050BCAC the top of the role box below its first row, the follower box's choice
+    i32 glow = 0;             // 0x0050BCB0 the mode tab drawn raised (0x23..0x26 after sorting)
+    u16 arrows = 0;           // 0x0050BCBC frames the arrows stay pressed: the list's (bits 0..7), the towns'
     u16 unk4FD1F0 = 0;        // 0x0050BD58 (only cleared)
-    i32 unk4FC3D0 = 0;        // swd32 0x004FC3D0 (only set)
-    i32 unk4FC3D4 = 0;        // swd32 0x004FC3D4
-    i32 unk4FC3DC = 0;        // swd32 0x004FC3DC
-    std::array<u16, 14> rowNumbers = {};  // swd32 0x004A6A00 the rows shown numbered from 100, ended by 0 (never read)
+    i32 unk4FC3D0 = 0;        // 0x0050AD78 (only set)
+    i32 unk4FC3D4 = 0;        // 0x0050AD7C
+    i32 unk4FC3DC = 0;        // 0x0050AD84
+    std::array<u16, 14> rowNumbers = {};  // 0x004BE59C the rows shown numbered from 100, ended by 0 (never read)
 };
 
 // An object of the ghost page's list (0x80 bytes, 64 of them at 0x0050BAA4, swd3e): an inventory object of the tab's
@@ -399,6 +398,7 @@ public:
     void DrawPageTitle();
     int ListPartyRoles();
     int VisibleRole(int slot) const;
+    int VisibleCount() const;
     void DrawShadowText(int x, int y, Pixel color, Pixel shadow, std::string_view text, TextFont& font);
     void DrawRoleTabs(int offset, int mode);
     void ItemsAfterSave(int saved);

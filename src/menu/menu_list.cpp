@@ -17,7 +17,7 @@ namespace
 
 constexpr i32 kItemsBackground = 0x43;  // Menu::background action of the items page
 constexpr int kItemRows = 0xD;
-constexpr u16 kSaveItem = 0x2D9;
+constexpr u16 kSaveItem = 0xC10;
 constexpr u8 kUnkSettings = 0x64;  // written as unk14 by the settings
 constexpr int kBarBoxLeft = 4;     // DrawScrollBar
 constexpr int kBarBoxUp = 0xC;
@@ -248,8 +248,9 @@ std::string FitMenuList(MenuList& view, ItemLink& list, int rows, Database& data
 }
 
 // swd3e.exe 0x00451160: back on the items page after its save slots: the inventory and the page's list kept by
-// 0x004485F0 come back, the view is fitted (13 rows) and the chosen object described; `saved` 1 adds one less of
-// object 0x2D9 to the list (inferred: the item spent on the save)
+// 0x004510F0 come back, the view is fitted (13 rows) and the chosen object described; without a save (`saved` not 1)
+// the crystal taken comes back. The list then goes back into the inventory and is made again from its category (the
+// description stays the one of the row chosen before).
 void Menu::ItemsAfterSave(int saved)
 {
     Game& owner = this->game;
@@ -261,10 +262,13 @@ void Menu::ItemsAfterSave(int saved)
     const ItemNode* chosen = ItemAfter(this->itemList.row + this->itemList.top, this->itemObjects);
     this->description = chosen != nullptr ? ObjectDescription(owner.databases.mapsData, chosen->id) : std::string();
 
-    if (saved == 1)
+    if (saved != 1)
     {
-        AddItem(this->itemObjects, kSaveItem, -1, ItemCountMode::Pending, owner.database);
+        AddItem(this->itemObjects, kSaveItem, 1, ItemCountMode::Pending, owner.database);
     }
+
+    this->ItemsReturn();
+    this->ItemsFill();
 }
 
 // swd3e.exe 0x00452970: the options page left: its list freed and the settings written (to [game], Env.dat in the
