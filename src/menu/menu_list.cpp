@@ -37,7 +37,8 @@ constexpr int kDownPressed = 2;
 }  // namespace
 
 // `node` inserted into `list` before the first node of an id not below its own that follows one below it (inline in
-// 0x0043F0D0, 0x0043F160 and 0x00441F70; the head counts as id 0)
+// the menu's lists, e.g. 0x00446E40; the head counts as id 0: the word after the list's pointer, 0x0050B834 there,
+// is never written)
 void InsertItemById(ItemLink& list, std::unique_ptr<ItemNode> node)
 {
     ItemLink* link = &list;

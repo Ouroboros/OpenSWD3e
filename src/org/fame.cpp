@@ -218,6 +218,27 @@ i16 FindCounterPercent(CounterList& list, i16 id)
     return node != nullptr ? static_cast<i16>(node->percent) : i16{0};
 }
 
+// swd3e.exe 0x0048A7A0: the percent of counter `id` and its share of the object's unk42 (percent times unk42, as a
+// word, over 100); every node of the id from the head on is looked at, the last one counting; both are left as they
+// are without one
+void FindCounterShare(CounterList& list, u16 id, u16& percent, u16& share, Database& database)
+{
+    constexpr u16 kHundred = 100;
+
+    for (const CounterNode* node = &list; node != nullptr; node = node->next.get())
+    {
+        if (static_cast<u16>(node->id) != id)
+        {
+            continue;
+        }
+
+        percent = node->percent;
+        database.LoadObject(database.scratch, id);
+        Database::FreeDescription(database.scratch);
+        share = static_cast<u16>(static_cast<u16>(node->percent * database.scratch.data.unk42) / kHundred);
+    }
+}
+
 // swd3e.exe 0x0048A810: sets the proficiency `id` to `value`, at most the limit of the object (+0x44 of its record)
 // with its percent; a finished one (done) is left. The search starts at the head while the list is empty and at the
 // first node otherwise.

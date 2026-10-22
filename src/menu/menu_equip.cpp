@@ -4,7 +4,7 @@
 #include <span>
 #include <string>
 
-#include "core/debug_log.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "draw/painter.h"
 #include "font/text_font.h"
@@ -31,12 +31,11 @@ constexpr int kFirstMagicSlot = 7;
 constexpr int kSecondMagicSlot = 8;
 constexpr int kFirstGuardSlot = 9;
 constexpr int kSecondGuardSlot = 0xA;
-constexpr int kResistanceSlots = 9;  // the resistances show for the first nine slots
+constexpr int kResistanceSlots = 9;  // the slots whose objects add to the resistances (0x00447E40)
 constexpr i32 kDescriptionStage = 5;
 constexpr i32 kRefusedStage = 0xF;
 constexpr i32 kNoStage = -1;
 constexpr u32 kKindTopBit = 0x8000;
-constexpr u16 kRoleMask = 3;
 constexpr int kWordShift = 16;
 constexpr u32 kWordMask = 0xFFFF;
 constexpr i32 kDescriptionSlide = 0x100;
@@ -52,7 +51,9 @@ constexpr std::size_t kDefenseBonusStat = 0x10;
 constexpr std::size_t kPercentStat = 0x11;
 constexpr std::size_t kProficiencyStat = 0x12;
 constexpr std::size_t kFameStat = 0x13;
+constexpr std::size_t kShareStat = 0x14;
 constexpr i32 kFamePercent = 5;
+constexpr u32 kHighWord = 0xFFFF0000;  // the extra figures are written as words over -1
 
 constexpr u16 kMoveSound = 0x2E;
 constexpr u16 kRoleSound = 0x107;
@@ -89,37 +90,23 @@ constexpr u32 kDescribeTop = 0x1D0;
 constexpr u32 kDescribeBottom = 0x1E0;
 constexpr u32 kDescribeLeft = 0x216;
 constexpr u32 kDescribeRight = 0x260;
-constexpr i32 kFacesTop = 0xA;
-constexpr i32 kFacesBottom = 0x1D4;
-constexpr i32 kFacesLeft = 4;
-constexpr i32 kFacesRight = 0xBC;
-constexpr i32 kFaceHeight = 0x6E;
+// The role tabs above the page (0x00445800): a click on the first sets the tab before the first and steps on.
+constexpr i32 kTabsTop = 0x10;
+constexpr i32 kTabsBottom = 0x30;
+constexpr std::array<i32, 3> kTabLeft = {0x28, 0x5A, 0x8C};
+constexpr i32 kTabWidth = 0x20;
 
 // The texts.
-// swd32.exe 0x004A6E4C (unmatched in swd3e)
-constexpr std::u8string_view kNoObjects = u8"沒有物品";
-// swd32.exe 0x0049F9FC (unmatched in swd3e)
-constexpr std::u8string_view kEmptyName = u8"無";
-// swd32.exe 0x004A6E18 (unmatched in swd3e)
-constexpr std::u8string_view kBareHanded = u8"無法空手戰鬥";
-// swd32.exe 0x004A6E80 (unmatched in swd3e)
-constexpr std::u8string_view kElementsTop = u8"火       冰       風       土       毒";
-// swd32.exe 0x004A6E60 (unmatched in swd3e)
-constexpr std::u8string_view kElementsBottom = u8"光       暗       電       物";
-// swd32.exe 0x004A6E40 (unmatched in swd3e)
-constexpr std::u8string_view kWeakFormat = u8"損%2d0%%";
-// swd32.exe 0x004A6E34 (unmatched in swd3e)
-constexpr std::u8string_view kResistFormat = u8"抗%2d0%%";
-// swd32.exe 0x004A6E28 (unmatched in swd3e)
-constexpr std::u8string_view kAbsorbFormat = u8"吸%2d0%%";
-constexpr std::string_view kNoResistance = "------";
-constexpr std::u8string_view kAttackLabel = u8" 攻擊";   // swd32.exe 0x004A6F08 (unmatched in swd3e)
-constexpr std::u8string_view kDefenseLabel = u8" 防禦";  // swd32.exe 0x004A6EF0 (unmatched in swd3e)
-constexpr std::u8string_view kAgilityLabel = u8" 敏捷";  // swd32.exe 0x004A6EE8 (unmatched in swd3e)
-constexpr std::u8string_view kSkillLabel = u8" 熟練";    // swd32.exe 0x004A6EE0 (unmatched in swd3e)
-constexpr std::u8string_view kGrowthLabel = u8" 成長";   // swd32.exe 0x004A6ED8 (unmatched in swd3e)
-constexpr std::u8string_view kKnownLabel = u8" 辨識";    // swd32.exe 0x004A6EC0 (unmatched in swd3e)
-// The names of the slots (swd32.exe 0x004A6F1C..0x004A6F5C, built on the stack in this order).
+constexpr std::u8string_view kNoObjects = u8"沒有物品";       // 0x004BEA88
+constexpr std::u8string_view kEmptyName = u8"無";             // 0x004AF630
+constexpr std::u8string_view kBareHanded = u8"無法空手戰鬥";  // 0x004BEA94
+constexpr std::u8string_view kAttackLabel = u8" 攻擊";        // 0x004BEB14
+constexpr std::u8string_view kDefenseLabel = u8" 防禦";       // 0x004BEAFC
+constexpr std::u8string_view kAgilityLabel = u8" 敏捷";       // 0x004BEAF4
+constexpr std::u8string_view kSkillLabel = u8" 熟練";         // 0x004BEAEC
+constexpr std::u8string_view kGrowthLabel = u8" 成長";        // 0x004BEAD4
+constexpr std::u8string_view kKnownLabel = u8" 辨識";         // 0x004BEABC
+// The names of the slots (0x004BEB30..0x004BEB68, built on the stack in this order).
 constexpr std::array<std::u8string_view, kLastSlot + 1> kSlotNames = {
     u8"武器",
     u8"頭部",
@@ -141,24 +128,14 @@ constexpr std::string_view kStatFormat = "%-6s%5d";
 constexpr std::string_view kNumberFormat = "%d";
 constexpr std::string_view kNewValueFormat = "%-5d";
 constexpr std::string_view kPercentFormat = "%-6s%5d%%";
+constexpr std::string_view kSkillFormat = "%-6s%5d%% +%d";
 constexpr std::string_view kGrowthFormat = "%-6s%5d/%-5d";
 
 // The layout.
 constexpr u32 kTextRed = 0x19;
 constexpr u32 kTextGreen = 0x17;
 constexpr u32 kTextBlue = 0x11;
-constexpr u32 kBlueRed = 2;
-constexpr u32 kBlueGreen = 0xE;
-constexpr u32 kBlueBlue = 0x1D;
-constexpr u32 kRedRed = 0x1C;
-constexpr u32 kRedGreen = 2;
-constexpr u32 kRedBlue = 2;
-constexpr u32 kGreenRed = 2;
-constexpr u32 kGreenGreen = 0x1C;
-constexpr u32 kGreenBlue = 0xD;
-constexpr u32 kGrey = 0x10;
-constexpr std::size_t kTopColor =
-    6;  // swd32.exe 0x0049E0E0 (unmatched in swd3e): the low word of TextColors::primary[6] (converted at start)
+constexpr std::size_t kTopColor = 6;  // 0x004AF738: the low word of TextColors::primary[6] (converted at start)
 constexpr int kDim = -4;
 constexpr int kPanelStyle = 4;
 constexpr int kFrameBorder = static_cast<int>(0x80000008);
@@ -178,21 +155,25 @@ constexpr i32 kListStartX = 0x1E8;
 constexpr i32 kListStartY = 0x78;
 constexpr i32 kFaceAct = 0x232A;
 constexpr i32 kFirstFaceAction = 0x2D;
-constexpr int kFirstFaceX = 0x14A;
-constexpr int kSecondFaceX = 0x1AE;
-constexpr int kThirdFaceX = 0x212;
+constexpr int kFirstFaceX = 0xC8;
+constexpr int kSecondFaceX = 0x140;
+constexpr int kThirdFaceX = 0x1B8;
 constexpr int kFacesY = 0x3E;
-constexpr int kNameBoxLeft = 0xD0;
-constexpr int kNameBoxTop = 0x3C;
-constexpr int kNameBoxRight = 0x13C;
-constexpr int kNameBoxBottom = 0x50;
-constexpr int kNameX = 0xD4;
-constexpr int kNameY = 0x3D;
 constexpr int kHelpBoxX = 0xD0;
-constexpr int kHelpBoxY = 0x1B4;
-constexpr int kHelpBoxWidth = 0x19E;
-constexpr int kHelpBoxHeight = 0x1E;
-constexpr int kHelpBoxMode = 2;
+constexpr int kHelpBoxY = 0x1BA;
+constexpr int kHelpBoxWidth = 0x190;
+constexpr int kHelpBoxHeight = 0x24;
+constexpr int kHelpBoxBlue = 0x48;
+constexpr int kHelpFrameLeft = 0xD8;
+constexpr int kHelpFrameTop = 0x1C2;
+constexpr int kHelpFrameRight = 0x258;
+constexpr int kHelpFrameBottom = 0x1D6;
+constexpr int kHelpClipX = 0xD4;
+constexpr int kHelpClipY = 0x1C2;
+constexpr int kHelpClipWidth = 0x188;
+constexpr int kHelpClipHeight = 0x19;
+constexpr int kHelpTextX = 0xDA;
+constexpr int kHelpTextY = 0x1C4;
 constexpr int kListBoxLeft = 0x24;
 constexpr int kStatsBoxY = 0x152;
 constexpr int kStatsBoxWidth = 0xAA;
@@ -210,7 +191,7 @@ constexpr int kSlotsWidth = 0xFC;
 constexpr int kListBoxUp = 0x10;
 constexpr int kListBoxWidth = 0x96;
 constexpr int kListBoxHeight = 0xD2;
-constexpr i32 kPictureAction = 0x44;
+constexpr i32 kPictureAction = 0x3B;
 constexpr i32 kButtonAction = 0x20;
 constexpr int kButtonX = 0x21C;
 constexpr int kButtonY = 0x1D4;
@@ -229,14 +210,6 @@ constexpr int kBarHeight = 0xBA;
 constexpr int kSecondBarOffsetX = 0xC4;
 constexpr int kSecondBarDown = 9;
 constexpr int kSecondBarHeight = 0xCA;
-constexpr int kElementsX = 0xD8;
-constexpr int kElementsY = 0x1B0;
-constexpr int kElementLine = 0x14;
-constexpr int kElementStep = 0x51;
-constexpr int kElementValuesX = 0xF0;
-constexpr int kElementValuesY = 0x1B5;
-constexpr int kElementsPerLine = 5;
-constexpr i32 kAbsorbFrom = -0xA;
 constexpr int kRefusedX = 0xFE;
 constexpr int kRefusedY = 0xE4;
 constexpr int kRefusedWidth = 0x84;
@@ -248,25 +221,30 @@ constexpr int kSlotTextDown = 2;
 constexpr int kSlotHighlightNarrow = 0x16;
 constexpr i32 kSlotPicturesAction = 0xD;
 constexpr int kSlotPictureX = 0x38;
-constexpr std::array<u16, 8> kSlotPictures = {3, 0, 1, 6, 4, 7, 5, 2};
+// The slot pictures 0..7 of act 0x232A action 0xD, beside the slots 0..5, 7 and 9.
 constexpr std::array<int, 8> kSlotPictureY = {6, 0x22, 0x3E, 0x5A, 0x76, 0x92, 0xCA, 0x102};
 constexpr int kStatsX = 0x1C8;
 constexpr int kAttackY = 0x152;
 constexpr int kDefenseY = 0x166;
 constexpr int kAgilityY = 0x17A;
 constexpr int kExtraY = 0x18E;
-constexpr int kAttackTopX = 0x17C;
-constexpr int kDefenseTopX = 0x1E0;
-constexpr int kAgilityTopX = 0x244;
+constexpr int kAttackTopX = 0xFA;
+constexpr int kDefenseTopX = 0x172;
+constexpr int kAgilityTopX = 0x1EA;
 constexpr int kArrowX = 0x22E;
 constexpr int kNewValueX = 0x23E;
-constexpr u16 kUpArrow = 0x2463;  // the object tried raises the value
-constexpr u16 kDownArrow = 0x2465;
+constexpr u16 kUpArrow = 0x235E;  // the object tried raises the value (picture 0 of the file)
+constexpr u16 kDownArrow = 0x235F;
+
+// The resistances (0x00447E40).
+constexpr std::size_t kShownResistances = 5;    // Menu::roleResistances: the first five of RoleRecord::resistances
+constexpr std::size_t kObjectElementFirst = 4;  // ObjectData::resistances from here by element
+constexpr i32 kMagicResistancePercent = 0x50;   // a magic's resistance: this percent of its proficiency
+constexpr i32 kResistanceTop = 100;
 
 }  // namespace
 
-// swd32.exe 0x00440630 (unmatched in swd3e): the equipment page opened (on the first role when no tab is raised): the
-// list of the first
+// swd3e.exe 0x00445640: the equipment page opened (on the first tab when none is raised): the list of the first
 // slot, the stats, its description
 void Menu::EquipEnter()
 {
@@ -310,8 +288,8 @@ void Menu::EquipEnter()
     page.listY = kListStartY;
 }
 
-// swd32.exe 0x00440750 (unmatched in swd3e): the equipment page left: the list's objects back in the inventory, every
-// slot's count 1 again
+// The equipment page left (the tail chunk 0x00445760 of 0x004465D0, also the page's leave handler): the list's
+// objects back in the inventory, every slot's count 1 again
 void Menu::EquipLeave()
 {
     Game& owner = this->game;
@@ -353,10 +331,18 @@ void Menu::EquipDescribeRow()
         chosen != nullptr ? ObjectDescription(this->game.databases.mapsData, chosen->id) : std::string();
 }
 
+// The party role of the tab raised (0x00441960 of Menu::roleTab, inline in the equipment page). Past the roles
+// listed the original reads before the party's records; here the first role is taken.
+int Menu::EquipRole() const
+{
+    const int role = this->VisibleRole(this->roleTab);
+    return role >= 0 && role < Party::Roles ? role : 0;
+}
+
 // The object in the slot chosen of the role chosen (inline in the equipment page).
 ItemNode* Menu::EquipSlotNode()
 {
-    const auto at = static_cast<std::size_t>(Party::SlotsPerRole * this->roleTab + this->equip.slot);
+    const auto at = static_cast<std::size_t>(Party::SlotsPerRole * this->EquipRole() + this->equip.slot);
     std::array<std::unique_ptr<ItemNode>, Party::Roles * Party::SlotsPerRole>& equipment = this->game.party.equipment;
     return at < equipment.size() ? equipment[at].get() : nullptr;
 }
@@ -368,7 +354,8 @@ void Menu::EquipTake(ItemLink& source, int slot)
     EquipPage& page = this->equip;
     page.objects.reset();
     const u32 kind = Party::SlotKinds[static_cast<std::size_t>(std::clamp(slot, 0, kLastSlot))];
-    const u16 role = static_cast<u16>(ObjectData::FirstRoleBit >> std::min<u16>(this->roleTab, Party::Roles - 1));
+    // 0x004AACCC: the role bits by party role
+    const u16 role = static_cast<u16>(ObjectData::FirstRoleBit >> this->EquipRole());
     ItemLink* link = &source;
 
     while (*link != nullptr)
@@ -387,7 +374,7 @@ void Menu::EquipTake(ItemLink& source, int slot)
     }
 }
 
-// swd32.exe 0x00442020 (unmatched in swd3e): the rows shown from the first one shown (at most ten)
+// The rows shown from the first one shown (at most ten) (inline in 0x00446F30)
 void Menu::EquipCountShown()
 {
     EquipPage& page = this->equip;
@@ -448,7 +435,7 @@ void Menu::EquipReturn()
 }
 
 // swd3e.exe 0x004478D0: the stats of the four roles as they wear their equipment, then of the role chosen with the
-// object tried, and the slot's extra figure
+// object tried, the slot's extra figure, the bonuses of the role's equipment and the four roles' resistances
 void Menu::EquipComputeStats()
 {
     EquipPage& page = this->equip;
@@ -459,8 +446,10 @@ void Menu::EquipComputeStats()
     }
 
     const ItemNode* tried = this->EquipTried();
-    this->EquipTryStats(this->roleTab, page.slot, page.stats[kTriedStats], tried);
+    this->EquipTryStats(this->EquipRole(), page.slot, page.stats[kTriedStats], tried);
     this->EquipExtraStats(tried, page.stats[kTriedStats]);
+    this->EquipSumBonuses();
+    this->EquipResistances();
 }
 
 // swd3e.exe 0x00447970: the object tried: the one in the slot, or the row chosen on the list
@@ -489,7 +478,7 @@ void Menu::EquipRoleStats(int role, EquipStats& stats)
 {
     Game& owner = this->game;
     EquipPage& page = this->equip;
-    page.worn = owner.party.roles[std::min<std::size_t>(this->roleTab, Party::Roles - 1)];
+    page.worn = owner.party.roles[static_cast<std::size_t>(this->EquipRole())];
 
     for (int slot = 0; slot < Party::SlotsPerRole; ++slot)
     {
@@ -510,7 +499,7 @@ void Menu::EquipTryStats(int role, int slot, EquipStats& stats, const ItemNode* 
 {
     Game& owner = this->game;
     EquipPage& page = this->equip;
-    page.worn = owner.party.roles[std::min<std::size_t>(this->roleTab, Party::Roles - 1)];
+    page.worn = owner.party.roles[static_cast<std::size_t>(this->EquipRole())];
     page.worn.attackBonus = 0;
     page.worn.defenseBonus = 0;
     stats.fill(0);
@@ -567,22 +556,37 @@ void Menu::EquipStatsOf(EquipStats& stats)
     std::copy(values.begin(), values.end(), stats.begin());
 }
 
-// swd3e.exe 0x00447BD0: the slot's extra figure of `tried`: a weapon its percent (the first counter list), a slot 7 or
-// 8 object its proficiency and maximum, a slot 9 or 10 object its fame; -1 for none
+// swd3e.exe 0x00447BD0: the slot's extra figure of `tried`: a weapon its percent and share (the first counter list,
+// written as words over -1, so a found percent keeps the high word 0xFFFF), a slot 7 or 8 object its proficiency and
+// maximum, a slot 9 or 10 object its fame; -1 for none
 void Menu::EquipExtraStats(const ItemNode* tried, EquipStats& stats)
 {
     Game& owner = this->game;
     const EquipPage& page = this->equip;
-    const bool present = tried != nullptr && tried->id != ItemNode::Empty;
     stats[kPercentStat] = -1;
+    stats[kProficiencyStat] = -1;
+    stats[kFameStat] = -1;
 
-    if (page.slot == kWeaponSlot && present)
+    if (tried == nullptr)
     {
-        stats[kPercentStat] =
-            static_cast<u16>(FindCounterPercent(owner.party.fame.lists[Fame::UnkList0], static_cast<i16>(tried->id)));
+        return;
     }
 
-    stats[kProficiencyStat] = -1;
+    const bool present = tried->id != ItemNode::Empty;
+
+    if (page.slot == kWeaponSlot)
+    {
+        if (!present)
+        {
+            return;
+        }
+
+        auto percent = static_cast<u16>(stats[kPercentStat]);
+        auto share = static_cast<u16>(stats[kShareStat]);
+        FindCounterShare(owner.party.fame.lists[Fame::UnkList0], tried->id, percent, share, owner.database);
+        stats[kPercentStat] = static_cast<i32>((static_cast<u32>(stats[kPercentStat]) & kHighWord) | percent);
+        stats[kShareStat] = static_cast<i32>((static_cast<u32>(stats[kShareStat]) & kHighWord) | share);
+    }
 
     if ((page.slot == kFirstMagicSlot || page.slot == kSecondMagicSlot) && present)
     {
@@ -592,8 +596,6 @@ void Menu::EquipExtraStats(const ItemNode* tried, EquipStats& stats)
         stats[kProficiencyStat] = static_cast<i32>(value | static_cast<u32>(maximum) << kWordShift);
     }
 
-    stats[kFameStat] = -1;
-
     if ((page.slot == kFirstGuardSlot || page.slot == kSecondGuardSlot) && present)
     {
         stats[kFameStat] =
@@ -601,13 +603,13 @@ void Menu::EquipExtraStats(const ItemNode* tried, EquipStats& stats)
     }
 }
 
-// swd32.exe 0x00442D70 (unmatched in swd3e): the maxima of the role chosen moved from what `removed` gives to what
-// `added` gives
-void Menu::EquipSwapVitals(const ItemNode& added, const ItemNode& removed)
+// swd3e.exe 0x00447CA0: the maxima of the role chosen moved from what `removed` gives to what `added` gives (nothing
+// added without one)
+void Menu::EquipSwapVitals(const ItemNode* added, const ItemNode& removed)
 {
     Game& owner = this->game;
     EquipPage& page = this->equip;
-    RoleRecord& role = owner.party.roles[std::min<std::size_t>(this->roleTab, Party::Roles - 1)];
+    RoleRecord& role = owner.party.roles[static_cast<std::size_t>(this->EquipRole())];
     page.worn = RoleRecord{};
 
     if (removed.id != ItemNode::Empty)
@@ -620,14 +622,111 @@ void Menu::EquipSwapVitals(const ItemNode& added, const ItemNode& removed)
     role.maxStamina = static_cast<i16>(role.maxStamina - page.worn.maxStamina);
     page.worn = RoleRecord{};
 
-    if (added.id != ItemNode::Empty)
+    if (added == nullptr)
     {
-        ApplyObject(page.worn, added.record.data, owner.database);
+        return;
+    }
+
+    if (added->id != ItemNode::Empty)
+    {
+        ApplyObject(page.worn, added->record.data, owner.database);
     }
 
     role.maxHitPoints = static_cast<i16>(role.maxHitPoints + page.worn.maxHitPoints);
     role.maxSpirit = static_cast<i16>(role.maxSpirit + page.worn.maxSpirit);
     role.maxStamina = static_cast<i16>(role.maxStamina + page.worn.maxStamina);
+}
+
+// swd3e.exe 0x00447DF0: the bonuses of the sixteen slots of the role chosen, from nothing
+void Menu::EquipSumBonuses()
+{
+    Game& owner = this->game;
+    EquipPage& page = this->equip;
+    page.bonuses = RoleRecord{};
+
+    for (int slot = 0; slot < Party::SlotsPerRole; ++slot)
+    {
+        const ItemNode* worn =
+            owner.party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * this->EquipRole() + slot)].get();
+
+        if (worn != nullptr)
+        {
+            ApplyObject(page.bonuses, worn->record.data, owner.database);
+        }
+    }
+}
+
+// swd3e.exe 0x00447E40: the first five resistances of each party role, the one of its element (RoleRecord::ElementAt)
+// raised by the objects of its first nine slots: a magic (slots 7 and 8) adds 80 percent of its proficiency (by its
+// act word) when it has a resistance of that element, the most 100; another adds its resistance of the element. The
+// sums are bytes and a negative one ends at 0.
+void Menu::EquipResistances()
+{
+    Game& owner = this->game;
+
+    for (int role = 0; role < Party::Roles; ++role)
+    {
+        const RoleRecord& record = owner.party.roles[static_cast<std::size_t>(role)];
+        std::array<i8, kShownResistances>& shown = this->roleResistances[static_cast<std::size_t>(role)];
+
+        for (std::size_t at = 0; at < kShownResistances; ++at)
+        {
+            shown[at] = static_cast<i8>(record.resistances[at]);
+        }
+
+        const auto element = static_cast<i8>(record.resistances[RoleRecord::ElementAt]);
+
+        // The original adds to the byte at the element past the five (into the next role's or beyond the table).
+        if (element < 0 || static_cast<std::size_t>(element) >= kShownResistances)
+        {
+            continue;
+        }
+
+        i8& value = shown[static_cast<std::size_t>(element)];
+
+        for (int slot = 0; slot < kResistanceSlots; ++slot)
+        {
+            const ItemNode* worn =
+                owner.party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * role + slot)].get();
+
+            if (worn == nullptr)
+            {
+                continue;
+            }
+
+            const u8 resistance =
+                worn->record.data.resistances[kObjectElementFirst + static_cast<std::size_t>(element)];
+
+            if (slot == kFirstMagicSlot || slot == kSecondMagicSlot)
+            {
+                const auto proficiency = static_cast<u16>(FindCounterPercent(
+                    owner.party.fame.lists[Fame::ProficiencyList],
+                    static_cast<i16>(worn->record.data.act)
+                ));
+
+                if (resistance == 0)
+                {
+                    continue;
+                }
+
+                value = static_cast<i8>(value + kMagicResistancePercent * proficiency / kResistanceTop);
+
+                if (value > kResistanceTop)
+                {
+                    value = static_cast<i8>(kResistanceTop);
+                }
+
+                continue;
+            }
+
+            value = static_cast<i8>(value + resistance);
+        }
+
+        if (value < 0)
+        {
+            value = 0;
+        }
+    }
 }
 
 // The list moved (inline in the equipment page's keys): the first row shown, the description and stats of the row.
@@ -799,7 +898,7 @@ void Menu::EquipRight()
     }
 }
 
-// swd3e.exe 0x00446060: Shift on the slots: the next role of the party
+// swd3e.exe 0x00446060: Shift on the slots: the next tab (past the roles with a tab back to the first)
 void Menu::EquipShift()
 {
     Game& owner = this->game;
@@ -810,14 +909,14 @@ void Menu::EquipShift()
         return;
     }
 
-    u16 role = static_cast<u16>((this->roleTab + 1) & kRoleMask);
+    // Menu::roleTab may be the tab before the first (a click on the first tab), which steps to 0 here.
+    this->roleTab = static_cast<u16>(this->roleTab + 1);
 
-    while (this->tabs[role].role == Menu::NoRole)
+    if (static_cast<i16>(this->roleTab) >= this->VisibleCount())
     {
-        role = static_cast<u16>((role + 1) & kRoleMask);
+        this->roleTab = 0;
     }
 
-    this->roleTab = role;
     this->EquipReturn();
     this->EquipFillList();
     FitListRow(page.count, page.top, page.row, page.shown);
@@ -869,7 +968,8 @@ void Menu::EquipSelect()
     }
 }
 
-// The row chosen put on (inline in 0x00441160, stage 1).
+// The row chosen put on (inline in 0x00446120, stage 1): nothing without a row; the weapon slot refuses the empty
+// entry.
 void Menu::EquipPutOn()
 {
     Game& owner = this->game;
@@ -877,7 +977,12 @@ void Menu::EquipPutOn()
     ItemNode* chosen = ItemAt(page.objects, static_cast<u16>(page.top + page.row));
     ItemNode* worn = this->EquipSlotNode();
 
-    if (chosen == nullptr || worn == nullptr || (page.slot == kWeaponSlot && chosen->id == ItemNode::Empty))
+    if (chosen == nullptr || worn == nullptr)
+    {
+        return;
+    }
+
+    if (page.slot == kWeaponSlot && chosen->id == ItemNode::Empty)
     {
         page.stage = kRefusedStage;
         owner.audio.PlaySound(kRefusedSound, owner.config.soundVolume);
@@ -890,7 +995,7 @@ void Menu::EquipPutOn()
     removed.count = worn->count;
     removed.pending = worn->pending;
     removed.record = worn->record;
-    this->EquipSwapVitals(*chosen, removed);
+    this->EquipSwapVitals(chosen, removed);
     worn->id = chosen->id;
     worn->record = chosen->record;
     worn->count = 1;
@@ -932,7 +1037,8 @@ void Menu::EquipPutOn()
     else
     {
         AddItem(page.takenOff, removed.id, 1, ItemCountMode::Count, owner.database);
-        DebugLog(u8"裝備道具歸還 卸下了種類不符的裝備(%d)", removed.id);  // 0x004A6DEC + 0x004A6DFC
+        // 0x004BEA5C, 0x004BEA6C
+        ErrorBox(owner.errors, u8"裝備道具歸還", u8"卸下了種類不符的裝備(%d)", removed.id);
     }
 
     page.count = CountItems(page.objects);
@@ -1081,12 +1187,8 @@ void Menu::EquipFrame()
         }
         else
         {
+            page.row = row > page.shown ? page.shown : row;
             this->EquipSelect();
-
-            if (row < page.shown)
-            {
-                page.row = row;
-            }
         }
 
         if (page.stage != kRefusedStage)
@@ -1150,26 +1252,25 @@ void Menu::EquipFrame()
         owner.input.PressKey(owner.config.keys[static_cast<std::size_t>(Button::F1)]);
     }
 
-    if ((clicks & kLeftClicks) != 0 && pointerY < kFacesBottom && pointerY > kFacesTop && pointerX < kFacesRight &&
-        pointerX > kFacesLeft)
+    if ((clicks & kLeftClicks) != 0 && page.stage == 0 && pointerY < kTabsBottom && pointerY > kTabsTop)
     {
-        if (page.stage == 1)
-        {
-            this->EquipCancel();
-        }
+        bool chosen = false;
 
-        if (page.stage == 0)
+        for (std::size_t tab = 0; tab < kTabLeft.size(); ++tab)
         {
-            const int face = (owner.state.pointerY - kFacesTop) / kFaceHeight;
-
-            if (owner.state.GameFlag(face + Party::FirstRoleFlag))
+            if (pointerX < kTabLeft[tab] + kTabWidth && pointerX > kTabLeft[tab])
             {
-                this->roleTab = static_cast<u16>(face - 1);
-                this->EquipShift();
+                // The tab before it is raised, then Shift steps on to it.
+                this->roleTab = static_cast<u16>(static_cast<int>(tab) - 1);
+                chosen = true;
             }
         }
 
-        return;
+        if (chosen)
+        {
+            this->EquipShift();
+            return;
+        }
     }
 
     back();
@@ -1184,9 +1285,6 @@ void Menu::EquipDraw()
     Game& owner = this->game;
     EquipPage& page = this->equip;
     const auto color = static_cast<Pixel>(owner.painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
-    const auto blue = static_cast<Pixel>(owner.painter.MakeColor(kBlueRed, kBlueGreen, kBlueBlue));
-    const auto red = static_cast<Pixel>(owner.painter.MakeColor(kRedRed, kRedGreen, kRedBlue));
-    const auto green = static_cast<Pixel>(owner.painter.MakeColor(kGreenRed, kGreenGreen, kGreenBlue));
     ActState& panel = owner.battleMessages.panelAct;
 
     if (static_cast<u32>(page.stage) <= 1 &&
@@ -1239,20 +1337,18 @@ void Menu::EquipDraw()
     owner.actDrawer.Draw(this->face, kSecondFaceX, kFacesY - slide);
     this->face.action = kFirstFaceAction + 2;
     owner.actDrawer.Draw(this->face, slide + kThirdFaceX, kFacesY - slide);
+    FillBox(owner.painter, kHelpBoxX, kHelpBoxY, kHelpBoxWidth, kHelpBoxHeight, 0, 0, kHelpBoxBlue, FillMode::Quarter);
     DrawWindowFrame(
         owner.painter,
         owner.archive,
         panel.frame,
-        kNameBoxLeft - slide,
-        kNameBoxTop - slide,
-        kNameBoxRight - slide,
-        kNameBoxBottom - slide,
+        kHelpFrameLeft,
+        kHelpFrameTop,
+        kHelpFrameRight,
+        kHelpFrameBottom,
         0,
         kFrameBorder
     );
-    const std::string name = owner.party.names[std::min<std::size_t>(this->roleTab, Party::Roles - 1)].FullName();
-    owner.mediumFont.DrawText(owner.drawSurface, kNameX - slide, kNameY - slide, name, color, kPanelStyle);
-    this->DrawBox(kHelpBoxX, slide + kHelpBoxY, kHelpBoxWidth, slide + kHelpBoxHeight, kHelpBoxMode, 0, 0, 0);
     this->DrawBox(
         page.listX + slide - kListBoxLeft,
         kStatsBoxY,
@@ -1418,59 +1514,11 @@ void Menu::EquipDraw()
         );
     }
 
-    if (shownObject != nullptr && shownObject->id != ItemNode::Empty && page.slot < kResistanceSlots)
+    if (shownObject != nullptr && shownObject->id != ItemNode::Empty)
     {
-        owner.mediumFont.DrawText(owner.drawSurface, kElementsX, slide + kElementsY, kElementsTop, color, kPanelStyle);
-        owner.mediumFont.DrawText(
-            owner.drawSurface,
-            kElementsX,
-            slide + kElementsY + kElementLine,
-            kElementsBottom,
-            color,
-            kPanelStyle
-        );
-        const auto grey = static_cast<Pixel>(owner.painter.MakeColor(kGrey, kGrey, kGrey));
-        Pixel shade = green;
-
-        for (std::size_t element = 0; element < shownObject->record.data.resistances.size(); ++element)
-        {
-            const auto value = static_cast<i8>(shownObject->record.data.resistances[element]);
-            std::string text;
-
-            if (value == 0)
-            {
-                text = std::string(kNoResistance);
-                shade = grey;
-            }
-
-            if (value > 0)
-            {
-                text = WinFormat(kWeakFormat, {static_cast<i32>(value)});
-                shade = red;
-            }
-
-            if (value < 0 && value > kAbsorbFrom)
-            {
-                text = WinFormat(kResistFormat, {-static_cast<i32>(value)});
-                shade = blue;
-            }
-
-            if (value <= kAbsorbFrom)
-            {
-                text = WinFormat(kAbsorbFormat, {kAbsorbFrom - static_cast<i32>(value)});
-                shade = green;
-            }
-
-            const auto index = static_cast<int>(element);
-            owner.smallFont.DrawText(
-                owner.drawSurface,
-                kElementStep * (index % kElementsPerLine) + kElementValuesX,
-                slide + kElementLine * (index / kElementsPerLine) + kElementValuesY,
-                text,
-                shade,
-                kPanelStyle
-            );
-        }
+        owner.mediumFont.SetClip(kHelpClipX, kHelpClipY, kHelpClipWidth, kHelpClipHeight);
+        owner.mediumFont.DrawText(owner.drawSurface, kHelpTextX, kHelpTextY, this->description, color, kPanelStyle);
+        owner.mediumFont.SetClip(0, 0, Display::Width, Display::Height);
     }
 
     if (page.described != nullptr)
@@ -1499,7 +1547,7 @@ void Menu::EquipDrawSlots(int x, int y, int slide, int width, int chosen)
         int shift = 0;
         Pixel rowColor = color;
         const ItemNode* worn =
-            owner.party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * this->roleTab + slot)].get();
+            owner.party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * this->EquipRole() + slot)].get();
         bool tint = page.stage > 0;
 
         if (chosen == slot)
@@ -1560,11 +1608,11 @@ void Menu::EquipDrawSlots(int x, int y, int slide, int width, int chosen)
     this->gauge.action = kSlotPicturesAction;
     owner.acts.Run(this->gauge);
 
-    for (std::size_t picture = 0; picture < kSlotPictures.size(); ++picture)
+    for (std::size_t picture = 0; picture < kSlotPictureY.size(); ++picture)
     {
         this->EquipDrawPicture(
             this->gauge.frame,
-            kSlotPictures[picture],
+            static_cast<u16>(picture),
             x - slide + kSlotPictureX,
             y + kSlotPictureY[picture]
         );
@@ -1574,13 +1622,14 @@ void Menu::EquipDrawSlots(int x, int y, int slide, int width, int chosen)
     this->gauge.action = kPictureAction;
 }
 
-// swd3e.exe 0x00447010: the attack, defence and agility of role `role` (with their equipment bonuses), each also over
-// the faces; where the object tried changes one, an arrow and the new value; then the slot's extra figure (a weapon's
-// skill, a magic's growth, a guard's recognition)
-void Menu::EquipDrawStats(int slot, int role)
+// swd3e.exe 0x00447010: the attack, defence and agility of the role of tab `tab` (with their equipment bonuses), each
+// also over the faces; where the object tried changes one, an arrow and the new value; then the slot's extra figure (a
+// weapon's skill and its share, a magic's growth, a guard's recognition)
+void Menu::EquipDrawStats(int slot, int tab)
 {
     Game& owner = this->game;
     const EquipPage& page = this->equip;
+    const int role = this->VisibleRole(tab);
     const EquipStats& now = page.stats[static_cast<std::size_t>(std::clamp(role, 0, Party::Roles - 1))];
     const EquipStats& tried = page.stats[kTriedStats];
     const auto color = static_cast<Pixel>(owner.painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
@@ -1645,7 +1694,12 @@ void Menu::EquipDrawStats(int slot, int role)
                 owner.drawSurface,
                 slide + kStatsX,
                 kExtraY,
-                WinFormat(kPercentFormat, {kSkillLabel, tried[kPercentStat]}),
+                WinFormat(
+                    kSkillFormat,
+                    {kSkillLabel,
+                     static_cast<i32>(static_cast<u16>(tried[kPercentStat])),
+                     static_cast<i32>(static_cast<u16>(tried[kShareStat]))}
+                ),
                 color,
                 kPanelStyle
             );

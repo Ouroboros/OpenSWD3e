@@ -38,10 +38,11 @@ i16 FindCounterValue(CounterList& list, i16 id);
 int StepCounterProgress(CounterList& list, i16 id, u16 maximum, u16 scale);
 void SetCounterProgress(CounterList& list, i16 id, u16 maximum, u16 value);
 i16 FindCounterPercent(CounterList& list, i16 id);
+void FindCounterShare(CounterList& list, u16 id, u16& percent, u16& share, Database& database);
 void SetProficiency(CounterList& list, u16 id, u16 value, Database& database);
 bool GetProficiency(CounterList& list, u16 id, u16& maximum, u16& value, Database& database);
 
-// The three counter lists saved with the game (0x004ACBA8, 0x004B9F00, 0x004B8A00; the last also holds the
+// The three counter lists saved with the game (0x004C6348, 0x004D3458, 0x004D1F58; the last also holds the
 // proficiencies).
 struct Fame
 {

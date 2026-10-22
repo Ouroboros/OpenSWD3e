@@ -116,39 +116,40 @@ struct AltarPage
 bool AltarTabTakes(const ItemNode& node, int tab);
 std::u8string_view CategoryName(u16 category);
 
-// The figures of a role on the equipment page (0x14 dwords): the vitals and maxima, the attributes, the word at
-// +0x20, the two equipment bonuses, then the slot's extra figures (percent, proficiency, fame).
-using EquipStats = std::array<i32, 0x14>;
+// The figures of a role on the equipment page (0x18 dwords, 0x60 bytes): the vitals and maxima, the attributes, the
+// word at +0x20, the two equipment bonuses, then the slot's extra figures (percent, proficiency, fame) and the
+// weapon's share (0x0048A7A0).
+using EquipStats = std::array<i32, 0x18>;
 
-// The equipment page (role page 0xC; 0x004FCD28..0x004FCF90): the eleven slots of a role and the inventory's objects
+// The equipment page (role page 0xC; 0x0050B7E8..0x0050BA74): the eleven slots of a role and the inventory's objects
 // that fit the slot chosen, with the stats each would give.
 struct EquipPage
 {
-    ItemLink takenOff;                           // swd32 0x004FCE20 where an object of another kind taken off goes
-    ItemNode* inventoryHead = nullptr;           // swd32 0x004FCED8 the inventory's first node when opened
-    i32 openedAt = 0;                            // swd32 0x004FCD28 Menu::frames when opened
-    i32 slide = 0;                               // swd32 0x004FCD2C the page slides in
-    i32 unk4FCD30 = 0;                           // swd32 0x004FCD30
-    i32 shown = 0;                               // swd32 0x004FCD34
-    i32 slot = 0;                                // swd32 0x004FCD38 0..10
-    i32 row = 0;                                 // swd32 0x004FCD3C
-    i32 listX = 0;                               // swd32 0x004FCD40
-    i32 listY = 0;                               // swd32 0x004FCD44
-    void (Menu::*savedBeforeFrame)() = nullptr;  // swd32 0x004FCD48
+    ItemLink takenOff;                           // 0x0050B8E8 where an object of another kind taken off goes
+    ItemNode* inventoryHead = nullptr;           // 0x0050B9B8 the inventory's first node when opened
+    i32 openedAt = 0;                            // 0x0050B7E8 Menu::frames when opened
+    i32 slide = 0;                               // 0x0050B7EC the page slides in
+    i32 unk4FCD30 = 0;                           // 0x0050B7F0
+    i32 shown = 0;                               // 0x0050B7F4
+    i32 slot = 0;                                // 0x0050B7F8 0..10
+    i32 row = 0;                                 // 0x0050B7FC
+    i32 listX = 0;                               // 0x0050B800
+    i32 listY = 0;                               // 0x0050B804
+    void (Menu::*savedBeforeFrame)() = nullptr;  // 0x0050B808
     RoleRecord worn;                             // 0x0050B80C the record the stats are computed in
     RoleRecord bonuses;                          // 0x0050B810 the bonuses of the role's equipment (0x00447DF0)
-    // swd32 0x004FCD54 0: the slots, 1: the list, 5: a description, 0xF: refused
+    // 0x0050B814 0: the slots, 1: the list, 5: a description, 0xF: refused
     i32 stage = 0;
-    ItemNode* described = nullptr;   // swd32 0x004FCD58
-    i32 unk4FCD5C = 0;               // swd32 0x004FCD5C
-    ItemNode* firstShown = nullptr;  // swd32 0x004FCD64
-    u16 scrollArrows = 0;            // swd32 0x004FCD68
+    ItemNode* described = nullptr;   // 0x0050B818
+    i32 unk4FCD5C = 0;               // 0x0050B81C
+    ItemNode* firstShown = nullptr;  // 0x0050B824
+    u16 scrollArrows = 0;            // 0x0050B828
     ItemLink objects;                // 0x0050B830 the objects that fit the slot
-    i32 top = 0;                     // swd32 0x004FCF88
+    i32 top = 0;                     // 0x0050BA6C
     std::array<EquipStats, Party::Roles + 1> stats =
-        {};                 // swd32 0x004FCF8C the four roles, then the role with the object tried
-    i32 count = 0;          // swd32 0x004FCF90
-    i32 previousStage = 0;  // swd32 0x004FCED0 the stage a description returns to
+        {};                 // 0x0050BA70 (allocated) the four roles, then the role with the object tried
+    i32 count = 0;          // 0x0050BA74
+    i32 previousStage = 0;  // 0x0050B9B0 the stage a description returns to
 };
 
 // The skills page (role page 0xD; 0x004FCF98..0x004FD080): a role's skills of one tab in two columns, used on the
@@ -518,7 +519,10 @@ public:
     void EquipTryStats(int role, int slot, EquipStats& stats, const ItemNode* tried);
     void EquipStatsOf(EquipStats& stats);
     void EquipExtraStats(const ItemNode* tried, EquipStats& stats);
-    void EquipSwapVitals(const ItemNode& added, const ItemNode& removed);
+    void EquipSwapVitals(const ItemNode* added, const ItemNode& removed);
+    void EquipSumBonuses();
+    void EquipResistances();
+    int EquipRole() const;
     void EquipListMoved(u16 arrows);
     void EquipSlotMoved();
     void EquipDown();
