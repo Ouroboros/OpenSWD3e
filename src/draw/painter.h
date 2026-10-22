@@ -157,6 +157,7 @@ public:
     void ConvertPixelsBack(std::span<u16> pixels) const;
     u32 MakeColor(u32 red, u32 green, u32 blue) const;
     const RleColors& Rle() const;
+    u16 SetRleFill(u16 fill);
     const ColorChannel& Red() const;
     const ColorChannel& Green() const;
     const ColorChannel& Blue() const;

@@ -376,6 +376,15 @@ const RleColors& Painter::Rle() const
     return this->rleColors;
 }
 
+// The fill colour of the RLE encoder and blitters (0x004EF588) set; its value before. The ghost page sets 0 while it
+// encodes its chart (0x00449840).
+u16 Painter::SetRleFill(u16 fill)
+{
+    const u16 before = this->rleColors.fill16;
+    this->rleColors.fill16 = fill;
+    return before;
+}
+
 const ColorChannel& Painter::Red() const
 {
     return this->red;

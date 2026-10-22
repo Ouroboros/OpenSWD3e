@@ -22,7 +22,7 @@ class Menu;
 class TextFont;
 class TextInput;
 
-// A role tab of the menus (0x1C bytes, four of them at 0x004A6A38): the role shown (0xFFFF: none), the box and the
+// A role tab of the menus (0x1C bytes, four of them at 0x004BE5D4): the role shown (0xFFFF: none), the box and the
 // three animations of the tab with their actions.
 struct MenuTab
 {
@@ -136,6 +136,7 @@ struct EquipPage
     i32 listY = 0;                               // swd32 0x004FCD44
     void (Menu::*savedBeforeFrame)() = nullptr;  // swd32 0x004FCD48
     RoleRecord worn;                             // 0x0050B80C the record the stats are computed in
+    RoleRecord bonuses;                          // 0x0050B810 the bonuses of the role's equipment (0x00447DF0)
     // swd32 0x004FCD54 0: the slots, 1: the list, 5: a description, 0xF: refused
     i32 stage = 0;
     ItemNode* described = nullptr;   // swd32 0x004FCD58
@@ -180,13 +181,6 @@ struct MenuTown
     u16 x = 0;
     u16 y = 0;
     std::string name;
-};
-
-// The status page (role page 0xE; 0x004FD2D8 and 0x004FD2DC): a role's record with its equipment.
-struct StatusPage
-{
-    RoleRecord bonus;  // swd32 0x004FD2D8 what the equipment gives
-    RoleRecord total;  // swd32 0x004FD2DC the record with it
 };
 
 // The system tab (role page 0xF; 0x004FD2E0..0x004FD3A8): save, load, the notes, the settings with the key setup, quit.
@@ -243,6 +237,88 @@ struct InventoryPage
     std::array<u16, 14> rowNumbers = {};  // swd32 0x004A6A00 the rows shown numbered from 100, ended by 0 (never read)
 };
 
+// An object of the ghost page's list (0x80 bytes, 64 of them at 0x0050BAA4, swd3e): an inventory object of the tab's
+// category with up to five skills it teaches the ghost (its itemA..C and healItemA..B objects), ended by SkillsEnd.
+struct GhostFood
+{
+    static constexpr std::size_t Skills = 5;
+    static constexpr i32 SkillsEnd = -1;
+    static constexpr i32 NoIcon = -1;
+
+    i32 id = 0;        // [0] (0: an unused entry)
+    i32 category = 0;  // [1] ObjectData::category
+    i32 level = 0;     // [2] ObjectData::level, what feeding it is worth
+    i32 count = 0;     // [3] the count and pending count
+    std::string name;  // [4]
+    // [5] the description buffer as the last object left it (never read)
+    std::string note;                                             // [6] the record's description
+    std::array<i32, Skills> skills = {};                          // [7..0xB]; the end mark of five lands in icons[0]
+    std::array<i32, Skills> icons = {};                           // [0xC..0x10] by the skill script's unk10
+    std::array<std::optional<std::string>, Skills> names;         // [0x11..0x15]
+    std::array<std::optional<std::string>, Skills> descriptions;  // [0x16..0x1A]
+    std::array<std::optional<std::string>, Skills> notes;         // [0x1B..0x1F]
+};
+
+// The ghost's skill slots as the ghost page shows them (0x80 bytes at 0x0050BAB8, swd3e): TalismanGhost::Skill 0..4
+// with their names ("無" when unknown), descriptions and notes.
+struct GhostSlots
+{
+    static constexpr std::size_t Slots = 5;
+
+    std::array<i32, Slots> skills = {};           // +0x1C
+    std::array<i32, Slots> icons = {};            // +0x30
+    std::array<std::string, Slots> names;         // +0x44
+    std::array<std::string, Slots> descriptions;  // +0x58
+    std::array<std::string, Slots> notes;         // +0x6C
+};
+
+// The talisman ghost's feeding page (role page 0xF; 0x0050BA78..0x0050BADC, swd3e): ten tabs of object categories, the
+// objects of the tab in the inventory, what each teaches, the ghost's three skill slots and its charts.
+struct GhostPage
+{
+    static constexpr i32 Tabs = 10;
+    static constexpr i32 Rows = 8;
+    static constexpr std::size_t Foods = 0x40;
+
+    // `stage`
+    enum Stage : i32
+    {
+        Fed = -1,        // a food was eaten: the next select steps on to Choosing
+        Choosing = 0,    // the list of the tab
+        Options = 1,     // the skills of the object chosen and 直接餵食
+        Slots = 2,       // the slot a skill goes into
+        TooFull = 0xA,   // 太飽了 無法餵食
+        Unsuited = 0xB,  // 屬性不合 無法餵食
+    };
+
+    std::vector<GhostFood> foods;     // 0x0050BAA4 (empty: not made)
+    std::optional<GhostSlots> slots;  // 0x0050BAB8
+    std::size_t current = 0;          // 0x0050BA9C the entry of the row chosen
+    i32 count = 0;                    // 0x0050BAB0
+    i32 top = 0;                      // 0x0050BABC
+    i32 lastRow = 0;                  // 0x0050BA78 the last row shown (0..7)
+    i32 row = 0;                      // 0x0050BAC0
+    i32 tab = 0;                      // 0x0050BAC4
+    i32 option = 0;                   // 0x0050BA94
+    i32 slot = 0;                     // 0x0050BAA0
+    i32 stage = Choosing;             // 0x0050BAD8
+    // 0x0050BAAC the category whose changes the ghost panel shows (-1: none) and the changes (0x0050BA8C,
+    // 0x0050BA88, 0x0050BA80, 0x0050BAA8: 力量, 精魄, 智慧, 敏捷)
+    i32 compared = -1;
+    i32 strengthChange = 0;
+    i32 essenceChange = 0;
+    i32 wisdomChange = 0;
+    i32 agilityChange = 0;
+    std::optional<std::string> description;  // 0x0050BA7C
+    std::optional<std::string> note;         // 0x0050BA90
+    u32 arrows = 0;                          // 0x0050BAC8 frames the scroll arrows stay pressed
+    i32 tick = 0;                            // 0x0050BA98
+    i32 dayMarker = 0;                       // 0x0050BADC
+    i32 satietyMarker = 0;                   // 0x0050BA84
+    std::vector<u16> chartPixels;            // 0x0050BACC 120 x 120
+    std::vector<u8> chart;                   // 0x0050BAD4 the chart as an RLE picture (empty: none)
+};
+
 // The edges of a list's scroll bar as last drawn (DrawScrollBar), read by the clicks.
 struct MenuScrollBar
 {
@@ -271,8 +347,10 @@ public:
     // The role pages: `page` counts from FirstRolePage as the mode counts from FirstPageMode in PageModeStep steps.
     static constexpr u16 FirstRolePage = 0xB;
     static constexpr u16 EquipmentPage = 0xC;
-    static constexpr u16 UnkPageF = 0xF;    // drawn without sliding while the pages are swapped (flag 0x49)
-    static constexpr u16 UnkPage11 = 0x11;  // drawn without the title and the tabs
+    static constexpr u16 AltarRolePage = 0xE;
+    // swd3e: the talisman ghost's feeding page (its background is drawn without sliding while flag 0x49 is set)
+    static constexpr u16 GhostFeedPage = 0xF;
+    static constexpr u16 BestiaryPage = 0x11;  // drawn without the title and the tabs
     static constexpr std::size_t Pages = 0x12;
     static constexpr int FirstPageMode = 0x1E;
     static constexpr int PageModeStep = 6;
@@ -294,13 +372,15 @@ public:
     static constexpr int ScriptSaveMode = 4;  // talk command SaveMenu
     static constexpr int ItemSaveMode = 5;    // the items page (0x004485F0)
     static constexpr int Tabs = 4;
-    // swd32.exe 0x004A6A38 (unmatched in swd3e): the tabs as the executable holds them.
+    // 0x004BE5D4: the tabs as the executable holds them (down the left side in swd3e).
     static constexpr std::array<MenuTab, Tabs> InitialTabs = {{
-        {0, 0x17, 0x16, 0xB4, 0x6D, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
-        {0, 0x17, 0x82, 0xB4, 0xE0, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
-        {0, 0x17, 0xE7, 0xB4, 0x153, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
-        {0, 0x17, 0x150, 0xB4, 0x1C6, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
+        {0, 0x17, 0x16, 0xE, 0x34, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
+        {0, 0x17, 0x82, 0xE, 0xB6, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
+        {0, 0x17, 0xE7, 0xE, 0x138, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
+        {0, 0x17, 0x150, 0xE, 0x1BA, 0, 0, 0, 0x232B, 0, 0x232C, 0, 0x232A, 0},
     }};
+
+    static constexpr int NoVisibleRole = -1;  // VisibleRole past the roles listed
 
     explicit Menu(Game& game);
     ~Menu();
@@ -317,7 +397,10 @@ public:
     void Present();
     void DrawBox(int x, int y, int width, int height, int mode, int red, int green, int blue);
     void DrawPageTitle();
-    void DrawRoleTabs(int offset);
+    int ListPartyRoles();
+    int VisibleRole(int slot) const;
+    void DrawShadowText(int x, int y, Pixel color, Pixel shadow, std::string_view text, TextFont& font);
+    void DrawRoleTabs(int offset, int mode);
     void ItemsAfterSave(int saved);
     void DrawScrollBar(int x, int y, int height, int arrows, float from, float to, MenuScrollBar& bar);
 
@@ -485,16 +568,44 @@ public:
     int SkillsShownTabs(int role) const;
     void Warp(u16 map, u16 x, u16 y, i16 event);
 
-    // The status page (role page 0xE).
-    void StatusEnter();
-    void StatusLeave();
-    void StatusCompute();
-    void StatusFrame();
-    void StatusNext();
-    void StatusPrevious();
-    void StatusCancel();
-    void StatusDrawBonus(int bonus, int x, int y, int value);
-    void StatusDraw();
+    // The talisman ghost's feeding page (role page 0xF, swd3e).
+    void GhostEnter();
+    void GhostLeave();
+    void GhostFrame();
+    void GhostDown();
+    void GhostUp();
+    void GhostPageDown();
+    void GhostPageUp();
+    void GhostLeft();
+    void GhostRight();
+    void GhostShift();
+    void GhostSelect();
+    void GhostCancel();
+    void GhostDraw();
+    void GhostDrawGauges();
+    void GhostDrawList();
+    void GhostDrawOptions();
+    void GhostDrawSlots();
+    void GhostDrawDescription();
+    void DrawGhostChart(int x, int y);
+    void GhostMakeChartBuffer();
+    void GhostFreeChart();
+    void GhostMakeChart(int balance, int attack, int defense, u32 top, u32 left, u32 right);
+    void GhostBuildList(int tab);
+    void GhostFreeList();
+    int GhostFeed(i32 id, i32 skill);
+    void GhostRow();
+    void GhostDescribe();
+    void GhostMakeSlots();
+    void GhostFreeSlots();
+    void GhostMoveRow(int delta);
+    void GhostMovePage(int delta);
+    void GhostCountShown();
+    void GhostSlotFor(i32 icon);
+    void GhostMove(int kind, int delta);
+    void GhostCompare();
+    bool GhostEat(i32 level, i32 category);
+    void GhostShiftTriangle(i32 balance, i32 attack, i32 defense);
 
     // The system tab (role page 0xF).
     // The key slot of each row of the key setup (swd32.exe 0x004A7210).
@@ -621,8 +732,12 @@ public:
     u16 roleTab = 0;    // swd32 0x004FBECC (low word) the role tab raised (the equipment page's role)
     // swd32 0x004FC82C bit 0: the menu opened on the equipment, left back to the item choice
     u16 openedOnEquipment = 0;
-    u16 unk4A6AA8 = 0;             // swd32 0x004A6AA8
-    i32 tint = 0;                  // 0x0050ACBC a screen tint while non-zero
+    u16 unk4A6AA8 = 0;  // 0x004BE644 the word after the tabs (BuildTabs sets it to NoRole)
+    i32 tint = 0;       // 0x0050ACBC a screen tint while non-zero
+    std::array<int, Party::Roles> visibleRoles = {};  // 0x0050A344 the roles in the party in order (ListPartyRoles)
+    int visibleCount = 0;                             // 0x0050AB90
+    // 0x0050B99C the five element resistances of each role with its equipment (0x00447E40)
+    std::array<std::array<i8, 5>, Party::Roles> roleResistances = {};
     i32 frames = 0;                // swd32 0x004FC784
     u32 flags = 0;                 // swd32 0x004FBED8
     i32 pointerX = 0;              // swd32 0x004FBAC4 the pointer of the last frame
@@ -671,11 +786,11 @@ public:
     // The items page.
     MenuList itemList;        // 0x0050BBE4 (see MenuList)
     MenuScrollBar scrollBar;  // 0x0050AEA0
+    GhostPage ghost;          // swd3e: the talisman ghost's feeding page
     Bestiary bestiary;
     AltarPage altar;
     EquipPage equip;
     SkillsPage skills;
-    StatusPage status;
     std::vector<MenuTown> towns;  // 0x0050A1EC (its count at 0x004FC834)
     i32 townTop = 0;              // swd32 0x004FBED4
     i32 townRow = 0;              // swd32 0x004FC510

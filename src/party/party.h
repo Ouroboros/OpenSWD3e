@@ -23,6 +23,8 @@ struct ObjectData;
 struct RoleRecord
 {
     static constexpr u16 Defeated = 0x8000;  // in `condition`: the role starts the battle defeated
+    // swd3e: the resistance slot holding the role's element (0..4: 金 木 水 火 土; the menus name it, 0x0043F4A0)
+    static constexpr std::size_t ElementAt = 10;
 
     i32 totalExperience = 0;  // +0x00 總經驗, raised by a won battle and checked against the next level
     i16 hitPoints = 0;        // +0x04 生命

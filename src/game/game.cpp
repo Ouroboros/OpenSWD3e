@@ -84,7 +84,7 @@ constexpr int kBattleLost = 2;
 constexpr int kBattleEscaped = 3;
 constexpr u16 kDefeatEvent = 0x63;       // the event the leader runs after a lost battle (0x0040A7B0)
 constexpr i32 kGhostTickFrames = 0x384;  // frames between two ticks of the talisman ghost (0x0040A7B0)
-constexpr i32 kGhostFallBase = 3;        // unk110 falls by 3 plus Below(5) a tick
+constexpr i32 kGhostFallBase = 3;        // satiety falls by 3 plus Below(5) a tick
 constexpr u32 kGhostFallRange = 5;
 
 // A new game.
@@ -2106,23 +2106,23 @@ void Game::MainFrame()
         return;
     }
 
-    // swd3e: while a talisman ghost is chosen, every 900 frames its unkC8 steps round unkC4 and its unk110 falls by 3
-    // to 7 (at least to 0)
+    // swd3e: while a talisman ghost is chosen, every 900 frames its day steps round its cycle and its satiety falls by
+    // 3 to 7 (at least to 0)
     if (this->party.variables[Party::GhostVariable] != 0 && ++this->ghostFrames >= kGhostTickFrames)
     {
         TalismanGhost& ghost = this->talismanGhost;
         this->ghostFrames = 0;
 
-        if (++ghost.unkC8 >= ghost.unkC4)
+        if (++ghost.day >= ghost.cycleDays)
         {
-            ghost.unkC8 = 0;
+            ghost.day = 0;
         }
 
-        ghost.unk110 += -kGhostFallBase - static_cast<i32>(this->random.Below(kGhostFallRange));
+        ghost.satiety += -kGhostFallBase - static_cast<i32>(this->random.Below(kGhostFallRange));
 
-        if (ghost.unk110 < 0)
+        if (ghost.satiety < 0)
         {
-            ghost.unk110 = 0;
+            ghost.satiety = 0;
         }
     }
 

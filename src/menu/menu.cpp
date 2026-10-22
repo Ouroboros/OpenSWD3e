@@ -28,19 +28,15 @@ constexpr int kHiddenPointerFlag = GameState::NoChoicePointer;
 constexpr int kMenuSound = 0xBB;
 constexpr int kSlideMaximum = 0x320;
 constexpr int kTabGlowMaximum = 0x10;
-constexpr int kTabGlowMinimum = 6;
 
 // The modes of the role pages (Menu::mode) SetPage tells them by.
 constexpr std::pair<u16, u16> kItemsModes = {0x1E, 0x20};
 constexpr std::pair<u16, u16> kEquipmentModes = {0x24, 0x29};
 constexpr std::pair<u16, u16> kSkillsModes = {0x2A, 0x2E};
-constexpr std::pair<u16, u16> kStatusModes = {0x30, 0x34};
-constexpr std::pair<u16, u16> kOptionsModes = {0x36, 0x3A};  // the altar's while the pages are swapped
-constexpr std::pair<u16, u16> kAltarModes = {0x3C, 0x3E};    // the system tab's while the pages are swapped
+constexpr std::pair<u16, u16> kAltarModes = {0x30, 0x34};
+constexpr std::pair<u16, u16> kGhostModes = {0x36, 0x3A};  // swd3e: the talisman ghost's feeding page
+constexpr std::pair<u16, u16> kOptionsModes = {0x3C, 0x3E};
 constexpr std::pair<u16, u16> kBestiaryModes = {0x42, 0x47};
-// swd32.exe 0x004A6ABC (unmatched in swd3e): the level, the experience needed
-constexpr std::u8string_view kLevelFormat = u8"%2d 級/%d";
-constexpr std::string_view kRatioFormat = "%4d/%4d";
 
 // The actions of the interface act (Scene::InterfaceAct) and of the effect act in the menus.
 constexpr i32 kTabsPanelAction = 1;
@@ -77,39 +73,124 @@ constexpr u32 kLeftDoubleClick = 2;
 constexpr u32 kRightClick = 4;
 constexpr u32 kRightDoubleClick = 8;
 
-// The title of a role page.
-constexpr i32 kTitleLit = 0x10;  // the glow of a fully lit title
+// The title of a role page (0x0043F3B0).
+constexpr i32 kTitleLit = 0x10;  // the glow of a fully lit title (counted, no longer drawn by swd3e)
 constexpr i32 kTitleDim = 8;
-constexpr int kTitleSpacing = 0x50;
-constexpr int kSwappedTitleSpacing = 0x46;
-constexpr int kTitleX = 0xDC;
-constexpr int kTitleY = 0xA;
-constexpr int kTitleArrowY = 9;
-constexpr i32 kLitTitleActions = 5;  // the lit title of page p is action p + kLitTitleActions
-constexpr i32 kFirstLitTitleAction = 0x14;
-constexpr i32 kGlowTitleActions = 0x19;
-constexpr i32 kFirstGlowTitleAction = 0x28;
+constexpr int kTitleY = 9;
+constexpr int kTitleStep = 0x46;
+constexpr int kTitleBase = -0x22F;
+constexpr i32 kTitleActions = 5;  // the title of page p is action p + kTitleActions of the interface act
+constexpr i32 kTitleArrowDirection = ActState::Left;
+// The title's offsets by page 0xB..0x10 (a local table of 0x0043F3B0; the other entries are never read).
+constexpr std::array<int, Menu::Pages> kTitleOffsets = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3, -2, 2, 7, 0xB, 0};
+// 0x004AAC88: the role panel's mode (DrawRoleTabs) by page; the items 1, the equipment 2, the ghost page 3
+constexpr std::array<int, Menu::Pages> kPanelModes = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 3, 1, 0};
 
-// The role tabs.
-constexpr int kTabRed = 0x1D;
-constexpr int kTabGreen = 0x1B;
-constexpr int kTabBlue = 0x15;
+// The role panel (0x0043F4A0).
+enum PanelMode : int
+{
+    TabsPanel = 1,   // the three role tabs
+    RolePanel = 2,   // the role chosen with its attributes and resistances
+    GhostPanel = 3,  // the talisman ghost
+};
+
+constexpr int kPanelTextRed = 0xF;
+constexpr int kPanelTextGreen = 0xD;
+constexpr int kPanelTextBlue = 0xB;
+constexpr int kPanelShadowRed = 0x1A;
+constexpr int kPanelShadowGreen = 0x19;
+constexpr int kPanelShadowBlue = 0x16;
 constexpr int kTabGlowRise = 3;
-constexpr int kTabTextStyle = TextFont::BoldShadow;
-constexpr int kBarX = 0x64;
+constexpr int kVisibleRoles = 3;
+constexpr int kFaceStep = 0x32;
+constexpr int kFaceX = 0x38;
+constexpr int kFaceY = 0x20;
+constexpr i32 kFaceActions = 0x5C;      // the face of role r is action r + kFaceActions of the interface act
+constexpr i32 kTabActions = 8;          // the tab of role r is action r + kTabActions
+constexpr i32 kPortraitActions = 0x48;  // the portrait of role r is action r + kPortraitActions
+constexpr i32 kGhostBackground = 0x5B;
+constexpr i32 kGhostKindAct = 0x2333;
+constexpr int kGhostKindX = 0x5C;
+constexpr int kGhostKindY = 0x78;
+constexpr int kBarX = 0x68;
 constexpr int kBarLength = 0x4F;
-constexpr int kHitPointBarUp = 0x27;
-constexpr int kSpiritBarUp = 0x11;
-constexpr int kStaminaBarDown = 5;
-constexpr int kNameLeft = 0x58;
-constexpr int kNameUp = 0x5E;
+constexpr int kBarClipX = 0x69;
+constexpr int kHitPointBarDown = 0x4E;  // below the tab's top
+constexpr int kSpiritBarDown = 0x64;
+constexpr int kStaminaBarDown = 0x7A;
+constexpr int kRoleBarsUp = 4;  // the role panel draws its bars and texts four pixels higher
+constexpr int kNameX = 0x6C;
+constexpr int kNameDown = 0x26;
 constexpr int kLevelX = 0x5C;
-constexpr int kLevelUp = 0x4C;
+constexpr int kLevelDown = 0x10;
 constexpr int kRatioX = 0x6C;
-constexpr int kHitPointsUp = 0x34;
-constexpr int kSpiritUp = 0x1E;
-constexpr int kStaminaUp = 8;
-constexpr u16 kDefeatedRole = 0x8000;  // RoleRecord::condition bit 15: the tab is greyed
+constexpr int kHitPointsDown = 0x40;
+constexpr int kSpiritDown = 0x56;
+constexpr int kStaminaDown = 0x6C;
+constexpr u32 kDefeatedMode = 0x28;  // ActDrawer::DrawWithMode of a defeated role's tab
+constexpr int kDefeatedShadeX = 0xE;
+constexpr int kDefeatedShadeY = 0x31;
+constexpr int kDefeatedShadeWidth = 0xAE;
+constexpr int kDefeatedShadeHeight = 0x189;
+constexpr int kAttributesX = 0x18;
+constexpr int kAttributeStep = 0x14;
+constexpr int kElementY = 0xBE;
+constexpr int kChangeX = 0x8C;
+constexpr int kResistancesY = 0x14E;
+constexpr std::size_t kRoleElementAt = 8;   // the element's character in kRoleElement
+constexpr std::size_t kGhostElementAt = 7;  // in kGhostElement
+constexpr int kGhostChangeX = 0x7E;
+constexpr int kGhostChangeDown = 5;
+constexpr int kGhostAttributesY = 0xAA;
+constexpr int kGhostChartX = 0x24;
+constexpr int kGhostChartY = 0x14A;
+constexpr int kBalanceX = 0x54;
+constexpr int kBalanceY = 0x144;
+constexpr int kAttackX = 0x16;
+constexpr int kDefenseX = 0x92;
+constexpr int kTriangleY = 0x19A;
+constexpr std::u8string_view kLevelFormat = u8"%2d 級/%d";        // 0x004BE76C
+constexpr std::string_view kRatioFormat = "%4d/%4d";              // 0x004BE764
+constexpr std::string_view kChangeFormat = "+%d";                 // 0x004BE70C
+constexpr std::string_view kGhostChangeFormat = " %d";            // 0x004BE6B0
+constexpr std::u8string_view kRoleElement = u8"屬性       ";      // 0x004BE758
+constexpr std::u8string_view kGhostElement = u8"屬性          ";  // 0x004BE6C0
+// 0x004BE650: the elements' names (a role's by RoleRecord::resistances[10], the ghost's by its kind)
+constexpr std::array<std::u8string_view, 5> kElements = {u8"金", u8"木", u8"水", u8"火", u8"土"};
+constexpr std::array<std::u8string_view, 4> kRoleAttributes = {
+    u8"力量    %d",  // 0x004BE74C
+    u8"耐力    %d",  // 0x004BE740
+    u8"智慧    %d",  // 0x004BE734
+    u8"敏捷    %d",  // 0x004BE728
+};
+
+constexpr std::u8string_view kNextLevel = u8"下一級  %d";   // 0x004BE71C
+constexpr std::u8string_view kExperience = u8"經驗值  %d";  // 0x004BE710
+constexpr std::array<std::u8string_view, 5> kResistances = {
+    u8"[金]  %d%%",  // 0x004BE700
+    u8"[木]  %d%%",  // 0x004BE6F4
+    u8"[水]  %d%%",  // 0x004BE6E8
+    u8"[火]  %d%%",  // 0x004BE6DC
+    u8"[土]  %d%%",  // 0x004BE6D0
+};
+
+constexpr std::u8string_view kGhostStrength = u8"力量   %d";  // 0x004BE6B4
+constexpr std::u8string_view kGhostSpirit = u8"靈力   %d";    // 0x004BE6A4
+constexpr std::u8string_view kGhostEssence = u8"精魄   %d";   // 0x004BE698
+constexpr std::u8string_view kGhostWisdom = u8"智慧   %d";    // 0x004BE68C
+constexpr std::u8string_view kGhostAgility = u8"敏捷   %d";   // 0x004BE680
+constexpr std::u8string_view kGhostInsight = u8"悟性   %d";   // 0x004BE674
+constexpr std::u8string_view kBalance = u8"平衡";             // 0x004BE66C
+constexpr std::u8string_view kAttack = u8"攻擊";              // 0x004BE664
+constexpr std::u8string_view kDefense = u8"防禦";             // 0x004BE65C
+// TalismanGhost::Stat numbers of the ghost panel
+constexpr int kStatInsight = 3;
+constexpr int kStatSpirit = 0xB;
+constexpr int kStatStrength = 0xC;
+constexpr int kStatEssence = 0xD;
+constexpr int kStatWisdom = 0xE;
+constexpr int kStatAgility = 0xF;
+constexpr int kHideHudFlag = GameState::HideHud;
 
 constexpr int kBoxMargin = 8;
 constexpr int kBoxFrameThickness = 8;
@@ -148,9 +229,9 @@ void Menu::Call(Handler handler)
     }
 }
 
-// swd3e.exe 0x0043EB10: the menu of the frame. On entering (bit 31 of the menu state) the page opens: the role pages
-// (menus 1..2), the system page in its title mode (3, 6), or modes 1 and 2 (4, 5); then the keys, the handlers and
-// the drawing of the page run.
+// swd3e.exe 0x0043EB10: the menu of the frame. On entering (bit 31 of the menu state) the roles in the party are
+// listed and the page opens: the role pages (menus 1..2), the system page in its title mode (3, 6), or modes 1 and 2
+// (4, 5) after the picture cache is flushed; then the keys, the handlers and the drawing of the page run.
 void Menu::Run()
 {
     Game& owner = this->game;
@@ -158,6 +239,7 @@ void Menu::Run()
 
     if (static_cast<i32>(state) < 0)
     {
+        this->ListPartyRoles();
         this->pointerX = 0;
         this->pointerY = 0;
         this->tabsPanelAct.action = kTabsPanelAction;
@@ -202,7 +284,7 @@ void Menu::Run()
 
         if (menu == Game::TitleScreenMenu || menu == Game::NameEntryMenu)
         {
-            owner.archive.CloseAll();
+            owner.archive.Flush();
 
             for (ActState& item : this->items)
             {
@@ -223,13 +305,13 @@ void Menu::Run()
 
         if (menu == Game::SystemMenuA)
         {
-            owner.archive.CloseAll();
+            owner.archive.Flush();
             this->Open(Menu::GameModeA, Menu::SystemPage);
         }
 
         if (menu == Game::SystemMenuB)
         {
-            owner.archive.CloseAll();
+            owner.archive.Flush();
             this->Open(Menu::GameModeB, Menu::SystemPage);
         }
 
@@ -281,49 +363,81 @@ void Menu::Open(int menuMode, u16 menuCode)
     }
 }
 
-// swd3e.exe 0x0043EEB0: a tab for every role in the party (flags 0x1E..0x21), their animations at action 8 + their
-// place, the tab `selected` raised. The original then copies a word of the tab past the last one (beyond the four when
-// all roles are present).
-void Menu::BuildTabs(int selected)
+// swd3e.exe 0x00441910: the roles in the party (flags 0x1E..0x21) listed in order; their count
+int Menu::ListPartyRoles()
+{
+    this->visibleRoles.fill(Menu::NoVisibleRole);
+    this->visibleCount = 0;
+
+    for (int role = 0; role < Party::Roles; ++role)
+    {
+        if (this->game.state.GameFlag(role + kFirstRoleFlag))
+        {
+            this->visibleRoles[static_cast<std::size_t>(this->visibleCount++)] = role;
+        }
+    }
+
+    return this->visibleCount;
+}
+
+// swd3e.exe 0x00441960: the role of tab `slot` (-1 past the third)
+int Menu::VisibleRole(int slot) const
+{
+    if (static_cast<u32>(slot) > kVisibleRoles - 1)
+    {
+        return Menu::NoVisibleRole;
+    }
+
+    return this->visibleRoles[static_cast<std::size_t>(slot)];
+}
+
+// swd3e.exe 0x00440570: `text` in `font` with a shadow two pixels right and one down, the text drawn twice a pixel
+// apart (bold)
+void Menu::DrawShadowText(int x, int y, Pixel color, Pixel shadow, std::string_view text, TextFont& font)
+{
+    Pixel* target = this->game.drawSurface;
+    font.DrawText(target, x + 2, y + 1, text, shadow, TextFont::Plain);
+    font.DrawText(target, x, y, text, color, TextFont::Plain);
+    font.DrawText(target, x + 1, y, text, color, TextFont::Plain);
+}
+
+// swd3e.exe 0x0043EEB0: a tab for each of the first three roles listed (ListPartyRoles); the original then copies a
+// word of the tab past the last one. `selected` is not read.
+void Menu::BuildTabs([[maybe_unused]] int selected)
 {
     for (MenuTab& tab : this->tabs)
     {
-        tab.role = 0;
         tab.unk0A = 0;
         tab.state = 0;
         tab.stateCopy = 0;
     }
 
     this->unk4A6AA8 = Menu::NoRole;
+
+    for (MenuTab& tab : this->tabs)
+    {
+        tab.role = Menu::NoRole;
+    }
+
     int count = 0;
 
-    for (int role = 0; role < Menu::Tabs; ++role)
+    for (int slot = 0; slot < kVisibleRoles; ++slot)
     {
-        MenuTab& tab = this->tabs[static_cast<std::size_t>(role)];
-        tab.role = Menu::NoRole;
+        const int role = this->VisibleRole(slot);
 
-        if (this->game.state.GameFlag(role + kFirstRoleFlag))
+        if (role >= 0)
         {
-            tab.role = static_cast<u16>(role);
-            tab.nameAction = static_cast<u16>(count + kFirstTabAction);
-            tab.iconAction = static_cast<u16>(count + kFirstTabAction);
-            tab.frameAction = static_cast<u16>(count + kFirstTabAction);
-            tab.state = count == selected ? Menu::RaisedTab : Menu::PlainTab;
-            tab.stateCopy = tab.state;
-            ++count;
+            this->tabs[static_cast<std::size_t>(count++)].role = static_cast<u16>(role);
         }
     }
 
-    if (count < Menu::Tabs)
-    {
-        this->tabs[static_cast<std::size_t>(count)].state = this->tabs[static_cast<std::size_t>(count)].frameAct;
-    }
+    this->tabs[static_cast<std::size_t>(count)].state = this->tabs[static_cast<std::size_t>(count)].frameAct;
 }
 
 // swd3e.exe 0x00440CF0: the handlers of page `menuCode`: the system page; the main page (the page tables filled, its
-// titles' mouse run before every frame); a role page by the mode (items, equipment, skills, status, the system tab and
-// the altar exchanged while the pages are swapped, the bestiary). A slot a page does not set keeps the handler of the
-// page before it.
+// titles' mouse run before every frame); a role page by the mode (items, equipment, skills, the altar, the talisman
+// ghost's feeding page, the system tab, the bestiary). A slot a page does not set keeps the handler of the page before
+// it.
 void Menu::SetPage(int menuCode)
 {
     if (menuCode == Menu::SystemPage)
@@ -369,7 +483,6 @@ void Menu::SetPage(int menuCode)
         return;
     }
 
-    const bool swapped = this->game.state.GameFlag(kSwappedPagesFlag);
     const u16 mode = this->mode;
 
     if (mode >= kItemsModes.first && mode <= kItemsModes.second)
@@ -417,24 +530,35 @@ void Menu::SetPage(int menuCode)
         this->cancel = &Menu::SkillsCancel;
         this->draw = &Menu::SkillsDraw;
     }
-    else if (mode >= kStatusModes.first && mode <= kStatusModes.second)
+    else if (mode >= kAltarModes.first && mode <= kAltarModes.second)
     {
-        this->frame = &Menu::StatusFrame;
-        this->down = &Menu::StatusNext;
-        this->up = &Menu::StatusPrevious;
-        this->left = &Menu::StatusPrevious;
-        this->right = &Menu::StatusNext;
-        this->pageDown = &Menu::Nothing;
-        this->pageUp = &Menu::Nothing;
-        this->shift = &Menu::StatusNext;
-        this->select = &Menu::Nothing;
-        this->cancel = &Menu::StatusCancel;
-        this->draw = &Menu::StatusDraw;
+        this->frame = &Menu::AltarFrame;
+        this->down = &Menu::AltarDown;
+        this->up = &Menu::AltarUp;
+        this->left = &Menu::AltarLeft;
+        this->right = &Menu::AltarRight;
+        this->pageDown = &Menu::AltarPageDown;
+        this->pageUp = &Menu::AltarPageUp;
+        this->shift = &Menu::AltarShift;
+        this->select = &Menu::AltarSelect;
+        this->cancel = &Menu::AltarCancel;
+        this->draw = &Menu::AltarDraw;
     }
-    else if (
-        (mode >= kOptionsModes.first && mode <= kOptionsModes.second && !swapped) ||
-        (mode >= kAltarModes.first && mode <= kAltarModes.second && swapped)
-    )
+    else if (mode >= kGhostModes.first && mode <= kGhostModes.second)
+    {
+        this->frame = &Menu::GhostFrame;
+        this->down = &Menu::GhostDown;
+        this->up = &Menu::GhostUp;
+        this->left = &Menu::GhostLeft;
+        this->right = &Menu::GhostRight;
+        this->pageDown = &Menu::GhostPageDown;
+        this->pageUp = &Menu::GhostPageUp;
+        this->shift = &Menu::GhostShift;
+        this->select = &Menu::GhostSelect;
+        this->cancel = &Menu::GhostCancel;
+        this->draw = &Menu::GhostDraw;
+    }
+    else if (mode >= kOptionsModes.first && mode <= kOptionsModes.second)
     {
         this->frame = &Menu::OptionsFrame;
         this->down = &Menu::OptionsDown;
@@ -447,24 +571,6 @@ void Menu::SetPage(int menuCode)
         this->select = &Menu::OptionsSelect;
         this->cancel = &Menu::OptionsCancel;
         this->draw = &Menu::OptionsDraw;
-    }
-    else if (
-        (mode >= kOptionsModes.first && mode <= kOptionsModes.second) ||
-        (mode >= kAltarModes.first && mode <= kAltarModes.second)
-    )
-    {
-        this->frame = &Menu::AltarFrame;
-        this->down = &Menu::AltarDown;
-        this->up = &Menu::AltarUp;
-        this->left = &Menu::AltarLeft;
-        this->right = &Menu::AltarRight;
-        this->pageDown = &Menu::AltarPageDown;
-        this->pageUp = &Menu::AltarPageUp;
-        this->shift = &Menu::AltarShift;
-        this->select = &Menu::AltarSelect;
-        this->cancel = &Menu::AltarCancel;
-        this->end = &Menu::AltarEnd;
-        this->draw = &Menu::AltarDraw;
     }
     else if (mode >= kBestiaryModes.first && mode <= kBestiaryModes.second)
     {
@@ -633,7 +739,10 @@ void Menu::Present()
     this->pointerY = state.pointerY;
 }
 
-// The drawing of Present on the target set; `replay`: painted again between frames (the notices kept as they are).
+// The drawing of Present (0x0043F110) on the target set; `replay`: painted again between frames (the notices kept as
+// they are). The background slides in from the right; the role tabs halve their slide every frame, except while the
+// altar (pages swapped) or the first page's subpage codes slide them out, doubling it. The system page and the
+// bestiary have no tabs; the gold shows on the main page unless flag 0x51 hides it.
 bool Menu::PaintPage(bool replay)
 {
     Game& owner = this->game;
@@ -642,7 +751,7 @@ bool Menu::PaintPage(bool replay)
     this->slide = slideBefore;
 
     const bool swapped = state.GameFlag(kSwappedPagesFlag);
-    const bool doubling = (this->page == Menu::UnkPageF && this->code > Menu::MainCode && swapped) ||
+    const bool doubling = (this->page == Menu::AltarRolePage && this->code > Menu::MainCode && swapped) ||
                           (this->page == Menu::FirstRolePage && this->code >= Menu::SubpageCodes);
 
     if (!doubling)
@@ -655,7 +764,7 @@ bool Menu::PaintPage(bool replay)
     {
         int offset = this->frames < kSlideFrames ? this->Shown(SlideValue, this->slide) : 0;
 
-        if (swapped && this->page == Menu::UnkPageF)
+        if (swapped && this->page == Menu::GhostFeedPage)
         {
             offset = 0;
         }
@@ -673,75 +782,74 @@ bool Menu::PaintPage(bool replay)
         }
     }
 
-    if (owner.menuMode == Menu::NoSlotsMode)
+    if (owner.menuMode != Menu::NoSlotsMode)
     {
-        if (this->code != Menu::SystemPage && this->page != Menu::UnkPage11)
-        {
-            if (doubling)
-            {
-                if (this->slide == 0)
-                {
-                    this->slide = 1;
-                }
-
-                const i32 drawn = this->slide;
-                const i32 shown = this->Shown(SlideValue, drawn);
-                owner.actDrawer.Draw(this->tabsPanelAct, -shown, 0);
-                this->DrawRoleTabs(shown);
-                this->slide *= kSlideGrowth;
-
-                if (this->slide > kSlideMaximum)
-                {
-                    this->slide = kSlideMaximum;
-                }
-
-                this->Move(SlideValue, drawn, drawn, this->slide);
-            }
-            else
-            {
-                const i32 shown = this->Shown(SlideValue, this->slide);
-                this->DrawPageTitle();
-                owner.actDrawer.Draw(this->tabsPanelAct, -shown, 0);
-                this->DrawRoleTabs(shown);
-            }
-        }
-
-        if (this->code == Menu::MainCode)
-        {
-            owner.actDrawer.DrawCounter(
-                ActDrawer::GoldX,
-                ActDrawer::GoldY,
-                static_cast<u32>(owner.party.variables[Party::Gold]),
-                owner.counterAlpha
-            );
-        }
-
-        owner.scene.pointerRole.act.action = Scene::ChoicePointer;
-
-        if (!state.GameFlag(kHiddenPointerFlag))
-        {
-            owner.RefreshCursor();
-        }
-
-        if (this->tint != 0)
-        {
-            owner.painter
-                .TintPixels(std::span<u16>(owner.drawSurface, Display::Pixels), this->tint, this->tint, this->tint);
-        }
-
-        owner.notices.Draw(owner.smallFont, owner.painter, state, owner.textColors, !replay);
+        return true;
     }
 
+    if (this->code != Menu::SystemPage && this->page != Menu::BestiaryPage)
+    {
+        if (doubling)
+        {
+            if (this->slide == 0)
+            {
+                this->slide = 1;
+            }
+
+            const i32 drawn = this->slide;
+            const i32 shown = this->Shown(SlideValue, drawn);
+            owner.actDrawer.Draw(this->tabsPanelAct, -shown, 0);
+            this->DrawRoleTabs(shown, RolePanel);
+            this->slide *= kSlideGrowth;
+
+            if (this->slide > kSlideMaximum)
+            {
+                this->slide = kSlideMaximum;
+            }
+
+            this->Move(SlideValue, drawn, drawn, this->slide);
+        }
+        else
+        {
+            const i32 shown = this->Shown(SlideValue, this->slide);
+            this->DrawPageTitle();
+            owner.actDrawer.Draw(this->tabsPanelAct, -shown, 0);
+            this->DrawRoleTabs(shown, this->code == Menu::MainCode ? TabsPanel : kPanelModes[this->page]);
+        }
+    }
+
+    owner.scene.pointerRole.act.action = Scene::ChoicePointer;
+
+    if (!state.GameFlag(kHiddenPointerFlag))
+    {
+        owner.RefreshCursor();
+    }
+
+    if (!state.GameFlag(kHideHudFlag) && this->code == Menu::MainCode)
+    {
+        owner.actDrawer.DrawCounter(
+            ActDrawer::GoldX,
+            ActDrawer::GoldY,
+            static_cast<u32>(owner.party.variables[Party::Gold]),
+            owner.counterAlpha
+        );
+    }
+
+    if (this->tint != 0)
+    {
+        owner.painter
+            .TintPixels(std::span<u16>(owner.drawSurface, Display::Pixels), this->tint, this->tint, this->tint);
+    }
+
+    owner.notices.Draw(owner.smallFont, owner.painter, state, owner.textColors, !replay);
     return true;
 }
 
-// swd32.exe 0x0043A880 (unmatched in swd3e): the title of the role page: glowing in (out on page 1's code) over 8..16
-// steps; once fully lit
-// the plain picture (actions 0x14 and 0x15 or 0x28 and 0x29 swap with flag 0x49)
+// swd3e.exe 0x0043F3B0: the title of the role page: the arrow (facing left) and the page's title picture; the glow
+// still counts in (out on the other codes) over 8..16 steps, read by nothing
 void Menu::DrawPageTitle()
 {
     Game& owner = this->game;
-    const bool swapped = owner.state.GameFlag(kSwappedPagesFlag);
     const int last = this->frames == kOpenedFrame ? 0 : this->titleGlow;
 
     if (this->code == Menu::MainCode)
@@ -754,137 +862,354 @@ void Menu::DrawPageTitle()
     }
 
     this->Move(TitleGlowValue, this->titleGlow, last, this->titleGlow);
-    const double fineGlow = this->ShownFine(TitleGlowValue, this->titleGlow);
-    const i32 glow = static_cast<i32>(std::round(fineGlow));
-    const auto arrowGlow = static_cast<i32>(std::floor(fineGlow));
-    const int spacing = swapped ? kSwappedTitleSpacing : kTitleSpacing;
-    this->titleArrowAct.direction = swapped ? ActState::Right : ActState::Left;
-    owner.actDrawer.DrawGhost(this->titleArrowAct, 0, kTitleArrowY, arrowGlow, fineGlow - arrowGlow);
+    this->titleArrowAct.direction = kTitleArrowDirection;
+    owner.actDrawer.Draw(this->titleArrowAct, 0, kTitleY);
     this->titleArrowAct.flags &= Painter::RleSource | Painter::Mirror | Painter::Flip;
     this->titleAct.id = Scene::InterfaceAct;
-    const int x = spacing * (this->page - Menu::FirstRolePage) + kTitleX;
-
-    auto swap = [swapped](int action, int first)
-    {
-        if (!swapped)
-        {
-            return action;
-        }
-
-        return action == first ? first + 1 : action == first + 1 ? first : action;
-    };
-
-    if (this->titleGlow == kTitleLit)
-    {
-        this->titleAct.action = swap(this->page + kLitTitleActions, kFirstLitTitleAction);
-        owner.actDrawer.Draw(this->titleAct, x, kTitleY);
-        return;
-    }
-
-    this->titleAct.action = swap(this->page + kGlowTitleActions, kFirstGlowTitleAction);
-
-    if (owner.acts.Run(this->titleAct) == 0)
-    {
-        return;
-    }
-
-    const Picture* picture = owner.archive.GetPicture(this->titleAct.frame, this->titleAct.picture);
-
-    if (picture == nullptr)
-    {
-        return;
-    }
-
-    owner.painter.SetSource(picture->data.data());
-    DrawOptions& options = owner.painter.Options();
-    options.tintBlue = glow - kTitleLit;
-    options.tintGreen = glow - kTitleLit;
-    options.tintRed = glow - kTitleLit;
-    owner.painter.DrawPicture(
-        x - this->titleAct.x,
-        kTitleY - this->titleAct.y,
-        picture->width,
-        picture->height,
-        this->titleAct.flags
-    );
+    this->titleAct.action = this->page + kTitleActions;
+    owner.actDrawer.Draw(this->titleAct, kTitleOffsets[this->page] + kTitleStep * this->page + kTitleBase, kTitleY);
 }
 
-// swd32.exe 0x0043AAA0 (unmatched in swd3e): the tabs of the roles shifted left by `offset`: the selected one glowing
-// up, with the bars of
-// hit points, spirit and stamina, the name, the level with the experience still needed and the three ratios
-void Menu::DrawRoleTabs(int offset)
+// swd3e.exe 0x0043F4A0: the role panel shifted left by `offset`, by `mode`: the three role tabs (a face for each above,
+// the chosen one bordered; each tab glowing up when chosen, with its bars, name, level and the experience still
+// needed, the three ratios, greyed when defeated); the role chosen alone with its attributes, the equipment's changes
+// on the equipment page and its resistances; or the talisman ghost with its element, stats, the changes of the food
+// chosen and its chart.
+void Menu::DrawRoleTabs(int offset, int mode)
 {
     Game& owner = this->game;
     Painter& painter = owner.painter;
-    const auto color = static_cast<Pixel>(painter.MakeColor(kTabRed, kTabGreen, kTabBlue));
+    const auto color = static_cast<Pixel>(painter.MakeColor(kPanelTextRed, kPanelTextGreen, kPanelTextBlue));
+    const auto shadow = static_cast<Pixel>(painter.MakeColor(kPanelShadowRed, kPanelShadowGreen, kPanelShadowBlue));
+    const int chosen = this->roleTab == Menu::NoTab ? 0 : this->roleTab;
 
-    for (std::size_t index = 0; index < Menu::Tabs; ++index)
+    auto text = [this, color, shadow](int x, int y, std::string_view line, TextFont& font)
     {
-        i8& glow = this->tabGlow[index];
-        const i8 glowBefore = glow;
+        this->DrawShadowText(x, y, color, shadow, line, font);
+    };
 
-        if (this->roleTab == index)
+    auto faces = [this, &owner, offset]()
+    {
+        for (int slot = 0; slot < kVisibleRoles; ++slot)
         {
-            glow = static_cast<i8>(glow + kTabGlowRise > kTabGlowMaximum ? kTabGlowMaximum : glow + kTabGlowRise);
+            const int role = this->VisibleRole(slot);
+
+            if (role < 0)
+            {
+                continue;
+            }
+
+            this->gauge.id = Scene::InterfaceAct;
+            this->gauge.action = role + kFaceActions;
+            const int x = kFaceStep * slot - offset + kFaceX;
+
+            if (slot == this->roleTab)
+            {
+                owner.actDrawer.DrawBordered(this->gauge, x, kFaceY);
+            }
+            else
+            {
+                owner.actDrawer.Draw(this->gauge, x, kFaceY);
+            }
         }
-        else
+    };
+
+    auto tracks = [this, &owner, offset](int top)
+    {
+        const int x = kBarX - offset;
+        owner.actDrawer.Draw(this->barTrackAct, x, top + kHitPointBarDown);
+        owner.actDrawer.Draw(this->barTrackAct, x, top + kSpiritBarDown);
+        owner.actDrawer.Draw(this->barTrackAct, x, top + kStaminaBarDown);
+    };
+
+    auto bars = [this, &owner, &painter, offset](const RoleRecord& role, int top, int glow, double fraction)
+    {
+        const int x = kBarX - offset;
+        painter.SetClipClamped(0, 0, BarLength(role.hitPoints, role.maxHitPoints) + kBarClipX, Display::Height);
+        owner.actDrawer.DrawGhost(this->hitPointBar, x, top + kHitPointBarDown, glow, fraction);
+        painter.SetClipClamped(0, 0, BarLength(role.spirit, role.maxSpirit) + kBarClipX, Display::Height);
+        owner.actDrawer.DrawGhost(this->spiritBar, x, top + kSpiritBarDown, glow, fraction);
+        painter.SetClipClamped(0, 0, BarLength(role.stamina, role.maxStamina) + kBarClipX, Display::Height);
+        owner.actDrawer.DrawGhost(this->staminaBar, x, top + kStaminaBarDown, glow, fraction);
+    };
+
+    // The name (the surname and given name), the level with the experience still needed (the experience itself when
+    // the next level lists none) and the ratios; `needed` gets the experience of the next level.
+    auto figures = [this, &owner, &text, offset](int slot, const RoleRecord& role, int top, u32& needed)
+    {
+        const int index = this->VisibleRole(slot);
+        const RoleName& name = owner.party.names[static_cast<std::size_t>(index)];
+        text(kNameX - offset, top + kNameDown, name.Surname() + name.Given(), owner.mediumFont);
+        needed = 0;
+        owner.database.LoadLevelEntry(index + 1, role.level + 1, needed);
+
+        if (needed == 0)
         {
-            glow = static_cast<i8>(glow - 1 < kTabGlowMinimum ? kTabGlowMinimum : glow - 1);
+            needed = static_cast<u32>(role.totalExperience);
         }
 
-        if (this->roleTab == Menu::NoTab || this->code == 1)
-        {
-            glow = kTabGlowMaximum;
-        }
-
-        this->Move(TabGlowValue + index, glow, glowBefore, glow);
-        const double fineGlow = this->ShownFine(TabGlowValue + index, glow);
-        const auto shownGlow = static_cast<i32>(std::floor(fineGlow));
-        const double glowFraction = fineGlow - shownGlow;
-
-        const MenuTab& tab = this->tabs[index];
-
-        if (tab.role == Menu::NoRole)
-        {
-            continue;
-        }
-
-        const RoleRecord& role = owner.party.roles[index];
-        const int x = tab.x - offset;
-        owner.actDrawer.DrawGhost(this->items[index], x, tab.y, shownGlow, glowFraction);
-        painter.SetClipClamped(0, 0, BarLength(role.hitPoints, role.maxHitPoints) + kBarX, Display::Height);
-        owner.actDrawer.DrawGhost(this->hitPointBar, kBarX - offset, tab.y - kHitPointBarUp, shownGlow, glowFraction);
-        painter.SetClipClamped(0, 0, BarLength(role.spirit, role.maxSpirit) + kBarX, Display::Height);
-        owner.actDrawer.DrawGhost(this->spiritBar, kBarX - offset, tab.y - kSpiritBarUp, shownGlow, glowFraction);
-        painter.SetClipClamped(0, 0, BarLength(role.stamina, role.maxStamina) + kBarX, Display::Height);
-        owner.actDrawer.DrawGhost(this->staminaBar, kBarX - offset, tab.y + kStaminaBarDown, shownGlow, glowFraction);
-        owner.mediumFont.DrawText(
-            painter.Target(),
-            x - kNameLeft,
-            tab.y - kNameUp,
-            owner.party.names[index].FullName(),
-            color,
-            kTabTextStyle
-        );
-        u32 needed = 0;
-        owner.database.LoadLevelEntry(static_cast<int>(index) + 1, role.level + 1, needed);
         const std::string level =
             WinFormat(kLevelFormat, {static_cast<i32>(role.level), static_cast<i32>(needed) - role.totalExperience});
-        owner.mediumFont.DrawText(painter.Target(), kLevelX - offset, tab.y - kLevelUp, level, color, kTabTextStyle);
-        const std::string hitPoints = WinFormat(kRatioFormat, {role.hitPoints, role.maxHitPoints});
-        owner.smallFont
-            .DrawText(painter.Target(), kRatioX - offset, tab.y - kHitPointsUp, hitPoints, color, kTabTextStyle);
-        const std::string spirit = WinFormat(kRatioFormat, {role.spirit, role.maxSpirit});
-        owner.smallFont.DrawText(painter.Target(), kRatioX - offset, tab.y - kSpiritUp, spirit, color, kTabTextStyle);
-        const std::string stamina = WinFormat(kRatioFormat, {role.stamina, role.maxStamina});
-        owner.smallFont.DrawText(painter.Target(), kRatioX - offset, tab.y - kStaminaUp, stamina, color, kTabTextStyle);
-        painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+        text(kLevelX - offset, top + kLevelDown, level, owner.mediumFont);
+        text(
+            kRatioX - offset,
+            top + kHitPointsDown,
+            WinFormat(kRatioFormat, {role.hitPoints, role.maxHitPoints}),
+            owner.smallFont
+        );
+        text(
+            kRatioX - offset,
+            top + kSpiritDown,
+            WinFormat(kRatioFormat, {role.spirit, role.maxSpirit}),
+            owner.smallFont
+        );
+        text(
+            kRatioX - offset,
+            top + kStaminaDown,
+            WinFormat(kRatioFormat, {role.stamina, role.maxStamina}),
+            owner.smallFont
+        );
+    };
 
-        if ((role.condition & kDefeatedRole) != 0)
+    if (mode == TabsPanel)
+    {
+        faces();
+
+        // Three tabs (the original's loop ends at the fourth item, 0x0050AAEC).
+        for (std::size_t index = 0; index < static_cast<std::size_t>(kVisibleRoles); ++index)
         {
-            owner.actDrawer.DrawWithMode(this->items[index], x, tab.y, Painter::GrayUnder);
+            i8& glow = this->tabGlow[index];
+            const i8 glowBefore = glow;
+
+            if (this->roleTab == index)
+            {
+                glow = static_cast<i8>(glow + kTabGlowRise > kTabGlowMaximum ? kTabGlowMaximum : glow + kTabGlowRise);
+            }
+            else
+            {
+                glow = static_cast<i8>(glow - 1 < Menu::InitialTabGlow ? Menu::InitialTabGlow : glow - 1);
+            }
+
+            if (this->roleTab == Menu::NoTab || this->code == Menu::MainCode)
+            {
+                glow = kTabGlowMaximum;
+            }
+
+            this->Move(TabGlowValue + index, glow, glowBefore, glow);
+            const double fineGlow = this->ShownFine(TabGlowValue + index, glow);
+            const auto shownGlow = static_cast<i32>(std::floor(fineGlow));
+            ActState& item = this->items[index];
+            item.id = Scene::InterfaceAct;
+            item.action = this->VisibleRole(static_cast<int>(index)) + kTabActions;
+            const MenuTab& tab = this->tabs[index];
+
+            if (tab.role == Menu::NoRole)
+            {
+                continue;
+            }
+
+            const RoleRecord& role =
+                owner.party.roles[static_cast<std::size_t>(this->VisibleRole(static_cast<int>(index)))];
+            owner.actDrawer.DrawGhost(item, tab.x - offset, tab.y, shownGlow, fineGlow - shownGlow);
+            tracks(tab.y);
+            bars(role, tab.y, shownGlow, fineGlow - shownGlow);
+            u32 needed = 0;
+            figures(static_cast<int>(index), role, tab.y, needed);
+            painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+
+            if ((role.condition & RoleRecord::Defeated) != 0)
+            {
+                owner.actDrawer.DrawWithMode(item, tab.x - offset, tab.y, kDefeatedMode);
+            }
         }
+
+        return;
     }
+
+    if (mode == RolePanel)
+    {
+        const int role = this->VisibleRole(chosen);
+        const RoleRecord& record = owner.party.roles[static_cast<std::size_t>(role)];
+        ActState& portrait = this->items[static_cast<std::size_t>(chosen)];
+        portrait.id = Scene::InterfaceAct;
+        portrait.action = role + kPortraitActions;
+        owner.actDrawer.Draw(portrait, -offset, 0);
+        faces();
+        const int top = this->tabs.front().y - kRoleBarsUp;
+        tracks(top);
+
+        if ((record.condition & RoleRecord::Defeated) != 0)
+        {
+            FillBox(
+                painter,
+                kDefeatedShadeX,
+                kDefeatedShadeY,
+                kDefeatedShadeWidth,
+                kDefeatedShadeHeight,
+                0,
+                0,
+                0,
+                FillMode::Gray
+            );
+        }
+
+        bars(record, top, kTabGlowMaximum, 0.0);
+        u32 needed = 0;
+        figures(chosen, record, top, needed);
+        // The element's name goes into bytes 8 and 9 of the label (the original reads past the names for an element
+        // beyond them; nothing is put in then).
+        std::string element = Big5(kRoleElement);
+        const auto elementAt = static_cast<std::size_t>(static_cast<i8>(record.resistances[RoleRecord::ElementAt]));
+
+        if (elementAt < kElements.size())
+        {
+            element.replace(kRoleElementAt, 2, Big5(kElements[elementAt]));
+        }
+
+        const int x = kAttributesX - offset;
+        int y = kElementY;
+        text(x, y, element, owner.mediumFont);
+        const std::array<i32, 4> attributes = {record.strength, record.endurance, record.wisdom, record.agility};
+
+        for (std::size_t at = 0; at < attributes.size(); ++at)
+        {
+            y += kAttributeStep;
+            text(x, y, WinFormat(kRoleAttributes[at], {attributes[at]}), owner.mediumFont);
+        }
+
+        y += kAttributeStep;
+        text(x, y, WinFormat(kNextLevel, {static_cast<i32>(needed)}), owner.mediumFont);
+        y += kAttributeStep;
+        text(x, y, WinFormat(kExperience, {record.totalExperience}), owner.mediumFont);
+
+        if (this->page == Menu::EquipmentPage)
+        {
+            // The changes of the equipment (the strength's and the endurance's at the same place, as in the original).
+            const RoleRecord& changes = this->equip.bonuses;
+            const std::array<std::pair<i16, int>, 4> shown = {{
+                {changes.strength, kElementY + 0x18},
+                {changes.endurance, kElementY + 0x18},
+                {changes.wisdom, kElementY + 0x40},
+                {changes.agility, kElementY + 0x54},
+            }};
+
+            for (const auto& [change, changeY] : shown)
+            {
+                if (change == 0)
+                {
+                    continue;
+                }
+
+                std::string line = WinFormat(kChangeFormat, {std::abs(static_cast<i32>(change))});
+
+                if (change < 0)
+                {
+                    line[0] = '-';
+                }
+
+                text(kChangeX, changeY, line, owner.smallFont);
+            }
+        }
+
+        const std::array<i8, 5>& resistances = this->roleResistances[static_cast<std::size_t>(role)];
+        y = kResistancesY;
+
+        for (std::size_t at = 0; at < kResistances.size(); ++at)
+        {
+            text(x, y, WinFormat(kResistances[at], {static_cast<i32>(resistances[at])}), owner.mediumFont);
+            y += kAttributeStep;
+        }
+
+        painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+        return;
+    }
+
+    if (mode != GhostPanel)
+    {
+        return;
+    }
+
+    painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+    ActState& background = this->items[0];
+    background.id = Scene::InterfaceAct;
+    background.action = kGhostBackground;
+    owner.actDrawer.Draw(background, -offset, 0);
+    const i32 kind = owner.party.variables[Party::GhostVariable];
+    ActState& kindAct = this->items[1];
+    kindAct.id = kGhostKindAct;
+    kindAct.action = kind - 1;
+
+    if (kind - 1 >= 0)
+    {
+        owner.actDrawer.Draw(kindAct, kGhostKindX, kGhostKindY);
+    }
+
+    if (kind == 0)
+    {
+        return;
+    }
+
+    TalismanGhost& talisman = owner.talismanGhost;
+    const GhostPage& page = this->ghost;
+    std::string element = Big5(kGhostElement);
+
+    if (static_cast<std::size_t>(kind - 1) < kElements.size())
+    {
+        element.replace(kGhostElementAt, 2, Big5(kElements[static_cast<std::size_t>(kind - 1)]));
+    }
+
+    const int x = kAttributesX - offset;
+    const int changeX = kGhostChangeX - offset;
+
+    auto change = [&text, changeX, &owner](i32 value, int y)
+    {
+        std::string line = WinFormat(kGhostChangeFormat, {std::abs(value)});
+        line[0] = value > 0 ? '+' : '-';
+        text(changeX, y + kGhostChangeDown, line, owner.smallFont);
+    };
+
+    int y = kGhostAttributesY;
+    text(x, y, element, owner.mediumFont);
+    y += kAttributeStep;
+    text(x, y, WinFormat(kGhostStrength, {talisman.Stat(kStatStrength)}), owner.mediumFont);
+
+    if (page.compared != -1)
+    {
+        change(page.strengthChange, y);
+    }
+
+    y += kAttributeStep;
+    text(x, y, WinFormat(kGhostSpirit, {talisman.Stat(kStatSpirit)}), owner.mediumFont);
+    y += kAttributeStep;
+    text(x, y, WinFormat(kGhostEssence, {talisman.Stat(kStatEssence)}), owner.mediumFont);
+
+    if (page.compared != -1)
+    {
+        change(page.essenceChange, y);
+    }
+
+    y += kAttributeStep;
+    text(x, y, WinFormat(kGhostWisdom, {talisman.Stat(kStatWisdom)}), owner.mediumFont);
+
+    if (page.compared != -1)
+    {
+        change(page.wisdomChange, y);
+    }
+
+    y += kAttributeStep;
+    text(x, y, WinFormat(kGhostAgility, {talisman.Stat(kStatAgility)}), owner.mediumFont);
+
+    if (page.compared != -1)
+    {
+        change(page.agilityChange, y);
+    }
+
+    y += kAttributeStep;
+    text(x, y, WinFormat(kGhostInsight, {talisman.Stat(kStatInsight)}), owner.mediumFont);
+    this->DrawGhostChart(kGhostChartX, kGhostChartY);
+    text(kBalanceX, kBalanceY, Big5(kBalance), owner.smallFont);
+    text(kAttackX, kTriangleY, Big5(kAttack), owner.smallFont);
+    text(kDefenseX, kTriangleY, Big5(kDefense), owner.smallFont);
 }
 
 // swd3e.exe 0x004412E0: a menu box: a filled box 8 pixels larger and the frame of act 0x233B

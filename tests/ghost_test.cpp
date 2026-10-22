@@ -21,7 +21,7 @@ constexpr std::array<u32, TalismanGhost::Kinds> kKindNamesAt =
     {0x004C04B8, 0x004C04B0, 0x004C04A8, 0x004C04A0, 0x004C0498};
 constexpr std::size_t kSlotBytes = 0x158;
 constexpr std::size_t kTimeBytes = 0x10;
-constexpr swd3e::i32 kStartUnk10 = 0x32;
+constexpr swd3e::i32 kStartInsight = 0x32;
 constexpr swd3e::i32 kWaterUnkC4 = 0x12;  // 水符鬼's
 constexpr swd3e::i32 kMetalUnkF0 = 0xA;   // 金符鬼's
 
@@ -46,8 +46,8 @@ TEST_CASE("ghost: the kind names match swd3e.exe and Reset makes each kind")
     CHECK_EQ(ghost.kind, TalismanGhost::Kinds - 1);
     ghost.Reset(2);
     CHECK_EQ(ghost.kind, 2);
-    CHECK_EQ(ghost.unkC4, kWaterUnkC4);
-    CHECK_EQ(ghost.Stat(3), kStartUnk10);
+    CHECK_EQ(ghost.cycleDays, kWaterUnkC4);
+    CHECK_EQ(ghost.Stat(3), kStartInsight);
     CHECK(std::string(ghost.name.data()) == swd3e::Big5(TalismanGhost::KindNames[2]));
     ghost.Reset(TalismanGhost::Kinds);
     CHECK_EQ(ghost.kind, 2);
@@ -68,5 +68,5 @@ TEST_CASE("ghost: a slot of swdghost.dat is the time, then the record")
     std::memcpy(&ghost, file.data() + kTimeBytes, sizeof(TalismanGhost));
     CHECK(std::string(ghost.name.data()) == swd3e::Big5(TalismanGhost::KindNames[0]));
     CHECK_EQ(ghost.kind, 0);
-    CHECK_EQ(ghost.unkF0, kMetalUnkF0);
+    CHECK_EQ(ghost.spirit, kMetalUnkF0);
 }
