@@ -73,6 +73,7 @@ public:
     int DrawEffectAt(int id, int action, int x, int y, int mirror);
     int ResetEffectAt();
     int DrawCursorAnimation(int id, int x, int y);
+    int DrawRoleIcon(int action, int x, int y);
     u16 DrawDigit(int font, int digit, int x, int y);
     int DrawScrollBar(u16 id, int x, int y, int rows, int offset, int style);
     int DrawCoinToss();
@@ -95,6 +96,7 @@ public:
     u16 digitMode = 0;                            // 0x0050C31C 0x4000 / 0x8000: digits drawn in mode 0x20
     i32 numberValue = 0;                          // 0x0050C320
     const Picture* lastPicture = nullptr;         // 0x0050C328
+    ActState roleIconAct;                         // 0x0050C330
     i32 scrollThumbBottom = 0;                    // 0x0050C3D4
     i32 scrollTrackBottom = 0;                    // 0x0050C3D8
     std::array<ActState, 8> slotActs;             // 0x0050C3F8
@@ -108,7 +110,7 @@ public:
     std::array<ActState, 4> arrowActs;            // swd32 0x004FDD10
     i32 coinFrames = 0;                           // swd32 0x004FDF70
     u32 coinState = 0;                            // swd32 0x004FDF74 low word: the side, high word: the wins
-    u32 coinDelay = BattleHud::InitialCoinDelay;  // swd32 0x004A74C8 low word: the delay, high word: the countdown
+    u32 coinDelay = BattleHud::InitialCoinDelay;  // 0x004BEFF4 low word: the delay, high word: the countdown
 
 private:
     const Picture* Select(int id, int frame);

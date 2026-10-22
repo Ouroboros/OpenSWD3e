@@ -30,11 +30,11 @@ void Game::ShakeBattleBackground(int shake)
     }
 }
 
-// swd32.exe 0x00453580 (unmatched in swd3e): the battle background of the frame. Unless the field is darkened it is
-// drawn (shifted by
-// `shake` with its animation, or animated in place with the grey band of the battle start growing from BandRow), the
-// quake is cleared and the flash applied. While unit darkenUnit acts with the field darkened, the field is drawn darker
-// by a level a few frames (a darkened copy, or tint steps), and when the darkening ends it is undone a level a frame.
+// swd3e.exe 0x0045B8D0: the battle background of the frame. Unless the field is darkened it is drawn (shifted by
+// `shake` with its animations, or with them in place and the grey band of the battle start growing from BandRow), the
+// quake is cleared and the flash applied. While the field is darkened it is drawn darker (a darkened copy a level a few
+// frames, or the background and its animations with the tint stepping down), and when the darkening ends it is undone
+// (the tint stepping back up, or a copy a level lighter) until a tint channel reaches 0.
 void Game::DrawBattleBackground(int shake)
 {
     smooth::Scene scene;

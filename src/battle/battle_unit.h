@@ -53,14 +53,14 @@ struct EffectNode
         Ailment100Frame = 8,
     };
 
-    std::unique_ptr<EffectNode> next;  // +0x00
-    ActState act;                      // +0x04
-    u32 bits = 0;                      // +0x9C
-    u16 timer = 0;                     // +0xA0
-    u16 turns = 0;                     // +0xA2
-    u16 element = 0;                   // +0xA4 the element of a resistance effect
-    u16 icon = 0;                      // +0xA6
-    u16 value = 0;                     // +0xA8
+    std::unique_ptr<EffectNode> next;  // swd32 +0x0
+    ActState act;                      // swd32 +0x4
+    u32 bits = 0;                      // swd32 +0x9C
+    u16 timer = 0;                     // swd32 +0xA0
+    u16 turns = 0;                     // swd32 +0xA2
+    u16 element = 0;                   // swd32 +0xA4 the element of a resistance effect
+    u16 icon = 0;                      // swd32 +0xA6
+    u16 value = 0;                     // swd32 +0xA8
 };
 
 // The afterimages of a moving act (0x98 bytes; in a queued action at +0x134 and eight in a unit at +0xFCC). DrawTrail
@@ -74,53 +74,53 @@ struct AfterimageTrail
 
     struct Image
     {
-        u32 mode = 0;     // +0x00 the draw mode
-        u16 picture = 0;  // +0x04 NoPicture: none
-        i16 level = 0;    // +0x06 the blend level, falling by fadeStep
-        i16 x = 0;        // +0x08
-        i16 y = 0;        // +0x0A
+        u32 mode = 0;     // swd32 +0x0 the draw mode
+        u16 picture = 0;  // swd32 +0x4 NoPicture: none
+        i16 level = 0;    // swd32 +0x6 the blend level, falling by fadeStep
+        i16 x = 0;        // swd32 +0x8
+        i16 y = 0;        // swd32 +0xA
         i32 unk0C = 0;
     };
 
-    std::array<Image, Images> images = {};  // +0x00 the newest first
-    i32 tintRed = 0;                        // +0x80 the tint of the images under the translucent ones
+    std::array<Image, Images> images = {};  // swd32 +0x0 the newest first
+    i32 tintRed = 0;                        // swd32 +0x80 the tint of the images under the translucent ones
     i32 tintGreen = 0;
     i32 tintBlue = 0;
     i32 unk8C = 0;
-    u16 direction = 0;  // +0x90 0: the images trail to the right, Left, InPlace
-    u16 started = 0;    // +0x92
-    i8 count = 0;       // +0x94 the images drawn
-    i8 fadeStep = 0;    // +0x95
-    u8 delay = 0;       // +0x96 frames until the next image is pushed
+    u16 direction = 0;  // swd32 +0x90 0: the images trail to the right, Left, InPlace
+    u16 started = 0;    // swd32 +0x92
+    i8 count = 0;       // swd32 +0x94 the images drawn
+    i8 fadeStep = 0;    // swd32 +0x95
+    u8 delay = 0;       // swd32 +0x96 frames until the next image is pushed
 };
 
 // An act flying along a line, queued on a unit (0x1DC bytes; AddQueuedAction appends one, RunQueuedActions runs them).
 struct QueuedAction
 {
-    std::unique_ptr<QueuedAction> next;  // +0x00
-    ActState act;                        // +0x04 the flying act
-    ActState impact;                     // +0x9C the act at the end (id 0: none; a negative id lands no hit)
-    AfterimageTrail trail;               // +0x134 drawn while `trailed`
-    i16 toX = 0;                         // +0x1CC
-    i16 toY = 0;                         // +0x1CE 0: the line stays level
-    i16 fromX = 0;                       // +0x1D0
-    i16 fromY = 0;                       // +0x1D2 0: the line stays level
-    u16 shakeFrames = 0;                 // +0x1D4 frames the act shakes before it flies
-    i16 steps = 0;                       // +0x1D6 line steps per frame flown (1: a speeding flight)
-    i16 flown = 0;                       // +0x1D8 the frames flown
-    u8 done = 0;                         // +0x1DA removed at the end of RunQueuedActions
-    u8 trailed = 0;                      // +0x1DB
+    std::unique_ptr<QueuedAction> next;  // swd32 +0x0
+    ActState act;                        // swd32 +0x4 the flying act
+    ActState impact;                     // swd32 +0x9C the act at the end (id 0: none; a negative id lands no hit)
+    AfterimageTrail trail;               // swd32 +0x134 drawn while `trailed`
+    i16 toX = 0;                         // +0x1E4
+    i16 toY = 0;                         // +0x1E6 0: the line stays level
+    i16 fromX = 0;                       // +0x1E8
+    i16 fromY = 0;                       // +0x1EA 0: the line stays level
+    u16 shakeFrames = 0;                 // +0x1EC frames the act shakes before it flies
+    i16 steps = 0;                       // swd32 +0x1D6 line steps per frame flown (1: a speeding flight)
+    i16 flown = 0;                       // +0x1F2 the frames flown
+    u8 done = 0;                         // +0x1F4 removed at the end of RunQueuedActions
+    u8 trailed = 0;                      // +0x1F5
 };
 
 // The placement of a unit (0x20 bytes, copied whole into the saved placement).
 struct UnitPlacement
 {
     std::array<u8, 0x14> unk00 = {};
-    u16 actId = 0;  // +0x14 the act of the unit
-    i16 x = 0;      // +0x16
-    i16 y = 0;      // +0x18
+    u16 actId = 0;  // swd32 +0x14 the act of the unit
+    i16 x = 0;      // swd32 +0x16
+    i16 y = 0;      // swd32 +0x18
     u16 unk1A = 0;
-    i32 kind = 0;  // +0x1C 1: a party role
+    i32 kind = 0;  // swd32 +0x1C 1: a party role
 };
 
 // The command block of a unit (0x28 bytes, cleared whole).
@@ -166,21 +166,21 @@ struct UnitCommand
     };
 
     i32 unk00 = 0;
-    u32 actionFlags = 0;  // +0x04 (0xD94)
+    u32 actionFlags = 0;  // swd32 +0x4 (0xD94)
     i32 unk08 = 0;
-    u16 flags = 0;       // +0x0C (0xD9C)
-    i16 value = 0;       // +0x0E (0xD9E) the value of the skill (SkillValue)
-    u16 resistance = 0;  // +0x10 (0xDA0) the element 1..9 whose resistance scales the damage
-    u16 followAct = 0;   // +0x12 (0xDA2) the follow-up action's act
-    u16 castAct = 0;     // +0x14 (0xDA4)
-    u16 unk16 = 0;       // +0x16 (0xDA6)
-    u16 ailment = 0;     // +0x18 (0xDA8)
-    u16 element = 0;     // +0x1A (0xDAA)
-    u16 pose = 0;        // +0x1C (0xDAC) the pose of a defeat (its low byte)
-    i16 unk1E = 0;       // +0x1E (0xDAE)
-    u16 unk20 = 0;       // +0x20 (0xDB0)
-    u16 target = 0;      // +0x22 (0xDB2)
-    u8 unk24 = 0;        // +0x24 (0xDB4)
+    u16 flags = 0;       // swd32 +0xC (0xD9C)
+    i16 value = 0;       // swd32 +0xE (0xD9E) the value of the skill (SkillValue)
+    u16 resistance = 0;  // swd32 +0x10 (0xDA0) the element 1..9 whose resistance scales the damage
+    u16 followAct = 0;   // swd32 +0x12 (0xDA2) the follow-up action's act
+    u16 castAct = 0;     // swd32 +0x14 (0xDA4)
+    u16 unk16 = 0;       // swd32 +0x16 (0xDA6)
+    u16 ailment = 0;     // swd32 +0x18 (0xDA8)
+    u16 element = 0;     // swd32 +0x1A (0xDAA)
+    u16 pose = 0;        // swd32 +0x1C (0xDAC) the pose of a defeat (its low byte)
+    i16 unk1E = 0;       // swd32 +0x1E (0xDAE)
+    u16 unk20 = 0;       // swd32 +0x20 (0xDB0)
+    u16 target = 0;      // swd32 +0x22 (0xDB2)
+    u8 unk24 = 0;        // swd32 +0x24 (0xDB4)
     std::array<u8, 3> unk25 = {};
 };
 
@@ -621,176 +621,176 @@ private:
     Stride FlightStride(BattleServices& services, const QueuedAction& node, const ActState& act, int taken) const;
 
 public:
-    // +0x00..+0x0F: what the unit is.
+    // swd32 +0x0..+0x0F: what the unit is.
     RoleRecord* battleRecord =
-        nullptr;                       // +0x00 the battle copy of a party role's record (+0x26, +0x28: attack, defence)
-    RoleRecord* roleRecord = nullptr;  // +0x04 the role's party record
-    i32* roleBlock = nullptr;          // +0x08 the role's 0x60-byte block at 0x004ACF50 ([0]: the fury gauge, inferred)
-    ObjectRecord* data = nullptr;      // +0x0C an enemy's mon.dat object (usually `object`)
+        nullptr;  // swd32 +0x0 the battle copy of a party role's record (+0x26, +0x28: attack, defence)
+    RoleRecord* roleRecord = nullptr;  // swd32 +0x4 the role's party record
+    i32* roleBlock = nullptr;  // swd32 +0x8 the role's 0x60-byte block at 0x004ACF50 ([0]: the fury gauge, inferred)
+    ObjectRecord* data = nullptr;             // swd32 +0xC an enemy's mon.dat object (usually `object`)
     std::unique_ptr<ObjectRecord> ownedData;  // a party role's block at +0x0C (freed by Reset)
-    ObjectRecord object;                      // +0x10 (its description at +0xB0)
-    ObjectRecord weapon;                      // +0xB4 a party role's weapon (equipment slot 0)
-    std::array<ObjectRecord, 2> accessories;  // +0x158 equipment slots 7 and 8
+    ObjectRecord object;                      // swd32 +0x10 (its description at +0xB0)
+    ObjectRecord weapon;                      // swd32 +0xB4 a party role's weapon (equipment slot 0)
+    std::array<ObjectRecord, 2> accessories;  // swd32 +0x158 equipment slots 7 and 8
 
-    ActState mainAct;                           // +0x2A0
-    ActState standAct;                          // +0x338
-    ActState castAct;                           // +0x3D0
-    ActState recoilAct;                         // +0x468
-    ActState attackAct;                         // +0x500
-    ActState unk598;                            // +0x598
-    std::array<ActState, SlotActs> slotActs;    // +0x630
-    ActState stepAct;                           // +0xCB8
-    UnitPlacement placement;                    // +0xD50
-    UnitPlacement savedPlacement;               // +0xD70
-    UnitCommand command;                        // +0xD90
-    ProjectedPicture projected;                 // +0xDB8 the picture of defeat pose 51 (DefeatProjected)
+    ActState mainAct;                           // +0x2B4
+    ActState standAct;                          // +0x358
+    ActState castAct;                           // +0x3FC
+    ActState recoilAct;                         // +0x4A0
+    ActState attackAct;                         // +0x544
+    ActState unk598;                            // swd32 +0x598
+    std::array<ActState, SlotActs> slotActs;    // +0x68C
+    ActState stepAct;                           // swd32 +0xCB8
+    UnitPlacement placement;                    // +0xFC4
+    UnitPlacement savedPlacement;               // +0xFE4
+    UnitCommand command;                        // +0x1004
+    ProjectedPicture projected;                 // swd32 +0xDB8 the picture of defeat pose 51 (DefeatProjected)
     std::vector<u16> projectedPixels;           // its raw pixels
-    LineWalker flight;                          // +0xDF4 the line of a flying act (FlyAct)
-    ParticleEffect absorb;                      // +0xE14 a picture breaking up into the unit (StartAbsorb)
+    LineWalker flight;                          // +0x106C the line of a flying act (FlyAct)
+    ParticleEffect absorb;                      // +0x108C a picture breaking up into the unit (StartAbsorb)
     std::vector<u16> absorbPixels;              // the raw pixels of absorb (decoded by 0x004019A0, freed by 0x004885A0)
-    std::array<ParticleEffect, Drains> drains;  // +0xE6C the drain effects (StartDrainEffect)
+    std::array<ParticleEffect, Drains> drains;  // +0x10E4 the drain effects (StartDrainEffect)
     std::array<std::vector<u16>, Drains> drainPixels;  // their raw pixels
-    std::array<AfterimageTrail, Trails> trails;        // +0xFCC the afterimages of the unit's acts
-    std::unique_ptr<QueuedAction> actions;             // +0x236C
-    const Picture* shadowPicture = nullptr;            // +0x2548
-    const Picture* picture = nullptr;                  // +0x254C the current picture
-    const Picture* unk2550 = nullptr;                  // +0x2550
-    const Picture* overlayPicture = nullptr;           // +0x2554 the overlay drawn on its picture
-    const Picture* absorbSource = nullptr;             // +0x255C the picture StartAbsorb breaks up
-    std::span<const char> displayName;      // +0x2560 the name shown in the messages (read up to its NUL when used)
-    EffectNode effects;                     // +0x2584 (the head is a node: +0x2588 its act, +0x2620 its bits)
-    std::array<char, 0x30> skillName = {};  // +0x2630 the name of the skill used
-    std::array<i32, 8> flightSteps = {};    // +0x2640 the steps per frame of FlyAct by its slot (callers use 0)
+    std::array<AfterimageTrail, Trails> trails;        // +0x1314 the afterimages of the unit's acts
+    std::unique_ptr<QueuedAction> actions;             // +0x2794
+    const Picture* shadowPicture = nullptr;            // +0x2A40
+    const Picture* picture = nullptr;                  // +0x2A44 the current picture
+    const Picture* unk2550 = nullptr;                  // swd32 +0x2550
+    const Picture* overlayPicture = nullptr;           // +0x2A4C the overlay drawn on its picture
+    const Picture* absorbSource = nullptr;             // +0x2A54 the picture StartAbsorb breaks up
+    std::span<const char> displayName;      // +0x2A58 the name shown in the messages (read up to its NUL when used)
+    EffectNode effects;                     // +0x2A7C (the head is a node: +0x2588 its act, +0x2620 its bits)
+    std::array<char, 0x30> skillName = {};  // +0x2B38 the name of the skill used
+    std::array<i32, 8> flightSteps = {};    // swd32 +0x2640 the steps per frame of FlyAct by its slot (callers use 0)
     i32 unk2660 = 0;
     i32 unk2664 = 0;
-    i32 fadeLevel = Opaque;  // +0x2668 (also the dash offset of ChargeAttackFrame)
-    i32 brightLevel = 1;     // +0x266C
-    i32 homePoseX = 0;       // +0x2670 the x offset of the stand pose while walking home (ReturnHome)
+    i32 fadeLevel = Opaque;  // +0x2B70 (also the dash offset of ChargeAttackFrame)
+    i32 brightLevel = 1;     // +0x2B74
+    i32 homePoseX = 0;       // swd32 +0x2670 the x offset of the stand pose while walking home (ReturnHome)
     i32 unk2674 = 0;
     i32 unk2678 = 0;
-    u32 stage = 0;       // +0x267C BattleUnit::Stage bits
-    i32 throwSteps = 0;  // +0x2680 the frames of the thrown act so far (ThrowAct)
+    u32 stage = 0;       // +0x2B84 BattleUnit::Stage bits
+    i32 throwSteps = 0;  // +0x2B88 the frames of the thrown act so far (ThrowAct)
     i32 unk2684 = 0;
-    u32 glowFlags = 0;       // +0x2688 the draw mode of the glow act
-    i32 glowOffsetX = 0;     // +0x268C
-    i32 readyAction = 0;     // +0x2690 the action of its ready pose (kReadyAct)
-    u32 drawFlags = 0;       // +0x2694 bit 0: mirrored
-    i32 overlayOffsetX = 0;  // +0x2698 the x offset of the overlay (IdleFrame)
-    u32 frameFlags = 0;      // +0x26A0 flag 1 toggled for mirrored frames
-    u32 shadowMode = 0;      // +0x26A4 the mode its shadow is drawn with
+    u32 glowFlags = 0;       // +0x2B90 the draw mode of the glow act
+    i32 glowOffsetX = 0;     // +0x2B94
+    i32 readyAction = 0;     // swd32 +0x2690 the action of its ready pose (kReadyAct)
+    u32 drawFlags = 0;       // +0x2B9C bit 0: mirrored
+    i32 overlayOffsetX = 0;  // swd32 +0x2698 the x offset of the overlay (IdleFrame)
+    u32 frameFlags = 0;      // +0x2BA8 flag 1 toggled for mirrored frames
+    u32 shadowMode = 0;      // +0x2BAC the mode its shadow is drawn with
     i32 unk26A8 = 0;
     i32 unk26AC = 0;
-    i32 damageCarry = 0;               // +0x26B0
-    i32 hitPointsOverride = 0;         // +0x26B4 an enemy's current hit points when set
-    u32 unk26B8 = 0;                   // +0x26B8 bit 31
-    u32 colorPair = DefaultColorPair;  // +0x26BC
-    u32 status = 0;                    // +0x26C0 status bits (2: stone, 12: frozen, ...)
-    u32 equipmentFlags = 0;            // +0x26C8 bits 0, 2..6 from the equipment
+    i32 damageCarry = 0;               // +0x2BB8
+    i32 hitPointsOverride = 0;         // +0x2BBC an enemy's current hit points when set
+    u32 unk26B8 = 0;                   // +0x2BC0 bit 31
+    u32 colorPair = DefaultColorPair;  // +0x2BC4
+    u32 status = 0;                    // +0x2BC8 status bits (2: stone, 12: frozen, ...)
+    u32 equipmentFlags = 0;            // +0x2BD0 bits 0, 2..6 from the equipment
     u32 unk26CC = 0;
-    u16 marks = 0;      // +0x26D0 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
-    i16 guardPose = 0;  // +0x26D2 the guard pose (kGuardPose1..8)
+    u16 marks = 0;      // +0x2BD8 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
+    i16 guardPose = 0;  // swd32 +0x26D2 the guard pose (kGuardPose1..8)
     u16 unk26D4 = 0;
-    u16 nudge = 0;                                  // +0x26D6
-    u16 drawAtSaved = 0;                            // +0x26D8
-    u16 proficiency = 0;                            // +0x26DC the proficiency of the accessory used
-    std::array<u16, MaxTargets> damageDelays = {};  // +0x26DE
-    std::array<std::array<i16, DamageDigits>, MaxTargets> damageDigits = {};  // +0x2724 the four digits per target slot
-    std::array<std::array<i16, DamageDigits>, MaxTargets> unk283C = {};       // +0x283C
-    std::array<i16, GuardLetters> guardPhases = {};  // +0x2884 the pop phases of the four letters of the guard text
-    i16 slotTint = 0;    // +0x2954 the tint of a waiting slot act, darkening to its end (AttackFrame)
-    i16 recoilTint = 0;  // +0x2956 the tint of a waiting recoil act, darkening to its end (DrawRecoil)
-    i16 glowLevel = 0;   // +0x2958 the brightness of a glow act (GlowAct)
-    std::array<i16, MaxTargets> numberFades = {};  // +0x295A the rise and fade of each damage number
-    i16 guardRise = 0;                             // +0x29A0
+    u16 nudge = 0;                                  // swd32 +0x26D6
+    u16 drawAtSaved = 0;                            // swd32 +0x26D8
+    u16 proficiency = 0;                            // +0x2BE6 the proficiency of the accessory used
+    std::array<u16, MaxTargets> damageDelays = {};  // swd32 +0x26DE
+    std::array<std::array<i16, DamageDigits>, MaxTargets> damageDigits = {};  // +0x2C30 the four digits per target slot
+    std::array<std::array<i16, DamageDigits>, MaxTargets> unk283C = {};       // swd32 +0x283C
+    std::array<i16, GuardLetters> guardPhases = {};  // +0x2D90 the pop phases of the four letters of the guard text
+    i16 slotTint = 0;    // +0x2E60 the tint of a waiting slot act, darkening to its end (AttackFrame)
+    i16 recoilTint = 0;  // +0x2E62 the tint of a waiting recoil act, darkening to its end (DrawRecoil)
+    i16 glowLevel = 0;   // +0x2E64 the brightness of a glow act (GlowAct)
+    std::array<i16, MaxTargets> numberFades = {};  // +0x2E66 the rise and fade of each damage number
+    i16 guardRise = 0;                             // +0x2EAC
     u16 unk29A2 = NoUnk29A2;
     u16 unk29A4 = 0;
-    u16 restoreHitPoints = 0;  // +0x29A6 the hit points a command restores
-    u16 restoreSpirit = 0;     // +0x29A8 the spirit
-    u16 restoreStamina = 0;    // +0x29AA the stamina
-    u16 actAnchorX = 0;        // +0x29AC the act's anchor x, from the picture's right edge when mirrored (DrawAction)
-    u16 aimAnchorX = 0;        // +0x29AE the same for AimAction
-    u16 overlayX = 0;          // +0x29B0 the x of the overlay picture from the act (DrawAction)
-    u16 originX = 0;           // +0x29B2
-    u16 actOffsetX = 0;        // +0x29B4 the act's x offset, mirrored like the picture (DrawAction)
-    u16 aimOffsetX = 0;        // +0x29B6 the act's x offset of AimAction, mirrored like the picture
-    u16 actX = 0;              // +0x29B8 where DrawAction draws the act
-    u16 actY = 0;              // +0x29BA
-    u16 aimX = 0;              // +0x29BC where AimAction places the act
-    u16 aimY = 0;              // +0x29BE
-    std::array<u16, MaxTargets> pushedTargets = {};  // +0x29C4
-    u16 fadeStep = DefaultFadeStep;                  // +0x2A0A the alpha step of its fades
-    u16 actId = 0;                                   // +0x2A0C the unit's act
-    u16 action = 0;                                  // +0x2A0E
-    u16 gauge = 0;                                   // +0x2A12 the action gauge
+    u16 restoreHitPoints = 0;  // +0x2EB6 the hit points a command restores
+    u16 restoreSpirit = 0;     // +0x2EB8 the spirit
+    u16 restoreStamina = 0;    // +0x2EBA the stamina
+    u16 actAnchorX = 0;        // +0x2EBC the act's anchor x, from the picture's right edge when mirrored (DrawAction)
+    u16 aimAnchorX = 0;        // +0x2EBE the same for AimAction
+    u16 overlayX = 0;          // +0x2EC0 the x of the overlay picture from the act (DrawAction)
+    u16 originX = 0;           // +0x2EC2
+    u16 actOffsetX = 0;        // +0x2EC6 the act's x offset, mirrored like the picture (DrawAction)
+    u16 aimOffsetX = 0;        // +0x2EC8 the act's x offset of AimAction, mirrored like the picture
+    u16 actX = 0;              // +0x2ECA where DrawAction draws the act
+    u16 actY = 0;              // +0x2ECC
+    u16 aimX = 0;              // +0x2ECE where AimAction places the act
+    u16 aimY = 0;              // +0x2ED0
+    std::array<u16, MaxTargets> pushedTargets = {};  // +0x2EE0
+    u16 fadeStep = DefaultFadeStep;                  // +0x2F26 the alpha step of its fades
+    u16 actId = 0;                                   // +0x2F28 the unit's act
+    u16 action = 0;                                  // +0x2F2A
+    u16 gauge = 0;                                   // +0x2F2E the action gauge
     u16 unk2A14 = 0;
-    std::array<u32, 4> targets = {NoTarget, NoTarget, NoTarget, NoTarget};  // +0x2A56
-    u16 glowPhase = 0;            // +0x2A66 0: brightening, 1: dimming, 2: over (GlowAct)
-    u16 flashPhase = FlashStart;  // +0x2A68 the rise of its turn flash
-    u16 flashFall = FlashPeak;    // +0x2A6A and its fall
-    u16 commandA = 0;             // +0x2A6C
+    std::array<u32, 4> targets = {NoTarget, NoTarget, NoTarget, NoTarget};  // +0x2F72
+    u16 glowPhase = 0;            // +0x2F82 0: brightening, 1: dimming, 2: over (GlowAct)
+    u16 flashPhase = FlashStart;  // +0x2F84 the rise of its turn flash
+    u16 flashFall = FlashPeak;    // +0x2F86 and its fall
+    u16 commandA = 0;             // +0x2F88
     u16 unk2A6E = 0;
-    u16 commandB = 0;  // +0x2A70 commands 2, 3, 6, 13, 14 and 15
+    u16 commandB = 0;  // +0x2F8C commands 2, 3, 6, 13, 14 and 15
     u16 unk2A72 = 0;
     u16 unk2A74 = 0;
-    u16 hurtStep = 0;  // +0x2A78 the step of the stagger (HurtFrame)
+    u16 hurtStep = 0;  // +0x2F94 the step of the stagger (HurtFrame)
     u16 unk2A76 = 0;
     u16 unk2A7A = 0;
-    u16 targetCount = 0;    // +0x2A7C
-    u16 damageSlot = 0;     // +0x2A7E
-    u16 queuedActions = 0;  // +0x2A80 the acts AddQueuedAction appended
-    u16 landedActions = 0;  // +0x2A82 the queued acts that reached their end
-    u16 pendingDamage = 0;  // +0x2A84 bit 15: healing
-    u16 commandFlags = 0;   // +0x2A86 CommandFlag bits (high byte at +0x2A87)
-    u16 restAction = 0;     // +0x2A88 the rest action of the frame (IdleFrame)
-    u16 magicAction = 0;    // +0x2A8A the action of its magic act
+    u16 targetCount = 0;    // +0x2F98
+    u16 damageSlot = 0;     // +0x2F9A
+    u16 queuedActions = 0;  // +0x2F9C the acts AddQueuedAction appended
+    u16 landedActions = 0;  // swd32 +0x2A82 the queued acts that reached their end
+    u16 pendingDamage = 0;  // +0x2FA6 bit 15: healing
+    u16 commandFlags = 0;   // +0x2FB0 CommandFlag bits (high byte at +0x2A87)
+    u16 restAction = 0;     // swd32 +0x2A88 the rest action of the frame (IdleFrame)
+    u16 magicAction = 0;    // +0x2FB4 the action of its magic act
     u16 unk2A8C = 0;
     u16 unk2A8E = 0;
-    u16 barrierTurns = 0;  // +0x2A90
+    u16 barrierTurns = 0;  // +0x2FBA
     u8 unk2A92 = 0;
-    u8 evadeSkill = 0;    // +0x2A93 an evade roll of 0..kEvadeRoll below it evades
-    u8 defeatPose = 0;    // +0x2A94 the pose of the defeat (a fixed pose overrides it)
-    u8 fixedPose = 0;     // +0x2A95
-    u8 idleTurns = 0;     // +0x2A97 the turns since the enemy chose an object or a skill (ChooseCommand)
-    u8 itemWait = 0;      // +0x2A98 the turns since the third object was forced
-    u8 skillWait = 0;     // +0x2A99 the turns since the second skill was forced
-    u8 choicePhase = 0;   // +0x2A9A 1: objects were last chosen, 2: skills
-    u8 extraAttacks = 0;  // +0x2A9B the attacks the unit repeats (set by skill 0x15)
-    u8 healChoice = 0;    // +0x2A9C
-    u8 healPercent = 0;   // +0x2A9E 1: restoreHitPoints..restoreStamina are percentages of the target's maxima
-    i32 kind = 0;         // +0x2AA0 1: a party role
+    u8 evadeSkill = 0;    // +0x2FC5 an evade roll of 0..kEvadeRoll below it evades
+    u8 defeatPose = 0;    // +0x2FC6 the pose of the defeat (a fixed pose overrides it)
+    u8 fixedPose = 0;     // +0x2FC7
+    u8 idleTurns = 0;     // swd32 +0x2A97 the turns since the enemy chose an object or a skill (ChooseCommand)
+    u8 itemWait = 0;      // swd32 +0x2A98 the turns since the third object was forced
+    u8 skillWait = 0;     // +0x2FCB the turns since the second skill was forced
+    u8 choicePhase = 0;   // +0x2FCC 1: objects were last chosen, 2: skills
+    u8 extraAttacks = 0;  // +0x2FCD the attacks the unit repeats (set by skill 0x15)
+    u8 healChoice = 0;    // +0x2FCE
+    u8 healPercent = 0;   // +0x2FD0 1: restoreHitPoints..restoreStamina are percentages of the target's maxima
+    i32 kind = 0;         // +0x2FE0 1: a party role
     i32 unk2AA4 = 0;
     i32 unk2AA8 = 0;
     i32 unk2AAC = 0;
     i32 unk2AB0 = 0;
     i32 unk2AB4 = 0;
-    i32 defeated = 0;  // +0x2AB8
-    i32 dying = 0;     // +0x2ABC 1 while the defeat runs (DefeatFrame)
-    i32 outline = 0;   // +0x2AC0
-    i32 charging = 0;  // +0x2AC4 1: ChargeAttackFrame is in its charge (also set when a stagger ends)
+    i32 defeated = 0;  // +0x2FF8
+    i32 dying = 0;     // swd32 +0x2ABC 1 while the defeat runs (DefeatFrame)
+    i32 outline = 0;   // +0x3000
+    i32 charging = 0;  // +0x3004 1: ChargeAttackFrame is in its charge (also set when a stagger ends)
     i32 unk2AC8 = 0;
     i32 unk2ACC = 0;
-    i32 held = 0;  // +0x2AD0
+    i32 held = 0;  // +0x3010
     i32 unk2AD4 = 0;
     i32 unk2AD8 = 0;
     i32 unk2ADC = 0;
     i32 unk2AE0 = 0;
-    i32 target = 0;       // +0x2AE4
-    i32 extraNumber = 0;  // +0x2AE8
+    i32 target = 0;       // +0x3024
+    i32 extraNumber = 0;  // +0x3028
     i32 unk2AEC = 0;
-    i32 guarding = 0;  // +0x2AF0
+    i32 guarding = 0;  // +0x3030
     i32 unk2AF4 = 0;
     i32 unk2AF8 = 0;
-    i32 absorbing = 0;     // +0x2AFC 1 while an absorb runs (AbsorbFrame)
-    i32 autoControl = 0;   // +0x2B00 1: the role acts by itself (AI)
-    i32 guestControl = 0;  // +0x2B04 1: a guest role, acting by itself
-    i32 facing = 0;        // +0x2B08
+    i32 absorbing = 0;     // +0x303C 1 while an absorb runs (AbsorbFrame)
+    i32 autoControl = 0;   // +0x3044 1: the role acts by itself (AI)
+    i32 guestControl = 0;  // +0x3048 1: a guest role, acting by itself
+    i32 facing = 0;        // +0x3050
     i32 unk2B0C = 0;
-    i32 fadedIn = 0;  // +0x2B1C a forced unit has faded in for its attack (AttackFrame)
+    i32 fadedIn = 0;  // +0x3064 a forced unit has faded in for its attack (AttackFrame)
     i32 facingTurnsBack =
-        0;  // +0x2B20 set with the facing (SetFacingIfAble); 1: the facing turns back when the gauge fills
+        0;  // swd32 +0x2B20 set with the facing (SetFacingIfAble); 1: the facing turns back when the gauge fills
     i32 unk2B10 = 0;
-    i32 evadeRolled = 0;  // +0x2B14 1: the evade roll of the attack was made
-    i32 goldGuard = 0;    // +0x2B18
+    i32 evadeRolled = 0;  // +0x305C 1: the evade roll of the attack was made
+    i32 goldGuard = 0;    // swd32 +0x2B18
 };
 
 int ScaleByTenths(i8 tenths, i16& value);

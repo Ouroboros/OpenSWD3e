@@ -54,6 +54,8 @@ public:
 
     int DrawCursorAnimationAdvance(int id, int x, int y, Scene& scene);
 
+    int DrawRoleIconAdvance(int action, int x, int y, Scene& scene);
+
     u16 DrawDigitAdvance(int font, int digit, int x, int y, Scene& scene);
 
     int DrawScrollBarAdvance(u16 id, int x, int y, int rows, int offset, int style, Scene& scene);

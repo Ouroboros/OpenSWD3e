@@ -2438,13 +2438,7 @@ int Game::FightTalkMisc(u16 command)
 
         case kTalkBackgroundAgain:
             battle.panelFlags |= kBackgroundPanel;
-            this->LoadBattleBackground(
-                battle.formation.background,
-                battle.formation.animation,
-                battle.formation.animationX,
-                battle.formation.animationY,
-                1
-            );
+            this->LoadBattleBackground(battle.formation.background, 1);
             talk.cursor += sizeof(u16);
             return 1;
 
@@ -2554,7 +2548,7 @@ int Game::FightTalkMisc(u16 command)
             return 1;
 
         case kTalkBackground:
-            this->LoadBattleBackground(talk.Word(1), talk.UnsignedWord(2), talk.Word(3), talk.Word(4), 1);
+            this->LoadBattleBackground(talk.Word(1), 1);
             talk.cursor += 5 * sizeof(u16);
             return 1;
 

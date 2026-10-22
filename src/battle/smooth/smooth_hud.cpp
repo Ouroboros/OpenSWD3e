@@ -23,6 +23,7 @@ namespace
 {
 
 constexpr int kArrowAct = 0x2392;
+constexpr int kArrowTint = -4;  // the tint of all three channels of an arrow
 constexpr int kBodyInset = 4;
 constexpr int kBottomCapStyle = 2;
 constexpr u16 kCoinAct = 0x2329;
@@ -37,8 +38,8 @@ constexpr i32 kCoinWinAction = 3;  // the coin showing the winning side
 constexpr int kCoinX = 0x104;      // a coin is drawn kCoinStep further right on the winning side
 constexpr int kCoinY = 0xC8;
 constexpr int kDecimal = 10;
-constexpr u32 kDigitFont0 = 0x2359;
-constexpr u32 kDigitFont1 = 0x2358;
+constexpr u32 kDigitFont =
+    0x2370;  // the digits of DrawDigit when its font is 0 (any other font redraws the last picture)
 constexpr u16 kDigitGlow4000 = 0x4000;
 constexpr u16 kDigitGlow8000 = 0x8000;
 constexpr int kDimTint = -10;  // the green and blue tint of a dimmed portrait
@@ -58,6 +59,7 @@ constexpr int kNeedleShift = 1;  // the needle moves a pixel every second frame
 constexpr int kNumberDigitWidth = 0x10;
 constexpr u32 kOutlineGreen = 0x07E007E0;
 constexpr int kPortraitAct = 0x2390;
+constexpr int kRoleIconAct = 0x23AA;  // the icons of the roles by action (DrawRoleIcon)
 constexpr int kScrollBottom = 0x1B;
 constexpr int kScrollClipWidth = 0x20;
 constexpr int kScrollPiece = 0x18;  // the actions of the scroll bar act
@@ -68,8 +70,8 @@ constexpr int kScrollTop = 0x1A;
 constexpr int kShineAlpha = 8;
 constexpr int kShineX = 0xB;
 constexpr int kShineY = 0x1F;
-constexpr int kSmallDigits = 4;
-constexpr int kSmallTopDivisor = 1000;
+constexpr int kSmallDigits = 10;
+constexpr int kSmallTopDivisor = 1000000000;
 constexpr u32 kTallGauge = 0x241A;
 constexpr int kThumbInset = 5;
 constexpr int kTileBottom = 7;
@@ -83,7 +85,7 @@ constexpr int kTileTop = 1;
 constexpr int kTileTopLeft = 0;
 constexpr int kTileTopRight = 2;
 constexpr u16 kTimingDone = 0x8000;
-constexpr u32 kTimingPicture = 0x234F;
+constexpr u32 kTimingPicture = 0x2380;
 constexpr int kTopCapStyle = 1;           // DrawScrollBar styles
 constexpr u32 kTopDivisor = 1000000000u;  // DrawNumber: ten digits
 constexpr int kTrackInset = 2;
@@ -204,6 +206,10 @@ int HudFrame::DrawArrowAdvance(int x, int y, int slot, Scene& scene)
         return 0;
     }
 
+    DrawOptions& options = painter.Options();
+    options.tintGreen = kArrowTint;
+    options.tintBlue = kArrowTint;
+    options.tintRed = kArrowTint;
     return painter
         .DrawPicture(x - state.x, y - state.y, picture->width, picture->height, state.flags, PaletteArgument(*picture));
 }
@@ -487,6 +493,31 @@ int HudFrame::DrawCursorAnimationAdvance(int id, int x, int y, Scene& scene)
     return painter.DrawPicture(x, y, picture->width, picture->height, hud.cursorAct.flags);
 }
 
+int HudFrame::DrawRoleIconAdvance(int action, int x, int y, Scene& scene)
+{
+    BattleHud& hud = this->hud;
+    BattleServices& services = *hud.services;
+    ScenePainter painter(services, scene);
+    ActState& state = hud.roleIconAct;
+    state.id = kRoleIconAct;
+    state.action = action;
+
+    if (hud.acts.Run(state) == 0)
+    {
+        return 0;
+    }
+
+    const Picture* picture = hud.archive.GetPicture(state.frame, state.picture);
+
+    if (picture == nullptr)
+    {
+        return 0;
+    }
+
+    painter.SetSource(*picture);
+    return painter.DrawPicture(x - state.x, y - state.y, picture->width, picture->height, state.flags);
+}
+
 // What BattleHud::DrawDigit decides of the frame; the draws into `scene`.
 u16 HudFrame::DrawDigitAdvance(int font, int digit, int x, int y, Scene& scene)
 {
@@ -495,9 +526,9 @@ u16 HudFrame::DrawDigitAdvance(int font, int digit, int x, int y, Scene& scene)
     ScenePainter painter(services, scene);
     const Picture* picture = hud.lastPicture;
 
-    if (font == 0 || font == 1)
+    if (font == 0)
     {
-        picture = hud.archive.GetPicture(font == 0 ? kDigitFont0 : kDigitFont1, static_cast<u32>(digit));
+        picture = hud.archive.GetPicture(kDigitFont, static_cast<u32>(digit));
         hud.lastPicture = picture;
 
         if (picture != nullptr)

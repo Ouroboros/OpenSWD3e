@@ -47,6 +47,7 @@ constexpr int kRowSpeedScale = 2;
 constexpr int kUnusedSpeedBase = 0xF;  // the speeds it draws for every row first, never used
 constexpr int kMaxEnemySteps = 6;
 constexpr int kScenes = 4;
+constexpr int kBackgroundPictures = 15000;  // the battle backgrounds are pictures 15000 on
 constexpr i32 kNoParty = 0x67;
 constexpr std::u8string_view kBadBattle = u8"第%d號戰鬥場景資料錯誤!!";  // swd32.exe 0x004A76F0 (unmatched in swd3e)
 
@@ -74,29 +75,34 @@ i32 Bar(int value, int maximum)
 
 }  // namespace
 
-// swd32.exe 0x00451940 (unmatched in swd3e): the battle background: picture `picture` of all_map2.tsw turned to 16 bits
-// and shifted right
-// by a share of the screen per scene, and its animation when the battle has one
-void Game::LoadBattleBackground(int picture, u16 animation, int x, int y, u16 scene)
+// swd3e.exe 0x004599E0: the battle background: picture `background` + kBackgroundPictures loaded directly (the one
+// before freed) and shifted right by 640 / `scene`; the formation's animations (animationCount of them) freed, then
+// loaded at their places with the same shift. The darkened copies' tint is forgotten.
+void Game::LoadBattleBackground(int background, u16 scene)
 {
     BattleState& battle = this->battleState;
-    const std::u8string path = Concat({this->config.installDirectory, u8"all_map2.tsw"});
-    this->battleHud.FreeAnimation(battle.backgroundAnimation);
-    battle.background = Picture{};
+    std::unique_ptr<Picture> picture =
+        this->archive.LoadPictureDirect(static_cast<u32>(background + kBackgroundPictures), 0);
+    battle.background = picture != nullptr ? std::move(*picture) : Picture{};
+    ShiftPicture(battle.background.data, ShiftMode::Right, Display::Width / scene);
+    // The original runs over animationCount slots of the eight; the rebuild stops at the eighth (deviations.md).
+    const std::size_t count = std::min<std::size_t>(battle.animationCount, BattleFormation::Animations);
 
-    // Pending the swd3e rebuild of the battle: swd3e has no TswArchive::LoadFromFile (swd32 0x00433320); the swd3e
-    // function loading the background is not identified yet, so no background is loaded.
-    if (!path.empty())
+    for (std::size_t index = 0; index < count; ++index)
     {
-        return;
+        this->battleHud.FreeAnimation(battle.backgroundAnimations[index]);
     }
 
-    this->codec.ConvertTo16(battle.background);
-    ShiftPicture(battle.background.data, ShiftMode::Right, Display::Width / scene);
-
-    if (battle.formation.animated != 0 && animation != 0)
+    for (std::size_t index = 0; index < count; ++index)
     {
-        this->battleHud.LoadAnimation(battle.backgroundAnimation, 0, x, y, animation, scene);
+        this->battleHud.LoadAnimation(
+            battle.backgroundAnimations[index],
+            0,
+            battle.formation.animationX[index],
+            battle.formation.animationY[index],
+            static_cast<u16>(battle.formation.animations[index]),
+            scene
+        );
     }
 
     battle.darkCopyTint.fill(-1);
@@ -248,7 +254,7 @@ void Game::StartBattle(u16 number)
     battle.file.ReadHeader(path);
     battle.file.ReadFormation(path, battle.formation, number, 0);
     battle.enemyCount = battle.formation.enemyCount;
-    battle.animated = battle.formation.animated;
+    battle.animationCount = battle.formation.animationCount;
 
     if (battle.formation.enemyCount == 0)
     {
@@ -257,13 +263,7 @@ void Game::StartBattle(u16 number)
     }
 
     battle.scene = static_cast<u16>(this->random.Below(kScenes) + 1);
-    this->LoadBattleBackground(
-        battle.formation.background,
-        battle.formation.animation,
-        battle.formation.animationX,
-        battle.formation.animationY,
-        battle.scene
-    );
+    this->LoadBattleBackground(battle.formation.background, battle.scene);
     battle.unk525470 = ActState{};
 
     for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)

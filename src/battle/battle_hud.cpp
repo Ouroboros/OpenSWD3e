@@ -76,7 +76,7 @@ int BattleHud::DrawPortrait(u16 index, int x, int y, int dim)
     return result;
 }
 
-// swd3e.exe 0x00457A50: the looping arrow (act 0x2392) of one of four slots
+// swd3e.exe 0x00457A50: the looping arrow (act 0x2392) of one of four slots, tinted by -4 in each channel
 int BattleHud::DrawArrow(int x, int y, int slot)
 {
     smooth::Scene scene;
@@ -130,7 +130,7 @@ int BattleHud::DrawGaugeWide(int id, int x, int y, u16 fill)
     return result;
 }
 
-// swd3e.exe 0x00457D20: up to four decimal digits right aligned at x (frames of picture `font`)
+// swd3e.exe 0x00457D20: up to ten decimal digits right aligned at x (frames of picture `font`)
 int BattleHud::DrawSmallNumber(int font, int value, int x, int y)
 {
     smooth::Scene scene;
@@ -202,6 +202,16 @@ int BattleHud::DrawCursorAnimation(int id, int x, int y)
     return result;
 }
 
+// swd3e.exe 0x00458240: action `action` of the role icon act 0x23AA at (x, y) less the action's offset; the picture is
+// not kept as the last one
+int BattleHud::DrawRoleIcon(int action, int x, int y)
+{
+    smooth::Scene scene;
+    const auto result = smooth::HudFrame(*this).DrawRoleIconAdvance(action, x, y, scene);
+    scene.Show(*this->services);
+    return result;
+}
+
 // swd3e.exe 0x004582C0: a digit of font 0 (picture 0x2359) or 1 (0x2358); other fonts redraw the last picture
 u16 BattleHud::DrawDigit(int font, int digit, int x, int y)
 {
@@ -253,7 +263,7 @@ int BattleHud::DrawCoinToss()
     return result;
 }
 
-// swd3e.exe 0x00458A00: the timing bar (picture 0x234F) with three marks and a moving needle; timingHit is the mark
+// swd3e.exe 0x00458A00: the timing bar (picture 0x2380) with three marks and a moving needle; timingHit is the mark
 // (1-based) under the needle unless it equals the low word of numberFont, which is cleared otherwise. 1 when the needle
 // reaches the end.
 int BattleHud::DrawTimingBar(int x, int y)
@@ -296,9 +306,8 @@ int BattleHud::FreeAnimation(BattleAnimation& animation)
     return 0;
 }
 
-// swd32.exe 0x00451420 (unmatched in swd3e): loads every frame picture of act `id` (run to its end) into the animation,
-// each shifted right
-// by 640 / `divisor`; the wave mode of 'WT' is kept. `unused` is ignored. Always 0.
+// swd3e.exe 0x004594F0: loads every frame picture of act `id` (run to its end) into the animation, each shifted right by
+// 640 / `divisor`; the wave mode of 'WT' is kept. `unused` is ignored. Always 0.
 int BattleHud::LoadAnimation(BattleAnimation& animation, int, int x, int y, u16 id, u16 divisor)
 {
     std::array<u16, BattleAnimation::Pictures> loaded = {};

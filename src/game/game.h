@@ -355,7 +355,7 @@ private:
     void StopVideo();
     void VideoFrame();
     void StartBattle(u16 battle);
-    void LoadBattleBackground(int picture, u16 animation, int x, int y, u16 scene);
+    void LoadBattleBackground(int background, u16 scene);
     void SlideBattleIn(const Surface& incoming, const Surface& outgoing);
     void ShakeBattleBackground(int shake);
     void DrawBattleBackground(int shake);

@@ -353,7 +353,13 @@ void Game::EndBattle()
     BattleState& battle = this->battleState;
     BattleMessages& messages = this->battleMessages;
     ReleaseBattleSurfaces(battle);
-    this->battleHud.FreeAnimation(battle.backgroundAnimation);
+
+    for (std::size_t index = 0; index < std::min<std::size_t>(battle.animationCount, BattleFormation::Animations);
+         ++index)
+    {
+        this->battleHud.FreeAnimation(battle.backgroundAnimations[index]);
+    }
+
     battle.projector.Release();
     battle.background = Picture{};
     battle.unk502944 = 0;

@@ -209,11 +209,31 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
     BattleState& battle = game.battleState;
     Picture& background = battle.background;
     const std::span<u16> field(game.drawSurface, kFieldPixels);
+    // The original runs over animationCount slots of the eight; the rebuild stops at the eighth (deviations.md).
+    const std::size_t animations = std::min<std::size_t>(battle.animationCount, BattleFormation::Animations);
 
     auto drawBackground = [&painter, &background](u32 mode)
     {
         painter.SetSource(background);
         painter.DrawPicture(0, 0, background.width, background.height, mode);
+    };
+
+    auto drawAnimations = [&game, &battle, &scene, animations]()
+    {
+        for (std::size_t index = 0; index < animations; ++index)
+        {
+            HudFrame(game.battleHud).DrawAnimationAdvance(battle.backgroundAnimations[index], scene);
+        }
+    };
+
+    auto shakeAnimations = [&game, &battle, &scene, animations, shake]()
+    {
+        game.ShakeBattleBackground(shake);
+
+        for (std::size_t index = 0; index < animations; ++index)
+        {
+            HudFrame(game.battleHud).PlayAnimationShiftedAdvance(battle.backgroundAnimations[index], 0, shake, scene);
+        }
     };
 
     painter.SetSource(background);
@@ -223,14 +243,21 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
     {
         if (shake != 0)
         {
+            // The background is shifted, drawn, then each animation shifted and drawn in turn.
             game.ShakeBattleBackground(shake);
             drawBackground(Painter::Copy);
-            HudFrame(game.battleHud).PlayAnimationShiftedAdvance(battle.backgroundAnimation, 0, shake, scene);
+
+            for (std::size_t index = 0; index < animations; ++index)
+            {
+                HudFrame(game.battleHud)
+                    .PlayAnimationShiftedAdvance(battle.backgroundAnimations[index], 0, shake, scene);
+                HudFrame(game.battleHud).DrawAnimationAdvance(battle.backgroundAnimations[index], scene);
+            }
         }
         else
         {
             drawBackground(Painter::Copy);
-            HudFrame(game.battleHud).DrawAnimationAdvance(battle.backgroundAnimation, scene);
+            drawAnimations();
 
             if (battle.grayBandShown == 1)
             {
@@ -273,32 +300,41 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
     }
 
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
-    i16 level = battle.darkLevel;
 
-    if (battle.darkenUnit == battle.actingUnit && (battle.unk53BF94 == 1 || battle.unk53BF98 == 1))
+    if ((battle.unk53BF94 == 1 || battle.unk53BF98 == 1) && battle.undarkening == 0)
     {
         if (battle.darkenByTint != 0)
         {
             if (shake != 0)
             {
-                game.ShakeBattleBackground(shake);
-                HudFrame(game.battleHud).PlayAnimationShiftedAdvance(battle.backgroundAnimation, 0, shake, scene);
+                shakeAnimations();
                 battle.shake = 0;
             }
 
             drawBackground(Painter::Copy);
-            painter.TintPixels(
-                field,
-                battle.darkLevel * (battle.darkRed >> 1),
-                battle.darkLevel * (battle.darkGreen >> 1),
-                battle.darkLevel * (battle.darkBlue >> 1)
-            );
-            level = battle.darkLevel;
+            drawAnimations();
+
+            // The tint shown moves a step a frame down to the darkening's tint.
+            if (battle.darkRedShown > battle.darkRed)
+            {
+                --battle.darkRedShown;
+            }
+
+            if (battle.darkGreenShown > battle.darkGreen)
+            {
+                --battle.darkGreenShown;
+            }
+
+            if (battle.darkBlueShown > battle.darkBlue)
+            {
+                --battle.darkBlueShown;
+            }
+
+            painter.TintPixels(field, battle.darkRedShown, battle.darkGreenShown, battle.darkBlueShown);
         }
-        else if (level >= 1)
+        else if (battle.darkLevel >= 1)
         {
-            painter.CopyScreen(*battle.surfaces[static_cast<std::size_t>(level - 1)], *game.offscreen);
-            level = battle.darkLevel;
+            painter.CopyScreen(*battle.surfaces[static_cast<std::size_t>(battle.darkLevel - 1)], *game.offscreen);
         }
 
         i32 frames = battle.darkFrames;
@@ -306,53 +342,75 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
         if (frames > BattleState::DarkLevelFrames)
         {
             frames = 0;
-            ++level;
-            battle.darkLevel = level;
+            ++battle.darkLevel;
 
-            if (level > BattleState::MaxDarkLevel)
+            if (battle.darkLevel > BattleState::MaxDarkLevel)
             {
-                level = BattleState::MaxDarkLevel;
-                battle.darkLevel = level;
+                battle.darkLevel = BattleState::MaxDarkLevel;
             }
         }
 
         battle.darkFrames = frames + 1;
     }
 
-    if (battle.undarkening != 1 || battle.unk53C030 != 0)
+    if (battle.undarkening != 1 || battle.fadingField != 0 || battle.unk5772C8 != 0)
     {
         return;
     }
 
-    if (level < 1)
+    if (shake != 0)
     {
-        battle.darkRed = 0;
-        battle.darkGreen = 0;
-        battle.darkBlue = 0;
-        battle.darkLevel = 0;
-        battle.darkenUnit = -1;
-        battle.unk53BF98 = 0;
-        battle.unk53BF94 = 0;
-        battle.darkenByTint = 0;
-        battle.undarkening = 0;
-        return;
+        shakeAnimations();
+        battle.shake = 0;
     }
 
-    --level;
-    battle.darkLevel = level;
+    drawBackground(Painter::Copy);
 
-    if (battle.darkenedAt != -1 && battle.darkenByTint == 0)
+    if (battle.darkRedShown != 0 && battle.darkGreenShown != 0 && battle.darkBlueShown != 0)
     {
-        // Level 0 reads the null pointer before the copies (0x005244C0): the blit fails and nothing is drawn.
-        if (level >= 1)
+        --battle.darkLevel;
+
+        if (battle.darkenedAt == -1 || battle.darkenByTint != 0)
         {
-            painter.CopyScreen(*battle.surfaces[static_cast<std::size_t>(level - 1)], *game.offscreen);
+            // The tint shown moves a step a frame back up to 0.
+            if (battle.darkRedShown < 0)
+            {
+                ++battle.darkRedShown;
+            }
+
+            if (battle.darkGreenShown < 0)
+            {
+                ++battle.darkGreenShown;
+            }
+
+            if (battle.darkBlueShown < 0)
+            {
+                ++battle.darkBlueShown;
+            }
+
+            painter.TintPixels(field, battle.darkRedShown, battle.darkGreenShown, battle.darkBlueShown);
+        }
+        else if (battle.darkLevel >= 1)
+        {
+            // Level 0 reads the null pointer before the copies (0x005379F0): the blit fails and nothing is drawn.
+            painter.CopyScreen(*battle.surfaces[static_cast<std::size_t>(battle.darkLevel - 1)], *game.offscreen);
         }
 
         return;
     }
 
-    drawBackground(Painter::Copy);
+    battle.darkRed = 0;
+    battle.darkGreen = 0;
+    battle.darkBlue = 0;
+    battle.darkRedShown = 0;
+    battle.darkGreenShown = 0;
+    battle.darkBlueShown = 0;
+    battle.darkLevel = 0;
+    battle.darkenUnit = -1;
+    battle.unk53BF98 = 0;
+    battle.unk53BF94 = 0;
+    battle.darkenByTint = 0;
+    battle.undarkening = 0;
 }
 
 // What Game::DrawRolePanels decides of the frame; the draws into `scene`.

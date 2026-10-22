@@ -22,26 +22,24 @@ void ReadWords(ByteReader& reader, std::array<Value, Count>& values)
 
 }  // namespace
 
-// The fields of a formation from its 0x10C bytes.
+// The fields of a formation from its 0x1EC bytes.
 void BattleFormation::Load(std::span<const u8> bytes)
 {
     ByteReader reader(bytes);
     this->unk00 = static_cast<i32>(reader.Word32());
     this->background = static_cast<i32>(reader.Word32());
     ReadWords(reader, this->unk08);
-    this->animated = reader.Word16();
+    this->animationCount = reader.Word16();
     this->unk26 = reader.Word16();
-    this->animation = reader.Word16();
+    ReadWords(reader, this->animations);
 
-    for (u8& value : this->unk2A)
+    for (u8& value : this->unk48)
     {
         value = reader.Byte();
     }
 
-    this->animationX = static_cast<i32>(reader.Word32());
-    ReadWords(reader, this->unk5C);
-    this->animationY = static_cast<i32>(reader.Word32());
-    ReadWords(reader, this->unk7C);
+    ReadWords(reader, this->animationX);
+    ReadWords(reader, this->animationY);
     this->enemyCount = reader.Word16();
     this->unk9A = reader.Word16();
     ReadWords(reader, this->enemies);
@@ -61,7 +59,7 @@ BattleFile::BattleFile(const Projector* projector)
     for (std::size_t step = 0; step < BattleFile::Steps; ++step)
     {
         const auto index = static_cast<i32>(step);
-        this->unk3104[step] = {index, kQuarters * index / kQuarter};
+        this->unk3C24[step] = {index, kQuarters * index / kQuarter};
     }
 }
 

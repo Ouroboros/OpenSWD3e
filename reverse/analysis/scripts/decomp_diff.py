@@ -2,7 +2,7 @@
 addresses (sub_, dword_, unk_, loc_, ...) and the declarations normalised away, leaving the lines whose logic differs.
 The globals and callees still differ by name in the output only when they map to different swd32 names.
 
-Usage: python3 -I decomp_diff.py <workspace> <swd3-rebuild> <swd3e address> [context lines]
+Usage: python3 -I decomp_diff.py <workspace> <swd3-rebuild> <swd3e address> [context lines] [field map name]
 """
 
 import difflib
@@ -35,6 +35,59 @@ if os.path.exists(globals_path):
                 global_map[int(row["a_address"], 16)] = int(row["b_address"], 16)
 function_map = {int(k, 16): int(v, 16) for k, v in pairs.items() if k and v and v.startswith("0x")}
 
+# The globals paired through the aligned instructions of the paired functions (global_map.py) fill the gaps.
+asm_globals_path = os.path.join(WS, "reverse/analysis/export/match_swd32/globals_asm.tsv")
+if os.path.exists(asm_globals_path):
+    best = {}
+    with open(asm_globals_path, encoding="utf-8") as fh:
+        fh.readline()
+        for line in fh:
+            theirs_address, mine_address, votes, share = line.rstrip("\n").split("\t")
+            key = int(mine_address, 16)
+            if int(votes) >= 2 and float(share) >= 0.6 and (key not in best or int(votes) > best[key][1]):
+                best[key] = (int(theirs_address, 16), int(votes))
+    for key, (value, _) in best.items():
+        global_map.setdefault(key, value)
+
+# Optional structure offsets (field_map.py, fields_<name>.tsv given as the fifth argument): the swd32 offsets are
+# rewritten to the swd3e ones before diffing.
+field_map = {}
+if len(sys.argv) > 5:
+    with open(os.path.join(WS, "reverse/analysis/export/match_swd32/fields_%s.tsv" % sys.argv[5]), encoding="utf-8") as fh:
+        fh.readline()
+        best = {}
+        for line in fh:
+            theirs_offset, mine_offset, votes, share = line.rstrip("\n").split("\t")
+            key = int(theirs_offset, 16)
+            if int(votes) >= 2 and float(share) >= 0.6 and (key not in best or int(votes) > best[key][1]):
+                best[key] = (int(mine_offset, 16), int(votes))
+        field_map = {key: value for key, (value, _) in best.items()}
+field_keys = sorted(field_map)
+
+
+def translate_offset(offset):
+    """The swd3e offset of a swd32 one: mapped, or inside a run of mapped offsets moved by the same amount."""
+    if offset in field_map:
+        return field_map[offset]
+    lower = [key for key in field_keys if key < offset]
+    upper = [key for key in field_keys if key > offset]
+    if lower and upper:
+        below, above = lower[-1], upper[0]
+        if field_map[below] - below == field_map[above] - above:
+            return offset + field_map[below] - below
+    return None
+
+
+def translate_index(offset):
+    """An offset as a byte offset, or as a dword or word index of a typed pointer."""
+    for scale in (1, 4, 2):
+        if offset * scale < 0x100:
+            continue
+        mapped = translate_offset(offset * scale)
+        if mapped is not None and mapped % scale == 0:
+            return mapped // scale
+    return offset
+
 NAME = re.compile(r"\b(sub|dword|word|byte|unk|loc|off|stru|qword|flt|dbl|asc|jpt|def|LABEL)_([0-9A-F]+)\b")
 
 
@@ -60,6 +113,13 @@ def load(path, translate):
             return "%s_%X" % (kind, value) if not translate else "%s_?%X" % (kind, value)
 
         line = NAME.sub(name, line)
+        if not translate and field_map:
+            line = re.sub(
+                r"(\+ )0x([0-9A-F]+)\b",
+                lambda m: m.group(1) + "0x%X" % translate_index(int(m.group(2), 16)),
+                line,
+            )
+            line = line.replace("0x98u", "0xA4u")  # memset of an ActState (0x98 bytes in swd32, 0xA4 in swd3e)
         if translate:
             # The map roles: 0xE4 bytes in swd3e, 0xD8 in swd32 (as bytes, dwords and words).
             for mine_stride, their_stride in (("0xE4", "0xD8"), ("0x39", "0x36"), ("0x72", "0x6C")):

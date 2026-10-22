@@ -49,7 +49,7 @@ public:
     // The equipment slots of a role (Party::SlotsPerRole).
     // 0x004A7BD4: the element icon of a skill by its script's resistance (0xFFFF: none)
     static constexpr std::array<u16, 12> SkillElements = {8, 1, 2, 3, 4, 0xFFFF, 5, 6, 7, 0xFFFF, 9, 10};
-    static constexpr std::u8string_view NotEnoughItems = u8"物品不夠!!";      // swd32 0x004A7CD0
+    static constexpr std::u8string_view NotEnoughItems = u8"物品不夠!!";      // 0x004BFA90
     static constexpr std::u8string_view NotEnoughSpirit = u8"靈力值不夠!!";   // swd32 0x004A7CC0
     static constexpr std::u8string_view NotEnoughStamina = u8"體力值不夠!!";  // swd32 0x004A7CB0
     static constexpr std::size_t WeaponSlot = 0;
@@ -137,29 +137,29 @@ public:
     void TakeCommand2F18();
 
     std::unique_ptr<RoleRecord> ownedRecord;     // the 0x38 bytes at +0x00
-    ObjectRecord unk2B24;                        // +0x2B24
-    std::array<ActState, ExtraActs> extraActs;   // +0x2BC8 the sparks of an absorb (FlyExtraAct)
-    ItemNode* skills = nullptr;                  // +0x2EC0 the first skill shown in the list
-    ItemNode* skillsHead = nullptr;              // +0x2EC4 the start of the list (its "無" head)
-    ItemLink* inventory = nullptr;               // +0x2EC8 the first item shown (the next of inventoryNode)
+    ObjectRecord unk2B24;                        // swd32 +0x2B24
+    std::array<ActState, ExtraActs> extraActs;   // +0x311C the sparks of an absorb (FlyExtraAct)
+    ItemNode* skills = nullptr;                  // +0x3450 the first skill shown in the list
+    ItemNode* skillsHead = nullptr;              // swd32 +0x2EC4 the start of the list (its "無" head)
+    ItemLink* inventory = nullptr;               // +0x3458 the first item shown (the next of inventoryNode)
     ItemNode* inventoryNode = nullptr;           // the item at +0x2EC8 itself; nullptr: the list head
-    ItemLink* inventoryHead = nullptr;           // +0x2ECC the party's items
-    ItemNode* selectedItem = nullptr;            // +0x2ED0 the item chosen to use
-    std::array<i32, ExtraActs> extraSteps = {};  // +0x2EF8 the line steps of each extra act this frame
+    ItemLink* inventoryHead = nullptr;           // +0x345C the party's items
+    ItemNode* selectedItem = nullptr;            // +0x3460 the item chosen to use
+    std::array<i32, ExtraActs> extraSteps = {};  // +0x3488 the line steps of each extra act this frame
     i32 unk2F0C = 0;
     u16 unk2F10 = 0;
-    u16 staminaCost = 0;  // +0x2F12 the stamina the command takes when it runs
-    u16 usedItem = 0;     // +0x2F14 the id of the item used (UseSelectedItem; GlowAct plays it as its act)
+    u16 staminaCost = 0;  // +0x34A2 the stamina the command takes when it runs
+    u16 usedItem = 0;     // +0x34A4 the id of the item used (UseSelectedItem; GlowAct plays it as its act)
     u16 unk2F16 = 0;
     u16 unk2F18 = 0;
-    u16 weaponId = 0;  // +0x2F1A
+    u16 weaponId = 0;  // +0x34AA
     u16 unk2F1C = 0;
-    u16 bonusA = 0;  // +0x2F1E the sum of the +0x34 words of the armour (slots 1..6 without kind)
-    u16 bonusB = 0;  // +0x2F20 of their +0x36 words
-    u16 bonusC = 0;  // +0x2F22 of their +0x38 words
+    u16 bonusA = 0;  // swd32 +0x2F1E the sum of the +0x34 words of the armour (slots 1..6 without kind)
+    u16 bonusB = 0;  // swd32 +0x2F20 of their +0x36 words
+    u16 bonusC = 0;  // swd32 +0x2F22 of their +0x38 words
     u16 unk2F24 = 0;
-    i16 absorbFrames = 0;  // +0x2F26 the frames of the running absorb (AbsorbFrame)
-    u8 critical = 0;       // +0x2F30 1: the next attack is critical (set by 0x0046FF00)
+    i16 absorbFrames = 0;  // +0x34BE the frames of the running absorb (AbsorbFrame)
+    u8 critical = 0;       // +0x34CA 1: the next attack is critical (set by 0x0046FF00)
 };
 
 }  // namespace swd3e
