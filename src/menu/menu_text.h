@@ -31,8 +31,8 @@ constexpr std::u8string_view kSample = u8"軒轅劍參外傳    ";    // 0x004BE
 constexpr std::array<std::u8string_view, 5> kSpeeds =
     {kSpeedFastest, kSpeedFast, kSpeedMedium, kSpeedSlower, kSpeedSlow};
 
-// The key names of the key setup by DirectInput code (swd32.exe 0x0049E470, 0x10 bytes each, 0xDE of them; the sine
-// table follows).
+// The key names of the key setup by DirectInput code (0x004AFA8C, 0x10 bytes each, 0xDE of them, checked against the
+// executable).
 constexpr std::array<std::u8string_view, 0xDE> kKeyNames = {
     u8"請按一個鍵",
     u8"Escape",

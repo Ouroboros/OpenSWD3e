@@ -43,9 +43,8 @@ constexpr i32 kMusicRow = 2;
 constexpr i32 kCacheRow = 3;
 constexpr i32 kEffectsRow = 4;
 constexpr i32 kTextSpeedRow = 5;
-constexpr i32 kBattleSpeedRow = 6;
-constexpr i32 kKeysRow = 7;
-constexpr i32 kDisplayRow = 8;  // the rebuild's display setup, below the key setup
+constexpr i32 kKeysRow = 6;     // swd3e has no battle speed row
+constexpr i32 kDisplayRow = 7;  // the rebuild's display setup, below the key setup
 constexpr i32 kEndRow = 0;
 constexpr i32 kRestartRow = 1;
 constexpr i32 kQuitRows = 2;
@@ -68,9 +67,6 @@ constexpr i32 kFirstNoteFlag = 0xE75;
 constexpr i32 kNoteFlagsEnd = 0xFA0;
 constexpr i32 kNoteBase = 0xE74;  // a note's number is its flag less this
 constexpr i32 kNotesPerPage = 5;
-constexpr u8 kNoteMark = '%';  // a note starting with it gets a mark before it
-constexpr i32 kNoteMarkAction = 0x17;
-constexpr int kNoteMarkLeft = 0x1C;
 constexpr int kNoteLines = 2;
 constexpr int kNoteWidth = 0x154;
 constexpr u32 kUpArrowFrames = 3;  // OptionsPage::arrows: bits 0..3 the up arrow, 4..7 the down arrow
@@ -151,7 +147,7 @@ constexpr int kStepsLeft = 0x13D;
 constexpr int kStepWidth = 0x10;
 constexpr u32 kKeysRowFrom = 0x5E;
 // The rows of the settings between these y (the first one the launcher switch's, the last one the display setup's).
-constexpr std::array<std::pair<u32, u32>, 9> kSettingsRows = {
+constexpr std::array<std::pair<u32, u32>, 8> kSettingsRows = {
     {{0x82, 0xA1},
      {0xA2, 0xC1},
      {0xC2, 0xE1},
@@ -159,8 +155,7 @@ constexpr std::array<std::pair<u32, u32>, 9> kSettingsRows = {
      {0x102, 0x121},
      {0x122, 0x141},
      {0x142, 0x161},
-     {0x162, 0x181},
-     {0x182, 0x1A1}}
+     {0x162, 0x181}}
 };
 
 // The drawing.
@@ -173,20 +168,21 @@ constexpr int kPanelStyle = 4;
 constexpr int kFrameBorder = static_cast<int>(0x80000008);
 constexpr int kHighlightRed = 0x14;
 constexpr int kHighlightGreen = 0xD;
-// The tab labels of swd32.exe 0x004A73B8, 0x004A73B0, 0x004A73A8, 0x004A73A0 and 0x004A7398.
+// The tab labels of 0x004BEEE4, 0x004BEEDC, 0x004BEED4, 0x004BEECC and 0x004BEEC4.
 constexpr std::array<std::u8string_view, 5> kTabLabels = {u8"存檔", u8"讀取", u8"記載", u8"設定", u8"離開"};
-constexpr std::u8string_view kCannotSaveText = u8"目前無法存檔";        // swd32.exe 0x004A7388 (unmatched in swd3e)
-constexpr std::u8string_view kKeySetup = u8"按鍵設定";                  // swd32.exe 0x004A737C (unmatched in swd3e)
-constexpr std::string_view kVersion = "v1.02DVD";                       // swd32.exe 0x004A7374 (unmatched in swd3e)
-constexpr std::u8string_view kEndGameText = u8"結束遊戲";               // swd32.exe 0x004A7364 (unmatched in swd3e)
-constexpr std::u8string_view kRestartText = u8"重新開始";               // swd32.exe 0x004A7358 (unmatched in swd3e)
-constexpr std::u8string_view kProgressLost = u8"目前進度將會消失";      // swd32.exe 0x004A7344 (unmatched in swd3e)
-constexpr std::u8string_view kEndQuestion = u8" 確定要結束嗎?";         // swd32.exe 0x004A7334 (unmatched in swd3e)
-constexpr std::u8string_view kRestartQuestion = u8" 要重新開始嗎?";     // swd32.exe 0x004A7324 (unmatched in swd3e)
-constexpr std::u8string_view kConfirm = u8"確定";                       // swd32.exe 0x004A731C (unmatched in swd3e)
-constexpr std::u8string_view kGiveUp = u8"放棄";                        // swd32.exe 0x004A7314 (unmatched in swd3e)
-constexpr std::u8string_view kKeyButtons = u8" 設定 放棄 恢復預設值 ";  // swd32.exe 0x004A72FC (unmatched in swd3e)
-constexpr std::u8string_view kPressKey = u8"請按一個鍵";                // swd32.exe 0x004A72F0 (unmatched in swd3e)
+constexpr std::u8string_view kCannotSaveText = u8"目前無法存檔";        // 0x004BEEB4
+constexpr std::u8string_view kKeySetup = u8"按鍵設定";                  // 0x004BEEA8
+constexpr std::string_view kVersion = "v2.03";                          // 0x004BEEA0
+constexpr std::u8string_view kGhostFile = u8"swdghost.dat";             // 0x004AF64C
+constexpr std::u8string_view kEndGameText = u8"結束遊戲";               // 0x004BEE94
+constexpr std::u8string_view kRestartText = u8"重新開始";               // 0x004BEE88
+constexpr std::u8string_view kProgressLost = u8"目前進度將會消失";      // 0x004BEE74
+constexpr std::u8string_view kEndQuestion = u8" 確定要結束嗎?";         // 0x004BEE64
+constexpr std::u8string_view kRestartQuestion = u8" 要重新開始嗎?";     // 0x004BEE54
+constexpr std::u8string_view kConfirm = u8"確定";                       // 0x004BEE4C
+constexpr std::u8string_view kGiveUp = u8"放棄";                        // 0x004BEE44
+constexpr std::u8string_view kKeyButtons = u8" 設定 放棄 恢復預設值 ";  // 0x004BEE2C
+constexpr std::u8string_view kPressKey = u8"請按一個鍵";                // 0x004BEE20
 
 constexpr std::u8string_view kAutomatic = u8"自動";
 constexpr int kTabsBoxX = 0xD0;
@@ -230,8 +226,8 @@ constexpr int kNotesTop = 0x84;
 constexpr int kNoteHeight = 0x41;
 constexpr int kVolumeLabelX = 0x108;
 constexpr int kLabelX = 0xDC;
-constexpr std::array<int, 9> kRowY = {0x82, 0xA2, 0xC2, 0xE2, 0x102, 0x122, 0x142, 0x162, 0x182};
-constexpr int kVersionX = 0x20C;
+constexpr std::array<int, 8> kRowY = {0x82, 0xA2, 0xC2, 0xE2, 0x102, 0x122, 0x142, 0x162};
+constexpr int kVersionX = 0x220;
 constexpr int kVersionY = 0x159;
 constexpr i32 kStepOff = 0x22;
 constexpr i32 kStepOn = 0x23;
@@ -303,7 +299,7 @@ bool Inside(u32 value, std::pair<u32, u32> range)
     return value < range.second && value > range.first;
 }
 
-// The name of DirectInput key `code` (swd32.exe 0x0049E470); the table ends at 0xDD.
+// The name of DirectInput key `code` (0x004AFA8C, sixteen bytes each); the table ends at 0xDD.
 std::u8string_view KeyName(i32 code)
 {
     if (code < 0 || static_cast<std::size_t>(code) >= menu_text::kKeyNames.size())
@@ -524,25 +520,14 @@ void Menu::FindNote(int index)
     this->options.noteAt = static_cast<std::size_t>(std::max(index, 0));
 }
 
-// swd32.exe 0x0044D070 (unmatched in swd3e): note `index` (table 0x11 of maps.dat) wrapped in two lines at (x, y); one
-// starting with '%'
-// gets a mark before it
+// swd3e.exe 0x00454930: note `index` (table 0x11 of maps.dat) wrapped in two lines at (x, y)
 void Menu::DrawNote(int index, int x, int y)
 {
     Game& owner = this->game;
     const std::vector<u8>& maps = owner.databases.mapsData;
     const std::size_t number = this->options.notes[static_cast<std::size_t>(index)];
-    std::size_t at = MapsDword(maps, MapsTable(maps, MapsDataTable::Notes) + sizeof(u32) * number);
+    const std::size_t at = MapsDword(maps, MapsTable(maps, MapsDataTable::Notes) + sizeof(u32) * number);
     const std::string_view all(reinterpret_cast<const char*>(maps.data()), maps.size());
-
-    if (at < maps.size() && maps[at] == kNoteMark)
-    {
-        this->gauge.id = Scene::InterfaceAct;
-        this->gauge.action = kNoteMarkAction;
-        owner.actDrawer.Draw(this->gauge, x - kNoteMarkLeft, y);
-        ++at;
-    }
-
     owner.DrawWrappedText(at < all.size() ? all.substr(at) : std::string_view(), x, y, kNoteLines, kNoteWidth);
 }
 
@@ -763,7 +748,7 @@ void Menu::OptionsFrame()
     if (x > kStepsFrom)
     {
         int step = (static_cast<int>(x) - kStepsLeft) / kStepWidth;
-        const std::array<i32, 6> rows = {kSoundRow, kMusicRow, kCacheRow, kEffectsRow, kTextSpeedRow, kBattleSpeedRow};
+        const std::array<i32, 5> rows = {kSoundRow, kMusicRow, kCacheRow, kEffectsRow, kTextSpeedRow};
 
         for (const i32 row : rows)
         {
@@ -807,14 +792,10 @@ void Menu::OptionsFrame()
 
                     break;
 
-                case kTextSpeedRow:
+                default:
                     step = std::min(step, kSlowestText);
                     settings.textSpeed = kSlowestText - step;
                     page.textSpeedShown = kSlowestText - step;
-                    break;
-
-                default:
-                    settings.battleSpeed = std::min(step, Config::MaxVolume);
                     break;
             }
 
@@ -1264,14 +1245,6 @@ void Menu::OptionsLeft()
                     return;
                 }
 
-                case kBattleSpeedRow:
-                    if (--settings.battleSpeed < 0)
-                    {
-                        settings.battleSpeed = 0;
-                    }
-
-                    return;
-
                 default:
                     return;
             }
@@ -1405,14 +1378,6 @@ void Menu::OptionsRight()
                     }
 
                     page.textSpeedShown = settings.textSpeed;
-                    return;
-
-                case kBattleSpeedRow:
-                    if (++settings.battleSpeed > Config::MaxVolume)
-                    {
-                        settings.battleSpeed = Config::MaxVolume;
-                    }
-
                     return;
 
                 default:
@@ -1725,7 +1690,6 @@ void Menu::OptionsDrawSettings(Pixel color)
     large.DrawText(owner.drawSurface, kLabelX, kRowY[kCacheRow], menu_text::kCacheSize, color, kPanelStyle);
     large.DrawText(owner.drawSurface, kLabelX, kRowY[kEffectsRow], menu_text::kMapEffects, color, kPanelStyle);
     large.DrawText(owner.drawSurface, kLabelX, kRowY[kTextSpeedRow], menu_text::kTextSpeed, color, kPanelStyle);
-    large.DrawText(owner.drawSurface, kLabelX, kRowY[kBattleSpeedRow], menu_text::kBattleSpeed, color, kPanelStyle);
     large.DrawText(owner.drawSurface, kLabelX, kRowY[kKeysRow], kKeySetup, color, kPanelStyle);
     large.DrawText(owner.drawSurface, kLabelX, kRowY[kDisplayRow], kDisplaySetup, color, kPanelStyle);
     medium.DrawText(
@@ -1818,7 +1782,6 @@ void Menu::OptionsDrawSettings(Pixel color)
         page.sampleLength = 0;
     }
 
-    bar(kRowY[kBattleSpeedRow], settings.battleSpeed);
     FillBox(
         painter,
         kHighlightX,
@@ -1993,19 +1956,17 @@ void Menu::OptionsDrawKeys(Pixel color)
         return;
     }
 
-    if (key == settings.keys[static_cast<std::size_t>(Button::Enter)] &&
-        owner.controls.At(Button::Enter).heldFrames != 1)
-    {
-        return;
-    }
+    // The Enter key past its first frame is only kept as held.
+    const bool enterHeld = key == settings.keys[static_cast<std::size_t>(Button::Enter)] &&
+                           owner.controls.At(Button::Enter).heldFrames != 1;
 
-    if (key == page.keys[slot])
+    if (!enterHeld && key == page.keys[slot])
     {
         page.stage = kKeys;
         return;
     }
 
-    if (key != 0)
+    if (!enterHeld && key != 0)
     {
         if (std::find(kReservedKeys.begin(), kReservedKeys.end(), key) != kReservedKeys.end())
         {
@@ -2257,6 +2218,9 @@ void Menu::OptionsDraw()
                 if (page.choice >= kQuitFadeEnd)
                 {
                     this->OptionsLeave();
+                    const i32 ghost = owner.party.variables[Party::GhostVariable];
+                    // swd3e: the talisman ghost chosen is kept in its slot of swdghost.dat (0x0049E910)
+                    const bool keepGhost = ghost != 0 && static_cast<u32>(ghost) <= TalismanGhost::Kinds;
 
                     if (page.quitKind == kEndGame)
                     {
@@ -2265,6 +2229,12 @@ void Menu::OptionsDraw()
                         owner.inactive = 1;
                         owner.state.ClearGameFlag(GameState::Running);
                         owner.systemFlags |= Game::QuitRequested;
+
+                        if (keepGhost)
+                        {
+                            owner.talismanGhost.Save(owner.config.installDirectory, kGhostFile);
+                        }
+
                         return;
                     }
 
@@ -2274,6 +2244,11 @@ void Menu::OptionsDraw()
                         owner.storyState = 0;
                         owner.saveScreenPage = 0;
                         owner.slotsLoad = 0;
+
+                        if (keepGhost)
+                        {
+                            owner.talismanGhost.Save(owner.config.installDirectory, kGhostFile);
+                        }
                     }
                 }
             }
