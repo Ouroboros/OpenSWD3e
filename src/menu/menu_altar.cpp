@@ -4,7 +4,6 @@
 #include <optional>
 #include <string>
 
-#include "core/debug_log.h"
 #include "core/error_box.h"
 #include "core/format.h"
 #include "draw/painter.h"
@@ -14,8 +13,10 @@
 #include "menu/menu.h"
 #include "menu/menu_list.h"
 #include "org/database.h"
+#include "org/fame.h"
 #include "pic/rle.h"
 #include "platform/display.h"
+#include "text/big5.h"
 #include "ui/ui_draw.h"
 
 namespace swd3e
@@ -26,50 +27,56 @@ namespace
 
 // AltarPage::stage.
 constexpr i32 kChoosing = 1;
-constexpr i32 kAltars = 2;  // the two results shown, an altar to choose
+constexpr i32 kOffered = 2;  // the result shown, to be made
 constexpr i32 kMorphing = 3;
 constexpr i32 kMade = 4;
-constexpr i32 kNeedTwo = 5;  // "請將兩個欄位選擇物品"
-constexpr i32 kAltarsAgain = 0xA;
+constexpr i32 kNeedTwo = 5;         // "請將兩個欄位選擇物品"
+constexpr i32 kOfferedAgain = 0xA;  // drawn and answered as kOffered (nothing sets it)
 
-constexpr int kTrialFlag = 0x1BB0;      // the trial version: the page only says so
-constexpr int kEastAltarFlag = 0x1BA9;  // the east altar is open
+constexpr int kAltarOpenFlag = 0x49;     // the altar works ("目前無法使用" otherwise)
+constexpr int kSlotAArrowFlag = 0x1BA9;  // swd32's east altar flag: slot A's pass also draws the result's arrow
 constexpr int kLastTab = 2;
-constexpr u32 kEastTooHigh = 1;  // AltarPage::tooHigh
-constexpr u32 kWestTooHigh = 2;
-constexpr int kTooHighLevels = 9;  // a result this many levels above the first role is refused
-constexpr u16 kDefaultResult = 0x65;
-constexpr u32 kKindMask = 0x0FFF7FFF;
-constexpr u32 kKeptKind = 0x800;  // AltarPage::kinds: a monster of 0x65..0x1F4 without it is never a result
-constexpr int kLastMonster = 0x1F4;
-constexpr int kLevelBonus = 3;  // the east result aims three levels above the average
-constexpr int kNoBest = 0x7FFFFFFF;
-constexpr i32 kEastOnly = 1;  // AltarPage::altars: the monster is never the east result
-constexpr i32 kWestOnly = 2;
-constexpr std::size_t kRecipesAt = 0x1C2;  // in maps.dat table 0x18: four words a recipe, ended by 0xFFFF
+constexpr int kTooHighLevels = 6;  // a result this many levels above the first party role cannot be made
+constexpr u32 kTooHigh = 3;        // AltarPage::tooHigh
+constexpr u32 kTooHighShown = 1;
+
+// The result (0x00444630).
+constexpr u16 kDefaultResult = 0x12A;      // without a recipe or an object of the category
+constexpr std::size_t kMatrixSide = 0x10;  // maps.dat table 0x18: the result category by the two categories
+constexpr u16 kFoldedCategory = 0x15;      // looked up as category 0xF
+constexpr u16 kFoldedTo = 0xF;
+constexpr std::size_t kRecipesAt = 0x200;  // then three words a recipe (two objects and the result), ended by 0xFFFF
 constexpr u16 kRecipesEnd = 0xFFFF;
-constexpr std::size_t kRecipeWords = 4;
-constexpr std::size_t kMatrixSide = 0xF;  // the 15 x 15 result categories at the table's start
-// The row of the matrix of each category value 0..20 (0 for the values without one).
-constexpr std::array<std::size_t, 21> kMatrixOrder = {0, 1, 2, 3, 4,   5,   6,   7,   8,   9, 0,
-                                                      0, 0, 0, 0, 0xE, 0xD, 0xC, 0xA, 0xB, 0};
-constexpr int kLastObjectCategory = 9;  // TabAccepts: categories past it count only from 0xF to 0x13
-constexpr int kFirstSpecialCategory = 0xF;
-constexpr int kLastSpecialCategory = 0x13;
+constexpr std::size_t kRecipeWords = 3;
+constexpr int kLevelBonus = 3;  // the result aims three levels above the average
+constexpr i32 kNoBest = 0x7FFFFFFF;
+constexpr int kFirstResult = 0x65;
+constexpr int kLastMonster = 0x1F4;
+constexpr int kFirstLateObject = 0xBB9;  // the objects 0x1F5..0xBB8 are not loaded
+constexpr u32 kKeptKind = 0x800;         // AltarPage::kinds: a monster of 0x65..0x1F4 without it is never a result
+constexpr i32 kNeverResult = 1;          // AltarPage::altars
+
+// The tabs (0x00444950).
+constexpr u16 kLastTabCategory = 0xE;  // categories 0..0xE and 0x15 are listed
+constexpr u16 kExtraTabCategory = 0x15;
+constexpr u32 kKindMask = 0x0FFF7FFF;
+constexpr u32 kFirstTabKinds = 0x101F;  // tested on the whole kind
+constexpr u32 kSecondTabKinds = 0x700;
+constexpr u32 kThirdTabKinds = 0x800;
 
 constexpr i32 kPageBackground = 0x3B;  // Menu::background actions
-constexpr i32 kAltarsBackground = 0x39;
+constexpr i32 kOfferBackground = 0x39;
 constexpr i32 kMorphBackground = 0x46;
+constexpr i32 kLeaveBackground = 0x37;
 constexpr i32 kFaceAct = 0x232A;
 constexpr i32 kFaceLeaveAction = 3;
 constexpr i32 kAltarAct = 0x232C;
-constexpr i32 kMorphFrameAction = 0x4E;
-constexpr i32 kPictureAction = 0x44;
-constexpr u16 kOpenSound = 0x136;
+constexpr i32 kPictureAction = 0x3B;
+constexpr u16 kOpenSound = 0x2BF;
 constexpr u16 kMoveSound = 0x2E;
 constexpr u16 kSwitchSound = 0x107;
 constexpr u16 kRefusedSound = 0x8C;
-constexpr u16 kMorphSound = 0xB7;
+constexpr u16 kMorphStartSound = 0x2BD;
 constexpr u16 kDoneSound = 0x208;
 
 // The morph (AltarMorph): the counter runs from -40.
@@ -85,8 +92,6 @@ constexpr i32 kMixEnd = 0x6E;
 constexpr i32 kMixPerFrame = 8;
 constexpr i32 kMixBase = 0x190;
 constexpr u32 kMixPairs = 0x3354;
-constexpr i32 kSoundEnd = 0x50;
-constexpr i32 kSoundMask = 7;
 constexpr i32 kDrawRange = 0xB4;
 constexpr i32 kDrawLast = 0x28;
 constexpr i32 kStepSpan = 0x28;
@@ -97,6 +102,8 @@ constexpr int kPictureTop = 0xB4;
 constexpr int kLeftPictureX = 0x8C;
 constexpr int kRightPictureX = 0x17C;
 constexpr int kTintStep = 6;
+constexpr int kTintBase = 0x5A;
+constexpr int kWaveRows = 0x7F;  // AltarPage::wave: offsets of -126..126 rows are set
 
 constexpr u16 kRolePagesCode = 2;  // Menu::code on a role page
 constexpr u16 kScrollUp = 3;       // AltarPage::scrollArrows
@@ -111,11 +118,8 @@ constexpr int kSpiritHealA = 2;
 constexpr int kSpiritHealB = 4;
 constexpr int kStaminaSkillA = 3;
 constexpr int kStaminaSkillB = 5;
-constexpr int kTintBase = 0x5A;
 
 // The clicks (Menu::clicks).
-constexpr u32 kLeftClick = 1;
-constexpr u32 kDoubleClick = 2;
 constexpr u32 kLeftClicks = 3;
 constexpr u32 kRightClicks = 0xC;
 constexpr u32 kAnyClick = 0xF;
@@ -147,31 +151,20 @@ constexpr i32 kBarUpTop = 0x4C;
 constexpr i32 kBarUpBottom = 0x5A;
 constexpr i32 kBarDownTop = 0x1C6;
 constexpr i32 kBarDownBottom = 0x1D4;
-constexpr u32 kResultsTop = 0x28;
-constexpr u32 kResultsBottom = 0x19F;
-constexpr u32 kEastLeft = 0xC;
-constexpr u32 kEastRight = 0x124;
-constexpr u32 kWestLeft = 0x14C;
-constexpr u32 kWestRight = 0x264;
 
 // The texts.
-constexpr std::u8string_view kTrialOnly = u8"試玩版無此功能";         // swd32.exe 0x004A6CF8 (unmatched in swd3e)
-constexpr std::u8string_view kEastAltar = u8"東方祭壇";               // swd32.exe 0x004A6CC8 (unmatched in swd3e)
-constexpr std::u8string_view kWestAltar = u8"西方祭壇";               // swd32.exe 0x004A6CBC (unmatched in swd3e)
-constexpr std::u8string_view kChooseAltar = u8"請選擇一個祭壇";       // swd32.exe 0x004A6CAC (unmatched in swd3e)
-constexpr std::u8string_view kChooseTwo = u8"請將兩個欄位選擇物品";   // swd32.exe 0x004A6C94 (unmatched in swd3e)
-constexpr std::u8string_view kTooHighText = u8"等級不足 無法訂契約";  // swd32.exe 0x004A6D18 (unmatched in swd3e)
-constexpr std::u8string_view kEast = u8"東";                          // swd32.exe 0x004A6D0C (unmatched in swd3e)
-constexpr std::u8string_view kWest = u8"西";                          // swd32.exe 0x004A6D08 (unmatched in swd3e)
-constexpr std::u8string_view kAltarFormat = u8"%s方祭壇";             // swd32.exe 0x004A6CD4 (unmatched in swd3e)
-constexpr std::u8string_view kSlotFormat = u8"%-8s  %2d級";           // swd32.exe 0x004A6CE0 (unmatched in swd3e)
-constexpr std::u8string_view kResultLevelFormat = u8"%d 級";          // swd32.exe 0x004A6D74 (unmatched in swd3e)
-constexpr std::u8string_view kHitPointsFormat = u8" 生命  %4d";       // swd32.exe 0x004A6D68 (unmatched in swd3e)
-constexpr std::u8string_view kSpiritFormat = u8" 靈力  %4d";
-constexpr std::u8string_view kStaminaFormat = u8" 體力  %4d";
-constexpr std::u8string_view kAttackFormat = u8" 攻擊  %4d";
-constexpr std::u8string_view kDefenseFormat = u8" 防禦  %4d";
-constexpr std::u8string_view kAgilityFormat = u8" 敏捷  %4d";
+constexpr std::u8string_view kClosed = u8"目前無法使用";              // 0x004BE994
+constexpr std::u8string_view kChooseTwo = u8"請將兩個欄位選擇物品";   // 0x004BE954
+constexpr std::u8string_view kTooHighText = u8"等級不足 無法訂契約";  // 0x004BE9A4
+constexpr std::u8string_view kCannotMake = u8"無法練化";              // 0x004BE96C
+constexpr std::u8string_view kSlotFormat = u8"%-8s  %2d級";           // 0x004BE97C
+constexpr std::u8string_view kResultLevelFormat = u8"%d 級";          // 0x004BEA00
+constexpr std::u8string_view kHitPointsFormat = u8" 生命  %4d";       // 0x004BE9F4
+constexpr std::u8string_view kSpiritFormat = u8" 靈力  %4d";          // 0x004BE9E8
+constexpr std::u8string_view kStaminaFormat = u8" 體力  %4d";         // 0x004BE9DC
+constexpr std::u8string_view kAttackFormat = u8" 攻擊  %4d";          // 0x004BE9D0
+constexpr std::u8string_view kDefenseFormat = u8" 防禦  %4d";         // 0x004BE9C4
+constexpr std::u8string_view kAgilityFormat = u8" 敏捷  %4d";         // 0x004BE9B8
 constexpr std::string_view kRowFormat = "%-12s%3d";
 constexpr std::string_view kNameFormat = "%-12s";
 
@@ -189,25 +182,28 @@ constexpr u32 kWarnRed = 0x18;
 constexpr u32 kWarnGreen = 0xA;
 constexpr u32 kWarnBlue = 0xB;
 constexpr int kPanelStyle = 4;
-constexpr int kTrialX = 0x118;
-constexpr int kTrialY = 0xDC;
-constexpr int kTrialCharWidth = 0xB;
-constexpr int kTrialHeight = 0x16;
-constexpr int kTrialBoxMode = 2;
+constexpr int kFrameBorder = static_cast<int>(0x80000008);
+constexpr int kClosedX = 0x118;
+constexpr int kClosedY = 0xDC;
+constexpr int kClosedCharWidth = 0xB;
+constexpr int kClosedHeight = 0x16;
+constexpr int kClosedBoxMode = 2;
 constexpr int kAltarBoxMode = 4;
 constexpr int kChosenBoxMode = 2;
 constexpr i32 kRunLitAction = 0xF;
 constexpr int kRunLitX = 0x198;
 constexpr int kRunLitY = 0x150;
+constexpr int kRunLitRight = 0x280;
+constexpr int kRunLitBottom = 0x164;
 constexpr i32 kFirstTabAction = 0x14;
 constexpr int kTabStepX = 0x1F;
 constexpr int kTabX = 8;
 constexpr int kTabY = 0x34;
-constexpr i32 kFirstSlotAction = 0x10;
-constexpr int kSlotStepX = 0xD8;
-constexpr int kSlotX = 0xD0;
-constexpr int kSlotStepY = 8;
-constexpr int kSlotY = 0x21;
+constexpr u16 kMarkerFile = 0x235B;  // the slot marker, bobbing over five steps of two frames
+constexpr int kMarkerSteps = 0xA;
+constexpr int kMarkerStepX = 0xD2;
+constexpr int kMarkerX = 0x134;
+constexpr int kMarkerY = 0x38;
 constexpr int kBarX = 0xC5;
 constexpr int kBarY = 0x5C;
 constexpr int kBarHeight = 0x168;
@@ -228,47 +224,59 @@ constexpr int kSlotBoxY = 0x164;
 constexpr int kSlotBoxWidth = 0x7E;
 constexpr int kSlotBoxHeight = 0x24;
 constexpr int kSlotNameY = 0x176;
-constexpr int kAltarNameStep = 0x122;
-constexpr int kAltarNameX = 0xF0;
-constexpr int kAltarNameY = 0x1A9;
-constexpr int kArrowX = 0x139;
-constexpr u16 kUpArrow = 0x2463;  // the result's level at least the average
-constexpr u16 kDownArrow = 0x2465;
-constexpr int kEastResultX = 0x14;
-constexpr int kWestResultX = 0x154;
+constexpr int kArrowX = 0x1C5;
+constexpr int kArrowY = 0x1A9;
+constexpr u16 kUpArrow = 0x235E;  // the result's level at least the average
+constexpr u16 kDownArrow = 0x235F;
+constexpr int kResultX = 0xAF;
 constexpr int kResultY = 0x28;
 constexpr u32 kChosenResult = 1;  // AltarDrawResult flags
-constexpr int kTooHighShift = 0xC;
 constexpr u32 kTooHighFlag = 0x1000;
-constexpr int kPromptX = 0x101;
-constexpr int kPromptY = 0x1B8;
-constexpr int kPromptWidth = 0x7E;
-constexpr int kPromptHeight = 0x12;
 constexpr int kResultBoxWidth = 0x118;
-constexpr int kResultBoxHeight = 0x177;
-constexpr i32 kResultFaceAction = 0x17;
-constexpr int kResultFaceX = 8;
-constexpr int kResultFaceUp = 0x1E;
-constexpr int kResultTitleX = 0x36;
-constexpr int kResultTitleUp = 0xA;
-constexpr int kResultPictureX = 0x10;
-constexpr int kResultPictureY = 0x18;
-constexpr int kResultPictureWidth = 0x78;
-constexpr int kResultPictureHeight = 0xDC;
+constexpr int kResultBoxHeight = 0xFA;
+constexpr int kResultPictureX = 0xC;
+constexpr int kResultPictureY = 0x10;
+constexpr int kShadeX = 0x10;
+constexpr int kShadeY = 0x18;
+constexpr int kShadeWidth = 0x78;
+constexpr int kShadeHeight = 0xDC;
 constexpr int kResultValuesX = 0x92;
+constexpr int kResultValuesY = 0xA;
 constexpr int kResultLine = 0x19;
 constexpr int kTooHighX = 0x40;
-constexpr int kTooHighY = 0x120;
+constexpr int kTooHighY = 0x112;
+constexpr int kDescriptionBoxX = 0x7E;
+constexpr int kDescriptionBoxY = 0x138;
+constexpr int kDescriptionBoxWidth = 0x184;
+constexpr int kDescriptionBoxHeight = 0x9D;
+constexpr int kDescriptionLeft = 0x82;
+constexpr int kDescriptionTop = 0x140;
+constexpr int kDescriptionRight = 0x1FA;
+constexpr int kDescriptionBottom = 0x1CD;
+constexpr int kDescriptionLines = 5;
+constexpr int kDescriptionWidth = 0x168;
+constexpr int kCannotMakeBoxX = 0xDC;
+constexpr int kCannotMakeX = 0xE5;
+constexpr int kCannotMakeY = 0xFA;
+constexpr int kCannotMakeWidth = 0x5A;
+constexpr int kCannotMakeHeight = 0x12;
 constexpr int kMadeX = 0x104;
 constexpr int kMadeY = 0xB4;
 constexpr int kNeedTwoCharWidth = 0xC;
 constexpr int kNeedTwoY = 0xE4;
 constexpr int kNeedTwoHeight = 0x18;
 
+// The word at byte `at` of maps.dat table 0x18 (Scene::recipesTable, set by the new game)
+u16 RecipeWord(const std::vector<u8>& maps, u32 table, std::size_t at)
+{
+    return MapsWord(maps, table + at);
+}
+
 }  // namespace
 
-// swd3e.exe 0x00442E10: the altar page opened: the category, level, kind and altar of every object 0..0x4AF; the
-// inventory's counts free to use, the objects of the first tab moved over, both slots empty; the morph tables made
+// swd3e.exe 0x00442E10: the altar page opened: the category, level, kind and altar of the objects 0..0x1F4 and
+// 0xBB9..0xD47 (-1 for the others); the result emptied; the inventory's counts free to use; the objects of the first
+// tab moved over, both slots empty; the morph's wave table made from the row table
 void Menu::AltarEnter()
 {
     Game& owner = this->game;
@@ -280,6 +288,11 @@ void Menu::AltarEnter()
 
     for (int id = 0; id < AltarPage::Objects; ++id)
     {
+        if (id > kLastMonster && id < kFirstLateObject)
+        {
+            continue;
+        }
+
         ObjectRecord record;
 
         if (owner.database.LoadObject(record, static_cast<u16>(id)))
@@ -292,8 +305,7 @@ void Menu::AltarEnter()
         }
     }
 
-    altar.resultEast = ItemNode{};
-    altar.resultWest = ItemNode{};
+    altar.result = ItemNode{};
 
     for (ItemNode* node = owner.party.inventory.get(); node != nullptr; node = node->next.get())
     {
@@ -321,29 +333,38 @@ void Menu::AltarEnter()
     altar.columnsB.assign(AltarPage::MorphColumns, 0);
     altar.rowsA.assign(AltarPage::MorphRows, 0);
     altar.rowsB.assign(AltarPage::MorphRows, 0);
+
+    // The row table's first 127 entries, halved, upwards from the centre and negated downwards (the centre takes the
+    // negated one); the three entries at the ends are left unset by the original (0 here).
+    altar.wave.assign(AltarPage::WaveSize, 0);
+    const i32 pitch = owner.painter.ScreenPitch();
+
+    for (int rows = 0; rows < kWaveRows; ++rows)
+    {
+        const i32 offset = rows * pitch * static_cast<i32>(sizeof(u16));
+        altar.wave[AltarPage::WaveCenter + static_cast<std::size_t>(rows)] = offset / 2;
+        altar.wave[AltarPage::WaveCenter - static_cast<std::size_t>(rows)] = offset / -2;
+    }
+
     altar.phase = 0;
     altar.scrollArrows = 0;
     this->code = kRolePagesCode;
 }
 
-// swd32.exe 0x0043D880 (unmatched in swd3e): the altar page closed: the moved objects back in the inventory, the slots,
-// results and tables
-// freed, the main tabs back
+// swd3e.exe 0x00443150: the altar page left: the backgrounds, the moved objects back in the inventory, the slots and
+// the result emptied, the tables freed, the main tabs back
 void Menu::AltarLeave()
 {
     AltarPage& altar = this->altar;
+    this->background.action = kLeaveBackground;
     this->background.id = kFaceAct;
-    this->background.action = kAltarsBackground;
     this->face.id = kFaceAct;
     this->face.action = kFaceLeaveAction;
     this->AltarReturnObjects();
     altar.slotA = ItemNode{};
     altar.slotB = ItemNode{};
-    altar.resultEast.record.description.reset();
-    altar.resultWest.record.description.reset();
+    altar.result = ItemNode{};
     FreeItemList(altar.objects);
-    altar.resultEast = ItemNode{};
-    altar.resultWest = ItemNode{};
     altar.categories.clear();
     altar.levels.clear();
     altar.kinds.clear();
@@ -352,6 +373,7 @@ void Menu::AltarLeave()
     altar.columnsB.clear();
     altar.rowsA.clear();
     altar.rowsB.clear();
+    altar.wave.clear();
     this->code = Menu::MainCode;
 }
 
@@ -432,35 +454,28 @@ void Menu::AltarSortObjects()
     altar.objects = std::move(sorted);
 }
 
-// swd32.exe 0x0043F7C0 (unmatched in swd3e): whether tab `tab` takes the object: categories 0..9 and 0xF..0x13 only, by
-// kind (bits 15 and
-// 28..31 ignored): tab 0 kinds 1, 2, 4, 8, 0x10 and 0x1000, tab 1 kinds 0x100, 0x200 and 0x400, tab 2 kind 0x800
+// swd3e.exe 0x00444950: whether tab `tab` lists the object: categories 0..0xE and 0x15 only; tab 0 an object of any of
+// kinds 0x101F, tab 1 of 0x700, tab 2 of 0x800 (bits 15 and 28..31 ignored for the last two)
 bool AltarTabTakes(const ItemNode& node, int tab)
 {
     const u16 category = node.record.data.category;
+    const u32 kind = node.record.data.kind;
 
-    if (category > kLastObjectCategory && (category < kFirstSpecialCategory || category > kLastSpecialCategory))
+    if (category > kLastTabCategory && category != kExtraTabCategory)
     {
         return false;
     }
 
-    switch (node.record.data.kind & kKindMask)
+    switch (tab)
     {
+        case 0:
+            return (kind & kFirstTabKinds) != 0;
+
         case 1:
+            return (kind & kKindMask & kSecondTabKinds) != 0;
+
         case 2:
-        case 4:
-        case 8:
-        case 0x10:
-        case 0x1000:
-            return tab == 0;
-
-        case 0x100:
-        case 0x200:
-        case 0x400:
-            return tab == 1;
-
-        case 0x800:
-            return tab == 2;
+            return (kind & kKindMask & kThirdTabKinds) != 0;
 
         default:
             return false;
@@ -501,7 +516,7 @@ void Menu::AltarPick()
 
 // swd3e.exe 0x00444A70: the object of list place `index` put into `slot` (one of it taken; with none left the slot
 // empties); the object the slot held goes back to the list or the inventory (the original reads through a null node
-// when it is in neither)
+// when it is in neither, or when the place is past the list)
 void Menu::AltarPut(ItemNode& slot, int index)
 {
     AltarPage& altar = this->altar;
@@ -540,133 +555,109 @@ void Menu::AltarPut(ItemNode& slot, int index)
     }
 }
 
-// swd32.exe 0x0043F1E0 (unmatched in swd3e): the results of the two slots (none unless both hold an object left): a
-// recipe of maps.dat
-// table 0x18 names both; otherwise the east result is the monster of the category the matrix gives for (slot B, slot
-// A) nearest above three levels over their average (below it for an odd category of slot B), the west result the one
-// of (slot A, slot B) nearest the average (above or below by slot A's category), skipping the monsters 0x65..0x1F4
-// without kind bit 0x800 and those barred from that altar. false when a slot is empty.
-bool Menu::AltarCombine()
+// swd3e.exe 0x00444630: the result of the two slots (none unless both hold an object left): a recipe of maps.dat
+// table 0x18 that names both; otherwise among the objects 0x65..0x1F4 and 0xBB9..0xD47 of the category the table's
+// matrix gives for (first, second; category 0x15 as 0xF), the one nearest the level aimed at (the average plus three):
+// at it or above when the half sum of the categories is even, at it or below when odd, the first of the nearest; a
+// monster of 0x65..0x1F4 needs kind 0x800 and an object of altar 1 never results; 0x12A when none does. The result is
+// loaded from mon.dat.
+bool Menu::AltarCombine(const ItemNode& first, const ItemNode& second)
 {
     Game& owner = this->game;
     AltarPage& altar = this->altar;
-    const ItemNode& first = altar.slotA;
-    const ItemNode& second = altar.slotB;
-    altar.resultEast = ItemNode{};
-    altar.resultWest = ItemNode{};
-    altar.resultEast.id = ItemNode::Empty;
-    altar.resultWest.id = ItemNode::Empty;
+    const std::vector<u8>& maps = owner.databases.mapsData;
+    const u32 table = owner.scene.recipesTable;
+    ItemNode& result = altar.result;
+    result = ItemNode{};
+    result.id = ItemNode::Empty;
 
     if (first.id == ItemNode::Empty || first.unk06 == 0 || second.id == ItemNode::Empty || second.unk06 == 0)
     {
         return false;
     }
 
-    auto setResult = [](ItemNode& result, u16 id)
+    result.id = kDefaultResult;
+    result.count = 0;
+    result.pending = 0;
+    result.unk06 = 1;
+
+    for (std::size_t at = kRecipesAt; RecipeWord(maps, table, at) != kRecipesEnd; at += kRecipeWords * sizeof(u16))
     {
-        result.id = id;
-        result.count = 0;
-        result.pending = 0;
-        result.unk06 = 1;
-    };
+        const u16 one = RecipeWord(maps, table, at);
+        const u16 other = RecipeWord(maps, table, at + sizeof(u16));
 
-    setResult(altar.resultEast, kDefaultResult);
-    setResult(altar.resultWest, kDefaultResult);
-    const std::vector<u8>& maps = owner.databases.mapsData;
-    const std::size_t table = owner.scene.recipesTable;
-
-    for (std::size_t recipe = table + kRecipesAt;; recipe += kRecipeWords * sizeof(u16))
-    {
-        const u16 a = MapsWord(maps, recipe);
-
-        if (a == kRecipesEnd)
+        if ((one == first.id && other == second.id) || (one == second.id && other == first.id))
         {
-            break;
-        }
-
-        const u16 b = MapsWord(maps, recipe + sizeof(u16));
-
-        if ((a == first.id && b == second.id) || (a == second.id && b == first.id))
-        {
-            setResult(altar.resultEast, MapsWord(maps, recipe + 2 * sizeof(u16)));
-            setResult(altar.resultWest, MapsWord(maps, recipe + 3 * sizeof(u16)));
+            result.id = RecipeWord(maps, table, at + 2 * sizeof(u16));
+            result.count = 0;
+            result.pending = 0;
+            result.unk06 = 1;
+            owner.database.LoadObject(result.record, result.id);
             return true;
         }
     }
 
-    auto order = [](u16 category)
-    {
-        return category < kMatrixOrder.size() ? kMatrixOrder[category] : 0;
-    };
+    const u16 firstCategory = first.record.data.category;
+    const u16 secondCategory = second.record.data.category;
+    const std::size_t row = firstCategory == kFoldedCategory ? kFoldedTo : firstCategory;
+    const std::size_t column = secondCategory == kFoldedCategory ? kFoldedTo : secondCategory;
+    const auto category = static_cast<i32>(RecipeWord(maps, table, sizeof(u16) * (column + kMatrixSide * row)));
+    const int aim = (second.record.data.level + first.record.data.level) / 2 + kLevelBonus;
+    const bool below = (secondCategory + firstCategory) / 2 % 2 != 0;
+    int best = 0;
+    i32 bestGap = kNoBest;
 
-    auto search = [&altar, &maps, table, &order](u16 row, u16 column, int target, bool below, i32 barred)
+    for (int id = kFirstResult; id < AltarPage::Objects; ++id)
     {
-        const u16 category = MapsWord(maps, table + sizeof(u16) * (order(column) + kMatrixSide * order(row)));
-        int best = kNoBest;
-        u16 found = 0;
+        const auto at = static_cast<std::size_t>(id);
 
-        for (int id = kDefaultResult; id < AltarPage::Objects; ++id)
+        if ((id > kLastMonster && id < kFirstLateObject) || altar.categories[at] != category)
         {
-            const auto at = static_cast<std::size_t>(id);
-
-            if (altar.categories[at] != category)
-            {
-                continue;
-            }
-
-            const int distance = altar.levels[at] - target;
-            bool better = false;
-
-            if (below)
-            {
-                better = distance <= 0 && target - altar.levels[at] < best;
-            }
-            else
-            {
-                better = distance >= 0 && distance < best;
-            }
-
-            if (id <= kLastMonster && (altar.kinds[at] & kKeptKind) == 0)
-            {
-                better = false;
-            }
-
-            if (altar.altars[at] == barred || !better)
-            {
-                continue;
-            }
-
-            found = static_cast<u16>(id);
-            best = below ? target - altar.levels[at] : distance;
+            continue;
         }
 
-        return found;
-    };
+        const i32 gap = altar.levels[at] - aim;
+        bool nearer = false;
 
-    const int average = (second.record.data.level + first.record.data.level) / 2;
-    const u16 east = search(
-        first.record.data.category,
-        second.record.data.category,
-        average + kLevelBonus,
-        static_cast<u8>(second.record.data.category) % 2 != 0,
-        kEastOnly
-    );
-    setResult(altar.resultEast, east != 0 ? east : kDefaultResult);
-    owner.database.LoadObject(altar.resultEast.record, altar.resultEast.id);
-    const u16 west = search(
-        second.record.data.category,
-        first.record.data.category,
-        average,
-        static_cast<u8>(first.record.data.category) % 2 != 0,
-        kWestOnly
-    );
-    setResult(altar.resultWest, west != 0 ? west : kDefaultResult);
-    owner.database.LoadObject(altar.resultWest.record, altar.resultWest.id);
+        if (below)
+        {
+            nearer = gap <= 0 && -gap < bestGap;
+        }
+        else
+        {
+            nearer = gap >= 0 && gap < bestGap;
+        }
+
+        if (id >= kFirstResult && id <= kLastMonster && (altar.kinds[at] & kKeptKind) == 0)
+        {
+            nearer = false;
+        }
+
+        if (altar.altars[at] == kNeverResult || !nearer)
+        {
+            continue;
+        }
+
+        best = id;
+        bestGap = below ? -gap : gap;
+    }
+
+    result.id = kDefaultResult;
+    result.count = 0;
+    result.pending = 0;
+    result.unk06 = 1;
+
+    if (best != 0)
+    {
+        result.id = static_cast<u16>(best);
+    }
+
+    owner.database.LoadObject(result.record, result.id);
     return true;
 }
 
-// The list moved (inline in the altar page's keys): the first row shown, the object picked into the slot, the
-// results.
+// The list moved (inline in the altar page's keys): the first row shown, the object put into the slot, the result made
+// again
 void Menu::AltarMoved(u16 arrows)
 {
     Game& owner = this->game;
@@ -674,131 +665,84 @@ void Menu::AltarMoved(u16 arrows)
     SkipItems(altar.top, altar.objects, altar.firstShown);
     CountShown(altar.firstShown, altar.shown, AltarPage::Rows);
     this->AltarPick();
-    this->AltarCombine();
+    this->AltarCombine(altar.slotA, altar.slotB);
     altar.scrollArrows = static_cast<u16>(altar.scrollArrows | arrows);
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
-// The east altar chosen when it is open and the result not too high (inline in the altar page's keys).
-void Menu::AltarChooseEast(bool soundFirst)
+// The morph skipped to its end (the keys during it, inline in the altar page's keys)
+void Menu::AltarSkipMorph()
 {
-    Game& owner = this->game;
     AltarPage& altar = this->altar;
 
-    if (soundFirst && altar.chosen != 0)
+    if (altar.stage == kMorphing)
     {
-        owner.audio.PlaySound(kSwitchSound, owner.config.soundVolume);
-    }
-
-    if (owner.state.GameFlag(kEastAltarFlag) && (altar.tooHigh & kEastTooHigh) == 0)
-    {
-        if (!soundFirst && altar.chosen != 0)
-        {
-            owner.audio.PlaySound(kSwitchSound, owner.config.soundVolume);
-        }
-
-        altar.chosen = 0;
+        altar.counter = kMorphDone;
     }
 }
 
-// The west altar chosen unless its result is too high (inline in the altar page's keys).
-void Menu::AltarChooseWest()
-{
-    Game& owner = this->game;
-    AltarPage& altar = this->altar;
-
-    if (altar.chosen != 1)
-    {
-        owner.audio.PlaySound(kSwitchSound, owner.config.soundVolume);
-    }
-
-    if ((altar.tooHigh & kWestTooHigh) == 0)
-    {
-        altar.chosen = 1;
-    }
-}
-
-// swd3e.exe 0x00443520: down: the next object (into the slot); on the altars the west one; during the morph its end
+// swd3e.exe 0x00443520: down: the next object (into the slot); during the morph its end
 void Menu::AltarDown()
 {
     AltarPage& altar = this->altar;
 
-    if (altar.stage == kChoosing)
+    if (altar.stage != kChoosing)
     {
-        ListDown(altar.count, altar.top, altar.row, altar.shown);
-        this->AltarMoved(kScrollDown);
+        this->AltarSkipMorph();
+        return;
     }
-    else if (altar.stage == kAltars)
-    {
-        this->AltarChooseWest();
-    }
-    else if (altar.stage == kMorphing)
-    {
-        altar.counter = kMorphDone;
-    }
+
+    ListDown(altar.count, altar.top, altar.row, altar.shown);
+    this->AltarMoved(kScrollDown);
 }
 
-// swd32.exe 0x0043DDF0 (unmatched in swd3e): up: the object before; on the altars the east one
+// swd3e.exe 0x004435C0: up: the object before (into the slot); during the morph its end
 void Menu::AltarUp()
 {
     AltarPage& altar = this->altar;
 
-    if (altar.stage == kChoosing)
+    if (altar.stage != kChoosing)
     {
-        ListUp(altar.top, altar.row);
-        this->AltarMoved(kScrollUp);
+        this->AltarSkipMorph();
+        return;
     }
-    else if (altar.stage == kAltars)
-    {
-        this->AltarChooseEast(false);
-    }
-    else if (altar.stage == kMorphing)
-    {
-        altar.counter = kMorphDone;
-    }
+
+    ListUp(altar.top, altar.row);
+    this->AltarMoved(kScrollUp);
 }
 
-// swd3e.exe 0x004435C0: Page Down: a page of sixteen on; on the altars the west one
+// swd3e.exe 0x00443660: Page Down: a page of sixteen on; during the morph its end
 void Menu::AltarPageDown()
 {
     AltarPage& altar = this->altar;
 
-    if (altar.stage == kChoosing)
+    if (altar.stage != kChoosing)
     {
-        ListPageDown(altar.count, altar.top, altar.row, altar.shown, AltarPage::Rows);
-        this->AltarMoved(kScrollDown);
+        this->AltarSkipMorph();
+        return;
     }
-    else if (altar.stage == kAltars)
-    {
-        this->AltarChooseWest();
-    }
-    else if (altar.stage == kMorphing)
-    {
-        altar.counter = kMorphDone;
-    }
+
+    ListPageDown(altar.count, altar.top, altar.row, altar.shown, AltarPage::Rows);
+    this->AltarMoved(kScrollDown);
 }
 
-// swd3e.exe 0x00443700: Page Up: a page of sixteen back; on the altars the east one
+// swd3e.exe 0x00443700: Page Up: a page of sixteen back; during the morph its end
 void Menu::AltarPageUp()
 {
     AltarPage& altar = this->altar;
 
-    if (altar.stage == kChoosing)
+    if (altar.stage != kChoosing)
     {
-        ListPageUp(altar.top, altar.row, AltarPage::Rows);
-        this->AltarMoved(kScrollUp);
+        this->AltarSkipMorph();
+        return;
     }
-    else if (altar.stage == kAltars)
-    {
-        this->AltarChooseEast(false);
-    }
-    else if (altar.stage == kMorphing)
-    {
-        altar.counter = kMorphDone;
-    }
+
+    ListPageUp(altar.top, altar.row, AltarPage::Rows);
+    this->AltarMoved(kScrollUp);
 }
 
-// The tab changed (inline in 0x0043E080 and 0x0043E170): its objects listed, the first one picked.
+// Another tab chosen (inline in 0x004437A0 and 0x00443840): its list made and fitted, the object put into the slot, the
+// result made again
 void Menu::AltarTabChanged()
 {
     Game& owner = this->game;
@@ -815,123 +759,72 @@ void Menu::AltarTabChanged()
     altar.shown = view.shown;
     altar.firstShown = view.first;
     this->AltarPick();
-    this->AltarCombine();
+    this->AltarCombine(altar.slotA, altar.slotB);
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
-// swd3e.exe 0x00443840: left: the tab before (wrapping); on the altars the east one
+// swd3e.exe 0x004437A0: left: the tab before (wrapping); during the morph its end
 void Menu::AltarLeft()
 {
     AltarPage& altar = this->altar;
 
-    if (altar.stage == kChoosing)
+    if (altar.stage != kChoosing)
     {
-        if (--altar.tab < 0)
-        {
-            altar.tab = kLastTab;
-        }
+        this->AltarSkipMorph();
+        return;
+    }
 
-        this->AltarTabChanged();
-    }
-    else if (altar.stage == kAltars)
+    if (--altar.tab < 0)
     {
-        this->AltarChooseEast(true);
+        altar.tab = kLastTab;
     }
-    else if (altar.stage == kMorphing)
-    {
-        altar.counter = kMorphDone;
-    }
+
+    this->AltarTabChanged();
 }
 
-// swd32.exe 0x0043E170 (unmatched in swd3e): right: the next tab (wrapping); on the altars the west one
+// swd3e.exe 0x00443840: right: the next tab (wrapping); during the morph its end
 void Menu::AltarRight()
 {
     AltarPage& altar = this->altar;
 
-    if (altar.stage == kChoosing)
+    if (altar.stage != kChoosing)
     {
-        if (++altar.tab > kLastTab)
-        {
-            altar.tab = 0;
-        }
+        this->AltarSkipMorph();
+        return;
+    }
 
-        this->AltarTabChanged();
-    }
-    else if (altar.stage == kAltars)
+    if (++altar.tab > kLastTab)
     {
-        this->AltarChooseWest();
+        altar.tab = 0;
     }
-    else if (altar.stage == kMorphing)
-    {
-        altar.counter = kMorphDone;
-    }
+
+    this->AltarTabChanged();
 }
 
-// The other slot or altar (inline in 0x0043E250 and 0x0043E310).
-void Menu::AltarSwitch(u16 slotSound)
+// swd3e.exe 0x004438F0: Shift: the other slot; during the morph its end
+void Menu::AltarShift()
 {
     Game& owner = this->game;
     AltarPage& altar = this->altar;
 
-    if (altar.stage == kChoosing)
+    if (altar.stage != kChoosing)
     {
-        if (++altar.slot > 1)
-        {
-            altar.slot = 0;
-        }
-
-        owner.audio.PlaySound(slotSound, owner.config.soundVolume);
+        this->AltarSkipMorph();
         return;
     }
 
-    if (altar.stage == kAltars)
+    if (++altar.slot > 1)
     {
-        if (++altar.chosen > 1)
-        {
-            altar.chosen = 0;
-        }
-
-        if (owner.state.GameFlag(kEastAltarFlag))
-        {
-            altar.chosen = 1;
-        }
-
-        if ((altar.tooHigh & kEastTooHigh) == 0)
-        {
-            altar.chosen = 1;
-        }
-
-        if ((altar.tooHigh & kWestTooHigh) == 0)
-        {
-            altar.chosen = 0;
-        }
-
-        owner.audio.PlaySound(kSwitchSound, owner.config.soundVolume);
-        return;
+        altar.slot = 0;
     }
 
-    if (altar.stage == kMorphing)
-    {
-        altar.counter = kMorphDone;
-    }
+    owner.audio.PlaySound(kSwitchSound, owner.config.soundVolume);
 }
 
-// swd32.exe 0x0043E250 (unmatched in swd3e): Shift: the other slot; on the altars the other one
-void Menu::AltarShift()
-{
-    this->AltarSwitch(kSwitchSound);
-}
-
-// swd32.exe 0x0043E310 (unmatched in swd3e): End: as Shift, the slot changing with the move sound
-void Menu::AltarEnd()
-{
-    this->AltarSwitch(kMoveSound);
-}
-
-// swd3e.exe 0x00443CB0: Space or Enter: with both slots set the altars are offered (a result more than nine levels
-// above the first role refused there); the altar chosen starts the morph (a refused one sounds); during the morph it
-// ends; once made, the two objects are spent and the result added (to the list or the inventory) and the list starts
-// again. The trial version leaves.
+// swd3e.exe 0x00443990: Space or Enter. On the list (with the altar open; Escape otherwise) the result is offered when
+// both slots hold an object (refused when more than six levels above the first party role), else
+// "請將兩個欄位選擇物品"; on the offer the morph starts unless refused; during the morph it ends at once; once made the
+// result is kept; the notice closes.
 void Menu::AltarSelect()
 {
     Game& owner = this->game;
@@ -940,45 +833,34 @@ void Menu::AltarSelect()
     switch (altar.stage)
     {
         case kChoosing:
-        {
-            if (owner.state.GameFlag(kTrialFlag))
+            if (!owner.state.GameFlag(kAltarOpenFlag))
             {
                 this->AltarCancel();
                 return;
             }
 
-            if (!this->AltarCombine())
+            if (!this->AltarCombine(altar.slotA, altar.slotB))
             {
                 altar.stage = kNeedTwo;
                 return;
             }
 
             this->AltarResultVitals();
-            this->background.id = kFaceAct;
             ++altar.stage;
-            this->background.action = kAltarsBackground;
-            altar.chosen = owner.state.GameFlag(kEastAltarFlag) ? 0 : 1;
+            this->background.id = kFaceAct;
+            this->background.action = kOfferBackground;
             altar.tooHigh = 0;
-            const int level = owner.party.roles[0].level;
 
-            if (owner.state.GameFlag(kEastAltarFlag) && altar.resultEast.record.data.level - level > kTooHighLevels)
+            if (altar.result.record.data.level - owner.party.roles[0].level > kTooHighLevels)
             {
-                altar.chosen = 1;
-                altar.tooHigh |= kEastTooHigh;
-            }
-
-            if (altar.resultWest.record.data.level - level > kTooHighLevels)
-            {
-                altar.tooHigh |= kWestTooHigh;
+                altar.tooHigh = kTooHigh;
             }
 
             owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
             return;
-        }
 
-        case kAltars:
-            if ((altar.chosen == 0 && (altar.tooHigh & kEastTooHigh) != 0) ||
-                (altar.chosen == 1 && (altar.tooHigh & kWestTooHigh) != 0))
+        case kOffered:
+            if (altar.tooHigh != 0)
             {
                 owner.audio.PlaySound(kRefusedSound, owner.config.soundVolume);
                 return;
@@ -987,7 +869,7 @@ void Menu::AltarSelect()
             altar.stage = kMorphing;
             altar.counter = kMorphStart;
             this->AltarPrepareMorph();
-            owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
+            owner.audio.PlaySound(kMorphStartSound, owner.config.soundVolume);
             return;
 
         case kMorphing:
@@ -1004,11 +886,11 @@ void Menu::AltarSelect()
             return;
 
         case kMade:
-            this->AltarSpend();
+            this->AltarFinish();
             return;
 
         case kNeedTwo:
-        case kAltarsAgain:
+        case kOfferedAgain:
             altar.stage = kChoosing;
             return;
 
@@ -1017,43 +899,38 @@ void Menu::AltarSelect()
     }
 }
 
-// The made result taken (inline in 0x0043E3D0, stage 4).
-void Menu::AltarSpend()
+// The result made (stage 4 of 0x00443990): the two slots' objects spent (from the list when the tab lists them, else
+// from the inventory), the result counted in the first counter list, one of it added (pending) to the list or the
+// inventory, free to use; the list fitted again, back to the list
+void Menu::AltarFinish()
 {
     Game& owner = this->game;
     AltarPage& altar = this->altar;
     this->tint = 0;
 
-    auto spend = [&owner, &altar](ItemNode& slot)
+    for (ItemNode* slot : {&altar.slotA, &altar.slotB})
     {
-        const bool listed = AltarTabTakes(slot, altar.tab);
+        const bool listed = AltarTabTakes(*slot, altar.tab);
 
-        if (slot.id == ItemNode::Empty)
+        if (slot->id == ItemNode::Empty)
         {
-            return;
+            continue;
         }
 
-        AddItem(listed ? altar.objects : owner.party.inventory, slot.id, -1, ItemCountMode::Pending, owner.database);
-        slot.record.description.reset();
-        slot.id = ItemNode::Empty;
-    };
+        AddItem(listed ? altar.objects : owner.party.inventory, slot->id, -1, ItemCountMode::Pending, owner.database);
+        slot->record.description.reset();
+        slot->id = ItemNode::Empty;
+    }
 
-    spend(altar.slotA);
-    spend(altar.slotB);
-    const ItemNode& result = altar.chosen != 0 ? altar.resultWest : altar.resultEast;
+    ItemNode& result = altar.result;
+    AddCounterCapped(owner.party.fame.lists[Fame::FameList], static_cast<i16>(result.id), 1);
     const bool listed = AltarTabTakes(result, altar.tab);
 
     if (result.id != ItemNode::Empty)
     {
-        ItemNode* added = AddItem(
-            listed ? altar.objects : owner.party.inventory,
-            result.id,
-            1,
-            ItemCountMode::PendingOnly,
-            owner.database
-        );
+        ItemLink& list = listed ? altar.objects : owner.party.inventory;
 
-        if (added != nullptr)
+        if (ItemNode* added = AddItem(list, result.id, 1, ItemCountMode::PendingOnly, owner.database); added != nullptr)
         {
             ++added->unk06;
         }
@@ -1070,32 +947,32 @@ void Menu::AltarSpend()
     altar.shown = view.shown;
     altar.firstShown = view.first;
     altar.counter = 0;
-    altar.chosen = 0;
+    altar.unk50B534 = 0;
     altar.stage = kChoosing;
     this->background.id = kFaceAct;
     this->background.action = kPageBackground;
 }
 
-// swd32.exe 0x0043E770 (unmatched in swd3e): Escape: from the list the page closes (to the main tabs); from the altars
-// back to the list;
-// during the morph or once made as Space; from the two slots message back to the list
+// swd3e.exe 0x00443CB0: Escape: from the list the page closes (the menu too when no page is left); from the offer back
+// to the list; during the morph and once made as Enter; the notice closes
 void Menu::AltarCancel()
 {
+    Game& owner = this->game;
     AltarPage& altar = this->altar;
 
     switch (altar.stage)
     {
         case kChoosing:
-            if (--this->code == 0)
+            if (static_cast<i16>(--this->code) <= 0)
             {
-                this->game.menuState = Game::NoMenu;
+                owner.menuState = Game::NoMenu;
             }
 
             this->SetPage(this->code);
             this->AltarLeave();
             return;
 
-        case kAltars:
+        case kOffered:
             altar.stage = kChoosing;
             this->background.id = kFaceAct;
             this->background.action = kPageBackground;
@@ -1116,177 +993,138 @@ void Menu::AltarCancel()
 }
 
 // swd3e.exe 0x004432E0: the mouse on the altar page. On the list: a click on a tab chooses it, on a row picks it, on a
-// slot chooses the slot, on "執行" selects (the pointer over it lights it); a held left button on the scroll bar
-// scrolls. On the altars a click on the open east or west result chooses it (a double click on the chosen one
-// selects). During the morph or once made any click selects; on the two slots message any click goes back. A right
-// click goes back.
+// slot chooses that slot (during the morph: its end); the run button lights under the pointer and offers on a click;
+// the held left button on the scroll bar; a right click goes back. On the offer a left click starts the morph (goes
+// back when refused), a right click goes back; during the morph and once made any click answers; on the notice any
+// click closes it.
 void Menu::AltarFrame()
 {
     Game& owner = this->game;
     AltarPage& altar = this->altar;
+    const u32 clicks = this->clicks;
+    altar.hover = 0;
+
+    if (altar.stage != kChoosing)
+    {
+        switch (altar.stage)
+        {
+            case kOffered:
+                if ((clicks & kLeftClicks) != 0)
+                {
+                    if ((altar.tooHigh & kTooHighShown) == 0)
+                    {
+                        this->AltarSelect();
+                        return;
+                    }
+                }
+                else if ((clicks & kRightClicks) == 0)
+                {
+                    return;
+                }
+
+                this->AltarCancel();
+                return;
+
+            case kMorphing:
+            case kMade:
+                if ((clicks & kAnyClick) != 0)
+                {
+                    this->AltarSelect();
+                }
+
+                return;
+
+            default:
+                if (altar.stage == kNeedTwo && (clicks & kAnyClick) != 0)
+                {
+                    this->AltarCancel();
+                }
+
+                return;
+        }
+    }
+
     const auto x = static_cast<u32>(owner.state.pointerX);
     const auto y = static_cast<u32>(owner.state.pointerY);
-    const u32 clicks = this->clicks;
 
     auto inside = [](u32 value, u32 low, u32 high)
     {
         return value < high && value > low;
     };
 
-    altar.hover = 0;
-
-    if (altar.stage == kChoosing)
+    if ((clicks & kLeftClicks) != 0 && inside(y, kTabsTop, kTabsBottom) && inside(x, kTabsLeft, kTabsRight))
     {
-        if ((clicks & kLeftClicks) != 0 && inside(y, kTabsTop, kTabsBottom) && inside(x, kTabsLeft, kTabsRight))
+        altar.tab = static_cast<i32>((x - kTabsLeft) / kTabWidth) + 1;
+        this->AltarLeft();
+        return;
+    }
+
+    if ((clicks & kLeftClicks) != 0)
+    {
+        if (inside(y, kRowsTop, kRowsBottom) && inside(x, kRowsLeft, kRowsRight))
         {
-            altar.tab = static_cast<i32>((x - kTabsLeft) / kTabWidth) + 1;
-            this->AltarLeft();
-            return;
-        }
+            const auto row = static_cast<i32>((y - kRowsTop) / kRowHeight);
 
-        if ((clicks & kLeftClicks) != 0)
-        {
-            if (inside(y, kRowsTop, kRowsBottom) && inside(x, kRowsLeft, kRowsRight))
+            if (row < altar.shown)
             {
-                const auto row = static_cast<i32>((y - kRowsTop) / kRowHeight);
-
-                if (row < altar.shown)
-                {
-                    altar.row = row + 1;
-                    this->AltarUp();
-                }
-
-                return;
-            }
-
-            if (inside(y, kSlotsTop, kSlotsBottom) && inside(x, kFirstSlotLeft, kFirstSlotRight))
-            {
-                altar.slot = 1;
-                this->AltarEnd();
-                return;
-            }
-
-            if (inside(y, kSlotsTop, kSlotsBottom) && inside(x, kSecondSlotLeft, kSecondSlotRight))
-            {
-                altar.slot = 0;
-                this->AltarEnd();
-                return;
-            }
-        }
-
-        altar.hover = 0;
-
-        if (inside(y, kRunTop, kRunBottom) && inside(x, kRunLeft, kRunRight))
-        {
-            altar.hover = 1;
-
-            if ((clicks & kLeftClicks) != 0)
-            {
-                this->AltarSelect();
-                return;
-            }
-        }
-
-        if (altar.count > AltarPage::Rows && owner.controls.Repeating(Button::MouseLeft) &&
-            inside(x, kBarLeft, kBarRight))
-        {
-            const MenuScrollBar& bar = this->scrollBar;
-            const i32 pointerY = owner.state.pointerY;
-
-            if (pointerY < kBarUpBottom && pointerY > kBarUpTop)
-            {
+                altar.row = row + 1;
                 this->AltarUp();
             }
 
-            if (owner.state.pointerY < kBarDownBottom && owner.state.pointerY > kBarDownTop)
-            {
-                this->AltarDown();
-            }
-
-            if (owner.state.pointerY < bar.thumbTop && owner.state.pointerY > bar.top)
-            {
-                this->AltarPageUp();
-            }
-
-            if (owner.state.pointerY < bar.bottom && owner.state.pointerY > bar.thumbBottom)
-            {
-                this->AltarPageDown();
-            }
-
             return;
         }
-    }
-    else if (altar.stage == kAltars)
-    {
-        const bool inResults = inside(y, kResultsTop, kResultsBottom);
 
-        if (inResults && inside(x, kEastLeft, kEastRight) && owner.state.GameFlag(kEastAltarFlag) &&
-            (altar.tooHigh & kEastTooHigh) == 0)
+        bool onSlot = false;
+
+        if (inside(y, kSlotsTop, kSlotsBottom) && inside(x, kFirstSlotLeft, kFirstSlotRight))
         {
-            if ((clicks & kLeftClick) != 0)
-            {
-                this->AltarLeft();
-            }
+            altar.slot = 1;
+            onSlot = true;
+        }
+        else if (inside(y, kSlotsTop, kSlotsBottom) && inside(x, kSecondSlotLeft, kSecondSlotRight))
+        {
+            altar.slot = 0;
+            onSlot = true;
+        }
 
-            if ((clicks & kDoubleClick) == 0)
+        if (onSlot)
+        {
+            // The slot clicked is the one after the one set (the first box sets 1, stepped on to 0).
+            if (altar.stage == kChoosing)
             {
-                if ((clicks & kRightClicks) != 0)
+                if (++altar.slot > 1)
                 {
-                    this->AltarCancel();
+                    altar.slot = 0;
                 }
 
-                return;
+                owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
             }
-
-            if (altar.chosen != 0)
+            else
             {
-                this->AltarLeft();
-                return;
+                this->AltarSkipMorph();
             }
 
-            this->AltarSelect();
             return;
         }
+    }
 
-        if (inResults && inside(x, kWestLeft, kWestRight) && (altar.tooHigh & kWestTooHigh) == 0)
+    altar.hover = 0;
+
+    if (inside(y, kRunTop, kRunBottom) && inside(x, kRunLeft, kRunRight))
+    {
+        altar.hover = 1;
+
+        if ((clicks & kLeftClicks) != 0)
         {
-            if ((clicks & kLeftClick) != 0)
-            {
-                this->AltarRight();
-            }
-
-            if ((clicks & kDoubleClick) == 0)
-            {
-                if ((clicks & kRightClicks) != 0)
-                {
-                    this->AltarCancel();
-                }
-
-                return;
-            }
-
-            if (altar.chosen != 1)
-            {
-                this->AltarRight();
-                return;
-            }
-
             this->AltarSelect();
             return;
         }
     }
-    else if (altar.stage == kMorphing || altar.stage == kMade)
-    {
-        if ((clicks & kAnyClick) != 0)
-        {
-            this->AltarSelect();
-        }
 
-        return;
-    }
-    else
+    if (altar.count <= AltarPage::Rows || !owner.controls.Repeating(Button::MouseLeft) ||
+        !inside(x, kBarLeft, kBarRight))
     {
-        if (altar.stage == kNeedTwo && (clicks & kAnyClick) != 0)
+        if ((clicks & kRightClicks) != 0)
         {
             this->AltarCancel();
         }
@@ -1294,38 +1132,57 @@ void Menu::AltarFrame()
         return;
     }
 
-    if ((clicks & kRightClicks) != 0)
+    const MenuScrollBar& bar = this->scrollBar;
+    i32 pointerY = owner.state.pointerY;
+
+    if (pointerY < kBarUpBottom && pointerY > kBarUpTop)
     {
-        this->AltarCancel();
+        this->AltarUp();
+        pointerY = owner.state.pointerY;
+    }
+
+    if (pointerY < kBarDownBottom && pointerY > kBarDownTop)
+    {
+        this->AltarDown();
+        pointerY = owner.state.pointerY;
+    }
+
+    if (pointerY < bar.thumbTop && pointerY > bar.top)
+    {
+        this->AltarPageUp();
+        pointerY = owner.state.pointerY;
+    }
+
+    if (pointerY < bar.bottom && pointerY > bar.thumbBottom)
+    {
+        this->AltarPageDown();
     }
 }
 
-// swd32.exe 0x0043E800 (unmatched in swd3e): the altar page. The trial version only says it lacks the page. On the
-// list: the tab, the slot
-// chosen, the scroll bar, the rows ("%-12s%3d": name and count free), the two slots (picture, category and level,
-// name) and, with both results known, the altars that are open with an up or down arrow by the result's level against
-// the average. On the altars the two results; the morph (darkening in, then the pictures run together); the result
-// made; the two slots message.
+// swd3e.exe 0x00443D40: the altar page ("目前無法使用" while the altar is closed). The run button lit under the
+// pointer; on the list and its notice the tab, the bobbing slot marker, the list with its scroll bar, the two slots and
+// the result's arrow; on the offer the result with its description ("無法練化" when too high); the morph (the result
+// shown first while the screen tints); the result made; "請將兩個欄位選擇物品".
 void Menu::AltarDraw()
 {
     Game& owner = this->game;
     AltarPage& altar = this->altar;
     const auto color = static_cast<Pixel>(owner.painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
 
-    if (owner.state.GameFlag(kTrialFlag))
+    if (!owner.state.GameFlag(kAltarOpenFlag))
     {
-        const std::string text = Big5(kTrialOnly);
+        const std::string text = Big5(kClosed);
         this->DrawBox(
-            kTrialX,
-            kTrialY,
-            kTrialCharWidth * static_cast<int>(text.size()),
-            kTrialHeight,
-            kTrialBoxMode,
+            kClosedX,
+            kClosedY,
+            kClosedCharWidth * static_cast<int>(text.size()),
+            kClosedHeight,
+            kClosedBoxMode,
             0,
             0,
             0
         );
-        owner.largeFont.DrawText(owner.drawSurface, kTrialX, kTrialY, text, color, kPanelStyle);
+        owner.largeFont.DrawText(owner.drawSurface, kClosedX, kClosedY, text, color, kPanelStyle);
         return;
     }
 
@@ -1333,7 +1190,9 @@ void Menu::AltarDraw()
     {
         this->face.id = kAltarAct;
         this->face.action = kRunLitAction;
+        owner.painter.SetClipClamped(kRunLitX, kRunLitY, kRunLitRight, kRunLitBottom);
         owner.actDrawer.Draw(this->face, kRunLitX, kRunLitY);
+        owner.painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     }
 
     if (altar.stage == kChoosing || altar.stage == kNeedTwo)
@@ -1341,16 +1200,13 @@ void Menu::AltarDraw()
         this->AltarDrawList(color);
     }
 
-    if (altar.stage == kAltars || altar.stage == kAltarsAgain)
+    if (altar.stage == kOffered || altar.stage == kOfferedAgain)
     {
-        this->AltarDrawResults(color);
+        this->AltarDrawOffer(color);
     }
 
     if (altar.stage == kMorphing)
     {
-        // The rebuild's continuous motion: the morph changes its pictures each frame, which are not kept.
-        this->KeepFrameFrom(false);
-
         if (altar.counter > kMorphShown)
         {
             this->background.id = kFaceAct;
@@ -1373,28 +1229,26 @@ void Menu::AltarDraw()
             {
                 this->AltarFinishMorph();
             }
+
+            return;
         }
-        else
+
+        this->AltarDrawResult(altar.result, kResultX, kResultY, kChosenResult);
+        this->tint = kTintStep * (kMorphStart - altar.counter);
+
+        if (altar.counter == kMorphShown)
         {
-            this->AltarDrawResults(color);
-            this->tint = kTintStep * (kMorphStart - altar.counter);
-
-            if (altar.counter == kMorphShown)
-            {
-                this->background.id = kFaceAct;
-                this->background.action = kMorphBackground;
-            }
-
-            ++altar.counter;
+            this->background.id = kFaceAct;
+            this->background.action = kMorphBackground;
         }
 
+        ++altar.counter;
         return;
     }
 
     if (altar.stage == kMade)
     {
-        const ItemNode& result = altar.chosen == 1 ? altar.resultWest : altar.resultEast;
-        this->gauge.id = result.record.data.act;
+        this->gauge.id = altar.result.record.data.act;
         this->gauge.action = kPictureAction;
         this->gauge.direction = 0;
         owner.actDrawer.Draw(this->gauge, kMadeX, kMadeY);
@@ -1410,7 +1264,7 @@ void Menu::AltarDraw()
     }
 }
 
-// The list of the altar page with its slots (inline in 0x0043E800, stages 1 and 5).
+// The list, the tab, the slot marker and the two slots (inline in 0x00443D40, stages 1 and 5)
 void Menu::AltarDrawList(Pixel color)
 {
     Game& owner = this->game;
@@ -1421,8 +1275,8 @@ void Menu::AltarDrawList(Pixel color)
 
     if (altar.slot <= 1)
     {
-        this->face.action = altar.slot + kFirstSlotAction;
-        owner.actDrawer.Draw(this->face, kSlotStepX * altar.slot + kSlotX, kSlotStepY * altar.slot + kSlotY);
+        altar.bob = (altar.bob + 1) % kMarkerSteps;
+        owner.actDrawer.DrawPicture(kMarkerFile, 0, kMarkerStepX * altar.slot + kMarkerX, altar.bob / 2 + kMarkerY);
     }
 
     if (altar.count > AltarPage::Rows)
@@ -1476,11 +1330,10 @@ void Menu::AltarDrawList(Pixel color)
         }
     }
 
-    const int average = (altar.slotA.record.data.level + altar.slotB.record.data.level) / 2;
+    const int average = static_cast<u16>(altar.slotA.record.data.level + altar.slotB.record.data.level) / 2;
 
     for (int side = 0; side < 2; ++side)
     {
-        const ItemNode& result = side == 1 ? altar.resultWest : altar.resultEast;
         const ItemNode& slot = side == 1 ? altar.slotB : altar.slotA;
 
         if (slot.id == ItemNode::Empty)
@@ -1498,12 +1351,11 @@ void Menu::AltarDrawList(Pixel color)
 
         const int boxX = kSlotBoxStep * side + kSlotBoxX;
         this->DrawBox(boxX, kSlotBoxY, kSlotBoxWidth, kSlotBoxHeight, kAltarBoxMode, 0, 0, 0);
-        const std::u8string_view category = CategoryName(slot.record.data.category);
         owner.mediumFont.DrawText(
             owner.drawSurface,
             boxX,
             kSlotBoxY,
-            WinFormat(kSlotFormat, {category, static_cast<i32>(slot.record.data.level)}),
+            WinFormat(kSlotFormat, {CategoryName(slot.record.data.category), static_cast<i32>(slot.record.data.level)}),
             color,
             kPanelStyle
         );
@@ -1516,81 +1368,76 @@ void Menu::AltarDrawList(Pixel color)
             kPanelStyle
         );
 
-        if ((side == 1 || owner.state.GameFlag(kEastAltarFlag)) && altar.resultEast.id != ItemNode::Empty &&
-            altar.resultWest.id != ItemNode::Empty)
+        // Both passes draw the arrow at one place (slot A's only with flag 0x1BA9).
+        if ((side == 1 || owner.state.GameFlag(kSlotAArrowFlag)) && altar.result.id != ItemNode::Empty)
         {
-            owner.mediumFont.DrawText(
-                owner.drawSurface,
-                kAltarNameStep * side + kAltarNameX,
-                kAltarNameY,
-                WinFormat(kAltarFormat, {side == 0 ? kEast : kWest}),
-                color,
-                kPanelStyle
-            );
-            const u16 arrow = result.record.data.level >= average ? kUpArrow : kDownArrow;
-            const Picture* picture = owner.archive.GetPicture(arrow, 0);
-
-            if (picture != nullptr)
-            {
-                owner.painter.SetSource(picture->data.data());
-                owner.painter
-                    .DrawPicture(kAltarNameStep * side + kArrowX, kAltarNameY, picture->width, picture->height, 0);
-            }
+            const u16 arrow = altar.result.record.data.level >= average ? kUpArrow : kDownArrow;
+            owner.actDrawer.DrawPicture(arrow, 0, kArrowX, kArrowY);
         }
     }
 }
 
-// The two results and the altar prompt (inline in 0x0043E800, stages 2, 3 and 0xA).
-void Menu::AltarDrawResults(Pixel color)
+// The result offered with its description, "無法練化" when it is too high (inline in 0x00443D40, stages 2 and 0xA)
+void Menu::AltarDrawOffer(Pixel color)
 {
     Game& owner = this->game;
     AltarPage& altar = this->altar;
-
-    if (owner.state.GameFlag(kEastAltarFlag))
-    {
-        this->AltarDrawResult(
-            altar.resultEast,
-            kEastAltar,
-            kEastResultX,
-            kResultY,
-            (altar.chosen == 0 ? kChosenResult : 0) | ((altar.tooHigh & kEastTooHigh) << kTooHighShift)
-        );
-    }
-
-    this->AltarDrawResult(
-        altar.resultWest,
-        kWestAltar,
-        kWestResultX,
-        kResultY,
-        (altar.chosen == 1 ? kChosenResult : 0) | ((altar.tooHigh & kWestTooHigh) << (kTooHighShift - 1))
+    this->AltarDrawResult(altar.result, kResultX, kResultY, kChosenResult);
+    FillBox(
+        owner.painter,
+        kDescriptionBoxX,
+        kDescriptionBoxY,
+        kDescriptionBoxWidth,
+        kDescriptionBoxHeight,
+        0,
+        0,
+        0,
+        FillMode::Eighth
     );
-    this->DrawBox(kPromptX, kPromptY, kPromptWidth, kPromptHeight, kAltarBoxMode, 0, 0, 0);
-    owner.mediumFont.DrawText(owner.drawSurface, kPromptX, kPromptY, kChooseAltar, color, kPanelStyle);
+    DrawWindowFrame(
+        owner.painter,
+        owner.archive,
+        owner.battleMessages.panelAct.frame,
+        kDescriptionLeft,
+        kDescriptionTop,
+        kDescriptionRight,
+        kDescriptionBottom,
+        0,
+        kFrameBorder
+    );
+    owner.DrawWrappedText(
+        altar.result.record.description.value_or(std::string()),
+        kDescriptionLeft,
+        kDescriptionTop,
+        kDescriptionLines,
+        kDescriptionWidth
+    );
+
+    if ((altar.tooHigh & kTooHighShown) != 0)
+    {
+        this->DrawBox(kCannotMakeBoxX, kCannotMakeY, kCannotMakeWidth, kCannotMakeHeight, kChosenBoxMode, 0, 0, 0);
+        owner.mediumFont.DrawText(owner.drawSurface, kCannotMakeX, kCannotMakeY, kCannotMake, color, kPanelStyle);
+    }
 }
 
-// swd3e.exe 0x00444BA0: a result in its box at (x, y): the title with its face, the picture, the category, name,
-// level and values (spirit and stamina of the side's result); darker and boxed over when not chosen or too high, then
-// "等級不足 無法訂契約"
-void Menu::AltarDrawResult(const ItemNode& result, std::u8string_view title, int x, int y, u32 flags)
+// swd3e.exe 0x00444BA0: a result in its box at (x, y): the picture, the category, name, level and values (the spirit
+// and stamina of AltarPage::vitals, the pair of the right half past the screen's middle); darker and the picture shaded
+// when not chosen or too high, then "等級不足 無法訂契約"
+void Menu::AltarDrawResult(const ItemNode& result, int x, int y, u32 flags)
 {
     Game& owner = this->game;
     AltarPage& altar = this->altar;
-    const auto gold = static_cast<Pixel>(owner.painter.MakeColor(kGoldRed, kGoldGreen, kGoldBlue));
-    Pixel text = gold;
+    Pixel text = static_cast<u16>(owner.painter.MakeColor(kGoldRed, kGoldGreen, kGoldBlue));
     int mode = kChosenBoxMode;
     const bool dim = (flags & kChosenResult) == 0 || (flags & kTooHighFlag) != 0;
 
     if (dim)
     {
-        text = static_cast<Pixel>(owner.painter.MakeColor(kDimRed, kDimGreen, kDimBlue));
+        text = static_cast<u16>(owner.painter.MakeColor(kDimRed, kDimGreen, kDimBlue));
         mode = kAltarBoxMode;
     }
 
     this->DrawBox(x, y, kResultBoxWidth, kResultBoxHeight, mode, 0, 0, 0);
-    this->face.id = kAltarAct;
-    this->face.action = kResultFaceAction;
-    owner.actDrawer.Draw(this->face, x + kResultFaceX, y - kResultFaceUp);
-    owner.mediumFont.DrawText(owner.drawSurface, x + kResultTitleX, y - kResultTitleUp, title, gold, kPanelStyle);
     const ObjectData& data = result.record.data;
     this->gauge.id = data.act;
     this->gauge.action = kPictureAction;
@@ -1602,9 +1449,9 @@ void Menu::AltarDrawResult(const ItemNode& result, std::u8string_view title, int
         Big5(CategoryName(data.category)),
         ObjectName(result.record),
         WinFormat(kResultLevelFormat, {static_cast<i32>(data.level)}),
-        WinFormat(kHitPointsFormat, {static_cast<i32>(data.hitPoints)}),
-        WinFormat(kSpiritFormat, {static_cast<i32>(altar.vitals[side])}),
-        WinFormat(kStaminaFormat, {static_cast<i32>(altar.vitals[side + 1])}),
+        WinFormat(kHitPointsFormat, {data.hitPoints}),
+        WinFormat(kSpiritFormat, {static_cast<i32>(static_cast<u16>(altar.vitals[side]))}),
+        WinFormat(kStaminaFormat, {static_cast<i32>(static_cast<u16>(altar.vitals[side + 1]))}),
         WinFormat(kAttackFormat, {static_cast<i32>(data.attack)}),
         WinFormat(kDefenseFormat, {static_cast<i32>(data.defense)}),
         WinFormat(kAgilityFormat, {static_cast<i32>(data.agility)}),
@@ -1615,7 +1462,7 @@ void Menu::AltarDrawResult(const ItemNode& result, std::u8string_view title, int
         owner.largeFont.DrawText(
             owner.drawSurface,
             valuesX,
-            y + kResultPictureY + kResultLine * static_cast<int>(line),
+            y + kResultValuesY + kResultLine * static_cast<int>(line),
             lines[line],
             text,
             kPanelStyle
@@ -1627,17 +1474,7 @@ void Menu::AltarDrawResult(const ItemNode& result, std::u8string_view title, int
         return;
     }
 
-    FillBox(
-        owner.painter,
-        x + kResultPictureX,
-        y + kResultPictureY,
-        kResultPictureWidth,
-        kResultPictureHeight,
-        0,
-        0,
-        0,
-        FillMode::Quarter
-    );
+    FillBox(owner.painter, x + kShadeX, y + kShadeY, kShadeWidth, kShadeHeight, 0, 0, 0, FillMode::Quarter);
 
     if ((flags & kTooHighFlag) != 0)
     {
@@ -1652,8 +1489,8 @@ void Menu::AltarDrawResult(const ItemNode& result, std::u8string_view title, int
     }
 }
 
-// swd3e.exe 0x00444EC0: the morph prepared: its offsets cleared, the frame picture and the pictures of the result
-// chosen and of the two slots unpacked
+// swd3e.exe 0x00444EC0: the morph prepared: its offsets cleared (with four buffers of the original never read), the
+// pictures of the result and of the two slots unpacked; a failed act is reported with the title of its step
 void Menu::AltarPrepareMorph()
 {
     Game& owner = this->game;
@@ -1663,23 +1500,22 @@ void Menu::AltarPrepareMorph()
     std::fill(altar.rowsA.begin(), altar.rowsA.end(), i16{0});
     std::fill(altar.rowsB.begin(), altar.rowsB.end(), i16{0});
 
-    auto unpack = [this, &owner](i32 act, i32 action, std::vector<u16>& pixels, int step)
+    auto unpack = [this, &owner](i32 act, std::vector<u16>& pixels, std::u8string_view failed)
     {
+        this->gauge.action = kPictureAction;
         this->gauge.id = act;
-        this->gauge.action = action;
         this->gauge.direction = 0;
 
         if (owner.acts.Run(this->gauge) == 0)
         {
             ErrorBox(
                 owner.errors,
-                u8"Act Err(Botl::GetOriginal%d)",
+                failed,
                 u8"設定錯誤 \nact[%d] qq[%d] dir[%d]",
-                step,
                 this->gauge.id,
                 this->gauge.action,
                 this->gauge.direction
-            );  // the four texts of 0x0043FDE0 with the format 0x0049FD0C
+            );
             return false;
         }
 
@@ -1700,31 +1536,25 @@ void Menu::AltarPrepareMorph()
         return true;
     };
 
-    if (!unpack(kAltarAct, kMorphFrameAction, altar.frame, 1))
+    // The titles of 0x004BEA40, 0x004BEA24 and 0x004BEA08 with the format 0x004B0D58
+    if (!unpack(altar.result.record.data.act, altar.resultPicture, u8"Act Err(Botl::GetOriginal2)"))
     {
         return;
     }
 
-    const ItemNode& result = altar.chosen != 0 ? altar.resultWest : altar.resultEast;
-
-    if (!unpack(result.record.data.act, kPictureAction, altar.result, 2))
+    if (!unpack(altar.slotA.record.data.act, altar.pictureA, u8"Act Err(Botl::GetOriginal3)"))
     {
         return;
     }
 
-    if (!unpack(altar.slotA.record.data.act, kPictureAction, altar.pictureA, 3))
-    {
-        return;
-    }
-
-    unpack(altar.slotB.record.data.act, kPictureAction, altar.pictureB, 4);
+    unpack(altar.slotB.record.data.act, altar.pictureB, u8"Act Err(Botl::GetOriginal4)");
 }
 
 // swd3e.exe 0x004450E0: a frame of the morph. Up to 0x8C: before 0x78 the columns and rows wander (more as the counter
-// grows), pixel pairs of the result spread into both slot pictures from 0x32 (all of it at 0x6E, with its sound; the
-// stirring sound before 0x50); from 0x78 the wandering settles. The two slot pictures are drawn displaced, closing in
-// from the sides. The original reads its row table past either end and writes past the screen for large offsets; here
-// those pixels are left out.
+// grows), pixel pairs of the result spread into both slot pictures from 0x32 (all of it at 0x6E, with its sound);
+// from 0x78 the wandering settles. The two slot pictures are drawn displaced (a column's offset in rows through
+// AltarPage::wave), closing in from the sides. The original reads the wave table past its ends for large offsets and
+// writes past the screen; here those read 0 and those pixels are left out.
 void Menu::AltarMorph()
 {
     Game& owner = this->game;
@@ -1761,7 +1591,8 @@ void Menu::AltarMorph()
 
                     for (std::size_t half = 0; half < 2; ++half)
                     {
-                        const u16 pixel = at + half < altar.result.size() ? altar.result[at + half] : u16{0};
+                        const u16 pixel =
+                            at + half < altar.resultPicture.size() ? altar.resultPicture[at + half] : u16{0};
 
                         if (at + half < altar.pictureA.size())
                         {
@@ -1776,16 +1607,11 @@ void Menu::AltarMorph()
                 }
             }
 
-            if (counter < kSoundEnd && (counter & kSoundMask) != kSoundMask)
-            {
-                owner.audio.PlaySound(kMorphSound, owner.config.soundVolume);
-            }
-
             if (counter == kMixEnd)
             {
                 owner.audio.PlaySound(kDoneSound, owner.config.soundVolume);
-                altar.pictureA = altar.result;
-                altar.pictureB = altar.result;
+                altar.pictureA = altar.resultPicture;
+                altar.pictureB = altar.resultPicture;
             }
 
             const int step = kSteps[static_cast<std::size_t>(std::clamp(counter / kStepSpan, 0, 2))];
@@ -1817,6 +1643,13 @@ void Menu::AltarMorph()
     const i32 shift = std::clamp(counter, 0, kSettleStart);
     const std::size_t screen = static_cast<std::size_t>(pitch) * Display::Height;
 
+    auto wave = [&altar](i16 column)
+    {
+        const i32 at = static_cast<i32>(AltarPage::WaveCenter) + column;
+        return at >= 0 && static_cast<std::size_t>(at) < altar.wave.size() ? altar.wave[static_cast<std::size_t>(at)]
+                                                                           : i32{0};
+    };
+
     auto draw = [&](const std::vector<u16>& picture, std::ptrdiff_t base)
     {
         std::size_t pixel = 0;
@@ -1825,8 +1658,8 @@ void Menu::AltarMorph()
         {
             for (std::size_t column = 0; column < altar.columnsA.size(); ++column, ++pixel)
             {
-                const std::ptrdiff_t at = base + static_cast<std::ptrdiff_t>(column) + altar.rowsA[row] -
-                                          static_cast<std::ptrdiff_t>(altar.columnsA[column]) * pitch;
+                const std::ptrdiff_t at =
+                    base + static_cast<std::ptrdiff_t>(column) + altar.rowsA[row] - wave(altar.columnsA[column]);
 
                 if (at >= 0 && static_cast<std::size_t>(at) < screen && pixel < picture.size())
                 {
@@ -1851,42 +1684,51 @@ void Menu::AltarFinishMorph()
     AltarPage& altar = this->altar;
     this->tint = 0;
     altar.stage = kMade;
-    altar.result.clear();
-    altar.frame.clear();
+    altar.resultPicture.clear();
     altar.pictureA.clear();
     altar.pictureB.clear();
     altar.phase = 0;
 }
 
-// swd3e.exe 0x004454E0: the spirit and stamina of the two results from their levels and the objects and skills they
-// carry (as the bestiary's)
+// swd3e.exe 0x004454E0: the spirit and stamina of the result from its level and the objects and skills it uses: the
+// spirit twice, three and five times the level for its objects A..C and twice and four times for its two healing
+// objects, the stamina three and five times for its skills A and B (as words); the other pair cleared
 void Menu::AltarResultVitals()
 {
     AltarPage& altar = this->altar;
-    altar.vitals.fill(0);
+    const ObjectData& data = altar.result.record.data;
+    const int level = data.level;
+    int spirit = 0;
+    int stamina = 0;
+    altar.vitals = {};
 
-    for (std::size_t side = 0; side < 2; ++side)
+    for (const auto& [uses, times] : std::array<std::pair<u16, int>, 5>{{
+             {data.itemA, kSpiritItemA},
+             {data.itemB, kSpiritItemB},
+             {data.itemC, kSpiritItemC},
+             {data.healItemA, kSpiritHealA},
+             {data.healItemB, kSpiritHealB},
+         }})
+
     {
-        const ObjectData& data = (side == 0 ? altar.resultEast : altar.resultWest).record.data;
-        const int level = data.level;
-        i16& spirit = altar.vitals[2 * side];
-        i16& stamina = altar.vitals[2 * side + 1];
-
-        auto add = [level](i16& value, u16 present, int times)
+        if (uses != 0)
         {
-            if (present != 0)
-            {
-                value = static_cast<i16>(value + times * level);
-            }
-        };
+            spirit += times * level;
+            altar.vitals[0] = static_cast<i16>(spirit);
+        }
+    }
 
-        add(spirit, data.itemA, kSpiritItemA);
-        add(spirit, data.itemB, kSpiritItemB);
-        add(spirit, data.itemC, kSpiritItemC);
-        add(spirit, data.healItemA, kSpiritHealA);
-        add(spirit, data.healItemB, kSpiritHealB);
-        add(stamina, data.skillA, kStaminaSkillA);
-        add(stamina, data.skillB, kStaminaSkillB);
+    for (const auto& [uses, times] : std::array<std::pair<u16, int>, 2>{{
+             {data.skillA, kStaminaSkillA},
+             {data.skillB, kStaminaSkillB},
+         }})
+
+    {
+        if (uses != 0)
+        {
+            stamina += times * level;
+            altar.vitals[1] = static_cast<i16>(stamina);
+        }
     }
 }
 

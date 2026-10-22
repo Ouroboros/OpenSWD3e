@@ -1169,7 +1169,7 @@ void Game::NewGame()
 
     this->party.battleBlocks = {};
     FreeItemList(this->party.inventory);
-    scene.recipesTable = MapsTable(data, MapsDataTable::Unk18);
+    scene.recipesTable = MapsTable(data, MapsDataTable::AltarRecipes);
 
     for (u32 at = MapsTable(data, MapsDataTable::StartItems); at + 1 < data.size() && MapsWord(data, at) != 0;
          at += MapsRecord::StartItemBytes)

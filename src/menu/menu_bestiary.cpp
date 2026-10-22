@@ -32,23 +32,11 @@ constexpr u16 kRolePagesCode = 2;
 
 // The categories shown in turn (the tabs 0..11) as values of a monster's category byte.
 constexpr std::array<i8, Bestiary::Categories> kCategoryValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xD, 0xE};
-// swd32.exe 0x0049E370 (unmatched in swd3e): the names of the categories, eight bytes each.
-constexpr std::array<std::u8string_view, 0xF> kCategoryNames = {
-    u8"天神",
-    u8"魔神",
-    u8"天使",
-    u8"活屍",
-    u8"神獸",
-    u8"魔獸",
-    u8"仙靈",
-    u8"死靈",
-    u8"妖怪",
-    u8"精怪",
-    u8"QQ",
-    u8"靈藥",
-    u8"法寶",
-    u8"魔機關",
-    u8"生物",
+// 0x004AF94C: the names of the categories, ten bytes each (from 0x15 on all "奇物").
+constexpr std::array<std::u8string_view, 0x20> kCategoryNames = {
+    u8"天神", u8"魔神", u8"仙靈", u8"神獸", u8"魔獸", u8"妖靈", u8"精怪", u8"鬼魂", u8"活屍",     u8"晶礦", u8"生物",
+    u8"武器", u8"防具", u8"靈藥", u8"符器", u8"劇情", u8"法寶", u8"奇術", u8"人族", u8"不能練化", u8"絕技", u8"奇物",
+    u8"奇物", u8"奇物", u8"奇物", u8"奇物", u8"奇物", u8"奇物", u8"奇物", u8"奇物", u8"奇物",     u8"奇物",
 };
 
 // What the defeats teach (Bestiary::known): the line is exact from this many, approximate one or two before.
@@ -188,7 +176,7 @@ u16 TextWord(std::string_view text, std::size_t at)
 
 }  // namespace
 
-// The name of category `category` of the table at 0x0049E370 (eight bytes each; the original reads on past its fifteen
+// The name of category `category` of the table at 0x004AF94C (ten bytes each; the original reads on past its 32
 // names, here none).
 std::u8string_view CategoryName(u16 category)
 {

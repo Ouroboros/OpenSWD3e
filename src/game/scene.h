@@ -368,7 +368,7 @@ struct Scene
     u16 rolesTableBytes = 0;                  // swd32 0x004C8BD4 the bytes of maps.dat's table 1
     Role pointerButtonRole;                   // swd32 0x004C96C8 (action 0xC)
     std::array<MapParticle, 4> weather = {};  // 0x004E5550 the weather particles (filled with 0x0F bytes)
-    u32 recipesTable = 0;                     // swd32 0x004C97E4 the altar's recipes in maps.dat (its table 0x18)
+    u32 recipesTable = 0;                     // 0x004E5594 the altar's matrix and recipes in maps.dat (table 0x18)
     std::array<ActState, 4> dialogFrameActs;  // 0x004E6880 the frames of the talk windows
     i32 timerFrames = 0;                      // 0x004E6B50 the frames left on the first timer (-1: stopped)
     Role pointerPageRole;                     // 0x004E6BD8 (act PageAct, action 0)

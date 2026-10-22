@@ -70,23 +70,25 @@ struct Bestiary
     u16 scrollArrows = 0;                          // 0x0050B52C
 };
 
-// The altar page (role page 0x10; 0x004FCA88..0x004FCD20): two objects of the party in the two slots give two
-// results, one at each altar; the altar chosen makes its result with a morph of the pictures.
+// The altar page (role page 0xE; 0x0050B534..0x0050B7E4, swd3e): two objects of the party in the two slots give one
+// result (a recipe of maps.dat table 0x18, else the object of the category the table's matrix gives nearest the
+// level aimed at), made with a morph of the pictures.
 struct AltarPage
 {
-    static constexpr int Objects = 0x4B0;
+    static constexpr int Objects = 0xD48;  // the object tables (0x3520 bytes each)
     static constexpr int Rows = 0x10;
     static constexpr std::size_t MorphColumns = 0x78;
     static constexpr std::size_t MorphRows = 0xDC;
+    static constexpr std::size_t WaveSize = 0x100;   // 0x0050B53C: 0x400 bytes
+    static constexpr std::size_t WaveCenter = 0x80;  // the entry of an offset of 0 rows
 
-    ItemNode resultEast;             // swd32 0x004FCA88
-    ItemNode resultWest;             // swd32 0x004FCBA0
+    ItemNode result;                 // 0x0050B564 (allocated while the page is open)
     ItemNode slotA;                  // 0x0050B660
     ItemNode slotB;                  // 0x0050B714
-    std::vector<i32> categories;     // swd32 0x004FCAC4 by object id
-    std::vector<i32> levels;         // swd32 0x004FCAB0
-    std::vector<u32> kinds;          // swd32 0x004FCA90
-    std::vector<i32> altars;         // swd32 0x004FCACC 1: never the east result, 2: never the west one
+    std::vector<i32> categories;     // 0x0050B570 by object id (-1: not loaded)
+    std::vector<i32> levels;         // 0x0050B558
+    std::vector<u32> kinds;          // 0x0050B538
+    std::vector<i32> altars;         // 0x0050B578 1: never a result
     ItemLink objects;                // 0x0050B590 the objects of the tab, moved out of the inventory
     ItemNode* firstShown = nullptr;  // 0x0050B7D0
     i32 count = 0;                   // 0x0050B584
@@ -96,19 +98,20 @@ struct AltarPage
     i32 tab = 0;                     // 0x0050B588 0..2
     i32 slot = 0;                    // 0x0050B560 the slot an object goes into
     i32 stage = 0;                   // 0x0050B7E0
-    i32 chosen = 0;                  // swd32 0x004FCA8C 0: the east altar, 1: the west one
-    u32 tooHigh = 0;                 // swd32 0x004FCAAC bit 0: the east result, bit 1: the west one
-    i32 hover = 0;                   // swd32 0x004FCAD4 the pointer is on "執行"
-    i32 counter = 0;                 // swd32 0x004FCAB4 the morph
+    u32 tooHigh = 0;                 // 0x0050B554 3: the result is more than six levels above the first role
+    i32 hover = 0;                   // 0x0050B580 the pointer is on the run button
+    i32 counter = 0;                 // 0x0050B55C the morph
     i32 phase = 0;                   // 0x0050B574
-    u16 scrollArrows = 0;            // swd32 0x004FCAA4
-    std::array<i16, 4> vitals = {};  // swd32 0x004FCD14 the spirit and stamina of the east result, then of the west one
-    std::vector<i16> columnsA;       // swd32 0x004FCD08 the morph's offsets
-    std::vector<i16> columnsB;       // swd32 0x004FCB9C
-    std::vector<i16> rowsA;          // swd32 0x004FCAA0
-    std::vector<i16> rowsB;          // swd32 0x004FCD0C
-    std::vector<u16> frame;          // 0x0050B7DC the pictures of the morph
-    std::vector<u16> result;         // 0x0050B644
+    i32 bob = 0;                     // 0x0050B7E4 the slot marker bobs with it (0..9)
+    i32 unk50B534 = 0;               // 0x0050B534 (only cleared)
+    u16 scrollArrows = 0;            // 0x0050B54C
+    std::array<i16, 4> vitals = {};  // 0x0050B7D4 the spirit and stamina of the result, then two words never set
+    std::vector<i16> columnsA;       // 0x0050B7C8 the morph's offsets
+    std::vector<i16> columnsB;       // 0x0050B650
+    std::vector<i16> rowsA;          // 0x0050B548
+    std::vector<i16> rowsB;          // 0x0050B7CC
+    std::vector<i32> wave;           // 0x0050B53C rows to pixel offsets from WaveCenter (the ends left unset)
+    std::vector<u16> resultPicture;  // 0x0050B644 the pictures of the morph
     std::vector<u16> pictureA;       // 0x0050B544
     std::vector<u16> pictureB;       // 0x0050B540
 };
@@ -492,10 +495,9 @@ public:
     void AltarSortObjects();
     void AltarPick();
     void AltarPut(ItemNode& slot, int index);
-    bool AltarCombine();
+    bool AltarCombine(const ItemNode& first, const ItemNode& second);
     void AltarMoved(u16 arrows);
-    void AltarChooseEast(bool soundFirst);
-    void AltarChooseWest();
+    void AltarSkipMorph();
     void AltarDown();
     void AltarUp();
     void AltarPageDown();
@@ -503,17 +505,15 @@ public:
     void AltarTabChanged();
     void AltarLeft();
     void AltarRight();
-    void AltarSwitch(u16 slotSound);
     void AltarShift();
-    void AltarEnd();
     void AltarSelect();
-    void AltarSpend();
+    void AltarFinish();
     void AltarCancel();
     void AltarFrame();
     void AltarDraw();
     void AltarDrawList(Pixel color);
-    void AltarDrawResults(Pixel color);
-    void AltarDrawResult(const ItemNode& result, std::u8string_view title, int x, int y, u32 flags);
+    void AltarDrawOffer(Pixel color);
+    void AltarDrawResult(const ItemNode& result, int x, int y, u32 flags);
     void AltarPrepareMorph();
     void AltarMorph();
     void AltarFinishMorph();
