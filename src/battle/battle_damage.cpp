@@ -47,7 +47,7 @@ void Game::ApplyDrain(BattleUnit& attacker, BattleUnit& target)
         attacker.PushTarget(BattleUnit::HealTarget);
         amount = -amount;
         attacker.SetDamageDigits(services, amount);
-        attacker.StepTargetCount(1);
+        attacker.StepTargetCount(services, 1);
         attacker.Damage(services, amount, 0, 0);
         return;
     }
@@ -73,12 +73,12 @@ void Game::ApplyDrain(BattleUnit& attacker, BattleUnit& target)
     }
 
     target.PushTarget(BattleUnit::DamageTarget);
-    target.StepTargetCount(1);
+    target.StepTargetCount(services, 1);
     attacker.PushTarget(
         drain == BattleUnit::DrainedSpirit ? BattleUnit::SpiritGainTarget : BattleUnit::StaminaGainTarget
     );
     attacker.SetDamageDigits(services, amount);
-    attacker.StepTargetCount(1);
+    attacker.StepTargetCount(services, 1);
 
     if (drain == BattleUnit::DrainedSpirit)
     {
@@ -220,7 +220,7 @@ void Game::EnemyStrike(BattleUnit& enemy, BattleUnit& target, u16 bits, u16& cha
 
         enemy.SetDamageDigits(services, battle.lastDamage);
         // 0x00475C03 / 0x00475E41: the reflected hit counts on the enemy (ecx = esi)
-        enemy.StepTargetCount(1);
+        enemy.StepTargetCount(services, 1);
         return;
     }
 
@@ -239,7 +239,7 @@ void Game::EnemyStrike(BattleUnit& enemy, BattleUnit& target, u16 bits, u16& cha
 
     if (kind <= BattleUnit::DrainedHitPoints)
     {
-        target.StepTargetCount(1);
+        target.StepTargetCount(services, 1);
     }
 }
 }  // namespace swd3e

@@ -57,7 +57,7 @@ public:
 
     int ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& target, int slot, Scene& scene);
 
-    int BoomerangFrameAdvance(BattleServices& services, BattleUnit& target, Scene& scene);
+    int BoomerangFrameAdvance(BattleServices& services, BattleUnit& target, i32 thrownAct, Scene& scene);
 
     int SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& target, Scene& scene);
 

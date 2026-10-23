@@ -492,7 +492,7 @@ void Game::StartBattle(u16 number)
 
     for (u32 role = 0; role < battle.roleCount; ++role)
     {
-        this->battleRoles[role].RandomizeGauge(this->battleServices);
+        this->battleRoles[role].RandomizeGauge(this->battleServices, 0);
     }
 
     const u32 fighting = battle.roleCount - battle.escortCount - battle.guestCount;

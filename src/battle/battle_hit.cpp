@@ -391,7 +391,7 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
     else
     {
         target.SetDamageDigits(this->battleServices, battle.lastDamage);
-        target.StepTargetCount(1);
+        target.StepTargetCount(this->battleServices, 1);
         delay = static_cast<u16>(delay + kDigitsDelay);
     }
 
@@ -400,7 +400,7 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
         target.PushTarget(BattleUnit::SpiritGainTarget);
         target.SetDamageDigits(this->battleServices, battle.spiritDamage);
         target.PushTargetAlt(delay);
-        target.StepTargetCount(1);
+        target.StepTargetCount(this->battleServices, 1);
         delay = static_cast<u16>(delay + kDigitsDelay);
     }
 
@@ -409,7 +409,7 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
         target.PushTarget(BattleUnit::StaminaGainTarget);
         target.SetDamageDigits(this->battleServices, battle.staminaDamage);
         target.PushTargetAlt(delay);
-        target.StepTargetCount(1);
+        target.StepTargetCount(this->battleServices, 1);
     }
 
     battle.lastSpiritDamage[at] = battle.spiritDamage;
@@ -643,7 +643,7 @@ void Game::ShowAllHitDigits(BattleUnit& unit, i16 damage, u16& delay, i32& spiri
     else
     {
         unit.SetDamageDigits(this->battleServices, battle.lastDamage);
-        unit.StepTargetCount(1);
+        unit.StepTargetCount(this->battleServices, 1);
         delay = static_cast<u16>(delay + kDigitsDelay);
     }
 
@@ -652,7 +652,7 @@ void Game::ShowAllHitDigits(BattleUnit& unit, i16 damage, u16& delay, i32& spiri
         unit.PushTarget(BattleUnit::SpiritGainTarget);
         unit.SetDamageDigits(this->battleServices, battle.spiritDamage);
         unit.PushTargetAlt(delay);
-        unit.StepTargetCount(1);
+        unit.StepTargetCount(this->battleServices, 1);
         delay = static_cast<u16>(delay + kDigitsDelay);
         battle.spiritDamage = 0;
     }
@@ -662,7 +662,7 @@ void Game::ShowAllHitDigits(BattleUnit& unit, i16 damage, u16& delay, i32& spiri
         unit.PushTarget(BattleUnit::StaminaGainTarget);
         unit.SetDamageDigits(this->battleServices, battle.staminaDamage);
         unit.PushTargetAlt(delay);
-        unit.StepTargetCount(1);
+        unit.StepTargetCount(this->battleServices, 1);
         battle.staminaDamage = 0;
     }
 
@@ -849,7 +849,7 @@ void Game::DrainToSpirit(BattleRole& role, i32& damage)
 
     role.PushTarget(BattleUnit::SpiritGainTarget);
     role.SetDamageDigits(this->battleServices, damage);
-    role.StepTargetCount(1);
+    role.StepTargetCount(this->battleServices, 1);
     role.Damage(this->battleServices, 0, static_cast<i16>(damage), 0);
 }
 
@@ -2195,7 +2195,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
     unit.PushTarget(BattleUnit::DamageTarget);
     unit.RaiseFlag26B8(this->battleState);
     unit.SetDamageDigits(services, battle.lastDamage);
-    unit.StepTargetCount(1);
+    unit.StepTargetCount(services, 1);
 
     if (unit.Damage(services, battle.lastDamage, 0, 0) == 1)
     {

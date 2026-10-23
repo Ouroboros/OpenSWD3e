@@ -26,6 +26,8 @@ namespace swd3e::smooth
 
 namespace
 {
+constexpr i32 kAttackPoseAction = 0x3C;  // swd3e: AttackPose (swd32: kAttackAction)
+constexpr u16 kAttackPoseHit = 0x1B78;   // swd3e: AttackPose hits with this act, not the command's cast act
 
 constexpr i32 kCriticalAction = 0x29;
 constexpr i32 kForcedAttackAction2 = 0x31;  // unk2A8C 2
@@ -70,25 +72,25 @@ constexpr u32 kLeapCasting = 0;
 constexpr u32 kLeapHome = 3;
 constexpr i32 kLeapReturnAction = 2;  // the walk home takes the action two after the magic act's
 constexpr u32 kLeapReturning = 2;
-constexpr int kSpeedingFlight = -1;  // FlyAct: the steps double each frame
-constexpr i32 kSparkAct = 0x186A;
+constexpr int kSpeedingFlight = -1;           // FlyAct: the steps double each frame
 constexpr std::size_t kSparkColumnShift = 2;  // the sparks start a quarter across the picture
 
 // AbsorbFrame: the sparks (extra acts) beside the absorb; the first flies every frame, each other from its frame on.
 struct Spark
 {
     i16 fromFrame = 0;
+    i32 act = 0;  // swd3e: an act of its own, action 0 (swd32: act 0x186A, actions 1..3)
     i32 action = 0;
     int offsetY = 0;  // from the top of the picture still left
     int steps = 0;
 };
 
 constexpr std::array<Spark, BattleRole::ExtraActs> kSparks = {{
-    {0, 1, -5, 0xE},
-    {10, 2, -10, 0xA},
-    {20, 3, -15, 0xC},
-    {30, 1, 0, 8},
-    {40, 1, 5, 0x10},
+    {0, 0x1C2B, 0, -5, 0xE},
+    {10, 0x1C2C, 0, -10, 0xA},
+    {20, 0x1C2D, 0, -15, 0xC},
+    {30, 0x1C2B, 0, 0, 8},
+    {40, 0x1C2C, 0, 5, 0x10},
 }};
 }  // namespace
 
@@ -250,7 +252,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
         return 0;
     }
 
-    follow.id = role.command.castAct;
+    follow.id = kDirectFollowAct;
     follow.action = 0;
 
     if (attack.effectA != 0)
@@ -931,7 +933,7 @@ u16 RoleFrame::AttackPoseAdvance(BattleServices& services, Scene& scene)
     ActState& act = role.standAct;
     act.id = role.actId;
     role.unk2AAC = 1;
-    act.action = kAttackAction;
+    act.action = kAttackPoseAction;
     act.hold = 0;
 
     if (role.held == 1)
@@ -987,7 +989,7 @@ u16 RoleFrame::AttackPoseAdvance(BattleServices& services, Scene& scene)
     if ((act.target & (ActState::Strikes | ActState::FollowsUp)) != 0)
     {
         act.target = 0;
-        return static_cast<u16>(role.command.castAct | kHitCast);
+        return kAttackPoseHit | kHitCast;
     }
 
     if (act.waiting != 1)
@@ -1152,7 +1154,7 @@ int RoleFrame::DirectAttackAdvance(BattleServices& services, BattleUnit& target,
     ActState& act = role.standAct;
     act.id = role.actId;
     role.unk2AAC = 1;
-    act.action = kForcedAttackAction;
+    act.action = kDirectAttackAction;
     act.hold = 0;
 
     if (role.held == 1)
@@ -1226,7 +1228,7 @@ int RoleFrame::DirectAttackAdvance(BattleServices& services, BattleUnit& target,
 
         battle.hitDamage += damage;
         target.SetDamageDigits(services, damage);
-        target.StepTargetCount(1);
+        target.StepTargetCount(services, 1);
     }
 
     if (role.stage != BattleUnit::FollowingUp)
@@ -1235,7 +1237,7 @@ int RoleFrame::DirectAttackAdvance(BattleServices& services, BattleUnit& target,
     }
 
     ActState& follow = role.slotActs[0];
-    follow.id = role.command.castAct;
+    follow.id = kDirectFollowAct;
     follow.action = 0;
     role.AimAction(services, target, follow, 0, 0);
 
@@ -1344,7 +1346,7 @@ int RoleFrame::ChargeOnTargetAdvance(BattleServices& services, BattleUnit& targe
 
     ActState& follow = role.slotActs[1];
     follow.action = 0;
-    follow.id = role.command.castAct;
+    follow.id = kDirectFollowAct;
 
     if (charge.effectA != 0)
     {
@@ -1622,7 +1624,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
 
     ActState& follow = role.slotActs[0];
     follow.action = 0;
-    follow.id = role.command.castAct;
+    follow.id = kDirectFollowAct;
     role.AimAction(services, target, follow, static_cast<i16>(magic.anchorX), static_cast<i16>(magic.anchorY));
 
     if ((follow.target & ActState::Strikes) != 0)
@@ -1682,7 +1684,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
 }
 
 // What BattleRole::BoomerangFrame decides of the frame; the draws into `scene`.
-int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& target, Scene& scene)
+int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& target, i32 thrownAct, Scene& scene)
 {
     const Scene::Owner owner(scene, &this->role);
     BattleRole& role = this->role;
@@ -1690,7 +1692,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
     ActState& act = role.standAct;
     act.id = role.actId;
     role.unk2AAC = 1;
-    act.action = kForcedAttackAction;
+    act.action = kDirectAttackAction;
 
     if (services.acts.Run(act) == 0)
     {
@@ -1744,7 +1746,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
 
     ActState& thrown = role.slotActs[0];
     thrown.action = 0;
-    thrown.id = kBoomerangAct;
+    thrown.id = thrownAct;
     u16 targetX = 0;
     u16 targetY = 0;
     target.GetDrawPosition(targetX, targetY);
@@ -2100,7 +2102,7 @@ int RoleFrame::BeamSpellFrameAdvance(BattleServices& services, BattleUnit& targe
 
             battle.hitDamage += damage;
             target.SetDamageDigits(services, damage);
-            target.StepTargetCount(1);
+            target.StepTargetCount(services, 1);
             role.stage = kBeamImpact;
             role.glowLevel = kBeamRiseStart;
         }
@@ -2251,7 +2253,7 @@ int RoleFrame::AbsorbFrameAdvance(BattleServices& services, Scene& scene)
         const int y = effect.height - effect.bursts + effect.y + spark.offsetY;
         this->FlyExtraActAdvance(
             services,
-            kSparkAct,
+            spark.act,
             spark.action,
             static_cast<int>(slot),
             static_cast<i16>(x),

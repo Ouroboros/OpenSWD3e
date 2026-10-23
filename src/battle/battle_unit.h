@@ -168,6 +168,7 @@ struct UnitCommand
         UnkAction1000 = 0x1000,
         UnkAction2000 = 0x2000,
         UnkAction4000 = 0x4000,
+        FixedOrigin = 0x40000,  // GetOrigin places slot act 8 from (0xF0, 0x12C) (0x00491CE0)
     };
 
     // The bits of `flags`.
@@ -296,10 +297,12 @@ public:
         UnkCommand1 = 1,  // fades in with action 0x28
         UnkCommand2 = 2,
         UnkCommand3 = 3,
+        UnkCommand4 = 4,  // swd3e: an enemy takes the anchor of its stand act (GetOffset)
         UnkCommand6 = 6,
         UnkCommand13 = 0xD,
         UnkCommand14 = 0xE,
         UnkCommand15 = 0xF,
+        UnkCommand29 = 0x29,  // swd3e: goes to commandB (SetCommand)
         UnkCommand16 = 0x16,
         UnkCommand18 = 0x18,
         UnkCommand1A = 0x1A,
@@ -413,10 +416,11 @@ public:
     int SetTarget(int value);
     int GaugeLength(const BattleServices& services) const;
     i16 ResetGauge(const BattleServices& services);
-    int RandomizeGauge(BattleServices& services);
+    int RandomizeGauge(BattleServices& services, int full);
     void GetDrawPosition(u16& x, u16& y) const;
     void GetOffset(u16& x, u16& y) const;
-    i16 GetOrigin(u16& x, u16& y) const;
+    void GetOrigin(u16& x, u16& y) const;
+    int HasFixedOrigin() const;
     void GetShadowRect(BattleServices& services, UnitRect& rect);
     i16 Move(i16 dx, i16 dy);
     i16 SetPosition(i16 x, i16 y);
@@ -462,7 +466,7 @@ public:
     bool IsDefeatedOrDying() const;
     i32 Unk2B00() const;
     i32 Unk2B04() const;
-    int StepTargetCount(int increase);
+    int StepTargetCount(BattleServices& services, int increase);
     int PushTargetAlt(u16 value);
     int ResetAfterGuard();
     int GetGuard() const;
@@ -553,7 +557,7 @@ public:
     int ReturnHome(BattleServices& services, const BattleUnit& target, i32 id, i32 action);
     int LoadEnemyCommand(Database& database, int choice, u32& act);
     int FadeInvisible(BattleServices& services, int mode);
-    int StepAccessoryCounters(CounterList& list, u16 amount);
+    int StepAccessoryCounters(CounterList& list, u16 kind, u16 amount);
     int StepGauge(BattleServices& services, int boost);
     int FadeMainOut(BattleServices& services);
     int FadeMainIn(BattleServices& services);

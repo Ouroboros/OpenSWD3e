@@ -296,9 +296,9 @@ TEST_CASE("battle unit: evasion, vitals and scaling")
 
     constexpr swd3e::u16 kLastTarget = BattleUnit::MaxTargets - 1;
     unit.targetCount = kLastTarget;
-    unit.StepTargetCount(1);
+    unit.StepTargetCount(all.services, 1);
     CHECK_EQ(unit.targetCount, kLastTarget);
-    unit.StepTargetCount(0);
+    unit.StepTargetCount(all.services, 0);
     CHECK_EQ(unit.targetCount, kLastTarget - 1);
     unit.PushTargetAlt(kDamageDelay);
     CHECK_EQ(unit.damageDelays[kLastTarget - 1], kDamageDelay);
@@ -915,6 +915,7 @@ TEST_CASE("battle unit: element orbs gain proficiency from hits of an element")
     role.accessories[0].data.unk48 = kElementOrb;
     role.accessories[0].data.act = static_cast<swd3e::u16>(kOrbCounter);
     role.accessories[0].data.counterMax = kOrbMaximum;
+    role.accessories[0].data.resistances[kFireElement - 1] = 1;  // swd3e: the orb counts only elements it resists
     swd3e::CounterList list;
     swd3e::UnitCommand command;
     CHECK_EQ(role.StepOrbCounters(list, command), 0);

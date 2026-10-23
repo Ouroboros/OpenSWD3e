@@ -18,6 +18,7 @@
 #include "battle/smooth/smooth_projector.h"
 #include "battle/smooth/smooth_unit.h"
 #include "config/config.h"
+#include "core/error_box.h"
 #include "core/format.h"
 #include "core/words.h"
 #include "crt/msvc.h"
@@ -47,7 +48,7 @@ constexpr i32 kHomePose2 = 0x31;  // and with kSecondHomePose
 constexpr i32 kRoleWalkAction = 0x2A;
 
 constexpr int kNumberAbove = 0x1E;
-constexpr int kDigitWidth = 0xC;
+constexpr int kDigitWidth = 0x10;  // swd3e (swd32: 0xC)
 constexpr i16 kLastHop = 9;
 constexpr i16 kNumberFadeStep = 2;
 constexpr int kNumberScaleBase = 0x1A;
@@ -56,8 +57,9 @@ constexpr i16 kGuardPhaseEnd = 9;       // the last phase of a guard text letter
 constexpr i16 kGuardTextRise = 0x18;    // pixels the guard text rises before it is gone
 constexpr i16 kGuardTextStep = 4;       // pixels the guard text rises a frame
 constexpr int kGuardTextHeight = 0x1A;
-constexpr u32 kNudgeChance = 2;    // a nudged unit shakes in one frame of two
-constexpr int kNudgeShift = 0x28;  // the shake moves the act by nudge - 0x28
+constexpr std::array<int, 4> kGuardLetterX = {0, 0x12, 0x1E, 0x2E};  // swd3e: the guard letters from the left
+constexpr u32 kNudgeChance = 2;                                      // a nudged unit shakes in one frame of two
+constexpr int kNudgeShift = 0x28;                                    // the shake moves the act by nudge - 0x28
 constexpr i16 kRecoilFadeStep = 2;
 constexpr i16 kRecoilFadeEnd = -0x20;  // DrawRecoil: the tint at which a waiting recoil act is over
 constexpr i8 kAdditiveTrailFade = 3;   // an additive act's images fade by 3 a frame, the others by 1
@@ -75,8 +77,12 @@ constexpr i32 kCommand1Action = 0x28;  // the fade in action after command 1
 constexpr i16 kDarkFillStep = 0xE;
 constexpr int kDarkFillTint = -0x18;
 constexpr u16 kEffectIcons = 0x23B6;  // swd3e
-constexpr int kFadeInSound = 0x30;
-constexpr int kFadeOutSound = 0x2F;
+constexpr int kFadeInTint = 0x14;     // swd3e: a unit fading in is tinted lighter under itself, less as it shows
+constexpr u16 kFixedFadeInX = 0x1A4;  // swd3e: where an enemy of UnitCommand::FixedOrigin fades in
+constexpr u16 kFixedFadeInY = 0x118;
+constexpr int kFadeOutSound = 0x29B;   // swd3e (swd32: 0x2F)
+constexpr int kFadeOutTint = 5;        // swd3e: a fading unit is tinted lighter under itself
+constexpr std::size_t kFadeTrail = 1;  // swd3e: DrawFadeOut ends with trail 1 stopped
 constexpr i16 kFadeOutStep = 2;
 constexpr i16 kHalvesFast = 4;
 constexpr i16 kHalvesPause = 8;
@@ -524,8 +530,8 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
         view.steps.push_back(NumberStep{.kind = NumberStep::Kind::Digit, .font = font, .value = value, .x = x, .y = y});
     };
 
-    const int x = unit.placement.x;
-    const int y = unit.placement.y - kNumberAbove;
+    const int x = unit.savedPlacement.x;  // swd3e: the saved place (swd32: the place)
+    const int y = unit.savedPlacement.y - kNumberAbove;
 
     for (u16 slot = unit.damageSlot; slot < unit.targetCount; ++slot)
     {
@@ -777,8 +783,8 @@ void UnitFrame::GuardAdvance(GuardView& view)
     }
 }
 
-// What DrawGuardText draws, as GuardAdvance decided it: the letters side by side from `left`, each placed after the
-// width of the ones before it.
+// What DrawGuardText draws, as GuardAdvance decided it: the letters at fixed places from `left` (swd3e; swd32 placed
+// each after the width of the ones before it).
 void UnitFrame::DrawGuard(BattleServices& services, const GuardView& view)
 {
     BattleHud& hud = services.hud;
@@ -787,8 +793,6 @@ void UnitFrame::DrawGuard(BattleServices& services, const GuardView& view)
     {
         hud.digitMode = 0;
     }
-
-    u32 offset = 0;
 
     for (int letter = 0; letter < view.letters; ++letter)
     {
@@ -803,7 +807,7 @@ void UnitFrame::DrawGuard(BattleServices& services, const GuardView& view)
             options.scaleHeight = view.fade + kGuardTextHeight;
         }
 
-        offset += hud.DrawDigit(0, letter, static_cast<u16>(offset) + view.left, view.y[at]);
+        hud.DrawDigit(0, letter, view.left + kGuardLetterX[at], view.y[at]);
     }
 }
 
@@ -1730,7 +1734,7 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
 
             battle.hitDamage += damage;
             target.SetDamageDigits(services, damage);
-            target.StepTargetCount(1);
+            target.StepTargetCount(services, 1);
         }
 
         node = node->next.get();
@@ -2274,7 +2278,7 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
     BattleUnit& unit = this->unit;
     ScenePainter painter(services, scene);
 
-    if (static_cast<i32>(unit.status) < 0)
+    if ((unit.status & BattleUnit::Invisible) != 0)
     {
         return 1;
     }
@@ -2282,7 +2286,6 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
     if (unit.brightLevel >= BattleUnit::Opaque)
     {
         unit.recoilAct = ActState{};
-        unit.unk2AAC = 0;
         return 1;
     }
 
@@ -2298,6 +2301,14 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
 
     if (services.acts.Run(unit.recoilAct) == 0)
     {
+        const std::string_view name(unit.displayName.data(), unit.displayName.size());
+        ErrorBox(
+            services.errors,
+            u8"Fade Act",
+            u8"[%s]QQ:%d號錯誤!!",
+            name.substr(0, name.find('\0')),
+            unit.recoilAct.action
+        );
         return 0;
     }
 
@@ -2309,14 +2320,7 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
 
     unit.picture = services.archive.GetPicture(unit.recoilAct.frame, 0);
 
-    if (unit.brightLevel == 1)
-    {
-        unit.recoilAct.view = kFadeInSound;
-        services.audio.PlaySound(kFadeInSound, services.config.soundVolume);
-        services.audio.SetSoundPan(unit.recoilAct.view, unit.facing == 1 ? -kFadePan : kFadePan);
-        unit.recoilAct.view = 0;
-    }
-
+    // A missing picture is read through a null pointer in the original.
     if (unit.picture == nullptr)
     {
         return 0;
@@ -2332,13 +2336,20 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
     u16 anchorX = 0;
     u16 anchorY = 0;
     anchor.GetDrawPosition(anchorX, anchorY);
+
+    if (unit.kind == 0 && unit.HasFixedOrigin() == 1)
+    {
+        anchorX = kFixedFadeInX;
+        anchorY = kFixedFadeInY;
+    }
+
     const int x = static_cast<i16>(anchorX) - static_cast<i16>(unit.originX);
     const int y = static_cast<i16>(anchorY) - unit.recoilAct.y;
     const i32 level = unit.brightLevel;
+    DrawOptions& options = painter.Options();
 
-    if (unit.autoControl == 1)
+    if (blend == 1)
     {
-        DrawOptions& options = painter.Options();
         options.tintRed = level - BattleUnit::FadedIn;
         options.tintGreen = level - BattleUnit::FadedIn;
         options.tintBlue = level - BattleUnit::FadedIn;
@@ -2352,7 +2363,7 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
         return 0;
     }
 
-    painter.Options().alpha = level;
+    options.alpha = level;
     painter.DrawPicture(
         x,
         y,
@@ -2361,6 +2372,11 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
         unit.drawFlags | Painter::Translucent,
         PaletteArgument(*unit.picture)
     );
+    options.alpha = 0;
+    options.tintRed = kFadeInTint - unit.brightLevel;
+    options.tintGreen = kFadeInTint - unit.brightLevel;
+    options.tintBlue = kFadeInTint - unit.brightLevel;
+    painter.DrawPicture(x, y, unit.picture->width, unit.picture->height, unit.drawFlags | Painter::TintUnder);
 
     if (unit.held == 0)
     {
@@ -2377,16 +2393,27 @@ int UnitFrame::DrawFadeOutAdvance(BattleServices& services, Scene& scene)
     BattleUnit& unit = this->unit;
     ScenePainter painter(services, scene);
 
-    if (static_cast<i32>(unit.status) < 0 || unit.fadeLevel <= 0)
+    if ((unit.unk26B8 & kFlag26B8) != 0)
+    {
+        return 0;
+    }
+
+    if ((unit.status & BattleUnit::Invisible) != 0)
     {
         return 1;
     }
 
+    if (unit.fadeLevel <= 0)
+    {
+        unit.trails[kFadeTrail].started = 0;
+        unit.recoilAct = ActState{};
+        return 1;
+    }
+
     unit.recoilAct.id = unit.actId;
-    const i32 paused = unit.held;
     unit.unk2AAC = 1;
     unit.recoilAct.action = kShadowAction;
-    unit.recoilAct.hold = paused == 1 ? 1 : 0;
+    unit.recoilAct.hold = unit.held == 1 ? 1 : 0;
 
     if (services.acts.Run(unit.recoilAct) == 0)
     {
@@ -2405,10 +2432,11 @@ int UnitFrame::DrawFadeOutAdvance(BattleServices& services, Scene& scene)
     {
         unit.recoilAct.view = kFadeOutSound;
         services.audio.PlaySound(kFadeOutSound, services.config.soundVolume);
-        services.audio.SetSoundPan(unit.recoilAct.view, unit.facing == 1 ? kFadePan : -kFadePan);
+        services.audio.SetSoundPan(unit.recoilAct.view, unit.kind == 1 ? kFadePan : -kFadePan);
         unit.recoilAct.view = 0;
     }
 
+    // A missing picture is read through a null pointer in the original.
     if (unit.picture == nullptr)
     {
         return 0;
@@ -2422,10 +2450,10 @@ int UnitFrame::DrawFadeOutAdvance(BattleServices& services, Scene& scene)
     const i32 level = unit.fadeLevel;
     const int x = unit.placement.x - static_cast<i16>(unit.originX);
     const int y = unit.placement.y - unit.recoilAct.y;
+    DrawOptions& options = painter.Options();
 
     if (blend == 1)
     {
-        DrawOptions& options = painter.Options();
         options.tintRed = level - BattleUnit::Opaque;
         options.tintGreen = level - BattleUnit::Opaque;
         options.tintBlue = level - BattleUnit::Opaque;
@@ -2446,7 +2474,7 @@ int UnitFrame::DrawFadeOutAdvance(BattleServices& services, Scene& scene)
         return 0;
     }
 
-    painter.Options().alpha = level;
+    options.alpha = level;
     painter.DrawPicture(
         x,
         y,
@@ -2455,6 +2483,11 @@ int UnitFrame::DrawFadeOutAdvance(BattleServices& services, Scene& scene)
         unit.drawFlags | Painter::Translucent,
         PaletteArgument(*unit.picture)
     );
+    options.alpha = 0;
+    options.tintRed = unit.fadeLevel + kFadeOutTint;
+    options.tintGreen = unit.fadeLevel + kFadeOutTint;
+    options.tintBlue = unit.fadeLevel + kFadeOutTint;
+    painter.DrawPicture(x, y, unit.picture->width, unit.picture->height, unit.drawFlags | Painter::TintUnder);
 
     if (unit.held == 0)
     {

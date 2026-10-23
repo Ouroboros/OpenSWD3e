@@ -153,16 +153,16 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
 
     battle.hitDamage += damage;
     target.SetDamageDigits(services, damage);
-    target.StepTargetCount(1);
+    target.StepTargetCount(services, 1);
     battle.lastDamage = -battle.lastDamage;
     role.PushTarget(BattleUnit::HealTarget);
     role.SetDamageDigits(services, battle.lastDamage);
     role.PushTargetAlt(0);
-    role.StepTargetCount(1);
+    role.StepTargetCount(services, 1);
     role.PushTarget(BattleUnit::StaminaGainTarget);
     role.SetDamageDigits(services, battle.hitDamage);
     role.PushTargetAlt(kDrainGainDelay);
-    role.StepTargetCount(1);
+    role.StepTargetCount(services, 1);
     role.Damage(services, battle.lastDamage, 0, static_cast<i16>(battle.hitDamage));
     role.absorbFrames = 0;
     role.slotActs[0] = ActState{};

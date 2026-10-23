@@ -29,7 +29,7 @@ namespace
 
 constexpr i32 kFieldFadeStep = 2;
 constexpr i32 kFieldFadeEnd = -0x20;
-constexpr i32 kFuryFullBlock = 0x38;  // roleBlock[0] of a full fury gauge
+constexpr i32 kFuryFullBlock = 0x30;  // roleBlock[0] of a full fury gauge (swd3e: 0x30)
 constexpr u16 kHighlightBackground = 0xF000;
 constexpr int kMenuColumnWidth = 0x30;
 constexpr int kTabsDrop = 0x20;

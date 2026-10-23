@@ -131,9 +131,9 @@ constexpr u16 kNoUseAct = 0x2000;  // ObjectData::costBits: the use returns no i
 // CancelCommand and AddFury.
 constexpr std::size_t kCancelledNameBytes = 0x10;  // only the start of the skill name is cleared
 constexpr int kFillFury = -1;
-constexpr i32 kFuryFull = 0x38;
-constexpr double kFuryScale = 47.0;  // swd32.exe 0x00499D40 (unmatched in swd3e)
-constexpr u16 kFurySound = 0xBC;
+constexpr i32 kFuryFull = 0x30;      // swd3e (swd32: 0x38)
+constexpr float kFuryScale = 41.0F;  // 0x004AAE50
+constexpr u16 kFurySound = 0x2FD;
 
 // Regenerate: the gains show 6 frames apart.
 constexpr u16 kRegenerateDelay = 6;
@@ -159,10 +159,12 @@ constexpr u32 kCategory2 = 0x1001;
 constexpr u32 kCategory3 = 0x800;
 constexpr u32 kCategory4 = 0x2000;
 constexpr u32 kCategory5 = 0x8000000;
+constexpr u32 kCategory6 = 2;  // swd3e: CountObjects counts these whoever may use them
 constexpr int kSkillCategories = 3;
 constexpr int kListCategories = 4;
 constexpr int kObjectCategories = 6;
-constexpr int kSkillType0 = 0x11;  // ObjectData::category of the skill types (swd3e: 奇術 and 絕技)
+constexpr int kCountCategories = 7;  // swd3e: CountObjects has category 6 as well
+constexpr int kSkillType0 = 0x11;    // ObjectData::category of the skill types (swd3e: 奇術 and 絕技)
 constexpr int kSkillType1 = 0x14;
 constexpr u16 kShownObject = 0x8000;  // ListObject flags
 constexpr u16 kCostlyObject = 0x4000;
@@ -637,7 +639,7 @@ void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadab
     if (damage != -1)
     {
         target.SetDamageDigits(services, damage);
-        target.StepTargetCount(1);
+        target.StepTargetCount(services, 1);
     }
 
     this->evadeRolled = 1;
@@ -659,18 +661,12 @@ int BattleRole::AttackFrame(BattleServices& services, BattleUnit& target, int sl
 }
 
 // swd3e.exe 0x00481170: item `id` of mon.dat taken as the role's action: its act, its command script (an item without
-// a resistance element takes its +0x34 word as the value) and UnkCommandFlag8000. The original frees the description
-// of the unit's own object (+0x0C) instead of the item's, which it leaks.
+// a resistance element takes its +0x34 word as the value) and UnkCommandFlag8000; the item's description is freed.
 void BattleRole::LoadItemAction(Database& database, u16 id, u32& act)
 {
     ObjectRecord item;
     database.LoadObject(item, id);
-
-    // A unit without its object is read through a null pointer in the original.
-    if (this->data != nullptr)
-    {
-        Database::FreeDescription(*this->data);
-    }
+    Database::FreeDescription(item);
 
     act = item.data.act;
     this->LoadCommand(database, item.data.skillScript);
@@ -855,9 +851,9 @@ int BattleRole::CanTarget(const BattleUnit& target)
     return 1;
 }
 
-// swd3e.exe 0x00483060: one frame of the role's attack pose (kAttackAction in the stand act) at its place over its
+// swd3e.exe 0x00483060: one frame of the role's attack pose (action 0x3C in the stand act) at its place over its
 // shadow, the sound panned left. The draw takes the act's own x and flags (the mirrored offset and flags it computes
-// for a facing role are kept but not used). It returns the cast act with kHitCast once the act strikes or follows up
+// for a facing role are kept but not used). It returns act 0x1B78 with kHitCast once the act strikes or follows up
 // (the bits cleared), kPoseDone (the act cleared) once it waits, otherwise 0.
 u16 BattleRole::AttackPose(BattleServices& services)
 {
@@ -942,10 +938,10 @@ int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) co
     return weakOrRoll(kBelowChanceStep * below + kAbsorbChanceBase);
 }
 
-// swd3e.exe 0x004834A0: one frame of the role's direct attack (pose kForcedAttackAction in the stand act) at its
+// swd3e.exe 0x004834A0: one frame of the role's direct attack (pose kDirectAttackAction in the stand act) at its
 // place, the shadow at the target's height. When the act strikes or follows up, the hit lands at once: its damage
 // (at most kMaxDamage, without the proficiency bonus and counted even when no number shows) adds to the hit's damage
-// and shows on the target, and the follow-up act (the cast act) is placed on the target and drawn each frame; 1 (the
+// and shows on the target, and the follow-up act (act 0x1C9A) is placed on the target and drawn each frame; 1 (the
 // acts cleared) once the stand act waits after it.
 int BattleRole::DirectAttack(BattleServices& services, BattleUnit& target)
 {
@@ -1031,14 +1027,14 @@ int BattleRole::SwarmSpellFrame(BattleServices& services, BattleUnit& target)
     return result;
 }
 
-// swd3e.exe 0x00486110: one frame of the role's boomerang throw (pose kForcedAttackAction in the stand act, its hold
-// left as it is, at its place over its shadow); 1 once it is over. Once the pose strikes or follows up, kBoomerangAct
+// swd3e.exe 0x00486110: one frame of the role's boomerang throw (pose kDirectAttackAction in the stand act, its hold
+// left as it is, at its place over its shadow); 1 once it is over. Once the pose strikes or follows up, `act`
 // is queued flying (kBoomerangOut steps a frame, no hit) to the target, raising flag 26B8 of the target when it
 // arrives, then back (kBoomerangBack steps after kBoomerangShake frames of shaking), and sound kBoomerangSound plays.
-int BattleRole::BoomerangFrame(BattleServices& services, BattleUnit& target)
+int BattleRole::BoomerangFrame(BattleServices& services, BattleUnit& target, i32 act)
 {
     smooth::Scene scene;
-    const auto result = smooth::RoleFrame(*this).BoomerangFrameAdvance(services, target, scene);
+    const auto result = smooth::RoleFrame(*this).BoomerangFrameAdvance(services, target, act, scene);
     scene.Show(services);
     return result;
 }
@@ -1200,12 +1196,12 @@ void BattleRole::CancelCommand()
 }
 
 // swd3e.exe 0x00499DC0: the fury gauge (roleBlock[0], full at kFuryFull) raised by `damage` taken: -1 fills it, 0
-// empties it; otherwise, below full, by damage / maximum hit points * 47 (a whole hit point or more fills it), the
+// empties it; otherwise, below full, by damage / maximum hit points * 41 (a whole hit point or more fills it), the
 // damage carried while that is 0 (with the original's double compare it never is). Full plays kFurySound. Not for a
-// forced unit.
+// forced unit nor the talisman ghost.
 void BattleRole::AddFury(BattleServices& services, int damage)
 {
-    if (this->autoControl == 1 || this->guestControl == 1)
+    if (this->autoControl == 1 || this->guestControl == 1 || this->ghost == 1)
     {
         return;
     }
@@ -1239,7 +1235,8 @@ void BattleRole::AddFury(BattleServices& services, int damage)
             damage += this->damageCarry;
         }
 
-        const double share = static_cast<double>(damage) / static_cast<double>(maximum) * kFuryScale;
+        const double share =
+            static_cast<double>(damage) / static_cast<double>(maximum) * static_cast<double>(kFuryScale);
         fury = before + crt::Ftol(share);
 
         if (share == 0.0)
@@ -1289,7 +1286,7 @@ void BattleRole::Regenerate(BattleServices& services)
         this->PushTarget(BattleUnit::HealTarget);
         this->SetDamageDigits(services, static_cast<i16>(this->restoreHitPoints));
         this->PushTargetAlt(0);
-        this->StepTargetCount(1);
+        this->StepTargetCount(services, 1);
         delay = kRegenerateDelay;
         this->restoreHitPoints = 0;
     }
@@ -1301,7 +1298,7 @@ void BattleRole::Regenerate(BattleServices& services)
         this->PushTarget(BattleUnit::SpiritGainTarget);
         this->SetDamageDigits(services, static_cast<i16>(this->restoreSpirit));
         this->PushTargetAlt(delay);
-        this->StepTargetCount(1);
+        this->StepTargetCount(services, 1);
         delay = static_cast<u16>(delay + kRegenerateDelay);
         this->restoreSpirit = 0;
     }
@@ -1313,7 +1310,7 @@ void BattleRole::Regenerate(BattleServices& services)
         this->PushTarget(BattleUnit::StaminaGainTarget);
         this->SetDamageDigits(services, static_cast<i16>(this->restoreStamina));
         this->PushTargetAlt(delay);
-        this->StepTargetCount(1);
+        this->StepTargetCount(services, 1);
         this->restoreStamina = 0;
     }
 }
@@ -1344,7 +1341,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             this->unk26CC |= kRepeatAttack;
             this->commandA = 1;
             this->AccessoryProficiency(kind, proficiency);
-            this->StepAccessoryCounters(proficiency, kAccessoryStep);
+            this->StepAccessoryCounters(proficiency, kind, kAccessoryStep);
             this->extraAttacks = 1;
             return;
 
@@ -1434,7 +1431,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             return;
     }
 
-    this->StepAccessoryCounters(proficiency, kAccessoryStep);
+    this->StepAccessoryCounters(proficiency, kind, kAccessoryStep);
 }
 
 // swd3e.exe 0x004807B0: whether the role's next attack is critical (it sets `critical`): never for a forced unit, with
@@ -1640,7 +1637,7 @@ int BattleRole::DrainShare(BattleServices& services, i32& amount)
 
     CounterList& proficiency = services.party.fame.lists[Fame::ProficiencyList];
     this->AccessoryProficiency(static_cast<u16>(AccessoryKind::SpiritDrain), proficiency);
-    this->StepAccessoryCounters(proficiency, kDrainStep);
+    this->StepAccessoryCounters(proficiency, static_cast<u16>(AccessoryKind::SpiritDrain), kDrainStep);
     this->proficiency = static_cast<u16>(this->proficiency >> 1);
     amount = amount * this->proficiency / kPercent + 1;
     return 1;
@@ -1723,17 +1720,18 @@ ItemNode* BattleRole::StepItem()
 }
 
 // The kind bits of the item and skill categories of the battle lists (inline in the original: 0 kCategory0, 1
-// kCategory1, 2 kCategory2, 3 kCategory3, 4 kCategory4, 5 kCategory5; another category is taken as the bits);
-// `categories` limits the switch to its first entries as each function has it.
+// kCategory1, 2 kCategory2, 3 kCategory3, 4 kCategory4, 5 kCategory5, 6 kCategory6; another category is taken as the
+// bits); `categories` limits the switch to its first entries as each function has it.
 u32 BattleRole::CategoryKinds(int category, int categories)
 {
-    static constexpr std::array<u32, 6> kinds = {
+    static constexpr std::array<u32, 7> kinds = {
         kCategory0,
         kCategory1,
         kCategory2,
         kCategory3,
         kCategory4,
         kCategory5,
+        kCategory6,
     };
 
     if (category >= 0 && category < categories)
@@ -1799,16 +1797,26 @@ int BattleRole::ObjectsLeft(const ItemNode& node)
     return node.count + node.pending - static_cast<u16>(node.unk06);
 }
 
-// swd3e.exe 0x00481460: `count` raised by the objects of `category` usable by roles bit 0 or 2 with some left, and
-// for category 4 by every object with unk40 bit kListedObject as well
+// swd3e.exe 0x00481460: `count` raised by the objects of `category` usable by roles bit 0 or 2 with some left (for
+// category 6 by any with some left), and for category 4 by every object with unk40 bit kListedObject as well
 void BattleRole::CountObjects(int category, u16& count)
 {
-    const u32 kinds = BattleRole::CategoryKinds(category, kObjectCategories);
+    const u32 kinds = BattleRole::CategoryKinds(category, kCountCategories);
     this->ShowAllItems();
 
     while (ItemNode* const node = this->StepItem())
     {
         const ObjectData& data = node->record.data;
+
+        if ((kinds & data.kind) != 0 && kinds == kCategory6)
+        {
+            if (ObjectsLeft(*node) > 0)
+            {
+                ++count;
+            }
+
+            continue;
+        }
 
         if ((kinds & data.kind) != 0 && (LowByte(data.usableBy) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
         {

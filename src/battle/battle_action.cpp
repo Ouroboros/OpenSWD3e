@@ -47,6 +47,7 @@ constexpr int kSlowCommand = 0x1D;
 constexpr int kTimerCommand = 0x1F;
 constexpr int kBarrierCommand = 0x20;
 constexpr int kKillCommand = 0x21;
+constexpr i32 kKillBoomerangAct = 0x1C87;  // swd3e: the act command 0x21 throws (BoomerangFrame)
 constexpr int kSelfDamageCommand = 0x22;
 constexpr int kSelfSpiritCommand = 0x23;
 constexpr int kSelfStaminaCommand = 0x24;
@@ -61,6 +62,7 @@ constexpr int kSlotRecordEnemy = 2;
 constexpr u16 kVampireDrain = 8;  // BattleUnit::DrainKind
 constexpr u16 kVampireRing = 0x38;
 constexpr u16 kVampireStep = 5;
+constexpr u16 kVampireKind = 0x38;  // the accessory kind of 吸血鬼指環 (AccessoryKind::LifeDrain)
 constexpr i32 kTenthPercent = 10;
 constexpr i32 kPercent = 100;
 constexpr u16 kVampireTarget = 0x246F;
@@ -614,7 +616,7 @@ int Game::RoleCommandFrame(BattleRole& unit, int role, int target, u16 command)
         {
             BattleEnemy& enemy = this->battleEnemies[at];
 
-            if (unit.BoomerangFrame(services, enemy) != 1)
+            if (unit.BoomerangFrame(services, enemy, kKillBoomerangAct) != 1)
             {
                 return 0;
             }
@@ -710,10 +712,10 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
             unit.SetDamageDigits(services, battle.hitDamage);
             unit.Damage(services, battle.hitDamage, 0, 0);
             unit.PushTargetAlt(kVampireDelay);
-            unit.StepTargetCount(1);
+            unit.StepTargetCount(services, 1);
         }
 
-        unit.StepAccessoryCounters(this->ProficiencyList(), kVampireStep);
+        unit.StepAccessoryCounters(this->ProficiencyList(), kVampireKind, kVampireStep);
     }
 
     if (battle.unk53AE7C == 0)
@@ -1147,7 +1149,7 @@ int Game::PoseSweepFrame(BattleRole& unit)
             battle.hitDamage += battle.lastDamage;
             enemy.RaiseFlag26B8(this->battleState);
             enemy.SetDamageDigits(services, battle.hitDamage);
-            enemy.StepTargetCount(1);
+            enemy.StepTargetCount(services, 1);
 
             if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
             {
@@ -1419,7 +1421,7 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
     battle.hitDamage = unit.HitDamage(services, enemy, battle.spiritDamage, battle.staminaDamage);
     enemy.RaiseFlag26B8(this->battleState);
     enemy.SetDamageDigits(services, battle.hitDamage);
-    enemy.StepTargetCount(1);
+    enemy.StepTargetCount(services, 1);
 
     if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
@@ -1453,21 +1455,21 @@ int Game::SelfHitFrame(BattleRole& unit, int command)
     {
         case kSelfDamageCommand:
             unit.SetDamageDigits(services, battle.lastDamage);
-            unit.StepTargetCount(1);
+            unit.StepTargetCount(services, 1);
             unit.Damage(services, battle.lastDamage, 0, 0);
             battle.lastDamage = 0;
             break;
 
         case kSelfSpiritCommand:
             unit.SetDamageDigits(services, battle.spiritDamage);
-            unit.StepTargetCount(1);
+            unit.StepTargetCount(services, 1);
             unit.Damage(services, 0, battle.spiritDamage, 0);
             battle.spiritDamage = 0;
             break;
 
         default:
             unit.SetDamageDigits(services, battle.staminaDamage);
-            unit.StepTargetCount(1);
+            unit.StepTargetCount(services, 1);
             unit.Damage(services, 0, 0, battle.staminaDamage);
             battle.staminaDamage = 0;
             break;

@@ -45,9 +45,10 @@ namespace
 constexpr double kGaugePixels = 62.0;
 constexpr int kSlotActsPerTurn = 8;
 
-constexpr int kGaugeBase = 0x12C;  // a random gauge: kGaugeBase + kGaugeSpread / (1..kGaugeDivisors)
-constexpr int kGaugeSpread = 0x96;
-constexpr u32 kGaugeDivisors = 9;
+constexpr int kGaugeBase = 0x32;  // a random gauge: kGaugeBase + kGaugeSpread / (1..kGaugeDivisors)
+constexpr int kGaugeSpread = 0x168;
+constexpr i32 kRoleGaugeShort = 0x12C;
+constexpr u32 kGaugeDivisors = 0xA;
 constexpr std::size_t kClearedNameBytes = 0x10;  // ResetTurn clears only the start of the skill name
 constexpr int kRoleGaugeBase = 0x32;             // a party role starts a turn at kRoleGaugeBase + 0..kRoleGaugeSpread-1
 constexpr u32 kRoleGaugeSpread = 0x8C;
@@ -57,9 +58,10 @@ constexpr i32 kUnkBlock30 = 0x30;
 constexpr u16 kUnk2EB2Accessory = 0x27;  // the accessory kind whose proficiency bounds unk2EB2 (swd3e)
 constexpr u16 kUnk2EB2Share = 10;        // unk2EB2 is held below a tenth of it
 constexpr int kTens = 10;
-constexpr i8 kNumberSpent = -1;  // unk2FD1: no use left
-constexpr i8 kNumberTaken = -2;  // unk2FD1: the hit number was taken back
-constexpr u16 kLastedTurns = 3;  // a lasting poison has lasted once past them
+constexpr i8 kNumberSpent = -1;     // unk2FD1: no use left
+constexpr i8 kNumberTaken = -2;     // unk2FD1: the hit number was taken back
+constexpr i8 kNumberCountdown = 2;  // unk2FD1: set by StepTargetCount past a damage number (IdleFrame counts it down)
+constexpr u16 kLastedTurns = 3;     // a lasting poison has lasted once past them
 constexpr int kRippleGrid = 0xC8;
 constexpr int kRippleSplashX = 0x64;
 constexpr int kRippleSplashY = 0x32;
@@ -69,6 +71,8 @@ constexpr int kRippleLeft = 0x50;  // the ripple is moved this far left of and k
 constexpr int kRippleUp = 0x78;
 constexpr std::size_t kRippleSlot = 10;
 constexpr i32 kRippleAct = 0x17E7;
+constexpr int kFixedOriginX = 0xF0;  // GetOrigin
+constexpr int kFixedOriginY = 0x12C;
 constexpr u8 kRippleFrames = 0x1E;        // the ripple of StartRipple ends past these frames (DrawEffects)
 constexpr i32 kSlowedEffectAct = 0x1C97;  // DrawEffects: the act over a slowed unit
 constexpr i32 kStatus100Act = 0x1C96;     // and over a unit of status bit 8
@@ -163,12 +167,27 @@ i16 BattleUnit::ResetGauge(const BattleServices& services)
     return static_cast<i16>(services.state.gaugeFull);
 }
 
-// swd3e.exe 0x0048B1D0
-int BattleUnit::RandomizeGauge(BattleServices& services)
+// swd3e.exe 0x0048B1D0: a random gauge of 50 + 360 / (1..10); `full` 1: a party role starts 300 short of the full
+// gauge, an enemy one short
+int BattleUnit::RandomizeGauge(BattleServices& services, int full)
 {
-    const int value = kGaugeSpread / static_cast<int>(services.random.Below(kGaugeDivisors) + 1) + kGaugeBase;
-    this->gauge = static_cast<u16>(value);
-    return value;
+    this->gauge =
+        static_cast<u16>(kGaugeSpread / static_cast<int>(services.random.Below(kGaugeDivisors) + 1) + kGaugeBase);
+
+    if (full != 1)
+    {
+        return full;
+    }
+
+    if (this->kind != 0)
+    {
+        const i32 gauge = services.state.gaugeFull - kRoleGaugeShort;
+        this->gauge = static_cast<u16>(gauge);
+        return gauge;
+    }
+
+    this->gauge = static_cast<u16>(services.state.gaugeFull - 1);
+    return this->kind;
 }
 
 // swd3e.exe 0x0048B230: the saved placement while drawAtSaved is set
@@ -179,9 +198,9 @@ void BattleUnit::GetDrawPosition(u16& x, u16& y) const
     y = static_cast<u16>(at.y);
 }
 
-// swd32.exe 0x00478400 (unmatched in swd3e): the anchor of the main action (of the slot act 8 with flag 2 of +0x2A87);
-// a mirrored unit
-// measures a non-zero anchor x from the right edge of its shadow picture
+// swd3e.exe 0x0048B280: the anchor of the main act (of slot act 8 with UnkCommandFlag200); a mirrored unit measures a
+// non-zero anchor x of the main act from the right edge of its shadow picture; an enemy of command 4 takes the anchor
+// of its stand act
 void BattleUnit::GetOffset(u16& x, u16& y) const
 {
     x = this->mainAct.anchorX;
@@ -197,20 +216,48 @@ void BattleUnit::GetOffset(u16& x, u16& y) const
     {
         const u16 offset = this->mainAct.anchorX;
 
+        // A missing shadow picture is read through a null pointer in the original.
         if (offset != 0 && this->shadowPicture != nullptr)
         {
             x = static_cast<u16>(this->shadowPicture->width - offset);
         }
     }
+
+    if (this->kind == 0 && this->commandA == BattleUnit::UnkCommand4)
+    {
+        x = this->standAct.anchorX;
+        y = this->standAct.anchorY;
+    }
 }
 
-// swd32.exe 0x00478470 (unmatched in swd3e)
-i16 BattleUnit::GetOrigin(u16& x, u16& y) const
+// swd3e.exe 0x0048B310: the top left of the main act's picture; with UnkCommandFlag200 the unit's place less slot act
+// 8's offset (from (0xF0, 0x12C) for a command of UnitCommand::FixedOrigin)
+void BattleUnit::GetOrigin(u16& x, u16& y) const
 {
     x = static_cast<u16>(this->placement.x - this->originX);
-    const auto value = static_cast<u16>(this->placement.y - static_cast<u16>(this->mainAct.y));
-    y = value;
-    return static_cast<i16>(value);
+    y = static_cast<u16>(this->placement.y - this->originY);
+
+    if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
+    {
+        const ActState& slot = this->slotActs[BattleUnit::UnkSlot8];
+
+        if (this->HasFixedOrigin() == 1)
+        {
+            x = static_cast<u16>(kFixedOriginX - slot.x);
+            y = static_cast<u16>(kFixedOriginY - slot.y);
+        }
+        else
+        {
+            x = static_cast<u16>(this->placement.x - slot.x);
+            y = static_cast<u16>(this->placement.y - slot.y);
+        }
+    }
+}
+
+// swd3e.exe 0x00491CE0
+int BattleUnit::HasFixedOrigin() const
+{
+    return (this->command.actionFlags & UnitCommand::FixedOrigin) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x0048B3A0: the rectangle of the shadow picture (action 0x24 of the unit's act, or the main action's,
@@ -354,20 +401,21 @@ int BattleUnit::ClearIdleAction()
     return 0;
 }
 
-// swd3e.exe 0x0048B610: commands 2, 3, 6, 13, 14 and 15 go to commandB (6 and 14 / 15 also set flags of +0x2A87), any
-// other to commandA
+// swd3e.exe 0x0048B610: commands 2, 3, 6, 13, 14, 15, 0x29 and 0x50 go to commandB (6 and 0x50 also set
+// UnkCommandFlag800, 14 and 15 UnkCommandFlag4000), any other to commandA
 int BattleUnit::SetCommand(int command)
 {
     if (command == BattleUnit::UnkCommand14 || command == BattleUnit::UnkCommand15)
     {
         this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag4000);
     }
-    else if (command == BattleUnit::UnkCommand6)
+    else if (command == BattleUnit::UnkCommand6 || command == BattleUnit::UnkCommand50)
     {
         this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag800);
     }
     else if (
-        command != BattleUnit::UnkCommand2 && command != BattleUnit::UnkCommand13 && command != BattleUnit::UnkCommand3
+        command != BattleUnit::UnkCommand2 && command != BattleUnit::UnkCommand13 &&
+        command != BattleUnit::UnkCommand3 && command != BattleUnit::UnkCommand29
     )
     {
         this->commandA = static_cast<u16>(command);
@@ -668,8 +716,8 @@ void BattleUnit::MirrorRecoil(u32 actFlags, bool forced)
     }
 }
 
-// swd3e.exe 0x004903B0: fades the unit out over fadeLevel (sound 0x2F on the first frame): translucent, or tinted
-// darker in blend mode; 1 once it is gone
+// swd3e.exe 0x004903B0: fades the unit out over fadeLevel (sound 0x29B on the first frame): translucent and tinted
+// lighter under itself, or tinted darker in blend mode; 1 once it is gone (or invisible), 0 while it staggers
 int BattleUnit::DrawFadeOut(BattleServices& services)
 {
     smooth::Scene scene;
@@ -678,8 +726,9 @@ int BattleUnit::DrawFadeOut(BattleServices& services)
     return result;
 }
 
-// swd3e.exe 0x004906F0: fades the unit in at the draw position of `anchor` (sound 0x30 on the first frame); 1 once it
-// is fully visible
+// swd3e.exe 0x004906F0: fades the unit in at the draw position of `anchor` ((0x1A4, 0x118) for an enemy of
+// UnitCommand::FixedOrigin), translucent and tinted lighter under itself, or tinted in blend mode ("Fade Act" error
+// box when the act cannot run); 1 once it is fully visible
 int BattleUnit::DrawFadeIn(BattleServices& services, const BattleUnit& anchor)
 {
     smooth::Scene scene;
@@ -800,26 +849,50 @@ bool BattleUnit::IsDefeatedOrDying() const
     return this->defeated == 1 || this->dying == 1;
 }
 
-// swd3e.exe 0x00490FF0: +1 (capped at 0x22) or -1 on the target count
-int BattleUnit::StepTargetCount(int increase)
+// swd3e.exe 0x00490FF0: +1 (capped at 0x22) or -1 on the target count. Stepping past a damage number (DamageTarget):
+// a unit under DamageTransfer with no enrage counter 2FD6 and no pending damage starts its ripple instead (the count
+// unchanged); one with equipment flag Unk36 clears unk306C and sets unk2FD1 to 2 (unless kNumberSpent).
+int BattleUnit::StepTargetCount(BattleServices& services, int increase)
 {
-    if (increase == 1)
-    {
-        const bool below = ++this->targetCount < BattleUnit::MaxTargets;
-        this->unk2AD8 = 1;
-
-        if (!below)
-        {
-            this->targetCount = BattleUnit::MaxTargets - 1;
-        }
-    }
-    else
+    if (increase != 1)
     {
         --this->targetCount;
         this->unk2AD8 = increase;
+        return increase;
     }
 
-    return increase;
+    u16 count = this->targetCount;
+
+    if (this->pushedTargets[count] == BattleUnit::DamageTarget)
+    {
+        if ((this->status & BattleUnit::DamageTransfer) != 0 && this->enrageCounter2FD6 == 0 &&
+            this->pendingDamage == 0)
+        {
+            this->StartRipple(services);
+            return 0;
+        }
+
+        if ((this->equipmentFlags & BattleUnit::Unk36) != 0)
+        {
+            this->unk306C = 0;
+
+            if (this->unk2FD1 != kNumberSpent)
+            {
+                this->unk2FD1 = kNumberCountdown;
+            }
+        }
+    }
+
+    ++count;
+    this->unk2AD8 = 1;
+    this->targetCount = count;
+
+    if (count >= BattleUnit::MaxTargets)
+    {
+        this->targetCount = BattleUnit::MaxTargets - 1;
+    }
+
+    return count;
 }
 
 // swd3e.exe 0x004910A0
@@ -1278,7 +1351,8 @@ constexpr u32 kRefinedKind = 0x8000000;
 
 // FadeInvisible and StepAccessoryCounters.
 
-constexpr double kCounterPercent = 100.0;  // swd32.exe 0x00499D28 (unmatched in swd3e)
+constexpr double kCounterPercent = 100.0;  // 0x004AAE10 (a float)
+constexpr u16 kCounterFull = 100;          // the percent of a full counter
 
 // StepGauge.
 constexpr std::size_t kAgilityShare = 2;  // the gauge fills by a quarter of the agility a tick
@@ -1441,7 +1515,7 @@ bool BattleUnit::ApplyPendingDamage(BattleServices& services)
     }
 
     this->SetDamageDigits(services, static_cast<i16>(this->pendingDamage));
-    this->StepTargetCount(1);
+    this->StepTargetCount(services, 1);
 
     if ((this->pendingDamage & BattleUnit::Healing) == 0)
     {
@@ -2165,7 +2239,7 @@ void BattleUnit::SetWords72(i16 first, i16 second, i16 third, i16 fourth)
     }
 }
 
-// swd3e.exe 0x00489350: the object's words +0x66..+0x70 set where non-zero
+// swd3e.exe 0x00489350: the object's words +0x6C..+0x76 (the three items and their counts) set where non-zero
 void BattleUnit::SetWords66(i16 a, i16 b, i16 c, i16 d, i16 e, i16 f)
 {
     ObjectData& object = this->data->data;
@@ -3039,10 +3113,11 @@ int BattleUnit::FadeInvisible(BattleServices& services, int mode)
     return result;
 }
 
-// swd3e.exe 0x0049A0E0: the proficiency counters of the two worn accessories (their unk50) stepped by `amount` up to
-// their unk44 in `list`, a missing one appended; 1 when either accessory counts. The search goes on from where the
-// first accessory's ended (the original keeps its node), so the second may be appended again.
-int BattleUnit::StepAccessoryCounters(CounterList& list, u16 amount)
+// swd3e.exe 0x0049A0E0: the proficiency counters of the worn accessories of `kind` (their unk48; the counter is their
+// act word) stepped by `amount` up to their counterMax in `list`, a missing one appended (a counterMax of 0 makes it
+// full and done at once); 1 when either accessory counts. The search goes on from where the first accessory's ended
+// (the original keeps its node), so the second may be appended again.
+int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
 {
     int counts = 0;
     CounterNode* at = list.id != 0 ? list.next.get() : &list;
@@ -3052,7 +3127,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 amount)
         const ObjectData& data = accessory.data;
         const auto id = static_cast<i16>(data.act);
 
-        if (id == 0)
+        if (id == 0 || static_cast<i16>(data.unk48) != static_cast<i16>(kind))
         {
             continue;
         }
@@ -3078,6 +3153,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 amount)
                 at->value = data.counterMax;
             }
 
+            // A counterMax of 0 divides by zero in the original (an infinite or undefined percentage).
             at->percent = static_cast<u16>(
                 crt::Ftol(static_cast<double>(at->value) / static_cast<double>(data.counterMax) * kCounterPercent)
             );
@@ -3091,6 +3167,14 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 amount)
         at->percent = static_cast<u16>(
             crt::Ftol(static_cast<double>(amount) / static_cast<double>(data.counterMax) * kCounterPercent)
         );
+
+        if (data.counterMax == 0)
+        {
+            at->value = 0;
+            at->percent = kCounterFull;
+            at->done = 1;
+        }
+
         ++list.id;
     }
 
@@ -5742,7 +5826,7 @@ bool BattleUnit::FanGuards(BattleServices& services, u16 ailment)
     }
 
     CounterList& proficiency = services.party.fame.lists[Fame::ProficiencyList];
-    this->StepAccessoryCounters(proficiency, kFanStep);
+    this->StepAccessoryCounters(proficiency, kSpiritFanKind, kFanStep);
     const auto level = static_cast<u16>(this->AccessoryProficiency(kSpiritFanKind, proficiency)) / kFanShare;
 
     if (level == kFanGuards.size())
@@ -5764,10 +5848,10 @@ int BattleUnit::RunAway(BattleServices& services)
     return result;
 }
 
-// swd3e.exe 0x0047FB90: the worn element orbs (AccessoryKind 0x33) step their proficiency counters (their unk50) in
-// `list` by kOrbStep up to their unk44, when hit by `command` of an element 1..9 (the original also tests the address
-// of the orb's resistance to it, never null); 1 when an orb counts. Each search starts at the head of the list, its
-// count compared as an id; a missing counter is appended at the end and counted.
+// swd3e.exe 0x0047FB90: the worn element orbs (AccessoryKind 0x33) step their proficiency counters (their act word) in
+// `list` by kOrbStep up to their counterMax, when hit by `command` of an element 1..5 the orb resists; 1 when an orb
+// counts. Each search starts at the head of the list, its count compared as an id; a missing counter is appended at
+// the end and counted (a counterMax of 0 makes it full and done at once).
 int BattleUnit::StepOrbCounters(CounterList& list, const UnitCommand& command)
 {
     int counts = 0;
@@ -5777,8 +5861,8 @@ int BattleUnit::StepOrbCounters(CounterList& list, const UnitCommand& command)
         const ObjectData& data = accessory.data;
         const auto id = static_cast<i16>(data.act);
 
-        if (id == 0 || data.unk48 != static_cast<u16>(AccessoryKind::ElementOrb) || command.resistance < 1 ||
-            command.resistance > kResistances)
+        if (id == 0 || data.unk48 != static_cast<u16>(AccessoryKind::ElementOrb) || command.resistance == 0 ||
+            command.resistance > data.resistances.size() || data.resistances[command.resistance - 1] == 0)
         {
             continue;
         }
@@ -5818,6 +5902,14 @@ int BattleUnit::StepOrbCounters(CounterList& list, const UnitCommand& command)
         at->percent = static_cast<u16>(
             crt::Ftol(static_cast<double>(kOrbStep) / static_cast<double>(data.counterMax) * kCounterPercent)
         );
+
+        if (data.counterMax == 0)
+        {
+            at->value = 0;
+            at->percent = kCounterFull;
+            at->done = 1;
+        }
+
         ++list.id;
     }
 
