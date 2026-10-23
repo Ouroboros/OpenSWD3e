@@ -169,6 +169,8 @@ struct UnitCommand
         UnkAction1000 = 0x1000,
         UnkAction2000 = 0x2000,
         UnkAction4000 = 0x4000,
+        UnkAction8000 = 0x8000,     // swd3e (ActFlag15)
+        UnkAction20000 = 0x20000,   // swd3e (ActFlag17)
         ShrinksInFlight = 0x10000,  // swd3e: FlyAct draws the act shrinking
         FixedOrigin = 0x40000,      // GetOrigin places slot act 8 from (0xF0, 0x12C) (0x00491CE0)
     };
@@ -459,7 +461,21 @@ public:
     int StartDefeat(int kind);
     int ToggleAF8();
     int ResetTurn(BattleServices& services);
-    i16 Retarget(i16 target);
+    int Retarget(i16 target);
+    u16 FollowAct() const;
+    int ActFlag15() const;
+    int ActFlag17() const;
+    bool HasActionFlags(u32 flags) const;
+    int SetAF8(int value);
+    void RaiseFlag26B8Bit17();
+    int Flag26B8Bit17() const;
+    bool HitPointsAtMost(int share) const;
+    i16 RoleAgility() const;
+    u16 RoleAttackBonus() const;
+    void FillSecondGauge();
+    int SecondGaugeLength() const;
+    bool CanHeal() const;
+    void SlideHook(int value);
     void IncreaseCounter2A76();
     u16 Counter2A76() const;
     void IncreaseHits();
@@ -693,7 +709,7 @@ public:
     i16 AccessoryProficiency(u16 kind, CounterList& proficiency);
     void SetWords72(i16 first, i16 second, i16 third, i16 fourth);
     void SetWords66(i16 a, i16 b, i16 c, i16 d, i16 e, i16 f);
-    void SetResistances(std::span<const i16, 9> values);
+    void SetResistances(std::span<const i16, 5> values);
     bool ShowsPicture(i16 picture) const;
     void LoadSkillAction(Database& database, u16 id, u16& act);
     u16 PrepareCommand(Database& database);

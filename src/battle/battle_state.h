@@ -61,6 +61,18 @@ struct ShopComparison
 };
 
 // The state of the battle and of the shop and item lists it shares with the menus.
+// swd3e: a picture of a second-tier spell (a 0xB4-byte list node at 0x00577818, AddHitPicture): an act played at its
+// place until it waits, its target bits gathered for the hit (hitBits); bit 5 adds its effect as another such picture.
+struct HitPicture
+{
+    std::unique_ptr<HitPicture> next;  // +0x00
+    ActState act;                      // +0x04
+    i32 mirrored = 0;                  // +0xA8 1: drawn mirrored
+    i16 x = 0;                         // +0xAC
+    i16 y = 0;                         // +0xAE
+    u8 done = 0;                       // +0xB0 1: its act waited (freed after the frame)
+};
+
 class BattleState
 {
 public:
@@ -141,6 +153,9 @@ public:
     void InsertSlotRecord(int kind, i32 unit, int at);
     void StartFieldFade(int red, int green, int blue, int toRed, int toGreen, int toBlue, int frames);
     u8 ItemUses(u16 id) const;
+    u8 MostHitEnemy() const;
+    bool HitPicturesDone() const;
+    u16 HitBits() const;
     void WipeSlotRecords();
     void SortDrawOrderAround(i32 acting, i32 target);
     void SetReturnedItem(int index, u16 id);
@@ -212,7 +227,15 @@ public:
     // swd32 0x00521398 the four roles are in the party (story flags 0x1E..)
     std::array<u8, Party::Roles> inParty = {};
     std::array<u8, Guests> guestUsed = {};  // swd32 0x004FDF80
-    u16 guestCount = 0;                     // 0x005771F4
+    // 0x005376A4 (swd3e) per enemy: the party's hits on it (MenuConfirm; cleared when it falls); the roles acting by
+    // themselves aim at the most hit (MostHitEnemy)
+    std::array<u8, Enemies> enemyHits = {};
+    // swd3e: the units slide sideways with the field (SlideUnits): 1 to a unit's place, 2 back to the middle; never on
+    // (0x00577364 is only read)
+    i32 slideEnabled = 0;  // 0x00577364
+    i32 slideMode = 0;     // 0x005777FC
+    i16 slideTarget = 0;   // 0x00577804
+    u16 guestCount = 0;    // 0x005771F4
     // 0x005770D4 low word: party roles the battle's checks leave out (read by 0x004612D0, 0x0045FA80 and
     // CheckBattleEnd; its writer is not rebuilt yet); the high word is a role slot
     u16 unk5770D4 = 0;
@@ -305,6 +328,8 @@ public:
     i32 undarkening = 0;         // 0x005772EC the darkening is undone a level a frame
     // 0x005772C8 set by 0x0049B9D0 and 0x0049BE20, cleared by 0x0049C0D0: the undarkening waits while set
     i32 unk5772C8 = 0;
+    std::unique_ptr<HitPicture> hitPictures;  // 0x00577818 (swd3e) the second-tier spell pictures (DrawHitPictures)
+    u16 hitBits = 0;                          // 0x005778CC (swd3e) their target bits of the frame
     i32 enraging = 0;      // 0x00577310 (swd3e) 1 while an enemy enrages (Enrage sets it, 0x0049C0D0 clears it)
     i32 enrageDamage = 0;  // 0x005770C4 (swd3e) the damage of enrage 0x3F4 (1.4 times the maximum hit points)
     // 0x00536880 the ripple over the battle (a spell with ActFlag13 in rippleHits, the unit effect of 0x0049B9D0)

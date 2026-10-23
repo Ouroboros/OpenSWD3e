@@ -167,6 +167,24 @@ u8 BattleState::ItemUses(u16 id) const
     return id < this->itemUses.size() ? this->itemUses[id] : u8{0};
 }
 
+// swd3e.exe 0x00469F80: 1 + the enemy hit most (the first of them)
+u8 BattleState::MostHitEnemy() const
+{
+    u8 best = this->enemyHits[0];
+    u8 index = 0;
+
+    for (std::size_t at = 0; at < this->enemyHits.size(); ++at)
+    {
+        if (this->enemyHits[at] > best)
+        {
+            index = static_cast<u8>(at);
+            best = this->enemyHits[at];
+        }
+    }
+
+    return static_cast<u8>(index + 1);
+}
+
 // swd3e.exe 0x00467C40: the field fades from (red, green, blue) to (toRed, toGreen, toBlue) over `frames` frames; the
 // steps are taken from the levels truncated to integers
 void BattleState::StartFieldFade(int red, int green, int blue, int toRed, int toGreen, int toBlue, int frames)

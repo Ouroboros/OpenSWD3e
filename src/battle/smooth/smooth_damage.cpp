@@ -104,7 +104,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
     battle.darkRed = static_cast<i16>(act.red);
     battle.darkGreen = static_cast<i16>(act.green);
     battle.darkBlue = static_cast<i16>(act.blue);
-    game.PrepareDarkenedCopies();
+    game.DarkenByTint();
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {
@@ -275,7 +275,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     battle.darkRed = static_cast<i16>(magic.red);
     battle.darkGreen = static_cast<i16>(magic.green);
     battle.darkBlue = static_cast<i16>(magic.blue);
-    game.PrepareDarkenedCopies();
+    game.DarkenByTint();
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {
@@ -573,7 +573,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     battle.darkRed = static_cast<i16>(attack.red);
     battle.darkGreen = static_cast<i16>(attack.green);
     battle.darkBlue = static_cast<i16>(attack.blue);
-    game.PrepareDarkenedCopies();
+    game.DarkenByTint();
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {

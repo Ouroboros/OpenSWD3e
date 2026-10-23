@@ -382,4 +382,115 @@ void BattleHud::DrawTileBox(int id, int x, int y, int columns, int rows, i8 fill
     smooth::HudFrame(*this).DrawTileBoxAdvance(id, x, y, columns, rows, fill, scene);
     scene.Show(*this->services);
 }
+
+// swd3e.exe 0x00459170: the top of the meter
+i16 BattleHud::SetMeterLimit(i16 limit)
+{
+    this->meterLimit = limit;
+    return limit;
+}
+
+// swd3e.exe 0x00459180: `amount` added to the meter (-1 empties it; the last amount kept, a negative one as 0, and a
+// meter below 0 empties); past its top the meter empties (0), else 1
+int BattleHud::AddToMeter(i16 amount)
+{
+    if (amount == kEmptyMeter)
+    {
+        this->meterLastAdd = 0;
+        this->meterValue = 0;
+    }
+    else
+    {
+        this->meterLastAdd = amount < 0 ? i16{0} : amount;
+        this->meterValue = static_cast<i16>(this->meterValue + amount);
+
+        if (this->meterValue < 0)
+        {
+            this->meterValue = 0;
+        }
+    }
+
+    if (this->meterValue <= this->meterLimit)
+    {
+        return 1;
+    }
+
+    this->meterLastAdd = 0;
+    this->meterValue = 0;
+    return 0;
+}
+
+// swd3e.exe 0x004591E0
+int BattleHud::ResetMeter()
+{
+    this->meterLevel = 0;
+    this->meterValue = 0;
+    this->meterShown = 0;
+    return 0;
+}
+
+// swd3e.exe 0x00459200: while the meter shows, its frame (picture 0x2397 frame 0) and its fill (frame 1) clipped to the
+// shown level, which moves a pixel a frame towards the meter's share of its top (in pixels of the fill; tinted while it
+// moves); the value
+// below it
+void BattleHud::DrawMeter(int x, int y)
+{
+    if (this->meterShown == 0)
+    {
+        return;
+    }
+
+    smooth::Scene scene;
+    smooth::ScenePainter painter(*this->services, scene);
+    const Picture* frame = this->archive.GetPicture(kMeterPicture, 0);
+    this->lastPicture = frame;
+
+    // A missing picture is read through a null pointer in the original.
+    if (frame == nullptr)
+    {
+        return;
+    }
+
+    painter.SetSource(frame->data.data());
+    painter.DrawPicture(x, y, frame->width, frame->height, Painter::Copy, PaletteArgument(*frame));
+    const Picture* fill = this->archive.GetPicture(kMeterPicture, 1);
+    this->lastPicture = fill;
+
+    if (fill == nullptr)
+    {
+        return;
+    }
+
+    double share = static_cast<double>(this->meterValue) / static_cast<double>(this->meterLimit);
+
+    if (share > 1.0)
+    {
+        share = 1.0;
+    }
+
+    const int height = fill->height;
+    const auto target = static_cast<i32>(crt::Ftol(static_cast<double>(height) * share));
+
+    if (this->meterLevel != target)
+    {
+        this->meterLevel = this->meterLevel >= target ? this->meterLevel - 1 : this->meterLevel + 1;
+    }
+
+    painter.SetClipClamped(x, y + height - this->meterLevel, x + fill->width, height + y);
+    painter.SetSource(fill->data.data());
+    painter.DrawPicture(x, y, fill->width, fill->height, Painter::Copy, PaletteArgument(*fill));
+
+    if (target != this->meterLevel)
+    {
+        DrawOptions& options = painter.Options();
+        options.tintRed = kMeterTint;
+        options.tintGreen = kMeterTint;
+        options.tintBlue = kMeterTint;
+        painter.DrawPicture(x, y, fill->width, fill->height, Painter::TintUnder, PaletteArgument(*fill));
+    }
+
+    painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+    scene.Show(*this->services);
+    this->DrawNumber(kMeterNumbers, this->meterValue, x + (fill->width >> 1), y + fill->height);
+}
 }  // namespace swd3e

@@ -113,6 +113,34 @@ void Game::ApplyDrain(i32& amount, BattleUnit& attacker, BattleUnit& target)
     amount = 0;
 }
 
+// swd3e.exe 0x00468000: the drains summed over a hit on many units (drainedLife, drainedSpirit, drainedStamina) shown
+// on `unit` and given to it by its drain kind
+void Game::ApplyDrainSums(BattleUnit& unit)
+{
+    BattleState& battle = this->battleState;
+    BattleServices& services = this->battleServices;
+    const u16 drain = unit.DrainKind();
+
+    if (drain == BattleUnit::DrainedHitPoints)
+    {
+        unit.SetDamageDigits(services, battle.drainedLife);
+        unit.StepTargetCount(services, 1);
+        unit.Damage(services, battle.drainedLife, 0, 0);
+    }
+    else if (drain == BattleUnit::DrainedSpirit)
+    {
+        unit.SetDamageDigits(services, battle.drainedSpirit);
+        unit.StepTargetCount(services, 1);
+        unit.Damage(services, 0, static_cast<i16>(battle.drainedSpirit), 0);
+    }
+    else if (drain == BattleUnit::DrainedStamina)
+    {
+        unit.SetDamageDigits(services, battle.drainedStamina);
+        unit.StepTargetCount(services, 1);
+        unit.Damage(services, 0, 0, static_cast<i16>(battle.drainedStamina));
+    }
+}
+
 // swd3e.exe 0x00469860: the retreat command of role `role`. When the role can act, a party whose first role is held
 // or whose battle forbids it gets the "無法撤退!!" message; otherwise the turn state is cleared for the retreat.
 void Game::TryRetreat(int role)

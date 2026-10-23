@@ -137,6 +137,7 @@ public:
     void TakeCommand2F18();
 
     // The talisman ghost in battle and the helpers of the roles acting by themselves (battle_ghost.cpp, swd3e).
+    u16 SelectedItemId() const;
     void SetGhostOrder(u16 order);
     u16 GhostOrder() const;
     static int RollHalf(BattleServices& services);

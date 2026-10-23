@@ -42,42 +42,9 @@ void Game::DrawBattleBackground(int shake)
     scene.Show(this->battleServices);
 }
 
-// swd32.exe 0x0045AF90 (unmatched in swd3e): when the darkening tint has changed, the darkened copies of the field are
-// drawn again: copy
-// `level` is the background shifted by `level` times half the tint. The field is then darkened from level 1, and the
-// frame is the painter's target again.
-void Game::PrepareDarkenedCopies()
+// swd3e.exe 0x004655A0: the field is darkened by tint steps (swd32 drew darkened copies of it here)
+void Game::DarkenByTint()
 {
-    BattleState& battle = this->battleState;
-    const std::array<i16, 3> tint = {battle.darkRed, battle.darkGreen, battle.darkBlue};
-
-    if (battle.darkCopyTint == tint)
-    {
-        return;
-    }
-
-    int level = 1;
-
-    for (std::unique_ptr<Surface>& copy : battle.surfaces)
-    {
-        this->audioDevice.Serve();
-        this->drawSurface = this->painter.LockSurface(*copy);
-        this->painter.SetTarget(this->drawSurface);
-        this->painter.UnlockSurface(*copy);
-        this->painter.SetSource(battle.background.data.data());
-        this->painter.DrawPicture(0, 0, Display::Width, Display::Height, Painter::Copy);
-        const std::span<u16> field(this->drawSurface, kFieldPixels);
-        this->painter.ShiftRed(field, level * (battle.darkRed >> 1));
-        this->painter.ShiftGreenPairs(field, level * (battle.darkGreen >> 1));
-        this->painter.ShiftBluePairs(field, level * (battle.darkBlue >> 1));
-        ++level;
-    }
-
-    battle.darkCopyTint = tint;
-    battle.darkLevel = 1;
-    battle.darkenedAt = battle.unk53BD0C;
-    this->drawSurface = this->painter.LockSurface(*this->offscreen);
-    this->painter.SetTarget(this->drawSurface);
-    this->painter.UnlockSurface(*this->offscreen);
+    this->battleState.darkenByTint = 1;
 }
 }  // namespace swd3e

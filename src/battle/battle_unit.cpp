@@ -597,13 +597,14 @@ int BattleUnit::ResetTurn(BattleServices& services)
     return result;
 }
 
-// swd32.exe 0x00478A70 (unmatched in swd3e)
-i16 BattleUnit::Retarget(i16 value)
+// swd3e.exe 0x0048B9D0: also marks unk2AE0
+int BattleUnit::Retarget(i16 value)
 {
-    this->unk2AB4 = 1;
-    this->unk29A2 = static_cast<u16>(value);
     this->gauge = 0;
-    return value;
+    this->unk29A2 = static_cast<u16>(value);
+    this->unk2AB4 = 1;
+    this->unk2AE0 = 1;
+    return 1;
 }
 
 // swd32.exe 0x00478AA0 (unmatched in swd3e)
@@ -612,7 +613,7 @@ void BattleUnit::IncreaseCounter2A76()
     ++this->unk2A76;
 }
 
-// swd32.exe 0x00478AB0 (unmatched in swd3e)
+// swd3e.exe 0x0048BA00
 u16 BattleUnit::Counter2A76() const
 {
     return this->unk2A76;
@@ -657,7 +658,7 @@ void BattleUnit::SetAA8()
     this->unk2AA8 = 1;
 }
 
-// swd32.exe 0x00478B40 (unmatched in swd3e)
+// swd3e.exe 0x0048BA50
 int BattleUnit::GetAA8() const
 {
     return this->unk2AA8;
@@ -669,7 +670,7 @@ int BattleUnit::GetAE0() const
     return this->unk2AE0;
 }
 
-// swd32.exe 0x0047C660 (unmatched in swd3e)
+// swd3e.exe 0x004902D0
 int BattleUnit::SetAC0(int value)
 {
     this->outline = value;
@@ -682,7 +683,7 @@ bool BattleUnit::IsAE4Clear() const
     return this->target == 0;
 }
 
-// swd32.exe 0x0047C680 (unmatched in swd3e)
+// swd3e.exe 0x00490380
 u16 BattleUnit::GetWordDA6() const
 {
     return this->command.unk16;
@@ -1065,27 +1066,33 @@ int BattleUnit::ActFlag0() const
     return static_cast<int>(this->command.actionFlags & UnitCommand::UnkAction1);
 }
 
-// swd32.exe 0x0047D8E0 (unmatched in swd3e)
+// swd3e.exe 0x00491CA0
 int BattleUnit::ActFlag13() const
 {
     return (this->command.actionFlags & UnitCommand::UnkAction2000) != 0 ? 1 : 0;
 }
 
-// swd32.exe 0x0047D8F0 (unmatched in swd3e)
+// swd3e.exe 0x00491CB0
 int BattleUnit::ActFlag14() const
 {
     return (this->command.actionFlags & UnitCommand::UnkAction4000) != 0 ? 1 : 0;
 }
 
-// swd32.exe 0x0047D900 (unmatched in swd3e): also restarts the main action
+// swd3e.exe 0x00491D10: also restarts the main act, unless the second gauge runs down (then `value` is returned)
 int BattleUnit::SetAction(i16 value)
 {
     this->action = static_cast<u16>(value);
+
+    if (this->drainingGauge != 0)
+    {
+        return value;
+    }
+
     this->mainAct = ActState{};
     return 0;
 }
 
-// swd32.exe 0x0047D930 (unmatched in swd3e)
+// swd3e.exe 0x00491D40
 bool BattleUnit::IsGuarding() const
 {
     return this->guarding == 1 || (this->marks & BattleUnit::GuardingMark) != 0;
@@ -1208,7 +1215,7 @@ void BattleUnit::SetLevel(i16 level)
     }
 }
 
-// swd32.exe 0x0047DAB0 (unmatched in swd3e)
+// swd3e.exe 0x00491EB0
 int BattleUnit::SetB00(int value)
 {
     this->autoControl = value;
@@ -1419,9 +1426,12 @@ constexpr double kCounterPercent = 100.0;  // 0x004AAE10 (a float)
 constexpr u16 kCounterFull = 100;          // the percent of a full counter
 
 // StepGauge.
-constexpr int kAgilityShare = 4;  // the gauge fills by a quarter of the agility a tick
-constexpr u32 kObeyRoll = 100;    // the talisman ghost obeys on a roll of 1..100 up to its unk104
-constexpr int kDisobeyShare = 3;  // a disobeying ghost's gauge falls back a third
+constexpr int kAgilityShare = 4;                    // the gauge fills by a quarter of the agility a tick
+constexpr u32 kObeyRoll = 100;                      // the talisman ghost obeys on a roll of 1..100 up to its unk104
+constexpr int kDisobeyShare = 3;                    // a disobeying ghost's gauge falls back a third
+constexpr i16 kSecondGaugeFull = 0x960;             // FillSecondGauge
+constexpr float kSecondGaugeStep = 0.00041666668F;  // 0x004AAE1C: SecondGaugeLength scales by 1 / 0x960
+constexpr float kSecondGaugePixels = 62.0F;         // 0x004AAE18
 constexpr int kBoostShare = 4;
 constexpr int kInvisibleSlowdown = 4;
 
@@ -2348,8 +2358,8 @@ void BattleUnit::SetWords66(i16 a, i16 b, i16 c, i16 d, i16 e, i16 f)
     }
 }
 
-// swd32.exe 0x00476920 (unmatched in swd3e): the object's resistances from the low bytes of nine words
-void BattleUnit::SetResistances(std::span<const i16, 9> values)
+// swd3e.exe 0x00489320: the object's five resistances from the low bytes of five words
+void BattleUnit::SetResistances(std::span<const i16, 5> values)
 {
     for (std::size_t element = 0; element < this->data->data.resistances.size(); ++element)
     {
@@ -6811,4 +6821,96 @@ void BattleUnit::ClearTurnCommand()
     std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
 }
 
+// swd3e.exe 0x0049A9B0
+u16 BattleUnit::FollowAct() const
+{
+    return this->command.followAct;
+}
+
+// swd3e.exe 0x00491CC0
+int BattleUnit::ActFlag15() const
+{
+    return (this->command.actionFlags & UnitCommand::UnkAction8000) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x00491CD0
+int BattleUnit::ActFlag17() const
+{
+    return (this->command.actionFlags & UnitCommand::UnkAction20000) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x00491CF0
+bool BattleUnit::HasActionFlags(u32 flags) const
+{
+    return (flags & this->command.actionFlags) != 0;
+}
+
+// swd3e.exe 0x0048B790
+int BattleUnit::SetAF8(int value)
+{
+    this->unk2AF8 = value;
+    return value;
+}
+
+// swd3e.exe 0x004875E0
+void BattleUnit::RaiseFlag26B8Bit17()
+{
+    this->unk26B8 |= kFlag26B8Bit17;
+}
+
+// swd3e.exe 0x004875F0
+int BattleUnit::Flag26B8Bit17() const
+{
+    return (this->unk26B8 & kFlag26B8Bit17) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x00487A70: the party record's hit points at most a `share`th of their maximum
+bool BattleUnit::HitPointsAtMost(int share) const
+{
+    return this->roleRecord->hitPoints <= this->roleRecord->maxHitPoints / share;
+}
+
+// swd3e.exe 0x0049AA20: a party role's agility (0 for others)
+i16 BattleUnit::RoleAgility() const
+{
+    return this->kind == BattleUnit::PartyRole ? this->roleRecord->agility : i16{0};
+}
+
+// swd3e.exe 0x0049AA40: a party role's attack bonus (0 for others)
+u16 BattleUnit::RoleAttackBonus() const
+{
+    return this->kind == BattleUnit::PartyRole ? this->roleRecord->attackBonus : u16{0};
+}
+
+// swd3e.exe 0x0048B170: the second gauge filled for a command with unk18, else emptied
+void BattleUnit::FillSecondGauge()
+{
+    this->unk2BE8 = this->command.unk18 != 0 ? kSecondGaugeFull : i16{0};
+}
+
+// swd3e.exe 0x0048B190: the second gauge scaled to 62 pixels of its full 0x960
+int BattleUnit::SecondGaugeLength() const
+{
+    const double share = static_cast<double>(this->unk2BE8) * static_cast<double>(kSecondGaugeStep);
+    return static_cast<int>(crt::Ftol(share * static_cast<double>(kSecondGaugePixels)));
+}
+
+// swd3e.exe 0x00488AB0: an enemy with heal uses left, unless flag 26B8 bit 21 holds
+bool BattleUnit::CanHeal() const
+{
+    if ((this->unk26B8 & kFlag26B8Pulse) != 0)
+    {
+        return false;
+    }
+
+    const ObjectData& data = this->data->data;
+    return data.healCountA != 0 || data.healCountB != 0;
+}
+
+// swd3e.exe 0x0049C2A0: an empty member taking one value, called with 0 on every unit when the units start sliding
+// back (0x0045BEA0)
+void BattleUnit::SlideHook(int value)
+{
+    static_cast<void>(value);
+}
 }  // namespace swd3e

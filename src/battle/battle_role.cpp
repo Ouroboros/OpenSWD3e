@@ -61,6 +61,12 @@ void BattleRole::SetSkills(ItemNode* list)
     this->skillsHead = list;
 }
 
+// swd3e.exe 0x00487600: the id of the item chosen to use
+u16 BattleRole::SelectedItemId() const
+{
+    return this->selectedItem->id;
+}
+
 // swd3e.exe 0x0047EAF0
 void BattleRole::SetInventory(ItemLink* list)
 {

@@ -16,6 +16,7 @@ constexpr u32 kFlag26B8Blocked = 0x4000000;  // the unit does not stagger (swd3e
 constexpr u32 kFlag26B8Spell = 0x8000000;    // a hit under DamageTransfer outside a cast spell (swd3e)
 constexpr u32 kFlag26B8Poison = 0x20000000;  // a lasting poison holds (swd3e)
 constexpr u32 kAttackDownIgnored = 0x100;    // unk26CC bit: AttackDown does not cut the attack
+constexpr u32 kFlag26B8Bit17 = 0x20000;      // swd3e (0x004875E0)
 constexpr u32 kFlag26B8Bit19 = 0x80000;      // swd3e (0x0049C310)
 constexpr u32 kFlag26B8Ripple = 0x100000;    // swd3e: the unit's ripple runs (StartRipple)
 constexpr u32 kFlag26B8Bit23 = 0x800000;     // swd3e: set by enrage 0x3F2

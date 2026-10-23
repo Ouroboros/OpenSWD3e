@@ -538,7 +538,7 @@ int Game::RoleCommandFrame(BattleRole& unit, int role, int target, u16 command)
                 battle.darkBlue = kDarkTint;
                 battle.pushFrames = 1;
                 battle.unk53BF94 = 1;
-                this->PrepareDarkenedCopies();
+                this->DarkenByTint();
                 battle.darkLevel = 1;
             }
 
@@ -868,7 +868,7 @@ int Game::AbsorbFrame(BattleRole& unit, int target)
         battle.pushFrames = 1;
         battle.unk4A7626 = static_cast<u16>(target);
         battle.unk53BF94 = 1;
-        this->PrepareDarkenedCopies();
+        this->DarkenByTint();
 
         if (enemy.ActId() == kGuardedAct)
         {
@@ -910,7 +910,7 @@ int Game::ThrowTalismanFrame(BattleRole& unit, int role, int target)
         battle.darkBlue = kDarkTint;
         battle.pushFrames = 1;
         battle.unk53BF94 = 1;
-        this->PrepareDarkenedCopies();
+        this->DarkenByTint();
     }
 
     if (unit.ThrowAct(this->battleServices, enemy) != 1)
@@ -984,7 +984,7 @@ int Game::SummonEscortFrame(BattleRole& unit, int role)
     battle.darkGreen = kDarkTint;
     battle.darkBlue = kDarkTint;
     battle.unk53BF94 = 1;
-    this->PrepareDarkenedCopies();
+    this->DarkenByTint();
     const UnitPlacement& place = battle.rolePlaces[battle.callingEscort];
 
     if (unit.GlowAct(services, place.x, place.y) != 1)

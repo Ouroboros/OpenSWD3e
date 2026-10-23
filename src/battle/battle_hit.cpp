@@ -14,6 +14,10 @@ namespace
 
 constexpr i16 kPushStart = 0x1A4;  // the push of a hit, halved each call
 constexpr i16 kSlideStep = 0x1E;   // the units slide back by at most this a call
+constexpr i32 kSlideToUnit = 1;    // BattleState::slideMode (SlideUnits)
+constexpr i32 kSlideBack = 2;
+constexpr int kSlideToShare = 8;
+constexpr int kSlideBackShare = 4;
 
 constexpr u16 kHitNudgeFrames = 0x1E;
 constexpr std::array<std::pair<u16, u16>, 3> kHitNudges = {{{0x1000, 1}, {0x2000, 2}, {0x4000, 3}}};
@@ -128,6 +132,89 @@ int Game::WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, int s
     }
 
     calls = 0;
+    return 1;
+}
+
+// swd3e.exe 0x00468440: the units start sliding to `x` (SlideUnits mode 1)
+i16 Game::StartSlideTo(i16 x)
+{
+    this->battleState.slideMode = kSlideToUnit;
+    this->battleState.slideTarget = x;
+    return x;
+}
+
+// swd3e.exe 0x00468460: and back (mode 2)
+i16 Game::StartSlideBack(i16 x)
+{
+    this->battleState.slideMode = kSlideBack;
+    this->battleState.slideTarget = x;
+    return x;
+}
+
+// swd3e.exe 0x004682B0: one step of the slide (only while slideEnabled, which nothing sets): mode 1 moves the field
+// (unk4FDF78) an eighth of the way from `unit`'s x to `x` (a pixel when less), mode 2 a quarter of the way from the
+// field back to the middle, ending there (mode 0); every unit moves with the step (shake). 0 without a slide.
+int Game::SlideUnits(const BattleUnit& unit, i16 x)
+{
+    BattleState& battle = this->battleState;
+
+    if (battle.slideEnabled == 0 || battle.slideMode == 0)
+    {
+        return 0;
+    }
+
+    int step = battle.shake;
+
+    if (battle.slideMode == kSlideToUnit)
+    {
+        unit.GetPosition(battle.unk53BF4A, battle.unk53BF4E);
+        const auto from = static_cast<i16>(battle.unk53BF4A);
+        step = (x - from) / kSlideToShare;
+        battle.shake = step;
+
+        if (step == 0 && x != from)
+        {
+            step = from <= x ? 1 : -1;
+            battle.shake = step;
+        }
+
+        battle.unk4FDF78 = static_cast<u16>(battle.unk4FDF78 + step);
+    }
+
+    if (battle.slideMode == kSlideBack)
+    {
+        step = (Display::Width / 2 - static_cast<i16>(battle.unk4FDF78)) / kSlideBackShare;
+        battle.shake = step;
+
+        if (step == 0)
+        {
+            if (static_cast<int>(battle.unk4FDF78) == x)
+            {
+                battle.slideMode = 0;
+                battle.shake = 0;
+                return 1;
+            }
+
+            step = static_cast<i16>(battle.unk4FDF78) <= x ? 1 : -1;
+            battle.shake = step;
+        }
+
+        battle.unk4FDF78 = static_cast<u16>(battle.unk4FDF78 + step);
+    }
+
+    if (step != 0)
+    {
+        for (u32 role = 0; role < battle.roleCount; ++role)
+        {
+            this->battleRoles[role].Move(static_cast<i16>(battle.shake), 0);
+        }
+
+        for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
+        {
+            this->battleEnemies[enemy].Move(static_cast<i16>(battle.shake), 0);
+        }
+    }
+
     return 1;
 }
 
@@ -1431,7 +1518,7 @@ int Game::EnemyActionFrame(int enemy, int target)
                 battle.darkGreen = kDrainDark;
                 battle.darkBlue = kDrainDark;
                 battle.unk53BF94 = 1;
-                this->PrepareDarkenedCopies();
+                this->DarkenByTint();
                 battle.pushFrames = 1;
                 battle.sweptUnits = 1;
             }

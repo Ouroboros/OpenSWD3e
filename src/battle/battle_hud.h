@@ -69,6 +69,10 @@ public:
     u16 DrawNumberDigit(u32 divisor);
     int DrawSlotAnimation(int id, int slot, int x, int y);
     int FillColor(int x, int y, int width, int height, u32 color);
+    i16 SetMeterLimit(i16 limit);
+    int AddToMeter(i16 amount);
+    int ResetMeter();
+    void DrawMeter(int x, int y);
     void DrawTileBox(int id, int x, int y, int columns, int rows, i8 fill);
     int DrawEffectAt(int id, int action, int x, int y, int mirror);
     int ResetEffectAt();
@@ -111,6 +115,12 @@ public:
     i32 coinFrames = 0;                           // swd32 0x004FDF70
     u32 coinState = 0;                            // swd32 0x004FDF74 low word: the side, high word: the wins
     u32 coinDelay = BattleHud::InitialCoinDelay;  // 0x004BEFF4 low word: the delay, high word: the countdown
+    // swd3e: the meter (picture 0x2397) of DrawMeter.
+    i32 meterLevel = 0;    // 0x0050CDD0 the level shown, in pixels
+    i16 meterValue = 0;    // 0x0050CDD4
+    i16 meterLastAdd = 0;  // 0x0050CDD6
+    i16 meterLimit = 100;  // 0x004BF002 its top
+    i32 meterShown = 0;    // 0x00577368 1: the meter shows
 
 private:
     const Picture* Select(int id, int frame);

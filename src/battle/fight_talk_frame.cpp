@@ -151,7 +151,7 @@ constexpr i32 kBattleLostState = 0x67;
 constexpr int kCatchCommand = 6;
 constexpr i16 kMaxVital = 0x270F;
 constexpr int kEnemyKillHeal = -100000;
-constexpr std::size_t kResistanceWords = 9;
+constexpr std::size_t kResistanceWords = 5;  // swd3e: five elements (swd32: nine)
 constexpr std::size_t kCountedSkipWords = 4;
 
 }  // namespace

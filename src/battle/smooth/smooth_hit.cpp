@@ -479,7 +479,7 @@ int HitFrame::HitTargetFrameAdvance(BattleUnit& target, BattleUnit& attacker, u3
         battle.darkRed = static_cast<i16>(hit.red);
         battle.darkGreen = static_cast<i16>(hit.green);
         battle.darkBlue = static_cast<i16>(hit.blue);
-        game.PrepareDarkenedCopies();
+        game.DarkenByTint();
         battle.unk53BF94 = 1;
         battle.unk53BF98 = 1;
     }
@@ -624,7 +624,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         battle.darkGreen = static_cast<i16>(hit.green);
         battle.unk53BF94 = 1;
         battle.unk53BF98 = 1;
-        game.PrepareDarkenedCopies();
+        game.DarkenByTint();
     }
 
     if (battle.unk4FF0BC[at] == 1)
