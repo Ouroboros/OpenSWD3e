@@ -306,8 +306,8 @@ int BattleHud::FreeAnimation(BattleAnimation& animation)
     return 0;
 }
 
-// swd3e.exe 0x004594F0: loads every frame picture of act `id` (run to its end) into the animation, each shifted right by
-// 640 / `divisor`; the wave mode of 'WT' is kept. `unused` is ignored. Always 0.
+// swd3e.exe 0x004594F0: loads every frame picture of act `id` (run to its end) into the animation, each shifted right
+// by 640 / `divisor`; the wave mode of 'WT' is kept. `unused` is ignored. Always 0.
 int BattleHud::LoadAnimation(BattleAnimation& animation, int, int x, int y, u16 id, u16 divisor)
 {
     std::array<u16, BattleAnimation::Pictures> loaded = {};

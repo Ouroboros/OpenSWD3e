@@ -1235,7 +1235,7 @@ void Menu::DrawBox(int x, int y, int width, int height, int mode, int red, int g
         static_cast<FillMode>(mode)
     );
     ActState& panel = owner.battleMessages.panelAct;
-    panel.id = BattleMessages::PanelAct;
+    panel.id = BattleMessages::MenuPanelAct;
     panel.action = 0;
     owner.acts.Run(panel);
     DrawWindowFrame(owner.painter, owner.archive, panel.frame, x, y, x + width, y + height, 0, kBoxBorder);
@@ -1311,7 +1311,7 @@ void Menu::InitActs()
     }
 
     this->face.action = kFaceAction;
-    panel.id = BattleMessages::PanelAct;
+    panel.id = BattleMessages::MenuPanelAct;
     panel.action = 0;
 }
 

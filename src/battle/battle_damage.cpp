@@ -186,7 +186,7 @@ void Game::EnemyStrike(BattleUnit& enemy, BattleUnit& target, u16 bits, u16& cha
 
     if ((bits & ActState::Strikes) != 0)
     {
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(this->battleState);
     }
 
     if (evaded != 0)
@@ -209,13 +209,13 @@ void Game::EnemyStrike(BattleUnit& enemy, BattleUnit& target, u16 bits, u16& cha
     {
         if (attackFirst)
         {
-            enemy.RaiseFlag26B8();
+            enemy.RaiseFlag26B8(this->battleState);
             enemy.PushTarget(BattleUnit::DamageTarget);
         }
         else
         {
             enemy.PushTarget(BattleUnit::DamageTarget);
-            enemy.RaiseFlag26B8();
+            enemy.RaiseFlag26B8(this->battleState);
         }
 
         enemy.SetDamageDigits(services, battle.lastDamage);

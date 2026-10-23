@@ -610,7 +610,7 @@ void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadab
         return;
     }
 
-    target.RaiseFlag26B8();
+    target.RaiseFlag26B8(services.state);
     battle.lastDamage = 0;
     i16 spirit = 0;
     i16 stamina = 0;
@@ -1573,7 +1573,7 @@ void BattleRole::FinishCommand()
 }
 
 // swd3e.exe 0x00481FF0: whether the role wins a roll against `level` (0 never): above the role's level 35 in 100;
-// 1..7 levels below it 70 in 100, 8..12 below 90 in 100, 13 or more always; the same level never
+// the same level or 1..7 levels below it 70 in 100, 8..12 below 90 in 100, 13 or more always
 int BattleRole::BeatsLevel(BattleServices& services, u16 level) const
 {
     if (level == 0)
@@ -1595,7 +1595,7 @@ int BattleRole::BeatsLevel(BattleServices& services, u16 level) const
         return services.random.Below(kLevelRoll) <= kNearChance ? 1 : 0;
     }
 
-    if (below >= 1 && below < kNearBelow)
+    if (below >= 0 && below < kNearBelow)
     {
         return services.random.Below(kLevelRoll) <= kCloseChance ? 1 : 0;
     }

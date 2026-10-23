@@ -14,6 +14,7 @@
 namespace swd3e
 {
 
+class BattleState;
 struct BattleServices;
 struct RoleRecord;
 struct Picture;
@@ -133,6 +134,8 @@ struct UnitRect
     i32 height = 0;
 };
 
+// The command of a unit (+0x1004, 0x2C bytes in swd3e): its skill script (SkillScript) under the names the battle
+// gives the fields.
 struct UnitCommand
 {
     // The bits of `actionFlags` (flag n is bit n).
@@ -165,23 +168,26 @@ struct UnitCommand
         FadesIn = 0x18,    // bits 3 and 4: a unit with autoControl fades in before it attacks (AttackFrame)
     };
 
-    i32 unk00 = 0;
-    u32 actionFlags = 0;  // swd32 +0x4 (0xD94)
-    i32 unk08 = 0;
-    u16 flags = 0;       // swd32 +0xC (0xD9C)
-    i16 value = 0;       // swd32 +0xE (0xD9E) the value of the skill (SkillValue)
-    u16 resistance = 0;  // swd32 +0x10 (0xDA0) the element 1..9 whose resistance scales the damage
-    u16 followAct = 0;   // swd32 +0x12 (0xDA2) the follow-up action's act
-    u16 castAct = 0;     // swd32 +0x14 (0xDA4)
-    u16 unk16 = 0;       // swd32 +0x16 (0xDA6)
-    u16 ailment = 0;     // swd32 +0x18 (0xDA8)
-    u16 element = 0;     // swd32 +0x1A (0xDAA)
-    u16 pose = 0;        // swd32 +0x1C (0xDAC) the pose of a defeat (its low byte)
-    i16 unk1E = 0;       // swd32 +0x1E (0xDAE)
-    u16 unk20 = 0;       // swd32 +0x20 (0xDB0)
-    u16 target = 0;      // swd32 +0x22 (0xDB2)
-    u8 unk24 = 0;        // swd32 +0x24 (0xDB4)
-    std::array<u8, 3> unk25 = {};
+    i32 unk00 = 0;        // +0x00 (unit +0x1004)
+    u32 actionFlags = 0;  // +0x04
+    i32 unk08 = 0;        // +0x08
+    u16 flags = 0;        // +0x0C
+    i16 value = 0;        // +0x0E the value of the skill (SkillValue)
+    u16 resistance = 0;   // +0x10 the element 1..9 whose resistance scales the damage
+    u16 followAct = 0;    // +0x12 the follow-up action's act
+    u16 castAct = 0;      // +0x14
+    u16 unk16 = 0;        // +0x16
+    u16 unk18 = 0;        // +0x18 (swd3e)
+    u16 ailment = 0;      // +0x1A
+    u16 element = 0;      // +0x1C
+    u16 pose = 0;         // +0x1E the pose of a defeat (its low byte)
+    i16 unk1E = 0;        // +0x20
+    u16 unk20 = 0;        // +0x22
+    u16 unk24 = 0;        // +0x24 (swd3e)
+    u16 target = 0;       // +0x26 the first value of CommandTarget
+    u16 unk28 = 0;        // +0x28 (swd3e) the second value of CommandTarget
+    u8 turns = 0;         // +0x2A
+    u8 unk2B = 0;         // +0x2B
 };
 
 class Database;
@@ -313,10 +319,10 @@ public:
     };
 
     // The pictures a hit pushes on its unit (PushTarget): the damage number, healing, a spirit or stamina gain.
-    static constexpr u16 DamageTarget = 0x235E;
-    static constexpr u16 HealTarget = 0x246F;
-    static constexpr u16 SpiritGainTarget = 0x2367;
-    static constexpr u16 StaminaGainTarget = 0x2366;
+    static constexpr u16 DamageTarget = 0x2389;
+    static constexpr u16 HealTarget = 0x237D;
+    static constexpr u16 SpiritGainTarget = 0x237E;
+    static constexpr u16 StaminaGainTarget = 0x237F;
     static constexpr u16 ReviveBit = 0x8000;  // CureEffects: revives a defeated party role
 
     static constexpr std::size_t Trails = 8;
@@ -375,7 +381,7 @@ public:
     int ClearIdleAction();
     int SetCommand(int command);
     void ClearFlag26B8();
-    void RaiseFlag26B8();
+    void RaiseFlag26B8(const BattleState& battle);
     int Flag26B8() const;
     int PushTarget(u16 target);
     int StartDefeat(int kind);
@@ -402,7 +408,7 @@ public:
     int Mirrored() const;
     bool IsDefeated() const;
     int StatusBit13() const;
-    bool IsAB8() const;
+    bool IsDefeatedOrDying() const;
     i32 Unk2B00() const;
     i32 Unk2B04() const;
     int StepTargetCount(int increase);
@@ -542,17 +548,17 @@ public:
     int AdvanceGauge(const BattleServices& services, int boost);
     ObjectRecord* Data() const;
     bool MarkBit11Clear() const;
-    int IsHeldOrHolding() const;
+    int IsHeld() const;
     u16 ActId() const;
     u16 DrainKind() const;
-    int StatusBit5Or8() const;
+    int StatusBit5() const;
     int SetValueAAC(int value);
     int SetFacingIfAble(int value);
     void SetNudge(u16 nudge, u16 saved);
-    bool CommandTarget(u16& target) const;
+    bool CommandTarget(u16& target, u16& second) const;
     int MarkBit1() const;
     bool MarkBit8Clear() const;
-    bool HasBlock38() const;
+    bool HasBlock30() const;
     int Word2A86Bit13() const;
     int Word2A86Bit12() const;
     bool RestartMainAct(i16 value, int force);

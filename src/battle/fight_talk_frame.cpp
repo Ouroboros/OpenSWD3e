@@ -832,8 +832,8 @@ int Game::FightTalkLift()
 }
 
 // Command 0xE of FightTalkFrame (inline in the original): the units listed after it (ended by 0xFFFF) are checked
-// (IsAB8); once all of them are, the talk jumps to the place after the list, otherwise it goes on past the list and
-// the place (and one more word).
+// (IsDefeatedOrDying); once all of them are, the talk jumps to the place after the list, otherwise it goes on past the
+// list and the place (and one more word).
 int Game::FightTalkAllDone()
 {
     FightTalk& talk = this->fightTalk;
@@ -854,7 +854,7 @@ int Game::FightTalkAllDone()
         talk.battleRuns = 0;
         this->SetTalkCommandUnit(unit);
 
-        if (this->TalkUnit(unit).IsAB8() && ++done == listed)
+        if (this->TalkUnit(unit).IsDefeatedOrDying() && ++done == listed)
         {
             talk.cursor += 2 * static_cast<std::size_t>(listed) + 2 * sizeof(u16);
             talk.Seek(talk.Word(0));
@@ -2248,7 +2248,7 @@ int Game::FightTalkDamage()
             static_cast<i16>(talk.unk53CE9A),
             static_cast<i16>(talk.unk53CE9C)
         );
-        role.RaiseFlag26B8();
+        role.RaiseFlag26B8(this->battleState);
         role.PushTarget(BattleUnit::DamageTarget);
         role.SetDamageDigits(this->battleServices, static_cast<i16>(talk.unk53CE98));
         role.StepTargetCount(1);

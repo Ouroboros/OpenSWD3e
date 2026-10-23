@@ -64,7 +64,7 @@ void BattleMessages::Attach(BattleServices& battle)
     this->services = &battle;
 }
 
-// The frame picture of the panels: act 0x233B, action 0.
+// The frame picture of the battle panels: act 0x2396, action 0.
 int BattleMessages::PanelFrame()
 {
     this->panelAct.id = BattleMessages::PanelAct;

@@ -297,8 +297,9 @@ bool HitFrame::DrawHitPictureAdvance(
     battle.hitPictureX = static_cast<i16>(x);
     battle.hitPictureY = static_cast<i16>(y);
     u16 speed = 0;
+    u16 second = 0;
 
-    if (attacker.CommandTarget(speed) == 1)
+    if (attacker.CommandTarget(speed, second) == 1)
     {
         u16 fromX = 0;
         u16 fromY = 0;
@@ -351,6 +352,7 @@ void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, i
     ActState& hit = battle.hitActs[at];
     i32& frames = battle.rippleFrames[at];
     u16 speed = 0;
+    u16 second = 0;
     u16 targetY = 0;
     ScenePainter painter(game.battleServices, scene);
 
@@ -368,7 +370,7 @@ void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, i
         }
     };
 
-    if (attacker.CommandTarget(speed) == 1)
+    if (attacker.CommandTarget(speed, second) == 1)
     {
         u16 fromX = 0;
         u16 fromY = 0;

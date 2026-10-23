@@ -14,7 +14,7 @@ public:
     static constexpr u32 NamedKind = 0x20;
     // ObjectData::kind bit of the machines (蟹精魔機, 羯忍幻機, ...).
     static constexpr u32 MachineKind = 0x800;
-    static constexpr u16 SmallMachineTypes = 0x15;
+    static constexpr u16 SmallMachineTypes = 0xA;
     static constexpr u16 NamedAgility = 6;
     static constexpr u16 NamedAttack = 0xA;
     // The acts of 撒旦 (mon.dat 0x1C) and 蚩尤 (0x2E) and the hit points they are given.

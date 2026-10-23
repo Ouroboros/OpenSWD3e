@@ -9,8 +9,13 @@ namespace swd3e
 {
 
 constexpr u16 kShadowAction = 0x24;
-constexpr u16 kDefeatedShadowAction = 0x33;
+constexpr u16 kDefeatedShadowAction = 0x27;
 constexpr u32 kFlag26B8 = 0x80000000u;
+constexpr u32 kFlag26B8Damage = 0x2000;       // set with kFlag26B8 when damage is pending (swd3e)
+constexpr u32 kFlag26B8Blocked = 0x4000000;   // the unit does not stagger (swd3e)
+constexpr u32 kFlag26B8Spell = 0x8000000;     // a hit under kStaggerSpellStatus outside a cast spell (swd3e)
+constexpr u32 kStaggerSpellStatus = 0x20000;  // status bit 17 (swd3e)
+constexpr u16 kStaggerBlockingEffect = 2;     // an effect with this bit keeps the unit from staggering (swd3e)
 constexpr int kFadePan = 0x10;
 constexpr int kPanCentre = 0x140;  // the sound pans right from the middle of the 640-pixel screen
 constexpr int kShadowShare = 3;    // the shadow is a third of the picture height high

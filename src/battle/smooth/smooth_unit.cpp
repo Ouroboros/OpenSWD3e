@@ -92,9 +92,9 @@ constexpr i16 kRecoilFadeEnd = -0x20;  // DrawRecoil: the tint at which a waitin
 constexpr i8 kAdditiveTrailFade = 3;   // an additive act's images fade by 3 a frame, the others by 1
 constexpr i16 kAdditiveTrailLevel = 0x18;
 constexpr i32 kQueuedMaxDamage = 0x270F;
-constexpr int kTrailBlue = -12;
+constexpr int kTrailBlue = -16;
 constexpr int kTrailCentre = 0xC;
-constexpr u8 kTrailDelay = 2;  // a new image every third frame
+constexpr u8 kTrailDelay = 1;  // a new image every second frame
 constexpr i16 kTrailLevel = 0xC;
 constexpr int kTrailSpacing = 0x1E;
 constexpr int kTrailTintBase = 0x1F;
@@ -2680,7 +2680,7 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
 
         if ((unit.command.actionFlags & UnitCommand::UnkAction1) == 0 && impact.id >= 0)
         {
-            target.RaiseFlag26B8();
+            target.RaiseFlag26B8(services.state);
             i16 spirit = 0;
             i16 stamina = 0;
             i32 damage = unit.HitDamage(services, target, spirit, stamina);
@@ -3102,7 +3102,7 @@ int UnitFrame::DrawAimedAdvance(
     if ((act.target & ActState::UnkTarget4) != 0)
     {
         act.target = 0;
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(services.state);
     }
 
     painter.SetSource(unit.picture->data.data());

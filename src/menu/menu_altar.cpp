@@ -315,7 +315,7 @@ void Menu::AltarEnter()
     this->background.id = kFaceAct;
     this->background.action = kPageBackground;
     ActState& panel = owner.battleMessages.panelAct;
-    panel.id = BattleMessages::PanelAct;
+    panel.id = BattleMessages::MenuPanelAct;
     panel.action = 0;
     altar.top = 0;
     altar.row = 0;

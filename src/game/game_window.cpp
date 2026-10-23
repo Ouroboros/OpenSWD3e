@@ -124,8 +124,8 @@ void Game::FreeItemLists()
     }
 }
 
-// swd3e.exe 0x00469810: the battle's projector released, the buffers of the ten battle roles and the eight enemies
-// freed
+// swd3e.exe 0x00469810: the battle's projector released, the buffers of the ten battle roles and the twenty
+// enemies freed
 void Game::ReleaseBattle()
 {
     this->battleState.projector.Release();

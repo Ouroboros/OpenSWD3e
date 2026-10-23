@@ -40,6 +40,9 @@ constexpr i32 kWaitState5 = 5;
 constexpr i32 kWaitState8 = 8;
 constexpr i32 kWaitState1B = 0x1B;
 constexpr i32 kWaitState1E = 0x1E;
+constexpr i32 kWaitState29 = 0x29;  // swd3e
+constexpr i32 kWaitState50 = 0x50;  // swd3e
+constexpr i32 kTurnState9 = 9;      // swd3e: prompts as kTurnState
 constexpr int kNoUnitPointer = 0x238C;
 constexpr int kUnitPointer = 0x238D;
 constexpr int kWaitPointer = 0x238E;
@@ -692,9 +695,9 @@ void Game::CheckBattleEnd()
 }
 
 // swd3e.exe 0x00469410: the pointer prompt of the battle state for its first 300 frames (always while unk53BDAC is
-// negative): kWaitPointer in states 1, 2, 4, 5, 8, 0x1B and 0x1E; in state 3 (with unk53BFBC) kTurnPointer or
-// kNoTurnPointer by turnPointer; otherwise kUnitPointer with a current unit, else kNoUnitPointer, or with a negative
-// unk53BDAC the effect kMarkEffect at (unk53BF50, unk53BF52) (unk53BF58 cleared once it ends).
+// negative): kWaitPointer in states 1, 2, 4, 5, 8, 0x1B, 0x1E, 0x29 and 0x50; in states 3 and 9 (with unk53BFBC)
+// kTurnPointer or kNoTurnPointer by turnPointer; otherwise kUnitPointer with a current unit, else kNoUnitPointer, or
+// with a negative unk53BDAC the effect kMarkEffect at (unk53BF50, unk53BF52) (unk53BF58 cleared once it ends).
 void Game::DrawBattlePrompt()
 {
     BattleState& battle = this->battleState;
@@ -717,6 +720,8 @@ void Game::DrawBattlePrompt()
         case kWaitState8:
         case kWaitState1B:
         case kWaitState1E:
+        case kWaitState29:
+        case kWaitState50:
         {
             const smooth::Scene::Pointer following(this->battleServices);
             hud.DrawEffectAt(kWaitPointer, 0, x, y, 0);
@@ -724,6 +729,7 @@ void Game::DrawBattlePrompt()
         }
 
         case kTurnState:
+        case kTurnState9:
             if (battle.unk53BFBC == 1)
             {
                 const smooth::Scene::Pointer following(this->battleServices);
@@ -829,7 +835,7 @@ int Game::CheckStoneSides()
     return 1;
 }
 
-// swd3e.exe 0x0046ACB0: the next slot record taken into `taken`: the records of held roles (IsHeldOrHolding) at the
+// swd3e.exe 0x0046ACB0: the next slot record taken into `taken`: the records of held roles (IsHeld) at the
 // front are passed over; a used record taken is removed (the later ones move up, the free ones after the used ones
 // cleared). The original also takes unit 7 for a role (the one before the first) and reads past the records when all
 // are held; both stop the search here.
@@ -843,7 +849,7 @@ void Game::TakeSlotRecord(BattleSlotRecord& taken)
         const i32 unit = battle.slotRecords[at].unit;
 
         if (unit < BattleState::FirstRoleUnit ||
-            this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeldOrHolding() != 1)
+            this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeld() != 1)
         {
             break;
         }
@@ -1212,8 +1218,7 @@ bool Game::CanSelectRole(int unit)
     {
         if (battle.roleOrder[at] == unit)
         {
-            return this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeldOrHolding() ==
-                   0;
+            return this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeld() == 0;
         }
     }
 
@@ -1322,7 +1327,7 @@ void Game::SelectRoleUnit(int unit)
             const i32 listed = battle.roleOrder[at];
 
             if (listed != 0 && listed == unit &&
-                this->battleRoles[static_cast<std::size_t>(listed - BattleState::FirstRoleUnit)].IsHeldOrHolding() != 1)
+                this->battleRoles[static_cast<std::size_t>(listed - BattleState::FirstRoleUnit)].IsHeld() != 1)
             {
                 battle.roleOrder[at] = battle.currentUnit;
                 battle.currentUnit = listed;
@@ -1488,7 +1493,7 @@ void Game::MenuLeft()
 // commands (kinds kFirstAccessoryCommand..kLastAccessoryCommand of the two accessory slots, named by
 // AccessoryCommandNames) after them, for battle role 0 in the party first the spirit pact (kSpiritPact, with
 // UnkPanel2) of the first party role's slots, otherwise of its own party role's. A role without MarkBit8Clear loses
-// command 2, one without HasBlock38 command 4; a MarkBit1 role keeps command 2 and guard only (the cursor on 2 unless
+// command 2, one without HasBlock30 command 4; a MarkBit1 role keeps command 2 and guard only (the cursor on 2 unless
 // its command is enabled).
 void Game::BuildCommandMenu()
 {
@@ -1546,7 +1551,7 @@ void Game::BuildCommandMenu()
         battle.commandEnabled[1] = 0;
     }
 
-    if (role.HasBlock38() == 0)
+    if (role.HasBlock30() == 0)
     {
         battle.commandEnabled[3] = 0;
     }
@@ -4710,7 +4715,7 @@ void Game::ConfirmKey()
     battle.anyStateRole = kNoPanelRole;
     BattleRole& role = this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
 
-    if (role.IsHeldOrHolding() == 1)
+    if (role.IsHeld() == 1)
     {
         return;
     }
@@ -4900,9 +4905,8 @@ void Game::BattleKeys()
         }
 
         // Without a current unit the original reads the role 8 before the first: taken as not held.
-        const bool held =
-            unit >= BattleState::FirstRoleUnit &&
-            this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeldOrHolding() == 1;
+        const bool held = unit >= BattleState::FirstRoleUnit &&
+                          this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeld() == 1;
 
         if (held || (static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1 && battle.unk4A7626 != kNoTalkRole))
         {
@@ -5165,7 +5169,7 @@ void Game::BattleKeys()
 // swd32.exe 0x00464270 (unmatched in swd3e): the battle menu of a frame (not in battle state 0x67; without a current
 // unit only in the auto
 // battle). A held current role drops its command and gives the panel to the next role in roleOrder not held; one
-// that may not act (StatusBit5Or8) takes its turn at once. By battle state: 1 the command menu with the role's name
+// that may not act (StatusBit5) takes its turn at once. By battle state: 1 the command menu with the role's name
 // over the tall gauge (grown for six frames at the pointer, or at kMenuHome after kMenuIdleFrames or with the pointer
 // near the edge), 2, 4, 8, 0x1B and 0x1E the lists (with a scroll bar past seven rows), 3 the aim pointers, 5 the
 // 佈置護駕 panel, 6 the retreat, 7 the 控制 menu.
@@ -5193,7 +5197,7 @@ void Game::DrawBattleMenu()
 
     i32 nameIndex = battle.currentUnit - BattleState::FirstRoleUnit;
 
-    if (BattleRole* role = currentRole(); role != nullptr && role->IsHeldOrHolding() == 1)
+    if (BattleRole* role = currentRole(); role != nullptr && role->IsHeld() == 1)
     {
         battle.listName = {};
         battle.result = 0;
@@ -5224,7 +5228,7 @@ void Game::DrawBattleMenu()
                 break;
             }
 
-            if (this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeldOrHolding() != 1)
+            if (this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeld() != 1)
             {
                 next = battle.currentUnit;
                 battle.currentUnit = unit;
@@ -5233,7 +5237,7 @@ void Game::DrawBattleMenu()
         }
     }
 
-    if (BattleRole* role = currentRole(); role != nullptr && role->StatusBit5Or8() == 1)
+    if (BattleRole* role = currentRole(); role != nullptr && role->StatusBit5() == 1)
     {
         this->StartRoleTurn(battle.currentUnit);
         battle.currentUnit = 0;

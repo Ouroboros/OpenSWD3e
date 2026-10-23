@@ -230,7 +230,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
 
     if ((attack.target & ActState::UnkTarget4) != 0)
     {
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(services.state);
         attack.target = 0;
         role.stage |= BattleUnit::FollowingUp;
     }
@@ -645,7 +645,7 @@ int RoleFrame::StepBackAdvance(BattleServices& services, int mode, Scene& scene)
 
     role.glowLevel = mode == 0 ? kStandBackEnd : kStepBackEnd;
 
-    if (role.IsHeldOrHolding() == 1)
+    if (role.IsHeld() == 1)
     {
         if (role.fadeLevel <= role.glowLevel)
         {
@@ -1212,7 +1212,7 @@ int RoleFrame::DirectAttackAdvance(BattleServices& services, BattleUnit& target,
     {
         act.target = 0;
         role.stage = BattleUnit::FollowingUp;
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(services.state);
         i16 spirit = 0;
         i16 stamina = 0;
         i32 damage = role.HitDamage(services, target, spirit, stamina);
@@ -1565,7 +1565,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
 
         if ((charge.target & ActState::Strikes) != 0)
         {
-            target.RaiseFlag26B8();
+            target.RaiseFlag26B8(services.state);
             charge.target = 0;
         }
 
@@ -1772,7 +1772,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
         {
             role.unk2F0C = 0;
             role.stage = kBoomerangReturning;
-            target.RaiseFlag26B8();
+            target.RaiseFlag26B8(services.state);
         }
     }
 
@@ -2083,7 +2083,7 @@ int RoleFrame::BeamSpellFrameAdvance(BattleServices& services, BattleUnit& targe
         if (UnitFrame(role)
                 .Fly(services, target, role.slotActs[0], 0, kRiseAct, fromX, fromY, kSpeedingFlight, 0, scene) == 1)
         {
-            target.RaiseFlag26B8();
+            target.RaiseFlag26B8(services.state);
             i16 spirit = 0;
             i16 stamina = 0;
             i32 damage = role.HitDamage(services, target, spirit, stamina);

@@ -39,6 +39,7 @@ constexpr int kListBoxDrop = 0x24;
 constexpr int kListBoxWidth = 0xBE;
 constexpr int kListBoxHeight = 0x98;
 constexpr int kListShade = 4;
+constexpr int kTabsListShade = 3;  // swd3e: the box under the page tabs (DrawListTabs)
 constexpr int kListFrameInset = 6;
 constexpr int kListFrameTop = 0x28;
 constexpr int kListFrameRight = 0xBA;
@@ -372,8 +373,8 @@ void TurnFrame::DrawListTabsAdvance(int x, int y, Scene& scene)
         kListBoxWidth,
         kListBoxHeight,
         0,
-        kListShade,
-        kListShade,
+        kTabsListShade,
+        kTabsListShade,
         FillMode::Quarter,
         scene);
     WindowFrame(

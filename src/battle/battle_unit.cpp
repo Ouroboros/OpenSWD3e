@@ -49,7 +49,7 @@ constexpr int kRoleGaugeBase = 0x32;             // a party role starts a turn a
 constexpr u32 kRoleGaugeSpread = 0x8C;
 
 constexpr i16 kSpeedMask = 0x7FFF;  // the speed of a command with bit 15 set
-constexpr i32 kUnkBlock38 = 0x38;
+constexpr i32 kUnkBlock30 = 0x30;
 constexpr u32 kCommandStatusBit = 0x10000000;  // command +0x08 bit 28
 constexpr u16 kAccessoryValueMask = 0x3FFF;
 constexpr u32 kHealRoll = 0xA;         // ChooseHeal: a roll of 0..4 picks the first way, 5..9 the second
@@ -166,7 +166,7 @@ i16 BattleUnit::GetOrigin(u16& x, u16& y) const
 }
 
 // swd3e.exe 0x0048B3A0: the rectangle of the shadow picture (action 0x24 of the unit's act, or the main action's,
-// 0x33 while defeated) under the unit
+// 0x27 while defeated) under the unit
 void BattleUnit::GetShadowRect(BattleServices& services, UnitRect& rect)
 {
     if (this->defeated == 1 && this->kind == 0)
@@ -337,22 +337,33 @@ void BattleUnit::ClearFlag26B8()
     this->unk26B8 &= ~kFlag26B8;
 }
 
-// swd32.exe 0x00478780 (unmatched in swd3e): not while status bit 25 is set; raising it again restarts the stagger
-// (hurtStep, +0x2A78)
-// and the attack act
-void BattleUnit::RaiseFlag26B8()
+// swd3e.exe 0x0048B690: a hit staggers the unit unless status bit 25 or 2 is set, an effect with bit 1 runs or flag
+// 26 of +0x2BC0 is set: under status bit 17 outside a cast spell only flag 27 is set; otherwise flag 13 marks pending
+// damage, the stagger (hurtStep) restarts and flag 31 is set
+void BattleUnit::RaiseFlag26B8(const BattleState& battle)
 {
-    if ((this->status & kRaiseBlocked) != 0)
+    if ((this->status & kRaiseBlocked) != 0 || this->HasEffectBits(kStaggerBlockingEffect) == 1)
     {
         return;
     }
 
-    if (static_cast<i32>(this->unk26B8) < 0)
+    if ((this->status & BattleUnit::UnkStatus4) != 0 || (this->unk26B8 & kFlag26B8Blocked) != 0)
     {
-        this->hurtStep = 0;
-        this->attackAct.position = 0;
+        return;
     }
 
+    if ((this->status & kStaggerSpellStatus) != 0 && (battle.spellStage & BattleState::SpellCast) == 0)
+    {
+        this->unk26B8 |= kFlag26B8Spell;
+        return;
+    }
+
+    if (this->pendingDamage != 0)
+    {
+        this->unk26B8 |= kFlag26B8Damage;
+    }
+
+    this->hurtStep = 0;
     this->unk26B8 |= kFlag26B8;
 }
 
@@ -736,10 +747,10 @@ int BattleUnit::StatusBit13() const
     return (this->marks & BattleUnit::DefeatedMark) != 0 ? 1 : 0;
 }
 
-// swd3e.exe 0x00490FD0
-bool BattleUnit::IsAB8() const
+// swd3e.exe 0x00490FD0: defeated, or its defeat under way
+bool BattleUnit::IsDefeatedOrDying() const
 {
-    return this->defeated == 1;
+    return this->defeated == 1 || this->dying == 1;
 }
 
 // swd3e.exe 0x00490FF0: +1 (capped at 0x22) or -1 on the target count
@@ -1717,7 +1728,7 @@ bool BattleUnit::ApplyPendingDamage(BattleServices& services)
 
     if ((this->pendingDamage & BattleUnit::Healing) == 0)
     {
-        this->RaiseFlag26B8();
+        this->RaiseFlag26B8(services.state);
     }
 
     const int result = this->Damage(services, static_cast<i16>(this->pendingDamage), 0, 0);
@@ -2357,13 +2368,16 @@ SkillScript BattleUnit::CommandSkill() const
     skill.unk10 = MakeWords(this->command.followAct, this->command.resistance);
     skill.unk14 = this->command.castAct;
     skill.unk16 = this->command.unk16;
+    skill.unk18 = this->command.unk18;
     skill.ailment = this->command.ailment;
     skill.element = this->command.element;
     skill.unk1E = this->command.pose;
     skill.unk20 = static_cast<u16>(this->command.unk1E);
     skill.unk22 = this->command.unk20;
-    skill.unk28 = this->command.target;
-    skill.turns = this->command.unk24;
+    skill.unk24 = this->command.unk24;
+    skill.unk26 = this->command.target;
+    skill.unk28 = this->command.unk28;
+    skill.turns = this->command.turns;
     return skill;
 }
 
@@ -2382,13 +2396,16 @@ void BattleUnit::LoadCommand(Database& database, u16 id)
     this->command.followAct = HighWord(skill.unk10);
     this->command.castAct = skill.unk14;
     this->command.unk16 = skill.unk16;
+    this->command.unk18 = skill.unk18;
     this->command.ailment = skill.ailment;
     this->command.element = skill.element;
     this->command.pose = skill.unk1E;
     this->command.unk1E = static_cast<i16>(skill.unk20);
     this->command.unk20 = skill.unk22;
-    this->command.target = skill.unk28;
-    this->command.unk24 = skill.turns;
+    this->command.unk24 = skill.unk24;
+    this->command.target = skill.unk26;
+    this->command.unk28 = skill.unk28;
+    this->command.turns = skill.turns;
 }
 
 // swd3e.exe 0x0049D3B0
@@ -2403,15 +2420,10 @@ bool BattleUnit::MarkBit11Clear() const
     return (this->marks & BattleUnit::UnkMark800) == 0;
 }
 
-// swd3e.exe 0x00495C10: held (by a mark) or holding
-int BattleUnit::IsHeldOrHolding() const
+// swd3e.exe 0x00495C10: held (by the mark)
+int BattleUnit::IsHeld() const
 {
-    if ((this->marks & BattleUnit::Held) != 0)
-    {
-        return 1;
-    }
-
-    return this->held;
+    return (this->marks & BattleUnit::Held) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00495C00
@@ -2441,14 +2453,9 @@ u16 BattleUnit::DrainKind() const
 }
 
 // swd3e.exe 0x0049A950
-int BattleUnit::StatusBit5Or8() const
+int BattleUnit::StatusBit5() const
 {
-    if ((this->status & BattleUnit::UnkStatus20) != 0)
-    {
-        return 1;
-    }
-
-    return (this->status & BattleUnit::UnkStatus100) != 0 ? 1 : 0;
+    return (this->status & BattleUnit::UnkStatus20) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x0049B160
@@ -2478,15 +2485,16 @@ void BattleUnit::SetNudge(u16 nudge, u16 saved)
     this->drawAtSaved = saved;
 }
 
-// swd3e.exe 0x0049A970: the target of a command that names one (flag 1)
-bool BattleUnit::CommandTarget(u16& target) const
+// swd3e.exe 0x0049A970: the two values of a command that names a target (flag 1)
+bool BattleUnit::CommandTarget(u16& target, u16& second) const
 {
-    if ((this->command.flags & 1) == 0)
+    if ((this->command.flags & UnitCommand::TargetsUnit) == 0)
     {
         return false;
     }
 
     target = this->command.target;
+    second = this->command.unk28;
     return true;
 }
 
@@ -2502,10 +2510,10 @@ bool BattleUnit::MarkBit8Clear() const
     return (this->marks & BattleUnit::UnkMark100) == 0;
 }
 
-// swd3e.exe 0x00499EB0: the role's battle block starts with 0x38
-bool BattleUnit::HasBlock38() const
+// swd3e.exe 0x00499EB0: the role's battle block starts with 0x30
+bool BattleUnit::HasBlock30() const
 {
-    return *this->roleBlock == kUnkBlock38;
+    return *this->roleBlock == kUnkBlock30;
 }
 
 // swd3e.exe 0x00482350
@@ -2551,10 +2559,10 @@ int BattleUnit::CommandStatusBit() const
 void BattleUnit::CommandValues(u16& value, u16& turns) const
 {
     value = this->command.unk20;
-    turns = this->command.unk24;
+    turns = this->command.turns;
 }
 
-// swd3e.exe 0x004892D0: a machine enemy (kind 0x800, like 蟹精魔機) of a type up to 0x15, never a named one
+// swd3e.exe 0x004892D0: a machine enemy (kind 0x800, like 蟹精魔機) of a type up to 0xA, never a named one
 bool BattleUnit::IsSmallMachine() const
 {
     const u32 kind = this->data->data.kind;
@@ -2609,7 +2617,7 @@ i16 BattleUnit::AccessoryProficiency(u16 kind, CounterList& proficiency)
     return static_cast<i16>(this->proficiency);
 }
 
-// swd3e.exe 0x004893C0: the object's words +0x72..+0x76 set where non-zero (the fourth value goes to +0x74 as well)
+// swd3e.exe 0x004893C0: the object's words +0x78..+0x7C set where non-zero (the fourth value goes to +0x7A as well)
 void BattleUnit::SetWords72(i16 first, i16 second, i16 third, i16 fourth)
 {
     ObjectData& object = this->data->data;
@@ -2844,7 +2852,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         return -1;
     }
 
-    if (!anyHeal && target.IsHeldOrHolding() == 1)
+    if (!anyHeal && target.IsHeld() == 1)
     {
         target.CureEffects(services, BattleUnit::UnkStatus8);
     }
@@ -2887,7 +2895,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
 
             if (target.AddAilment(services, this->CommandSkill()) == 1)
             {
-                target.RaiseFlag26B8();
+                target.RaiseFlag26B8(services.state);
             }
             else if (this->command.value == 0)
             {
@@ -3036,7 +3044,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
                         this->command.ailment = SkillScript::UnkAilment1;
                     }
 
-                    this->command.unk24 = kStrongTurns;
+                    this->command.turns = kStrongTurns;
                     target.AddAilment(services, this->CommandSkill());
                     pose = kStrongPose;
                     break;
@@ -3309,7 +3317,7 @@ void BattleUnit::AimAction(BattleServices& services, BattleUnit& target, ActStat
     if ((act.target & ActState::UnkTarget4) != 0)
     {
         act.target = 0;
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(services.state);
     }
 }
 
@@ -3335,9 +3343,9 @@ int BattleUnit::DrawAimed(BattleServices& services, BattleUnit& target, ActState
     return result;
 }
 
-// swd3e.exe 0x00498DF0: one frame of the trail: every third frame the images move back one place and the current
+// swd3e.exe 0x00498DF0: one frame of the trail: every second frame the images move back one place and the current
 // picture (`frame`, `picture`, `mode` at x, y) is pushed in front at level 12 (24 when additive). Each image is drawn
-// at its own y and fades by fadeStep (gone at 0): additive ones tinted by their level (blue fixed at -12), the others
+// at its own y and fades by fadeStep (gone at 0): additive ones tinted by their level (blue fixed at -16), the others
 // translucent at their level with the trail's tint under them while above 1. The original places the image at
 // 12 + 30 per place for direction 0 (the image's x cancels), at x + y - 12 - 30 per place for Left, at x for InPlace.
 void BattleUnit::DrawTrail(
@@ -4578,7 +4586,7 @@ void BattleUnit::MoveIdle(BattleServices& services)
             this->nudge = 0;
             this->drawAtSaved = 0;
             this->unk2B10 = 1;
-            this->RaiseFlag26B8();
+            this->RaiseFlag26B8(services.state);
         }
     }
 }
@@ -4633,7 +4641,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
 
     bool rollIdle = true;
 
-    if (this->StatusBit5Or8() == 1)
+    if (this->StatusBit5() == 1)
     {
         choice = kStatusChoice;
     }
@@ -4928,7 +4936,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
         return 0;
     }
 
-    if (this->restoreHitPoints == 0 && target.IsHeldOrHolding() == 1)
+    if (this->restoreHitPoints == 0 && target.IsHeld() == 1)
     {
         target.CureEffects(services, BattleUnit::UnkStatus8);
     }
@@ -4949,7 +4957,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
         {
             if (target.AddAilment(services, this->CommandSkill()) == 1)
             {
-                target.RaiseFlag26B8();
+                target.RaiseFlag26B8(services.state);
 
                 if ((ailment & kSacrificeAilment) != 0)
                 {
@@ -4962,7 +4970,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
             }
             else if (this->command.value != 0 || this->unk29A4 != 0)
             {
-                target.RaiseFlag26B8();
+                target.RaiseFlag26B8(services.state);
             }
             else
             {

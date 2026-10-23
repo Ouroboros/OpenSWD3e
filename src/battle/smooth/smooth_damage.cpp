@@ -139,7 +139,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
         return 0;
     }
 
-    target.RaiseFlag26B8();
+    target.RaiseFlag26B8(this->game.battleState);
     i16 spirit = 0;
     i16 stamina = 0;
     i32 damage = role.HitDamage(services, target, spirit, stamina);
@@ -233,7 +233,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     {
         magic.target = 0;
         role.stage |= BattleUnit::FollowingUp;
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(this->game.battleState);
     }
 
     ActState& follow = role.slotActs[0];
@@ -334,7 +334,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
 
     if ((follow.target & ActState::UnkTarget4) != 0)
     {
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(this->game.battleState);
         follow.target = 0;
     }
 
@@ -554,7 +554,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     {
         enemy.stage |= BattleUnit::FollowingUp;
         attack.target = 0;
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(this->game.battleState);
     }
 
     if ((attack.target & kEnemyStrikeBits) != 0)

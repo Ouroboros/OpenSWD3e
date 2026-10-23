@@ -94,7 +94,7 @@ constexpr i32 kFacingChanged = 0x80;
 
 }  // namespace
 
-// swd3e.exe 0x00465AB0: one frame of every unit in the draw order: a role (units 8 and up, below the role count)
+// swd3e.exe 0x00465AB0: one frame of every unit in the draw order: a role (units 20 and up, below the role count)
 // runs RoleFrame, an enemy below the enemy count EnemyFrame.
 void Game::UpdateUnits()
 {

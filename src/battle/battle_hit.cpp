@@ -351,13 +351,13 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
 
     if ((hit.target & ActState::UnkTarget4) != 0)
     {
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(this->battleState);
         hit.target = 0;
     }
 
     if ((hit.target & ActState::Strikes) != 0)
     {
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(this->battleState);
     }
     else if ((hit.target & ActState::UnkTarget10) == 0)
     {
@@ -524,7 +524,9 @@ void Game::PlaceAllHit(BattleUnit& attacker, int width, int index, u16& delay)
     battle.hitPictureX = static_cast<i16>(x);
     battle.hitPictureY = static_cast<i16>(y);
 
-    if (attacker.CommandTarget(delay) != 1)
+    u16 second = 0;
+
+    if (attacker.CommandTarget(delay, second) != 1)
     {
         return;
     }
@@ -591,7 +593,7 @@ void Game::RaiseAllHit(BattleUnit& target, int all)
 
     if (all != 1)
     {
-        target.RaiseFlag26B8();
+        target.RaiseFlag26B8(this->battleState);
         return;
     }
 
@@ -603,7 +605,7 @@ void Game::RaiseAllHit(BattleUnit& target, int all)
 
             if (role.autoControl != 1 && role.guestControl != 1 && !role.IsDefeated())
             {
-                role.RaiseFlag26B8();
+                role.RaiseFlag26B8(this->battleState);
             }
         }
 
@@ -616,7 +618,7 @@ void Game::RaiseAllHit(BattleUnit& target, int all)
 
         if (!enemy.IsDefeated())
         {
-            enemy.RaiseFlag26B8();
+            enemy.RaiseFlag26B8(this->battleState);
         }
     }
 }
@@ -680,7 +682,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
     {
         if ((hit.target & ActState::Strikes) != 0)
         {
-            target.RaiseFlag26B8();
+            target.RaiseFlag26B8(this->battleState);
             battle.quakePhase = 0;
         }
 
@@ -720,7 +722,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
 
                 if ((hit.target & ActState::Strikes) != 0)
                 {
-                    role.RaiseFlag26B8();
+                    role.RaiseFlag26B8(this->battleState);
                 }
 
                 damage = attacker.EnemyHitDamage(this->battleServices, role);
@@ -758,7 +760,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
 
         if ((hit.target & ActState::Strikes) != 0)
         {
-            enemy.RaiseFlag26B8();
+            enemy.RaiseFlag26B8(this->battleState);
         }
 
         const i16 damage = attacker.HitDamage(this->battleServices, enemy, battle.spiritDamage, battle.staminaDamage);
@@ -1148,7 +1150,7 @@ int Game::EnemyHitFrame(int enemy)
                 this->FlashFrameWhite();
             }
 
-            if (role.IsHeldOrHolding() == 1 && target == battle.currentUnit - BattleState::FirstRoleUnit)
+            if (role.IsHeld() == 1 && target == battle.currentUnit - BattleState::FirstRoleUnit)
             {
                 battle.result = 0;
             }
@@ -1205,7 +1207,7 @@ int Game::EnemyHitFrame(int enemy)
 
         this->ApplyDrain(attacker, role);
 
-        if (role.IsHeldOrHolding() == 1 && target == battle.currentUnit - BattleState::FirstRoleUnit)
+        if (role.IsHeld() == 1 && target == battle.currentUnit - BattleState::FirstRoleUnit)
         {
             battle.result = 0;
         }
@@ -1718,9 +1720,9 @@ int Game::EnemyFrame(int enemy)
         {
             if (battle.actingUnit == enemy)
             {
-                if (unit.IsHeldOrHolding() == 1 || unit.IsDefeated())
+                if (unit.IsHeld() == 1 || unit.IsDefeated())
                 {
-                    if (unit.IsHeldOrHolding() == 1)
+                    if (unit.IsHeld() == 1)
                     {
                         battle.heldEnemy = enemy + 1;
                     }
@@ -1857,7 +1859,7 @@ void Game::EnemyGatherSweep(BattleEnemy& unit)
 }
 
 // The target of an acting enemy in EnemyFrame (inline in the original): a role at random (not autoControl, not a guest,
-// standing), then ChooseHeal may aim it at itself; an enemy kept from acting (StatusBit5Or8) with other enemies
+// standing), then ChooseHeal may aim it at itself; an enemy kept from acting (StatusBit5) with other enemies
 // standing aims at another enemy at random instead. The original draws for ever when nothing qualifies.
 void Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
 {
@@ -1883,7 +1885,7 @@ void Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
         Hang();
     };
 
-    if (unit.StatusBit5Or8() == 0)
+    if (unit.StatusBit5() == 0)
     {
         randomRole();
 
@@ -2084,7 +2086,7 @@ void Game::ReturnHeldEscort(BattleRole& role, std::size_t index, bool dropComman
     BattleState& battle = this->battleState;
     u16& escort = battle.escortCalled[index + static_cast<std::size_t>(BattleState::FirstRoleUnit)];
 
-    if (role.IsHeldOrHolding() != 1 || escort == 0)
+    if (role.IsHeld() != 1 || escort == 0)
     {
         return;
     }
@@ -2191,7 +2193,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
     }
 
     unit.PushTarget(BattleUnit::DamageTarget);
-    unit.RaiseFlag26B8();
+    unit.RaiseFlag26B8(this->battleState);
     unit.SetDamageDigits(services, battle.lastDamage);
     unit.StepTargetCount(1);
 

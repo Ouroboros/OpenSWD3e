@@ -1145,7 +1145,7 @@ int Game::PoseSweepFrame(BattleRole& unit)
             }
 
             battle.hitDamage += battle.lastDamage;
-            enemy.RaiseFlag26B8();
+            enemy.RaiseFlag26B8(this->battleState);
             enemy.SetDamageDigits(services, battle.hitDamage);
             enemy.StepTargetCount(1);
 
@@ -1352,7 +1352,7 @@ int Game::AccessoryBuffFrame(BattleRole& unit, int target, int command)
 
         buff(kSlowAccessory, SkillScript::AttackDown);
         enemy.AddBuff(services, skill);
-        enemy.RaiseFlag26B8();
+        enemy.RaiseFlag26B8(this->battleState);
     }
     else
     {
@@ -1417,7 +1417,7 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
     battle.unk53BDAC = kTimerStarted;
     battle.unk53BF58 = 1;
     battle.hitDamage = unit.HitDamage(services, enemy, battle.spiritDamage, battle.staminaDamage);
-    enemy.RaiseFlag26B8();
+    enemy.RaiseFlag26B8(this->battleState);
     enemy.SetDamageDigits(services, battle.hitDamage);
     enemy.StepTargetCount(1);
 
@@ -1513,7 +1513,7 @@ int Game::RoleFrame(int role)
 
                 if (free != battle.roleOrder.end())
                 {
-                    if (unit.StatusBit5Or8() == 1)
+                    if (unit.StatusBit5() == 1)
                     {
                         this->StartRoleTurn(role + BattleState::FirstRoleUnit);
                     }
@@ -1535,7 +1535,7 @@ int Game::RoleFrame(int role)
 
         const auto queued = static_cast<std::size_t>(battle.roleOrder[index] - BattleState::FirstRoleUnit);
 
-        if (this->battleRoles[queued].IsHeldOrHolding() != 1)
+        if (this->battleRoles[queued].IsHeld() != 1)
         {
             battle.currentUnit = battle.roleOrder[index];
             std::copy(
@@ -1548,7 +1548,7 @@ int Game::RoleFrame(int role)
         }
     }
 
-    if (battle.unk524268[at] == 0 && unit.IsHeldOrHolding() == 0 && unit.GetValueAB4() == 1 && unit.IsAE4Clear() &&
+    if (battle.unk524268[at] == 0 && unit.IsHeld() == 0 && unit.GetValueAB4() == 1 && unit.IsAE4Clear() &&
         battle.hitsAllRoles == 0 && battle.unk53BF64 == 0)
     {
         if (battle.unk4A7626 != kNoUnit && static_cast<i32>(battle.enemyCount) - battle.enemiesGone <= 1)

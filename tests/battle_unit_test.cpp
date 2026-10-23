@@ -114,7 +114,7 @@ struct Services
 
 constexpr int kOtherCommand = 9;  // a command that goes to commandA
 constexpr int kHalf = 2;
-constexpr int kGaugePixels = 62;            // the length of a full gauge bar
+constexpr int kGaugePixels = 62;             // the length of a full gauge bar
 constexpr swd3e::u16 kResetClearsGuard = 8;  // the ResetTurn mode bit that ends the guard
 constexpr swd3e::i32 kSlotAct = 5;
 constexpr std::size_t kTurnSlot = 2;  // one of the first eight slot acts, which ResetTurn clears
@@ -128,6 +128,7 @@ constexpr swd3e::i16 kMoveStep = 5;
 constexpr swd3e::i16 kHitPoints = 99;
 constexpr swd3e::u8 kFallbackDefeatPose = 6;     // the pose of a unit defeated without one
 constexpr swd3e::u32 kRaiseBlocked = 0x2000000;  // status bit 25 blocks RaiseFlag26B8
+constexpr swd3e::u32 kFlag26B8Damage = 0x2000;   // set by RaiseFlag26B8 with damage pending (swd3e)
 constexpr swd3e::u8 kEvadeSkill = 9;
 constexpr swd3e::u8 kSureEvadeStreak = 0x18;  // failed rolls after which the evasion succeeds
 constexpr swd3e::u16 kSureChance = 10;        // a chance of ten in ten
@@ -238,11 +239,13 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     CHECK_EQ(role.hitPoints, 0);
     CHECK_EQ(unit.defeatPose, kFallbackDefeatPose);
     unit.status = kRaiseBlocked;
-    unit.RaiseFlag26B8();
+    unit.RaiseFlag26B8(all.state);
     CHECK_EQ(unit.Flag26B8(), 0);
     unit.status = 0;
-    unit.RaiseFlag26B8();
+    unit.pendingDamage = 1;
+    unit.RaiseFlag26B8(all.state);
     CHECK_EQ(unit.Flag26B8(), 1);
+    CHECK((unit.unk26B8 & kFlag26B8Damage) != 0);
 }
 
 TEST_CASE("battle unit: evasion, vitals and scaling")
@@ -478,7 +481,7 @@ namespace
 
 constexpr swd3e::u16 kEnemyLevel = 20;
 constexpr swd3e::u8 kCatchChance = 10;  // unk91: a roll of 0..9 below it always catches
-constexpr int kNearAbove = 5;          // exactly this many levels above uses unk91
+constexpr int kNearAbove = 5;           // exactly this many levels above uses unk91
 constexpr int kNearerAbove = 4;
 constexpr int kMidAbove = 6;   // 6..10 above: 5 in 10
 constexpr int kFarAbove = 11;  // more than 10 above: 8 in 10
