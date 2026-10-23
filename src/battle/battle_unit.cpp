@@ -68,6 +68,24 @@ constexpr int kRippleLeft = 0x50;  // the ripple is moved this far left of and k
 constexpr int kRippleUp = 0x78;
 constexpr std::size_t kRippleSlot = 10;
 constexpr i32 kRippleAct = 0x17E7;
+constexpr u8 kRippleFrames = 0x1E;        // the ripple of StartRipple ends past these frames (DrawEffects)
+constexpr i32 kSlowedEffectAct = 0x1C97;  // DrawEffects: the act over a slowed unit
+constexpr i32 kStatus100Act = 0x1C96;     // and over a unit of status bit 8
+constexpr u16 kWipeStep = 8;              // the stone and freeze overlays wipe in 8 lines a frame from the bottom
+constexpr u16 kWipeLines = 0x7FFF;
+constexpr int kStoneTintGreen = 0xF;  // the tint of a wiping stone or freeze overlay
+constexpr int kStoneTintBlue = 0x1E;
+constexpr int kFreezeGreenStep = 8;  // the freeze tint by the share of its turns left (0 or 1)
+constexpr int kFreezeGreen = 7;
+constexpr int kFreezeBlueStep = 0x14;
+constexpr int kFreezeBlue = 0xA;
+constexpr int kPoisonTint = -12;
+constexpr int kLastingPoisonGreen = -32;
+constexpr int kLastingPoisonTint = -1;
+constexpr int kStatus400Tint = -20;        // darkened by the share of its turns left
+constexpr float kStatus400Scale = -20.0F;  // 0x004AAE40
+constexpr i16 kTurnsNumbers = 0x2377;      // the turns of a status 0x400 effect, shown 0x14 right of the unit
+constexpr int kTurnsLeft = 0x14;
 constexpr int kEnrageEvent0 = 0;  // CountEnrageEvent
 constexpr int kEnrageEvent1 = 1;
 constexpr int kEnrageEvent2 = 2;
@@ -1142,6 +1160,19 @@ constexpr u16 kFarCatch = 8;
 constexpr u16 kNearCatch = 5;
 
 // HurtFrame.
+constexpr i32 kHurtAction = 0x26;
+constexpr i32 kHurtGuardAction = 0x2B;
+constexpr i32 kKnockBackAction = 0x3A;  // the hurt pose of a unit of unk3070
+constexpr int kKnockBackFlash = 0xF;    // the red of its flash
+constexpr u16 kHurtSteps = 0xC;         // the stagger lasts past this step
+constexpr u16 kNudgedSteps = 0x16;      // and to this one for a unit nudged in place
+
+// An entry of a stagger table by the step; past the data the tables run on into, 0 (deviations.md).
+template <typename T, std::size_t Size>
+int StaggerValue(const std::array<T, Size>& table, u16 step)
+{
+    return step < Size ? static_cast<int>(table[step]) : 0;
+}
 
 // IdleFrame.
 constexpr u16 kShaken = 1;          // SetNudge: the unit is nudged in place
@@ -1165,7 +1196,7 @@ constexpr u32 kFlag26B8Pulse = 0x200000;    // a red pulse over the unit (DrawPu
 constexpr u32 kFlag26B8Tinted = kFlag26B8Bit19;
 constexpr u32 kPictureBits = Painter::RleSource | Painter::Mirror | Painter::Flip;
 constexpr u32 kWhiteColorPair = 0xFFFFFFFF;
-constexpr int kAutoTint = -10;  // a unit acting by itself is drawn with this tint
+constexpr int kAutoTint = -10;     // a unit acting by itself is drawn with this tint
 constexpr i32 kSparkAct = 0x1C2A;  // the act over a unit of command 6 or 0x50
 constexpr int kGoldNumbers = 0x2377;
 constexpr int kGoldLeft = 0x50;
@@ -3913,18 +3944,295 @@ int BattleUnit::CatchRoll(BattleServices& services, u8 level)
     return above >= kNearAbove && static_cast<u16>(services.random.Below(kCatchRoll)) < data.catchChance ? 1 : 0;
 }
 
-// swd3e.exe 0x0048F390: one frame of the unit staggering from a hit (hurtStep 0..5, one step every second frame not
-// held); 1 once over (hurtStep back to 1, the attack act and the targets cleared, `charging` set) or when its act
-// ends. A party role takes its hurt pose (its guard pose while guarding or marked, not held; a poisoned one the
-// hurt pose), others the shadow action. The picture shakes back by kStaggerShake (UnkStatus4 copies the main act and
-// stays), over its shadow, with a flash; an enemy also leaves a red flash behind, lifted by kStaggerRise (up with
-// nudged, else to the side). Its effects, overlay and a recoil effect follow.
+// swd3e.exe 0x0048F390: one frame of the unit staggering from a hit (hurtStep one on each frame not held); 1 once over
+// (from step 13 when its act waits or for a unit of unk3070: hurtStep back to 1, the attack act and the targets
+// cleared, `charging` set) or when its act cannot run or the unit guards. A party member takes the hurt pose (the
+// guard pose when GetGuard or unk306C, not held nor with damage pending; under MarkBit4 act 0xFA), others the hurt
+// pose (0x3A for unk3070); a unit nudged in place stands. The picture shakes back from the hit by StaggerShake
+// (towards the side of an enemy or a unit acting by itself or under MarkBit4; slides back by StaggerSlide while
+// nudged; lifts by StaggerLift when nudged in place, which lasts to step 22), over its shadow; a unit of unk3070
+// leaves a red flash shaking by StaggerFlash. The stone (UnkStatus4) copies the main act and stays. Its effects,
+// overlay and the recoil effect of its act follow.
 int BattleUnit::HurtFrame(BattleServices& services)
 {
+    ActState& act = this->attackAct;
+    act.id = this->actId;
+
+    if (this->partyMember == 1)
+    {
+        if (this->MarkBit4() != 0)
+        {
+            act.id = kStillAct;
+            act.action = kShadowAction;
+        }
+        else
+        {
+            act.action = kHurtAction;
+
+            if ((this->GetGuard() == 1 || this->unk306C == 1) && (this->marks & BattleUnit::Held) == 0 &&
+                (this->unk26B8 & kFlag26B8Damage) == 0)
+            {
+                act.action = kHurtGuardAction;
+            }
+        }
+    }
+    else
+    {
+        act.action = kHurtAction;
+
+        if (this->unk3070 == 1)
+        {
+            act.action = kKnockBackAction;
+        }
+    }
+
+    if (this->nudged == 1)
+    {
+        act.action = kShadowAction;
+    }
+
+    if (services.acts.Run(act) == 0 || this->guarding == 1)
+    {
+        return 1;
+    }
+
+    if ((this->status & BattleUnit::UnkStatus4) != 0)
+    {
+        act = this->mainAct;
+    }
+
+    this->shadowPicture = services.archive.GetPicture(act.frame, act.picture);
+    services.audio.PlaySound(act.view, services.config.soundVolume);
+
+    if (act.view != 0)
+    {
+        services.audio.SetSoundPan(act.view, this->kind != 0 ? kFadePan : -kFadePan);
+        act.view = 0;
+    }
+
+    // A missing picture is read through a null pointer in the original: the frame draws nothing.
+    if (this->shadowPicture == nullptr)
+    {
+        return this->HurtStep(services);
+    }
+
+    const Picture& picture = *this->shadowPicture;
     smooth::Scene scene;
-    const int result = smooth::UnitFrame(*this).Hurt(services, scene);
+    const smooth::Scene::Owner owner(scene, this);
+    smooth::ScenePainter painter(services, scene);
+    DrawOptions& options = painter.Options();
+    painter.SetSource(picture.data.data());
+    this->homePoseX = act.x;
+
+    if (this->autoControl == 1)
+    {
+        this->homePoseX = picture.width - act.x;
+    }
+
+    const u16 step = this->hurtStep;
+    const int placeX = this->placement.x;
+    int x = 0;
+
+    if (this->nudged == 0)
+    {
+        x = placeX + StaggerValue(BattleUnit::StaggerShake, step) - this->homePoseX;
+    }
+
+    int y = this->placement.y - act.y;
+
+    if (this->nudged == 1)
+    {
+        x = placeX - this->homePoseX;
+        y = this->placement.y - StaggerValue(BattleUnit::StaggerLift, step) - act.y;
+    }
+
+    const bool turned = this->kind == 0 || this->autoControl == 1 || this->MarkBit4() == 1;
+
+    if (turned)
+    {
+        if (this->kind == 0 && this->facing == 0)
+        {
+            x = placeX - StaggerValue(BattleUnit::StaggerShake, step) - this->homePoseX;
+        }
+
+        if (this->nudge != 0)
+        {
+            x = placeX - StaggerValue(BattleUnit::StaggerSlide, step) - this->homePoseX;
+        }
+    }
+
+    if ((this->status & BattleUnit::UnkStatus4) != 0)
+    {
+        x = placeX - this->homePoseX;
+    }
+    else if (turned && this->unk3070 == 1)
+    {
+        const int flash = StaggerValue(BattleUnit::StaggerFlash, step);
+        options.tintRed = kKnockBackFlash;
+        options.tintGreen = 0;
+        options.tintBlue = 0;
+        this->shadowMode = this->drawFlags & kPictureBits;
+
+        if (this->facing == 0)
+        {
+            painter.DrawPicture(
+                placeX + flash - this->homePoseX,
+                this->placement.y - act.y,
+                picture.width,
+                picture.height,
+                this->shadowMode | Painter::TintUnder
+            );
+            x = placeX - flash - this->homePoseX;
+        }
+
+        if (this->autoControl == 1)
+        {
+            painter.DrawPicture(
+                placeX + flash - static_cast<i16>(this->originX),
+                this->placement.y - act.y,
+                picture.width,
+                picture.height,
+                this->shadowMode | Painter::TintUnder
+            );
+            x = placeX - flash - static_cast<i16>(this->originX);
+        }
+    }
+
+    const int shadowHeight = picture.height / kShadowShare;
+    options.scaleHeight = shadowHeight;
+    options.shear = picture.height >> kShadowShearShift;
+    const int shadowTint = this->autoControl == 1 ? kInvisibleShadowTint : kShadowTint;
+    options.tintRed = shadowTint;
+    options.tintGreen = shadowTint;
+    options.tintBlue = shadowTint;
+    this->shadowMode = (this->drawFlags & kPictureBits) | Painter::Shadow;
+    painter.DrawPicture(x, this->placement.y - shadowHeight, picture.width, picture.height, this->shadowMode);
+    // The flags keep only the mirror: the blend of 0x14 below never holds.
+    this->drawFlags &= kPictureBits;
+
+    if ((this->drawFlags & ActState::Signal) == ActState::Signal)
+    {
+        options.alpha = act.signal;
+    }
+
+    painter.DrawPicture(x, y, picture.width, picture.height, this->drawFlags);
+    options.alpha = 0;
+    this->DrawEffects(services, x, y, scene);
+
+    if ((this->status & BattleUnit::UnkStatus4) == 0 && act.rotation != 0 && act.actionCode != 0)
+    {
+        this->overlayPicture = services.archive.GetPicture(act.rotation, static_cast<u16>(act.actionCode - 1));
+
+        // A missing picture is read through a null pointer in the original.
+        if (this->overlayPicture != nullptr)
+        {
+            const Picture& overlay = *this->overlayPicture;
+            painter.SetSource(overlay.data.data());
+            painter.DrawPicture(
+                static_cast<i16>(act.offsetX) + placeX - this->homePoseX,
+                this->placement.y + static_cast<i16>(act.offsetY) - act.y,
+                overlay.width,
+                overlay.height,
+                this->drawFlags | Painter::Additive
+            );
+        }
+    }
+
+    if ((act.target & ActState::Recoils) != 0)
+    {
+        ActState& recoil = this->castAct;
+        recoil.action = act.effectQ;
+        recoil.id = act.effectA;
+
+        if (services.acts.Run(recoil) == 0)
+        {
+            scene.Show(services);
+            return 0;
+        }
+
+        services.audio.PlaySound(recoil.view, services.config.soundVolume);
+        recoil.view = 0;
+        this->picture = services.archive.GetPicture(recoil.frame, recoil.picture);
+        const u16 anchorX = act.anchorX;
+        u32 flags = recoil.flags;
+        int recoilX = recoil.x;
+
+        if (anchorX != 0)
+        {
+            this->actAnchorX = anchorX;
+        }
+
+        // A missing picture is read through a null pointer in the original.
+        if (this->picture != nullptr)
+        {
+            const Picture& effect = *this->picture;
+
+            if (this->facing == 1)
+            {
+                flags ^= Painter::Mirror;
+                recoilX = effect.width - recoil.x;
+                this->actAnchorX = static_cast<u16>(picture.width - anchorX);
+            }
+
+            painter.SetSource(effect.data.data());
+            painter.DrawPicture(
+                x + static_cast<i16>(this->actAnchorX) - recoilX,
+                y + static_cast<i16>(act.anchorY) - recoil.y,
+                effect.width,
+                effect.height,
+                flags
+            );
+        }
+    }
+
     scene.Show(services);
-    return result;
+    return this->HurtStep(services);
+}
+
+// The end of HurtFrame (inline in the original): the step (on each frame not held, the glow phase cleared); 1 once
+// the stagger is over.
+int BattleUnit::HurtStep(BattleServices& services)
+{
+    ActState& act = this->attackAct;
+
+    if (this->held == 0)
+    {
+        ++this->hurtStep;
+        this->glowPhase = 0;
+    }
+
+    const u16 step = this->hurtStep;
+    this->unk2AAC = 1;
+
+    if (step <= kHurtSteps || (act.waiting != 1 && this->unk3070 != 1))
+    {
+        return 0;
+    }
+
+    if (this->nudged == 1)
+    {
+        if (step >= kNudgedSteps)
+        {
+            this->nudged = 0;
+            this->hurtStep = 0;
+        }
+
+        return 0;
+    }
+
+    this->nudge = 0;
+    services.state.unk53BF46 = 0;
+    services.state.unk53BF48 = 0;
+    this->hurtStep = 1;
+    services.painter.Options().shear = 0;
+    this->nudged = 0;
+    act.target = 0;
+    this->unk26B8 &= ~(kFlag26B8Spell | kFlag26B8Damage);
+    this->unk2AAC = 0;
+    this->charging = 1;
+    act = ActState{};
+    this->targets.fill(BattleUnit::NoTarget);
+    return 1;
 }
 
 // swd3e.exe 0x0048BA60: one frame of the unit at rest (`paused`: its act holds). A staggering unit (flag 26B8) runs
@@ -4432,9 +4740,8 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         act.view = 0;
     }
 
+    this->DrawEffects(services, x, y, scene);
     smooth::PictureSteps steps;
-    smooth::UnitFrame(*this).EffectsAdvance(services, x, y, smooth::RefOf(services.archive, &picture), steps);
-    scene.Add(std::move(steps));
 
     if (this->commandA == BattleUnit::UnkCommand6 || this->commandA == BattleUnit::UnkCommand50)
     {
@@ -5541,6 +5848,298 @@ void BattleUnit::StartRipple(BattleServices& services)
     services.state.ripple->MoveTo(this->placement.x - kRippleLeft, this->placement.y - kRippleUp);
     this->slotActs[kRippleSlot].id = kRippleAct;
     this->rippleFrames = 0;
+}
+
+// swd3e.exe 0x00493EB0: the effects drawn over the unit, the shadow picture (the caller's, at (x, y)) for the overlays.
+// The ripple of StartRipple runs over the unit for 30 frames, then ends. With an effect and the unit not guarding nor
+// invisible: the first effect with an act (the head node itself when it has one) is animated above the unit (the
+// turns of a status 0x400 effect passed on the way kept for its number); then by the status: the act of slot 10
+// (status 0x200: at its end the unit is marked UnkMark10 and turned), the stone overlay (bit 2, wiping in from the
+// bottom while overlayWipe has bit 15; nothing follows it), the acts of status 0x100 and of Slowed, the poison tint
+// (a lasting poison greener), the freeze tint (bit 1, wiping in likewise, greener and bluer while more turns are
+// left) and the darkening of status 0x400 with its turns.
+void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Scene& scene)
+{
+    BattleState& battle = services.state;
+    smooth::ScenePainter painter(services, scene);
+
+    if ((this->unk26B8 & kFlag26B8Ripple) != 0)
+    {
+        ++this->rippleFrames;
+
+        // Without a ripple the original calls through a null pointer: the ripple is skipped. The copy of the screen
+        // the original takes before the ripple moves is taken where it refracts: nothing is drawn between.
+        if (ScriptObject* ripple = battle.ripple.get(); ripple != nullptr)
+        {
+            ripple->MoveTo(this->placement.x - kRippleLeft, this->placement.y - kRippleUp);
+            painter.Refract(*ripple);
+            ripple->Step();
+        }
+
+        if (this->rippleFrames > kRippleFrames)
+        {
+            battle.ripple.reset();
+            this->rippleFrames = 0;
+            battle.unk5772C8 = 0;
+            battle.unk53BF74 = 0;
+            battle.unk53BFC0 = 0;
+            this->unk26B8 &= ~kFlag26B8Ripple;
+            this->slotActs[kRippleSlot] = ActState{};
+        }
+    }
+
+    if (this->effects.next == nullptr || this->guarding == 1 || (this->marks & BattleUnit::GuardingMark) != 0 ||
+        (this->status & BattleUnit::Invisible) != 0)
+    {
+        return;
+    }
+
+    u16 turns = 0;
+    EffectNode* node = &this->effects;
+
+    if (node->act.id <= 0)
+    {
+        do
+        {
+            if ((node->bits & BattleUnit::UnkStatus400) != 0)
+            {
+                turns = node->turns;
+            }
+
+            node = node->next.get();
+        } while (node != nullptr && node->act.id <= 0);
+    }
+
+    if (node != nullptr)
+    {
+        ActState& act = node->act;
+        act.hold = this->held == 1 ? 1 : 0;
+
+        if (services.acts.Run(act) == 0)
+        {
+            return;
+        }
+
+        this->picture = services.archive.GetPicture(act.frame, act.picture);
+
+        // A missing picture is read through a null pointer in the original.
+        if (this->picture != nullptr && (this->unk26B8 & kFlag26B8) == 0)
+        {
+            const Picture& picture = *this->picture;
+            painter.SetSource(picture.data.data());
+            painter.DrawPicture(
+                this->placement.x - act.x,
+                this->placement.y - (picture.height >> 1) - this->mainAct.y,
+                picture.width,
+                picture.height,
+                act.flags
+            );
+        }
+    }
+
+    if (this->status == 0)
+    {
+        return;
+    }
+
+    // An act drawn at the unit's place less its own (`act` run first: false when it cannot run).
+    auto drawAct = [this, &services, &painter](ActState& act)
+    {
+        if (services.acts.Run(act) == 0)
+        {
+            return false;
+        }
+
+        this->picture = services.archive.GetPicture(act.frame, act.picture);
+
+        // A missing picture is read through a null pointer in the original.
+        if (this->picture != nullptr)
+        {
+            const Picture& picture = *this->picture;
+            painter.SetSource(picture.data.data());
+            painter.DrawPicture(
+                this->placement.x - act.x,
+                this->placement.y - act.y,
+                picture.width,
+                picture.height,
+                act.flags
+            );
+        }
+
+        return true;
+    };
+
+    ActState& slot = this->slotActs[kRippleSlot];
+
+    if ((this->status & BattleUnit::StatsScaled) != 0 && (this->unk26B8 & kFlag26B8) == 0 && slot.id != 0)
+    {
+        if (!drawAct(slot))
+        {
+            return;
+        }
+
+        if (slot.waiting == 1)
+        {
+            this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark10);
+            this->facing = 1;
+            this->unk3070 = 1;
+            slot = ActState{};
+        }
+    }
+
+    // A missing shadow picture is read through a null pointer in the original: its overlays are not drawn.
+    const Picture* shadow = this->shadowPicture;
+    const u32 mirrored = this->drawFlags & kPictureBits;
+
+    // The shadow picture drawn at (x, y) in `mode`, wiping in from the bottom while overlayWipe has bit 15 (tinted
+    // for the wipe; the full overlay keeps the tint set before it).
+    auto drawWiped = [this, shadow, &painter, x, y](u32 mode, const auto& tint)
+    {
+        const auto wipe = static_cast<i16>(this->overlayWipe);
+
+        if (wipe >= 0)
+        {
+            tint();
+            painter.SetSource(shadow->data.data());
+            painter.DrawPicture(x, y, shadow->width, shadow->height, mode);
+            return;
+        }
+
+        this->overlayWipe = static_cast<u16>(wipe + kWipeStep);
+        const int lines = this->overlayWipe & kWipeLines;
+        painter.SetClipClamped(x, y + shadow->height - lines, x + shadow->width, shadow->height + y);
+        DrawOptions& options = painter.Options();
+        options.tintRed = 0;
+        options.tintGreen = kStoneTintGreen;
+        options.tintBlue = kStoneTintBlue;
+        painter.SetSource(shadow->data.data());
+        painter.DrawPicture(x, y, shadow->width, shadow->height, mode);
+        painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+
+        if ((this->overlayWipe & kWipeLines) >= shadow->height)
+        {
+            this->overlayWipe = 0;
+        }
+    };
+
+    if ((this->status & BattleUnit::UnkStatus4) != 0)
+    {
+        this->shadowMode = mirrored | Painter::GrayUnder;
+
+        if (shadow != nullptr)
+        {
+            drawWiped(
+                this->shadowMode,
+                []
+                {
+                }
+            );
+        }
+
+        return;
+    }
+
+    if ((this->status & BattleUnit::UnkStatus100) != 0)
+    {
+        ActState& act = this->status100Act;
+        act.action = this->kind == 0 ? 1 : 0;
+        act.id = kStatus100Act;
+
+        if (!drawAct(act))
+        {
+            return;
+        }
+
+        if (act.waiting == 1)
+        {
+            act = ActState{};
+        }
+    }
+
+    if ((this->status & BattleUnit::Slowed) != 0)
+    {
+        ActState& act = this->slowedAct;
+        act.action = this->kind == 0 ? 1 : 0;
+        act.id = kSlowedEffectAct;
+
+        if (!drawAct(act))
+        {
+            return;
+        }
+
+        if (act.waiting == 1)
+        {
+            act = ActState{};
+        }
+    }
+
+    DrawOptions& options = painter.Options();
+
+    if ((this->status & BattleUnit::Poisoned) != 0)
+    {
+        this->shadowMode = mirrored;
+        options.tintRed = kPoisonTint;
+        options.tintGreen = 0;
+        options.tintBlue = kPoisonTint;
+
+        if ((this->unk26B8 & kFlag26B8Poison) != 0)
+        {
+            options.tintGreen = kLastingPoisonGreen;
+            options.tintRed = kLastingPoisonTint;
+            options.tintBlue = kLastingPoisonTint;
+        }
+
+        if (shadow != nullptr)
+        {
+            painter.SetSource(shadow->data.data());
+            painter.DrawPicture(x, y, shadow->width, shadow->height, this->shadowMode | Painter::TintUnder);
+        }
+    }
+
+    if ((this->status & BattleUnit::UnkStatus2) != 0)
+    {
+        this->shadowMode = mirrored;
+
+        if (shadow != nullptr)
+        {
+            drawWiped(
+                this->shadowMode | Painter::TintUnder,
+                [this, &options]
+                {
+                    const auto green = static_cast<int>(crt::Ftol(this->EffectShare(BattleUnit::UnkStatus2)));
+                    const auto blue = static_cast<int>(crt::Ftol(this->EffectShare(BattleUnit::UnkStatus2)));
+                    options.tintRed = 0;
+                    options.tintGreen = kFreezeGreenStep * green + kFreezeGreen;
+                    options.tintBlue = kFreezeBlueStep * blue + kFreezeBlue;
+                }
+            );
+        }
+    }
+
+    if ((this->status & BattleUnit::UnkStatus400) != 0)
+    {
+        this->shadowMode = mirrored;
+        const double share = this->EffectShare(BattleUnit::UnkStatus400) * static_cast<double>(kStatus400Scale);
+        const int tint = kStatus400Tint - static_cast<int>(crt::Ftol(share));
+        options.tintRed = tint;
+        options.tintGreen = tint;
+        options.tintBlue = tint;
+
+        if (shadow != nullptr)
+        {
+            painter.SetSource(shadow->data.data());
+            painter.DrawPicture(x, y, shadow->width, shadow->height, this->shadowMode | Painter::TintUnder);
+        }
+
+        const int numberX = this->placement.x + kTurnsLeft;
+        const int numberY = this->placement.y - this->mainAct.y;
+        scene.Add(
+            [turns, numberX, numberY](BattleServices& drawing)
+            {
+                drawing.hud.DrawNumber(kTurnsNumbers, turns, numberX, numberY);
+            }
+        );
+    }
 }
 
 // swd3e.exe 0x0049BAB0: the enrage counters: a party role's event 2 sets enrageCounter2FD6 to 1; an enemy counts

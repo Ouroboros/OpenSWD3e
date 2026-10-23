@@ -351,12 +351,40 @@ public:
     static constexpr std::size_t Trails = 8;
     static constexpr std::size_t Drains = 4;
     static constexpr std::array<i32, 10> DigitHops = {0, 12, 18, 12, 8, 4, 0, 2, 0, 0};  // 0x004BFB40 by hop step
-    // HurtFrame: the shake (0x004A7E08) and the lift of the flash (0x004A7DF0, read one entry on at 0x004A7DF4, its
-    // last entry then the bytes of the shake table: as in the original) by hurtStep.
-    static constexpr std::array<u8, 6> StaggerShake = {30, 40, 45, 47, 49, 50};
-    static constexpr std::array<i32, 6> StaggerLift = {14, -12, 10, -8, 6, -4};
-    static constexpr std::array<i32, 6> StaggerRise = {-12, 10, -8, 6, -4, 0x2F2D281E};
-    // RunQueuedActions: the y offsets of a shaking queued act by its frames left (0x004A7E10).
+    // HurtFrame: the offsets of the stagger by its step. The four tables lie one after another up to the shake
+    // offsets (0x004BFC2C) and are read past their ends by the later steps: each runs on through the data after it,
+    // up to 0x004BFC3C.
+    // 0x004BFBA4 (12 entries): the red flash of a unit of unk3070 shakes this far each way
+    static constexpr std::array<i32, 38> StaggerFlash = {
+        14,      14,      -24,       10,        10,        -8,        -8,       6,        6,        -4,
+        -4,      0,       757736212, 825307183, 842150450, 842150450, 2621460,  5242940,  7864420,  9175180,
+        9175180, 9175180, 10485840,  17039580,  19005720,  20971830,  20971840, 20316470, 18350370, 6553820,
+        -655310, -655350, -655350,   -655350,   -131073,   -327683,   -131078,  65533,
+    };
+
+    // 0x004BFBD4 (16 entries): the shake back from the hit
+    static constexpr std::array<i8, 104> StaggerShake = {
+        20,  35, 42,  45,  47, 48,  49, 49,   50, 50,   50, 50,   50, 50,   50, 50,   20, 0,    40, 0,   60,
+        0,   80, 0,   100, 0,  120, 0,  -116, 0,  -116, 0,  -116, 0,  -116, 0,  -116, 0,  -116, 0,  80,  0,
+        -96, 0,  -36, 0,   4,  1,   24, 1,    34, 1,    54, 1,    64, 1,    64, 1,    64, 1,    54, 1,   54,
+        1,   34, 1,   24,  1,  -36, 0,  100,  0,  50,   0,  -10,  -1, 10,   0,  -10,  -1, 10,   0,  -10, -1,
+        10,  0,  -10, -1,  -1, -1,  -3, -1,   -3, -1,   -6, -1,   -6, -1,   -3, -1,   -3, -1,   0,  0,
+    };
+
+    // 0x004BFBE4 (12 entries): the slide back of a nudged unit
+    static constexpr std::array<u16, 44> StaggerSlide = {
+        20,  40,    60,  80,    100, 120,   140,   140,   140,   140,   140,   140,   80,    160, 220,
+        260, 280,   290, 310,   320, 320,   320,   310,   310,   290,   280,   220,   100,   50,  65526,
+        10,  65526, 10,  65526, 10,  65526, 65535, 65533, 65533, 65530, 65530, 65533, 65533, 0,
+    };
+
+    // 0x004BFBFC (24 entries): the lift of a unit nudged in place (SetNudge 1)
+    static constexpr std::array<i16, 32> StaggerLift = {
+        80, 160, 220, 260, 280, 290, 310, 320, 320, 320, 310, 310, 290, 280, 220, 100,
+        50, -10, 10,  -10, 10,  -10, 10,  -10, -1,  -3,  -3,  -6,  -6,  -3,  -3,  0,
+    };
+
+    // RunQueuedActions: the y offsets of a shaking queued act by its frames left (0x004BFC2C).
     static constexpr std::array<i16, 8> ShakeOffsets = {-1, -3, -3, -6, -6, -3, -3, 0};
     // DefeatHop: the heights of the hop by frame (0x004A7DB4).
     static constexpr std::array<i32, 15> HopHeights = {0, 4, 12, 24, 32, 24, 16, 8, 4, 0, -4, -12, -16, -20, -32};
@@ -571,8 +599,10 @@ public:
     int DrainEffectFrame(BattleServices& services, int slot);
     int CatchRoll(BattleServices& services, u8 level);
     int HurtFrame(BattleServices& services);
+    int HurtStep(BattleServices& services);
     void IdleFrame(BattleServices& services, int paused);
     void IdleFrameBody(BattleServices& services, smooth::Scene& scene);
+    void DrawEffects(BattleServices& services, int x, int y, smooth::Scene& scene);
     void DrawFlash(smooth::ScenePainter& painter);
     int DrawPulse(const BattleServices& services, smooth::ScenePainter& painter);
     void DrawTint(smooth::ScenePainter& painter);
@@ -714,7 +744,9 @@ public:
     ActState attackAct;                         // +0x544
     ActState unk598;                            // swd32 +0x598
     std::array<ActState, SlotActs> slotActs;    // +0x68C
-    ActState stepAct;                           // swd32 +0xCB8
+    ActState status100Act;                      // +0xD98 (swd3e) the act over a unit of status 0x100 (DrawEffects)
+    ActState slowedAct;                         // +0xE3C (swd3e) the act over a slowed unit (DrawEffects)
+    ActState stepAct;                           // +0xEE0
     UnitPlacement placement;                    // +0xFC4
     UnitPlacement savedPlacement;               // +0xFE4
     UnitCommand command;                        // +0x1004
@@ -850,7 +882,7 @@ public:
     u16 commandB = 0;  // +0x2F8C commands 2, 3, 6, 13, 14 and 15
     u16 unk2A72 = 0;
     u16 unk2A74 = 0;
-    u16 hurtStep = 0;       // +0x2F94 the step of the stagger (HurtFrame)
+    u16 hurtStep = 0;  // +0x2F94 the step of the stagger (HurtFrame)
     u16 unk2A76 = 0;
     u16 drainingGauge = 0;  // +0x2F96 (swd3e) 1 while the second gauge (unk2BE8) runs down (0x004902E0)
     u16 targetCount = 0;    // +0x2F98

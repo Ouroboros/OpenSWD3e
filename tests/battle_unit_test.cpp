@@ -421,20 +421,6 @@ TEST_CASE("battle unit: role and enemy blocks, reset")
     CHECK(enemy.data != nullptr);
 }
 
-TEST_CASE("battle unit: the shake offsets of a queued act match swd32.exe")
-{
-    constexpr swd3e::u32 kShakeOffsetsAt = 0x004A7E10;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
-
-    if (exe.empty())
-    {
-        std::printf("  (swd32.exe not found, skipped)\n");
-        return;
-    }
-
-    CHECK(swd3etest::SameTable(exe, kShakeOffsetsAt, swd3e::BattleUnit::ShakeOffsets));
-}
-
 TEST_CASE("battle role: the swarm offsets match swd32.exe")
 {
     constexpr swd3e::u32 kSwarmOffsetXAt = 0x004A7C04;
@@ -465,22 +451,26 @@ TEST_CASE("battle unit: the hop heights of defeat pose 50 match swd32.exe")
     CHECK(swd3etest::SameTable(exe, kHopHeightsAt, swd3e::BattleUnit::HopHeights));
 }
 
-TEST_CASE("battle unit: the stagger tables match swd32.exe")
+TEST_CASE("battle unit: the stagger tables match swd3e.exe")
 {
-    constexpr swd3e::u32 kStaggerShakeAt = 0x004A7E08;
-    constexpr swd3e::u32 kStaggerLiftAt = 0x004A7DF0;
-    constexpr swd3e::u32 kStaggerRiseAt = 0x004A7DF4;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kStaggerFlashAt = 0x004BFBA4;
+    constexpr swd3e::u32 kStaggerShakeAt = 0x004BFBD4;
+    constexpr swd3e::u32 kStaggerSlideAt = 0x004BFBE4;
+    constexpr swd3e::u32 kStaggerLiftAt = 0x004BFBFC;
+    constexpr swd3e::u32 kShakeOffsetsAt = 0x004BFC2C;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
+    CHECK(swd3etest::SameTable(exe, kStaggerFlashAt, swd3e::BattleUnit::StaggerFlash));
     CHECK(swd3etest::SameTable(exe, kStaggerShakeAt, swd3e::BattleUnit::StaggerShake));
+    CHECK(swd3etest::SameTable(exe, kStaggerSlideAt, swd3e::BattleUnit::StaggerSlide));
     CHECK(swd3etest::SameTable(exe, kStaggerLiftAt, swd3e::BattleUnit::StaggerLift));
-    CHECK(swd3etest::SameTable(exe, kStaggerRiseAt, swd3e::BattleUnit::StaggerRise));
+    CHECK(swd3etest::SameTable(exe, kShakeOffsetsAt, swd3e::BattleUnit::ShakeOffsets));
 }
 
 namespace

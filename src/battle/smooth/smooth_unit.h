@@ -79,34 +79,6 @@ struct GuardView
     std::array<int, 4> y = {};
 };
 
-// What HurtFrame draws: the red flash an enemy leaves, the shadow (its top at shadowY less a third of the picture), the
-// unit at (x, y), its red copy; after the unit's effects the overlay and the recoil effect. `bodyWidth`: the hurt
-// picture's width.
-struct HurtView
-{
-    PictureRef picture;
-    int bodyWidth = 0;
-    int x = 0;
-    int y = 0;
-    u32 flags = 0;
-    bool flash = false;
-    int flashX = 0;
-    int flashY = 0;
-    u32 flashFlags = 0;
-    int shadowY = 0;
-    int shadowTint = 0;
-    u32 shadowFlags = 0;
-    bool red = false;
-    PictureRef overlay;
-    int overlayX = 0;
-    int overlayY = 0;
-    u32 overlayFlags = 0;
-    PictureRef recoil;
-    int recoilX = 0;
-    int recoilY = 0;
-    u32 recoilFlags = 0;
-};
-
 // What DrawAction draws: the outline (at the unit's place), the shadow (its top at shadowY less a third of the
 // picture), the act at (x, y) (smeared when invisible; blended, waved), the overlay.
 struct ActionView
@@ -130,7 +102,7 @@ struct ActionView
 };
 
 // The parts of the frame functions of `unit` (WalkToTarget, ReturnHome, DrawDamageNumbers, DrawGuardText,
-// HurtFrame, DrawAction):
+// DrawAction):
 // what a frame decides into a view, and the view drawn.
 class UnitFrame
 {
@@ -148,15 +120,7 @@ public:
     // DrawGuardText.
     void GuardAdvance(GuardView& view);
     static void DrawGuard(BattleServices& services, const GuardView& view);
-    // HurtFrame: before the draws (false when the frame ends with `result`), after the unit's effects (false when the
-    // frame ends with 0), and at the end (its result).
-    bool HurtAdvance(BattleServices& services, HurtView& view, int& result);
-    static void HurtDrawBody(BattleServices& services, const HurtView& view);
-    bool HurtAdvanceTail(BattleServices& services, HurtView& view);
-    static void HurtDrawTail(BattleServices& services, const HurtView& view);
-    int HurtStep(BattleServices& services);
-    // DrawEffects (the shadow picture the caller drew in `body`), PlayIdleEffect, PlayIdleFollowUp.
-    void EffectsAdvance(BattleServices& services, int x, int y, const PictureRef& body, PictureSteps& steps);
+    // PlayIdleEffect, PlayIdleFollowUp.
     void IdleEffectAdvance(BattleServices& services, PictureSteps& steps);
     void FollowUpAdvance(BattleServices& services, PictureSteps& steps);
     // DrawRecoil: its result.
@@ -213,9 +177,8 @@ public:
     );
     int Queued(BattleServices& services, BattleUnit& target, i32 action, Scene& scene);
     int Home(BattleServices& services, const BattleUnit& target, i32 id, i32 action, Scene& scene);
-    // WalkToTarget, HurtFrame, DrawDamageNumbers and DrawGuardText into a scene.
+    // WalkToTarget, DrawDamageNumbers and DrawGuardText into a scene.
     void Walk(BattleServices& services, const BattleUnit& target, Scene& scene);
-    int Hurt(BattleServices& services, Scene& scene);
     int Numbers(BattleServices& services, Scene& scene);
     void Guard(Scene& scene);
     // DrawAction: false when it draws nothing.
