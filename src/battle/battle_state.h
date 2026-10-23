@@ -23,6 +23,7 @@ namespace swd3e
 {
 
 struct ClickRegion;
+struct ScriptObject;
 
 // A record of 0x1C bytes, eighteen of them from 0x00524788 (cleared by the battle start): a unit with a kind of 1 or
 // 2 (AddSlotRecord), the free records after the used ones.
@@ -113,8 +114,9 @@ public:
         UnkPanel8 = 8,        // the battle ends with frameResult 0 even when lost (CheckBattleEnd)
         UnkPanel100 = 0x100,  // the screen quakes all the time (QuakeFrame)
         ResistancePanel = 0x20,
-        NoRetreat = 0x200,   // the party cannot retreat
-        MusicGiven = 0x400,  // swd3e: a battle talk set the battle music (BattleIntro keeps it, then clears this)
+        NoRetreat = 0x200,    // the party cannot retreat
+        UnkPanel800 = 0x800,  // swd3e: no hit number is taken back (CancelHitNumber)
+        MusicGiven = 0x400,   // swd3e: a battle talk set the battle music (BattleIntro keeps it, then clears this)
     };
 
     // Bits of spellStage.
@@ -123,6 +125,11 @@ public:
         SpellOver = 0x1,     // the spell is over (MagicFrame ends)
         SpellCast = 0x8000,  // the magic act followed up: the spell takes effect
     };
+
+    BattleState();
+    ~BattleState();
+    BattleState(const BattleState&) = delete;
+    BattleState& operator=(const BattleState&) = delete;
 
     void TakePendingAction();
     void SortDrawOrder();
@@ -291,8 +298,10 @@ public:
     i32 undarkening = 0;         // 0x005772EC the darkening is undone a level a frame
     // 0x005772C8 set by 0x0049B9D0 and 0x0049BE20, cleared by 0x0049C0D0: the undarkening waits while set
     i32 unk5772C8 = 0;
-    i32 enraging = 0;        // 0x00577310 (swd3e) 1 while an enemy enrages (Enrage sets it, 0x0049C0D0 clears it)
-    i32 enrageDamage = 0;    // 0x005770C4 (swd3e) the damage of enrage 0x3F4 (1.4 times the maximum hit points)
+    i32 enraging = 0;      // 0x00577310 (swd3e) 1 while an enemy enrages (Enrage sets it, 0x0049C0D0 clears it)
+    i32 enrageDamage = 0;  // 0x005770C4 (swd3e) the damage of enrage 0x3F4 (1.4 times the maximum hit points)
+    // 0x00536880 the ripple over the battle (a spell with ActFlag13 in rippleHits, the unit effect of 0x0049B9D0)
+    std::unique_ptr<ScriptObject> ripple;
     i32 unk5761C8 = 0;       // 0x005761C8 (swd3e) cleared when ailment 0x400 ends (also by StartBattle, 0x0045EE20)
     u16 unk5761CC = 0;       // 0x005761CC (swd3e) with it
     i16 darkRedShown = 0;    // 0x00577232 the tint applied, a step a frame towards darkRed (or back to 0)

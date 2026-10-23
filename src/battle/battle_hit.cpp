@@ -278,8 +278,8 @@ int Game::HitTargetFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int 
     return result;
 }
 
-// The ripple of HitTargetFrame (inline in the original); see there. The ripple (battleRipple) is refracted over the
-// frame at the walked point (kRippleSound once it reaches the target) or over the target.
+// The ripple of HitTargetFrame (inline in the original); see there. The ripple (BattleState::ripple) is refracted over
+// the frame at the walked point (kRippleSound once it reaches the target) or over the target.
 void Game::RippleHitFrame(BattleUnit& target, BattleUnit& attacker, int index, u16& targetX)
 {
     smooth::Scene scene;
@@ -1396,7 +1396,7 @@ int Game::EnemyActionFrame(int enemy, int target)
                 if (unit.ActFlag13() == 1)
                 {
                     battle.rippleHits = 1;
-                    this->battleRipple =
+                    this->battleState.ripple =
                         std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
                 }
             }
@@ -1410,7 +1410,7 @@ int Game::EnemyActionFrame(int enemy, int target)
 
             if (battle.rippleHits == 1)
             {
-                this->battleRipple.reset();
+                this->battleState.ripple.reset();
             }
 
             battle.rippleHits = 0;

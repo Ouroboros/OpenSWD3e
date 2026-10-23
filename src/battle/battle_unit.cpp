@@ -21,6 +21,7 @@
 #include "crt/msvc.h"
 #include "draw/paint_record.h"
 #include "draw/painter.h"
+#include "game/scene.h"
 #include "org/database.h"
 #include "org/fame.h"
 #include "party/party.h"
@@ -49,8 +50,33 @@ constexpr u32 kRoleGaugeSpread = 0x8C;
 
 constexpr i16 kSpeedMask = 0x7FFF;  // the speed of a command with bit 15 set
 constexpr i32 kUnkBlock30 = 0x30;
-constexpr u16 kUnk2EB2Accessory = 0x27;        // the accessory kind whose proficiency bounds unk2EB2 (swd3e)
-constexpr u16 kUnk2EB2Share = 10;              // unk2EB2 is held below a tenth of it
+constexpr u16 kUnk2EB2Accessory = 0x27;  // the accessory kind whose proficiency bounds unk2EB2 (swd3e)
+constexpr u16 kUnk2EB2Share = 10;        // unk2EB2 is held below a tenth of it
+constexpr int kTens = 10;
+constexpr i8 kNumberSpent = -1;  // unk2FD1: no use left
+constexpr i8 kNumberTaken = -2;  // unk2FD1: the hit number was taken back
+constexpr u16 kLastedTurns = 3;  // a lasting poison has lasted once past them
+constexpr int kRippleGrid = 0xC8;
+constexpr int kRippleSplashX = 0x64;
+constexpr int kRippleSplashY = 0x32;
+constexpr int kRippleRadius = 0x20;
+constexpr int kRippleDepth = 0xC8;
+constexpr int kRippleLeft = 0x50;  // the ripple is moved this far left of and kRippleUp above the unit
+constexpr int kRippleUp = 0x78;
+constexpr std::size_t kRippleSlot = 10;
+constexpr i32 kRippleAct = 0x17E7;
+constexpr int kEnrageEvent0 = 0;  // CountEnrageEvent
+constexpr int kEnrageEvent1 = 1;
+constexpr int kEnrageEvent2 = 2;
+constexpr int kEnrageEvent3 = 3;
+constexpr u16 kCounter2FD5Condition = 4;  // the enrage conditions the counters serve
+constexpr u16 kSpent2FD5Condition = 5;
+constexpr u16 kCounter2FD6Condition = 6;
+constexpr u16 kSpent2FD6Condition = 7;
+constexpr i8 kCounterSpent = -1;
+constexpr u32 kSupportBuffs = SkillScript::Invisible | SkillScript::AttackUp | SkillScript::DefenseUp |
+                              SkillScript::SpeedUp | SkillScript::Barrier;
+constexpr u8 kSupportKind = 4;                 // ObjectData::kind bit 2
 constexpr u32 kCommandStatusBit = 0x10000000;  // command +0x08 bit 28
 constexpr u16 kAccessoryValueMask = 0x3FFF;
 constexpr u16 kUnkAccessory28 = 0x28;  // the accessory kind UnkEquipment100 takes the value of (swd3e)
@@ -68,7 +94,6 @@ constexpr u16 kLowEvadeGate = 8;
 constexpr int kTenths = 10;
 constexpr int kThousands = 1000;  // the places of the four damage digits
 constexpr int kHundreds = 100;
-constexpr int kTens = 10;
 constexpr std::size_t kThousandsDigit = 0;
 constexpr std::size_t kHundredsDigit = 1;
 constexpr std::size_t kTensDigit = 2;
@@ -4710,6 +4735,261 @@ i32 BattleUnit::Unk2B00() const
 i32 BattleUnit::Unk2B04() const
 {
     return this->guestControl;
+}
+
+// swd3e.exe 0x0049B6D0: the party record's hit points as a share of `scale` (truncated)
+i32 BattleUnit::HitPointShare(int scale) const
+{
+    const double share = static_cast<double>(this->roleRecord->hitPoints) /
+                         static_cast<double>(this->roleRecord->maxHitPoints) * static_cast<double>(scale);
+    return crt::Ftol(share);
+}
+
+// swd3e.exe 0x0049B700: with equipment flag Unk36 the hit number of the last target slot is taken back once: its
+// amount off the hit damage, its digits cleared (unk2FD1 -2, unk306C 1). Not while panel flag 0x800 is set or once
+// spent; 1 while it holds.
+int BattleUnit::CancelHitNumber(BattleServices& services)
+{
+    if ((services.state.panelFlags & BattleState::UnkPanel800) != 0 || this->unk2FD1 < 0)
+    {
+        return 0;
+    }
+
+    if (this->unk306C == 1)
+    {
+        return 1;
+    }
+
+    if ((this->equipmentFlags & BattleUnit::Unk36) == 0)
+    {
+        return 0;
+    }
+
+    this->unk306C = 0;
+
+    if (this->unk2FD1 <= 0)
+    {
+        this->unk2FD1 = kNumberSpent;
+        return 0;
+    }
+
+    // The slot before targetCount; at 0 the original reads the four words before the digits (deviations.md).
+    if (this->targetCount != 0)
+    {
+        auto& digits = this->damageDigits[static_cast<std::size_t>(this->targetCount - 1)];
+        services.state.hitDamage -= digits[3] + kTens * (digits[2] + kTens * (digits[1] + kTens * digits[0]));
+        digits = {};
+    }
+
+    this->unk2FD1 = kNumberTaken;
+    this->unk306C = 1;
+    return 1;
+}
+
+// swd3e.exe 0x0049B7D0
+void BattleUnit::ClearUnk2FD1()
+{
+    this->unk2FD1 = 0;
+}
+
+// swd3e.exe 0x0049B7E0: a lasting poison held more than three turns
+bool BattleUnit::PoisonLasted() const
+{
+    return (this->unk26B8 & kFlag26B8Poison) != 0 && this->unk2FA0 > kLastedTurns;
+}
+
+// swd3e.exe 0x0049B800
+i16 BattleUnit::PoisonBase() const
+{
+    return this->poisonBase;
+}
+
+// swd3e.exe 0x0049B960: a turn of a lasting poison counted
+void BattleUnit::CountPoisonTurn()
+{
+    if ((this->unk26B8 & kFlag26B8Poison) != 0)
+    {
+        ++this->unk2FA0;
+    }
+}
+
+// swd3e.exe 0x0049B980
+void BattleUnit::RaiseUnk26B8Bit28()
+{
+    this->unk26B8 |= kFlag26B8Bit28;
+}
+
+// swd3e.exe 0x0049B990
+i32 BattleUnit::PartyMember() const
+{
+    return this->partyMember;
+}
+
+// swd3e.exe 0x0049B9A0
+i32 BattleUnit::AutoControl() const
+{
+    return this->autoControl;
+}
+
+// swd3e.exe 0x0049B9B0
+i32 BattleUnit::GuestControl() const
+{
+    return this->guestControl;
+}
+
+// swd3e.exe 0x0049B9C0
+i32 BattleUnit::Ghost() const
+{
+    return this->ghost;
+}
+
+// swd3e.exe 0x0049B9D0: a ripple over the whole screen (a 200 x 200 grid) splashed at (100, 50) and moved to 0x50
+// left of and 0x78 above the unit, act 0x17E7 in slot act 10; unk26B8 bit 20 marks it (DrawEffects runs it)
+void BattleUnit::StartRipple(BattleServices& services)
+{
+    services.state.unk5772C8 = 1;
+    services.state.unk53BFC0 = 1;
+    this->unk26B8 |= kFlag26B8Ripple;
+    services.state.ripple =
+        std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
+    services.state.ripple->Splash(kRippleSplashX, kRippleSplashY, kRippleRadius, kRippleDepth, services.crtRandom);
+    services.state.ripple->MoveTo(this->placement.x - kRippleLeft, this->placement.y - kRippleUp);
+    this->slotActs[kRippleSlot].id = kRippleAct;
+    this->rippleFrames = 0;
+}
+
+// swd3e.exe 0x0049BAB0: the enrage counters: a party role's event 2 sets enrageCounter2FD6 to 1; an enemy counts
+// events 0 and 2 (or spends the counter on events 1 and 3) when its condition is the matching one (4..7)
+int BattleUnit::CountEnrageEvent(int event)
+{
+    if (this->kind == BattleUnit::PartyRole)
+    {
+        if (event == kEnrageEvent2)
+        {
+            this->enrageCounter2FD6 = 1;
+        }
+
+        return 1;
+    }
+
+    const u16 condition = this->data->data.enrageCondition;
+
+    switch (event)
+    {
+        case kEnrageEvent0:
+            if (condition == kCounter2FD5Condition)
+            {
+                ++this->enrageCounter2FD5;
+            }
+
+            break;
+
+        case kEnrageEvent1:
+            if (condition == kSpent2FD5Condition)
+            {
+                this->enrageCounter2FD5 = kCounterSpent;
+            }
+
+            break;
+
+        case kEnrageEvent2:
+            if (condition == kCounter2FD6Condition)
+            {
+                ++this->enrageCounter2FD6;
+            }
+
+            break;
+
+        case kEnrageEvent3:
+            if (condition == kSpent2FD6Condition)
+            {
+                this->enrageCounter2FD6 = kCounterSpent;
+            }
+
+            break;
+
+        default:
+            break;
+    }
+
+    return event;
+}
+
+// swd3e.exe 0x0049C290
+u8 BattleUnit::EnrageElement() const
+{
+    return this->enrageElement;
+}
+
+// swd3e.exe 0x0049C2B0
+u8 BattleUnit::CommandTurns() const
+{
+    return this->command.turns;
+}
+
+// swd3e.exe 0x0049C310
+void BattleUnit::SetUnk26B8Bit19(int on)
+{
+    if (on == 1)
+    {
+        this->unk26B8 |= kFlag26B8Bit19;
+    }
+    else
+    {
+        this->unk26B8 &= ~kFlag26B8Bit19;
+    }
+}
+
+// swd3e.exe 0x0049C340: set by enrage 0x3F2
+int BattleUnit::Unk26B8Bit23() const
+{
+    return (this->unk26B8 & kFlag26B8Bit23) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x0049C350
+i32 BattleUnit::RaiseUnk26B8(i32 bits)
+{
+    this->unk26B8 |= static_cast<u32>(bits);
+    return bits;
+}
+
+// swd3e.exe 0x0049C370
+i32 BattleUnit::ClearUnk26B8(i32 bits)
+{
+    this->unk26B8 &= ~static_cast<u32>(bits);
+    return ~bits;
+}
+
+// swd3e.exe 0x0049C390
+int BattleUnit::DamageTransferred() const
+{
+    return (this->status & BattleUnit::DamageTransfer) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x0049C3A0: the command brings a rise, invisibility or a barrier, has action flag 12, or the unit's own
+// object has kind bit 2
+int BattleUnit::CommandSupports() const
+{
+    const u32 buffs = static_cast<u32>(this->command.unk08);
+
+    if ((buffs & kSupportBuffs) != 0 || (this->command.actionFlags & UnitCommand::UnkAction1000) != 0)
+    {
+        return 1;
+    }
+
+    return (LowByte(this->object.data.kind) & kSupportKind) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x0049C410: bit 15 of the command's ailment
+int BattleUnit::CommandRefreshOnly() const
+{
+    return (this->command.ailment & SkillScript::RefreshOnly) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x0049C420
+bool BattleUnit::HasStatus(u32 bits) const
+{
+    return (bits & this->status) != 0;
 }
 
 }  // namespace swd3e

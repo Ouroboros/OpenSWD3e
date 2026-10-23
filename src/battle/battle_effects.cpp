@@ -1240,7 +1240,7 @@ void BattleUnit::TickEffects(BattleServices& services)
             --node->turns;
         }
 
-        if (node->bits == SkillScript::Barrier && this->unk3040 == 1)
+        if (node->bits == SkillScript::Barrier && this->partyMember == 1)
         {
             if (this->roleRecord->stamina < kBarrierStamina)
             {

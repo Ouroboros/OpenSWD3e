@@ -430,6 +430,29 @@ public:
     int AddPoison(BattleServices& services, i16 base, u8 level);
     int EnrageCheck(BattleServices& services, i16 cause, i16 element);
     int Enrage(BattleServices& services);
+    i32 HitPointShare(int scale) const;
+    int CancelHitNumber(BattleServices& services);
+    void ClearUnk2FD1();
+    bool PoisonLasted() const;
+    i16 PoisonBase() const;
+    void CountPoisonTurn();
+    void RaiseUnk26B8Bit28();
+    i32 PartyMember() const;
+    i32 AutoControl() const;
+    i32 GuestControl() const;
+    i32 Ghost() const;
+    void StartRipple(BattleServices& services);
+    int CountEnrageEvent(int event);
+    u8 EnrageElement() const;
+    u8 CommandTurns() const;
+    void SetUnk26B8Bit19(int on);
+    int Unk26B8Bit23() const;
+    i32 RaiseUnk26B8(i32 bits);
+    i32 ClearUnk26B8(i32 bits);
+    int DamageTransferred() const;
+    int CommandSupports() const;
+    int CommandRefreshOnly() const;
+    bool HasStatus(u32 bits) const;
     int HasEffectBits(u16 bits) const;
     bool ApplyPendingDamage(BattleServices& services);
     void DrawEffectIcons(BattleServices& services, int x, int y);
@@ -737,6 +760,11 @@ public:
     // +0x3070 (swd3e) 1: an enemy whose act has no action 0x26 (0x00487D60), or set by DrawEffects; cleared when
     // ailment 0x200 ends
     i32 unk3070 = 0;
+    // swd3e: with equipment flag Unk36 a hit number is taken back once (CancelHitNumber): the uses left (0x0048BA60
+    // counts them down; -1: none, -2: used), and 1 once it was
+    i8 unk2FD1 = 0;       // +0x2FD1
+    i32 unk306C = 0;      // +0x306C
+    u8 rippleFrames = 0;  // +0x2FDB (swd3e) the frames of the unit's ripple (StartRipple, DrawEffects ends it past 30)
     // swd3e: the text of the unit's messages, kept by address by the messages (Announce).
     std::array<char, 0x40> text = {};  // +0xF84
     u16 restoreHitPoints = 0;          // +0x2EB6 the hit points a command restores
@@ -818,7 +846,8 @@ public:
     i32 absorbing = 0;  // +0x303C 1 while an absorb runs (AbsorbFrame)
     // +0x3040 (swd3e) 1: a party role set up from its record (Setup), 0: the talisman ghost (0x0047ED60); read by
     // HitDamage, 0x0048BA60, HurtFrame and 0x004808D0
-    i32 unk3040 = 0;
+    i32 partyMember = 0;
+    i32 ghost = 0;         // +0x304C (swd3e) 1: the talisman ghost in battle (0x0047ED60)
     i32 autoControl = 0;   // +0x3044 1: the role acts by itself (AI)
     i32 guestControl = 0;  // +0x3048 1: a guest role, acting by itself
     i32 facing = 0;        // +0x3050

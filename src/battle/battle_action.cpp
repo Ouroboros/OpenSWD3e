@@ -747,7 +747,7 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, u16 command)
         if (command == kSpellCommand && unit.ActFlag13() == 1)
         {
             battle.rippleHits = 1;
-            this->battleRipple =
+            this->battleState.ripple =
                 std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
         }
 
@@ -777,7 +777,7 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, u16 command)
 
         if (battle.rippleHits == 1)
         {
-            this->battleRipple.reset();
+            this->battleState.ripple.reset();
         }
 
         battle.rippleHits = 0;

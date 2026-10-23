@@ -240,7 +240,7 @@ i16 Grown(i16 value, i16 scale)
 
 }  // namespace
 
-// swd3e.exe 0x0047E930: the battle extras cleared: the words past the unit, unk2EB2, unk3040, the five extra acts,
+// swd3e.exe 0x0047E930: the battle extras cleared: the words past the unit, unk2EB2, partyMember, the five extra acts,
 // slot acts 8 and 9 and the record at +0x3074
 void BattleRole::ClearExtras()
 {
@@ -257,7 +257,7 @@ void BattleRole::ClearExtras()
     this->usedItem = 0;
     this->unk2F18 = 0;
     this->unk2F16 = 0;
-    this->unk3040 = 0;
+    this->partyMember = 0;
     this->extraActs.fill(ActState{});
     this->slotActs[BattleUnit::UnkSlot8] = ActState{};
     this->slotActs[BattleUnit::UnkSlot9] = ActState{};
@@ -266,12 +266,12 @@ void BattleRole::ClearExtras()
 
 // swd3e.exe 0x0047E9C0: a party role entering battle: its record copied into the battle copy (the attack and defence
 // bonuses starting from the attack and defence), its party record kept with its current and maximum values held to
-// 9999, the act from its placement (asserted non-zero), unk3040 set; bit 15 of +0x24 or no hit points left mark it
+// 9999, the act from its placement (asserted non-zero), partyMember set; bit 15 of +0x24 or no hit points left mark it
 // defeated
 void BattleRole::Setup(RoleRecord& record, RoleBattleBlock& block, const UnitPlacement& at, ErrorReporter& reporter)
 {
     this->ClearExtras();
-    this->unk3040 = 1;
+    this->partyMember = 1;
     this->placement = at;
     this->savedPlacement = this->placement;
     this->kind = at.kind;

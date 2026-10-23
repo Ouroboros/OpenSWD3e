@@ -358,7 +358,7 @@ void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, i
 
     // Without a ripple the original calls through a null pointer: the ripple is skipped. The copy of the screen the
     // original takes before the ripple moves is taken where it refracts: nothing is drawn between.
-    ScriptObject* ripple = game.battleRipple.get();
+    ScriptObject* ripple = game.battleState.ripple.get();
 
     auto refract = [ripple, &painter](int x, int y)
     {

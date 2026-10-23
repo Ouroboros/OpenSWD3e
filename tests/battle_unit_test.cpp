@@ -608,7 +608,7 @@ TEST_CASE("battle unit: effect timers, poison and the barrier's stamina")
     record.stamina = kTooLittleStamina;
     unit.battleRecord = &record;
     unit.roleRecord = &record;
-    unit.unk3040 = 1;
+    unit.partyMember = 1;
     unit.effects.next = std::make_unique<swd3e::EffectNode>();
     swd3e::EffectNode& poison = *unit.effects.next;
     poison.bits = SkillScript::PoisonAilment;

@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "crt/msvc.h"
+#include "game/scene.h"
 
 namespace swd3e
 {
@@ -17,6 +18,11 @@ constexpr int kSecondKind = 2;
 constexpr u16 kAllOnes16 = 0xFFFF;  // a free record has every byte 0xFF
 
 }  // namespace
+
+// The battle state: every field at its opening value (the original's globals).
+BattleState::BattleState() = default;
+
+BattleState::~BattleState() = default;
 
 // swd32.exe 0x004694E0 (unmatched in swd3e): takes the first non-zero entry of the 4 x 10 queue unless one is pending
 void BattleState::TakePendingAction()
