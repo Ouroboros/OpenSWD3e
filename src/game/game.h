@@ -422,6 +422,7 @@ private:
     void DrawControlMenu(int x, int y, int cursor);
     void DrawSpellList(int x, int y, int cursor, int top);
     void DrawItemList(int x, int y, int cursor, int top);
+    int DrawObjectStats(int x, int y);
     void DrawVictoryPanel();
     void DrawLevelUpPanel();
     void CheckLevelUps();

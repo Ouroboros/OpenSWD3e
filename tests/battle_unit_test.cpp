@@ -1346,14 +1346,15 @@ TEST_CASE("battle role: the worn accessories gain proficiency")
     constexpr swd3e::u16 kCounter = 4;
     constexpr swd3e::u16 kMaximum = 10;
     constexpr swd3e::u16 kStep = 6;
+    Services world;
     swd3e::BattleRole role;
     role.accessories[1].data.act = kCounter;
     role.accessories[1].data.counterMax = kMaximum;
     swd3e::CounterList list;
-    CHECK_EQ(role.StepWornCounters(list, kStep), 1);
+    CHECK_EQ(role.StepWornCounters(world.services, list, kStep), 1);
     CHECK_EQ(list.id, 1);
     CHECK_EQ(list.next->value, kStep);
-    role.StepWornCounters(list, kStep);
+    role.StepWornCounters(world.services, list, kStep);
     CHECK_EQ(list.next->value, kMaximum);
     CHECK_EQ(list.next->percent, 100);
 }

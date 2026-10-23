@@ -267,11 +267,16 @@ void SetProficiency(CounterList& list, u16 id, u16 value, Database& database)
 
         if (static_cast<u16>(node->id) != id)
         {
-            CounterNode& added = Append(*node);
-            added.id = static_cast<i16>(id);
-            added.value = value >= maximum ? maximum : value;
-            added.percent = Percent(added.value, maximum);
-            CountOne(list);
+            // swd3e: a missing proficiency is added only for a value.
+            if (value != 0)
+            {
+                CounterNode& added = Append(*node);
+                added.id = static_cast<i16>(id);
+                added.value = value >= maximum ? maximum : value;
+                added.percent = Percent(added.value, maximum);
+                CountOne(list);
+            }
+
             return;
         }
     }

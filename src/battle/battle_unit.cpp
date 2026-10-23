@@ -1446,8 +1446,9 @@ constexpr int kInvisibleSlowdown = 4;
 
 // FadeMainOut and Defense.
 
-constexpr int kDefenseChangePercent = 30;
 constexpr int kBarrierPercent = 70;
+constexpr int kUnk2EB2Tenths = 10;  // Defense: a positive unk2EB2 scales the defence by unk2EB2 * 10 percent (swd3e)
+constexpr int kSignBit16 = 0x8000;  // Defense: a role's defence negative in 16 bits
 
 // DefeatFrame: the defeat poses (defeatPose) and their timing.
 constexpr i32 kDefeatAction = 0x24;
@@ -3396,32 +3397,47 @@ void BattleUnit::DrawMainFaded(BattleServices& services, int tint)
     scene.Show(services);
 }
 
-// swd3e.exe 0x00497790: the unit's defence: a party role's from its battle record (+30% DefenseUp, -30% DefenseDown,
-// +70% Barrier), an enemy's from its object (no barrier)
+// swd3e.exe 0x00497790: the unit's defence: a party role's from its battle record, with defenseShift percent of it
+// added (DefenseUp) and taken (DefenseDown, in 16 bits) and 70 percent added with Barrier; a positive unk2EB2 then
+// scales it (from its 16 bits) by unk2EB2 tenths, and one negative in 16 bits is 0. An enemy's from its object, with
+// the same shifts.
 int BattleUnit::Defense() const
 {
     const u32 status = this->status;
     const int base = this->kind == 1 ? this->battleRecord->defenseBonus : this->data->data.defense;
     int up = 0;
     int down = 0;
-    int barrier = 0;
 
     if ((status & BattleUnit::DefenseUp) != 0)
     {
-        up = kDefenseChangePercent * base / kPercent;
+        up = base * this->defenseShift / kPercent;
     }
 
     if ((status & BattleUnit::DefenseDown) != 0)
     {
-        down = kDefenseChangePercent * base / kPercent;
+        down = base * this->defenseShift / kPercent;
     }
 
-    if (this->kind == 1 && (status & BattleUnit::Barrier) != 0)
+    if (this->kind != 1)
+    {
+        return base - down + up;
+    }
+
+    int barrier = 0;
+
+    if ((status & BattleUnit::Barrier) != 0)
     {
         barrier = kBarrierPercent * base / kPercent;
     }
 
-    return up + barrier + base - down;
+    int defense = static_cast<u16>(base - down) + barrier + up;
+
+    if (this->unk2EB2 > 0)
+    {
+        defense = static_cast<i16>(defense) * this->unk2EB2 * kUnk2EB2Tenths / kPercent;
+    }
+
+    return (defense & kSignBit16) != 0 ? 0 : defense;
 }
 
 // swd3e.exe 0x0048CA10: one frame of the unit's defeat while `dying` (none for the talisman ghost); 1 once it is over

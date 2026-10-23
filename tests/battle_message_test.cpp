@@ -183,3 +183,17 @@ TEST_CASE("battle message: list, panel growth and the action queue")
     all.state.TakePendingAction();
     CHECK_EQ(all.state.pendingAction, kEarlierAction);  // kept until it is used
 }
+
+TEST_CASE("battle message: the element tints match swd3e.exe")
+{
+    constexpr swd3e::u32 kElementTintsAt = 0x004BF674;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
+
+    if (exe.empty())
+    {
+        std::printf("  (swd3e.exe not found, skipped)\n");
+        return;
+    }
+
+    CHECK(swd3etest::SameTable(exe, kElementTintsAt, swd3e::BattleMessages::ElementTints));
+}

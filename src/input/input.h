@@ -23,6 +23,8 @@ public:
         E = 0x12,
         P = 0x19,
         R = 0x13,
+        T = 0x14,
+        Y = 0x15,
         Enter = 0x1C,
         A = 0x1E,
         G = 0x22,

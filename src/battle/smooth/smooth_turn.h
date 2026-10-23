@@ -43,6 +43,7 @@ public:
     void DrawSpellListAdvance(int x, int y, int cursor, int top, Scene& scene);
 
     void DrawItemListAdvance(int x, int y, int cursor, int top, Scene& scene);
+    void DrawObjectStatsAdvance(int x, int y, Scene& scene);
 
     void DrawVictoryPanelAdvance(Scene& scene);
 

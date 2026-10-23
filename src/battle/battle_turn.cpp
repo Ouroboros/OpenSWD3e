@@ -21,8 +21,10 @@ namespace
 
 constexpr i32 kBattleWon = 0x63;
 constexpr i32 kBattleLost = 0x67;
-constexpr i32 kTurnsRunning = 1;   // BattleState::result while no side has lost
-constexpr u16 kBossReward = 0x14;  // unk53BF16 gained by an enemy of ObjectData::UnkKind20
+constexpr i32 kTurnsRunning = 1;           // BattleState::result while no side has lost
+constexpr u32 kGhostRescueAct = 0x17B7;    // ApplyHits: the act of the ghost healing its master (swd3e)
+constexpr int kGhostRescuePercent = 0x50;  // of the master's hit points
+constexpr u16 kBossReward = 0x14;          // unk53BF16 gained by an enemy of ObjectData::UnkKind20
 constexpr u16 kEnemyReward = 3;
 constexpr i16 kDefeatCount = 1;  // the bestiary count of a defeated enemy
 constexpr std::size_t kLastTurnUnit = BattleState::RoleUnits - 1;
@@ -53,7 +55,6 @@ constexpr u16 kBackSound = 0x2E;
 constexpr i32 kListState2 = 2;
 constexpr i32 kListState4 = 4;
 constexpr i32 kListState1B = 0x1B;
-constexpr i32 kGuardOrder = 5;                               // the order of a role that guards in the auto battle
 constexpr i32 kFirstPanelUnit = BattleState::FirstRoleUnit;  // the four party roles have the panels
 constexpr i32 kLastPanelUnit = BattleState::FirstRoleUnit + 3;
 constexpr u16 kNoPanelRole = 0xFFFF;
@@ -107,17 +108,18 @@ constexpr std::u8string_view kNormalPact = u8"正常靈契";    // 0x004BF3E4
 constexpr std::u8string_view kAbsolutePact = u8"絕對靈契";  // 0x004BF3D8
 constexpr i16 kRefill = -1;
 constexpr int kFillFury = -1;
-constexpr i16 kDebugAttack = 0x26AC;
+constexpr i16 kDebugAttack = 0x1964;  // swd3e (swd32: 0x26AC)
 constexpr i16 kDebugDefense = 0x9B;
-constexpr i16 kDebugAgility = 0xC8;
-constexpr int kSmallHurt = 0x50;
-constexpr i16 kSmallDrain = -10;
-constexpr int kBigHurt = 0x1F4;
+constexpr i16 kDebugAgility = 0x64;  // swd3e (swd32: 0xC8)
+constexpr int kSmallHurt = 0x32;     // swd3e: D hurts without a drain
+constexpr int kBigHurt = 0x1F4;      // swd3e: R
 constexpr i16 kBigDrain = -5;
+constexpr int kSlowFrameInterval = 0x64;  // swd3e: F5
 constexpr int kEnemyHurt = 10;
 constexpr int kDefeatHurt = 0x7530;
 constexpr int kToggleStates = 2;
-constexpr std::size_t kClearedTurnUnits = 8;  // the original clears 0x28 bytes from 0x0053AF30
+constexpr std::size_t kClearedTurnFirst = 10;  // swd3e: W clears turnTaken 10..19 (0x28 bytes from 0x0057604C)
+constexpr std::size_t kClearedTurnUnits = 10;
 constexpr i16 kDebugStep = 10;
 
 constexpr int kPanelsTop = 0x182;  // the pointer over the battle
@@ -267,7 +269,6 @@ constexpr i32 kListGrown = 7;
 constexpr i32 kListOpened = 0xA;
 constexpr u16 kListScrollBar = 0x232A;
 constexpr int kSpellScrollX = 0x190;
-constexpr int kItemScrollX = 0x19E;
 constexpr int kThrowScrollX = 0x192;
 constexpr int kListScrollY = 0x9E;
 constexpr int kListScrollRows = 4;
@@ -869,10 +870,12 @@ int Game::DamageNumbersFrame(int index, int role)
     return unit.DrawDamageNumbers(services) == 1 ? 1 : 0;
 }
 
-// swd3e.exe 0x00469930: the units in draw order show their guard text and their damage numbers (once done damageShown
-// is set and their slotTargets entry cleared: a role by its role index, so a role and the enemy of the same index share
-// it), then take their pending damage: a unit that does has its unk502984 entry set to its index and the slot record
-// of that index removed (a role's index, as in the original).
+// swd3e.exe 0x00469930: the units in draw order show their guard text and their damage numbers, then take their
+// pending damage: a unit that does has its unk502984 entry set to its index and the slot record of that index removed.
+// A role whose numbers are done (its slotTargets entry cleared) or whose damage is taken sets damageShown; then, out of
+// the menu, with the talisman ghost (ghostSlot) obeying, the first role standing below half its hit points and no
+// rescue yet, the ghost heals it when it can spend its spirit (kGhostRescuePercent): its act kGhostRescueAct, its
+// order put first in the slot records and ghostRescued set. An enemy's numbers set nothing.
 void Game::ApplyHits()
 {
     BattleState& battle = this->battleState;
@@ -882,26 +885,74 @@ void Game::ApplyHits()
     for (std::size_t order = 0; order < units; ++order)
     {
         const i32 unitId = battle.drawOrder[order];
-        const bool isRole = unitId >= BattleState::FirstRoleUnit;
-        const int index = isRole ? unitId - BattleState::FirstRoleUnit : unitId;
-        const auto at = static_cast<std::size_t>(index);
-        BattleUnit& unit = isRole ? static_cast<BattleUnit&>(this->battleRoles[at])
-                                  : static_cast<BattleUnit&>(this->battleEnemies[at]);
-        unit.DrawGuardText(services);
 
-        if (this->DamageNumbersFrame(index, isRole ? 1 : 0) == 1)
+        if (unitId < BattleState::FirstRoleUnit)
+        {
+            const auto at = static_cast<std::size_t>(unitId);
+            BattleEnemy& enemy = this->battleEnemies[at];
+            enemy.DrawGuardText(services);
+            this->DamageNumbersFrame(unitId, 0);
+
+            if (enemy.ApplyPendingDamage(services))
+            {
+                battle.unk502984[at] = unitId;
+                battle.RemoveSlotRecord(unitId);
+            }
+
+            continue;
+        }
+
+        const int index = unitId - BattleState::FirstRoleUnit;
+        const auto at = static_cast<std::size_t>(index);
+        BattleRole& role = this->battleRoles[at];
+        role.DrawGuardText(services);
+
+        if (this->DamageNumbersFrame(index, 1) == 1)
         {
             battle.damageShown = 1;
             battle.slotTargets[at] = -1;
         }
 
-        if (!unit.ApplyPendingDamage(services))
+        if (role.ApplyPendingDamage(services))
+        {
+            battle.damageShown = 1;
+            battle.unk502984[at] = index;
+            battle.RemoveSlotRecord(index);
+        }
+
+        if (battle.damageShown != 1)
         {
             continue;
         }
 
-        battle.unk502984[at] = index;
-        battle.RemoveSlotRecord(index);
+        battle.damageShown = 0;
+        const auto ghostAt = static_cast<std::size_t>(battle.ghostSlot);
+        BattleRole& ghost = this->battleRoles[ghostAt];
+        BattleRole& master = this->battleRoles[0];
+
+        if (battle.result != 0 || ghost.GhostObeys(services) != 1 || master.LowHitPoints(0) != 1 ||
+            master.IsDefeated() || battle.ghostRescued != 0)
+        {
+            continue;
+        }
+
+        i32 hitPoints = 0;
+        i32 maximum = 0;
+        master.GetHitPoints(hitPoints, maximum);
+
+        if (ghost.SpendGhostSpirit(hitPoints, maximum, kGhostRescuePercent) != 1)
+        {
+            continue;
+        }
+
+        battle.unk4FE5D4[ghostAt] = static_cast<i32>(kGhostRescueAct);
+        battle.aimTarget = 1;
+        battle.pendingOrders[ghostAt].unk00 = 1;
+        ghost.Retarget(0);
+        battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
+        battle.unk53BFC0 = 1;
+        battle.unk53BFC4 = 1;
+        battle.ghostRescued = 1;
     }
 }
 
@@ -1143,8 +1194,8 @@ void Game::ScrollListForward()
 }
 
 // swd3e.exe 0x00467CF0: the auto battle takes the current role's turn (unless in battle state 3): with no remembered
-// enemy (autoTarget) the state becomes 3; otherwise the role acts on it (aimTarget), or guards with MarkBit1 (its
-// order taken as 1); a defeated enemy gives way to the first standing one, and with none the auto battle ends.
+// enemy (autoTarget) the state becomes 3; otherwise the role acts on it (aimTarget); a defeated enemy gives way to the
+// first standing one, and with none the auto battle ends.
 void Game::AutoBattleTurn()
 {
     BattleState& battle = this->battleState;
@@ -1173,16 +1224,6 @@ void Game::AutoBattleTurn()
     battle.result = 0;
     battle.unk53BFBC = 0;
     battle.unk53BFB8 = 0;
-
-    if (role.MarkBit1() == 1)
-    {
-        battle.turnCommand = kGuardOrder;
-        battle.turnTaken[static_cast<std::size_t>(battle.turnUnit)] = kGuardOrder;
-        role.ResetAfterGuard();
-        role.SetTarget(1);
-        battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
-        return;
-    }
 
     if (!this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].IsDefeated())
     {
@@ -1871,9 +1912,10 @@ void Game::DrawEscortList(int x, int y)
 }
 
 // swd3e.exe 0x00475680: the name tag of the aimed enemy (aimTarget, 1-based) at (x, y), unless the current role's
-// order is taken or unk53BF88: a darkened box and a frame as wide as the name (20 pixels per two bytes; from the right
-// edge when the sides are swapped), the name in white. Once the bestiary counts 10 of it its hit points follow
-// ("生命:%d/%d", to the left when swapped); from 15 its action gauge as a dark red bar below.
+// order is taken or unk53BF88: a quarter-dark box and a frame as wide as the name (20 pixels per two bytes; from the
+// right edge when the sides are swapped), the name in white. Once the bestiary counts 10 of it the box takes the tint
+// of its element and its hit points follow right of the frame ("生命:%d/%d"); from 15 its action gauge as a dark red
+// bar below them.
 void Game::DrawTargetTag(int x, int y)
 {
     smooth::Scene scene;
@@ -1905,15 +1947,27 @@ void Game::DrawSpellList(int x, int y, int cursor, int top)
 }
 
 // swd3e.exe 0x00473E10: the object list of category listRole at (x, y): its four page tabs (frames 3..0 right to
-// left, the open one frame 4 + category), the panel act restarted, a quarter-dark box and a frame; then from entry
-// `top` + 1 up to 7 shown objects (roleListEntries counts them) with their counts ("%2d"), dark when too costly. Row
-// `cursor` (from 1) is drawn again a pixel up and left under a gradient bar, its entry becomes listCursor, and the
-// object's description is centred in a bar at the bottom.
+// left, the open one frame 4 + category), the panel act restarted, a quarter-dark box and a frame; its scroll bar past
+// 7 entries; then from entry `top` + 1 up to 7 shown objects (roleListEntries counts them) with their counts ("%2d"),
+// dark when too costly, a "+" before the marked ones. Row `cursor` (from 1) is drawn again a pixel up and left under a
+// gradient bar, its entry becomes listCursor, category 3 shows DrawObjectStats, and the object's description is
+// centred in a bar at the bottom.
 void Game::DrawItemList(int x, int y, int cursor, int top)
 {
     smooth::Scene scene;
     smooth::TurnFrame(*this).DrawItemListAdvance(x, y, cursor, top, scene);
     scene.Show(this->battleServices);
+}
+
+// swd3e.exe 0x00478990: the stats panel of the selected object (攻, 防, 敏 of its record in lastObject, green, after
+// the light labels) in a quarter-dark box, tinted by the object's first element once its fame reaches kTintedFame;
+// the panel act runs and the menu slide is cleared. Returns x.
+int Game::DrawObjectStats(int x, int y)
+{
+    smooth::Scene scene;
+    smooth::TurnFrame(*this).DrawObjectStatsAdvance(x, y, scene);
+    scene.Show(this->battleServices);
+    return x;
 }
 
 // swd3e.exe 0x00476200: the 戰鬥勝利 panel. The first time (the gold not yet given, bit 15 of unk53BF12): the music
@@ -1938,9 +1992,9 @@ void Game::DrawLevelUpPanel()
     scene.Show(this->battleServices);
 }
 
-// swd3e.exe 0x004767D0: the first party role standing (not forced) with the experience of its next level (below the
-// level cap) levels up: the record is kept in levelUpBefore, the next level's maxima and attributes (LevelUp of both
-// levels; a skill learned sets learnedPending) are added to it as the difference, hit points, spirit and stamina
+// swd3e.exe 0x004767D0: the first party role (not auto, guest or ghost) with the experience of its next level (below
+// the level cap) levels up: the record is kept in levelUpBefore, the next level's maxima and attributes (LevelUp of
+// both levels; a skill learned sets learnedPending) are added to it as the difference, hit points, spirit and stamina
 // refilled, its level and experience mark taken; levelUpRole becomes the role and the level-up sound plays. Otherwise
 // levelUpRole is kNoLevelUp. unk53C4C8 is set either way.
 void Game::CheckLevelUps()
@@ -1951,7 +2005,7 @@ void Game::CheckLevelUps()
     {
         const BattleRole& unit = this->battleRoles[index];
 
-        if (unit.autoControl == 1 || unit.guestControl == 1)
+        if (unit.AutoControl() == 1 || unit.GuestControl() == 1 || unit.Ghost() == 1)
         {
             continue;
         }
@@ -2598,12 +2652,14 @@ void Game::MenuDown()
     }
 }
 
-// swd3e.exe 0x00468480: the debug keys of the battle (with the debug mode). With a Ctrl key: F3 stops the music, F1
-// and X toggle unk5244E0 and unk53AF68, K starts a strong attack (強攻擊), Z refills the roles (vitals, fury and
-// strong attributes), D and F hurt the roles, V the enemies, F9 toggles skipping the talk, E ends the frame (0), C
-// ends the spell and the acting unit (the original then resets the turn of role actingUnit - 8 with actingUnit just set
-// to -1: not done here), F5 restarts the battle music, F2 toggles the absolute spirit pact, W defeats the enemies.
-// Without Ctrl: H and J move every unit and the background 10 pixels. P toggles the snapshot in any mode. 1 otherwise.
+// swd3e.exe 0x00468480: the debug keys of the battle (with the debug mode). With a Ctrl key: F3 stops the music, F4
+// toggles showRoleBlocks, F1 and X toggle unk5244E0 and unk53AF68, K starts a strong attack (強攻擊), Z refills the
+// roles (vitals, fury and strong attributes), T draws the enemies' gauges again, D and R hurt the roles, V the enemies,
+// F9 toggles skipping the talk, E ends the battle (0), C ends the spell and the acting unit (the original then resets
+// the turn of role actingUnit - 20 and enemy actingUnit with actingUnit just set to -1: not done here), F5 slows the
+// frames or restores them, F2 toggles the absolute spirit pact, W defeats the enemies. Without Ctrl: H and J move
+// every unit and the background 10 pixels, T and Y set the slide mode. P toggles the snapshot in any mode. 1
+// otherwise.
 int Game::BattleDebugKeys()
 {
     BattleState& battle = this->battleState;
@@ -2627,6 +2683,12 @@ int Game::BattleDebugKeys()
             if (pressed(Input::F3))
             {
                 this->audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
+            }
+
+            if (pressed(Input::F4))
+            {
+                SleepMilliseconds(kDebugShortPause);
+                battle.showRoleBlocks = (battle.showRoleBlocks + 1) % kToggleStates;
             }
 
             if (pressed(Input::F1))
@@ -2669,13 +2731,23 @@ int Game::BattleDebugKeys()
                 }
             }
 
+            if (pressed(Input::T))
+            {
+                pause();
+
+                for (u32 index = 0; index < battle.enemyCount; ++index)
+                {
+                    this->battleEnemies[index].RandomizeGauge(services, 1);
+                }
+            }
+
             auto hurtRoles = [this, &battle, &services](int hitPoints, i16 drain)
             {
                 for (u32 index = 0; index < battle.roleCount; ++index)
                 {
                     BattleRole& role = this->battleRoles[index];
 
-                    if (role.autoControl != 1 && role.guestControl != 1)
+                    if (role.AutoControl() != 1 && role.GuestControl() != 1)
                     {
                         role.Damage(services, hitPoints, drain, drain);
                     }
@@ -2685,10 +2757,10 @@ int Game::BattleDebugKeys()
             if (pressed(Input::D))
             {
                 pause();
-                hurtRoles(kSmallHurt, kSmallDrain);
+                hurtRoles(kSmallHurt, 0);
             }
 
-            if (pressed(Input::F))
+            if (pressed(Input::R))
             {
                 SleepMilliseconds(kDebugShortPause);
                 hurtRoles(kBigHurt, kBigDrain);
@@ -2714,6 +2786,7 @@ int Game::BattleDebugKeys()
             {
                 this->audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
                 this->audio.Queue().Switch(battle.musicBeforeBattle, MusicQueue::RepeatList, 0);
+                this->EndBattle();
                 return 0;
             }
 
@@ -2734,6 +2807,20 @@ int Game::BattleDebugKeys()
                 if (battle.hitsAllRoles == 1)
                 {
                     battle.hitsAllRoles = 0;
+                }
+            }
+
+            if (pressed(Input::F5))
+            {
+                if (battle.slowFrames != 0)
+                {
+                    this->state.SetFrameInterval(Game::FrameInterval);
+                    battle.slowFrames = 0;
+                }
+                else
+                {
+                    this->state.SetFrameInterval(kSlowFrameInterval);
+                    battle.slowFrames = 1;
                 }
             }
 
@@ -2777,17 +2864,15 @@ int Game::BattleDebugKeys()
                 }
 
                 battle.unk53BD88 = static_cast<i32>(battle.enemyCount);
-                battle.unk53BF80 = 1;
-                battle.unk53BFC0 = 1;
-                battle.unk53BFC4 = 1;
                 battle.roleOrder = {};
-                battle.unk53AF30 = 0;
-                battle.unk53AF34 = 0;
-                std::fill_n(battle.turnTaken.begin(), kClearedTurnUnits, 0);
+                std::fill_n(battle.turnTaken.begin() + kClearedTurnFirst, kClearedTurnUnits, 0);
                 battle.slotRecords.fill(BattleSlotRecord{});
                 battle.unk4A7626 = kNoTalkRole;
+                battle.unk53BF80 = 1;
                 battle.unk53BD80 = 0;
                 battle.unk53BF64 = 0;
+                battle.unk53BFC0 = 1;
+                battle.unk53BFC4 = 1;
                 battle.unk53BF5C = 0;
                 battle.turnUnit = 0;
                 battle.currentUnit = 0;
@@ -2820,6 +2905,16 @@ int Game::BattleDebugKeys()
         {
             moveAll(-kDebugStep);
         }
+
+        if (pressed(Input::T))
+        {
+            battle.slideMode = BattleState::SlideToUnit;
+        }
+
+        if (pressed(Input::Y))
+        {
+            battle.slideMode = BattleState::SlideBack;
+        }
     }
 
     if (pressed(Input::P))
@@ -2832,8 +2927,10 @@ int Game::BattleDebugKeys()
 
 // swd3e.exe 0x00468B20: the debug overlay (unk5244E0): each enemy's hit points, lock (GetWord2A74), command and
 // level, each role's lock and command, the slot records (攻擊順序), the party order (我方等待順序) and the draw order
-// (排列順序), the acting and current units, each enemy's action gauge as a two-row bar of kGaugePixel at its place,
-// and the state values (無敵, UM, 戰鬥, the menu, the counts, the aim, the locks, the picture cache, the frame).
+// (排列順序), the acting and current units, each enemy's action gauge as a two-row bar of kGaugePixel at its place
+// with its second gauge as a green bar, and the state values (無敵, UM, 戰鬥, the menu, the command, the aim, the
+// locks, the battle number, the enemies gone, the frame). With showRoleBlocks the experience values of the four party
+// battle blocks follow.
 void Game::DrawBattleDebug()
 {
     smooth::Scene scene;
@@ -5303,7 +5400,6 @@ void Game::DrawBattleMenu()
         case kListState4:
             battle.unk53BFC8 = 1;
             this->DrawItemList(kListX, kListY, battle.roleListRow, battle.roleListScroll);
-            scrollBar(battle.roleListEntries, battle.roleListScroll, kItemScrollX);
             listDrawn();
             return;
 

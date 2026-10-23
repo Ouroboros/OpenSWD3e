@@ -85,6 +85,8 @@ public:
     static constexpr int RoleUnits = 10;               // the party roles and the guests
     static constexpr int Units = Enemies + RoleUnits;  // the enemies, then the roles
     static constexpr int FirstRoleUnit = Enemies;
+    static constexpr i32 SlideToUnit = 1;  // slideMode (SlideUnits)
+    static constexpr i32 SlideBack = 2;
     static constexpr int Guests = 8;
     static constexpr std::size_t LootSlots = 10;  // as BattleMessages::LootSlots
     static constexpr std::size_t TextBytes = 64;
@@ -239,6 +241,8 @@ public:
     // 0x005770D4 low word: party roles the battle's checks leave out (read by 0x004612D0, 0x0045FA80 and
     // CheckBattleEnd; its writer is not rebuilt yet); the high word is a role slot
     u16 unk5770D4 = 0;
+    i16 ghostSlot = 0;     // 0x005770D6 (swd3e) the role slot of the talisman ghost (StartBattle sets it to roleCount)
+    i32 ghostRescued = 0;  // 0x00577358 (swd3e) 1 once the ghost healed its master this turn (ApplyHits; 0x0045FA80)
     i32 musicBeforeBattle = 0;               // 0x005770C8 the music queue's mode when the battle started (StartBattle)
     u8 defeatedRoles = 0;                    // 0x005771E7 the party roles entering defeated
     i32 result = 0;                          // 0x00576FAC 0x67: the battle is lost before it starts
@@ -456,6 +460,9 @@ public:
     u16 levelUpFrames = 0;
     // The debug keys (Game::BattleDebugKeys) and the acting unit.
     i32 unk5244E0 = 0;
+    i32 slowFrames = 0;      // 0x005777F8 (swd3e) the debug keys' F5: the frames are slowed to 100 ms
+    i32 showRoleBlocks = 0;  // 0x00577808 (swd3e) the debug keys toggle it: the overlay shows the party battle blocks
+    u8 unk5774E9 = 0;        // 0x005774E9 (swd3e) 0 or 1, set by FightTalkFrame (0x0047DF22, 0x0047DF46); debug overlay
     i32 unk53AF68 = 0;
     i32 hitsAllRoles = 0;  // 0x00577264 1: the hit falls on all roles at once
     i32 unk53BD88 = 0;

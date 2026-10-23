@@ -64,6 +64,24 @@ class BattleMessages
     friend class smooth::MessagesFrame;  // the rebuild's smooth battle: Draw split (smooth/smooth_messages.h)
 
 public:
+    // The tint of a panel by element (Game::DrawObjectStats, Game::DrawTargetTag).
+    struct ElementTint
+    {
+        i32 red = 0;
+        i32 green = 0;
+        i32 blue = 0;
+    };
+
+    // swd3e.exe 0x004BF674: by element number (0: none, then 金 木 水 火 土)
+    static constexpr std::array<ElementTint, 6> ElementTints = {{
+        {-8, -8, 1},
+        {0x1F, 0x1F, 1},
+        {0xE, 0x12, 7},
+        {2, 0x18, 0x1F},
+        {0x1F, 0xD, 9},
+        {0x15, 0xE, 8},
+    }};
+
     // The texts of the battle (Big5 in the executable; UTF-8 here, converted where drawn).
     // swd32.exe 0x004A8038 (unmatched in swd3e)
     static constexpr std::u8string_view AttackDownEnd = u8"%s降低攻擊力效果解除";

@@ -117,7 +117,7 @@ public:
     int ListObject(const BattleState& battle, int category, int index, std::string& name, u16& flags, u16& count);
     int ThrowableObject(int throwable, int index, std::string& name, u16& count);
     u16 ListSkill(Database& database, int category, int type, int index, std::string& name, u16& cost);
-    int StepWornCounters(CounterList& list, u16 amount);
+    int StepWornCounters(BattleServices& services, CounterList& list, u16 amount);
     u16 SelectSkill(Database& database, int category, int type, int index, u32& act);
     int CanPaySkill(BattleServices& services, int category, int index);
     int SelectObject(Database& database, const BattleState& battle, int category, int index, u32& act, u16& kind);

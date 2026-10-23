@@ -105,13 +105,17 @@ constexpr u16 kWhite = 0xFFFF;
 constexpr int kTagMirrorRight = 0x276;  // the name tag of the aimed enemy
 constexpr int kTagCharWidth = 0x14;
 constexpr int kTagMargin = 4;
-constexpr int kTagFrameHeight = 0x10;
+constexpr int kTagFrameHeight = 0x18;  // swd3e (swd32: 0x10)
+constexpr int kTagFramePad = 4;        // swd3e: the frame reaches 4 past the name
+constexpr int kTagBoxHeight = 0x1C;    // swd3e: a quarter-dark box
+constexpr int kTagTintUp = 3;          // swd3e: tinted by the element once the hit points show
+constexpr int kTagTintHeight = 0x1F;
+constexpr int kTagNameY = 4;
 constexpr int kTagNameX = 2;
 constexpr u16 kKnownHitPoints = 10;  // bestiary counts that show the hit points and the gauge
 constexpr u16 kKnownGauge = 0xF;
 constexpr std::u8string_view kHitPointsFormat = u8"生命:%d/%d";  // 0x004BF760
-constexpr int kTagHitPointsLeft = 0x8C;
-constexpr int kTagHitPointsGap = 0xA;
+constexpr int kTagSideGap = 0xC;  // swd3e: the hit points and the gauge right of the frame on either side
 constexpr int kTagHitPointsUp = 2;
 constexpr int kTagGaugeTop = 0x11;
 constexpr int kTagGaugeHeight = 3;
@@ -147,6 +151,31 @@ constexpr int kItemBoxWidth = 0xCC;
 constexpr int kItemFrameRight = 0xC8;
 constexpr u16 kShownItem = 0x8000;
 constexpr u16 kCostlyItem = 0x4000;
+constexpr u16 kMarkedItem = 0x2000;  // swd3e: drawn with a "+" before it
+constexpr std::string_view kMarkText = "+";
+constexpr int kMarkX = 6;
+constexpr u16 kItemScrollBar = 0x232A;  // swd3e: DrawItemList draws its scroll bar
+constexpr int kItemScrollX = 0x19E;
+constexpr int kItemScrollY = 0x9E;
+constexpr int kItemScrollRows = 4;
+constexpr int kObjectStatsCategory = 3;  // swd3e: the object list category whose cursor shows DrawObjectStats
+constexpr int kObjectStatsX = 0xA4;
+constexpr int kObjectStatsTop = 0x7E;
+constexpr int kObjectStatsRowHeight = 0x18;  // by roleListRow
+constexpr int kObjectStatsWidth = 0x40;
+constexpr int kObjectStatsHeight = 0x42;
+constexpr int kObjectStatsFrameInset = 4;
+constexpr int kObjectStatsFrameRight = 0x3C;
+constexpr int kObjectStatsFrameBottom = 0x3A;
+constexpr int kObjectStatsLabelX = 8;
+constexpr int kObjectStatsValueX = 0x22;
+constexpr int kObjectStatsFirstRow = 8;
+constexpr int kObjectStatsRowStep = 0x10;
+constexpr u32 kObjectStatsValueGreen = 0x18;
+constexpr u16 kTintedFame = 10;  // the fame from which the panel takes the tint of the object's element
+constexpr std::u8string_view kAttackLabel = u8"攻:";   // 0x004BF8F0
+constexpr std::u8string_view kDefenseLabel = u8"防:";  // 0x004BF8EC
+constexpr std::u8string_view kAgilityLabel = u8"敏:";  // 0x004BF8E8
 constexpr int kItemBarWidth = 0xCE;
 constexpr int kVictoryShadeExtra = 0x28;  // the 戰鬥勝利 panel
 constexpr int kVictoryTitleX = 0xF8;
@@ -213,38 +242,40 @@ constexpr int kDebugPartyRow = 0x1E;
 constexpr int kDebugDrawRow = 0x32;
 constexpr int kDebugStateX = 0xF0;
 constexpr int kDebugRightX = 0x1A4;
-constexpr int kDebugFarX = 0x1C2;
+constexpr int kDebugLocksX = 0x190;    // swd3e
+constexpr int kDebugBlockStep = 0xA0;  // swd3e: the battle blocks of the party roles (showRoleBlocks)
+constexpr u32 kDebugGaugeGreen = 0x18;
+constexpr int kDebugGaugeHeight = 3;
 constexpr int kDebugFlagsY = 0x1E;
 constexpr int kDebugMenuY = 0x32;
 constexpr int kDebugUnitsY = 0x46;
 constexpr int kDebugCountsY = 0x5A;
 constexpr int kDebugAimY = 0x6E;
-constexpr int kKilobyte = 1000;
 constexpr i32 kMillisecondsPerSecond = 1000;
 constexpr std::string_view kDebugNumber = "%d";
-// swd32.exe 0x004A792C (unmatched in swd3e)
-constexpr std::u8string_view kEnemyDebugLine = u8"生命:%-3d 鎖定:%-1d 命令:%-1d lv:%-2d";
-// swd32.exe 0x004A7918 (unmatched in swd3e)
-constexpr std::u8string_view kRoleDebugLine = u8"鎖定:%d 命令:%-3d";
-// swd32.exe 0x004A790C (unmatched in swd3e)
-constexpr std::u8string_view kAttackOrder = u8"攻擊順序:";
-// swd32.exe 0x004A78FC (unmatched in swd3e)
-constexpr std::u8string_view kPartyOrder = u8"我方等待順序:";
-// swd32.exe 0x004A78F0 (unmatched in swd3e)
-constexpr std::u8string_view kDrawOrder = u8"排列順序:";
-// swd32.exe 0x004A78DC (unmatched in swd3e)
-constexpr std::u8string_view kUnitsDebugLine = u8"目前角色:%d SEL:%d";
-// swd32.exe 0x004A78C4 (unmatched in swd3e)
+constexpr std::u8string_view kEnemyDebugLine = u8"生命:%-3d 鎖:%-1d 令:%-1d lv:%-2d";  // 0x004BF51C
+constexpr std::u8string_view kRoleDebugLine = u8"鎖定:%d 命令:%-3d";                   // 0x004BF508
+constexpr std::u8string_view kAttackOrder = u8"攻擊順序:";                             // 0x004BF4FC
+constexpr std::u8string_view kPartyOrder = u8"我方等待順序:";                          // 0x004BF4EC
+constexpr std::u8string_view kDrawOrder = u8"排列順序:";                               // 0x004BF4E0
+constexpr std::u8string_view kUnitsDebugLine = u8"目前角色:%d SEL:%d";                 // 0x004BF4CC
+// 0x004BF4B4
 constexpr std::u8string_view kFlagsDebugLine = u8"無敵:%d UM:%d 戰鬥:%d";
-constexpr std::string_view kMenuDebugLine = "fMenu:%d mMove%d";
-constexpr std::string_view kCountsDebugLine = "MsD:%d dRole1:%d CanS:%d";
+constexpr std::string_view kMenuDebugLine = "fMenu:%d mMove%d si:%d";
+constexpr std::string_view kCommandDebugLine = "GetCom:%d ver:11270430";
 constexpr std::string_view kAimDebugLine = "MS:%d Stop:%d mStop%d";
-constexpr std::string_view kLockDebugLine = "A.Lockc:%d ";
-constexpr std::string_view kCacheDebugLine = "TswMem:%dK";
-constexpr std::string_view kLevelUpDebugLine = "w"
-                                               // swd32.exe 0x004A7854 (unmatched in swd3e) (one string)
-                                               "Ll:%d iMn:%d";
-constexpr std::string_view kBfDebugLine = "bf:%d";
+constexpr std::string_view kLockDebugLine = "ALk:%d ALk1:%d";
+constexpr std::string_view kAllHitDebugLine = "AllHit:%d ";
+constexpr std::u8string_view kBattleDebugLine = u8"編號:%d";  // 0x004BF448
+constexpr std::string_view kGoneDebugLine = "MsDCount:%d";
+constexpr std::string_view kTalkDebugLine = "RN:%d Seld:%d";
+constexpr std::u8string_view kBlockExperience = u8"經驗:%d";            // 0x004BF418
+constexpr std::u8string_view kBlockNextExperience = u8"下一招經驗:%d";  // 0x004BF408
+constexpr std::u8string_view kBlockNextSpecial = u8"下一招號碼:%d";     // 0x004BF3F8
+constexpr std::size_t kBlockExperienceAt = 1;                           // in RoleBattleBlock::values
+constexpr std::size_t kBlockNextExperienceAt = 2;
+constexpr std::size_t kBlockNextSpecialAt = 3;
+constexpr i32 kBlockSpecialMask = 0x7FFFFFFF;
 constexpr std::string_view kFrameDebugLine = "FRAME:%d";
 constexpr int kMenuPointerShiftX = 0x10;
 constexpr int kMenuPointerShiftY = 0x30;
@@ -972,6 +1003,9 @@ void TurnFrame::DrawTargetTagAdvance(int x, int y, Scene& scene)
     BattleEnemy& enemy = game.battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)];
     const std::string name = ObjectName(*enemy.Data());
     const int halves = static_cast<int>(name.size()) / 2;
+    const u16 known =
+        static_cast<u16>(FindCounterValue(game.party.fame.lists[Fame::FameList], static_cast<i16>(enemy.ActId())));
+    const int element = enemy.FirstResistance();
     const int left = battle.mirrored == 1 ? kTagMirrorRight - kTagCharWidth * halves - x : x;
     messages.panelAct.id = BattleMessages::PanelAct;
     messages.panelAct.action = 0;
@@ -981,30 +1015,44 @@ void TurnFrame::DrawTargetTagAdvance(int x, int y, Scene& scene)
         left - kTagMargin,
         y - kTagMargin,
         width + 2 * kTagMargin,
-        kListBarHeight,
+        kTagBoxHeight,
         0,
-        kThrowShade,
-        kThrowShade,
-        FillMode::Tint,
+        kListShade,
+        kListShade,
+        FillMode::Quarter,
         scene);
-    const int right = left + width;
+
+    if (known >= kKnownHitPoints)
+    {
+        const BattleMessages::ElementTint& tint = BattleMessages::ElementTints[static_cast<std::size_t>(element)];
+        Box(game.painter,
+            left - kTagMargin,
+            y - kTagTintUp,
+            width + 2 * kTagMargin,
+            kTagTintHeight,
+            tint.red,
+            tint.green,
+            tint.blue,
+            FillMode::Gradient,
+            scene);
+    }
+
+    const int side = width + left + kTagSideGap;
     WindowFrame(
         game.painter,
         game.archive,
         messages.panelAct.frame,
         left,
         y,
-        right,
+        width + left + kTagFramePad,
         y + kTagFrameHeight,
         0,
         kListFrameBorder,
         scene
     );
     font.SetAdvance(kTagCharWidth);
-    font.DrawText(game.drawSurface, left + kTagNameX, y, name, kWhite, TextFont::BoldOutline);
+    font.DrawText(game.drawSurface, left + kTagNameX, y + kTagNameY, name, kWhite, TextFont::BoldOutline);
     font.SetAdvance(kListAdvance);
-    const u16 known =
-        static_cast<u16>(FindCounterValue(game.party.fame.lists[Fame::FameList], static_cast<i16>(enemy.ActId())));
 
     if (known >= kKnownHitPoints)
     {
@@ -1012,8 +1060,7 @@ void TurnFrame::DrawTargetTagAdvance(int x, int y, Scene& scene)
         i32 maximum = 0;
         enemy.GetHitPoints(hitPoints, maximum);
         const std::string text = WinFormat(kHitPointsFormat, {hitPoints, maximum});
-        const int textX = battle.mirrored != 0 ? left - kTagHitPointsLeft : right + kTagHitPointsGap;
-        font.DrawText(game.drawSurface, textX, y - kTagHitPointsUp, text, kWhite, TextFont::BoldOutline);
+        font.DrawText(game.drawSurface, side, y - kTagHitPointsUp, text, kWhite, TextFont::BoldOutline);
     }
 
     if (known < kKnownGauge)
@@ -1028,9 +1075,8 @@ void TurnFrame::DrawTargetTagAdvance(int x, int y, Scene& scene)
         return;
     }
 
-    const int barX = battle.mirrored != 0 ? left - kTagHitPointsLeft : right + kTagHitPointsGap;
     HudFrame(game.battleHud)
-        .FillColor(barX, y + kTagGaugeTop, gauge, kTagGaugeHeight, painter.MakeColor(kTagGaugeRed, 0, 0), scene);
+        .FillColor(side, y + kTagGaugeTop, gauge, kTagGaugeHeight, painter.MakeColor(kTagGaugeRed, 0, 0), scene);
 }
 
 // What Game::DrawControlMenu decides of the frame; the draws into `scene`.
@@ -1326,6 +1372,23 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
     battle.roleListEntries = 0;
     role.CountObjects(battle.listRole, battle.roleListEntries);
     role.ShowAllItems();
+    game.battleHud.scrollCount = static_cast<u16>(battle.roleListEntries);
+    game.battleHud.scrollFirst = battle.roleListScroll;
+
+    if (static_cast<u16>(battle.roleListEntries) > kListRowsShown)
+    {
+        HudFrame(game.battleHud)
+            .DrawScrollBarAdvance(
+                kItemScrollBar,
+                kItemScrollX,
+                kItemScrollY,
+                kItemScrollRows,
+                battle.unk53BD70,
+                battle.unk53BD9C,
+                scene
+            );
+    }
+
     int row = 0;
 
     for (int index = top + 1;; ++index)
@@ -1344,6 +1407,19 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
             const std::string number = WinFormat(kCountFormat, {static_cast<i32>(static_cast<i16>(count))});
             const u16 color = (flags & kCostlyItem) != 0 ? battle.darkColor : battle.lightColor;
             const int rowY = y + kListRowHeight * row;
+
+            if ((flags & kMarkedItem) != 0)
+            {
+                font.DrawText(
+                    game.drawSurface,
+                    x + kMarkX,
+                    rowY + kListRowTop,
+                    kMarkText,
+                    color,
+                    TextFont::BoldOutline
+                );
+            }
+
             font.DrawText(game.drawSurface, x + kListCountX, rowY + kListRowTop, number, color, TextFont::BoldOutline);
             font.DrawText(game.drawSurface, x + kListNameX, rowY + kListRowTop, name, color, TextFont::BoldOutline);
 
@@ -1370,6 +1446,16 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
                     scene);
                 battle.listCursor = index;
                 battle.unk53BFB8 = 1;
+
+                if (battle.listRole == kObjectStatsCategory)
+                {
+                    this->DrawObjectStatsAdvance(
+                        kObjectStatsX,
+                        kObjectStatsRowHeight * battle.roleListRow + kObjectStatsTop,
+                        scene
+                    );
+                }
+
                 Box(game.painter,
                     0,
                     kDescriptionTop,
@@ -1407,6 +1493,87 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
 
     role.ShowAllItems();
     font.SetBackground(TextFont::NoBackground);
+}
+
+// What Game::DrawObjectStats decides of the frame; the draws into `scene`.
+void TurnFrame::DrawObjectStatsAdvance(int x, int y, Scene& scene)
+{
+    Game& game = this->game;
+    BattleState& battle = game.battleState;
+    BattleMessages& messages = game.battleMessages;
+    SceneFont font(game.smallFont, scene);
+    messages.panelAct.id = BattleMessages::PanelAct;
+    messages.panelAct.action = 0;
+    game.acts.Run(messages.panelAct);
+    battle.menuSlide = 0;
+    BattleRole& role = game.battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
+    const u16 id = role.SelectedItemId();
+    game.database.LoadObject(battle.lastObject, id);
+    Database::FreeDescription(battle.lastObject);
+    const ObjectData& data = battle.lastObject.data;
+    const auto element = std::find_if(
+        data.resistances.begin(),
+        data.resistances.end(),
+        [](u8 resistance)
+        {
+            return resistance != 0;
+        }
+    );
+    const auto fame = static_cast<u16>(FindCounterValue(game.party.fame.lists[Fame::FameList], static_cast<i16>(id)));
+    Box(game.painter, x, y, kObjectStatsWidth, kObjectStatsHeight, 0, kListShade, kListShade, FillMode::Quarter, scene);
+
+    // With no element the original takes x as the element, reading past the tints.
+    if (fame >= kTintedFame && element != data.resistances.end())
+    {
+        const BattleMessages::ElementTint& tint =
+            BattleMessages::ElementTints[static_cast<std::size_t>(element - data.resistances.begin()) + 1];
+        Box(game.painter,
+            x,
+            y,
+            kObjectStatsWidth,
+            kObjectStatsHeight,
+            tint.red,
+            tint.green,
+            tint.blue,
+            FillMode::Gradient,
+            scene);
+    }
+
+    WindowFrame(
+        game.painter,
+        game.archive,
+        messages.panelAct.frame,
+        x + kObjectStatsFrameInset,
+        y + kObjectStatsFrameInset,
+        x + kObjectStatsFrameRight,
+        y + kObjectStatsFrameBottom,
+        0,
+        kListFrameBorder,
+        scene
+    );
+    const std::array<std::pair<std::u8string_view, u16>, 3> rows = {{
+        {kAttackLabel, data.attack},
+        {kDefenseLabel, data.defense},
+        {kAgilityLabel, data.agility},
+    }};
+
+    int top = y + kObjectStatsFirstRow;
+
+    for (const auto& [label, value] : rows)
+    {
+        font.DrawText(
+            game.drawSurface,
+            x + kObjectStatsLabelX,
+            top,
+            Big5(label),
+            battle.lightColor,
+            TextFont::BoldOutline
+        );
+        const auto green = static_cast<u16>(game.painter.MakeColor(0, kObjectStatsValueGreen, 0));
+        const std::string number = WinFormat(kCostFormat, {static_cast<i32>(value)});
+        font.DrawText(game.drawSurface, x + kObjectStatsValueX, top, number, green, TextFont::BoldOutline);
+        top += kObjectStatsRowStep;
+    }
 }
 
 // What Game::DrawVictoryPanel decides of the frame; the draws into `scene`.
@@ -1523,7 +1690,11 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
                 record.totalExperience += battle.unk53BF14;
             }
 
-            if (role.StepWornCounters(game.party.fame.lists[Fame::ProficiencyList], battle.unk53BF16) == 1)
+            if (role.StepWornCounters(
+                    game.battleServices,
+                    game.party.fame.lists[Fame::ProficiencyList],
+                    battle.unk53BF16
+                ) == 1)
             {
                 battle.accessoryGained = 1;
             }
@@ -1912,6 +2083,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
     // The menus and lists stay where they are: a highlight jumps to its entry, as in the original.
     const Scene::Still still(scene);
     BattleServices& services = game.battleServices;
+    ScenePainter painter(services, scene);
     BattleState& battle = game.battleState;
     SceneFont font(game.mediumFont, scene);
 
@@ -2018,6 +2190,21 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
                     }
                 }
             }
+
+            const auto second = static_cast<u16>(enemy.SecondGaugeLength());
+
+            if (second != 0)
+            {
+                HudFrame(game.battleHud)
+                    .FillColor(
+                        static_cast<i16>(battle.unk53BF4A),
+                        static_cast<i16>(battle.unk53BF4E),
+                        second,
+                        kDebugGaugeHeight,
+                        painter.MakeColor(0, kDebugGaugeGreen, 0),
+                        scene
+                    );
+            }
         }
 
         text(
@@ -2028,35 +2215,40 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
                 {battle.unk53AF68, static_cast<i32>(battle.darkenUnit), game.fightTalk.battleRuns}
             )
         );
-        text(kDebugStateX, kDebugMenuY, WinFormat(kMenuDebugLine, {battle.result, battle.unk53BFBC}));
         text(
             kDebugStateX,
-            kDebugCountsY,
-            WinFormat(
-                kCountsDebugLine,
-                {static_cast<i32>(battle.enemiesGone),
-                 static_cast<i32>(battle.unk4A7626),
-                 static_cast<i32>(battle.sweptUnits)}
-            )
+            kDebugMenuY,
+            WinFormat(kMenuDebugLine, {battle.result, battle.unk53BFBC, battle.menuCommand})
         );
+        text(kDebugStateX, kDebugCountsY, WinFormat(kCommandDebugLine, {battle.unk53BF74}));
         text(
             kDebugStateX,
             kDebugAimY,
             WinFormat(kAimDebugLine, {battle.aimTarget, battle.unk53BFC0, battle.unk53BFC4})
         );
-        text(kDebugRightX, kDebugFlagsY, WinFormat(kLockDebugLine, {battle.sweepTotal}));
-        text(kDebugRightX, kDebugMenuY, WinFormat(kCacheDebugLine, {game.archive.CacheBytes() / kKilobyte}));
+        text(kDebugLocksX, kDebugTop, WinFormat(kLockDebugLine, {battle.sweepTotal, battle.sweepTargets}));
+        text(kDebugLocksX, kDebugFlagsY, WinFormat(kAllHitDebugLine, {battle.unk53BD80}));
+        text(kDebugRightX, kDebugMenuY, WinFormat(kBattleDebugLine, {static_cast<i32>(battle.battle)}));
+        text(kDebugRightX, kDebugUnitsY, WinFormat(kGoneDebugLine, {static_cast<i32>(battle.enemiesGone)}));
         text(
             kDebugRightX,
-            kDebugUnitsY,
-            WinFormat(
-                kLevelUpDebugLine,
-                {static_cast<i32>(static_cast<i8>(battle.levelUpRole)),
-                 static_cast<i32>(static_cast<i16>(battle.anyStateRole))}
-            )
+            kDebugCountsY,
+            WinFormat(kTalkDebugLine, {static_cast<i32>(battle.unk5774E9), battle.unk53BFB8})
         );
-        text(kDebugFarX, kDebugCountsY, WinFormat(kBfDebugLine, {battle.hoverScrollPart}));
         text(kDebugStateX, kDebugTop, WinFormat(kFrameDebugLine, {kMillisecondsPerSecond / battle.frameMilliseconds}));
+    }
+
+    if (battle.showRoleBlocks > 0)
+    {
+        int x = kDebugTop;
+
+        for (const RoleBattleBlock& block : game.party.battleBlocks)
+        {
+            text(x, kDebugTop, WinFormat(kBlockExperience, {block.values[kBlockExperienceAt]}));
+            text(x, kDebugFlagsY, WinFormat(kBlockNextExperience, {block.values[kBlockNextExperienceAt]}));
+            text(x, kDebugMenuY, WinFormat(kBlockNextSpecial, {block.values[kBlockNextSpecialAt] & kBlockSpecialMask}));
+            x += kDebugBlockStep;
+        }
     }
 
     font.SetShadow(0);

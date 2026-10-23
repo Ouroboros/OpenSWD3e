@@ -61,11 +61,6 @@ int HitFrame::PlayHitActAdvance(BattleUnit& unit, u32 act, int index, Scene& sce
         hit.action = 0;
         hit.hold = 0;
 
-        if (battle.paused == 1)
-        {
-            hit.hold = 1;
-        }
-
         if (game.acts.Run(hit) == 0)
         {
             battle.followActs[at] = ActState{};
@@ -163,17 +158,13 @@ int HitFrame::FadeHitActAdvance(BattleUnit& unit, u32 act, i32 action, int index
     effect.action = action;
     effect.hold = 0;
 
-    if (battle.paused == 1)
-    {
-        effect.hold = 1;
-    }
-
     if (game.acts.Run(effect) == 0)
     {
         return 0;
     }
 
-    const Picture* picture = game.archive.GetPicture(effect.frame, effect.picture);
+    // The original loads the picture directly (0x00436770) and never frees it.
+    const Picture* picture = game.archive.LoadPictureKept(effect.frame, effect.picture);
 
     // A missing picture is read through a null pointer in the original.
     if (picture != nullptr)

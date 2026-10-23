@@ -209,6 +209,11 @@ constexpr int kRefusalY = 0xA;
 constexpr i16 kRefusalFrames = 0x14;
 constexpr int kRefusalFlags = BattleMessage::BlackBar | BattleMessage::Centered;
 constexpr u16 kRefusedSound = 0x8C;
+constexpr int kTreasureLevelX = 0x118;  // StepWornCounters: the message of a treasure level reached (swd3e)
+constexpr int kTreasureLevelY = 0xA;
+constexpr i16 kTreasureLevelFrames = 0x28;
+constexpr std::u8string_view kTreasureLevelUp = u8"龍颿法寶升級";  // 0x004BF388
+constexpr u16 kFullPercent = 100;  // StepWornCounters: a counter with no top is done at once
 constexpr std::size_t kClearedNameBytes = 0x10;
 constexpr u32 kSeparateKind = 0x800;     // ObjectData::kind: the object plays its own act (UnkCommandFlag1000)
 constexpr u32 kReusableKind = 0x80;      // an object not taken when used
@@ -2228,10 +2233,12 @@ u16 BattleRole::ListSkill(Database& database, int category, int type, int index,
     return LowWord(script.unk10);
 }
 
-// swd3e.exe 0x0047FA00: the proficiency counters of the two worn accessories (their unk50) stepped by `amount` up to
-// their unk44 in `list` (a done one left), a missing one appended and counted; 1 when either accessory counts. Each
-// search starts at the head of the list, its count compared as an id.
-int BattleRole::StepWornCounters(CounterList& list, u16 amount)
+// swd3e.exe 0x0047FA00: the proficiency counters of the two worn accessories (their act) stepped by `amount` up to
+// their counterMax in `list` (a done one left), a missing one appended and counted (with no counterMax, done at 100
+// percent); 1 when either such accessory counts. An accessory of kind Unk25 adds the experience of its treasure instead
+// (AddTreasureExperience), announcing a level reached. Each search starts at the head of the list, its count compared
+// as an id.
+int BattleRole::StepWornCounters(BattleServices& services, CounterList& list, u16 amount)
 {
     int counts = 0;
 
@@ -2242,6 +2249,22 @@ int BattleRole::StepWornCounters(CounterList& list, u16 amount)
 
         if (id == 0)
         {
+            continue;
+        }
+
+        if (static_cast<AccessoryKind>(data.unk48) == AccessoryKind::Unk25)
+        {
+            if (this->AddTreasureExperience(list, data.unk48, amount) == 1)
+            {
+                services.messages.Add(
+                    kTreasureLevelX,
+                    kTreasureLevelY,
+                    kTreasureLevelFrames,
+                    kTreasureLevelUp,
+                    BattleMessage::BlackBar | BattleMessage::Centered
+                );
+            }
+
             continue;
         }
 
@@ -2257,7 +2280,7 @@ int BattleRole::StepWornCounters(CounterList& list, u16 amount)
         {
             if (at->done == 0)
             {
-                at->value = static_cast<u16>(at->value + amount);  // a u16 add (0x0046F60B), then held to unk44
+                at->value = static_cast<u16>(at->value + amount);
 
                 if (at->value >= data.counterMax)
                 {
@@ -2279,6 +2302,14 @@ int BattleRole::StepWornCounters(CounterList& list, u16 amount)
         at->percent = static_cast<u16>(
             crt::Ftol(static_cast<double>(amount) / static_cast<double>(data.counterMax) * kCounterPercent)
         );
+
+        if (data.counterMax == 0)
+        {
+            at->value = 0;
+            at->percent = kFullPercent;
+            at->done = 1;
+        }
+
         ++list.id;
     }
 
