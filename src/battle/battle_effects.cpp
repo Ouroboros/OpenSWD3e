@@ -10,12 +10,15 @@
 #include "battle/battle_state.h"
 #include "battle/battle_unit.h"
 #include "battle/battle_unit_constants.h"
+#include "battle/smooth/smooth_draw.h"
 #include "config/config.h"
 #include "core/format.h"
 #include "core/words.h"
 #include "crt/msvc.h"
 #include "party/party.h"
 #include "random/random.h"
+#include "res/act_archive.h"
+#include "res/tsw_archive.h"
 
 namespace swd3e
 {
@@ -265,9 +268,10 @@ enum EnrageEffect : u16
     DefenseDoubledAgilityHalved = 0x3EF,
     AgilityDoubledAttackHalved = 0x3F0,
     AgilityDoubledDefenseHalved = 0x3F1,
-    Unk3F2 = 0x3F2,        // unk26B8 bit 23
-    BurstDamage = 0x3F4,   // enrageDamage, unk26B8 bit 16
-    FirstElement = 0x3F5,  // 0x3F5..0x3FA: enrageElement 1..6
+    Unk3F2 = 0x3F2,           // unk26B8 bit 23
+    InvisibleEnrage = 0x3F3,  // the unit turns invisible once the enrage act ends (EnrageFrame)
+    BurstDamage = 0x3F4,      // enrageDamage, unk26B8 bit 16
+    FirstElement = 0x3F5,     // 0x3F5..0x3FA: enrageElement 1..6
     LastElement = 0x3FA,
     FirstSkill = 0x3E9,  // below it: the skill the enemy takes up
     LastEffect = 0x1770,
@@ -281,6 +285,8 @@ constexpr u16 kEnrageSkillCount = 10000;  // the uses of the skill an enrage giv
 constexpr u8 kEnrageSkillChance = 8;
 constexpr i16 kEnrageDark = -12;  // the field darkens to -12 in each channel
 constexpr i32 kEnrageAct = 0x1C98;
+constexpr u32 kEnrageDone = 0x400000;  // unk26B8: the enrage act ended
+constexpr u8 kEnrageInvisibleTurns = 0xFF;
 
 // The resistances of the elements (RoleRecord and ObjectData, swd3e: 金 木 水 火 土).
 constexpr std::size_t kMetalResistance = 0;
@@ -1814,6 +1820,93 @@ int BattleUnit::Enrage(BattleServices& services)
     battle.enraging = 1;
     this->slotActs[kEffectSlot].id = kEnrageAct;
     return 0;
+}
+
+// swd3e.exe 0x0049C0D0: one frame of an enraged enemy's enrage act (slot act 10, its sound panned left) at the unit;
+// once it waits, an enrage 0x3F3 makes the unit invisible for 255 turns, the field brightens again and the enrage is
+// done (unk26B8 bit 22). A defeated unit drops the enrage instead. 0 while not enraged (or casting, unk2AAC) or with
+// no act; 1 otherwise.
+int BattleUnit::EnrageFrame(BattleServices& services)
+{
+    if ((this->unk26B8 & kEnraged) == 0 || this->unk2AAC == 1)
+    {
+        return 0;
+    }
+
+    if ((this->unk26B8 & kEnrageDone) != 0)
+    {
+        return 1;
+    }
+
+    ActState& act = this->slotActs[kEffectSlot];
+
+    if (act.id == 0)
+    {
+        return 0;
+    }
+
+    BattleState& battle = services.state;
+
+    auto release = [&battle]
+    {
+        battle.unk53BFC0 = 0;
+        battle.unk5772C8 = 0;
+        battle.unk53BF74 = 0;
+        battle.undarkening = 1;
+        battle.enraging = 0;
+    };
+
+    if (this->defeated == 1)
+    {
+        release();
+        this->unk26B8 &= ~kEnraged;
+        act = ActState{};
+        return 1;
+    }
+
+    if (services.acts.Run(act) == 0)
+    {
+        return 0;
+    }
+
+    services.audio.PlaySound(act.view, services.config.soundVolume);
+    services.audio.SetSoundPan(act.view, -kFadePan);
+    act.view = 0;
+    this->picture = services.archive.GetPicture(act.frame, act.picture);
+
+    // A missing picture is read through a null pointer in the original.
+    if (this->picture != nullptr)
+    {
+        smooth::Scene scene;
+        smooth::ScenePainter painter(services, scene);
+        painter.SetSource(this->picture->data.data());
+        painter.DrawPicture(
+            this->placement.x - act.x,
+            this->placement.y - act.y,
+            this->picture->width,
+            this->picture->height,
+            act.flags
+        );
+        scene.Show(services);
+    }
+
+    if (act.waiting != 1)
+    {
+        return 1;
+    }
+
+    if (this->data->data.enrageEffect == InvisibleEnrage)
+    {
+        SkillScript invisible;
+        invisible.statusBits = SkillScript::Invisible;
+        invisible.turns = kEnrageInvisibleTurns;
+        this->AddBuff(services, invisible);
+    }
+
+    release();
+    this->unk26B8 |= kEnrageDone;
+    act = ActState{};
+    return 1;
 }
 
 // swd3e.exe 0x00469FB0: every enemy not defeated checks enrage cause `cause`

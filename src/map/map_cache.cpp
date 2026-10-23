@@ -236,7 +236,7 @@ u32 HeaderDword(const std::array<u8, MapCache::HeaderBytes>& header, std::size_t
 
 }  // namespace
 
-// swd32.exe 0x004267E0 (unmatched in swd3e): 14-bit LZO1X-1
+// swd3e.exe 0x00429BA0: 14-bit LZO1X-1 (the original packs into `size` + 0x20 bytes with a 64 KB dictionary)
 std::vector<u8> MapCache::Pack(std::span<const u8> data)
 {
     return LzoEncoder(kDictionaryBits).Compress(data);

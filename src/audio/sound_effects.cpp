@@ -59,7 +59,7 @@ void WriteDword(u8* bytes, u32 value)
 
 }  // namespace
 
-// swd32.exe 0x00485930 (unmatched in swd3e)
+// swd3e.exe 0x0049D3D0: the file of the sound archive constructed and the tables cleared (default member values)
 SoundEffects::SoundEffects(AudioDevice& device)
     : device(device)
 {

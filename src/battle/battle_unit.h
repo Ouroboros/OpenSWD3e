@@ -430,6 +430,7 @@ public:
     int AddPoison(BattleServices& services, i16 base, u8 level);
     int EnrageCheck(BattleServices& services, i16 cause, i16 element);
     int Enrage(BattleServices& services);
+    int EnrageFrame(BattleServices& services);
     i32 HitPointShare(int scale) const;
     int CancelHitNumber(BattleServices& services);
     void ClearUnk2FD1();
@@ -453,6 +454,12 @@ public:
     int CommandSupports() const;
     int CommandRefreshOnly() const;
     bool HasStatus(u32 bits) const;
+    i32 HitPointsAndAttack() const;
+    int OutOfChoices() const;
+    u8 ObjectUnkA2() const;
+    int FirstResistance() const;
+    int Named() const;
+    void ClearTurnCommand();
     int HasEffectBits(u16 bits) const;
     bool ApplyPendingDamage(BattleServices& services);
     void DrawEffectIcons(BattleServices& services, int x, int y);
@@ -765,6 +772,9 @@ public:
     i8 unk2FD1 = 0;       // +0x2FD1
     i32 unk306C = 0;      // +0x306C
     u8 rippleFrames = 0;  // +0x2FDB (swd3e) the frames of the unit's ripple (StartRipple, DrawEffects ends it past 30)
+    // swd3e: 1 once an enemy chose its objects or its skills (read by OutOfChoices with the counts left)
+    u8 unk2FD9 = 0;  // +0x2FD9
+    u8 unk2FDA = 0;  // +0x2FDA
     // swd3e: the text of the unit's messages, kept by address by the messages (Announce).
     std::array<char, 0x40> text = {};  // +0xF84
     u16 restoreHitPoints = 0;          // +0x2EB6 the hit points a command restores

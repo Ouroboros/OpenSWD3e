@@ -98,6 +98,8 @@ bool LoadRiff(const u8* image, std::vector<i16>& pcm)
 
 }  // namespace
 
+// swd3e.exe 0x004A1070, 0x004A1080, 0x004A1090: Miles shut down at exit (AIL_shutdown) - the platform device closed
+// here instead (deviations.md)
 AudioDevice::~AudioDevice()
 {
     this->CloseOutput();

@@ -4992,4 +4992,69 @@ bool BattleUnit::HasStatus(u32 bits) const
     return (bits & this->status) != 0;
 }
 
+// swd3e.exe 0x00489430: an enemy's hit points plus its attack
+i32 BattleUnit::HitPointsAndAttack() const
+{
+    return this->data->data.hitPoints + this->data->data.attack;
+}
+
+// swd3e.exe 0x00489440: 1 when an enemy has no choice left: it chose its objects (unk2FD9) and has none of them, or
+// it chose its skills (unk2FDA) and has no uses of them
+int BattleUnit::OutOfChoices() const
+{
+    const ObjectData& data = this->data->data;
+
+    if (this->unk2FD9 == 1 && data.itemACount == 0 && data.itemBCount == 0 && data.itemCCount == 0)
+    {
+        return 1;
+    }
+
+    if (this->unk2FDA != 1)
+    {
+        return 0;
+    }
+
+    return data.skillACount == 0 && data.skillBCount == 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x004896C0
+u8 BattleUnit::ObjectUnkA2() const
+{
+    return this->data->data.unkA2;
+}
+
+// swd3e.exe 0x004896D0: the element (1..5) of the object's first resistance, 0 without one
+int BattleUnit::FirstResistance() const
+{
+    const auto& resistances = this->data->data.resistances;
+
+    for (std::size_t element = 0; element < resistances.size(); ++element)
+    {
+        if (resistances[element] != 0)
+        {
+            return static_cast<int>(element) + 1;
+        }
+    }
+
+    return 0;
+}
+
+// swd3e.exe 0x004896F0: the object is a named one (kind bit 5)
+int BattleUnit::Named() const
+{
+    return (LowByte(this->data->data.kind) & ObjectData::UnkKind20) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x00489710: the turn's command cleared: command word +0x18, the second gauge, the ready action, unk2AB4,
+// the target and the start of the skill name
+void BattleUnit::ClearTurnCommand()
+{
+    this->command.unk18 = 0;
+    this->unk2BE8 = 0;
+    this->readyAction = 0;
+    this->unk2AB4 = 0;
+    this->target = 0;
+    std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
+}
+
 }  // namespace swd3e
