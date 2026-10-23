@@ -15,6 +15,13 @@ namespace
 constexpr i16 kPushStart = 0x1A4;  // the push of a hit, halved each call
 constexpr i16 kSlideStep = 0x1E;   // the units slide back by at most this a call
 constexpr int kSlideToShare = 8;
+constexpr u16 kWalkModeMask = 0x7FFF;  // WalkLine (swd3e): BattleState::walkModes
+constexpr u16 kWalkRises = 1;
+constexpr u16 kWalkRisen = 0x8000;
+constexpr i32 kWalkRiseTop = 0x32;
+constexpr int kWalkRiseSteps = 0xE;
+constexpr u32 kWalkFastest = 0xFFFFFFFF;  // a speed of -1: the step factor doubles
+constexpr u16 kWalkDoublingTop = 0x40;
 constexpr int kSlideBackShare = 4;
 
 constexpr u16 kHitNudgeFrames = 0x1E;
@@ -94,42 +101,127 @@ int Game::FadeHitAct(BattleUnit& unit, u32 act, i32 action, int index)
     return result;
 }
 
-// swd32.exe 0x0045D810 (unmatched in swd3e): the point unit `index` reaches walking the line from (fromX, fromY) to
-// (toX, toY), `speed`
-// steps more each call (walkLineCalls counts the calls); 1 once it reaches toX (the count reset).
-int Game::WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, int speed, int index)
+// swd3e.exe 0x004680A0: the point unit `index` reaches walking the line from (fromX, fromY) to (toX, toY), `speed`
+// times the step factor (walkLineCalls) steps a call; 1 once it reaches toX (its state reset). Walking (walkModes low
+// bits 0), the factor grows after `delay` calls (none without one): by one, or with speed 0 or -1 (taken as 1) doubled
+// up to 0x40 and by 0x40 after. Mode 1 first rises 14 steps a factor towards (fromX, 0x32), turning to 0x8000 once
+// there, the line then kept towards that point. Another mode stays put and returns 1 only with speed -1.
+int Game::WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, u32 speed, int delay, int index)
 {
     BattleState& battle = this->battleState;
-    u16& calls = battle.walkLineCalls[static_cast<std::size_t>(index)];
+    const auto at = static_cast<std::size_t>(index);
+    u16& factor = battle.walkLineCalls[at];
+    u16& waited = battle.walkDelays[at];
+    u16& mode = battle.walkModes[at];
     LineWalker walker;
     walker.fromX = fromX;
     walker.fromY = fromY;
     walker.toX = toX;
     walker.toY = toY;
-    ++calls;
-    const int steps = speed * calls;
-    bool reached = false;
+    int lastX = fromX;
+    const u16 low = static_cast<u16>(mode & kWalkModeMask);
+    u32 steps = speed;
+    bool grows = low == 0;
 
-    for (int step = 0; step < steps; ++step)
+    if (grows && delay != 0)
     {
-        LineStep(walker);
+        ++waited;
+        grows = waited >= delay;
+    }
 
-        if (walker.fromX + walker.x == walker.toX)
+    if (grows)
+    {
+        if (speed == 0 || speed == kWalkFastest)
         {
-            reached = true;
-            break;
+            steps = 1;
+
+            if (factor == 0)
+            {
+                factor = 1;
+            }
+
+            factor = static_cast<u16>(factor > kWalkDoublingTop ? factor + kWalkDoublingTop : 2 * factor);
+        }
+        else
+        {
+            ++factor;
         }
     }
 
-    x = walker.fromX + walker.x;
+    i32 outcome = static_cast<i32>(speed);
+
+    if (low == kWalkRises)
+    {
+        outcome = 0;
+        walker.toX = fromX;
+        walker.toY = kWalkRiseTop;
+        bool reached = false;
+
+        if (kWalkRiseSteps * factor > 0)
+        {
+            while (true)
+            {
+                const bool done = LineStep(walker);
+                lastX = walker.fromX;
+
+                if (done || walker.fromX + walker.x == walker.toX)
+                {
+                    reached = true;
+                    break;
+                }
+
+                if (++outcome >= kWalkRiseSteps * factor)
+                {
+                    break;
+                }
+            }
+        }
+
+        if (reached)
+        {
+            factor = 0;
+            mode = kWalkRisen;
+        }
+
+        ++factor;
+    }
+
+    if ((mode & kWalkModeMask) == 0)
+    {
+        outcome = 0;
+
+        if (steps * factor > 0)
+        {
+            while (true)
+            {
+                const bool done = LineStep(walker);
+                lastX = walker.fromX;
+
+                if (done || walker.fromX + walker.x == walker.toX)
+                {
+                    outcome = -1;
+                    break;
+                }
+
+                if (static_cast<u32>(++outcome) >= steps * factor)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    x = lastX + walker.x;
     y = walker.fromY + walker.y;
 
-    if (!reached)
+    if (outcome != -1)
     {
         return 0;
     }
 
-    calls = 0;
+    waited = 0;
+    factor = 0;
+    mode = 0;
     return 1;
 }
 
@@ -634,6 +726,7 @@ void Game::PlaceAllHit(BattleUnit& attacker, int width, int index, u16& delay)
             static_cast<i16>(x),
             0,
             delay,
+            0,
             0
         ) == 1)
     {
@@ -1753,7 +1846,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 
             this->database.LoadObject(battle.unk5246E0, battle.unk53BF28);
             this->database.FreeDescription(battle.unk5246E0);
-            enemy.Setup(place, battle.unk53BF28, this->database);
+            enemy.Setup(place, battle.unk53BF28, this->database, this->acts);
             enemy.SetStatus(BattleUnit::UnkMark400);
             ++battle.enemyCount;
             this->MeasureUnits();

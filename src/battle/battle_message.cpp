@@ -367,10 +367,10 @@ void BattleMessages::Draw()
     smooth::MessagesFrame(*this).Draw(view);
 }
 
-// swd32.exe 0x00468ED0 (unmatched in swd3e): while a proficiency has just filled (learnedPending), the box
-// "法寶%s已完全成長!!" with the
-// accessory's name: a shade and a frame as wide as the text (17 pixels per two bytes), grown open (GrowPanel), then
-// the text at a 17-pixel advance.
+// swd3e.exe 0x00477C40: while a proficiency has just filled (learnedPending), the box "法寶%s已完全成長!!" with the
+// accessory's name, or "法寶[%s]轉化為[%s]!!" with the object it turned into (evolvedName): a shade and a frame as wide
+// as the text (17 pixels per two bytes); an evolution is drawn every frame in parts (法寶, the name, 轉化為, the new
+// name, the names in 0xF000, 18 pixels per two bytes); grown open (GrowPanel), the whole text at a 17-pixel advance.
 void BattleMessages::DrawMastery()
 {
     smooth::Scene scene;

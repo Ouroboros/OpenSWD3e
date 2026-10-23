@@ -381,7 +381,7 @@ private:
     int RemoveDefeated(int index, int role);
     int PlayHitAct(BattleUnit& unit, u32 act, int index);
     int FadeHitAct(BattleUnit& unit, u32 act, i32 action, int index);
-    int WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, int speed, int index);
+    int WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, u32 speed, int delay, int index);
     void SortActingDrawOrder();
     int PushUnits(u16 picture, int restart);
     void ShiftUnits(int shift);

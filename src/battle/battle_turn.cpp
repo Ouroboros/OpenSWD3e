@@ -48,6 +48,7 @@ constexpr int kNoUnitPointer = 0x238C;
 constexpr int kUnitPointer = 0x238D;
 constexpr int kWaitPointer = 0x238E;
 constexpr int kTurnPointer = 0x238F;
+constexpr int kEnemyPointer = 0x2393;  // NextEnemyTurn: the pointer over the enemy taking its turn (swd3e)
 constexpr int kNoTurnPointer = 0x2393;
 constexpr int kMarkEffect = 0x23A0;
 constexpr i32 kListPage = 7;  // a back key scrolls a list up by this
@@ -67,6 +68,8 @@ constexpr i32 kMenuStepMost = 10;
 
 constexpr std::size_t kAccessorySlots = 2;
 constexpr std::size_t kFirstAccessorySlot = 7;  // the equipment slots of the accessories
+constexpr std::size_t kClearedNameStart = 4;    // AnnounceMastery: the name bytes of an emptied accessory cleared
+constexpr std::u8string_view kEmptySlotName = u8"無";  // 0x004AF630 the name of an emptied accessory
 
 constexpr u16 kLastAccessoryCommand = 0x31;
 constexpr u16 kSpiritPact = 6;
@@ -956,10 +959,10 @@ void Game::ApplyHits()
     }
 }
 
-// swd32.exe 0x00465090 (unmatched in swd3e): the next enemy takes its turn: enemy actingEnemy (0 past the enemies); a
-// defeated one passes
+// swd3e.exe 0x00473150: the next enemy takes its turn: enemy actingEnemy (0 past the enemies); a defeated one passes
 // on through orderStep (1-based in enemyOrder, wrapping) for at most enemyCount tries, after which the battle state
-// is 1. The enemy is marked (SetAC0 1) and aimed at (aimTarget, 1-based).
+// is 1. The enemy is marked (SetAC0 1), aimed at (aimTarget, 1-based) and pointed at (kEnemyPointer, slot 0, the
+// middle of its shadow; a rectangle the unit leaves unset is 0 here, uninitialised in the original).
 void Game::NextEnemyTurn()
 {
     BattleState& battle = this->battleState;
@@ -999,6 +1002,9 @@ void Game::NextEnemyTurn()
     this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].SetAC0(1);
     battle.unk53BFB8 = 1;
     battle.aimTarget = battle.actingEnemy + 1;
+    UnitRect rect;
+    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].GetShadowRect(this->battleServices, rect);
+    this->battleHud.DrawSlotAnimation(kEnemyPointer, 0, rect.x + (rect.width >> 1), rect.y + (rect.height >> 1));
 }
 
 // swd3e.exe 0x00473270: the party role whose turn follows: orderStep steps (1-based, wrapping over the party roles)
@@ -1618,19 +1624,21 @@ void Game::DrawCommandMenu(int x, int y, int cursor)
     scene.Show(this->battleServices);
 }
 
-// swd32.exe 0x00468FF0 (unmatched in swd3e): the first party role (not forced, standing) whose accessory proficiency
-// has just filled
-// (FinishProficiency): its object read into lastObject (the description freed), its name kept in lastLearned for the
-// message, learnedPending set and levelUpRole the role
+// swd3e.exe 0x00477EE0: the first party role (not auto, guest, ghost or defeated) whose accessory proficiency has just
+// filled (FinishProficiency): its object read into lastObject (the description freed), its name kept in lastLearned
+// for the message, learnedPending set and levelUpRole the role. An object that turns into another (unk42) empties the
+// worn accessory of that id (its name 無 over four cleared bytes, the rest of its record kept), adds the new
+// object to the inventory and keeps its name in evolvedName (cleared first).
 void Game::AnnounceMastery()
 {
     BattleState& battle = this->battleState;
+    battle.evolvedName.clear();
 
     for (u32 index = 0; index < battle.roleCount; ++index)
     {
         BattleRole& role = this->battleRoles[index];
 
-        if (role.autoControl == 1 || role.guestControl == 1 || role.IsDefeated())
+        if (role.AutoControl() == 1 || role.GuestControl() == 1 || role.Ghost() == 1 || role.IsDefeated())
         {
             continue;
         }
@@ -1647,6 +1655,40 @@ void Game::AnnounceMastery()
         battle.learnedPending = 1;
         battle.lastLearned.name = ObjectName(battle.lastObject);
         battle.levelUpRole = static_cast<u8>(index);
+        const u16 evolved = battle.lastObject.data.unk42;
+
+        if (evolved == 0)
+        {
+            return;
+        }
+
+        const auto first =
+            static_cast<std::size_t>(battle.partyRoles[index]) * Party::SlotsPerRole + kFirstAccessorySlot;
+
+        for (std::size_t slot = 0; slot < kAccessorySlots; ++slot)
+        {
+            const std::unique_ptr<ItemNode>& node = this->party.equipment[first + slot];
+
+            // A missing slot is read through a null pointer in the original.
+            if (node == nullptr || static_cast<int>(node->id) != static_cast<int>(static_cast<i16>(finished)))
+            {
+                continue;
+            }
+
+            node->id = ItemNode::Empty;
+            node->count = 1;
+            node->pending = 0;
+            node->unk06 = 0;
+            std::fill_n(node->record.data.name.begin(), kClearedNameStart, '\0');
+            const std::string empty = Big5(kEmptySlotName);
+            std::copy(empty.begin(), empty.end(), node->record.data.name.begin());
+            AddOneItem(this->party.inventory, evolved, 1, this->database);
+            this->database.LoadObject(battle.lastObject, evolved);
+            Database::FreeDescription(battle.lastObject);
+            battle.evolvedName = ObjectName(battle.lastObject);
+            return;
+        }
+
         return;
     }
 }
@@ -1889,11 +1931,11 @@ void Game::DrawRefineList(int x, int y, int cursor)
     scene.Show(this->battleServices);
 }
 
-// swd32.exe 0x00466500 (unmatched in swd3e): the 絕招 list of the current role at (x, y): the panel act run on (not
-// restarted), a darkened
+// swd3e.exe 0x00474E80: the 絕技 list of the current role at (x, y): the panel act run on (not restarted), a darkened
 // box with a title and a body frame, then up to 7 skills of type 1 (their names kept in listName, cut to its bytes:
 // the original copies the whole name over what follows); specialCount counts them. Row `cursor` (from 1) is drawn again
-// a pixel up and left under a gradient bar, and its skill index becomes specialCursor.
+// a pixel up and left under a gradient bar with the skill's description centred in a bar at the bottom, and its skill
+// index becomes specialCursor.
 void Game::DrawSpecialList(int x, int y, int cursor)
 {
     smooth::Scene scene;
@@ -1901,9 +1943,9 @@ void Game::DrawSpecialList(int x, int y, int cursor)
     scene.Show(this->battleServices);
 }
 
-// swd32.exe 0x004667B0 (unmatched in swd3e): the 佈置護駕 panel: the panel act run on, a shade with a title frame
-// (佈置護駕) and a body frame, a gradient bar on row guardCursor at (x, y), and the names of the escorts (the last
-// escortCount battle roles) in white at an 18-pixel advance, with 無 below a lone escort.
+// swd3e.exe 0x004751D0: the 佈置護駕 panel: the panel act run on, a shade with a title frame (佈置護駕) and a body
+// frame, a gradient bar on row guardCursor at (x, y), and the names of the escorts (the last escortCount battle roles)
+// in white at an 18-pixel advance, a defeated one as 無 (dark), with a dark 無 below a lone escort.
 void Game::DrawEscortList(int x, int y)
 {
     smooth::Scene scene;

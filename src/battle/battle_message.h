@@ -157,14 +157,17 @@ public:
     static constexpr std::u8string_view WaterResistUp = u8"%s增加50%%水系抗力";
     // swd32.exe 0x004A7AE8 (unmatched in swd3e) "%-12s X %2d"
     static constexpr std::string_view LootLine = "%-12s X %2d";
-    static constexpr std::u8string_view LootTitle = u8"戰利品";                // 0x004BF890
-    static constexpr std::u8string_view PartyWiped = u8"隊伍全滅!!";           // 0x004BF898
-    static constexpr std::u8string_view DefeatTitle = u8"戰鬥失敗";            // 0x004BF8A4
-    static constexpr std::u8string_view NothingGained = u8"沒有得到東西";      // 0x004BF8B0
-    static constexpr std::u8string_view CraftFailed = u8"煉符失敗";            // 0x004BF8C0
-    static constexpr std::u8string_view CraftGot = u8"得到符咒:%s";            // 0x004BF8CC
-    static constexpr std::u8string_view CraftSuccess = u8"煉符成功";           // 0x004BF8D8
-    static constexpr std::u8string_view MasteryLine = u8"法寶%s已完全成長!!";  // 0x004BF870
+    static constexpr std::u8string_view LootTitle = u8"戰利品";                  // 0x004BF890
+    static constexpr std::u8string_view PartyWiped = u8"隊伍全滅!!";             // 0x004BF898
+    static constexpr std::u8string_view DefeatTitle = u8"戰鬥失敗";              // 0x004BF8A4
+    static constexpr std::u8string_view NothingGained = u8"沒有得到東西";        // 0x004BF8B0
+    static constexpr std::u8string_view CraftFailed = u8"煉符失敗";              // 0x004BF8C0
+    static constexpr std::u8string_view CraftGot = u8"得到符咒:%s";              // 0x004BF8CC
+    static constexpr std::u8string_view CraftSuccess = u8"煉符成功";             // 0x004BF8D8
+    static constexpr std::u8string_view MasteryLine = u8"法寶%s已完全成長!!";    // 0x004BF870
+    static constexpr std::u8string_view EvolvedLine = u8"法寶[%s]轉化為[%s]!!";  // 0x004BF858 (swd3e)
+    static constexpr std::u8string_view TreasureWord = u8"法寶";                 // 0x004BEB60 (swd3e)
+    static constexpr std::u8string_view EvolveWord = u8"轉化為";                 // 0x004BF850 (swd3e)
 
     // 0x004BF61C: the names of the five elements (pointers to the strings in the original)
     static constexpr std::array<std::u8string_view, 5> ElementNames = {

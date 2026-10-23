@@ -79,7 +79,7 @@ constexpr int kRefineBarWidth = 0x6A;
 constexpr std::u8string_view kNoObject = u8"無";  // 0x004AF630
 constexpr int kSpecialBoxHeight = 0xAC;           // the 絕招 list
 constexpr int kSpecialFrameBottom = 0xA8;
-constexpr std::size_t kSpecialCommandName = 3;
+constexpr std::u8string_view kSpecialTitle = u8"絕技";  // 0x004BF1F0 (swd3e)
 constexpr u16 kSkillListEnd = 0xFFFF;
 constexpr int kSpecialBarTop = 0x25;
 constexpr int kSpecialBarWidth = 0xC0;
@@ -808,7 +808,7 @@ void TurnFrame::DrawSpecialListAdvance(int x, int y, int cursor, Scene& scene)
         kListFrameBorder,
         scene
     );
-    const std::string title = Big5(BattleState::FixedCommandNames[kSpecialCommandName]);
+    const std::string title = Big5(kSpecialTitle);
     font.DrawText(game.drawSurface, x + kThrowTitleX, y + kThrowTitleTop, title, kTitleColor, TextFont::BoldOutline);
     font.SetShadow(0);
     font.SetBackground(TextFont::NoBackground);
@@ -864,9 +864,32 @@ void TurnFrame::DrawSpecialListAdvance(int x, int y, int cursor, Scene& scene)
                     0,
                     FillMode::Gradient,
                     scene);
+                // swd3e: the skill's description in the bar at the bottom.
+                Box(game.painter,
+                    0,
+                    kDescriptionTop,
+                    Display::Width,
+                    kDescriptionHeight,
+                    0,
+                    kDescriptionGreen,
+                    kDescriptionBlue,
+                    FillMode::Gradient,
+                    scene);
+                const std::string description = role.skills != nullptr
+                                                    ? ObjectDescription(game.databases.mapsData, role.skills->id)
+                                                    : std::string();
+                const auto halves = static_cast<int>(description.size()) >> 1;
+                font.DrawText(
+                    game.drawSurface,
+                    kDescriptionCentre - ((kListAdvance * halves) >> 1),
+                    kDescriptionTextTop,
+                    description,
+                    kWhite,
+                    TextFont::BoldOutline
+                );
                 font.SetBackground(TextFont::NoBackground);
-                battle.unk53BFB8 = 1;
                 battle.specialCursor = index;
+                battle.unk53BFB8 = 1;
             }
 
             ++row;
@@ -950,9 +973,24 @@ void TurnFrame::DrawEscortListAdvance(int x, int y, Scene& scene)
 
     for (int left = battle.escortCount; left > 0; --left)
     {
-        font.SetAdvance(kEscortAdvance);
         const BattleRole& escort = game.battleRoles[battle.roleCount - static_cast<u32>(left)];
         const int rowY = y + kSpecialRowHeight * (battle.escortCount - left) + kEscortRowTop;
+
+        // swd3e: a defeated escort shows 無, dark.
+        if (escort.IsDefeated())
+        {
+            font.DrawText(
+                game.drawSurface,
+                x + kEscortNameX,
+                rowY,
+                Big5(kNoObject),
+                battle.darkColor,
+                TextFont::BoldOutline
+            );
+            continue;
+        }
+
+        font.SetAdvance(kEscortAdvance);
         font.DrawText(
             game.drawSurface,
             x + kEscortNameX,
@@ -970,7 +1008,7 @@ void TurnFrame::DrawEscortListAdvance(int x, int y, Scene& scene)
             x + kEscortNameX,
             y + kEscortNoneTop,
             Big5(kNoObject),
-            kWhite,
+            battle.darkColor,
             TextFont::BoldOutline
         );
     }

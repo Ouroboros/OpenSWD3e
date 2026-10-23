@@ -2621,7 +2621,8 @@ int Game::FightTalkMisc(u16 command)
             // 0x0046DDCA: always an enemy, as command 0x38.
             if (this->TalkCommandUnit() < this->battleEnemies.size())
             {
-                this->battleEnemies[this->TalkCommandUnit()].Reload(static_cast<u16>(talk.unk53CCE8), this->database);
+                this->battleEnemies[this->TalkCommandUnit()]
+                    .Reload(static_cast<u16>(talk.unk53CCE8), this->database, this->acts);
             }
 
             talk.cursor += 3 * sizeof(u16);

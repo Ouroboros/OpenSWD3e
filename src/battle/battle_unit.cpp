@@ -116,14 +116,32 @@ constexpr u32 kFlag26B8Bit18 = 0x40000;  // cleared by ResetTurn
 constexpr u32 kEvadeRoll = 10;       // evade chances are in tenths
 constexpr u16 kInvisibleEvades = 9;  // an invisible unit evades 9 times in kEvadeRoll
 constexpr int kTenths = 10;
+
+// ApplyElement: for an attack of each element (金 木 水 火 土), the resistance that lessens it, the one that raises it
+// and the one that absorbs it.
+struct ElementRule
+{
+    std::size_t lessens = 0;
+    std::size_t raises = 0;
+    std::size_t absorbs = 0;
+};
+
+constexpr std::array<ElementRule, 5> kElementRules = {{
+    {3, 1, 2},
+    {0, 4, 3},
+    {4, 3, 1},
+    {2, 0, 4},
+    {1, 2, 0},
+}};
+
 constexpr int kThousands = 1000;  // the places of the four damage digits
 constexpr int kHundreds = 100;
 constexpr std::size_t kThousandsDigit = 0;
 constexpr std::size_t kHundredsDigit = 1;
 constexpr std::size_t kTensDigit = 2;
 constexpr std::size_t kOnesDigit = 3;
-constexpr int kAgilityShift = 2;  // the gauge step is agility / 4, agility / 8 when slowed
-constexpr int kSlowedAgilityShift = 3;
+constexpr int kAgilityDivisor = 4;            // AdvanceGauge: the gauge step is a quarter of the agility (swd3e)
+constexpr int kInvisibleLoss = 4;             // AdvanceGauge: an invisible unit loses 4 more (swd3e)
 constexpr int kBoostDivisor = 4;              // a boost adds a quarter of the step plus one
 constexpr u8 kFirstHeal = 1;                  // healChoice: ObjectData::healCountA
 constexpr u8 kSecondHeal = 2;                 // ObjectData::healCountB
@@ -138,8 +156,6 @@ constexpr u8 kEvadeCounterMiddleEnd = 5;
 constexpr u8 kEvadeCounterEarlyEnd = 2;  // at half its skill up to this count
 constexpr u8 kLikelyEvadeStreak = 0xD;   // swd3e: from which a party role rolls
 constexpr int kPercent = 100;
-constexpr int kSpeedChangePercent = 0x1E;  // the gauge step a speed buff adds or takes
-constexpr int kInvisibleSlowPercent = 0xA;
 constexpr int kChanceScale = 0x46;  // RollChance: kChanceScale percent of the chance plus kChanceBase
 constexpr int kChanceBase = 0xA;
 }  // namespace
@@ -978,6 +994,42 @@ int ScaleByTenths(i8 tenths, i16& value)
     }
 
     value = static_cast<i16>(value * static_cast<i8>(tenths + kTenths) / kTenths);
+    return 1;
+}
+
+// swd3e.exe 0x00491450: an attack of `element` (1..5: 金 木 水 火 土) against the resistances by element (signed
+// percents): `value` lessened by the element that overcomes it and raised by the one it feeds; the element that
+// absorbs it turns the value to minus its percent (1), otherwise 0. Elements past 5 change nothing.
+int ApplyElement(const std::array<u8, 5>& resistances, i16 element, i16& value)
+{
+    if (element < 1 || element > static_cast<i16>(kElementRules.size()))
+    {
+        return 0;
+    }
+
+    const ElementRule& rule = kElementRules[static_cast<std::size_t>(element - 1)];
+
+    const auto percent = [&resistances](std::size_t at)
+    {
+        return static_cast<int>(static_cast<i8>(resistances[at]));
+    };
+
+    if (percent(rule.lessens) != 0)
+    {
+        value = static_cast<i16>(value - percent(rule.lessens) * value / kPercent);
+    }
+
+    if (percent(rule.raises) != 0)
+    {
+        value = static_cast<i16>(value + value * percent(rule.raises) / kPercent);
+    }
+
+    if (percent(rule.absorbs) == 0)
+    {
+        return 0;
+    }
+
+    value = static_cast<i16>(value * percent(rule.absorbs) / -kPercent);
     return 1;
 }
 
@@ -1962,54 +2014,51 @@ void BattleUnit::GetHitPoints(i32& value, i32& maximum) const
     maximum = this->data->data.maxHitPoints;
 }
 
-// swd32.exe 0x004755E0 (unmatched in swd3e): the action gauge filled by a quarter of the agility (an eighth while
-// slowed, with a quarter
-// more and one when boosted; speed up and speed down add and take 30%, invisibility takes 10% more) while below full;
-// a full gauge marks the unit ready (true). Held units do not move.
+// swd3e.exe 0x00487C40: the action gauge filled by a quarter of the agility with speedShift added (speed up) and taken
+// (speed down), with a quarter more and one when boosted, an invisible unit losing half the proficiency percent of it
+// and 4, while below full; a full gauge marks the unit ready (true). Held, stopped (Unk4000) and unk26B8 bit 31 units
+// do not move.
 int BattleUnit::AdvanceGauge(const BattleServices& services, int boost)
 {
-    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::Unk4000) != 0)
+    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::Unk4000) != 0 ||
+        static_cast<i32>(this->unk26B8) < 0)
     {
         return 0;
     }
 
     const u16 gauge = this->gauge;
 
-    // 0x0047561B: the zero-extended gauge against the dword 0x004A74CC, signed (jl)
     if (static_cast<i32>(gauge) < services.state.gaugeFull)
     {
-        int step = this->data->data.agility >> kAgilityShift;
+        int up = 0;
+        int down = 0;
 
-        if ((this->status & BattleUnit::Slowed) != 0)
+        if ((this->status & BattleUnit::SpeedUp) != 0)
         {
-            step = this->data->data.agility >> kSlowedAgilityShift;
+            up = this->speedShift;
         }
+
+        if ((this->status & BattleUnit::SpeedDown) != 0)
+        {
+            down = this->speedShift;
+        }
+
+        int step = (up + this->data->data.agility - down) / kAgilityDivisor;
 
         if (boost == 1)
         {
             step += step / kBoostDivisor + 1;
         }
 
-        int gain = 0;
         int loss = 0;
-
-        if ((this->status & BattleUnit::SpeedUp) != 0)
-        {
-            gain = kSpeedChangePercent * step / kPercent;
-        }
-
-        if ((this->status & BattleUnit::SpeedDown) != 0)
-        {
-            loss = kSpeedChangePercent * step / kPercent;
-        }
 
         if ((this->status & BattleUnit::Invisible) != 0)
         {
-            loss = static_cast<u16>(kInvisibleSlowPercent * step / kPercent + loss);
+            loss = step * this->proficiency / kPercent / 2 + kInvisibleLoss;
         }
 
         this->unk2AB0 = 0;
-        this->gauge = static_cast<u16>(step + gain + gauge - loss);
+        this->gauge = static_cast<u16>(step + gauge - loss);
         return 0;
     }
 

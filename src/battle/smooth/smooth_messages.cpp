@@ -85,6 +85,8 @@ constexpr int kMasteryShadeY = 0xD0;
 constexpr int kMasteryTextExtra = 0x20;
 constexpr int kMasteryTextX = 0xD8;
 constexpr int kMasteryTextY = 0xDA;
+constexpr int kMasteryPartStep = 0x12;  // swd3e: the parts of an evolution are placed 18 pixels per two bytes
+constexpr Pixel kMasteryNameColor = 0xF000;
 constexpr Pixel kMessageTextColor = 0xFFFF;
 constexpr int kMessageAdvance = 0x16;  // swd3e: the advance the messages set on their font
 constexpr int kCodedByteWidth = 10;    // a coloured piece moves the next one 11 pixels a byte
@@ -716,13 +718,17 @@ void MessagesFrame::DrawResistancePanelAdvance(Scene& scene)
 void MessagesFrame::DrawMasteryAdvance(Scene& scene)
 {
     BattleMessages& messages = this->messages;
+    BattleState& state = messages.state;
 
-    if (messages.state.learnedPending != 1)
+    if (state.learnedPending != 1)
     {
         return;
     }
 
-    const std::string text = WinFormat(BattleMessages::MasteryLine, {messages.state.lastLearned.name});
+    const bool evolved = !state.evolvedName.empty();
+    const std::string text = evolved
+                                 ? WinFormat(BattleMessages::EvolvedLine, {state.lastLearned.name, state.evolvedName})
+                                 : WinFormat(BattleMessages::MasteryLine, {state.lastLearned.name});
     const int halves = static_cast<int>(text.size()) / 2;
     const int width = kMasteryCharWidth * halves + kMasteryTextExtra;
     Box(messages.painter,
@@ -747,6 +753,24 @@ void MessagesFrame::DrawMasteryAdvance(Scene& scene)
         kFrameBorder,
         scene
     );
+
+    // swd3e: an evolution is drawn in parts every frame, the names coloured, before the panel has grown.
+    if (evolved)
+    {
+        messages.panelFont.SetAdvance(kMasteryCharWidth);
+        SceneFont font(messages.panelFont, scene);
+        const std::string treasure = Big5(BattleMessages::TreasureWord);
+        const std::string evolve = Big5(BattleMessages::EvolveWord);
+        int x = kMasteryTextX;
+        font.DrawText(messages.painter.Target(), x, kMasteryTextY, treasure, kPanelTextColor, kTextStyle);
+        x += kMasteryPartStep * (static_cast<int>(treasure.size()) / 2);
+        const std::string& name = state.lastLearned.name;
+        font.DrawText(messages.painter.Target(), x, kMasteryTextY, name, kMasteryNameColor, kTextStyle);
+        x += kMasteryPartStep * (static_cast<int>(name.size()) / 2);
+        font.DrawText(messages.painter.Target(), x, kMasteryTextY, evolve, kPanelTextColor, kTextStyle);
+        x += kMasteryPartStep * (static_cast<int>(evolve.size()) / 2);
+        font.DrawText(messages.painter.Target(), x, kMasteryTextY, state.evolvedName, kMasteryNameColor, kTextStyle);
+    }
 
     if (messages.GrowPanel(kResultBodyTop, kDefeatBodyBottom, kGrowDivisor) != 1)
     {

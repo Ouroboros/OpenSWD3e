@@ -418,7 +418,10 @@ public:
     // defeat pose 0x65
     i32 musicLevel = 0;
     std::array<i8, Units> fadeActLevels = {};   // swd32 0x00521374 the fade of fadeActs
-    std::array<u16, Units> walkLineCalls = {};  // swd32 0x004FDF94 the calls of WalkLine
+    std::array<u16, Units> walkLineCalls = {};  // 0x0050CED0 the step factor of WalkLine, doubling while it has none
+    std::array<u16, Units> walkDelays = {};     // 0x005372FC (swd3e) the calls WalkLine has waited
+    // 0x00575FB0 (swd3e) the mode of WalkLine: 1 rises to y 0x32 first, then 0x8000 (low bits 0: walking)
+    std::array<u16, Units> walkModes = {};
     // The draw order around the acting unit (SortDrawOrderAround).
     u8 unk53C4C0 = 0;
     i32 unk53AE7C = 0;
@@ -612,6 +615,7 @@ public:
     // The proficiency filled in the battle (AnnounceMastery).
     ObjectRecord lastObject;   // 0x00576D40 the object read last (stolen, or its proficiency filled)
     LearnedSkill lastLearned;  // 0x0057747C the name of the accessory or of the skill learned, for the messages
+    std::string evolvedName;   // 0x00577A54 (swd3e, 0x18 bytes) the object a mastered accessory turned into
     i32 learnedPending = 0;    // 0x00577300 1: a proficiency filled or a special was learned, its message to show
     u8 levelUpRole = 0xFF;     // 0x004BF1EE the role
     // The end of the battle (Game::CheckBattleEnd, Game::DrawBattlePrompt).

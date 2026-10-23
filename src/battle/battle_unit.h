@@ -883,6 +883,8 @@ public:
     u8 unk2FD7 = 0;            // +0x2FD7 (swd3e) only cleared (Reset)
     i8 enrageCounter2FD8 = 0;  // +0x2FD8
     u8 enrageElement = 0;      // +0x2FDC
+    // +0x2FDD (swd3e) an enemy with no object counts 1, with no skill counts 2 (BattleEnemy::Setup, Reload)
+    u8 unk2FDD = 0;
     // swd3e: a second gauge (0x960 when full, 0x0048B170; drawn by 0x0048B190, run down by 0x004902E0), cleared by
     // ailment 0x200
     i16 unk2BE8 = 0;  // +0x2BE8
@@ -1001,6 +1003,7 @@ public:
 };
 
 int ScaleByTenths(i8 tenths, i16& value);
+int ApplyElement(const std::array<u8, 5>& resistances, i16 element, i16& value);
 bool RollChance(Random& random, int percent);
 void EnrageEnemies(BattleServices& services, i16 cause);
 

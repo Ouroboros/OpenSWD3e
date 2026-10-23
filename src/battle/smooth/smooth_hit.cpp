@@ -311,6 +311,7 @@ bool HitFrame::DrawHitPictureAdvance(
                 static_cast<i16>(x),
                 static_cast<i16>(y),
                 speed,
+                0,
                 index
             ) == 1)
         {
@@ -376,6 +377,7 @@ void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, i
                                           static_cast<i16>(targetX),
                                           static_cast<i16>(targetY),
                                           speed,
+                                          0,
                                           index
                                       ) == 1)
         {

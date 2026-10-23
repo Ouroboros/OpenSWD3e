@@ -3,9 +3,17 @@
 #include <memory>
 
 #include "org/database.h"
+#include "res/act_archive.h"
 
 namespace swd3e
 {
+
+namespace
+{
+
+constexpr u32 kProbedAction = 0x26;  // ProbeAct: an enemy's act without it sets unk3070
+
+}  // namespace
 
 // swd3e.exe 0x00487B90
 BattleEnemy::BattleEnemy()
@@ -29,24 +37,17 @@ void BattleEnemy::Release()
     this->data = nullptr;
 }
 
-// swd32.exe 0x00475720 (unmatched in swd3e): an enemy entering battle: its placement, its mon.dat object (a named
-// character or boss is
-// faster and stronger), its maximum hit points from its hit points, its level byte, its act (the object's, else the
-// placement's) and skill script; 撒旦 and 蚩尤 get fixed hit points
-void BattleEnemy::Setup(const UnitPlacement& at, u16 id, Database& database)
+// swd3e.exe 0x00487D60: an enemy entering battle: its placement, its mon.dat object (its name shown), its kind from the
+// placement, its maximum hit points from its hit points, its level byte, its act (the object's, else the
+// placement's) and skill script; then the act probed and the choices it has noted (inline in Reload too)
+void BattleEnemy::Setup(const UnitPlacement& at, u16 id, Database& database, ActArchive& acts)
 {
     this->placement = at;
     this->savedPlacement = this->placement;
     this->hitPointsOverride = 0;
     database.LoadObject(*this->data, id);
+    this->SetDisplayName(this->data->data.name);
     ObjectData& object = this->data->data;
-
-    if ((object.kind & BattleEnemy::NamedKind) != 0)
-    {
-        object.agility = static_cast<u16>(object.agility + BattleEnemy::NamedAgility);
-        object.attack = static_cast<u16>(object.attack + BattleEnemy::NamedAttack);
-    }
-
     this->kind = at.kind;
     object.maxHitPoints = object.hitPoints;
     this->evadeSkill = object.battleLevel;
@@ -60,23 +61,40 @@ void BattleEnemy::Setup(const UnitPlacement& at, u16 id, Database& database)
     this->unk2684 = 0;
     this->LoadCommand(database, object.skill);
     Database::FreeDescription(*this->data);
+    this->ProbeAct(acts);
+}
 
-    if (this->actId == BattleEnemy::SatanAct)
+// The end of Setup and Reload (inline in each): unk3070 set when the act has no action 0x26 (the probe state
+// cleared after), unk2FDD NoObjects when the object counts are all 0 and NoSkills when the skill counts are.
+void BattleEnemy::ProbeAct(ActArchive& acts)
+{
+    this->unk3070 = 0;
+    this->attackAct.id = this->actId;
+    this->attackAct.action = kProbedAction;
+
+    if (acts.Run(this->attackAct) == 0)
     {
-        this->hitPointsOverride = BattleEnemy::SatanHitPoints;
-        object.maxHitPoints = BattleEnemy::SatanHitPoints;
+        this->unk3070 = 1;
     }
 
-    if (this->actId == BattleEnemy::ChiyouAct)
+    this->attackAct = ActState{};
+    this->unk2FDD = 0;
+    const ObjectData& object = this->data->data;
+
+    if (object.itemACount == 0 && object.itemBCount == 0 && object.itemCCount == 0)
     {
-        this->hitPointsOverride = BattleEnemy::ChiyouHitPoints;
-        object.maxHitPoints = BattleEnemy::ChiyouHitPoints;
+        this->unk2FDD = BattleEnemy::NoObjects;
+    }
+
+    if (object.skillACount == 0 && object.skillBCount == 0)
+    {
+        this->unk2FDD = BattleEnemy::NoSkills;
     }
 }
 
-// swd32.exe 0x00475820 (unmatched in swd3e): the enemy turned into object `id` (its hit points full, its level byte and
-// skill script)
-void BattleEnemy::Reload(u16 id, Database& database)
+// swd3e.exe 0x00487E90: the enemy turned into object `id` (its hit points full, its level byte and skill script; its
+// act the object's, else `id`), then the act probed and the choices noted as by Setup
+void BattleEnemy::Reload(u16 id, Database& database, ActArchive& acts)
 {
     database.LoadObject(*this->data, id);
     ObjectData& object = this->data->data;
@@ -84,6 +102,14 @@ void BattleEnemy::Reload(u16 id, Database& database)
     this->evadeSkill = object.battleLevel;
     this->LoadCommand(database, object.skill);
     Database::FreeDescription(*this->data);
+    this->actId = object.act;
+
+    if (this->actId == 0)
+    {
+        this->actId = id;
+    }
+
+    this->ProbeAct(acts);
 }
 
 }  // namespace swd3e

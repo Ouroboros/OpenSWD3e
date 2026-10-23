@@ -283,7 +283,7 @@ void Game::StartBattle(u16 number)
             place.x = static_cast<i16>(Display::Width - place.x);
         }
 
-        unit.Setup(place, static_cast<u16>(battle.formation.enemies[enemy]), this->database);
+        unit.Setup(place, static_cast<u16>(battle.formation.enemies[enemy]), this->database, this->acts);
 
         if (battle.formation.guarding[enemy] == 1)
         {
