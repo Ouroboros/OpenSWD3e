@@ -435,8 +435,8 @@ void MessagesFrame::DrawMessageBoxAdvance(
         messages.panelAct.frame,
         x + kShadeMargin,
         y + kShadeMargin,
-        x + width - kShadeMargin,
-        y + height - kShadeMargin,
+        x + width,
+        y + height,
         0,
         kFrameBorder,
         scene

@@ -19,7 +19,6 @@ namespace swd3e
 namespace
 {
 
-constexpr u16 kAimNone = 0x8000;  // GetWord29A2: the role aims at no enemy
 constexpr i32 kBattleWon = 0x63;
 constexpr i32 kBattleLost = 0x67;
 constexpr i32 kTurnsRunning = 1;   // BattleState::result while no side has lost
@@ -338,9 +337,9 @@ void Game::StartRoleTurn(int unit)
     }
 }
 
-// swd3e.exe 0x00465460: when `enemy` is unk4A7626 its turn is reset, and each role but `role` aiming at it turns to
-// the first standing enemy other than it (retargeted set). With none and one enemy left, such a role's aim, command,
-// target and turn are reset and the turn order is cleared.
+// swd3e.exe 0x00465460: when `enemy` is unk4A7626, each role but `role` aiming at it turns to the first standing enemy
+// other than it (retargeted set). With none and one enemy left, such a role's command, target and turn are reset and
+// the turn order is cleared.
 void Game::RetargetRoles(int role, int enemy)
 {
     BattleState& battle = this->battleState;
@@ -351,8 +350,6 @@ void Game::RetargetRoles(int role, int enemy)
         return;
     }
 
-    this->battleEnemies[static_cast<std::size_t>(enemy)].ResetTurn(services);
-
     for (u32 index = 0; index < battle.roleCount; ++index)
     {
         if (static_cast<int>(index) == role)
@@ -361,9 +358,9 @@ void Game::RetargetRoles(int role, int enemy)
         }
 
         BattleRole& unit = this->battleRoles[index];
-        const u16 aim = unit.GetWord29A2();
+        const auto aim = static_cast<i16>(unit.GetWord29A2());
 
-        if ((aim & kAimNone) != 0 || aim != battle.unk4A7626)
+        if (aim < 0 || static_cast<u16>(aim) != battle.unk4A7626)
         {
             continue;
         }
@@ -375,8 +372,6 @@ void Game::RetargetRoles(int role, int enemy)
         {
             if (battle.unk4A7626 != other && !this->battleEnemies[static_cast<std::size_t>(other)].IsDefeated())
             {
-                unit.ClearWord29A2();
-                this->battleEnemies[aim].DecreaseHits();
                 unit.Retarget(static_cast<i16>(other));
                 battle.retargeted = 1;
                 turned = true;
@@ -389,8 +384,6 @@ void Game::RetargetRoles(int role, int enemy)
             continue;
         }
 
-        unit.ClearWord29A2();
-        this->battleEnemies[aim].DecreaseHits();
         unit.SetCommand(0);
         unit.SetTarget(0);
         unit.ResetTurn(services);
@@ -771,15 +764,16 @@ void Game::FieldFadeFrame(int counting)
     scene.Show(this->battleServices);
 }
 
-// swd3e.exe 0x00469BC0: while no unit acts, a side that is all down or turned to stone (UnkStatus4) loses: the party
-// (forced units left out; the count against the roles less the guests, in 8 bits) unless endFade, the stone roles
-// counted as defeated and the battle state 0x67; then, unless unk53C048, the enemies, counted as defeated, unk53C048
-// set, the auto battle off and the battle state 0x63. 1 when a side lost.
+// swd3e.exe 0x00469BC0: while no unit acts and the battle is not kLostQuietly, a side that is all down or turned to
+// stone (UnkStatus4) loses: the party (auto, guest and ghost units and the defeated left out; the count against the
+// roles less unk5770D4, the escorts and the guests, in 8 bits) unless endFade, the stone roles counted as defeated and
+// the battle state 0x67; then, unless unk53C048, the standing enemies, counted as defeated, unk53C048 set, the auto
+// battle off and the battle state 0x63. 1 when a side lost.
 int Game::CheckStoneSides()
 {
     BattleState& battle = this->battleState;
 
-    if (battle.actingUnit != -1)
+    if (battle.actingUnit != -1 || battle.result == kLostQuietly)
     {
         return 0;
     }
@@ -790,14 +784,16 @@ int Game::CheckStoneSides()
     {
         BattleRole& role = this->battleRoles[index];
 
-        if (role.autoControl != 1 && role.guestControl != 1 && role.HasEffectBits(BattleUnit::UnkStatus4) == 1)
+        if (role.AutoControl() != 1 && role.GuestControl() != 1 && role.Ghost() != 1 && !role.IsDefeated() &&
+            role.HasEffectBits(BattleUnit::UnkStatus4) == 1)
         {
             ++stoneRoles;
         }
     }
 
     const auto partyRoles = static_cast<u8>(
-        static_cast<u8>(battle.roleCount) - static_cast<u8>(battle.escortCount) - static_cast<u8>(battle.guestCount)
+        static_cast<u8>(battle.roleCount) - static_cast<u8>(battle.unk5770D4) - static_cast<u8>(battle.escortCount) -
+        static_cast<u8>(battle.guestCount)
     );
 
     if (stoneRoles != 0 && battle.defeatedRoles + stoneRoles >= partyRoles && battle.endFade == 0)
@@ -816,7 +812,9 @@ int Game::CheckStoneSides()
 
     for (u32 index = 0; index < battle.enemyCount; ++index)
     {
-        if (this->battleEnemies[index].HasEffectBits(BattleUnit::UnkStatus4) == 1)
+        BattleEnemy& enemy = this->battleEnemies[index];
+
+        if (!enemy.IsDefeated() && enemy.HasEffectBits(BattleUnit::UnkStatus4) == 1)
         {
             ++stoneEnemies;
         }
@@ -836,9 +834,9 @@ int Game::CheckStoneSides()
 }
 
 // swd3e.exe 0x0046ACB0: the next slot record taken into `taken`: the records of held roles (IsHeld) at the
-// front are passed over; a used record taken is removed (the later ones move up, the free ones after the used ones
-// cleared). The original also takes unit 7 for a role (the one before the first) and reads past the records when all
-// are held; both stop the search here.
+// front are passed over, the first role (unit 20) not counting as one; a used record taken is removed (the later ones
+// move up, the free ones after the used ones cleared). The original reads past the records when all are held; the
+// search stops there here.
 void Game::TakeSlotRecord(BattleSlotRecord& taken)
 {
     BattleState& battle = this->battleState;
@@ -848,7 +846,7 @@ void Game::TakeSlotRecord(BattleSlotRecord& taken)
     {
         const i32 unit = battle.slotRecords[at].unit;
 
-        if (unit < BattleState::FirstRoleUnit ||
+        if (unit <= BattleState::FirstRoleUnit ||
             this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeld() != 1)
         {
             break;
@@ -861,7 +859,7 @@ void Game::TakeSlotRecord(BattleSlotRecord& taken)
 }
 
 // swd3e.exe 0x00464E70: one frame of the damage numbers of role `index` (`role` 1) or enemy `index`; 1 once they are
-// done (the original tests unk53BF80 first, both ways alike).
+// done
 int Game::DamageNumbersFrame(int index, int role)
 {
     BattleServices& services = this->battleServices;
@@ -4703,9 +4701,19 @@ void Game::ConfirmKey()
         }
     }
 
+    // swd3e: with click regions shown the talk moves on only for a click on one of them.
     if (this->scene.talkWindows != nullptr)
     {
-        this->talk.advance = 1;
+        if (this->state.clickRegions.regions.empty())
+        {
+            this->talk.advance = 1;
+        }
+        else
+        {
+            this->state.clickRegions.Find(this->state.pointerX, this->state.pointerY, battle.hoverRegion);
+            this->talk.advance = battle.hoverRegion != nullptr ? 1 : 0;
+        }
+
         return;
     }
 

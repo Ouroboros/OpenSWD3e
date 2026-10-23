@@ -180,6 +180,10 @@ public:
     void DrawCraftResultPanel();
     void DrawMessageBox(int x, int y, int width, int height, int textX, int textY, std::string_view text);
     void DrawMessageBox(int x, int y, int width, int height, int textX, int textY, std::u8string_view text);
+    int DrawSmallPanel(int x, int y);
+    int DrawTallPanel(int x, int y);
+    int DrawSlidPanel(int x, int y, int width, int height, int frameRight, int frameBottom);
+    bool DrawWidePanel(int x, int y);
     int GrowPanel(int top, int bottom, int divisor);
     void DrawResistancePanel();
     void DrawMastery();

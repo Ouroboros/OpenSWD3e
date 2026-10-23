@@ -280,6 +280,8 @@ public:
     std::array<i32, Party::Roles> roleListScrolls =  // 0x0052544C by role: its roleListScroll
         {};  // 0x005394B4..0x00525458 per party role: the scroll of its list (ScrollListBack)
     std::array<PendingOrder, RoleUnits> pendingOrders = {};  // 0x005369C8
+    // 0x00536EE0 (swd3e) per enemy: its chosen order, taken into its slot record by AddSlotRecord (kind 2)
+    std::array<PendingOrder, Enemies> enemyPendingOrders = {};
     i32 unk53BF80 = 0;  // cleared when a party unit's order is taken (InsertSlotRecord)
     i32 unk53BFD0 = 0;
     i16 unk53BF46 = 0;  // cleared when a stagger ends (HurtFrame)
@@ -332,6 +334,7 @@ public:
     u16 hitBits = 0;                          // 0x005778CC (swd3e) their target bits of the frame
     u16 experienceBonus = 0;  // 0x00577220 (swd3e) the percent the roulette adds to the battle's experience
     u16 moneyTimes = 0;       // 0x0057721E (swd3e) the times the roulette multiplies its money
+    i32 menuSlide = 0;        // 0x00577A4C (swd3e) the menu panels slide in by it, halved each frame
     i32 enraging = 0;         // 0x00577310 (swd3e) 1 while an enemy enrages (Enrage sets it, 0x0049C0D0 clears it)
     i32 enrageDamage = 0;     // 0x005770C4 (swd3e) the damage of enrage 0x3F4 (1.4 times the maximum hit points)
     // 0x00536880 the ripple over the battle (a spell with ActFlag13 in rippleHits, the unit effect of 0x0049B9D0)

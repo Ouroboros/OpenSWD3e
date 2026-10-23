@@ -31,7 +31,7 @@
 namespace swd3e
 {
 
-// swd32.exe 0x0046E490 (unmatched in swd3e)
+// swd3e.exe 0x0047E660
 BattleRole::BattleRole()
     : ownedRecord(std::make_unique<RoleRecord>())
 {
@@ -164,6 +164,8 @@ constexpr u32 kAccessoryBit1A = 0x20;
 constexpr u32 kAccessoryBit1B = 0x40;
 constexpr u32 kAccessoryBit1D = 0x100;
 constexpr u32 kAccessoryBit1E = 0x200;
+constexpr u32 kAccessoryBit28 = 0x400;   // swd3e: Unk28 taken
+constexpr u32 kUnk28Armed = 0x100;       // swd3e: in equipmentFlags, Unk28 armed
 constexpr u16 kAccessoryStep = 5;        // the proficiency steps of an accessory command
 constexpr u16 kDrainStep = 0xC;          // the proficiency the life-drain accessory gains from a drain
 constexpr u32 kCountedKind = 0x8000000;  // ObjectData::kind bit of the objects CountUsableObjects counts
@@ -210,9 +212,9 @@ constexpr u16 kRefusedSound = 0x8C;
 constexpr std::size_t kClearedNameBytes = 0x10;
 constexpr u32 kSeparateKind = 0x800;     // ObjectData::kind: the object plays its own act (UnkCommandFlag1000)
 constexpr u32 kReusableKind = 0x80;      // an object not taken when used
-constexpr int kUnk1FScale = 4;           // Unk1F: unk29A4 is 4 percent of the proficiency and 1
+constexpr int kUnk1FScale = 0xB;         // Unk1F: unk29A4 is 11 percent of the proficiency (in 16 bits) and 1 (swd3e)
 constexpr int kAccessoryBaseShare = 10;  // the heals add a tenth of their base
-constexpr int kHalfShare = 5;            // Unk22 / Unk24: the proficiency is halved, less a fifth of that
+constexpr int kTenthShare = 10;          // Unk22 / Unk24: the proficiency is halved, less a tenth of it (swd3e)
 constexpr int kSpiritShare = 5;          // Unk23: a fifth of the proficiency
 
 // RollCritical and PrepareCommand.
@@ -1474,7 +1476,8 @@ void BattleRole::Regenerate(BattleServices& services)
 // swd3e.exe 0x0047F5C0: the command of an accessory of `kind` (the stamina it costs taken first when none is owed):
 // the kind sets its unk26CC bit and becomes command A (some take command B with UnkCommandFlag400, command A 0) and
 // most read the accessory's proficiency into proficiency; Unk1F scales unk29A4, Unk22 / Unk23 / Unk24 a heal of the
-// hit points / spirit / stamina of the battle record. The proficiencies then step by kAccessoryStep.
+// hit points / spirit / stamina of the battle record; swd3e adds Unk25 (command A only, no step), Unk27 (unk2EB2 up),
+// Unk28 (armed by one use, taken as command A by the next) and Unk29. The proficiencies then step by kAccessoryStep.
 void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 {
     CounterList& proficiency = services.party.fame.lists[Fame::ProficiencyList];
@@ -1532,8 +1535,9 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             break;
 
         case AccessoryKind::Unk1B:
-            this->commandA = kind;
             this->unk26CC |= kAccessoryBit1B;
+            this->commandA = kind;
+            this->AccessoryProficiency(kind, proficiency);
             break;
 
         case AccessoryKind::Unk1C:
@@ -1556,7 +1560,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             this->commandA = 0;
             this->commandB = kind;
             this->AccessoryProficiency(kind, proficiency);
-            this->unk29A4 = static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);
+            this->unk29A4 = static_cast<u16>(static_cast<i16>(kUnk1FScale * this->proficiency) / kPercent + 1);
             break;
 
         case AccessoryKind::Unk20:
@@ -1567,7 +1571,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 
         case AccessoryKind::Unk22:
             this->AccessoryProficiency(kind, proficiency);
-            this->proficiency = static_cast<u16>((this->proficiency >> 1) - (this->proficiency >> 1) / kHalfShare);
+            this->proficiency = static_cast<u16>((this->proficiency >> 1) - this->proficiency / kTenthShare);
             this->restoreHitPoints = share(record.maxHitPoints, this->proficiency);
             break;
 
@@ -1579,8 +1583,34 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 
         case AccessoryKind::Unk24:
             this->AccessoryProficiency(kind, proficiency);
-            this->proficiency = static_cast<u16>((this->proficiency >> 1) - (this->proficiency >> 1) / kHalfShare);
+            this->proficiency = static_cast<u16>((this->proficiency >> 1) - this->proficiency / kTenthShare);
             this->restoreStamina = share(record.stamina, this->proficiency);
+            break;
+
+        case AccessoryKind::Unk25:
+            this->commandA = kind;
+            return;
+
+        case AccessoryKind::Unk27:
+            ++this->unk2EB2;
+            break;
+
+        case AccessoryKind::Unk28:
+            if ((this->equipmentFlags & kUnk28Armed) != 0)
+            {
+                this->equipmentFlags &= ~kUnk28Armed;
+                this->commandA = kind;
+                this->unk26CC |= kAccessoryBit28;
+            }
+            else
+            {
+                this->AccessoryProficiency(kind, proficiency);
+                this->equipmentFlags |= kUnk28Armed;
+            }
+
+            break;
+
+        case AccessoryKind::Unk29:
             break;
 
         default:

@@ -31,16 +31,20 @@ enum class AccessoryKind : u16
     Unk22 = 0x22,         // no item has it
     Unk23 = 0x23,         // 夜叉肩帶
     Unk24 = 0x24,         // no item has it
-    Unk32 = 0x32,         // no item has it
-    ElementOrb = 0x33,    // 地炎玉, 水靈珠, 青龍水珠, ...: an element's resistance lowered by the proficiency
-    AttackRing = 0x34,    // 薩登荊環, 星君眼
-    BladeReturn = 0x35,   // 返刃玉
-    Unk36 = 0x36,         // no item has it
-    SpiritDrain = 0x37,   // 吸魔壺
-    LifeDrain = 0x38,     // 吸血鬼指環
-    SpiritFan = 0x39,     // 靈虛扇
-    SpecialAct = 0x3A,    // swd3e: equipment flag 0x80 (BattleRole::StartSpecialAct)
-    GoldGuard = 0x3B,     // swd3e: the gold pays for the hits (goldGuard)
+    Unk25 = 0x25,         // swd3e: command 0x25 alone (the command name 攻擊)
+    Unk27 = 0x27,         // swd3e: unk2EB2 counts up (the command name 物品)
+    Unk28 = 0x28,       // swd3e: armed by a first use (equipmentFlags 0x100), taken by the next (the command name 絕招)
+    Unk29 = 0x29,       // swd3e: the proficiency steps only (the command name 防禦)
+    Unk32 = 0x32,       // no item has it
+    ElementOrb = 0x33,  // 地炎玉, 水靈珠, 青龍水珠, ...: an element's resistance lowered by the proficiency
+    AttackRing = 0x34,  // 薩登荊環, 星君眼
+    BladeReturn = 0x35,  // 返刃玉
+    Unk36 = 0x36,        // no item has it
+    SpiritDrain = 0x37,  // 吸魔壺
+    LifeDrain = 0x38,    // 吸血鬼指環
+    SpiritFan = 0x39,    // 靈虛扇
+    SpecialAct = 0x3A,   // swd3e: equipment flag 0x80 (BattleRole::StartSpecialAct)
+    GoldGuard = 0x3B,    // swd3e: the gold pays for the hits (goldGuard)
 };
 
 // A party role in battle (0x2F34 bytes in the original, ten of them at 0x005029D0): a unit with a battle copy of the

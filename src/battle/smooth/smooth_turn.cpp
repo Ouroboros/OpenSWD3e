@@ -116,7 +116,7 @@ constexpr int kTagHitPointsUp = 2;
 constexpr int kTagGaugeTop = 0x11;
 constexpr int kTagGaugeHeight = 3;
 constexpr u32 kTagGaugeRed = 0x18;
-constexpr int kControlTiles = 0x234E;  // the 控制 menu
+constexpr int kControlTiles = 0x2387;  // the 控制 menu (swd3e; swd32: 0x234E)
 constexpr int kControlBoxLeft = 8;
 constexpr int kControlTitleUp = 0x28;
 constexpr int kControlTitleTextUp = 0x20;
@@ -126,10 +126,13 @@ constexpr i8 kControlFill = 0x48;
 constexpr std::u8string_view kSpecialFormat = u8"特殊%d";  // 0x004BF76C
 constexpr std::u8string_view kReleaseName = u8"釋放";      // 0x004BF60C
 constexpr u16 kStaminaCostBit = 0x8000;                    // the spell list
-constexpr int kElementIcons = 0x241C;
+constexpr int kElementIcons = 0x23AC;                      // swd3e (swd32: 0x241C)
 constexpr int kSpellIconLeft = 4;
+constexpr int kElementIconBasic = 5;  // swd3e: icons 1..5 are drawn 2 left and 4 up
+constexpr int kSmallIconLeft = 6;
+constexpr int kSmallIconUp = 4;
 constexpr int kSpellRowTop = 0x25;
-constexpr int kSpellNameX = 0xC;
+constexpr int kSpellNameX = 0xE;  // swd3e (swd32: 0xC)
 constexpr std::string_view kCostFormat = "%3d";
 constexpr int kSpellBarLeft = 8;
 constexpr int kSpellBarUp = 4;
@@ -1189,9 +1192,14 @@ void TurnFrame::DrawSpellListAdvance(int x, int y, int cursor, int top, Scene& s
 
         const int rowY = y + kListRowHeight * row + kSpellRowTop;
 
-        if (icon != kSkillListEnd)
+        if (static_cast<i16>(icon) > kElementIconBasic)
         {
             HudFrame(game.battleHud).DrawPictureFrameAdvance(kElementIcons, icon - 1, x - kSpellIconLeft, rowY, scene);
+        }
+        else if (static_cast<i16>(icon) >= 1)
+        {
+            HudFrame(game.battleHud)
+                .DrawPictureFrameAdvance(kElementIcons, icon - 1, x - kSmallIconLeft, rowY - kSmallIconUp, scene);
         }
 
         const bool isShort = static_cast<i16>(have) < static_cast<i16>(cost);

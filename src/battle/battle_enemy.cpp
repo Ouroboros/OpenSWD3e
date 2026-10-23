@@ -7,7 +7,7 @@
 namespace swd3e
 {
 
-// swd32.exe 0x00475560 (unmatched in swd3e)
+// swd3e.exe 0x00487B90
 BattleEnemy::BattleEnemy()
 {
     this->ownedData = std::make_unique<ObjectRecord>();

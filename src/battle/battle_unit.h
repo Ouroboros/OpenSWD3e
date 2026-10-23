@@ -479,6 +479,7 @@ public:
     u16 TreasureLevel(const CounterList& list) const;
     int AddTreasureExperience(CounterList& list, u16 kind, u16 amount);
     bool IsWeakEnemy() const;
+    int DrainSecondGauge();
     void IncreaseCounter2A76();
     u16 Counter2A76() const;
     void IncreaseHits();

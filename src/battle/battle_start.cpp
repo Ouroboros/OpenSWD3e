@@ -44,7 +44,6 @@ constexpr int kBarLength = 56;    // the pixels of a full gauge of the role pane
 constexpr u32 kRowSpeeds = 0x14;  // SlideBattleIn: a row moves kRowStep + 2 * (0..kRowSpeeds-1) pixels a frame
 constexpr int kRowStep = 0x1E;
 constexpr int kRowSpeedScale = 2;
-constexpr int kUnusedSpeedBase = 0xF;  // the speeds it draws for every row first, never used
 constexpr int kMaxEnemySteps = 6;
 constexpr int kScenes = 4;
 constexpr int kBackgroundPictures = 15000;  // the battle backgrounds are pictures 15000 on
@@ -108,7 +107,7 @@ void Game::LoadBattleBackground(int background, u16 scene)
     battle.darkCopyTint.fill(-1);
 }
 
-// swd3e.exe 0x004655B0: the y of the enemies and of the roles (from 8)
+// swd3e.exe 0x004655B0: the y of the enemies and of the roles (from unit 20)
 void Game::MeasureUnits()
 {
     BattleState& battle = this->battleState;
@@ -160,6 +159,7 @@ void Game::StartBattle(u16 number)
     std::fill_n(battle.commandEnabled.begin(), kCommandClearBytes, u8{0});
     battle.roleListScrolls[0] = 0;
     battle.pendingOrders.fill(PendingOrder{});
+    battle.enemyPendingOrders.fill(PendingOrder{});
     battle.unk4FF0BC.fill(0);
     battle.roleListScrolls[1] = 0;
     battle.background = Picture{};
@@ -503,21 +503,12 @@ void Game::StartBattle(u16 number)
     }
 }
 
-// swd3e.exe 0x0045B490: the rows of `incoming` slide over `outgoing` from the right, each by a random step a frame,
-// shown on the primary surface until the rows have reached the left edge 0x1E0 times in all. The original first draws
-// a speed for every row that it never uses.
+// swd3e.exe 0x0045B490: the rows of `incoming` spread over `outgoing` from the left, each by a random step a frame,
+// shown on the primary surface until the rows have reached the right edge 0x1E0 times in all
 void Game::SlideBattleIn(const Surface& incoming, const Surface& outgoing)
 {
     std::unique_ptr<Surface> frame = this->graphics.CreateOffscreen(Display::Width, Display::Height);
-    std::array<int, Display::Height> rowX;
-    rowX.fill(Display::Width);
-    std::array<int, Display::Height> unusedSpeeds;
-
-    for (int& speed : unusedSpeeds)
-    {
-        speed = static_cast<int>(this->random.Below(kRowSpeeds)) + kUnusedSpeedBase;
-    }
-
+    std::array<int, Display::Height> rowWidth = {};
     int arrived = 0;
 
     for (;;)
@@ -527,18 +518,18 @@ void Game::SlideBattleIn(const Surface& incoming, const Surface& outgoing)
             std::copy_n(outgoing.Row(row), Display::Width, frame->Row(row));
         }
 
-        for (int row = Display::Height - 1; row >= 0; --row)
+        for (int row = 0; row < Display::Height; ++row)
         {
-            int& x = rowX[static_cast<std::size_t>(row)];
-            x = x - kRowStep - kRowSpeedScale * static_cast<int>(this->random.Below(kRowSpeeds));
+            int& width = rowWidth[static_cast<std::size_t>(row)];
+            width = kRowSpeedScale * static_cast<int>(this->random.Below(kRowSpeeds)) + kRowStep + width;
 
-            if (x <= 0)
+            if (width >= Display::Width)
             {
-                x = 0;
+                width = Display::Width;
                 ++arrived;
             }
 
-            std::copy(incoming.Row(row) + x, incoming.Row(row) + Display::Width, frame->Row(row) + x);
+            std::copy_n(incoming.Row(row), width, frame->Row(row));
         }
 
         Surface* primary = this->graphics.GetSurface(Graphics::SurfaceId::Primary);

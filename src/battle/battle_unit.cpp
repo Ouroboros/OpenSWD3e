@@ -7057,4 +7057,47 @@ bool BattleUnit::IsWeakEnemy() const
     const i32 hitPoints = this->hitPointsOverride != 0 ? this->hitPointsOverride : data.hitPoints;
     return hitPoints < data.maxHitPoints / kWeakEnemyShare;
 }
+
+// swd3e.exe 0x004902E0: a frame of the second gauge running down by the command's unk18 (not while held or marked
+// UnkMark2; then unk2AC8 is cleared): 1 once it is empty or without unk18. Nothing with a target; a fallen unit other
+// than the talisman ghost loses its gauge (0).
+int BattleUnit::DrainSecondGauge()
+{
+    if (this->target != 0)
+    {
+        return 0;
+    }
+
+    if (this->Ghost() == 0 && (this->defeated == 1 || this->dying == 1))
+    {
+        this->unk2BE8 = 0;
+        this->drainingGauge = 0;
+        return 0;
+    }
+
+    const u16 step = this->command.unk18;
+
+    if (step == 0)
+    {
+        return 1;
+    }
+
+    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::UnkMark2) != 0)
+    {
+        return 0;
+    }
+
+    this->unk2BE8 = static_cast<i16>(this->unk2BE8 - step);
+    this->drainingGauge = 1;
+
+    if (this->unk2BE8 <= 0)
+    {
+        this->unk2BE8 = 0;
+        this->drainingGauge = 0;
+        return 1;
+    }
+
+    this->unk2AC8 = 0;
+    return 0;
+}
 }  // namespace swd3e

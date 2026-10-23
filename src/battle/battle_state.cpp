@@ -117,8 +117,8 @@ void BattleState::ListEnemyOrder()
     }
 }
 
-// swd3e.exe 0x0046AA00: `unit` with kind 1 or 2 put in the first free record (none when all are used); other kinds
-// add nothing
+// swd3e.exe 0x0046AA00: `unit` with kind 1 or 2 put in the first free record (none when all are used); kind 2 also
+// takes the enemy's order (enemyPendingOrders, then cleared) into it; other kinds add nothing
 void BattleState::AddSlotRecord(int kind, i32 unit)
 {
     if (kind != 1 && kind != kSecondKind)
@@ -128,12 +128,26 @@ void BattleState::AddSlotRecord(int kind, i32 unit)
 
     for (BattleSlotRecord& record : this->slotRecords)
     {
-        if (record.unit == -1)
+        if (record.unit != -1)
         {
-            record.unit = unit;
-            record.kind = static_cast<u16>(kind);
-            return;
+            continue;
         }
+
+        record.unit = unit;
+        record.kind = static_cast<u16>(kind);
+
+        if (kind == kSecondKind)
+        {
+            PendingOrder& order = this->enemyPendingOrders[static_cast<std::size_t>(unit)];
+            record.unk14 = order.unk04;
+            record.unk10 = order.unk00;
+            record.unk18 = order.unk08;
+            record.unk0A = order.unk0C;
+            record.targetCount = order.targetCount;
+            order = PendingOrder{};
+        }
+
+        return;
     }
 }
 
@@ -203,13 +217,24 @@ void BattleState::StartFieldFade(int red, int green, int blue, int toRed, int to
     fade.stepBlue = static_cast<float>(static_cast<double>(toBlue - static_cast<i32>(crt::Ftol(fade.blue))) / count);
 }
 
-// swd3e.exe 0x0046AAE0: `unit` put at place `at` among the records (the records from there to the first free one move
-// down a place). Kind 1 (a party unit) at -1 goes to the first free record, and takes its pending order (cleared, as
-// are unk53BF80 and unk53BFD0). The original counts from 0 when no record is free, puts a kind 1 unit placed past the
-// first free record at place 0, and moves the last record past the array when only it was free.
+// swd3e.exe 0x0046AAE0: unless already in a record, `unit` put at place `at` among the records (the records from there
+// to the first free one move down a place). Kind 1 (a party unit) at -1 goes to the first free record, and takes its
+// pending order (cleared, as are unk53BF80 and unk53BFD0). The original counts from 0 when no record is free, puts a
+// kind 1 unit placed past the first free record at place 0, and moves the last record past the array when only it was
+// free.
 void BattleState::InsertSlotRecord(int kind, i32 unit, int at)
 {
     auto& records = this->slotRecords;
+
+    // swd3e: a unit already in a record is not put in again.
+    for (const BattleSlotRecord& record : records)
+    {
+        if (record.unit == unit)
+        {
+            return;
+        }
+    }
+
     int count = 0;
 
     for (std::size_t place = 0; place < records.size(); ++place)
@@ -438,7 +463,7 @@ void BattleState::SetReturnedItem(int index, u16 id)
 
 // The removal of 0x0045F020 (inline in the original): record `at` copied into `taken`; a used one is removed, the
 // later records moving up, and from the first free record on (from `at` when none is free) the records are cleared.
-// The original reads the table after the records for `at` 18; a free record is taken then.
+// An `at` past the records (all of them held) reads after them in the original; a free record is taken then.
 void BattleState::TakeSlotRecordAt(std::size_t at, BattleSlotRecord& taken)
 {
     auto& records = this->slotRecords;
