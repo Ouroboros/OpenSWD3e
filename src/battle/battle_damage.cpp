@@ -10,7 +10,7 @@ namespace swd3e
 namespace
 {
 
-constexpr std::u8string_view kNoRetreat = u8"無法撤退!!";  // swd32.exe 0x004A7954 (unmatched in swd3e)
+constexpr std::u8string_view kNoRetreat = u8"無法撤退!!";  // 0x004BF540
 constexpr int kRetreatX = 0x118;
 constexpr int kRetreatY = 0xA;
 constexpr i16 kRetreatFrames = 0x32;

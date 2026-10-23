@@ -73,14 +73,14 @@ namespace
 
 constexpr std::string_view kManroleFile = "C:\\cpp\\SWD102e\\manrole.cpp";
 // The source lines the assertions name.
-constexpr u32 kNoActLine = 0xDE;
+constexpr u32 kNoActLine = 0x10B;
 constexpr u32 kNoEscortActLine = 0x123;
 constexpr u32 kNoGuestActLine = 0x14E;
 constexpr u32 kNoWeaponActLine = 0x182;
-constexpr std::u8string_view kNoAct = u8"戰鬥角色actNumber為0!!";           // swd32.exe 0x004A7C2C (unmatched in swd3e)
-constexpr std::u8string_view kNoEscortAct = u8"護駕actNumber為0!!";         // swd32.exe 0x004A7C68 (unmatched in swd3e)
+constexpr std::u8string_view kNoAct = u8"戰鬥角色actNumber為0!!";           // 0x004BF9D8
+constexpr std::u8string_view kNoEscortAct = u8"護駕actNumber為0!!";         // 0x004BFA0C
 constexpr std::u8string_view kNoGuestAct = u8"Npc角色actNumber為0!!";       // swd32.exe 0x004A7C7C (unmatched in swd3e)
-constexpr std::u8string_view kNoWeaponAct = u8"武器%d號的強攻擊act沒設!!";  // swd32.exe 0x004A7C94 (unmatched in swd3e)
+constexpr std::u8string_view kNoWeaponAct = u8"武器%d號的強攻擊act沒設!!";  // 0x004BFA34
 constexpr i16 kStatLimit = 0x270F;
 
 constexpr u16 kStruckEvasion = 8;
@@ -162,10 +162,8 @@ constexpr u32 kCategory5 = 0x8000000;
 constexpr int kSkillCategories = 3;
 constexpr int kListCategories = 4;
 constexpr int kObjectCategories = 6;
-constexpr int kSkillType0 = 0x1C;  // ObjectData::category of the skill types
-constexpr int kSkillType1 = 0x1F;
-constexpr u16 kFirstSkillType = 0x1B;
-constexpr u16 kLastSkillType = 0x1E;
+constexpr int kSkillType0 = 0x11;  // ObjectData::category of the skill types (swd3e: 奇術 and 絕技)
+constexpr int kSkillType1 = 0x14;
 constexpr u16 kShownObject = 0x8000;  // ListObject flags
 constexpr u16 kCostlyObject = 0x4000;
 constexpr u16 kCostsStamina = 0x4000;  // ObjectData::costBits: the low 14 bits are a stamina cost
@@ -215,7 +213,8 @@ constexpr int kSureBelow = 13;
 // StepBack.
 
 // CanAbsorb.
-constexpr u16 kMaxAbsorbClass = 0x15;   // ObjectData::category
+constexpr u16 kMaxAbsorbClass = 0xA;    // ObjectData::category
+constexpr u32 kAbsorbChanceRoll = 10;   // an item's absorbChance is against a 0..9 roll (swd3e)
 constexpr int kAbsorbLevelsAbove = 12;  // a target this many levels above the role is never absorbed
 constexpr int kSureAbsorbBelow = 10;
 constexpr int kQuarterAbove = 7;
@@ -241,13 +240,14 @@ i16 Grown(i16 value, i16 scale)
 
 }  // namespace
 
-// swd3e.exe 0x0047E930: the battle extras cleared: the words past the unit, the five acts at +0x2BC8, slot acts 8 and
-// 9 and the record at +0x2B24
+// swd3e.exe 0x0047E930: the battle extras cleared: the words past the unit, unk2EB2, unk3040, the five extra acts,
+// slot acts 8 and 9 and the record at +0x3074
 void BattleRole::ClearExtras()
 {
     this->bonusA = 0;
     this->bonusB = 0;
     this->bonusC = 0;
+    this->unk2EB2 = 0;
     this->unk2F0C = 0;
     this->unk2F10 = 0;
     this->staminaCost = 0;
@@ -257,6 +257,7 @@ void BattleRole::ClearExtras()
     this->usedItem = 0;
     this->unk2F18 = 0;
     this->unk2F16 = 0;
+    this->unk3040 = 0;
     this->extraActs.fill(ActState{});
     this->slotActs[BattleUnit::UnkSlot8] = ActState{};
     this->slotActs[BattleUnit::UnkSlot9] = ActState{};
@@ -265,10 +266,12 @@ void BattleRole::ClearExtras()
 
 // swd3e.exe 0x0047E9C0: a party role entering battle: its record copied into the battle copy (the attack and defence
 // bonuses starting from the attack and defence), its party record kept with its current and maximum values held to
-// 9999, the act from its placement (asserted non-zero), and bit 15 of +0x24 marking it defeated
+// 9999, the act from its placement (asserted non-zero), unk3040 set; bit 15 of +0x24 or no hit points left mark it
+// defeated
 void BattleRole::Setup(RoleRecord& record, RoleBattleBlock& block, const UnitPlacement& at, ErrorReporter& reporter)
 {
     this->ClearExtras();
+    this->unk3040 = 1;
     this->placement = at;
     this->savedPlacement = this->placement;
     this->kind = at.kind;
@@ -300,7 +303,7 @@ void BattleRole::Setup(RoleRecord& record, RoleBattleBlock& block, const UnitPla
         }
     }
 
-    this->defeated = (this->battleRecord->condition & RoleRecord::Defeated) != 0 ? 1 : 0;
+    this->defeated = (this->battleRecord->condition & RoleRecord::Defeated) != 0 || record.hitPoints == 0 ? 1 : 0;
 }
 
 // swd32.exe 0x0046E890 (unmatched in swd3e): a summoned escort: its mon.dat object (by the act of its placement,
@@ -864,10 +867,11 @@ u16 BattleRole::AttackPose(BattleServices& services)
     return result;
 }
 
-// swd3e.exe 0x004832C0: whether the role absorbs the target: only an Absorbable monster (not UnkKind20) of class up to
-// kMaxAbsorbClass, at most 11 levels above the role. Ten levels or more below it always; 7..11 above it at a quarter of
-// its hit points or less; otherwise at a third or less, or by a 0..99 roll: up to 80 for 5..9 levels below, 20 less 5
-// per level above, 20 plus 10 per level below.
+// swd3e.exe 0x004832C0: whether the role absorbs the target: only an Absorbable monster (not UnkKind20). One of the
+// category of the item used (absorbCategory) on a 0..9 roll below absorbChance; else one of class up to
+// kMaxAbsorbClass, at most 11 levels above the role. Ten levels or more below it always; 7..11 above it at a quarter
+// of its hit points or less; otherwise at a third or less, or by a 0..99 roll: up to 80 for 5..9 levels below, 20 less
+// 5 per level above, 20 plus 10 per level below.
 int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) const
 {
     const ObjectData& data = target.Data()->data;
@@ -875,8 +879,17 @@ int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) co
     i32 maximum = 0;
     target.GetHitPoints(hitPoints, maximum);
 
-    if ((data.kind & ObjectData::UnkKind20) != 0 || (data.kind & ObjectData::Absorbable) == 0 ||
-        data.category > kMaxAbsorbClass)
+    if ((data.kind & ObjectData::UnkKind20) != 0 || (data.kind & ObjectData::Absorbable) == 0)
+    {
+        return 0;
+    }
+
+    if (this->absorbChance != 0 && this->absorbCategory == data.category)
+    {
+        return services.random.Below(kAbsorbChanceRoll) < this->absorbChance ? 1 : 0;
+    }
+
+    if (data.category > kMaxAbsorbClass)
     {
         return 0;
     }
@@ -953,7 +966,7 @@ int BattleRole::CastAt(BattleServices& services, const BattleUnit& target, i32 s
     return result;
 }
 
-// swd3e.exe 0x00483ED0: one frame of the role's magic act (its act + MagicActs, action magicAction, slot act 8) drawn
+// swd3e.exe 0x00483ED0: one frame of the role's magic act (its own act, action magicAction, slot act 8) drawn
 // by DrawAction; its target bits play the effect in the recoil act (holding the act) and fade the field by its lights;
 // a follow-up marks the spell cast in BattleState::spellStage. 1 (slot act 8 and the stages cleared) once the battle
 // marks the spell over.
@@ -1425,22 +1438,23 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 }
 
 // swd3e.exe 0x004807B0: whether the role's next attack is critical (it sets `critical`): never for a forced unit, with
-// an accessory command or for the role that had the last one; always with the Unk32 equipment; after roleCount + 8
-// attacks since the last one; after 8, on a 0..9 roll above 5. A rolled one restarts the count for this role.
-void BattleRole::RollCritical(BattleServices& services)
+// an accessory command, while unk2EB2 is positive or mark bit 4 is set, or for the role that had the last one; always
+// with the Unk32 equipment or status bit 18 (the count kept); after roleCount + 8 attacks since the last one; after 8,
+// on a 0..9 roll above 5. A rolled one restarts the count for this role.
+int BattleRole::RollCritical(BattleServices& services)
 {
     BattleState& battle = services.state;
 
-    if (this->autoControl == 1 || this->guestControl == 1 || this->unk26CC != 0 ||
-        battle.lastCriticalRole == this->placement.actId)
+    if (this->autoControl == 1 || this->guestControl == 1 || this->unk26CC != 0 || this->unk2EB2 > 0 ||
+        this->MarkBit4() == 1 || battle.lastCriticalRole == this->placement.actId)
     {
-        return;
+        return 0;
     }
 
-    if ((this->equipmentFlags & BattleUnit::Unk32) != 0)
+    if ((this->equipmentFlags & BattleUnit::Unk32) != 0 || (this->status & BattleUnit::UnkStatus40000) != 0)
     {
         this->critical = 1;
-        return;
+        return 1;
     }
 
     const u32 since = battle.attacksSinceCritical;
@@ -1448,12 +1462,13 @@ void BattleRole::RollCritical(BattleServices& services)
     if (since < battle.roleCount + kCriticalAttacks &&
         (since < kCriticalAttacks || static_cast<u16>(services.random.Below(kCriticalRoll)) <= kCriticalChance))
     {
-        return;
+        return 0;
     }
 
     this->critical = 1;
     battle.attacksSinceCritical = 0;
     battle.lastCriticalRole = this->placement.actId;
+    return 1;
 }
 
 // swd3e.exe 0x004808D0: the role's chosen command prepared. A UnkCommandFlag200 command takes command unk2F18 (a
@@ -1737,7 +1752,7 @@ ItemNode* BattleRole::StepSkill()
 }
 
 // swd3e.exe 0x00480C60: `count` raised by the skills of `category` usable by roles bit 0 or 2: for `type` 0 those
-// with unk52 kFirstSkillType..kLastSkillType, otherwise those with unk52 kSkillType1 (type 1 is that kind; others
+// with category kSkillType0, otherwise those with category kSkillType1 (type 1 is that kind; others
 // are taken as themselves, but only kSkillType0 is told apart)
 void BattleRole::CountSkills(int category, int type, u8& count)
 {
@@ -1766,7 +1781,7 @@ void BattleRole::CountSkills(int category, int type, u8& count)
 
         if (wanted == kSkillType0)
         {
-            if (data.category >= kFirstSkillType && data.category <= kLastSkillType)
+            if (data.category == kSkillType0)
             {
                 ++count;
             }
@@ -1902,10 +1917,10 @@ int BattleRole::ThrowableObject(int throwable, int index, std::string& name, u16
 }
 
 // swd3e.exe 0x00480B10: the `index`th skill of `category` (0..2) usable by roles bit 0 or 2, of `type` 0 (unk52
-// kFirstSkillType..kLastSkillType) or 1 (kSkillType1): its name and `cost` (unk40 with bit 15: the low 15 bits; with
+// category kSkillType0) or 1 (kSkillType1): its name and `cost` (unk40 with bit 15: the low 15 bits; with
 // kCostsStamina: the low 14 with kShownObject; with kFixedCostBit: kFixedCost; type 1: 1; otherwise kept), and the
-// element icon of its skill script (SkillElements by its resistance). Past the end `cost` and the result are 0xFFFF.
-// Other types give cost 0 and the icon of element 0.
+// low word of +0x10 of its skill script (the element). Past the end `cost` and the result are 0xFFFF. Other types give
+// cost 0 and the stack word the script would have filled (0 here).
 u16 BattleRole::ListSkill(Database& database, int category, int type, int index, std::string& name, u16& cost)
 {
     const u32 kinds = BattleRole::CategoryKinds(category, kSkillCategories);
@@ -1941,8 +1956,7 @@ u16 BattleRole::ListSkill(Database& database, int category, int type, int index,
             continue;
         }
 
-        if (wanted == kSkillType0 ? data.category >= kFirstSkillType && data.category <= kLastSkillType
-                                  : data.category == kSkillType1)
+        if (wanted == kSkillType0 ? data.category == kSkillType0 : data.category == kSkillType1)
         {
             ++listed;
         }
@@ -1983,10 +1997,7 @@ u16 BattleRole::ListSkill(Database& database, int category, int type, int index,
         cost = 0;
     }
 
-    const auto element = static_cast<std::size_t>(LowWord(script.unk10));
-
-    // The original reads past the table for a larger element.
-    return element < BattleRole::SkillElements.size() ? BattleRole::SkillElements[element] : kNoSkill;
+    return LowWord(script.unk10);
 }
 
 // swd3e.exe 0x0047FA00: the proficiency counters of the two worn accessories (their unk50) stepped by `amount` up to
@@ -2048,7 +2059,7 @@ int BattleRole::StepWornCounters(CounterList& list, u16 amount)
 
 // swd3e.exe 0x00480F30: the `index`th node of the skill list (from 1; the count goes on with every node, so a node
 // after the last counted skill is taken when it is reached) taken as the role's command: type 0 counts unk52
-// kFirstSkillType..kLastSkillType and sets UnkCommandFlag8000, type 1 counts kSkillType1 and sets
+// category kSkillType0 and sets UnkCommandFlag8000, type 1 counts kSkillType1 and sets
 // UnkCommandFlag200, other types count kSkillType1. `act` takes its unk50, the command its skill script (cleared
 // first), the skill name its name; with UnkCommandFlag200 magicAction, unk2F16 and unk2F18 take its unk48, unk50 and
 // unk40. Its unk34..unk38 are the heals when unk3C is 0, and percentages with bit kHealPercentBit. The result is 1
@@ -2085,9 +2096,7 @@ u16 BattleRole::SelectSkill(Database& database, int category, int type, int inde
 
         if ((LowByte(data.usableBy) & kCountedUsers) != 0 && (kinds & data.kind) != 0)
         {
-            const bool counted = wanted == kSkillType0
-                                     ? data.category >= kFirstSkillType && data.category <= kLastSkillType
-                                     : data.category == kSkillType1;
+            const bool counted = wanted == kSkillType0 ? data.category == kSkillType0 : data.category == kSkillType1;
 
             if (counted)
             {
@@ -2139,7 +2148,7 @@ u16 BattleRole::SelectSkill(Database& database, int category, int type, int inde
 }
 
 // swd3e.exe 0x00480CF0: whether the role can pay for the `index`th skill of `category` (unk52
-// kFirstSkillType..kLastSkillType; 0 for index 0 or past the end). Its unk40 sets the cost: bit 15 the spirit
+// category kSkillType0; 0 for index 0 or past the end). Its unk40 sets the cost: bit 15 the spirit
 // (unk2F10, no item chosen), kCostsStamina the stamina (unk2F12, no item chosen), kItemCostBit an object (unk2F10 its
 // id, which must be in the inventory with some left: it becomes the chosen item). Costs the skill does not set keep
 // their last values (as in the original). A shortfall shows kNotEnoughItems, kNotEnoughSpirit or kNotEnoughStamina
@@ -2168,8 +2177,7 @@ int BattleRole::CanPaySkill(BattleServices& services, int category, int index)
 
         const ObjectData& data = node->record.data;
 
-        if ((LowByte(data.usableBy) & kCountedUsers) != 0 && (kinds & data.kind) != 0 &&
-            data.category >= kFirstSkillType && data.category <= kLastSkillType)
+        if ((LowByte(data.usableBy) & kCountedUsers) != 0 && (kinds & data.kind) != 0 && data.category == kSkillType0)
         {
             ++listed;
         }

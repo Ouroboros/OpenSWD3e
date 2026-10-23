@@ -46,12 +46,10 @@ enum class AccessoryKind : u16
 class BattleRole : public BattleUnit
 {
 public:
-    // The equipment slots of a role (Party::SlotsPerRole).
-    // 0x004A7BD4: the element icon of a skill by its script's resistance (0xFFFF: none)
-    static constexpr std::array<u16, 12> SkillElements = {8, 1, 2, 3, 4, 0xFFFF, 5, 6, 7, 0xFFFF, 9, 10};
     static constexpr std::u8string_view NotEnoughItems = u8"物品不夠!!";      // 0x004BFA90
-    static constexpr std::u8string_view NotEnoughSpirit = u8"靈力值不夠!!";   // swd32 0x004A7CC0
-    static constexpr std::u8string_view NotEnoughStamina = u8"體力值不夠!!";  // swd32 0x004A7CB0
+    static constexpr std::u8string_view NotEnoughSpirit = u8"靈力值不夠!!";   // 0x004BFA80
+    static constexpr std::u8string_view NotEnoughStamina = u8"體力值不夠!!";  // 0x004BFA70
+    // The equipment slots of a role (Party::SlotsPerRole).
     static constexpr std::size_t WeaponSlot = 0;
     static constexpr std::size_t FirstAccessorySlot = 7;
     static constexpr std::size_t SecondAccessorySlot = 8;
@@ -60,9 +58,7 @@ public:
     static constexpr std::size_t NoResistanceSlotB = 0xA;
 
     static constexpr std::size_t ExtraActs = 5;
-    // The magic act is MagicActs entries after the unit's act (inferred: the second half of the 3000-entry archive).
-    static constexpr i32 MagicActs = 1500;
-    // SwarmSpellFrame: where the swarm acts start around the role, by their number (0x004A7C04, 0x004A7C14).
+    // SwarmSpellFrame: where the swarm acts start around the role, by their number (0x004BF9B0, 0x004BF9C0).
     static constexpr std::array<i16, 8> SwarmOffsetX = {0, 0, -120, 120, -70, 70, -70, 70};
     static constexpr std::array<i16, 8> SwarmOffsetY = {-100, 100, 0, 0, -50, -50, 50, 50};
 
@@ -119,7 +115,7 @@ public:
     int SelectObject(Database& database, ErrorReporter& reporter, int category, int index, u32& act, u16& kind);
     void Regenerate(BattleServices& services);
     void UseAccessorySkill(BattleServices& services, u16 kind);
-    void RollCritical(BattleServices& services);
+    int RollCritical(BattleServices& services);
     void PrepareCommand(BattleServices& services, Database& database);
     void FinishCommand();
     int BeatsLevel(BattleServices& services, u16 level) const;
@@ -158,6 +154,10 @@ public:
     u16 bonusB = 0;  // swd32 +0x2F20 of their +0x36 words
     u16 bonusC = 0;  // swd32 +0x2F22 of their +0x38 words
     u16 unk2F24 = 0;
+    // +0x34BA, +0x34BC (swd3e) the words +0x56 and +0x58 of the item used (UseSelectedItem, 0x004818E0): a target of
+    // that category is absorbed on a 0..9 roll below the second (CanAbsorb)
+    u16 absorbCategory = 0;
+    u16 absorbChance = 0;
     i16 absorbFrames = 0;  // +0x34BE the frames of the running absorb (AbsorbFrame)
     u8 critical = 0;       // +0x34CA 1: the next attack is critical (set by 0x0046FF00)
 };

@@ -49,7 +49,7 @@ constexpr int kMaxEnemySteps = 6;
 constexpr int kScenes = 4;
 constexpr int kBackgroundPictures = 15000;  // the battle backgrounds are pictures 15000 on
 constexpr i32 kNoParty = 0x67;
-constexpr std::u8string_view kBadBattle = u8"第%d號戰鬥場景資料錯誤!!";  // swd32.exe 0x004A76F0 (unmatched in swd3e)
+constexpr std::u8string_view kBadBattle = u8"第%d號戰鬥場景資料錯誤!!";  // 0x004BF2C0
 
 struct Spot
 {

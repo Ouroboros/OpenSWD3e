@@ -50,8 +50,11 @@ constexpr u32 kRoleGaugeSpread = 0x8C;
 
 constexpr i16 kSpeedMask = 0x7FFF;  // the speed of a command with bit 15 set
 constexpr i32 kUnkBlock30 = 0x30;
+constexpr u16 kUnk2EB2Accessory = 0x27;        // the accessory kind whose proficiency bounds unk2EB2 (swd3e)
+constexpr u16 kUnk2EB2Share = 10;              // unk2EB2 is held below a tenth of it
 constexpr u32 kCommandStatusBit = 0x10000000;  // command +0x08 bit 28
 constexpr u16 kAccessoryValueMask = 0x3FFF;
+constexpr u16 kUnkAccessory28 = 0x28;  // the accessory kind UnkEquipment100 takes the value of (swd3e)
 constexpr u32 kHealRoll = 0xA;         // ChooseHeal: a roll of 0..4 picks the first way, 5..9 the second
 constexpr u8 kDefeatPoses = 10;        // a defeated unit takes a pose of 1..kDefeatPoses
 constexpr u8 kFallbackDefeatPose = 6;  // or this one when none was taken
@@ -2458,6 +2461,27 @@ int BattleUnit::StatusBit5() const
     return (this->status & BattleUnit::UnkStatus20) != 0 ? 1 : 0;
 }
 
+// swd3e.exe 0x00498CD0
+int BattleUnit::MarkBit4() const
+{
+    return (this->marks & BattleUnit::UnkMark10) != 0 ? 1 : 0;
+}
+
+// swd3e.exe 0x0049C2C0: unk2EB2 plus one (the original adds to the zero-extended word: its caller's eax has a clear
+// high word)
+i32 BattleUnit::Unk2EB2Shown() const
+{
+    return static_cast<i32>(static_cast<u16>(this->unk2EB2)) + 1;
+}
+
+// swd3e.exe 0x0049C2D0: the proficiency of accessory kind kUnk2EB2Accessory taken, whether unk2EB2 is below a tenth of
+// it
+bool BattleUnit::Unk2EB2BelowProficiency(CounterList& proficiency)
+{
+    this->AccessoryProficiency(kUnk2EB2Accessory, proficiency);
+    return this->unk2EB2 < static_cast<i32>(this->proficiency / kUnk2EB2Share);
+}
+
 // swd3e.exe 0x0049B160
 int BattleUnit::SetValueAAC(int value)
 {
@@ -2587,13 +2611,19 @@ void BattleUnit::Unk62And8A(u16& first, u16& second) const
     second = this->data->data.unk90;
 }
 
-// swd3e.exe 0x00499FA0: the value (+0x40, low 14 bits) of the worn accessory of `kind`, 0 without one
+// swd3e.exe 0x00499FA0: the value (+0x40, low 14 bits) of the worn accessory of `kind`, 0 without one (and for kind
+// 0x28 under the UnkEquipment100 flag)
 u16 BattleUnit::AccessoryValue(u16 kind) const
 {
     for (const ObjectRecord& accessory : this->accessories)
     {
         if (accessory.data.unk48 == kind)
         {
+            if (accessory.data.unk48 == kUnkAccessory28 && (this->equipmentFlags & BattleUnit::UnkEquipment100) != 0)
+            {
+                return 0;
+            }
+
             return static_cast<u16>(accessory.data.costBits & kAccessoryValueMask);
         }
     }
@@ -3378,8 +3408,8 @@ int BattleUnit::RunQueuedActions(BattleServices& services, BattleUnit& target, i
 }
 
 // swd3e.exe 0x00496510: appends an act (`id`, `action`) flying from (fromX, fromY) to (toX, toY) with `steps` line
-// steps a frame flown (1: speeding) after `shakeFrames` frames of shaking, and its impact act; counts it in
-// queuedActions
+// steps a frame flown (1: speeding) after `shakeFrames` frames of shaking, its impact act and its QueuedAction::Flag
+// bits (swd3e); counts it in queuedActions
 void BattleUnit::AddQueuedAction(
     i32 id,
     i32 action,
@@ -3389,7 +3419,8 @@ void BattleUnit::AddQueuedAction(
     i16 toY,
     i16 steps,
     u16 shakeFrames,
-    i32 impact
+    i32 impact,
+    u8 flags
 )
 {
     std::unique_ptr<QueuedAction>* link = &this->actions;
@@ -3411,6 +3442,7 @@ void BattleUnit::AddQueuedAction(
     node.shakeFrames = shakeFrames;
     node.steps = steps;
     node.done = 0;
+    node.flags = flags;
     ++this->queuedActions;
 }
 

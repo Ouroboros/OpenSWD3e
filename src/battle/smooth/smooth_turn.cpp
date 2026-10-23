@@ -52,13 +52,13 @@ constexpr int kThrowShade = -8;
 constexpr int kThrowTitleTop = 8;
 constexpr int kThrowTitleBottom = 0x18;
 constexpr int kThrowTitleX = 0x50;
-constexpr std::u8string_view kThrowTitle = u8"投擲";  // swd32.exe 0x004A76A0 (unmatched in swd3e)
+constexpr std::u8string_view kThrowTitle = u8"投擲";  // 0x004BF270
 constexpr u16 kTitleColor = 0xFFC0;
 constexpr int kListAdvance = 0x10;
 constexpr int kListRowTop = 0x2C;
 constexpr int kListNameX = 0x10;
 constexpr int kListCountX = 0x90;
-constexpr std::string_view kCountFormat = "%2d";  // swd32.exe 0x004A79CC (unmatched in swd3e)
+constexpr std::string_view kCountFormat = "%2d";  // 0x004BF744
 constexpr int kListBarTop = 0x28;
 constexpr int kListBarWidth = 0xC2;
 constexpr int kListBarRed = 0x1F;
@@ -73,7 +73,7 @@ constexpr int kRefineColumns = 2;
 constexpr int kRefineBarLeft = 4;
 constexpr int kRefineBarUp = 3;
 constexpr int kRefineBarWidth = 0x6A;
-constexpr std::u8string_view kNoObject = u8"無";  // swd32.exe 0x0049F9FC (unmatched in swd3e)
+constexpr std::u8string_view kNoObject = u8"無";  // 0x004AF630
 constexpr int kSpecialBoxHeight = 0xAC;           // the 絕招 list
 constexpr int kSpecialFrameBottom = 0xA8;
 constexpr std::size_t kSpecialCommandName = 3;
@@ -89,7 +89,7 @@ constexpr int kEscortFrameRight = 0x178;
 constexpr int kEscortTitleTop = 0xB4;
 constexpr int kEscortTitleBottom = 0xC4;
 constexpr int kEscortTitleX = 0xFC;
-constexpr std::u8string_view kEscortTitle = u8"佈置護駕";  // swd32.exe 0x004A79D0 (unmatched in swd3e)
+constexpr std::u8string_view kEscortTitle = u8"佈置護駕";  // 0x004BF748
 constexpr int kEscortBodyTop = 0xD4;
 constexpr int kEscortBodyBottom = 0x104;
 constexpr int kEscortBarLeft = 2;
@@ -106,7 +106,7 @@ constexpr int kTagFrameHeight = 0x10;
 constexpr int kTagNameX = 2;
 constexpr u16 kKnownHitPoints = 10;  // bestiary counts that show the hit points and the gauge
 constexpr u16 kKnownGauge = 0xF;
-constexpr std::u8string_view kHitPointsFormat = u8"生命:%d/%d";  // swd32.exe 0x004A79DC (unmatched in swd3e)
+constexpr std::u8string_view kHitPointsFormat = u8"生命:%d/%d";  // 0x004BF760
 constexpr int kTagHitPointsLeft = 0x8C;
 constexpr int kTagHitPointsGap = 0xA;
 constexpr int kTagHitPointsUp = 2;
@@ -120,8 +120,8 @@ constexpr int kControlTitleTextUp = 0x20;
 constexpr int kControlColumns = 4;
 constexpr int kControlTitleRows = 2;
 constexpr i8 kControlFill = 0x48;
-constexpr std::u8string_view kSpecialFormat = u8"特殊%d";  // swd32.exe 0x004A79F0 (unmatched in swd3e)
-constexpr std::u8string_view kReleaseName = u8"釋放";      // swd32.exe 0x004A79E8 (unmatched in swd3e)
+constexpr std::u8string_view kSpecialFormat = u8"特殊%d";  // 0x004BF76C
+constexpr std::u8string_view kReleaseName = u8"釋放";      // 0x004BF60C
 constexpr u16 kStaminaCostBit = 0x8000;                    // the spell list
 constexpr int kElementIcons = 0x241C;
 constexpr int kSpellIconLeft = 4;
@@ -144,7 +144,7 @@ constexpr u16 kCostlyItem = 0x4000;
 constexpr int kItemBarWidth = 0xCE;
 constexpr int kVictoryShadeExtra = 0x28;  // the 戰鬥勝利 panel
 constexpr int kVictoryTitleX = 0xF8;
-constexpr std::u8string_view kVictoryTitle = u8"戰鬥勝利";  // swd32.exe 0x004A7A2C (unmatched in swd3e)
+constexpr std::u8string_view kVictoryTitle = u8"戰鬥勝利";  // 0x004BF7A8
 constexpr u16 kGoldGiven = 0x8000;                          // BattleState::unk53BF12: the gold of the battle is given
 constexpr u16 kGoldMask = 0x7FFF;
 constexpr u32 kManyEnemies = 3;
@@ -155,17 +155,17 @@ constexpr int kVictoryTextX = 0xD0;
 constexpr int kVictoryExperienceY = 0xDC;
 constexpr int kVictoryGoldY = 0xF0;
 constexpr int kVictoryProficiencyY = 0x104;
-constexpr std::u8string_view kExperienceLine = u8"每人得到經驗值:%d";   // swd32.exe 0x004A7A18 (unmatched in swd3e)
+constexpr std::u8string_view kExperienceLine = u8"每人得到經驗值:%d";   // 0x004BF794
 constexpr std::u8string_view kGoldLine = u8"得到銀幣:%d";               // swd32.exe 0x004A7A0C (unmatched in swd3e)
-constexpr std::u8string_view kProficiencyLine = u8"得到法寶經驗值:%d";  // swd32.exe 0x004A79F8 (unmatched in swd3e)
+constexpr std::u8string_view kProficiencyLine = u8"得到法寶經驗值:%d";  // 0x004BF774
 constexpr int kLevelUpTitleX = 0x108;
-constexpr std::u8string_view kLevelUpTitle = u8"升級";  // swd32.exe 0x004A7A44 (unmatched in swd3e)
+constexpr std::u8string_view kLevelUpTitle = u8"升級";  // 0x004BF7C0
 // swd32.exe 0x004A7A38 (unmatched in swd3e): the name and the new level
-constexpr std::u8string_view kLevelUpLine = u8"%s升第%d級";
+constexpr std::u8string_view kLevelUpLine = u8"%s升第%d級";  // 0x004BF7B4
 constexpr int kLevelUpBodyBottom = 0xF4;
 constexpr int kLevelUpGrowDivisor = 3;
 constexpr int kLevelUpTextY = 0xDC;
-constexpr std::string_view kBracketFormat = "[%s]";  // swd32.exe 0x004A7AAC (unmatched in swd3e)
+constexpr std::string_view kBracketFormat = "[%s]";  // 0x004BF828
 constexpr int kLearnedShadeX = 0xF6;
 constexpr int kLearnedFrameLeft = 0xFA;
 constexpr int kLearnedBodyBottom = 0xEC;
@@ -186,17 +186,17 @@ constexpr int kStatsTextX = 0xD8;
 constexpr int kStatsFirstY = 0x78;
 constexpr int kStatsLineHeight = 0x14;
 constexpr std::array<std::u8string_view, kStatLines> kStatLabels = {
-    u8"生命力:%4d",  // swd32.exe 0x004A7AA0 (unmatched in swd3e)
+    u8"生命力:%4d",  // 0x004BF81C
     u8"魔法力:%4d",  // swd32.exe 0x004A7A94 (unmatched in swd3e)
-    u8"體  力:%4d",  // swd32.exe 0x004A7A88 (unmatched in swd3e)
-    u8"力  量:%4d",  // swd32.exe 0x004A7A7C (unmatched in swd3e)
-    u8"耐  力:%4d",  // swd32.exe 0x004A7A70 (unmatched in swd3e)
-    u8"智  慧:%4d",  // swd32.exe 0x004A7A64 (unmatched in swd3e)
-    u8"敏  捷:%4d",  // swd32.exe 0x004A7A58 (unmatched in swd3e)
+    u8"體  力:%4d",  // 0x004BF804
+    u8"力  量:%4d",  // 0x004BF7F8
+    u8"耐  力:%4d",  // 0x004BF7EC
+    u8"智  慧:%4d",  // 0x004BF7E0
+    u8"敏  捷:%4d",  // 0x004BF7D4
 };
 
-constexpr std::string_view kArrow = " ==> ";         // swd32.exe 0x004A7A50 (unmatched in swd3e)
-constexpr std::string_view kNewValueFormat = "%4d";  // swd32.exe 0x004A7A4C (unmatched in swd3e)
+constexpr std::string_view kArrow = " ==> ";         // 0x004BF7CC
+constexpr std::string_view kNewValueFormat = "%4d";  // 0x004BF7C8
 constexpr int kStatsArrowX = 0x136;
 constexpr int kStatsNewX = 0x158;
 constexpr int kDebugTop = 0xA;  // the debug overlay

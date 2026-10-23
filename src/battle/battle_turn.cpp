@@ -82,8 +82,8 @@ constexpr u16 kNoTalkRole = 0xFFFF;
 constexpr i32 kListRows = 5;
 
 constexpr u16 kLevelUpSound = 0x12B;
-constexpr std::u8string_view kNewSpellLine = u8"%s學到新魔法";    // swd32.exe 0x004A7AB4 (unmatched in swd3e)
-constexpr std::u8string_view kNewSpecialLine = u8"%s學到新絕招";  // swd32.exe 0x004A7AC4 (unmatched in swd3e)
+constexpr std::u8string_view kNewSpellLine = u8"%s學到新奇術";    // 0x004BF830
+constexpr std::u8string_view kNewSpecialLine = u8"%s學到新絕技";  // 0x004BF840
 
 constexpr std::size_t kNeededBattles = 2;  // RoleBattleBlock::unk00: the battles the next special needs
 constexpr std::size_t kNextSpecial = 3;    // the next special skill with bit 31, -1: none
@@ -103,9 +103,9 @@ constexpr u32 kDebugShortPause = 0x64;
 constexpr int kDebugMessageX = 0x208;
 constexpr int kDebugMessageY = 0xA;
 constexpr i16 kDebugMessageFrames = 0x1E;
-constexpr std::u8string_view kStrongAttack = u8"強攻擊";    // swd32.exe 0x004A7838 (unmatched in swd3e)
-constexpr std::u8string_view kNormalPact = u8"正常靈契";    // swd32.exe 0x004A782C (unmatched in swd3e)
-constexpr std::u8string_view kAbsolutePact = u8"絕對靈契";  // swd32.exe 0x004A7820 (unmatched in swd3e)
+constexpr std::u8string_view kStrongAttack = u8"強攻擊";    // 0x004BF3F0
+constexpr std::u8string_view kNormalPact = u8"正常靈契";    // 0x004BF3E4
+constexpr std::u8string_view kAbsolutePact = u8"絕對靈契";  // 0x004BF3D8
 constexpr i16 kRefill = -1;
 constexpr int kFillFury = -1;
 constexpr i16 kDebugAttack = 0x26AC;
@@ -222,7 +222,7 @@ constexpr int kRefusalMessageX = 0x118;
 constexpr int kRefusalMessageY = 0xA;
 constexpr i16 kRefusalMessageFrames = 0x14;
 constexpr int kRefusalMessageFlags = BattleMessage::BlackBar | BattleMessage::Centered;
-constexpr std::u8string_view kStaminaShort = u8"體力點數不夠!!";  // swd32.exe 0x004A7990 (unmatched in swd3e)
+constexpr std::u8string_view kStaminaShort = u8"體力點數不夠!!";  // 0x004BF5D8
 constexpr std::u8string_view kEscortCalling = u8"護駕召喚中!!";   // swd32.exe 0x004A7980 (unmatched in swd3e)
 constexpr u16 kRefusedSound = 0x8C;
 constexpr i32 kEscortOrder = 0xF;
@@ -256,7 +256,7 @@ constexpr u16 kRetreatMark = 0x4000;
 constexpr u32 kRefusedPause = 0x14;
 constexpr u32 kRetreatPause = 0x32;
 constexpr i16 kRetreatMessageFrames = 5;
-constexpr std::u8string_view kNoRetreatText = u8"無法撤退!!";  // swd32.exe 0x004A7954 (unmatched in swd3e)
+constexpr std::u8string_view kNoRetreatText = u8"無法撤退!!";  // 0x004BF540
 constexpr i32 kThumbPart = 5;
 constexpr i32 kConfirmIdle = 0x12C;
 constexpr i32 kChoiceSignBit = 0x8000;
@@ -2018,13 +2018,13 @@ void Game::CheckLevelUps()
     battle.unk53C4C8 = 1;
 }
 
-// swd3e.exe 0x004776B0: the box of a new spell (%s學到新魔法) of the role that levelled up
+// swd3e.exe 0x004776B0: the box of a new spell (%s學到新奇術) of the role that levelled up
 void Game::DrawNewSpell()
 {
     this->DrawLearnedBox(kNewSpellLine, false);
 }
 
-// swd3e.exe 0x00477850: the box of a new special skill (%s學到新絕招), with kLearnedSound as it opens
+// swd3e.exe 0x00477850: the box of a new special skill (%s學到新絕技), with kLearnedSound as it opens
 void Game::DrawNewSpecial()
 {
     this->DrawLearnedBox(kNewSpecialLine, true);

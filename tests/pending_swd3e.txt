@@ -18,7 +18,6 @@ battle state: the quake steps match swd32.exe
 battle unit: the damage digit hops match swd32.exe
 battle state: the panel units match swd32.exe
 battle state: the names of the accessory commands match swd32.exe
-battle role: the skill element icons match swd32.exe
 battle role: the cost refusals match swd32.exe
 # cheat_dialog_test.cpp
 cheat dialog: the attribute names match swd32.exe

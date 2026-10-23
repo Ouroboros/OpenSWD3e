@@ -15,7 +15,7 @@ namespace
 {
 
 constexpr u16 kAllHitNudge = 0x1000;
-constexpr int kHitPan = 0x10;
+constexpr int kHitPan = 0x30;
 constexpr int kHitPanCentre = 0x140;  // the sound pans right from the middle of the field
 constexpr int kRippleBackX = 0x14;
 constexpr int kRippleShiftX = 0x50;

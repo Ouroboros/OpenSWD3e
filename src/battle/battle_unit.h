@@ -98,6 +98,13 @@ struct AfterimageTrail
 // An act flying along a line, queued on a unit (0x1DC bytes; AddQueuedAction appends one, RunQueuedActions runs them).
 struct QueuedAction
 {
+    // QueuedAction::flags bits (swd3e).
+    enum Flag : u8
+    {
+        UnkFlag2 = 2,  // set by RunQueuedActions (0x00495FF0)
+        UnkFlag4 = 4,  // given by BoomerangFrame (0x00486110), read by RunQueuedActions
+    };
+
     std::unique_ptr<QueuedAction> next;  // swd32 +0x0
     ActState act;                        // swd32 +0x4 the flying act
     ActState impact;                     // swd32 +0x9C the act at the end (id 0: none; a negative id lands no hit)
@@ -111,6 +118,7 @@ struct QueuedAction
     i16 flown = 0;                       // +0x1F2 the frames flown
     u8 done = 0;                         // +0x1F4 removed at the end of RunQueuedActions
     u8 trailed = 0;                      // +0x1F5
+    u8 flags = 0;                        // +0x1F6 (swd3e) QueuedAction::Flag bits
 };
 
 // The placement of a unit (0x20 bytes, copied whole into the saved placement).
@@ -215,6 +223,7 @@ public:
         UnkMark2 = 2,
         UnkMark4 = 4,       // the unit is drawn over a grey copy (IdleFrame)
         UnkMark8 = 8,       // cleared by ResetTurn
+        UnkMark10 = 0x10,   // swd3e: no critical attack while set (MarkBit4)
         MissedMark = 0x20,  // the ailment missed (SkillScript::MissedAilment)
         Held = 0x40,
         InvisibleMark = 0x80,
@@ -237,6 +246,7 @@ public:
         SpiritDrain = 0x10,
         LifeDrain = 0x20,
         SpiritFan = 0x40,
+        UnkEquipment100 = 0x100,  // swd3e: accessory kind 0x28 has no value (AccessoryValue)
     };
 
     // A unit in battle (0x2B28 bytes in the original; the base of BattleRole and BattleEnemy). Offsets of the original
@@ -250,8 +260,9 @@ public:
         UnkStatus8 = 8,
         UnkStatus10 = 0x10,  // cleared with mark UnkMark100
         UnkStatus20 = 0x20,
-        UnkStatus80 = 0x80,  // a struck unit evades 8 times in 10 (Strike)
-        Slowed = 0x40,       // ailment 0x40: the gauge fills at half speed
+        UnkStatus40000 = 0x40000,  // swd3e: a role's attacks are always critical (RollCritical)
+        UnkStatus80 = 0x80,        // a struck unit evades 8 times in 10 (Strike)
+        Slowed = 0x40,             // ailment 0x40: the gauge fills at half speed
         UnkStatus100 = 0x100,
         StatsScaled = 0x200,  // a party role's attributes are scaled (undone when it ends)
         UnkStatus1000 = 0x1000,
@@ -457,7 +468,8 @@ public:
         i16 toY,
         i16 steps,
         u16 shakeFrames,
-        i32 impact
+        i32 impact,
+        u8 flags
     );
     void TrailLastQueuedAction(i32 tintRed, i32 tintGreen, i32 tintBlue);
     void DrawActionAt(BattleServices& services, i16 x, i16 y, ActState& act);
@@ -552,6 +564,9 @@ public:
     u16 ActId() const;
     u16 DrainKind() const;
     int StatusBit5() const;
+    int MarkBit4() const;
+    i32 Unk2EB2Shown() const;
+    bool Unk2EB2BelowProficiency(CounterList& proficiency);
     int SetValueAAC(int value);
     int SetFacingIfAble(int value);
     void SetNudge(u16 nudge, u16 saved);
@@ -710,6 +725,10 @@ public:
     i16 guardRise = 0;                             // +0x2EAC
     u16 unk29A2 = NoUnk29A2;
     u16 unk29A4 = 0;
+    // +0x2EB2 (swd3e) a count kept by HitDamage (0x00497900), cleared by ClearExtras; while positive the role has no
+    // critical attack; shown as "X%2d" plus one by the panel of 0x00478FA0 against a tenth of the proficiency of
+    // accessory kind 0x27
+    i16 unk2EB2 = 0;
     u16 restoreHitPoints = 0;  // +0x2EB6 the hit points a command restores
     u16 restoreSpirit = 0;     // +0x2EB8 the spirit
     u16 restoreStamina = 0;    // +0x2EBA the stamina
@@ -786,7 +805,10 @@ public:
     i32 guarding = 0;  // +0x3030
     i32 unk2AF4 = 0;
     i32 unk2AF8 = 0;
-    i32 absorbing = 0;     // +0x303C 1 while an absorb runs (AbsorbFrame)
+    i32 absorbing = 0;  // +0x303C 1 while an absorb runs (AbsorbFrame)
+    // +0x3040 (swd3e) 1: a party role set up from its record (Setup), 0: the talisman ghost (0x0047ED60); read by
+    // HitDamage, 0x0048BA60, HurtFrame and 0x004808D0
+    i32 unk3040 = 0;
     i32 autoControl = 0;   // +0x3044 1: the role acts by itself (AI)
     i32 guestControl = 0;  // +0x3048 1: a guest role, acting by itself
     i32 facing = 0;        // +0x3050

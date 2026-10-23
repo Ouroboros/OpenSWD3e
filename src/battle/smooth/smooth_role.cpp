@@ -1269,7 +1269,7 @@ int RoleFrame::ChargeOnTargetAdvance(BattleServices& services, BattleUnit& targe
     BattleRole& role = this->role;
     ScenePainter painter(services, scene);
     ActState& charge = role.attackAct;
-    charge.id = role.actId + BattleRole::MagicActs;
+    charge.id = role.actId;
     charge.action = role.magicAction + kChargeAction;
 
     if (services.acts.Run(charge) == 0)
@@ -1420,7 +1420,7 @@ int RoleFrame::MagicFrameAdvance(BattleServices& services, const BattleUnit& tar
     ActState& act = role.slotActs[BattleUnit::UnkSlot8];
     act.action = role.magicAction;
     role.unk2AAC = 1;
-    act.id = role.actId + BattleRole::MagicActs;
+    act.id = role.actId;
     UnitFrame(role).Action(services, target, act, scene);
 
     if ((act.target & ActState::Recoils) != 0)
@@ -1500,7 +1500,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
     role.unk2AAC = 1;
     ActState& magic = role.slotActs[BattleUnit::UnkSlot8 + static_cast<std::size_t>(slot)];
     ActState& charge = role.attackAct;
-    magic.id = role.actId + BattleRole::MagicActs;
+    magic.id = role.actId;
     magic.action = role.magicAction;
     UnitFrame(role).Action(services, target, magic, scene);
 
@@ -1548,7 +1548,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
         }
 
         magic.hold = 1;
-        charge.id = role.actId + BattleRole::MagicActs;
+        charge.id = role.actId;
         charge.action = role.magicAction + kChargeAction;
 
         while (charge.picture < kChargePicture)
@@ -1762,7 +1762,8 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
                 static_cast<i16>(targetY),
                 kBoomerangOut,
                 0,
-                kNoImpact
+                kNoImpact,
+                QueuedAction::UnkFlag4
             );
             role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
             role.unk2F0C = 1;
@@ -1789,7 +1790,8 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
                 role.placement.y,
                 kBoomerangBack,
                 kBoomerangShake,
-                kNoImpact
+                kNoImpact,
+                QueuedAction::UnkFlag4
             );
             role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
             role.unk2F0C = 1;
@@ -1824,7 +1826,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
     u16 targetY = 0;
     magic.action = role.magicAction;
     role.unk2AAC = 1;
-    magic.id = role.actId + BattleRole::MagicActs;
+    magic.id = role.actId;
     UnitFrame(role).Action(services, target, magic, scene);
 
     if ((magic.target & ActState::Recoils) != 0)
@@ -1896,6 +1898,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
             static_cast<i16>(targetY - kSwarmAbove),
             1,
             kSwarmShake,
+            0,
             0
         );
         role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
@@ -1932,7 +1935,7 @@ int RoleFrame::BeamSpellFrameAdvance(BattleServices& services, BattleUnit& targe
     ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
     ActState& rise = role.slotActs[BattleUnit::UnkSlot9];
     role.unk2AAC = 1;
-    magic.id = role.actId + BattleRole::MagicActs;
+    magic.id = role.actId;
     magic.action = role.magicAction;
 
     if (services.acts.Run(magic) == 0)
@@ -2149,7 +2152,7 @@ int RoleFrame::LeapSpellFrameAdvance(BattleServices& services, BattleUnit& targe
     BattleRole& role = this->role;
     BattleState& battle = services.state;
     ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
-    magic.id = role.actId + BattleRole::MagicActs;
+    magic.id = role.actId;
     role.unk2AAC = 1;
     magic.action = role.magicAction;
 

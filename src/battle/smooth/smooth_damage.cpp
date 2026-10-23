@@ -18,7 +18,7 @@ constexpr int kSpellShadowTint = -6;
 constexpr int kFaintSpellShadowTint = -1;
 constexpr int kSpellShadowLeft = 5;
 constexpr int kSpellPanCentre = 0x140;
-constexpr int kSpellPan = 0x10;
+constexpr int kSpellPan = 0x30;
 constexpr u16 kDrainGainDelay = 8;  // the stamina gain shows 8 frames after the healing
 constexpr i32 kEnemyAttackAction = 0x28;
 constexpr i32 kEnemyAttackAction1 = 0x30;  // unk2A8C 1
@@ -47,7 +47,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
     ScenePainter painter(game.battleServices, scene);
     ActState& act = role.slotActs[BattleUnit::UnkSlot8];
     role.unk2AAC = 1;
-    act.id = role.actId + BattleRole::MagicActs;
+    act.id = role.actId;
     act.action = role.magicAction;
 
     if (game.acts.Run(act) == 0)
@@ -192,7 +192,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
         magic.hold = 1;
     }
 
-    magic.id = role.actId + BattleRole::MagicActs;
+    magic.id = role.actId;
     magic.action = role.magicAction;
     UnitFrame(role).Action(services, target, magic, scene);
 

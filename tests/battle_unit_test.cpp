@@ -1228,8 +1228,8 @@ TEST_CASE("battle role: the object and skill lists of the battle menu")
     constexpr swd3e::i16 kStamina = 40;
     constexpr swd3e::u16 kShown = 0x8000;
     constexpr swd3e::u16 kShownCostly = 0x8000 | 0x4000;
-    constexpr swd3e::u16 kSkillType0 = 0x1C;
-    constexpr swd3e::u16 kSkillType1 = 0x1F;
+    constexpr swd3e::u16 kSkillType0 = 0x11;  // 奇術
+    constexpr swd3e::u16 kSkillType1 = 0x14;  // 絕技
     constexpr int kAnyIndex = 5;
 
     swd3e::ItemLink head = std::make_unique<swd3e::ItemNode>();
@@ -1304,13 +1304,13 @@ TEST_CASE("battle role: a skill of the battle menu and its cost")
 {
     constexpr swd3e::u32 kCategoryKind = 0x10;
     constexpr swd3e::u16 kUsable = 1;
-    constexpr swd3e::u16 kSkillType0 = 0x1C;
+    constexpr swd3e::u16 kSkillType0 = 0x11;  // 奇術
     constexpr swd3e::u16 kStaminaCost = 0x4000 | 12;
     constexpr swd3e::u16 kShownCost = 0x8000 | 12;
     constexpr swd3e::u16 kFixed = 0x800;
     constexpr swd3e::u16 kFixedCost = 1000;
     constexpr swd3e::u16 kNone = 0xFFFF;
-    constexpr swd3e::u16 kElementZeroIcon = 8;
+    constexpr swd3e::u16 kElementZero = 0;  // the element word of the skill script, returned as it is
     const std::u8string directory = swd3e::Utf8Bytes(kNoData);
     swd3e::Database database(directory);
     swd3e::ItemNode head;
@@ -1324,7 +1324,7 @@ TEST_CASE("battle role: a skill of the battle menu and its cost")
     role.SetSkills(&head);
     std::string name;
     swd3e::u16 cost = 0;
-    CHECK_EQ(role.ListSkill(database, 0, 0, 1, name, cost), kElementZeroIcon);
+    CHECK_EQ(role.ListSkill(database, 0, 0, 1, name, cost), kElementZero);
     CHECK_EQ(cost, kShownCost);
     data.costBits = kFixed;
     role.ListSkill(database, 0, 0, 1, name, cost);
@@ -1384,25 +1384,11 @@ TEST_CASE("battle unit: refining an enemy into a talisman")
     }
 }
 
-TEST_CASE("battle role: the skill element icons match swd32.exe")
-{
-    constexpr swd3e::u32 kSkillElementsAt = 0x004A7BD4;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
-
-    if (exe.empty())
-    {
-        std::printf("  (swd32.exe not found, skipped)\n");
-        return;
-    }
-
-    CHECK(swd3etest::SameTable(exe, kSkillElementsAt, swd3e::BattleRole::SkillElements));
-}
-
 TEST_CASE("battle role: choosing a skill and paying for it")
 {
     constexpr swd3e::u32 kCategoryKind = 0x10;
     constexpr swd3e::u16 kUsable = 1;
-    constexpr swd3e::u16 kSkillType0 = 0x1C;
+    constexpr swd3e::u16 kSkillType0 = 0x11;  // 奇術
     constexpr swd3e::u16 kAct = 0x77;
     constexpr swd3e::u16 kHeal = 30;
     constexpr swd3e::u16 kSpiritCost = 0x8000 | 20;

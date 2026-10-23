@@ -14,10 +14,12 @@ constexpr int kByteBits = 8;
 
 }  // namespace
 
-// swd3e.exe 0x0047E270: the talk script of battle `battle` (figtalk.dat is opened once and kept, created empty when
-// missing; the battle's offset is the dword at 0x200 + 4 * battle)
+// swd3e.exe 0x0047E270: drawMovedAtOnce cleared, then the talk script of battle `battle` (figtalk.dat is opened once
+// and kept, created empty when missing; the battle's offset is the dword at 0x200 + 4 * battle)
 void FightTalk::Load(const std::u8string& installDirectory, u16 battle)
 {
+    this->drawMovedAtOnce = 0;
+
     if (this->enabled == 0)
     {
         return;
