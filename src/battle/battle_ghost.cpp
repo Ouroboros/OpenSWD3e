@@ -2,14 +2,19 @@
 #include <array>
 #include <string>
 
+#include "audio/audio_manager.h"
 #include "battle/battle_role.h"
 #include "battle/battle_services.h"
 #include "battle/battle_state.h"
 #include "battle/battle_unit_constants.h"
+#include "battle/smooth/smooth_draw.h"
+#include "config/config.h"
 #include "ghost/talisman_ghost.h"
 #include "org/database.h"
 #include "party/party.h"
 #include "random/random.h"
+#include "res/act_archive.h"
+#include "res/tsw_archive.h"
 
 // swd3e: the talisman ghost fighting with the party (a BattleRole set up by SetupGhost) and the orders the player gives
 // it, with the helpers the battle frames ask of the roles acting by themselves.
@@ -80,6 +85,9 @@ constexpr i16 kThirdShare = 3;
 constexpr i16 kQuarterShare = 4;
 constexpr i32 kSpecialAct = 0x17BF;  // StartSpecialAct: slot act 10 of equipment flag 0x80
 constexpr std::size_t kSpecialSlot = 10;
+constexpr int kSpecialPan = 0x30;             // SpecialActFrame: its sound panned right
+constexpr int kSpecialBaseShare = 40;         // the hit points it stands up with, in percent of the maximum
+constexpr int kSpecialProficiencyShare = 90;  // and the proficiency percent of this percent of it
 
 }  // namespace
 
@@ -672,6 +680,75 @@ int BattleRole::StartSpecialAct(BattleState& battle)
     battle.unk53BFC0 = 1;
     this->unk34D0 = 1;
     return 1;
+}
+
+// swd3e.exe 0x00487200: one frame of the special act (StartSpecialAct) while equipment flag 0x80 and unk34D0 are set:
+// the battle marks unk53BFC0 and slot act 10 runs, its sound played (panned right) and its picture drawn at the unit's
+// place (the stand act's sound cleared instead of the slot act's, as in the original). Once it ends the role stands up
+// again: unk34D0 and unk53BFC0 cleared, the turn reset, the effects ended, the flag and `defeated` cleared, the
+// accessory's proficiency read, the party record's hit points set to 40 percent of the maximum plus the proficiency
+// percent of 90 percent of it and its Defeated bit cleared, the healing shown (HealTarget) and the act cleared.
+void BattleRole::SpecialActFrame(BattleServices& services)
+{
+    if ((this->equipmentFlags & BattleUnit::SpecialActEquipment) == 0 || this->unk34D0 != 1)
+    {
+        return;
+    }
+
+    ActState& act = this->slotActs[kSpecialSlot];
+    services.state.unk53BFC0 = 1;
+
+    if (services.acts.Run(act) == 0)
+    {
+        return;
+    }
+
+    services.audio.PlaySound(act.view, services.config.soundVolume);
+    services.audio.SetSoundPan(act.view, kSpecialPan);
+    this->standAct.view = 0;
+    this->picture = services.archive.GetPicture(act.frame, act.picture);
+
+    // A missing picture is read through a null pointer in the original.
+    if (this->picture != nullptr)
+    {
+        smooth::Scene scene;
+        smooth::ScenePainter painter(services, scene);
+        painter.SetSource(this->picture->data.data());
+        painter.DrawPicture(
+            this->placement.x - act.x,
+            this->placement.y - act.y,
+            this->picture->width,
+            this->picture->height,
+            act.flags
+        );
+        scene.Show(services);
+    }
+
+    if (act.waiting != 1)
+    {
+        return;
+    }
+
+    this->unk34D0 = 0;
+    services.state.unk53BFC0 = 0;
+    this->ResetTurn(services);
+    this->ExpireEffects(services, 1);
+    this->equipmentFlags &= ~BattleUnit::SpecialActEquipment;
+    this->defeated = 0;
+    this->AccessoryProficiency(
+        static_cast<u16>(AccessoryKind::SpecialAct),
+        services.party.fame.lists[Fame::ProficiencyList]
+    );
+    RoleRecord& record = *this->roleRecord;
+    record.hitPoints = static_cast<i16>(static_cast<i16>(kSpecialBaseShare * record.maxHitPoints) / kPercent);
+    record.hitPoints = static_cast<i16>(
+        record.hitPoints + this->proficiency * (kSpecialProficiencyShare * record.maxHitPoints / kPercent) / kPercent
+    );
+    record.condition = static_cast<u16>(record.condition & ~RoleRecord::Defeated);
+    this->PushTarget(BattleUnit::HealTarget);
+    this->SetDamageDigits(services, record.hitPoints);
+    this->StepTargetCount(services, 1);
+    act = ActState{};
 }
 
 }  // namespace swd3e

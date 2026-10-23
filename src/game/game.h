@@ -360,6 +360,9 @@ private:
     void ShakeBattleBackground(int shake);
     void DrawBattleBackground(int shake);
     void DarkenByTint();
+    void SpreadPoison(int enemies);
+    int YinYangAttack(int role);
+    void RaiseLevel(u16 role, u16 level);
     void ApplyDrain(i32& amount, BattleUnit& attacker, BattleUnit& target);
     void ApplyDrainSums(BattleUnit& unit);
     void ClearHitBits();

@@ -476,15 +476,17 @@ namespace
 {
 
 constexpr swd3e::u16 kEnemyLevel = 20;
-constexpr swd3e::u8 kCatchChance = 10;  // unk91: a roll of 0..9 below it always catches
-constexpr int kNearAbove = 5;           // exactly this many levels above uses unk91
+constexpr swd3e::u8 kCatchChance = 10;  // catchChance: a roll of 0..9 below it always flees
+constexpr int kNearAbove = 5;           // exactly this many levels above uses catchChance
 constexpr int kNearerAbove = 4;
-constexpr int kMidAbove = 6;   // 6..10 above: 5 in 10
-constexpr int kFarAbove = 11;  // more than 10 above: 8 in 10
+constexpr int kMidAbove = 6;   // 6..10 above: 50 in 100 (swd3e)
+constexpr int kFarAbove = 11;  // more than 10 above: 80 in 100
 constexpr swd3e::u32 kUnusedCatchRoll = 12;
 constexpr swd3e::u32 kCatchRoll = 10;
-constexpr swd3e::u16 kMidCatch = 5;
-constexpr swd3e::u16 kFarCatch = 8;
+constexpr swd3e::u32 kFlightRoll = 100;
+constexpr swd3e::u16 kMidFlight = 0x32;
+constexpr swd3e::u16 kFarFlight = 0x50;
+constexpr int kStays = -1;
 constexpr swd3e::u16 kAccessory19 = 0x19;
 constexpr swd3e::u16 kAccessory1C = 0x1C;
 constexpr swd3e::u16 kAccessory1D = 0x1D;
@@ -542,24 +544,24 @@ TEST_CASE("battle unit: the catch roll")
     };
 
     enemy.marks = BattleUnit::UnkMark800;
-    CHECK_EQ(catches(kNearAbove, kSeed), 0);
+    CHECK_EQ(catches(kNearAbove, kSeed), kStays);
     CHECK_EQ(all.random.Below(kCatchRoll), reference.Below(kCatchRoll));
     enemy.marks = 0;
-    CHECK_EQ(catches(kNearAbove, kSeed), 0);
+    CHECK_EQ(catches(kNearAbove, kSeed), kStays);
     reference.Below(kUnusedCatchRoll);
     CHECK_EQ(all.random.Below(kCatchRoll), reference.Below(kCatchRoll));
     object.data.catchChance = kCatchChance;
     CHECK_EQ(catches(kNearAbove, kSeed), 1);
-    CHECK_EQ(catches(kNearerAbove, kSeed), 0);
+    CHECK_EQ(catches(kNearerAbove, kSeed), kStays);
 
     for (swd3e::u32 seed = 0; seed < kCatchRoll; ++seed)
     {
         const int far = catches(kFarAbove, seed);
         reference.Below(kUnusedCatchRoll);
-        CHECK_EQ(far, static_cast<swd3e::u16>(reference.Below(kCatchRoll)) < kFarCatch ? 1 : 0);
+        CHECK_EQ(far, static_cast<swd3e::u16>(reference.Below(kFlightRoll)) < kFarFlight ? 1 : kStays);
         const int mid = catches(kMidAbove, seed);
         reference.Below(kUnusedCatchRoll);
-        CHECK_EQ(mid, static_cast<swd3e::u16>(reference.Below(kCatchRoll)) < kMidCatch ? 1 : 0);
+        CHECK_EQ(mid, static_cast<swd3e::u16>(reference.Below(kFlightRoll)) < kMidFlight ? 1 : kStays);
     }
 }
 

@@ -52,10 +52,16 @@ void FightTalk::Load(const std::u8string& installDirectory, u16 battle)
     this->file.Read(this->script.data(), bytes);
 }
 
-// swd32.exe 0x0046E390 (unmatched in swd3e): the talk state cleared (windowTimeout 0xFFFF, battleRuns and `enabled` 1)
-// and the script freed
-void FightTalk::Reset()
+// swd3e.exe 0x0047E420: figtalk.dat closed and the talk state cleared (windowTimeout 0xFFFF, battleRuns and `enabled`
+// 1), the script freed
+void FightTalk::Close()
 {
+    if (this->file.IsOpen())
+    {
+        this->file.Close();
+    }
+
+    this->drawMovedAtOnce = 0;
     this->battleRuns = 1;
     this->enabled = 1;
     this->unk53CE5C = 0;
@@ -78,6 +84,7 @@ void FightTalk::Reset()
     this->unk53CE9A = 0;
     this->unk53CE9C = 0;
     this->unk53CE9E = 0;
+    this->unk578458 = 0;
     this->windowTimeout = kNoTalk;
     this->unk53CEA0 = 0;
     this->unk53CCD4 = 0;
@@ -86,18 +93,6 @@ void FightTalk::Reset()
     this->wonByTalk = 0;
     this->script.clear();
     this->cursor = 0;
-}
-
-// swd32.exe 0x0046E260 (unmatched in swd3e): figtalk.dat closed and the talk state cleared
-void FightTalk::Close()
-{
-    if (this->file.IsOpen())
-    {
-        this->file.Close();
-    }
-
-    this->open = false;
-    this->Reset();
 }
 
 // swd3e.exe 0x0047E3A0: kSeekBytes of the script read from `offset` (after the header) into a new buffer, read from

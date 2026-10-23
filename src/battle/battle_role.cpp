@@ -82,6 +82,24 @@ constexpr std::string_view kManroleFile = "C:\\cpp\\SWD102e\\manrole.cpp";
 // The source lines the assertions name.
 constexpr u32 kNoActLine = 0x10B;
 constexpr u32 kNoEscortActLine = 0x15B;
+constexpr u16 kRandomItemFirst = 0xB;  // TakeRandomItem: the object categories it takes (swd3e)
+constexpr u16 kRandomItemLast = 0xE;
+
+// LevelInReach: the reach up to each top and the level span it allows.
+struct ReachSpan
+{
+    u16 top = 0;
+    int span = 0;
+};
+
+constexpr std::array<ReachSpan, 5> kReachSpans = {{
+    {0x14, 5},
+    {0x28, 0xA},
+    {0x3C, 0x14},
+    {0x50, 0x23},
+    {0x64, 0x32},
+}};
+
 constexpr u32 kNoGhostActLine = 0x1E2;
 constexpr i32 kEscortHurtAction = 0x26;  // SetupEscort: an escort's act without it marks unk3070
 constexpr u32 kGhostDroppedRoll = 5;     // SetupGhost rolls 0..4 and drops it
@@ -398,6 +416,40 @@ void BattleRole::TakeObjectForm(Database& database, u16 id)
     std::copy_n(object.resistances.begin(), object.resistances.size(), record.resistances.begin());
     this->roleRecord = this->battleRecord;
     this->evadeSkill = static_cast<u8>(record.evasion);
+}
+
+// swd3e.exe 0x00487610: object `id` read into unk2B24 (cleared first, its description freed); 1 when its level is
+// within the span of `reach` of the role's level, above or below: 5 up to a reach of 20 (below only exactly 5), 10 up
+// to 40, 20 up to 60, 35 up to 80, 50 up to 100; 0 otherwise.
+int BattleRole::LevelInReach(Database& database, u16 id, u16 reach)
+{
+    this->unk2B24 = ObjectRecord{};
+    database.LoadObject(this->unk2B24, id);
+    Database::FreeDescription(this->unk2B24);
+    const int above = this->unk2B24.data.level - this->battleRecord->level;
+    const int below = this->battleRecord->level - this->unk2B24.data.level;
+
+    if (reach <= kReachSpans[0].top && ((above <= kReachSpans[0].span && above >= 1) || below == kReachSpans[0].span))
+    {
+        return 1;
+    }
+
+    for (std::size_t at = 1; at < kReachSpans.size(); ++at)
+    {
+        const ReachSpan& span = kReachSpans[at];
+
+        if (reach < kReachSpans[at - 1].top + 1 || reach > span.top)
+        {
+            continue;
+        }
+
+        if ((above <= span.span && above >= 1) || (below <= span.span && below >= 1))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 // swd3e.exe 0x0047ED60: the talisman ghost fighting with the party at `at`: its act (unk108, asserted non-zero), its
@@ -1986,6 +2038,80 @@ void BattleRole::CountSkills(int category, int type, u8& count)
 int BattleRole::ObjectsLeft(const ItemNode& node)
 {
     return node.count + node.pending - static_cast<u16>(node.unk06);
+}
+
+// swd3e.exe 0x00487A90: one object of a category kRandomItemFirst..kRandomItemLast taken from the item list at random
+// (0 without one): a roll of 1..the objects in the list picks the first such object from that place on, a new roll
+// starting over at the end of the list. Its count goes down by one (its pending count when none is left), and an
+// object with neither left leaves the list. Its id.
+u16 BattleRole::TakeRandomItem(BattleServices& services)
+{
+    auto taken = [](const ItemNode& node)
+    {
+        const u16 category = node.record.data.category;
+        return category >= kRandomItemFirst && category <= kRandomItemLast;
+    };
+
+    u32 objects = 0;
+    bool any = false;
+    this->ShowAllItems();
+
+    while (ItemNode* const node = this->StepItem())
+    {
+        if (taken(*node))
+        {
+            any = true;
+        }
+
+        ++objects;
+    }
+
+    if (!any)
+    {
+        return 0;
+    }
+
+    int roll = static_cast<int>(services.random.Below(objects)) + 1;
+    this->ShowAllItems();
+    u16 step = 0;
+    ItemNode* node = nullptr;
+
+    while (true)
+    {
+        node = this->StepItem();
+
+        if (node == nullptr)
+        {
+            step = 0;
+            roll = static_cast<int>(services.random.Below(objects)) + 1;
+            this->ShowAllItems();
+            continue;
+        }
+
+        if (++step >= roll && taken(*node))
+        {
+            break;
+        }
+    }
+
+    if (node->count != 0)
+    {
+        --node->count;
+    }
+    else if (node->pending != 0)
+    {
+        --node->pending;
+    }
+
+    const u16 id = node->id;
+
+    // The original reads the id from the freed node.
+    if (node->count == 0 && node->pending == 0)
+    {
+        UnlinkItem(*this->inventoryHead, static_cast<i16>(id));
+    }
+
+    return id;
 }
 
 // swd3e.exe 0x00481460: `count` raised by the objects of `category` usable by roles bit 0 or 2 with some left (for

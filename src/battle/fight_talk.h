@@ -21,7 +21,6 @@ public:
     static constexpr u32 ScriptBytes = 0x8000;
 
     void Load(const std::u8string& installDirectory, u16 battle);
-    void Reset();
     void Close();
     void Seek(i32 offset);
     i16 Word(std::size_t index) const;
@@ -56,6 +55,7 @@ public:
     u16 unk53CE9A = 0;
     u16 unk53CE9C = 0;
     u16 unk53CE9E = 0;
+    u16 unk578458 = 0;  // (swd3e) set by FightTalkFrame (0x0047DEF6), read by 0x00464ED0 and BattleIntro
     i32 unk53CEA0 = 0;
     i32 offset = 0;     // 0x00578460 the place of the script read last (Seek)
     i32 wonByTalk = 0;  // 0x00578468 1: the battle ends as won (Game::CheckBattleEnd)

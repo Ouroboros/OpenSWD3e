@@ -156,6 +156,16 @@ constexpr u8 kEvadeCounterMiddleEnd = 5;
 constexpr u8 kEvadeCounterEarlyEnd = 2;  // at half its skill up to this count
 constexpr u8 kLikelyEvadeStreak = 0xD;   // swd3e: from which a party role rolls
 constexpr int kPercent = 100;
+constexpr i16 kEntranceDark = -12;     // ZoomEntranceFrame (swd3e): the tint steps of the darkened field
+constexpr u32 kEntranceAction = 0x24;  // the action that grows in
+constexpr int kEntranceZoom = 0xC18;   // its zoom at the start, less glowLevel
+constexpr i16 kEntranceGrowth = 0x28;  // glowLevel a frame
+constexpr i16 kEntranceGrown = 0x800;
+constexpr u32 kEnteredAct = 0x1C98;    // the act after it
+constexpr u32 kCastPoseAction = 0x34;  // CastPoseFrame (swd3e)
+constexpr int kAutoShadowTint = -1;    // the shadow of an auto role
+constexpr int kScreenMiddle = 0x140;   // a unit right of it pans its sound right
+constexpr int kSidePan = 0x30;
 constexpr int kChanceScale = 0x46;  // RollChance: kChanceScale percent of the chance plus kChanceBase
 constexpr int kChanceBase = 0xA;
 }  // namespace
@@ -1351,8 +1361,18 @@ constexpr u32 kUnusedCatchRoll = 12;
 constexpr u32 kCatchRoll = 10;
 constexpr int kFarAbove = 10;
 constexpr int kNearAbove = 5;
-constexpr u16 kFarCatch = 8;
-constexpr u16 kNearCatch = 5;
+constexpr int kStays = -1;  // CatchRoll: the enemy stays (swd3e)
+constexpr u32 kCoin = 2;
+constexpr u16 kMarkedFlight = 3;   // with StatusBit5, flight on a 0..9 roll below it
+constexpr u32 kFleeFlag = 0x4000;  // unk26B8: the enemy is set to flee
+constexpr u16 kFleeFlagFlight = 8;
+constexpr u32 kPercentRoll = 100;
+constexpr u16 kFarFlight = 0x50;
+constexpr u16 kNearFlight = 0x32;
+constexpr i16 kFleeEnrageCause = 0x13;  // a failed flight roll checks this enrage cause
+constexpr int kFleeNameX = 0x118;
+constexpr int kFleeNameY = 0xA;
+constexpr i16 kFleeNameFrames = 0x28;
 
 // HurtFrame.
 constexpr i32 kHurtAction = 0x26;
@@ -4448,15 +4468,32 @@ int BattleUnit::DrainEffectFrame(BattleServices& services, int slot)
     return result;
 }
 
-// swd32.exe 0x00476330 (unmatched in swd3e): whether `level` catches the enemy (never with UnkMark800 or when its
-// object's unk91 is 0; a
-// 0..11 roll is drawn and not used): more than 10 levels above its level 8 in 10, 6..10 above 5 in 10, exactly 5
-// above unk91 in 10, otherwise never
+// swd3e.exe 0x00488D80: whether the enemy flees from a party of `level` (1), only shows its name (0) or stays (-1):
+// never with UnkMark800 or when its object's catchChance is 0 (a 0..11 roll drawn and not used first). With StatusBit5
+// a coin decides between staying and a 3 in 10 flight, its name shown otherwise; with unk26B8 bit 14 it flees in 8 of
+// 10 (the bit cleared). More than 10 levels above it 80 in 100, 6..10 above 50 in 100, exactly 5 above catchChance in
+// 10 (its name shown instead with StatusBit5); a failed roll there checks enrage cause 0x13 and shows its name with
+// StatusBit5.
 int BattleUnit::CatchRoll(BattleServices& services, u8 level)
 {
+    auto showName = [this, &services]
+    {
+        this->text = {};
+        const std::string name = ObjectName(*this->data);
+        std::copy_n(name.begin(), std::min(name.size(), this->text.size() - 1), this->text.begin());
+        services.messages.Add(
+            kFleeNameX,
+            kFleeNameY,
+            kFleeNameFrames,
+            std::span<const char>(this->text.data(), std::strlen(this->text.data())),
+            BattleMessage::BlackBar | BattleMessage::Centered
+        );
+        return 0;
+    };
+
     if ((this->marks & BattleUnit::UnkMark800) != 0)
     {
-        return 0;
+        return kStays;
     }
 
     services.random.Below(kUnusedCatchRoll);
@@ -4464,22 +4501,75 @@ int BattleUnit::CatchRoll(BattleServices& services, u8 level)
 
     if (data.catchChance == 0)
     {
-        return 0;
+        return kStays;
+    }
+
+    if (this->StatusBit5() == 1)
+    {
+        if (static_cast<u16>(services.random.Below(kCoin)) == 0)
+        {
+            return kStays;
+        }
+
+        if (static_cast<u16>(services.random.Below(kCatchRoll)) < kMarkedFlight)
+        {
+            return 1;
+        }
+
+        return showName();
+    }
+
+    if ((this->unk26B8 & kFleeFlag) != 0)
+    {
+        if (static_cast<u16>(services.random.Below(kCatchRoll)) < kFleeFlagFlight)
+        {
+            this->unk26B8 &= ~kFleeFlag;
+            return 1;
+        }
+
+        return kStays;
     }
 
     const int above = level - data.level;
 
+    auto failed = [this, &services, &showName]
+    {
+        this->EnrageCheck(services, kFleeEnrageCause, 0);
+        return this->StatusBit5() == 1 ? showName() : kStays;
+    };
+
     if (above > kFarAbove)
     {
-        return static_cast<u16>(services.random.Below(kCatchRoll)) < kFarCatch ? 1 : 0;
+        return static_cast<u16>(services.random.Below(kPercentRoll)) < kFarFlight ? 1 : failed();
     }
 
     if (above > kNearAbove)
     {
-        return static_cast<u16>(services.random.Below(kCatchRoll)) < kNearCatch ? 1 : 0;
+        return static_cast<u16>(services.random.Below(kPercentRoll)) < kNearFlight ? 1 : failed();
     }
 
-    return above >= kNearAbove && static_cast<u16>(services.random.Below(kCatchRoll)) < data.catchChance ? 1 : 0;
+    if (above < kNearAbove)
+    {
+        return kStays;
+    }
+
+    if (data.catchChance != 0)
+    {
+        const auto roll = static_cast<u16>(services.random.Below(kCatchRoll));
+
+        if (this->StatusBit5() == 1)
+        {
+            return showName();
+        }
+
+        if (roll < data.catchChance)
+        {
+            return 1;
+        }
+    }
+
+    this->EnrageCheck(services, kFleeEnrageCause, 0);
+    return kStays;
 }
 
 // swd3e.exe 0x0048F390: one frame of the unit staggering from a hit (hurtStep one on each frame not held); 1 once over
@@ -7165,4 +7255,225 @@ int BattleUnit::DrainSecondGauge()
     this->unk2AC8 = 0;
     return 0;
 }
+}  // namespace swd3e
+
+namespace swd3e
+{
+
+// swd3e.exe 0x004873C0: one frame of an entrance (`unused` is not read): the field darkens by tint (darkRed, darkGreen
+// and darkBlue -12, unk53BF94 set, darkenByTint as by Game::DarkenByTint), then while `stage` is 0 action 0x24 of act
+// `act` grows in mirrored, zoomed from 0xC18 down by glowLevel (0x28 more a frame) about its origin, until glowLevel
+// reaches 0x800 (stage 1, the act cleared); from stage 1 act 0x1C98 plays at the unit's place, 1 once it ends
+// (glowLevel and stage 0, the act cleared). 0 otherwise, or when an act cannot run.
+int BattleUnit::ZoomEntranceFrame(BattleServices& services, int unused, u16 act)
+{
+    static_cast<void>(unused);
+    BattleState& battle = services.state;
+    battle.darkRed = kEntranceDark;
+    battle.darkGreen = kEntranceDark;
+    battle.darkBlue = kEntranceDark;
+    battle.unk53BF94 = 1;
+    battle.darkenByTint = 1;
+    ActState& state = this->standAct;
+    state.action = kEntranceAction;
+    state.id = act;
+    u16 x = 0;
+    u16 y = 0;
+
+    if (this->stage == 0)
+    {
+        if (services.acts.Run(state) == 0)
+        {
+            return 0;
+        }
+
+        this->picture = services.archive.GetPicture(state.frame, state.picture);
+        this->GetDrawPosition(x, y);
+        smooth::Scene scene;
+        smooth::ScenePainter painter(services, scene);
+        const int zoom = kEntranceZoom - this->glowLevel;
+        painter.SetZoom(state.x, state.y, zoom, zoom);
+
+        // A missing picture is read through a null pointer in the original.
+        if (this->picture != nullptr)
+        {
+            painter.SetSource(this->picture->data.data());
+            painter.DrawPicture(
+                state.x + static_cast<i16>(x) - this->picture->width,
+                static_cast<i16>(y) - state.y,
+                this->picture->width,
+                this->picture->height,
+                state.flags | Painter::ZoomCopy | Painter::Mirror
+            );
+        }
+
+        scene.Show(services);
+        this->glowLevel = static_cast<i16>(this->glowLevel + kEntranceGrowth);
+
+        if (this->glowLevel >= kEntranceGrown)
+        {
+            this->glowLevel = 0;
+            this->stage = BattleUnit::Entered;
+            state = ActState{};
+            return 0;
+        }
+    }
+
+    if (this->stage != BattleUnit::Entered)
+    {
+        return 0;
+    }
+
+    state.id = kEnteredAct;
+    state.action = 0;
+
+    if (services.acts.Run(state) == 0)
+    {
+        return 0;
+    }
+
+    this->picture = services.archive.GetPicture(state.frame, state.picture);
+    this->GetDrawPosition(x, y);
+
+    // A missing picture is read through a null pointer in the original.
+    if (this->picture != nullptr)
+    {
+        smooth::Scene scene;
+        smooth::ScenePainter painter(services, scene);
+        painter.SetSource(this->picture->data.data());
+        painter.DrawPicture(
+            static_cast<i16>(x) - state.x,
+            static_cast<i16>(y) - state.y,
+            this->picture->width,
+            this->picture->height,
+            state.flags
+        );
+        scene.Show(services);
+    }
+
+    if (state.waiting != 1)
+    {
+        return 0;
+    }
+
+    this->glowLevel = 0;
+    this->stage = 0;
+    state = ActState{};
+    return 1;
+}
+
+}  // namespace swd3e
+
+namespace swd3e
+{
+
+// swd3e.exe 0x004877A0: one frame of the cast pose (action 0x34 of the unit's act; unk2AAC set): its picture over its
+// shadow (a third high, sheared by a quarter, tinted -6, -1 for an auto role) at its place, mirrored when facing back
+// (actAnchorX from the right edge then), its sound played once and panned to the unit's side. Once the pose marks
+// Strikes or FollowsUp it is done (1) without `slotAct`; with one, slot act 0 plays it over the screen from (0, 0) and
+// both acts are cleared when it ends (1). 0 otherwise.
+int BattleUnit::CastPoseFrame(BattleServices& services, i32 slotAct)
+{
+    ActState& pose = this->standAct;
+    pose.id = this->actId;
+    this->unk2AAC = 1;
+    pose.action = kCastPoseAction;
+
+    if (services.acts.Run(pose) == 0)
+    {
+        return 0;
+    }
+
+    this->picture = services.archive.GetPicture(pose.frame, pose.picture);
+
+    // A missing picture is read through a null pointer in the original.
+    if (this->picture == nullptr)
+    {
+        return 0;
+    }
+
+    const Picture& picture = *this->picture;
+    u32 flags = pose.flags;
+    auto originX = static_cast<i16>(pose.x);
+    this->actAnchorX = pose.anchorX;
+
+    if (this->facing == 1)
+    {
+        flags ^= Painter::Mirror;
+        originX = static_cast<i16>(picture.width - pose.x);
+
+        if (pose.anchorX != 0)
+        {
+            this->actAnchorX = static_cast<u16>(picture.width - pose.anchorX);
+        }
+    }
+
+    smooth::Scene scene;
+    smooth::ScenePainter painter(services, scene);
+    const int shadowHeight = picture.height / kShadowShare;
+    DrawOptions& options = painter.Options();
+    options.scaleHeight = shadowHeight;
+    options.shear = picture.height >> kShadowShearShift;
+    const int tint = this->autoControl == 1 ? kAutoShadowTint : kShadowTint;
+    options.tintRed = tint;
+    options.tintGreen = tint;
+    options.tintBlue = tint;
+    services.audio.PlaySound(pose.view, services.config.soundVolume);
+    services.audio.SetSoundPan(pose.view, this->placement.x >= kScreenMiddle ? kSidePan : -kSidePan);
+    this->shadowMode = (flags & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::Shadow;
+    pose.view = 0;
+    painter.SetSource(picture.data.data());
+    painter.DrawPicture(
+        this->placement.x - originX,
+        this->placement.y - shadowHeight,
+        picture.width,
+        picture.height,
+        this->shadowMode
+    );
+    painter.DrawPicture(this->placement.x - originX, this->placement.y - pose.y, picture.width, picture.height, flags);
+    scene.Show(services);
+
+    if ((pose.target & (ActState::Strikes | ActState::FollowsUp)) == 0)
+    {
+        return 0;
+    }
+
+    if (slotAct <= 0)
+    {
+        return 1;
+    }
+
+    ActState& extra = this->slotActs[0];
+    extra.action = 0;
+    extra.id = static_cast<u32>(slotAct);
+
+    if (services.acts.Run(extra) == 0)
+    {
+        return 0;
+    }
+
+    services.audio.PlaySound(extra.view, services.config.soundVolume);
+    extra.view = 0;
+    this->picture = services.archive.GetPicture(extra.frame, extra.picture);
+
+    // A missing picture is read through a null pointer in the original.
+    if (this->picture != nullptr)
+    {
+        smooth::Scene over;
+        smooth::ScenePainter overPainter(services, over);
+        overPainter.SetSource(this->picture->data.data());
+        overPainter.DrawPicture(0, 0, this->picture->width, this->picture->height, extra.flags);
+        over.Show(services);
+    }
+
+    if (extra.waiting != 1)
+    {
+        return 0;
+    }
+
+    extra = ActState{};
+    pose = ActState{};
+    return 1;
+}
+
 }  // namespace swd3e

@@ -319,6 +319,7 @@ public:
     i32 unk53BF98 = 0;
     i16 darkenUnit = -1;  // 0x004BF1D4 the unit darkening the field
     u16 unk53BF2C = 0;
+    u16 grayBandState = 0;       // 0x00577214 (swd3e) 1 opens the grey band, 2 closes it (0x0045BEA0, inferred)
     u16 grayBand = 0;            // 0x00577216 the half height of the grey band around BandRow
     i32 grayBandShown = 0;       // 0x00577218
     i32 flashing = 0;            // 0x005772CC the field flashes, flashLevel falling by FlashStep a frame

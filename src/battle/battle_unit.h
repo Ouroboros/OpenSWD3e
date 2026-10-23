@@ -337,6 +337,7 @@ public:
     // BattleUnit::stage bits: the stages of an attack (AttackFrame).
     enum Stage : u32
     {
+        Entered = 1,              // swd3e: the whole dword 1: the zoomed entrance is over (ZoomEntranceFrame)
         ChargeFollowing = 0x800,  // the follow-up of a charge runs (ChargeAttackFrame)
         Recoiling = 0x4000,       // the recoil act runs (DrawRecoil)
         FollowingUp = 0x8000,     // the follow-up action runs in its slot act
@@ -538,6 +539,8 @@ public:
     int Enrage(BattleServices& services);
     int EnrageFrame(BattleServices& services);
     int KnockBackFrame(BattleServices& services);
+    int ZoomEntranceFrame(BattleServices& services, int unused, u16 act);
+    int CastPoseFrame(BattleServices& services, i32 slotAct);
     i32 HitPointShare(int scale) const;
     int CancelHitNumber(BattleServices& services);
     void ClearUnk2FD1();

@@ -77,6 +77,7 @@ public:
     void Setup(RoleRecord& record, RoleBattleBlock& block, const UnitPlacement& at, ErrorReporter& reporter);
     void SetupEscort(const UnitPlacement& at, BattleServices& services, Database& database);
     void TakeObjectForm(Database& database, u16 id);
+    int LevelInReach(Database& database, u16 id, u16 reach);
     void SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, BattleServices& services);
     void Strike(BattleServices& services, BattleUnit& target, int evadable);
     int AttackFrame(BattleServices& services, BattleUnit& target, int slot);
@@ -109,6 +110,7 @@ public:
     void CountUsableObjects(u16& count);
     int ListedObject(int index, std::string& name, u16& count);
     ItemNode* StepItem();
+    u16 TakeRandomItem(BattleServices& services);
     static u32 CategoryKinds(int category, int categories);
     ItemNode* StepSkill();
     void CountSkills(int category, int type, u8& count);
@@ -170,6 +172,7 @@ public:
     bool LowSpirit() const;
     bool LowStamina() const;
     int StartSpecialAct(BattleState& battle);
+    void SpecialActFrame(BattleServices& services);
 
     std::unique_ptr<RoleRecord> ownedRecord;     // the 0x38 bytes at +0x00
     ObjectRecord unk2B24;                        // swd32 +0x2B24

@@ -2136,7 +2136,7 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
 
     const u8 level = this->party.roles[static_cast<std::size_t>(battle.partyRoles[0])].level;
 
-    if (unit.CatchRoll(this->battleServices, level) != 0)
+    if (unit.CatchRoll(this->battleServices, level) == 1)
     {
         unit.Retarget(0);
         unit.SetCommand(kRunCommand);

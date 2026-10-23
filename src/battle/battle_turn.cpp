@@ -49,6 +49,15 @@ constexpr int kUnitPointer = 0x238D;
 constexpr int kWaitPointer = 0x238E;
 constexpr int kTurnPointer = 0x238F;
 constexpr int kEnemyPointer = 0x2393;  // NextEnemyTurn: the pointer over the enemy taking its turn (swd3e)
+constexpr int kYinYangScale = 0x960;   // YinYangAttack (swd3e): the damage in percent of the proficiency
+constexpr int kYinYangPercent = 100;
+constexpr int kYinYangBase = 100;
+constexpr i32 kYinYangAct = 0x1775;  // the act after the cast pose
+constexpr u16 kGrayBandCloses = 2;   // BattleState::grayBandState
+constexpr u16 kYinYangHitPicture = 0x2389;
+constexpr i32 kYinYangMost = 0x270F;  // the number shown is at most 9999
+constexpr u8 kYinYangDefeatPose = 6;
+constexpr u16 kWhitePixel = 0xFFFF;  // the frame whitened by a defeat (0xFF bytes)
 constexpr int kNoTurnPointer = 0x2393;
 constexpr int kMarkEffect = 0x23A0;
 constexpr i32 kListPage = 7;  // a back key scrolls a list up by this
@@ -834,6 +843,141 @@ int Game::CheckStoneSides()
     battle.unk53C048 = 1;
     battle.autoBattle = 0;
     battle.result = kBattleWon;
+    return 1;
+}
+
+// swd3e.exe 0x00469D80: the lasting poisons of one side spread (the enemies with `enemies`, the party roles
+// otherwise): each unit counts its poison turn, and one poisoned more than three turns passes it (its base and level)
+// to a unit of its side picked at random (0..its count - 1), not itself, defeated or with unk2AF8, nor for the roles a
+// ghost, a StatusBit13 or an auto role. The enemies' pick is checked on the role of that index (as in the original;
+// past the ten roles the original reads after them, the poison does not spread here).
+void Game::SpreadPoison(int enemies)
+{
+    BattleState& battle = this->battleState;
+    BattleServices& services = this->battleServices;
+
+    if (enemies != 0)
+    {
+        for (u32 index = 0; index < battle.enemyCount; ++index)
+        {
+            BattleEnemy& enemy = this->battleEnemies[index];
+            enemy.CountPoisonTurn();
+
+            if (!enemy.PoisonLasted())
+            {
+                continue;
+            }
+
+            const auto pick = static_cast<u16>(services.random.Below(battle.enemyCount));
+
+            if (pick >= this->battleRoles.size())
+            {
+                continue;
+            }
+
+            const BattleRole& checked = this->battleRoles[pick];
+
+            if (!checked.IsDefeated() && checked.unk2AF8 != 1 && pick != index)
+            {
+                const u8 level = enemy.poisonLevel;
+                this->battleEnemies[pick].AddPoison(services, enemy.PoisonBase(), level);
+            }
+        }
+
+        return;
+    }
+
+    for (u32 index = 0; index < battle.roleCount; ++index)
+    {
+        BattleRole& role = this->battleRoles[index];
+        role.CountPoisonTurn();
+
+        if (!role.PoisonLasted())
+        {
+            continue;
+        }
+
+        const auto pick = static_cast<u16>(services.random.Below(battle.roleCount));
+        BattleRole& target = this->battleRoles[pick];
+
+        if (!target.IsDefeated() && target.unk2AF8 != 1 && target.Ghost() != 1 && target.StatusBit13() != 1 &&
+            target.AutoControl() != 1 && pick != index)
+        {
+            const u8 level = role.poisonLevel;
+            target.AddPoison(services, role.PoisonBase(), level);
+        }
+    }
+}
+
+// swd3e.exe 0x0046A000: one frame of the 陰陽 command of role `role`: its damage 0x960 percent of the proficiency of
+// kind Unk16 plus 100 (hitDamage, lastDamage) while the cast pose of act 0x1775 plays; once it is done (1) the grey
+// band closes (2) and every standing enemy takes it: by the side of the coin (coinState) an enemy of the other kind
+// (ObjectUnkA2, 1 on 陽, 0 on 陰) is healed (minus the damage, HealTarget), the others are hit (flag 26B8 raised),
+// the number shown (at most 9999) after the hit picture 0x2389; one defeated becomes unk4A7626 (its unk502984 entry
+// set), flashes the field (defeat pose 6) and whitens the frame. 0 while the pose plays.
+int Game::YinYangAttack(int role)
+{
+    BattleState& battle = this->battleState;
+    BattleServices& services = this->battleServices;
+    BattleRole& caster = this->battleRoles[static_cast<std::size_t>(role)];
+    const bool yang = static_cast<u16>(this->battleHud.coinState) != 0;
+    const auto proficiency = static_cast<u16>(caster.AccessoryProficiency(
+        static_cast<u16>(AccessoryKind::Unk16),
+        this->party.fame.lists[Fame::ProficiencyList]
+    ));
+    battle.hitDamage = kYinYangScale * proficiency / kYinYangPercent + kYinYangBase;
+    battle.lastDamage = battle.hitDamage;
+
+    if (caster.CastPoseFrame(services, kYinYangAct) != 1)
+    {
+        return 0;
+    }
+
+    battle.grayBandState = kGrayBandCloses;
+
+    for (u32 index = 0; index < battle.enemyCount; ++index)
+    {
+        BattleEnemy& enemy = this->battleEnemies[index];
+
+        if (enemy.IsDefeated())
+        {
+            continue;
+        }
+
+        battle.lastDamage = battle.hitDamage;
+        enemy.PushTarget(kYinYangHitPicture);
+        const bool healed = yang ? enemy.ObjectUnkA2() == 1 : enemy.ObjectUnkA2() == 0;
+
+        if (healed)
+        {
+            battle.lastDamage = -battle.lastDamage;
+            enemy.PushTarget(BattleUnit::HealTarget);
+        }
+        else
+        {
+            enemy.RaiseFlag26B8(battle);
+        }
+
+        if (battle.lastDamage >= kYinYangMost)
+        {
+            battle.lastDamage = kYinYangMost;
+        }
+
+        enemy.SetDamageDigits(services, battle.lastDamage);
+        enemy.StepTargetCount(services, 1);
+
+        if (enemy.Damage(services, battle.lastDamage, 0, 0) == 1)
+        {
+            battle.unk4A7626 = static_cast<u16>(index);
+            battle.unk502984[index] = static_cast<i32>(index);
+            battle.flashing = 1;
+            enemy.SetDefeatPose(kYinYangDefeatPose);
+            std::fill_n(this->drawSurface, static_cast<std::size_t>(Display::Width) * Display::Height, kWhitePixel);
+        }
+    }
+
+    battle.hitDamage = 0;
+    battle.lastDamage = 0;
     return 1;
 }
 
@@ -2110,6 +2254,61 @@ void Game::CheckLevelUps()
     }
 
     battle.unk53C4C8 = 1;
+}
+
+// swd3e.exe 0x00476A90: party role `role` raised level by level up to `level` (below the level cap): each step keeps
+// the record in levelUpBefore and adds the difference of the two levels' records (LevelUp; the learned flag goes to a
+// local the original leaves unset) to the maxima and attributes (hit points, spirit and stamina refilled), takes the
+// next level, its experience mark, and adds the difference of the marks to the total experience.
+void Game::RaiseLevel(u16 role, u16 level)
+{
+    BattleState& battle = this->battleState;
+    RoleRecord& record = this->party.roles[role];
+    i32 learned = 0;
+
+    for (u32 at = record.level; at < level && at < battle.timingWindow; ++at)
+    {
+        RoleRecord before;
+        RoleRecord after;
+        battle.levelUpBefore = record;
+        LevelUp(
+            before,
+            role + 1,
+            static_cast<int>(at),
+            learned,
+            this->party,
+            this->database,
+            battle.lastLearned,
+            this->errors
+        );
+        LevelUp(
+            after,
+            role + 1,
+            static_cast<int>(at) + 1,
+            learned,
+            this->party,
+            this->database,
+            battle.lastLearned,
+            this->errors
+        );
+        record.level = after.level;
+        record.experience = after.experience;
+        record.totalExperience += after.experience - before.experience;
+        record.maxHitPoints = static_cast<i16>(record.maxHitPoints + after.maxHitPoints - before.maxHitPoints);
+        record.hitPoints = record.maxHitPoints;
+        record.maxSpirit = static_cast<i16>(record.maxSpirit + after.maxSpirit - before.maxSpirit);
+        record.spirit = record.maxSpirit;
+        record.maxStamina = static_cast<i16>(record.maxStamina + after.maxStamina - before.maxStamina);
+        record.stamina = record.maxStamina;
+        record.strength = static_cast<i16>(record.strength + after.strength - before.strength);
+        record.endurance = static_cast<i16>(record.endurance + after.endurance - before.endurance);
+        record.wisdom = static_cast<i16>(record.wisdom + after.wisdom - before.wisdom);
+        record.agility = static_cast<i16>(record.agility + after.agility - before.agility);
+        record.rapport = static_cast<i16>(record.rapport + after.rapport - before.rapport);
+        record.reaction = static_cast<i16>(record.reaction + after.reaction - before.reaction);
+        record.ailmentChance = static_cast<i16>(record.ailmentChance + after.ailmentChance - before.ailmentChance);
+        record.evasion = static_cast<i16>(record.evasion + after.evasion - before.evasion);
+    }
 }
 
 // swd3e.exe 0x004776B0: the box of a new spell (%s學到新奇術) of the role that levelled up
