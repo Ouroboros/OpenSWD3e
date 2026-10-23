@@ -51,9 +51,12 @@ constexpr int kGlowTintBase = 0x1F;  // the tint is glowLevel / 2 - kGlowTintBas
 constexpr i32 kNoImpact = -1;        // a queued act without an impact act that lands no hit
 constexpr u16 kNoUnk2A8E = 0xFFFF;
 constexpr i16 kStandBackEnd = 2;
-constexpr i32 kStepBackAction = 0x2A;
+constexpr i32 kStepBackAction = 0x2F;        // swd3e (swd32: 0x2A)
+constexpr i32 kSecondStepBackAction = 0x2E;  // swd3e: the step back of the role of act 1
+constexpr u16 kSecondStepBackAct = 1;
+constexpr i32 kAutoStepBackAction = 0x24;  // swd3e: the step back of a role acting by itself
 constexpr i16 kStepBackEnd = 6;
-constexpr int kStepBackShift = 0x10;
+constexpr int kStepBackShift = 0x1E;  // swd3e (swd32: 0x10)
 constexpr int kSwarmAbove = 0x28;
 constexpr u16 kSwarmActs = 8;
 constexpr i16 kSwarmInterval = 3;  // a new act every third frame
@@ -670,6 +673,11 @@ int RoleFrame::StepBackAdvance(BattleServices& services, int mode, Scene& scene)
         if (mode == 1)
         {
             role.unk2AAC = 1;
+
+            if (role.autoControl == 1)
+            {
+                role.defeated = 1;
+            }
         }
 
         return 1;
@@ -678,6 +686,17 @@ int RoleFrame::StepBackAdvance(BattleServices& services, int mode, Scene& scene)
     role.unk2AAC = 1;
     act.id = role.actId;
     act.action = kStepBackAction;
+
+    if (role.actId == kSecondStepBackAct)
+    {
+        act.action = kSecondStepBackAction;
+    }
+
+    if (role.autoControl == 1)
+    {
+        act.action = kAutoStepBackAction;
+    }
+
     act.hold = 0;
 
     if (role.held == 1)
@@ -699,12 +718,12 @@ int RoleFrame::StepBackAdvance(BattleServices& services, int mode, Scene& scene)
     }
 
     role.actOffsetX = static_cast<u16>(act.x);
-    role.frameFlags = act.flags ^ Painter::Mirror;
+    role.frameFlags = act.flags;
 
-    if (role.facing == 1)
+    // swd3e: only the role of act 1 is turned (the facing does not mirror the step).
+    if (role.actId == kSecondStepBackAct)
     {
         role.frameFlags ^= Painter::Mirror;
-        role.actOffsetX = static_cast<u16>(role.picture->width - static_cast<u16>(act.x));
     }
 
     if (role.fadeLevel == BattleUnit::Opaque && mode == 1)
@@ -721,12 +740,18 @@ int RoleFrame::StepBackAdvance(BattleServices& services, int mode, Scene& scene)
 
     if (mode == 1)
     {
-        x = static_cast<u16>(role.facing == 1 ? x - kStepBackShift : x + kStepBackShift);
+        x = static_cast<u16>(role.facing != 1 || role.autoControl != 0 ? x + kStepBackShift : x - kStepBackShift);
     }
 
     role.SetPosition(static_cast<i16>(x), static_cast<i16>(y));
     ScenePainter painter(services, scene);
     painter.SetSource(role.picture->data.data());
+
+    if ((role.frameFlags & ActState::Signal) == ActState::Signal)
+    {
+        painter.Options().alpha = act.signal;
+    }
+
     painter.DrawPicture(
         role.placement.x - static_cast<i16>(role.actOffsetX),
         role.placement.y - act.y,

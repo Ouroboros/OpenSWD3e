@@ -47,6 +47,7 @@ constexpr int kSlowCommand = 0x1D;
 constexpr int kTimerCommand = 0x1F;
 constexpr int kBarrierCommand = 0x20;
 constexpr int kKillCommand = 0x21;
+constexpr int kListedCategory = 4;         // the item category a direct attack uses its object from (UseSelectedItem)
 constexpr i32 kKillBoomerangAct = 0x1C87;  // swd3e: the act command 0x21 throws (BoomerangFrame)
 constexpr int kSelfDamageCommand = 0x22;
 constexpr int kSelfSpiritCommand = 0x23;
@@ -592,7 +593,7 @@ int Game::RoleCommandFrame(BattleRole& unit, int role, int target, u16 command)
                 return 0;
             }
 
-            battle.usedUpItem = unit.UseSelectedItem();
+            battle.usedUpItem = unit.UseSelectedItem(kListedCategory);
 
             if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
             {
@@ -690,7 +691,7 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
 
     if (battle.unk53AE7C != 0)
     {
-        this->ApplyDrain(unit, enemy);
+        this->ApplyDrain(battle.hitDamage, unit, enemy);
     }
 
     if (unit.DrainKind() == kVampireDrain)
@@ -720,7 +721,7 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
 
     if (battle.unk53AE7C == 0)
     {
-        this->ApplyDrain(unit, enemy);
+        this->ApplyDrain(battle.hitDamage, unit, enemy);
     }
 
     battle.hitDamage = 0;
@@ -786,7 +787,7 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, u16 command)
     }
     else
     {
-        battle.usedUpItem = unit.UseSelectedItem();
+        battle.usedUpItem = unit.UseSelectedItem(battle.listRole);
         battle.hitDamage = 0;
         battle.spiritDamage = 0;
         battle.staminaDamage = 0;
@@ -973,7 +974,7 @@ int Game::SummonEscortFrame(BattleRole& unit, int role)
             escort.SetFacing(1);
         }
 
-        escort.SetupEscort(battle.rolePlaces[battle.callingEscort], this->database, this->errors);
+        escort.SetupEscort(battle.rolePlaces[battle.callingEscort], this->battleServices, this->database);
         battle.pushFrames = 1;
         battle.unk53BDD4 = 0;
         battle.unk53BDD8 = 0;

@@ -336,10 +336,16 @@ public:
     ColorFade fieldFade;
 
     // The damage of the hit being dealt (0x004539B0, 0x0045D690).
-    i32 hitDamage = 0;     // 0x005378F4
+    i32 hitDamage = 0;  // 0x005378F4
+    // swd3e: the drains of a hit on many units summed (0x00577054, 0x00577058, 0x0057705C; ApplyDrain) and 1 while
+    // the attacker's numbers of them wait (0x00577374, set by HitFrame)
+    i32 drainedLife = 0;
+    i32 drainedSpirit = 0;
+    i32 drainedStamina = 0;
+    i32 deferDrains = 0;
     i16 spiritDamage = 0;  // 0x005761CE
     u16 unk4FDF78 = 0;
-    i16 staminaDamage = 0;     // swd32 0x004FDF7A
+    i16 staminaDamage = 0;     // 0x0050CE68
     i32 lastDamage = 0;        // 0x00575F34 the damage of the last hit with the proficiency bonus
     i16 proficiencyBonus = 0;  // 0x005373B4 the weapon proficiency step of the last strike
 

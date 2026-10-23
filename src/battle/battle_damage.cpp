@@ -24,31 +24,39 @@ constexpr u16 kNoRetreatSound = 0x8C;
 
 }  // namespace
 
-// swd3e.exe 0x00467E50: the drain of `attacker`'s command applied after a hit on `target`. A life drain heals the
-// attacker by the damage; a spirit or stamina drain takes the damage (at most what the target has) from the target to
-// the attacker, shown on both, and records it as the spirit or stamina damage of the hit.
-void Game::ApplyDrain(BattleUnit& attacker, BattleUnit& target)
+// swd3e.exe 0x00467E50: the drain of `attacker`'s command applied after a hit on `target` of `amount` damage. A life
+// drain heals the attacker by it; a spirit or stamina drain takes it (at most what the target has, shown on the target)
+// to the attacker, records it as the spirit or stamina damage of the hit and clears `amount`. Each drain is added to
+// its sum (drainedLife, drainedSpirit, drainedStamina); while deferDrains is set the attacker's number and gain wait
+// for them (HitFrame).
+void Game::ApplyDrain(i32& amount, BattleUnit& attacker, BattleUnit& target)
 {
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
-    i32 amount = battle.hitDamage;
+    i32 value = amount;
 
-    if (amount == 0)
+    if (value == 0)
     {
         return;
     }
 
     u16 maximum = 0;
-    u16 value = 0;
+    u16 left = 0;
     const u16 drain = attacker.DrainKind();
 
     if (drain == BattleUnit::DrainedHitPoints)
     {
         attacker.PushTarget(BattleUnit::HealTarget);
-        amount = -amount;
-        attacker.SetDamageDigits(services, amount);
-        attacker.StepTargetCount(services, 1);
-        attacker.Damage(services, amount, 0, 0);
+        value = -value;
+        battle.drainedLife += value;
+
+        if (battle.deferDrains == 0)
+        {
+            attacker.SetDamageDigits(services, value);
+            attacker.StepTargetCount(services, 1);
+            attacker.Damage(services, value, 0, 0);
+        }
+
         return;
     }
 
@@ -59,39 +67,50 @@ void Game::ApplyDrain(BattleUnit& attacker, BattleUnit& target)
 
     if (drain == BattleUnit::DrainedSpirit)
     {
-        target.GetSpirit(maximum, value);
+        target.GetSpirit(maximum, left);
     }
     else
     {
-        target.GetStamina(maximum, value);
+        target.GetStamina(maximum, left);
     }
 
-    if (static_cast<i16>(value) - amount <= 0)
+    if (static_cast<i16>(left) - value <= 0)
     {
-        amount = static_cast<i16>(value);
-        target.SetDamageDigits(services, amount);
+        value = static_cast<i16>(left);
+        target.SetDamageDigits(services, value);
     }
 
-    target.PushTarget(BattleUnit::DamageTarget);
-    target.StepTargetCount(services, 1);
     attacker.PushTarget(
         drain == BattleUnit::DrainedSpirit ? BattleUnit::SpiritGainTarget : BattleUnit::StaminaGainTarget
     );
-    attacker.SetDamageDigits(services, amount);
-    attacker.StepTargetCount(services, 1);
+
+    if (battle.deferDrains == 0)
+    {
+        attacker.SetDamageDigits(services, value);
+        attacker.StepTargetCount(services, 1);
+
+        if (drain == BattleUnit::DrainedSpirit)
+        {
+            attacker.Damage(services, 0, static_cast<i16>(value), 0);
+        }
+        else
+        {
+            attacker.Damage(services, 0, 0, static_cast<i16>(value));
+        }
+    }
 
     if (drain == BattleUnit::DrainedSpirit)
     {
-        attacker.Damage(services, 0, static_cast<i16>(amount), 0);
-        battle.spiritDamage = static_cast<i16>(-amount);
+        battle.drainedSpirit -= value;
+        battle.spiritDamage = static_cast<i16>(-value);
     }
     else
     {
-        attacker.Damage(services, 0, 0, static_cast<i16>(amount));
-        battle.staminaDamage = static_cast<i16>(-amount);
+        battle.drainedStamina -= value;
+        battle.staminaDamage = static_cast<i16>(-value);
     }
 
-    battle.hitDamage = 0;
+    amount = 0;
 }
 
 // swd3e.exe 0x00469860: the retreat command of role `role`. When the role can act, a party whose first role is held

@@ -17,6 +17,7 @@ namespace swd3e
 class BattleState;
 struct BattleServices;
 struct RoleRecord;
+struct TalismanGhost;
 struct Picture;
 struct SkillScript;
 
@@ -247,6 +248,20 @@ public:
         UnkMark8000 = 0x8000,  // the damage of the unit is not raised
     };
 
+    // BattleUnit::unk2BDA bits (swd3e): the weak stand pose and the state of the talisman ghost's orders
+    // (battle_ghost.cpp).
+    enum GhostFlag : u16
+    {
+        WeakStand = 1,         // the stand pose is the weak one (IdleFrame)
+        GhostGuards = 2,       // the ghost keeps by its master (order 4)
+        GhostSkillUsed = 4,    // a fed skill of kind 0x1000 was chosen (TakeSkillUsed)
+        GhostAttackUsed = 8,   // one of kind 8 or 0x10 (TakeAttackUsed)
+        GhostHealUsed = 0x10,  // one of kind 4 (TakeHealUsed)
+        GhostOrder7 = 0x20,    // order 7 was given (TakeOrder7)
+        GhostSpent = 0x40,     // the ghost spent its spirit (SpendGhostSpirit)
+        GhostRests = 0x80,     // order 2: the ghost rests and gains spirit
+    };
+
     // BattleUnit::equipmentFlags set by the accessories (BattleRole::ApplyAccessory).
     enum EquipmentFlag : u32
     {
@@ -256,7 +271,8 @@ public:
         SpiritDrain = 0x10,
         LifeDrain = 0x20,
         SpiritFan = 0x40,
-        UnkEquipment100 = 0x100,  // swd3e: accessory kind 0x28 has no value (AccessoryValue)
+        SpecialActEquipment = 0x80,  // swd3e: accessory kind 0x3A (BattleRole::StartSpecialAct)
+        UnkEquipment100 = 0x100,     // swd3e: accessory kind 0x28 has no value (AccessoryValue)
     };
 
     // A unit in battle (0x2B28 bytes in the original; the base of BattleRole and BattleEnemy). Offsets of the original
@@ -740,7 +756,8 @@ public:
         nullptr;  // swd32 +0x0 the battle copy of a party role's record (+0x26, +0x28: attack, defence)
     RoleRecord* roleRecord = nullptr;  // swd32 +0x4 the role's party record
     i32* roleBlock = nullptr;  // swd32 +0x8 the role's 0x60-byte block at 0x004ACF50 ([0]: the fury gauge, inferred)
-    ObjectRecord* data = nullptr;             // swd32 +0xC an enemy's mon.dat object (usually `object`)
+    ObjectRecord* data = nullptr;             // +0xC an enemy's mon.dat object (usually `object`)
+    TalismanGhost* ghostRecord = nullptr;     // +0x10 (swd3e) the talisman ghost's record (SetupGhost)
     std::unique_ptr<ObjectRecord> ownedData;  // a party role's block at +0x0C (freed by Reset)
     ObjectRecord object;                      // +0x14 (its description at +0xB8; ResetTurn clears it)
     ObjectRecord weapon;                      // swd32 +0xB4 a party role's weapon (equipment slot 0)

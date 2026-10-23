@@ -12,6 +12,7 @@ class BattleHud;
 class BattleMessages;
 class BattleState;
 class Config;
+class Database;
 class ErrorReporter;
 class Painter;
 class Party;
@@ -48,6 +49,7 @@ struct BattleServices
     // the frame is decided); none: each part's draws are drawn at once, in the original's order.
     smooth::Scene* frame = nullptr;
     BattleEnemy* enemies = nullptr;  // Game::battleEnemies (BattleState::Enemies of them), set with the services
+    Database* database = nullptr;    // Game::database (swd3e: the talisman ghost loads its fed skills in StepGauge)
 };
 
 }  // namespace swd3e

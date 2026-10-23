@@ -986,7 +986,7 @@ int Game::RoleHitFrame(int role)
         battle.lastEnemyHit = static_cast<u16>(target);
         battle.hitLanded = 1;
         battle.slotTargets[at] = target;
-        this->ApplyDrain(attacker, enemy);
+        this->ApplyDrain(battle.hitDamage, attacker, enemy);
 
         if (battle.unk53AF68 == 0 &&
             enemy.Damage(this->battleServices, battle.hitDamage, battle.spiritDamage, battle.staminaDamage) == 1)
@@ -1205,7 +1205,7 @@ int Game::EnemyHitFrame(int enemy)
             this->FlashFrameWhite();
         }
 
-        this->ApplyDrain(attacker, role);
+        this->ApplyDrain(battle.hitDamage, attacker, role);
 
         if (role.IsHeld() == 1 && target == battle.currentUnit - BattleState::FirstRoleUnit)
         {
@@ -1270,7 +1270,7 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
                 battle.hitDamage = battle.slotDamage[slot];
             }
 
-            this->ApplyDrain(attacker, role);
+            this->ApplyDrain(battle.hitDamage, attacker, role);
             battle.slotTargets[slot] = static_cast<i32>(slot);
             battle.hitLanded = 1;
             battle.sweepHit = 1;
@@ -1589,7 +1589,7 @@ int Game::EnemyAttackAction(BattleEnemy& unit, int target)
             battle.hitLanded = 1;
             battle.unk53BFC0 = 0;
             battle.lastRoleHit = static_cast<u16>(target);
-            this->ApplyDrain(unit, role);
+            this->ApplyDrain(battle.hitDamage, unit, role);
 
             if (battle.unk53AF68 == 0 &&
                 role.Damage(this->battleServices, battle.hitDamage, battle.spiritDamage, battle.staminaDamage) == 1)

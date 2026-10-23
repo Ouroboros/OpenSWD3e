@@ -3961,7 +3961,7 @@ void Game::ConfirmTarget()
 
         if (role != nullptr)
         {
-            role->UseSelectedItem();
+            role->UseSelectedItem(battle.listRole);
         }
 
         if (role != nullptr && role->Word2A86Bit13() == 1)
@@ -4197,7 +4197,7 @@ void Game::CallEscort(BattleRole& role)
 
     battle.commandNames = {};
     battle.listedCommands = 0;
-    battle.callingEscort = role.UseSelectedItem();
+    battle.callingEscort = role.UseSelectedItem(battle.listRole);
     battle.SetReturnedItem(1, battle.callingEscort);
 
     // With every place taken the original writes the escort past the places.
@@ -4236,7 +4236,7 @@ void Game::ConfirmEscort()
     }
 
     BattleRole& role = this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
-    battle.callingEscort = role.UseSelectedItem();
+    battle.callingEscort = role.UseSelectedItem(battle.listRole);
     battle.turnUnit = battle.currentUnit;
     battle.turnCommand = kEscortOrder;
     battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = kEscortOrder;

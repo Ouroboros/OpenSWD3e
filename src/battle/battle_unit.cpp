@@ -26,6 +26,7 @@
 #include "draw/paint_record.h"
 #include "draw/painter.h"
 #include "game/scene.h"
+#include "ghost/talisman_ghost.h"
 #include "org/database.h"
 #include "org/fame.h"
 #include "party/party.h"
@@ -1418,7 +1419,9 @@ constexpr double kCounterPercent = 100.0;  // 0x004AAE10 (a float)
 constexpr u16 kCounterFull = 100;          // the percent of a full counter
 
 // StepGauge.
-constexpr std::size_t kAgilityShare = 2;  // the gauge fills by a quarter of the agility a tick
+constexpr int kAgilityShare = 4;  // the gauge fills by a quarter of the agility a tick
+constexpr u32 kObeyRoll = 100;    // the talisman ghost obeys on a roll of 1..100 up to its unk104
+constexpr int kDisobeyShare = 3;  // a disobeying ghost's gauge falls back a third
 constexpr int kBoostShare = 4;
 constexpr int kInvisibleSlowdown = 4;
 
@@ -3268,79 +3271,88 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
     return counts;
 }
 
-// swd3e.exe 0x0047E720: one tick of the action gauge: nothing while held, stopped (Unk4000), defeated or full
-// (unk2AB0). Below gaugeFull it fills by a quarter of the agility (an eighth while Slowed; a quarter more and 1 with
-// `boost`), 30% more with SpeedUp, 30% less with SpeedDown, and less by half the proficiency percent of it and 4 while
-// Invisible (0). Full, it is marked full, the main act's effect cleared, the cast act marked waiting and the facing
-// of a unit with facingTurnsBack turned back (1).
+// swd3e.exe 0x0047E720: one tick of the action gauge: nothing while held, stopped (Unk4000), defeated, with unk2AF8,
+// full (unk2AB0), kept by its master (GhostGuards) or staggering. Below gaugeFull it fills by a quarter of the agility
+// with speedShift added under SpeedUp and taken under SpeedDown (a quarter more and 1 with `boost`), less by half the
+// proficiency percent of it and 4 while Invisible (0). Full, the talisman ghost obeys on a roll of 1..100 up to its
+// unk104 and takes its order (else it stands weak and its gauge falls back a third, 0); it is then marked full, the
+// main act's effect cleared, the cast act marked waiting and the facing of a unit with facingTurnsBack turned back
+// (1); a ghost that rests starts over (0).
 int BattleUnit::StepGauge(BattleServices& services, int boost)
 {
-    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::Unk4000) != 0)
-    {
-        return 0;
-    }
-
-    if (this->defeated == 1 || this->unk2AB0 == 1)
+    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::Unk4000) != 0 || this->defeated == 1 ||
+        this->unk2AF8 == 1 || this->unk2AB0 == 1 || (this->unk2BDA & BattleUnit::GhostGuards) != 0 ||
+        (this->unk26B8 & kFlag26B8) != 0)
     {
         return 0;
     }
 
     const u16 gauge = this->gauge;
+    const i32 full = services.state.gaugeFull;
 
-    if (static_cast<i32>(gauge) >= services.state.gaugeFull)
+    if (static_cast<i32>(gauge) < full)
     {
-        this->unk2AB0 = 1;
-        this->unk2AEC = 0;
+        const u32 status = this->status;
+        const int up = (status & BattleUnit::SpeedUp) != 0 ? this->speedShift : 0;
+        const int down = (status & BattleUnit::SpeedDown) != 0 ? this->speedShift : 0;
+        int speed = (up + static_cast<u16>(this->battleRecord->agility) - down) / kAgilityShare;
 
-        if (this->facingTurnsBack == 1)
+        if (boost == 1)
         {
-            this->facingTurnsBack = 0;
-
-            if (this->guestControl == 0)
-            {
-                this->facing = 0;
-            }
+            speed += speed / kBoostShare + 1;
         }
 
-        this->mainAct.effectA = 0;
-        this->mainAct.effectQ = 0;
-        this->castAct.waiting = 1;
+        int cut = 0;
+
+        if ((status & BattleUnit::Invisible) != 0)
+        {
+            cut = speed * this->proficiency / kPercent / 2 + kInvisibleSlowdown;
+        }
+
+        this->unk2AB0 = 0;
+        this->gauge = static_cast<u16>(speed + gauge - cut);
+        return 0;
+    }
+
+    if (this->Ghost() == 1)
+    {
+        if (static_cast<i16>(services.random.Below(kObeyRoll) + 1) > this->ghostRecord->unk104)
+        {
+            this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::WeakStand);
+            this->gauge = static_cast<u16>(this->gauge + full / -kDisobeyShare);
+            return 0;
+        }
+
+        // Only a party role is set up as the ghost (SetupGhost).
+        static_cast<BattleRole&>(*this).TakeGhostOrder(services, *services.database);
+        this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::WeakStand);
+    }
+
+    this->unk2AB0 = 1;
+    this->unk2AEC = 0;
+
+    if (this->facingTurnsBack == 1)
+    {
+        this->facingTurnsBack = 0;
+
+        if (this->guestControl == 0)
+        {
+            this->facing = 0;
+        }
+    }
+
+    this->mainAct.effectA = 0;
+    this->mainAct.effectQ = 0;
+    this->castAct.waiting = 1;
+
+    if ((this->unk2BDA & BattleUnit::GhostRests) == 0)
+    {
         return 1;
     }
 
-    const u32 status = this->status;
-    int speed = static_cast<u16>(this->battleRecord->agility) >> kAgilityShare;
-
-    if ((status & BattleUnit::Slowed) != 0)
-    {
-        speed >>= 1;
-    }
-
-    if (boost == 1)
-    {
-        speed += speed / kBoostShare + 1;
-    }
-
-    int extra = 0;
-    int cut = 0;
-
-    if ((status & BattleUnit::SpeedUp) != 0)
-    {
-        extra = kSpeedChangePercent * speed / kPercent;
-    }
-
-    if ((status & BattleUnit::SpeedDown) != 0)
-    {
-        cut = kSpeedChangePercent * speed / kPercent;
-    }
-
-    if ((status & BattleUnit::Invisible) != 0)
-    {
-        cut += this->proficiency * speed / kPercent / 2 + kInvisibleSlowdown;
-    }
-
     this->unk2AB0 = 0;
-    this->gauge = static_cast<u16>(gauge - cut + extra + speed);
+    this->gauge = 0;
+    this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostRests);
     return 0;
 }
 
@@ -4775,7 +4787,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
     act.id = this->actId;
     act.action = kShadowAction;
 
-    if ((this->unk2BDA & 1) != 0)
+    if ((this->unk2BDA & BattleUnit::WeakStand) != 0)
     {
         act.action = kWeakAction;
     }
@@ -4969,7 +4981,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         }
     };
 
-    if (this->ghost == 1 && (this->unk2BDA & 1) == 0 && this->unk2AC8 == 0)
+    if (this->ghost == 1 && (this->unk2BDA & BattleUnit::WeakStand) == 0 && this->unk2AC8 == 0)
     {
         std::array<std::array<i16, 2>, 4> points = {};
 

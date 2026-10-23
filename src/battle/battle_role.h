@@ -39,6 +39,8 @@ enum class AccessoryKind : u16
     SpiritDrain = 0x37,   // 吸魔壺
     LifeDrain = 0x38,     // 吸血鬼指環
     SpiritFan = 0x39,     // 靈虛扇
+    SpecialAct = 0x3A,    // swd3e: equipment flag 0x80 (BattleRole::StartSpecialAct)
+    GoldGuard = 0x3B,     // swd3e: the gold pays for the hits (goldGuard)
 };
 
 // A party role in battle (0x2F34 bytes in the original, ten of them at 0x005029D0): a unit with a battle copy of the
@@ -69,7 +71,9 @@ public:
     void SetInventory(ItemLink* list);
     void ClearExtras();
     void Setup(RoleRecord& record, RoleBattleBlock& block, const UnitPlacement& at, ErrorReporter& reporter);
-    void SetupEscort(const UnitPlacement& at, Database& database, ErrorReporter& reporter);
+    void SetupEscort(const UnitPlacement& at, BattleServices& services, Database& database);
+    void TakeObjectForm(Database& database, u16 id);
+    void SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, BattleServices& services);
     void Strike(BattleServices& services, BattleUnit& target, int evadable);
     int AttackFrame(BattleServices& services, BattleUnit& target, int slot);
     void LoadItemAction(Database& database, u16 id, u32& act);
@@ -93,7 +97,7 @@ public:
     int SwarmSpellFrame(BattleServices& services, BattleUnit& target);
     int BoomerangFrame(BattleServices& services, BattleUnit& target, i32 act);
     int LeapSpellFrame(BattleServices& services, BattleUnit& target);
-    u16 UseSelectedItem();
+    u16 UseSelectedItem(int category);
     void CancelCommand();
     void AddFury(BattleServices& services, int damage);
     int DrainShare(BattleServices& services, i32& amount);
@@ -132,6 +136,36 @@ public:
     void PayStamina();
     void TakeCommand2F18();
 
+    // The talisman ghost in battle and the helpers of the roles acting by themselves (battle_ghost.cpp, swd3e).
+    void SetGhostOrder(u16 order);
+    u16 GhostOrder() const;
+    static int RollHalf(BattleServices& services);
+    bool GhostOrderIs5() const;
+    bool GhostOrderIs6() const;
+    bool TakeSkillUsed();
+    bool TakeAttackUsed();
+    bool TakeHealUsed();
+    int TakeOrder7();
+    int GhostObeys(BattleServices& services);
+    int RestoreGhostSpirit(BattleServices& services);
+    int HasCommandEffect() const;
+    int SetGhostActs(int value);
+    int ChooseGhostSkill(BattleServices& services, Database& database);
+    bool LoadGhostSkill(Database& database, i32 skill);
+    int ChooseGhostSkillOf(BattleServices& services, Database& database, int mode);
+    void TakeGhostOrder(BattleServices& services, Database& database);
+    int GhostSkillCommand(Database& database, u32& act, u16& kind);
+    void GhostAttackCommand(Database& database);
+    int SpendGhostSpirit(int less, int base, int percent);
+    int LevelGapRoll(BattleServices& services, u16 level);
+    int LowHitPoints(int third) const;
+    void SetElement(CounterList& proficiency, i8 element);
+    i16 SetUnk34C0(i16 value);
+    i16 Unk34C0() const;
+    bool LowSpirit() const;
+    bool LowStamina() const;
+    int StartSpecialAct(BattleState& battle);
+
     std::unique_ptr<RoleRecord> ownedRecord;     // the 0x38 bytes at +0x00
     ObjectRecord unk2B24;                        // swd32 +0x2B24
     std::array<ActState, ExtraActs> extraActs;   // +0x311C the sparks of an absorb (FlyExtraAct)
@@ -154,12 +188,17 @@ public:
     u16 bonusB = 0;  // swd32 +0x2F20 of their +0x36 words
     u16 bonusC = 0;  // swd32 +0x2F22 of their +0x38 words
     u16 unk2F24 = 0;
+    u16 ghostOrder = 0;  // +0x34B6 (swd3e) the order the player gave the talisman ghost (SetGhostOrder)
+    u16 ghostSkill = 0;  // +0x34B8 (swd3e) the index of the fed skill chosen (bit 15 while choosing)
     // +0x34BA, +0x34BC (swd3e) the words +0x56 and +0x58 of the item used (UseSelectedItem, 0x004818E0): a target of
     // that category is absorbed on a 0..9 roll below the second (CanAbsorb)
     u16 absorbCategory = 0;
     u16 absorbChance = 0;
     i16 absorbFrames = 0;  // +0x34BE the frames of the running absorb (AbsorbFrame)
+    i16 unk34C0 = 0;       // +0x34C0 (swd3e) set by MenuConfirm, read by EnemyFrame (0x00487160, 0x00487170)
     u8 critical = 0;       // +0x34CA 1: the next attack is critical (set by 0x0046FF00)
+    i32 ghostActs = 0;     // +0x34CC (swd3e) 1: the ghost acts this turn (a half roll of its order)
+    i32 unk34D0 = 0;       // +0x34D0 (swd3e) set by StartSpecialAct
 };
 
 }  // namespace swd3e

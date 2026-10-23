@@ -360,7 +360,7 @@ private:
     void ShakeBattleBackground(int shake);
     void DrawBattleBackground(int shake);
     void PrepareDarkenedCopies();
-    void ApplyDrain(BattleUnit& attacker, BattleUnit& target);
+    void ApplyDrain(i32& amount, BattleUnit& attacker, BattleUnit& target);
     void TryRetreat(int role);
     int DrainSpellFrame(BattleRole& role, BattleUnit& target);
     int MagicAttackFrame(BattleRole& role, BattleUnit& target);

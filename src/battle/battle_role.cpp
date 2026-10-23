@@ -18,6 +18,7 @@
 #include "core/words.h"
 #include "crt/msvc.h"
 #include "draw/painter.h"
+#include "ghost/talisman_ghost.h"
 #include "org/database.h"
 #include "org/fame.h"
 #include "pic/rle.h"
@@ -53,7 +54,7 @@ void BattleRole::Release()
     this->battleRecord = nullptr;
 }
 
-// swd32.exe 0x0046E870 (unmatched in swd3e)
+// swd3e.exe 0x0047EB10
 void BattleRole::SetSkills(ItemNode* list)
 {
     this->skills = list;
@@ -74,11 +75,21 @@ namespace
 constexpr std::string_view kManroleFile = "C:\\cpp\\SWD102e\\manrole.cpp";
 // The source lines the assertions name.
 constexpr u32 kNoActLine = 0x10B;
-constexpr u32 kNoEscortActLine = 0x123;
+constexpr u32 kNoEscortActLine = 0x15B;
+constexpr u32 kNoGhostActLine = 0x1E2;
+constexpr i32 kEscortHurtAction = 0x26;  // SetupEscort: an escort's act without it marks unk3070
+constexpr u32 kGhostDroppedRoll = 5;     // SetupGhost rolls 0..4 and drops it
+constexpr u32 kGhostYoungDays = 6;       // the ghost's day ranges of SetupGhost
+constexpr u32 kGhostMiddleDays = 0xA;
+constexpr u32 kGhostGrownDays = 0x18;
+constexpr int kGhostDayPercent = 30;
+constexpr u16 kGhostGuardOrder = 4;
+constexpr u16 kGhostLastOrder = 8;
 constexpr u32 kNoGuestActLine = 0x14E;
 constexpr u32 kNoWeaponActLine = 0x182;
 constexpr std::u8string_view kNoAct = u8"戰鬥角色actNumber為0!!";           // 0x004BF9D8
 constexpr std::u8string_view kNoEscortAct = u8"護駕actNumber為0!!";         // 0x004BFA0C
+constexpr std::u8string_view kNoGhostAct = u8"符鬼actNumber為0!!";          // 0x004BFA20
 constexpr std::u8string_view kNoGuestAct = u8"Npc角色actNumber為0!!";       // swd32.exe 0x004A7C7C (unmatched in swd3e)
 constexpr std::u8string_view kNoWeaponAct = u8"武器%d號的強攻擊act沒設!!";  // 0x004BFA34
 constexpr i16 kStatLimit = 0x270F;
@@ -229,7 +240,8 @@ constexpr int kAbsorbChanceBase = 20;
 constexpr int kAbsorbChanceStep = 5;  // less per level above
 constexpr int kBelowChanceStep = 10;  // more per level below
 
-constexpr u16 kCoinArmour = 0x39D;  // 投幣式鎧甲: the gold pays for the hits
+constexpr int kOrbPercent = 0x50;   // ApplyAccessory: an orb adds 80% of its proficiency to the resistance
+constexpr i8 kMaxResistance = 100;  // ApplyEquipment keeps the element resistance to 0..100
 constexpr int kTenths = 10;
 constexpr int kPercent = 100;
 constexpr u32 kAttackRingPercent = 10;  // an attack ring adds 10% of the attack bonus besides its proficiency share
@@ -308,12 +320,13 @@ void BattleRole::Setup(RoleRecord& record, RoleBattleBlock& block, const UnitPla
     this->defeated = (this->battleRecord->condition & RoleRecord::Defeated) != 0 || record.hitPoints == 0 ? 1 : 0;
 }
 
-// swd32.exe 0x0046E890 (unmatched in swd3e): a summoned escort: its mon.dat object (by the act of its placement,
-// asserted non-zero) gives
-// the attack and defence bonuses, the agility, +0x14, the level byte, the resistances and the hit points of the battle
-// record, which serves as both party and battle record
-void BattleRole::SetupEscort(const UnitPlacement& at, Database& database, ErrorReporter& reporter)
+// swd3e.exe 0x0047EB30: a summoned escort: its mon.dat object (by the act of its placement, asserted non-zero) gives
+// the attack and defence bonuses, the agility, the wisdom, the evasion, the level, the five resistances and the hit
+// points of the battle record, which serves as both party and battle record; its skill script is its weapon's. An
+// escort whose act has no action 0x26 is marked (unk3070).
+void BattleRole::SetupEscort(const UnitPlacement& at, BattleServices& services, Database& database)
 {
+    this->partyMember = 0;
     this->ownedData = std::make_unique<ObjectRecord>();
     this->data = this->ownedData.get();
     database.LoadObject(*this->data, at.actId);
@@ -325,7 +338,7 @@ void BattleRole::SetupEscort(const UnitPlacement& at, Database& database, ErrorR
 
     if (this->actId == 0)
     {
-        MaintenanceAssert(reporter, kNoEscortAct, 0, kManroleFile, kNoEscortActLine);
+        MaintenanceAssert(services.errors, kNoEscortAct, 0, kManroleFile, kNoEscortActLine);
     }
 
     RoleRecord& record = *this->battleRecord;
@@ -335,12 +348,111 @@ void BattleRole::SetupEscort(const UnitPlacement& at, Database& database, ErrorR
     record.agility = static_cast<i16>(object.agility);
     record.wisdom = static_cast<i16>(object.unk60);
     record.evasion = object.battleLevel;
-    std::copy_n(object.resistances.begin(), record.resistances.size(), record.resistances.begin());
+    record.level = static_cast<u8>(object.level);
+    std::copy_n(object.resistances.begin(), object.resistances.size(), record.resistances.begin());
     this->evadeSkill = static_cast<u8>(record.evasion);
-    record.hitPoints = object.hitPoints;
+    record.hitPoints = static_cast<i16>(object.hitPoints);
     record.maxHitPoints = record.hitPoints;
-    this->roleRecord = this->battleRecord;
     this->weapon.data.skillScript = object.skill;
+    this->roleRecord = this->battleRecord;
+    this->unk3070 = 0;
+    ActState& act = this->attackAct;
+    act.id = this->actId;
+    act.action = kEscortHurtAction;
+
+    if (services.acts.Run(act) == 0)
+    {
+        this->unk3070 = 1;
+    }
+
+    act = ActState{};
+}
+
+// swd3e.exe 0x0047ECC0: command 0x29: object `id` taken into unk2B24 adds its attack and defence bonuses, agility,
+// wisdom, evasion and level to the battle record and gives its five resistances; the record serves as both.
+void BattleRole::TakeObjectForm(Database& database, u16 id)
+{
+    database.LoadObject(this->unk2B24, id);
+    Database::FreeDescription(this->unk2B24);
+    RoleRecord& record = *this->battleRecord;
+    const ObjectData& object = this->unk2B24.data;
+    record.attackBonus = static_cast<u16>(record.attackBonus + object.attack);
+    record.defenseBonus = static_cast<u16>(record.defenseBonus + object.defense);
+    record.agility = static_cast<i16>(record.agility + object.agility);
+    record.wisdom = static_cast<i16>(record.wisdom + object.unk60);
+    record.evasion = static_cast<i16>(record.evasion + object.battleLevel);
+    record.level = static_cast<u8>(record.level + object.level);
+    std::copy_n(object.resistances.begin(), object.resistances.size(), record.resistances.begin());
+    this->roleRecord = this->battleRecord;
+    this->evadeSkill = static_cast<u8>(record.evasion);
+}
+
+// swd3e.exe 0x0047ED60: the talisman ghost fighting with the party at `at`: its act (unk108, asserted non-zero), its
+// strength as the attack bonus, its wisdom, agility and spirit; on its days 0..6 its agility is halved and its attack
+// bonus 30% less, on days 7..10 its agility 30% less, its attack bonus halved and its wisdom 30% more, on days 11..24
+// its agility and attack bonus 30% more. Its spirit is full, its unk104 takes its insight, its skill script is its
+// unk10C; its order is 1 (order 4 keeps it by its master; order 8 becomes 1). A roll of 0..4 is made and dropped.
+void BattleRole::SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, BattleServices& services)
+{
+    this->partyMember = 0;
+    this->placement = at;
+    this->savedPlacement = at;
+    this->ghostRecord = &ghost;
+    this->kind = BattleUnit::PartyRole;
+    this->actId = static_cast<u16>(ghost.unk108);
+
+    if (this->actId == 0)
+    {
+        MaintenanceAssert(services.errors, kNoGhostAct, 0, kManroleFile, kNoGhostActLine);
+    }
+
+    services.random.Below(kGhostDroppedRoll);
+    RoleRecord& record = *this->battleRecord;
+    record.attackBonus = static_cast<u16>(ghost.strength);
+    record.wisdom = static_cast<i16>(ghost.wisdom);
+    record.agility = static_cast<i16>(ghost.agility);
+    record.maxSpirit = static_cast<i16>(ghost.spirit);
+    const auto day = static_cast<u32>(ghost.day);
+
+    if (day <= kGhostYoungDays)
+    {
+        record.agility = static_cast<i16>(static_cast<u16>(record.agility) >> 1);
+        record.attackBonus = static_cast<u16>(record.attackBonus - kGhostDayPercent * record.attackBonus / kPercent);
+    }
+
+    if (day > kGhostYoungDays && day <= kGhostMiddleDays)
+    {
+        record.agility =
+            static_cast<i16>(record.agility - static_cast<i16>(kGhostDayPercent * record.agility) / kPercent);
+        record.attackBonus = static_cast<u16>(record.attackBonus >> 1);
+        record.wisdom = static_cast<i16>(record.wisdom + kGhostDayPercent * static_cast<u16>(record.wisdom) / kPercent);
+    }
+
+    if (day > kGhostMiddleDays && day <= kGhostGrownDays)
+    {
+        record.agility =
+            static_cast<i16>(record.agility + static_cast<i16>(kGhostDayPercent * record.agility) / kPercent);
+        record.attackBonus = static_cast<u16>(record.attackBonus + kGhostDayPercent * record.attackBonus / kPercent);
+    }
+
+    record.spirit = record.maxSpirit;
+    ghost.unk104 = ghost.insight;
+    this->ghost = 1;
+    this->orbitStep = 0;
+    this->orbitSegment = 0;
+    this->weapon.data.skillScript = static_cast<u16>(ghost.unk10C);
+
+    if (this->ghostOrder == kGhostGuardOrder)
+    {
+        this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostGuards);
+    }
+
+    if (this->ghostOrder == 0 || this->ghostOrder == kGhostLastOrder)
+    {
+        this->ghostOrder = 1;
+    }
+
+    this->roleRecord = this->battleRecord;
 }
 
 // swd32.exe 0x0046E9C0 (unmatched in swd3e): a guest fighting with the party: its mon.dat object (by the act of its
@@ -385,11 +497,10 @@ void BattleRole::SetupGuest(
     this->roleRecord = this->battleRecord;
 }
 
-// swd32.exe 0x0046EBB0 (unmatched in swd3e): the sixteen equipment slots add to the battle record: the attack and
-// defence bonuses, the
-// agility, +0x14, +0x18, +0x1E, raised attack and defence, the resistances (not slots 7..10) and, for slots 1..6 of
-// kind 0, the three bonus words. Slot 0 is the weapon (its strong attack act asserted), slots 7 and 8 the
-// accessories; 投幣式鎧甲 makes the gold guard.
+// swd3e.exe 0x0047EFE0: the sixteen equipment slots add to the battle record: the attack and defence bonuses, the
+// agility, +0x14, +0x18, +0x1E, raised attack and defence, the resistance to the role's element (not slots 7..10) and,
+// for slots 1..6 of kind 0, the three bonus words. Slot 0 is the weapon (its strong attack act asserted), slots 7 and
+// 8 the accessories.
 void BattleRole::ApplyEquipment(
     std::span<const std::unique_ptr<ItemNode>> slots,
     CounterList& proficiency,
@@ -453,9 +564,28 @@ void BattleRole::ApplyEquipment(
         }
         else if (slot != BattleRole::NoResistanceSlotA && slot != BattleRole::NoResistanceSlotB)
         {
-            for (std::size_t element = 0; element < record.resistances.size(); ++element)
+            // swd3e: only the resistance to the role's element rises, kept to 0..100 and copied to unk38[0]; an
+            // element past the item's five resistances reads the bytes after them in the original, 0 here.
+            const auto element = static_cast<i8>(record.resistances[RoleRecord::ElementAt]);
+
+            if (element >= 0 && static_cast<std::size_t>(element) < record.resistances.size())
             {
-                record.resistances[element] = static_cast<u8>(record.resistances[element] + stats.resistances[element]);
+                const auto at = static_cast<std::size_t>(element);
+                const u8 gain = at < stats.resistances.size() ? stats.resistances[at] : u8{0};
+                auto value = static_cast<i8>(record.resistances[at] + gain);
+
+                if (value > kMaxResistance)
+                {
+                    value = kMaxResistance;
+                }
+
+                if (value < 0)
+                {
+                    value = 0;
+                }
+
+                record.resistances[at] = static_cast<u8>(value);
+                record.unk38[0] = record.resistances[at];
             }
 
             if (slot < BattleRole::ArmourSlots && stats.useKind == 0)
@@ -464,18 +594,13 @@ void BattleRole::ApplyEquipment(
                 this->bonusB = static_cast<u16>(this->bonusB + stats.spiritUp);
                 this->bonusC = static_cast<u16>(this->bonusC + stats.staminaUp);
             }
-
-            if (item.id == kCoinArmour)
-            {
-                this->goldGuard = 1;
-            }
         }
     }
 }
 
-// swd3e.exe 0x0047F3E0: an accessory by its kind: most set their equipment flag; an elemental orb lowers its
-// first resistance by the proficiency of the accessory, an attack ring raises the attack bonus by a tenth and half the
-// proficiency in percent
+// swd3e.exe 0x0047F3E0: an accessory by its kind: most set their equipment flag; an elemental orb raises the role's
+// resistance to its first element by 80% of the accessory's proficiency (to at most 100), an attack ring raises the
+// attack bonus by a tenth and half the proficiency in percent; kind 0x3B makes the gold guard
 void BattleRole::ApplyAccessory(const ObjectRecord& accessory, CounterList& proficiency)
 {
     RoleRecord& record = *this->battleRecord;
@@ -501,11 +626,14 @@ void BattleRole::ApplyAccessory(const ObjectRecord& accessory, CounterList& prof
                 break;
             }
 
-            const auto scaled = static_cast<i8>(static_cast<u8>(-kTenths * accessory.data.resistances[element]));
-            const auto product = static_cast<i16>(percent * scaled);
-            const auto share = static_cast<u16>(product / kPercent);
-            record.resistances[element] =
-                static_cast<u8>(record.resistances[element] + static_cast<int>(share) / -kTenths);
+            const auto share = static_cast<i8>(kOrbPercent * percent);
+            record.resistances[element] = static_cast<u8>(record.resistances[element] + share / kPercent);
+
+            if (static_cast<i8>(record.resistances[element]) > kMaxResistance)
+            {
+                record.resistances[element] = static_cast<u8>(kMaxResistance);
+            }
+
             break;
         }
 
@@ -540,6 +668,14 @@ void BattleRole::ApplyAccessory(const ObjectRecord& accessory, CounterList& prof
 
         case AccessoryKind::SpiritFan:
             this->equipmentFlags |= BattleUnit::SpiritFan;
+            break;
+
+        case AccessoryKind::SpecialAct:
+            this->equipmentFlags |= BattleUnit::SpecialActEquipment;
+            break;
+
+        case AccessoryKind::GoldGuard:
+            this->goldGuard = 1;
             break;
 
         default:
@@ -1061,8 +1197,9 @@ int BattleRole::LeapSpellFrame(BattleServices& services, BattleUnit& target)
 // (usedItem; 0 for an item with kNoUseAct). A multi-use item (kMultiUse, uses in the low byte) loses a use and is spent
 // only with its last; a spent item that is not kept (kKeptKind without kUnkKind8000000) loses a count (else a pending
 // count) and unk06, and the selection is cleared; an item left with no count is freed from the list. The original
-// then reads the flag of the item before it (of the list head for the first item, past it).
-u16 BattleRole::UseSelectedItem()
+// then reads the flag of the item before it (of the list head for the first item, past it). swd3e: an item of
+// `category` 6 sets UnkCommandFlag800 and its unk4A and unk4C become absorbCategory and absorbChance.
+u16 BattleRole::UseSelectedItem(int category)
 {
     int place = 0;
     this->ShowAllItems();
@@ -1106,6 +1243,13 @@ u16 BattleRole::UseSelectedItem()
     {
         data.useKind = static_cast<u16>((uses & ~kUsesMask) | ((uses & kUsesMask) - 1));
         spent = (uses & kUsesMask) == 1;
+    }
+
+    if (category == kAnyUserCategory)
+    {
+        this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag800);
+        this->absorbCategory = data.unk4A;
+        this->absorbChance = data.unk4C;
     }
 
     if (spent && ((data.kind & kKeptKind) == 0 || (data.kind & kUnkKind8000000) != 0))
@@ -1570,7 +1714,7 @@ void BattleRole::FinishCommand()
     {
         if (this->selectedItem != nullptr)
         {
-            this->UseSelectedItem();
+            this->UseSelectedItem(0);
             this->selectedItem = nullptr;
         }
         else
