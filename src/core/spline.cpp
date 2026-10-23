@@ -12,8 +12,8 @@ namespace
 {
 
 constexpr double kSegmentBase = 2.0;  // the first point of a segment is two before it
-// swd32.exe 0x00499D20 (unmatched in swd3e): TalkCurvePoint goes 1/20 along the curve a step
-constexpr double kTalkStep = 0.05;
+// 0x004BF900: TalkCurvePoint goes 1/20 along the curve a step
+constexpr float kTalkStep = 0.05F;  // a float in the original
 
 }  // namespace
 
@@ -76,9 +76,8 @@ Point Evaluate(float t, std::span<const Point> points)
 
 }  // namespace spline
 
-// swd32.exe 0x0046E290 (unmatched in swd3e): the point of the battle talk's curve through four points at `step`
-// twentieths (the original
-// also evaluates the curve at 0 and drops it)
+// swd3e.exe 0x0047E450: the point of the curve through four points at `step` twentieths (the battle talk's, the
+// talisman ghost's orbit; the original also evaluates the curve at 0 and drops it)
 void TalkCurvePoint(float step, i32& x, i32& y, const std::array<std::array<i16, 2>, 4>& points)
 {
     spline::Points curve;
@@ -89,7 +88,7 @@ void TalkCurvePoint(float step, i32& x, i32& y, const std::array<std::array<i16,
     }
 
     spline::Evaluate(0.0F, curve);
-    const auto t = static_cast<float>(static_cast<double>(step) * kTalkStep);
+    const auto t = static_cast<float>(static_cast<double>(step) * static_cast<double>(kTalkStep));
     const spline::Point point = spline::Weighted(spline::BasisWeights(t, spline::Basis), curve);
     x = static_cast<i32>(crt::Ftol(point.x));
     y = static_cast<i32>(crt::Ftol(point.y));

@@ -80,6 +80,7 @@ public:
               this->party,
               this->crtRandom,
               this->screenPixels,
+              this->errors,
           }
 
     {

@@ -23,7 +23,7 @@ struct Point
 
 using Points = std::array<Point, 4>;
 
-// swd32.exe 0x004A6474 (unmatched in swd3e): the uniform cubic B-spline basis
+// 0x004BE010: the uniform cubic B-spline basis
 constexpr Matrix Basis = {
     -1.0F / 6,
     0.5F,

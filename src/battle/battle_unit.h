@@ -36,6 +36,40 @@ struct EffectNode
     u16 value = 0;                     // +0xBA the value of the skill (a poison's damage)
 };
 
+// swd3e: a list of afterimages (0xD0 bytes; the unit's at +0x1244): snapshots of pictures that fade out, each drawn
+// translucent at its level and tinted under it while the level lasts.
+struct ImageList
+{
+    struct Image
+    {
+        static constexpr u8 Once = 1;  // `flags`: not added again for the same picture
+
+        std::unique_ptr<Image> next;  // +0x00 (+0x04..+0xA7 unused)
+        i32 x = 0;                    // +0xA8
+        i32 y = 0;                    // +0xAC
+        u32 mode = 0;                 // +0xB0
+        u16 frame = 0;                // +0xB4
+        u16 picture = 0;              // +0xB6
+        u16 unkB8 = 0;                // +0xB8
+        u8 flags = 0;                 // +0xBA
+        i16 tintRed = 0;              // +0xBC
+        i16 tintGreen = 0;            // +0xBE
+        i16 tintBlue = 0;             // +0xC0
+        i16 level = 0;                // +0xC2 the translucency, falling by `step` a frame
+        i16 step = 0;                 // +0xC4
+    };
+
+    void Add(const Image& image);
+    int Draw(BattleServices& services);
+    bool Empty() const;
+
+    std::unique_ptr<Image> first;  // +0x00
+    u16 count = 0;                 // +0xC8
+    u16 lastFrame = 0;             // +0xCA the last image added
+    u16 lastPicture = 0;           // +0xCC
+    u16 lastB8 = 0;                // +0xCE
+};
+
 // The afterimages of a moving act (0x98 bytes; in a queued action at +0x134 and eight in a unit at +0xFCC). DrawTrail
 // pushes the current picture in front every third frame and draws the images fading by fadeStep.
 struct AfterimageTrail
@@ -176,8 +210,10 @@ class TswArchive;
 
 namespace smooth
 {
+class Scene;
+class ScenePainter;
 class UnitFrame;
-}
+}  // namespace smooth
 
 class ErrorReporter;
 struct CounterNode;
@@ -269,6 +305,7 @@ public:
         UnkCommand1A = 0x1A,
         UnkCommand1B = 0x1B,
         UnkCommand1C = 0x1C,
+        UnkCommand50 = 0x50,  // swd3e: drawn with the spark act like UnkCommand6 (IdleFrame)
         UnkCommand1F = 0x1F,
         UnkCommand22 = 0x22,
         UnkCommand23 = 0x23,
@@ -431,6 +468,7 @@ public:
     int EnrageCheck(BattleServices& services, i16 cause, i16 element);
     int Enrage(BattleServices& services);
     int EnrageFrame(BattleServices& services);
+    int KnockBackFrame(BattleServices& services);
     i32 HitPointShare(int scale) const;
     int CancelHitNumber(BattleServices& services);
     void ClearUnk2FD1();
@@ -534,7 +572,11 @@ public:
     int CatchRoll(BattleServices& services, u8 level);
     int HurtFrame(BattleServices& services);
     void IdleFrame(BattleServices& services, int paused);
-    void MoveIdle(BattleServices& services);
+    void IdleFrameBody(BattleServices& services, smooth::Scene& scene);
+    void DrawFlash(smooth::ScenePainter& painter);
+    int DrawPulse(const BattleServices& services, smooth::ScenePainter& painter);
+    void DrawTint(smooth::ScenePainter& painter);
+    void DrawShadowTinted(smooth::ScenePainter& painter);
     int ChooseCommand(BattleServices& services, Database& database, u32& act);
     int ChooseAttack(Database& database);
     void MarkDelayedAttack();
@@ -683,6 +725,7 @@ public:
     std::vector<u16> absorbPixels;              // the raw pixels of absorb (decoded by 0x004019A0, freed by 0x004885A0)
     std::array<ParticleEffect, Drains> drains;  // +0x10E4 the drain effects (StartDrainEffect)
     std::array<std::vector<u16>, Drains> drainPixels;  // their raw pixels
+    ImageList images;                                  // +0x1244 (swd3e) the afterimages of a knock back
     std::array<AfterimageTrail, Trails> trails;        // +0x1314 the afterimages of the unit's acts
     std::unique_ptr<QueuedAction> actions;             // +0x2794
     const Picture* shadowPicture = nullptr;            // +0x2A40
@@ -721,7 +764,8 @@ public:
     u32 equipmentFlags = 0;            // +0x2BD0 bits 0, 2..6 from the equipment
     u32 unk26CC = 0;
     u16 marks = 0;      // +0x2BD8 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
-    i16 guardPose = 0;  // swd32 +0x26D2 the guard pose (kGuardPose1..8)
+    u16 unk2BDA = 0;    // +0x2BDA (swd3e) bit 0: the weak stand pose (IdleFrame); bit 2 (0x00486540)
+    i16 guardPose = 0;  // +0x2BDC the guard pose (1, 2, 4)
     u16 unk26D4 = 0;
     u16 nudge = 0;                                  // swd32 +0x26D6
     u16 drawAtSaved = 0;                            // swd32 +0x26D8
@@ -784,6 +828,7 @@ public:
     u16 aimAnchorX = 0;  // +0x2EBE the same for AimAction
     u16 overlayX = 0;    // +0x2EC0 the x of the overlay picture from the act (DrawAction)
     u16 originX = 0;     // +0x2EC2
+    u16 originY = 0;     // +0x2EC4 (swd3e) the act's y offset (IdleFrame)
     u16 actOffsetX = 0;  // +0x2EC6 the act's x offset, mirrored like the picture (DrawAction)
     u16 aimOffsetX = 0;  // +0x2EC8 the act's x offset of AimAction, mirrored like the picture
     u16 actX = 0;        // +0x2ECA where DrawAction draws the act
@@ -805,9 +850,9 @@ public:
     u16 commandB = 0;  // +0x2F8C commands 2, 3, 6, 13, 14 and 15
     u16 unk2A72 = 0;
     u16 unk2A74 = 0;
-    u16 hurtStep = 0;  // +0x2F94 the step of the stagger (HurtFrame)
+    u16 hurtStep = 0;       // +0x2F94 the step of the stagger (HurtFrame)
     u16 unk2A76 = 0;
-    u16 unk2A7A = 0;
+    u16 drainingGauge = 0;  // +0x2F96 (swd3e) 1 while the second gauge (unk2BE8) runs down (0x004902E0)
     u16 targetCount = 0;    // +0x2F98
     u16 damageSlot = 0;     // +0x2F9A
     u16 queuedActions = 0;  // +0x2F9C the acts AddQueuedAction appended
@@ -820,17 +865,19 @@ public:
     u16 unk2A8E = 0;
     u16 barrierTurns = 0;  // +0x2FBA
     u8 unk2A92 = 0;
-    u8 evadeSkill = 0;    // +0x2FC5 an evade roll of 0..kEvadeRoll below it evades
-    u8 defeatPose = 0;    // +0x2FC6 the pose of the defeat (a fixed pose overrides it)
-    u8 fixedPose = 0;     // +0x2FC7
-    u8 idleTurns = 0;     // swd32 +0x2A97 the turns since the enemy chose an object or a skill (ChooseCommand)
-    u8 itemWait = 0;      // swd32 +0x2A98 the turns since the third object was forced
-    u8 skillWait = 0;     // +0x2FCB the turns since the second skill was forced
-    u8 choicePhase = 0;   // +0x2FCC 1: objects were last chosen, 2: skills
-    u8 extraAttacks = 0;  // +0x2FCD the attacks the unit repeats (set by skill 0x15)
-    u8 healChoice = 0;    // +0x2FCE
-    u8 healPercent = 0;   // +0x2FD0 1: restoreHitPoints..restoreStamina are percentages of the target's maxima
-    i32 kind = 0;         // +0x2FE0 1: a party role
+    u16 orbitStep = 0;     // +0x2FC0 (swd3e) the talisman ghost's step along its orbit segment (IdleFrame)
+    u16 orbitSegment = 0;  // +0x2FC2 (swd3e) and the segment
+    u8 evadeSkill = 0;     // +0x2FC5 an evade roll of 0..kEvadeRoll below it evades
+    u8 defeatPose = 0;     // +0x2FC6 the pose of the defeat (a fixed pose overrides it)
+    u8 fixedPose = 0;      // +0x2FC7
+    u8 idleTurns = 0;      // swd32 +0x2A97 the turns since the enemy chose an object or a skill (ChooseCommand)
+    u8 itemWait = 0;       // swd32 +0x2A98 the turns since the third object was forced
+    u8 skillWait = 0;      // +0x2FCB the turns since the second skill was forced
+    u8 choicePhase = 0;    // +0x2FCC 1: objects were last chosen, 2: skills
+    u8 extraAttacks = 0;   // +0x2FCD the attacks the unit repeats (set by skill 0x15)
+    u8 healChoice = 0;     // +0x2FCE
+    u8 healPercent = 0;    // +0x2FD0 1: restoreHitPoints..restoreStamina are percentages of the target's maxima
+    i32 kind = 0;          // +0x2FE0 1: a party role
     i32 unk2AA4 = 0;
     i32 unk2AA8 = 0;
     i32 unk2AAC = 0;
@@ -865,9 +912,9 @@ public:
     i32 fadedIn = 0;  // +0x3064 a forced unit has faded in for its attack (AttackFrame)
     i32 facingTurnsBack =
         0;  // swd32 +0x2B20 set with the facing (SetFacingIfAble); 1: the facing turns back when the gauge fills
-    i32 unk2B10 = 0;
+    i32 nudged = 0;       // +0x3058 (swd3e) set by SetNudge for a shake, read by HurtFrame
     i32 evadeRolled = 0;  // +0x305C 1: the evade roll of the attack was made
-    i32 goldGuard = 0;    // swd32 +0x2B18
+    i32 goldGuard = 0;    // +0x3060
 };
 
 int ScaleByTenths(i8 tenths, i16& value);

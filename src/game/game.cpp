@@ -336,6 +336,7 @@ Game::Game(std::u8string installDirectory)
           this->party,
           this->crtRandom,
           this->drawSurface,
+          this->errors,
       },
       battleStage(this->battleServices),
       actDrawer(this->acts, this->archive, this->painter, this->errors),

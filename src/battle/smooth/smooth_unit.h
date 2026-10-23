@@ -24,52 +24,6 @@ struct BattleServices;
 namespace swd3e::smooth
 {
 
-// What IdleFrame draws of the unit, as its frame decides it (IdleAdvance) for IdleDraw: the body at (x, y) with its
-// flags (mirrored: the mirror bits alone), the shadow, outlines, smear, blend, wave, barrier flash, grey and red
-// copies, the gold over a gold guard, the thrown act and the overlay; thrownLost: the thrown act did not run (the
-// frame ends after the body).
-struct IdleView
-{
-    PictureRef picture;
-    std::array<int, 2> place = {};  // where the unit stands: its draws move with it (a new pose keeps it)
-    const void* who = nullptr;      // the unit
-    int x = 0;
-    int y = 0;
-    u32 flags = 0;
-    u32 mirrored = 0;
-    bool body = false;
-    bool shadow = false;
-    int shadowX = 0;
-    int shadowY = 0;
-    int shadowTint = 0;
-    bool whiteOutline = false;
-    bool outline = false;
-    bool smear = false;
-    bool signal = false;
-    int alpha = 0;
-    int wave = 0;
-    bool held = false;
-    bool flash = false;
-    int flashTint = 0;
-    int flashX = 0;
-    int flashY = 0;
-    bool gray = false;
-    bool red = false;
-    bool gold = false;
-    int goldValue = 0;
-    int goldX = 0;
-    int goldY = 0;
-    PictureRef thrown;
-    int thrownX = 0;
-    int thrownY = 0;
-    u32 thrownFlags = 0;
-    bool thrownLost = false;
-    PictureRef overlay;
-    int overlayX = 0;
-    int overlayY = 0;
-    u32 overlayFlags = 0;
-};
-
 // What a walk (WalkToTarget, ReturnHome) draws, as its frame decides it: the picture at (x, y) with its flags, the
 // shadow for the place at shadowY, the overlay of a walk home.
 struct WalkView
@@ -175,7 +129,7 @@ struct ActionView
     u32 overlayFlags = 0;
 };
 
-// The parts of the frame functions of `unit` (IdleFrame, WalkToTarget, ReturnHome, DrawDamageNumbers, DrawGuardText,
+// The parts of the frame functions of `unit` (WalkToTarget, ReturnHome, DrawDamageNumbers, DrawGuardText,
 // HurtFrame, DrawAction):
 // what a frame decides into a view, and the view drawn.
 class UnitFrame
@@ -183,9 +137,6 @@ class UnitFrame
 public:
     explicit UnitFrame(BattleUnit& unit);
 
-    // IdleFrame: false when the unit is not drawn (hidden, staggering, busy, fading, its act or picture missing).
-    bool IdleAdvance(BattleServices& services, int paused, IdleView& view);
-    static void IdleDraw(BattleServices& services, const IdleView& view);
     // WalkToTarget: false when it draws nothing.
     bool WalkAdvance(BattleServices& services, const BattleUnit& target, WalkView& view);
     // ReturnHome: its result; the view keeps no picture when it draws nothing.
@@ -262,8 +213,7 @@ public:
     );
     int Queued(BattleServices& services, BattleUnit& target, i32 action, Scene& scene);
     int Home(BattleServices& services, const BattleUnit& target, i32 id, i32 action, Scene& scene);
-    // IdleFrame, WalkToTarget, HurtFrame, DrawDamageNumbers and DrawGuardText into a scene.
-    void Idle(BattleServices& services, int paused, Scene& scene);
+    // WalkToTarget, HurtFrame, DrawDamageNumbers and DrawGuardText into a scene.
     void Walk(BattleServices& services, const BattleUnit& target, Scene& scene);
     int Hurt(BattleServices& services, Scene& scene);
     int Numbers(BattleServices& services, Scene& scene);
@@ -349,7 +299,6 @@ public:
     int DrainEffectFrameAdvance(BattleServices& services, int slot, Scene& scene);
 
 private:
-    int FlashStep();
     void ChooseOverlay(BattleServices& services, u16 frame, u16 picture, int offsetX, int offsetY, WalkView& view);
 
     BattleUnit& unit;

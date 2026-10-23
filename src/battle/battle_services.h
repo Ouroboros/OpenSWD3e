@@ -12,6 +12,7 @@ class BattleHud;
 class BattleMessages;
 class BattleState;
 class Config;
+class ErrorReporter;
 class Painter;
 class Party;
 class Random;
@@ -42,6 +43,7 @@ struct BattleServices
     Party& party;
     crt::Random& crtRandom;  // the C runtime rand (seeded by the explosions)
     u16*& screen;            // Game::drawSurface (0x004CD76C): the locked frame the painter draws to
+    ErrorReporter& errors;
     // The rebuild's smooth battle: the scene of the battle frame the parts deciding it add their draws to (drawn once
     // the frame is decided); none: each part's draws are drawn at once, in the original's order.
     smooth::Scene* frame = nullptr;

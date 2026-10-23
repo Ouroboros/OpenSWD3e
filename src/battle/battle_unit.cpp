@@ -14,9 +14,12 @@
 #include "battle/battle_services.h"
 #include "battle/battle_state.h"
 #include "battle/battle_unit_constants.h"
+#include "battle/smooth/smooth_draw.h"
 #include "battle/smooth/smooth_unit.h"
 #include "config/config.h"
+#include "core/error_box.h"
 #include "core/format.h"
+#include "core/spline.h"
 #include "core/words.h"
 #include "crt/msvc.h"
 #include "draw/paint_record.h"
@@ -457,7 +460,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->commandA = 0;
     this->commandB = 0;
     this->unk2A72 = 0;
-    this->unk2A7A = 0;
+    this->drainingGauge = 0;
     this->unk29A4 = 0;
     this->fadeLevel = BattleUnit::Opaque;
     this->brightLevel = 1;
@@ -1141,10 +1144,51 @@ constexpr u16 kNearCatch = 5;
 // HurtFrame.
 
 // IdleFrame.
-constexpr u16 kShaking = 1;  // drawAtSaved: the unit shakes while nudge lasts
-constexpr u32 kShakeChance = 2;
-constexpr i16 kRiseStep = 10;
-constexpr i16 kDropStep = 0x1E;
+constexpr u16 kShaken = 1;          // SetNudge: the unit is nudged in place
+constexpr i32 kWeakAction = 0x25;   // the stand pose of unk2BDA bit 0 or a weak party member
+constexpr i16 kWeakShare = 4;       // a party member at a quarter of its hit points or less looks weak
+constexpr i32 kDrainAction = 0x2D;  // while the second gauge runs down
+constexpr i32 kReadyAction = 0x2C;
+constexpr i32 kItemReadyAction = 0x34;
+constexpr i32 kAbsorbReadyAction = 0x31;
+constexpr i32 kGuardAction1 = 0x33;
+constexpr i32 kGuardAction2 = 0x38;
+constexpr i32 kGuardAction4 = 0x37;
+constexpr i16 kGuardPose1 = 1;
+constexpr i16 kGuardPose2 = 2;
+constexpr i16 kGuardPose4 = 4;
+constexpr i32 kStillAct = 0xFA;  // the act of a unit under MarkBit4
+constexpr i16 kForcedPlaceX = 0x140;
+constexpr i16 kForcedPlaceY = 0x136;
+constexpr u32 kFlag26B8Bit30 = 0x40000000;  // keeps the stand pose (IdleFrame)
+constexpr u32 kFlag26B8Pulse = 0x200000;    // a red pulse over the unit (DrawPulse)
+constexpr u32 kFlag26B8Tinted = kFlag26B8Bit19;
+constexpr u32 kPictureBits = Painter::RleSource | Painter::Mirror | Painter::Flip;
+constexpr u32 kWhiteColorPair = 0xFFFFFFFF;
+constexpr int kAutoTint = -10;  // a unit acting by itself is drawn with this tint
+constexpr i32 kSparkAct = 0x1C2A;  // the act over a unit of command 6 or 0x50
+constexpr int kGoldNumbers = 0x2377;
+constexpr int kGoldLeft = 0x50;
+constexpr int kGoldBelow = 0xA;
+constexpr int kAutoBar = 0x236D;  // the hit point bar under a unit acting by itself, and its gauge
+constexpr int kAutoBarFrame = 1;
+constexpr int kAutoBarLeft = 0x1C;
+constexpr int kAutoBarLength = 0x30;
+constexpr int kAutoGaugeBelow = 5;
+constexpr int kAutoGaugeHeight = 3;
+constexpr u32 kAutoGaugeBlue = 0x18;
+// The talisman ghost circles its saved place: a curve through ten points about it (0x005785F0, filled each frame),
+// six segments of 21 steps.
+constexpr std::array<std::array<i16, 2>, 10> kOrbit = {
+    {{0, 0}, {0, 0}, {15, -10}, {45, 10}, {60, 0}, {45, -10}, {15, 10}, {0, 0}, {0, 0}, {15, -10}}
+};
+
+constexpr u16 kOrbitSteps = 0x14;
+constexpr u16 kOrbitSegments = 5;
+constexpr i16 kOrbitTurn = 3;  // the ghost faces back on the first three segments
+// DrawFlash, DrawPulse, DrawTint.
+constexpr int kTintedLevel = 0xF;
+constexpr int kUntintedLevel = -12;
 
 // ChooseCommand.
 constexpr int kNoChoice = 0xFFFF;
@@ -1570,7 +1614,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2A72 = 0;
     this->unk2A74 = 0;
     this->hurtStep = 0;
-    this->unk2A7A = 0;
+    this->drainingGauge = 0;
     this->targetCount = 0;
     this->queuedActions = 0;
     this->damageSlot = 0;
@@ -1881,11 +1925,19 @@ int BattleUnit::SetFacingIfAble(int value)
     return 1;
 }
 
-// swd32.exe 0x00482080 (unmatched in swd3e)
+// swd3e.exe 0x00498DB0: the nudge of a hit and how the unit is drawn by it (kRising, kDropping); a shake (1) only
+// marks the unit nudged for HurtFrame
 void BattleUnit::SetNudge(u16 nudge, u16 saved)
 {
     this->nudge = nudge;
     this->drawAtSaved = saved;
+
+    if (saved == kShaken)
+    {
+        this->nudged = 1;
+        this->drawAtSaved = 0;
+        this->nudge = 0;
+    }
 }
 
 // swd3e.exe 0x0049A970: the two values of a command that names a target (flag 1)
@@ -3866,7 +3918,7 @@ int BattleUnit::CatchRoll(BattleServices& services, u8 level)
 // ends. A party role takes its hurt pose (its guard pose while guarding or marked, not held; a poisoned one the
 // hurt pose), others the shadow action. The picture shakes back by kStaggerShake (UnkStatus4 copies the main act and
 // stays), over its shadow, with a flash; an enemy also leaves a red flash behind, lifted by kStaggerRise (up with
-// unk2B10, else to the side). Its effects, overlay and a recoil effect follow.
+// nudged, else to the side). Its effects, overlay and a recoil effect follow.
 int BattleUnit::HurtFrame(BattleServices& services)
 {
     smooth::Scene scene;
@@ -3875,73 +3927,706 @@ int BattleUnit::HurtFrame(BattleServices& services)
     return result;
 }
 
-// swd32.exe 0x00478B60 (unmatched in swd3e): one frame of the unit at rest (`paused`: its acts hold). drawAtSaved moves
-// it first (1 shakes
-// it a pixel at random, 2 lifts it 10 a frame to the top, 3 drops it 0x1E a frame back to its saved place, marking
-// flag 26B8). A staggering unit (flag 26B8) runs HurtFrame. Otherwise, unless busy, the main act takes its pose: the
-// stand pose (an enemy's plus unk2684; a party role's weak pose at a quarter of its hit points or less), the pose of
-// a chosen command, a guard pose by guardPose, the defeated pose of a role, or unk2A0E. It is drawn over its shadow
-// (mirrored by the facing; a forced draw adds Additive), with its outlines, its blend or wave, the barrier flash, a
-// grey copy (UnkMark4), a red copy for command 2, the gold over a gold guard, its sound; command 6 of a
-// role shows the thrown act; its overlay, idle effect, follow-up and effects follow. A fading or invisible unit runs
-// its fade instead. The rebuild's continuous motion splits the frame into what it decides (IdleAdvance) and what it
-// draws of the unit (IdleDraw), run here in the original's order.
+// swd3e.exe 0x0048BA60: one frame of the unit at rest (`paused`: its act holds). A staggering unit (flag 26B8) runs
+// HurtFrame (a gold guard's gold shown by it), a knocked back one KnockBackFrame. Otherwise, unless busy, the main act
+// takes its pose: the stand pose (an enemy's plus unk2684; a weak one for unk2BDA bit 0 or a party member at a
+// quarter of its hit points), the drain pose, the defeated pose of a party member, unk2F2A, the pose of a chosen
+// command (nothing drawn for command flag 0x200), a guard pose by guardPose. The talisman ghost circles its saved
+// place. The unit is drawn over its shadow (mirrored by the facing; a unit acting by itself adds Additive and is
+// tinted), with its outlines, its blend or wave, the barrier flash, the pulse and tint of flags 26B8 bits 21 and 19, a
+// grey copy (UnkMark4), a red copy for command 2, the hit point bar of a unit acting by itself, its sound; its
+// effects, the spark of commands 6 and 0x50, its overlay, idle effect and follow-up follow. A fading or invisible
+// unit runs its fade instead.
 void BattleUnit::IdleFrame(BattleServices& services, int paused)
 {
+    ActState& act = this->mainAct;
+
+    if ((this->equipmentFlags & BattleUnit::Unk36) != 0 && this->unk2FD1 > 0)
+    {
+        --this->unk2FD1;
+    }
+
+    this->unk2AF4 = paused;
+    act.hold = 0;
+
+    if (paused == 1 || (this->marks & BattleUnit::Held) != 0)
+    {
+        act.hold = 1;
+    }
+
+    if ((act.target & ActState::Holds) != 0)
+    {
+        act.hold = 1;
+    }
+
+    const bool shown = this->defeated != 1 || (this->kind != 0 && this->autoControl != 1 && this->guestControl != 1) ||
+                       this->unk2AF8 != 0;
+
+    if (!shown)
+    {
+        return;
+    }
+
     smooth::Scene scene;
-    smooth::UnitFrame(*this).Idle(services, paused, scene);
+    const smooth::Scene::Owner owner(scene, this);
+    this->IdleFrameBody(services, scene);
     scene.Show(services);
 }
 
-// The movement of IdleFrame by drawAtSaved (inline in the original): 1 shakes the unit a pixel at random while nudge
-// lasts (towards its side), 2 lifts it, 3 drops it back to its saved place.
-void BattleUnit::MoveIdle(BattleServices& services)
+// The part of IdleFrame (0x0048BA60) past its visibility test, its draws added to `scene`.
+void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
 {
-    if (this->nudge == 0)
-    {
-        return;
-    }
+    ActState& act = this->mainAct;
 
-    if (this->drawAtSaved == kShaking)
+    if ((this->unk26B8 & kFlag26B8) != 0)
     {
-        if (static_cast<u16>(services.random.Below(kShakeChance)) == 1)
+        if (this->HurtFrame(services) == 1)
         {
-            const bool back = this->kind == 1 ? this->facing != 0 : this->facing == 0;
-            this->placement.x = static_cast<i16>(this->placement.x + (back ? -1 : 1));
+            this->charging = 0;
+            this->ClearFlag26B8();
         }
 
-        --this->nudge;
-        return;
-    }
+        const i32 gold = services.party.variables[Party::Gold];
 
-    if (this->drawAtSaved == kRising)
-    {
-        this->placement.y = static_cast<i16>(this->placement.y - kRiseStep);
-
-        if (this->placement.y <= 0)
+        if (this->goldGuard == 1 && this->guardPose == 0 && gold != 0)
         {
-            this->placement.y = 0;
-            this->nudge = 0;
-            this->drawAtSaved = 0;
+            const int x = this->placement.x + kGoldLeft;
+            const int y = this->placement.y - act.y + kGoldBelow;
+            scene.Add(
+                [gold, x, y](BattleServices& drawing)
+                {
+                    drawing.hud.DrawSmallNumber(kGoldNumbers, gold, x, y);
+                }
+            );
         }
 
         return;
     }
 
-    if (this->drawAtSaved == kDropping)
+    if ((this->unk26B8 & kFlag26B8Blocked) != 0)
     {
-        this->placement.y = static_cast<i16>(this->placement.y + kDropStep);
-        const i16 home = this->savedPlacement.y;
+        this->KnockBackFrame(services);
+        return;
+    }
 
-        if (this->placement.y >= home)
+    if (this->unk2AAC == 1)
+    {
+        return;
+    }
+
+    act.id = this->actId;
+    act.action = kShadowAction;
+
+    if ((this->unk2BDA & 1) != 0)
+    {
+        act.action = kWeakAction;
+    }
+
+    if (this->MarkBit4() == 1)
+    {
+        act.id = kStillAct;
+        act.action = kShadowAction;
+    }
+
+    if ((this->unk26B8 & kFlag26B8Bit30) != 0)
+    {
+        act.action = kShadowAction;
+    }
+
+    this->restAction = static_cast<u16>(act.action);
+
+    // 0x0048BB5F calls nullsub_1 without arguments for a party role: nothing to log.
+    if (this->kind != 1)
+    {
+        act.action += this->unk2684;
+    }
+
+    const RoleRecord* record = this->roleRecord;
+
+    if (this->kind == 1 && this->partyMember == 1 && record->hitPoints <= record->maxHitPoints / kWeakShare &&
+        this->MarkBit4() == 0)
+    {
+        act.action = kWeakAction;
+    }
+
+    if (this->drainingGauge == 1)
+    {
+        act.action = kDrainAction;
+    }
+
+    if (this->defeated == 1 && this->partyMember == 1)
+    {
+        act.action = kDefeatedShadowAction;
+    }
+
+    if (this->action != 0)
+    {
+        act.action = this->action;
+    }
+
+    if (this->commandFlags != 0 && this->unk2AB4 == 1 && this->unk2AC8 == 1)
+    {
+        if (this->autoControl == 1)
         {
-            this->placement.y = home;
-            this->nudge = 0;
-            this->drawAtSaved = 0;
-            this->unk2B10 = 1;
-            this->RaiseFlag26B8(services.state);
+            this->guarding = 0;
+        }
+
+        if (this->guestControl == 1)
+        {
+            this->placement.x = kForcedPlaceX;
+            this->placement.y = kForcedPlaceY;
+        }
+
+        this->homePoseX = 0;
+
+        if (this->kind == 1)
+        {
+            this->unk2674 = 0;
+        }
+
+        act.action = kReadyAction;
+
+        if (this->readyAction != 0)
+        {
+            act.action = this->readyAction;
+        }
+
+        this->restAction = static_cast<u16>(act.action);
+
+        if ((this->commandFlags & BattleUnit::UnkCommandFlag4000) != 0)
+        {
+            act.action = kItemReadyAction;
+        }
+
+        if ((this->commandFlags & BattleUnit::UnkCommandFlag2000) != 0)
+        {
+            act.action = kItemReadyAction;
+        }
+
+        if ((this->commandFlags & BattleUnit::UnkCommandFlag400) != 0)
+        {
+            act.action = kItemReadyAction;
+        }
+
+        if ((this->commandFlags & BattleUnit::UnkCommandFlag800) != 0)
+        {
+            act.action = kAbsorbReadyAction;
+        }
+
+        if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
+        {
+            return;
         }
     }
+
+    if (this->partyMember == 1)
+    {
+        if (this->guardPose == kGuardPose1)
+        {
+            this->unk2AD4 = 0;
+            act.action = kGuardAction1;
+
+            if (this->MarkBit4() == 1)
+            {
+                this->ExpireEffects(services, 1);
+                act.id = this->actId;
+            }
+        }
+
+        if (this->guardPose == kGuardPose2)
+        {
+            act.action = kGuardAction2;
+
+            if (act.waiting == 1)
+            {
+                act.waiting = 0;
+                act.view = 0;
+            }
+        }
+
+        if (this->guardPose == kGuardPose4)
+        {
+            act.action = kGuardAction4;
+        }
+    }
+
+    if (services.acts.Run(act) == 0)
+    {
+        const std::string_view name(this->displayName.data(), this->displayName.size());
+        ErrorBox(services.errors, u8"Wait Act", u8"[%s]QQ:%d號錯誤!!", name.substr(0, name.find('\0')), act.action);
+        return;
+    }
+
+    this->shadowPicture = services.archive.GetPicture(act.frame, act.picture);
+
+    if ((act.target & ActState::FollowsUp) != 0)
+    {
+        if ((this->command.flags & UnitCommand::TargetsUnit) == 0 && this->command.followAct != 0)
+        {
+            this->stage |= BattleUnit::FollowingUp;
+        }
+
+        this->commandA = this->commandB;
+        act.target = 0;
+
+        if ((this->commandFlags & BattleUnit::UnkCommandFlag8000) == 0 ||
+            (this->commandFlags & BattleUnit::UnkCommandFlag4000) != 0)
+        {
+            act.hold = 0;
+        }
+
+        if ((this->command.actionFlags & UnitCommand::DelaysFadeIn) != 0)
+        {
+            this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark8);
+            this->recoilAct = act;
+        }
+    }
+
+    // A missing picture is read through a null pointer in the original.
+    if (this->shadowPicture == nullptr)
+    {
+        return;
+    }
+
+    const Picture& picture = *this->shadowPicture;
+    this->originX = static_cast<u16>(act.x);
+    this->originY = static_cast<u16>(act.y);
+    this->drawFlags = act.flags;
+    this->actAnchorX = act.anchorX;
+
+    // The mirror of the act: a mirrored act is drawn unmirrored, another mirrored; mirroring twice keeps it mirrored.
+    auto mirror = [this, &act, &picture]
+    {
+        this->drawFlags =
+            (act.flags & Painter::Mirror) != 0 ? act.flags & ~Painter::Mirror : this->drawFlags | Painter::Mirror;
+
+        if (act.x != 0)
+        {
+            this->originX = static_cast<u16>(picture.width - static_cast<u16>(act.x));
+        }
+
+        if (act.anchorX != 0)
+        {
+            this->actAnchorX = static_cast<u16>(picture.width - act.anchorX);
+        }
+    };
+
+    if (this->ghost == 1 && (this->unk2BDA & 1) == 0 && this->unk2AC8 == 0)
+    {
+        std::array<std::array<i16, 2>, 4> points = {};
+
+        for (std::size_t at = 0; at < points.size(); ++at)
+        {
+            const std::array<i16, 2>& point = kOrbit[this->orbitSegment + at];
+            points[at] = {
+                static_cast<i16>(this->savedPlacement.x + point[0]),
+                static_cast<i16>(this->savedPlacement.y + point[1]),
+            };
+        }
+
+        i32 x = 0;
+        i32 y = 0;
+        TalkCurvePoint(static_cast<float>(this->orbitStep), x, y, points);
+        this->placement.x = static_cast<i16>(x);
+        this->placement.y = static_cast<i16>(y);
+        ++this->orbitStep;
+
+        if (this->orbitStep > kOrbitSteps)
+        {
+            ++this->orbitSegment;
+            this->orbitStep = 0;
+
+            if (this->orbitSegment > kOrbitSegments)
+            {
+                this->orbitSegment = 0;
+            }
+        }
+
+        if (this->orbitSegment < kOrbitTurn)
+        {
+            mirror();
+        }
+    }
+
+    if (this->autoControl == 1 || this->guestControl == 1)
+    {
+        if (this->facing == 1)
+        {
+            mirror();
+        }
+
+        if ((this->drawFlags & ActState::NoBlend) == 0)
+        {
+            this->drawFlags |= Painter::Additive;
+        }
+    }
+
+    if (this->facing == 1 && this->autoControl == 0 && this->guestControl == 0)
+    {
+        mirror();
+    }
+
+    const u16 marks = this->marks;
+
+    if ((marks & BattleUnit::UnkMark8) != 0)
+    {
+        this->FadeMainOut(services);
+        return;
+    }
+
+    if ((marks & BattleUnit::UnkMark200) != 0)
+    {
+        this->FadeMainIn(services);
+        return;
+    }
+
+    if (this->commandA == 0 || this->commandA == BattleUnit::UnkCommand1C)
+    {
+        if ((marks & BattleUnit::InvisibleMark) != 0)
+        {
+            this->FadeInvisible(services, 0);
+            return;
+        }
+
+        if ((marks & BattleUnit::UnkMark400) != 0)
+        {
+            this->FadeInvisible(services, 1);
+            return;
+        }
+    }
+
+    smooth::ScenePainter painter(services, scene);
+    painter.SetSource(picture.data.data());
+    const int left = this->placement.x - static_cast<i16>(this->originX);
+    const int x = this->unk26A8 + left;
+    const int y = this->placement.y - this->unk26AC - act.y;
+
+    if (this->guarding == 0 && (marks & BattleUnit::GuardingMark) == 0)
+    {
+        DrawOptions& options = painter.Options();
+
+        if (this->drawAtSaved != kRising && this->drawAtSaved != kDropping &&
+            (this->status & BattleUnit::Invisible) == 0 && this->autoControl == 0)
+        {
+            // An invisible unit would take tint -1 here, but it has no shadow.
+            const int shadowHeight = picture.height / kShadowShare;
+            options.scaleHeight = shadowHeight;
+            options.shear = picture.height >> kShadowShearShift;
+            options.tintRed = kShadowTint;
+            options.tintGreen = kShadowTint;
+            options.tintBlue = kShadowTint;
+            this->shadowMode = (this->drawFlags & kPictureBits) | Painter::Shadow;
+            painter
+                .DrawPicture(left, this->placement.y - shadowHeight, picture.width, picture.height, this->shadowMode);
+        }
+
+        if ((this->status & BattleUnit::ResistAll) != 0)
+        {
+            this->colorPair = kWhiteColorPair;
+            painter.DrawOutline(
+                x,
+                y,
+                picture.width,
+                picture.height,
+                this->drawFlags & kPictureBits,
+                DrawArgument{.colorPair = this->colorPair}
+            );
+        }
+
+        if (this->outline == 1)
+        {
+            this->colorPair = BattleUnit::OutlineColorPair;
+            painter.DrawOutline(
+                x,
+                y,
+                picture.width,
+                picture.height,
+                this->drawFlags & kPictureBits,
+                DrawArgument{.colorPair = this->colorPair}
+            );
+        }
+
+        painter.SetSource(picture.data.data());
+
+        if ((this->status & BattleUnit::Invisible) != 0)
+        {
+            this->shadowMode = this->drawFlags & kPictureBits;
+            painter.DrawPicture(x, y, picture.width, picture.height, this->shadowMode | Painter::SmearUnder);
+        }
+        else
+        {
+            if ((this->drawFlags & ActState::Signal) == ActState::Signal)
+            {
+                options.alpha = act.signal;
+            }
+
+            if (act.wait != 0)
+            {
+                painter.SetWave(act.wait);
+            }
+
+            if ((marks & BattleUnit::Held) != 0)
+            {
+                painter.SetWave(0);
+            }
+
+            if (this->autoControl == 1)
+            {
+                options.tintRed = kAutoTint;
+                options.tintGreen = kAutoTint;
+                options.tintBlue = kAutoTint;
+            }
+
+            painter.DrawPicture(x, y, picture.width, picture.height, this->drawFlags);
+            painter.SetWave(0);
+
+            if ((this->status & BattleUnit::Barrier) != 0)
+            {
+                this->DrawFlash(painter);
+            }
+
+            this->DrawPulse(services, painter);
+
+            if ((this->unk26B8 & kFlag26B8Tinted) != 0)
+            {
+                this->DrawTint(painter);
+            }
+        }
+
+        if ((marks & BattleUnit::UnkMark4) != 0)
+        {
+            this->shadowMode = this->drawFlags & kPictureBits;
+            painter.DrawPicture(x, y, picture.width, picture.height, this->shadowMode | Painter::GrayUnder);
+        }
+
+        if (this->commandA == BattleUnit::UnkCommand2)
+        {
+            this->shadowMode = this->drawFlags & kPictureBits;
+            options.tintRed = kHurtFlash;
+            painter.DrawPicture(x, y, picture.width, picture.height, this->shadowMode | Painter::TintUnder);
+        }
+
+        if (this->autoControl == 1)
+        {
+            const int barX = this->placement.x - kAutoBarLeft;
+            const int barY = this->placement.y + (picture.height >> 1) - act.y;
+            const int share = this->HitPointShare(kAutoBarLength);
+            const u32 blue = painter.MakeColor(0, 0, kAutoGaugeBlue);
+            const int length = (this->GaugeLength(services) & 0xFFFF) + 1;
+            scene.Add(
+                [barX, barY, share, blue, length](BattleServices& drawing)
+                {
+                    drawing.hud.DrawBar(kAutoBar, kAutoBarFrame, barX, barY, share);
+                    drawing.hud.FillColor(barX, barY + kAutoGaugeBelow, length, kAutoGaugeHeight, blue);
+                }
+            );
+        }
+
+        services.audio.PlaySound(act.view, services.config.soundVolume);
+
+        if (act.view != 0)
+        {
+            services.audio.SetSoundPan(act.view, this->placement.x >= kPanCentre ? kFadePan : -kFadePan);
+        }
+
+        act.view = 0;
+    }
+
+    smooth::PictureSteps steps;
+    smooth::UnitFrame(*this).EffectsAdvance(services, x, y, smooth::RefOf(services.archive, &picture), steps);
+    scene.Add(std::move(steps));
+
+    if (this->commandA == BattleUnit::UnkCommand6 || this->commandA == BattleUnit::UnkCommand50)
+    {
+        ActState& spark = this->recoilAct;
+        spark.action = 0;
+        spark.id = kSparkAct;
+
+        if (services.acts.Run(spark) == 0)
+        {
+            return;
+        }
+
+        this->picture = services.archive.GetPicture(spark.frame, spark.picture);
+
+        // A missing picture is read through a null pointer in the original.
+        if (this->picture != nullptr)
+        {
+            painter.SetSource(this->picture->data.data());
+            painter.DrawPicture(
+                static_cast<i16>(act.anchorX) + this->placement.x - spark.x - static_cast<i16>(this->originX),
+                this->placement.y + static_cast<i16>(act.anchorY) - spark.y - act.y,
+                this->picture->width,
+                this->picture->height,
+                spark.flags
+            );
+        }
+
+        services.audio.PlaySound(spark.view, services.config.soundVolume);
+        spark.view = 0;
+
+        if (spark.waiting == 1)
+        {
+            spark.waiting = 0;
+            spark.position = 0;
+        }
+    }
+
+    if (this->guarding == 0 && (this->marks & BattleUnit::GuardingMark) == 0 &&
+        (this->status & BattleUnit::UnkStatus4) == 0 && act.rotation != 0 && act.actionCode != 0)
+    {
+        this->overlayPicture = services.archive.GetPicture(act.rotation, static_cast<u16>(act.actionCode - 1));
+        this->overlayOffsetX = static_cast<i16>(act.offsetX);
+
+        // A missing picture is read through a null pointer in the original.
+        if (this->overlayPicture != nullptr)
+        {
+            const Picture& overlay = *this->overlayPicture;
+            painter.SetSource(overlay.data.data());
+            painter.DrawPicture(
+                this->overlayOffsetX + left,
+                this->placement.y + static_cast<i16>(act.offsetY) - this->unk26AC - act.y,
+                overlay.width,
+                overlay.height,
+                this->drawFlags | Painter::Additive
+            );
+        }
+    }
+
+    steps = smooth::PictureSteps{};
+    smooth::UnitFrame(*this).IdleEffectAdvance(services, steps);
+    scene.Add(std::move(steps));
+    steps = smooth::PictureSteps{};
+    smooth::UnitFrame(*this).FollowUpAdvance(services, steps);
+    scene.Add(std::move(steps));
+}
+
+// swd3e.exe 0x00490A50: the barrier flash: a red and green tint rising 2..24 and falling back (each step only while
+// the unit is not held) over the shadow picture; at the turn it is drawn with the tint left from before.
+void BattleUnit::DrawFlash(smooth::ScenePainter& painter)
+{
+    DrawOptions& options = painter.Options();
+    const u16 phase = this->flashPhase;
+
+    if (phase == BattleUnit::FlashPeak)
+    {
+        const u16 fall = this->flashFall;
+
+        if (fall != 0)
+        {
+            if (this->held == 0)
+            {
+                this->flashFall = static_cast<u16>(fall - 1);
+            }
+
+            options.tintRed = this->flashFall;
+            options.tintGreen = this->flashFall;
+        }
+        else
+        {
+            this->flashPhase = BattleUnit::FlashStart;
+            this->flashFall = BattleUnit::FlashPeak;
+        }
+    }
+    else
+    {
+        if (this->held == 0)
+        {
+            this->flashPhase = static_cast<u16>(phase + 1);
+        }
+
+        options.tintRed = this->flashPhase;
+        options.tintGreen = this->flashPhase;
+    }
+
+    this->DrawShadowTinted(painter);
+}
+
+// swd3e.exe 0x00490B50: under flag 26B8 bit 21 (unless the battle waits or status bit 1 or 2 is set) a red pulse
+// stepped like the barrier flash (sharing its phase) over the shadow picture; 1 when drawn.
+int BattleUnit::DrawPulse(const BattleServices& services, smooth::ScenePainter& painter)
+{
+    if ((this->unk26B8 & kFlag26B8Pulse) == 0 || services.state.unk5772C8 == 1 ||
+        (this->status & (BattleUnit::UnkStatus2 | BattleUnit::UnkStatus4)) != 0)
+    {
+        return 0;
+    }
+
+    DrawOptions& options = painter.Options();
+    const u16 phase = this->flashPhase;
+
+    if (phase == BattleUnit::FlashPeak)
+    {
+        const u16 fall = this->flashFall;
+
+        if (fall != 0)
+        {
+            if (this->held == 0)
+            {
+                this->flashFall = static_cast<u16>(fall - 1);
+            }
+
+            options.tintRed = this->flashFall;
+            options.tintGreen = 0;
+            options.tintBlue = 0;
+        }
+        else
+        {
+            this->flashPhase = BattleUnit::FlashStart;
+            this->flashFall = BattleUnit::FlashPeak;
+        }
+    }
+    else
+    {
+        if (this->held == 0)
+        {
+            this->flashPhase = static_cast<u16>(phase + 1);
+        }
+
+        options.tintRed = this->flashPhase;
+        options.tintGreen = 0;
+        options.tintBlue = 0;
+    }
+
+    this->DrawShadowTinted(painter);
+    return 1;
+}
+
+// swd3e.exe 0x00490C80: flag 26B8 bit 19: the shadow picture tinted yellow (an object of byte +0xA2) or darkened.
+void BattleUnit::DrawTint(smooth::ScenePainter& painter)
+{
+    DrawOptions& options = painter.Options();
+
+    if (this->ObjectUnkA2() != 0)
+    {
+        options.tintBlue = 0;
+        options.tintRed = kTintedLevel;
+        options.tintGreen = kTintedLevel;
+    }
+    else
+    {
+        options.tintRed = kUntintedLevel;
+        options.tintGreen = kUntintedLevel;
+        options.tintBlue = kUntintedLevel;
+    }
+
+    this->DrawShadowTinted(painter);
+}
+
+// The draw that ends DrawFlash, DrawPulse and DrawTint (inline in each): the shadow picture tinted under itself at the
+// unit's place less its act's offset, its mirror kept in shadowMode.
+void BattleUnit::DrawShadowTinted(smooth::ScenePainter& painter)
+{
+    const Picture& picture = *this->shadowPicture;
+    painter.SetSource(picture.data.data());
+    this->shadowMode = this->drawFlags & kPictureBits;
+    painter.DrawPicture(
+        this->placement.x - static_cast<i16>(this->originX),
+        this->placement.y - this->mainAct.y,
+        picture.width,
+        picture.height,
+        this->shadowMode | Painter::TintUnder
+    );
 }
 
 // swd3e.exe 0x00496650: an enemy chooses its command for the turn; `act` takes the act of an object or a cast; 1 when
