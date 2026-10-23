@@ -68,11 +68,16 @@ constexpr int kScrollStyle2Bottom = 0x1F;
 constexpr int kScrollThumb = 0x19;
 constexpr int kScrollTop = 0x1A;
 constexpr int kShineAlpha = 8;
-constexpr int kShineX = 0xB;
+constexpr int kShineX = 0xE;  // swd3e (swd32: 0xB)
 constexpr int kShineY = 0x1F;
 constexpr int kSmallDigits = 10;
 constexpr int kSmallTopDivisor = 1000000000;
-constexpr u32 kTallGauge = 0x241A;
+constexpr u32 kTallGauge = 0x237A;  // swd3e (swd32: 0x241A)
+constexpr int kShortGauge = 4;      // swd3e: a gauge of four levels draws its body 0x20 shorter
+constexpr int kShortGaugeCut = 0x20;
+constexpr int kShortShineCut = 0x1E;
+constexpr int kGaugeOverlap = 2;  // the body starts 2 above the top's bottom
+constexpr int kBottomOverlap = 3;
 constexpr int kThumbInset = 5;
 constexpr int kTileBottom = 7;
 constexpr int kTileBottomLeft = 6;
@@ -776,7 +781,7 @@ int HudFrame::DrawTimingBarAdvance(int x, int y, Scene& scene)
 }
 
 // What BattleHud::DrawTallGauge decides of the frame; the draws into `scene`.
-int HudFrame::DrawTallGaugeAdvance(int x, int y, int level, Scene& scene)
+int HudFrame::DrawTallGaugeAdvance(int x, int y, int level, int levels, Scene& scene)
 {
     BattleHud& hud = this->hud;
     BattleServices& services = *hud.services;
@@ -784,12 +789,15 @@ int HudFrame::DrawTallGaugeAdvance(int x, int y, int level, Scene& scene)
     const Picture* body = hud.archive.GetPicture(kTallGauge, kGaugeBody);
     hud.lastPicture = body;
 
+    // A missing picture is read through a null pointer in the original.
     if (body == nullptr)
     {
         return 0;
     }
 
-    const int shown = level * (body->height / kGaugeLevels);
+    const int step =
+        levels == kShortGauge ? (body->height - kShortGaugeCut) / kGaugeLevels : body->height / kGaugeLevels;
+    const int shown = level * step;
     const Picture* top = hud.Select(static_cast<int>(kTallGauge), kGaugeTop);
 
     if (top == nullptr)
@@ -798,37 +806,35 @@ int HudFrame::DrawTallGaugeAdvance(int x, int y, int level, Scene& scene)
     }
 
     painter.DrawPicture(x, y, top->width, top->height, 0);
-    const int bodyTop = hud.lastPicture->height + y;
+    const int bodyTop = y + top->height - kGaugeOverlap;
 
     if (level < kGaugeLevels)
     {
-        painter.SetClipClamped(x, bodyTop, x + hud.lastPicture->width, shown + bodyTop);
+        painter.SetClipClamped(x, bodyTop, x + top->width, bodyTop + shown);
     }
 
     body = hud.Select(static_cast<int>(kTallGauge), kGaugeBody);
-    this->DrawAdvance(
-        body,
-        x + kBodyInset,
-        bodyTop,
-        body != nullptr ? body->width : 0,
-        body != nullptr ? body->height : 0,
-        0,
-        scene
-    );
+
+    if (body != nullptr)
+    {
+        const int height = levels == kGaugeLevels ? body->height : body->height - kShortGaugeCut;
+        painter.DrawPicture(x + kBodyInset, bodyTop, body->width, height, 0);
+    }
+
     const Picture* shine = hud.Select(static_cast<int>(kTallGauge), kGaugeShine);
     painter.Options().alpha = kShineAlpha;
-    this->DrawAdvance(
-        shine,
-        x + kShineX,
-        bodyTop + kShineY,
-        shine != nullptr ? shine->width : 0,
-        shine != nullptr ? shine->height : 0,
-        Painter::Translucent,
-        scene
-    );
+
+    if (shine != nullptr)
+    {
+        const int height = levels == kGaugeLevels ? shine->height : shine->height - kShortShineCut;
+        painter.DrawPicture(x + kShineX, bodyTop + kShineY, shine->width, height, Painter::Translucent);
+    }
+
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     const Picture* bottom = hud.Select(static_cast<int>(kTallGauge), kGaugeBottom);
-    return bottom != nullptr ? painter.DrawPicture(x, bodyTop + shown, bottom->width, bottom->height, 0) : 0;
+    return bottom != nullptr
+               ? painter.DrawPicture(x, bodyTop + shown - kBottomOverlap, bottom->width, bottom->height, 0)
+               : 0;
 }
 
 // What BattleHud::DrawAnimation decides of the frame; the draws into `scene`.

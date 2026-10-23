@@ -26,6 +26,9 @@ namespace swd3e::smooth
 
 namespace
 {
+constexpr u16 kShortGaugeCommands = 2;  // DrawCommandPanel: the tall gauge's levels by the commands listed
+constexpr int kShortGaugeLevels = 4;
+constexpr int kFullGaugeLevels = 6;
 
 constexpr i32 kFieldFadeStep = 2;
 constexpr i32 kFieldFadeEnd = -0x20;
@@ -2096,7 +2099,9 @@ void TurnFrame::DrawCommandPanelAdvance(i32 nameIndex, Scene& scene)
         battle.listRows = 0;
     }
 
-    HudFrame(game.battleHud).DrawTallGaugeAdvance(battle.menuX, battle.menuY, grown, scene);
+    // swd3e: a menu of fewer than two extra commands has the short gauge.
+    const int levels = battle.listedCommands < kShortGaugeCommands ? kShortGaugeLevels : kFullGaugeLevels;
+    HudFrame(game.battleHud).DrawTallGaugeAdvance(battle.menuX, battle.menuY, grown, levels, scene);
 
     if (battle.menuGrow < kMenuOpened)
     {

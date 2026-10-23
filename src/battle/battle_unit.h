@@ -476,6 +476,9 @@ public:
     int SecondGaugeLength() const;
     bool CanHeal() const;
     void SlideHook(int value);
+    u16 TreasureLevel(const CounterList& list) const;
+    int AddTreasureExperience(CounterList& list, u16 kind, u16 amount);
+    bool IsWeakEnemy() const;
     void IncreaseCounter2A76();
     u16 Counter2A76() const;
     void IncreaseHits();
@@ -563,7 +566,7 @@ public:
     int FirstResistance() const;
     int Named() const;
     void ClearTurnCommand();
-    int HasEffectBits(u16 bits) const;
+    int HasEffectBits(u32 bits) const;
     bool ApplyPendingDamage(BattleServices& services);
     void DrawEffectIcons(BattleServices& services, int x, int y);
     void ExpireEffects(BattleServices& services, int clearAll);

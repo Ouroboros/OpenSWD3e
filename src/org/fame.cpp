@@ -82,7 +82,9 @@ void SaveNode(const CounterNode& node, u8* entry)
     put(&node.value, sizeof(node.value));
     put(&node.percent, sizeof(node.percent));
     put(&node.done, sizeof(node.done));
-    put(node.unk0C.data(), node.unk0C.size());
+    put(&node.toNext, sizeof(node.toNext));
+    put(&node.level, sizeof(node.level));
+    put(node.unk10.data(), node.unk10.size());
 }
 
 void LoadNode(CounterNode& node, const u8* entry)
@@ -97,7 +99,9 @@ void LoadNode(CounterNode& node, const u8* entry)
     get(&node.value, sizeof(node.value));
     get(&node.percent, sizeof(node.percent));
     get(&node.done, sizeof(node.done));
-    get(node.unk0C.data(), node.unk0C.size());
+    get(&node.toNext, sizeof(node.toNext));
+    get(&node.level, sizeof(node.level));
+    get(node.unk10.data(), node.unk10.size());
 }
 
 }  // namespace

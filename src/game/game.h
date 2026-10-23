@@ -368,6 +368,9 @@ private:
     i16 StartSlideTo(i16 x);
     i16 StartSlideBack(i16 x);
     int SlideUnits(const BattleUnit& unit, i16 x);
+    void CureHeldBy(int enemy);
+    bool AnyRoleBuffed() const;
+    bool AllRolesHaveEffect(u32 bits) const;
     void TryRetreat(int role);
     int DrainSpellFrame(BattleRole& role, BattleUnit& target);
     int MagicAttackFrame(BattleRole& role, BattleUnit& target);

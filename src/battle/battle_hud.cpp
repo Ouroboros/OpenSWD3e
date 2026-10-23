@@ -1,9 +1,15 @@
 #include "battle/battle_hud.h"
 
+#include <algorithm>
+
 #include "audio/audio_manager.h"
 #include "battle/battle_hud_constants.h"
+#include "battle/battle_message.h"
 #include "battle/battle_services.h"
+#include "battle/battle_state.h"
 #include "battle/smooth/smooth_hud.h"
+#include "config/config.h"
+#include "core/format.h"
 #include "core/words.h"
 #include "crt/msvc.h"
 #include "draw/painter.h"
@@ -19,6 +25,7 @@ namespace swd3e
 
 namespace
 {
+constexpr int kRouletteFlags = BattleMessage::BlackBar | BattleMessage::Centered;
 
 }  // namespace
 
@@ -274,11 +281,12 @@ int BattleHud::DrawTimingBar(int x, int y)
     return result;
 }
 
-// swd32.exe 0x004512B0 (unmatched in swd3e): the vertical gauge of picture 0x241A showing `level` sixths of its body
-int BattleHud::DrawTallGauge(int x, int y, int level)
+// swd3e.exe 0x00458BB0: the vertical gauge of picture 0x237A showing `level` sixths of its body (its body and shine
+// shorter for a gauge of 4 `levels`)
+int BattleHud::DrawTallGauge(int x, int y, int level, int levels)
 {
     smooth::Scene scene;
-    const auto result = smooth::HudFrame(*this).DrawTallGaugeAdvance(x, y, level, scene);
+    const auto result = smooth::HudFrame(*this).DrawTallGaugeAdvance(x, y, level, levels, scene);
     scene.Show(*this->services);
     return result;
 }
@@ -492,5 +500,299 @@ void BattleHud::DrawMeter(int x, int y)
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     scene.Show(*this->services);
     this->DrawNumber(kMeterNumbers, this->meterValue, x + (fill->width >> 1), y + fill->height);
+}
+
+// swd3e.exe 0x00458DC0: the roulette widened a step: the first two digits rise to 9, then a third digit (to 9), then
+// a fourth
+void BattleHud::RaiseRoulette()
+{
+    Roulette& roulette = this->roulette;
+
+    for (std::size_t digit = 0; digit < roulette.tops.size(); ++digit)
+    {
+        if (roulette.tops[digit] < Roulette::TopDigit)
+        {
+            if (digit >= Roulette::BaseDigits)
+            {
+                roulette.digits = static_cast<i32>(digit + 1);
+            }
+
+            ++roulette.tops[digit];
+            return;
+        }
+    }
+}
+
+// swd3e.exe 0x00458D80: the roulette of the dragon treasure (accessory kind 0x25): two digits of 0..5, widened `steps`
+// times (its proficiency)
+void BattleHud::SetupRoulette(i16 steps)
+{
+    Roulette& roulette = this->roulette;
+    roulette.tops = Roulette::InitialTops;
+    roulette.digits = Roulette::BaseDigits;
+
+    for (i16 step = 0; step < steps; ++step)
+    {
+        this->RaiseRoulette();
+    }
+}
+
+// swd3e.exe 0x00458FD0: no digit stopped, each spinning from a random 0..9
+void BattleHud::ResetRoulette()
+{
+    Roulette& roulette = this->roulette;
+    roulette.stopped = 0;
+    roulette.result = {};
+    roulette.spins = {};
+
+    for (i32 digit = 0; digit < roulette.digits; ++digit)
+    {
+        roulette.spinning[static_cast<std::size_t>(digit)] = static_cast<u8>(this->random.Below(Roulette::Digits));
+    }
+}
+
+// swd3e.exe 0x00458E30: one frame of the roulette at (x, y) (its frame picture 0x23B0, frame 1 when `stop`): the
+// stopped digits, then the spinning ones from the right, the first two stepping every third frame, the third every
+// second, the fourth every frame (sound 0x125 as the next to stop turns). `stop` 1 stops the next digit; once all are
+// stopped `value` takes their number (1).
+int BattleHud::DrawRoulette(int x, int y, i32& value, int stop)
+{
+    Roulette& roulette = this->roulette;
+    const Picture* frame = this->archive.GetPicture(kRoulettePicture, stop == 1 ? 1 : 0);
+    this->lastPicture = frame;
+
+    // A missing picture is read through a null pointer in the original.
+    if (frame != nullptr)
+    {
+        smooth::Scene scene;
+        smooth::ScenePainter painter(*this->services, scene);
+        painter.SetSource(frame->data.data());
+        painter.DrawPicture(
+            x - frame->width + kRouletteFrameLeft,
+            y - (frame->height >> 1) + kRouletteFrameDown,
+            frame->width,
+            frame->height,
+            Painter::Copy,
+            PaletteArgument(*frame)
+        );
+        scene.Show(*this->services);
+    }
+
+    int period = Roulette::SlowPeriod;
+    int digitX = x;
+
+    for (i32 digit = 0; digit < roulette.digits; ++digit)
+    {
+        const auto at = static_cast<std::size_t>(digit);
+
+        if (digit >= Roulette::BaseDigits)
+        {
+            --period;
+        }
+
+        if (digit < roulette.stopped)
+        {
+            this->DrawNumber(kMeterNumbers, roulette.result[at], digitX, y);
+        }
+        else
+        {
+            const u8 shown = roulette.spinning[at];
+
+            if (stop == 1)
+            {
+                roulette.result[at] = static_cast<i8>(shown);
+            }
+
+            this->DrawNumber(kMeterNumbers, shown, digitX, y);
+
+            if (roulette.spins[at] == period)
+            {
+                roulette.spins[at] = 0;
+                roulette.spinning[at] = static_cast<u8>((roulette.spinning[at] + 1) % (roulette.tops[at] + 1));
+            }
+
+            ++roulette.spins[at];
+        }
+
+        digitX -= kRouletteDigitWidth;
+    }
+
+    // The counter after the last digit is read past them in the original when all are stopped; 0 here.
+    const auto next = static_cast<std::size_t>(roulette.stopped);
+
+    if (next < roulette.spins.size() && roulette.spins[next] == 1)
+    {
+        this->audio.PlaySound(kRouletteSound, this->services->config.soundVolume);
+    }
+
+    if (stop == 1)
+    {
+        ++roulette.stopped;
+    }
+
+    if (roulette.stopped < roulette.digits)
+    {
+        return 0;
+    }
+
+    value = roulette.result[0] + kTens * roulette.result[1] + kHundreds * roulette.result[2] +
+            kThousands * roulette.result[3];
+    return 1;
+}
+
+// swd3e.exe 0x00459010: the prize of the stopped roulette: all zeros raise the battle's experience by ten percent a
+// digit; all sevens double its money a seven (from the second digit); other equal digits give the treasure ten points
+// of experience a digit (returned). Each is announced.
+u16 BattleHud::RouletteBonus()
+{
+    Roulette& roulette = this->roulette;
+    BattleState& battle = this->services->state;
+    const i32 digits = roulette.digits;
+    const i8 first = roulette.result[0];
+
+    auto announce = [this, &roulette](std::u8string_view format, int amount)
+    {
+        const std::string text = WinFormat(format, {amount});
+        const std::size_t length = std::min(text.size(), roulette.text.size() - 1);
+        std::copy_n(text.begin(), length, roulette.text.begin());
+        roulette.text[length] = '\0';
+        this->services->messages
+            .Add(kRouletteMessageX, kRouletteMessageY, kRouletteMessageFrames, roulette.text, kRouletteFlags);
+    };
+
+    if (first == 0)
+    {
+        int bonus = kRouletteStep;
+        battle.experienceBonus = kRouletteStep;
+
+        for (i32 digit = 1; digit < digits; ++digit)
+        {
+            if (roulette.result[static_cast<std::size_t>(digit)] != 0)
+            {
+                battle.experienceBonus = 0;
+                return 0;
+            }
+
+            bonus += kRouletteStep;
+        }
+
+        battle.experienceBonus = static_cast<u16>(bonus);
+        announce(kExperienceBonus, bonus);
+        return 0;
+    }
+
+    if (first == kLuckyDigit)
+    {
+        u16 times = battle.moneyTimes;
+
+        for (i32 digit = 1; digit < digits; ++digit)
+        {
+            if (roulette.result[static_cast<std::size_t>(digit)] != kLuckyDigit)
+            {
+                battle.moneyTimes = 0;
+                return 0;
+            }
+
+            times = static_cast<u16>(times + kLuckyStep);
+
+            if (digit + 1 >= digits)
+            {
+                battle.moneyTimes = times;
+            }
+        }
+
+        if (times != 0)
+        {
+            announce(kMoneyTimes, times);
+        }
+
+        return 0;
+    }
+
+    u16 bonus = 0;
+
+    if (digits > 1)
+    {
+        for (i32 digit = 1; digit < digits; ++digit)
+        {
+            if (roulette.result[static_cast<std::size_t>(digit)] != first)
+            {
+                return 0;
+            }
+
+            bonus = static_cast<u16>(bonus + kRouletteStep);
+        }
+
+        if (bonus != 0)
+        {
+            announce(kTreasureExperience, bonus);
+        }
+    }
+
+    return bonus;
+}
+
+// swd3e.exe 0x004593C0: one frame of picture `id` growing from its middle in slot `slot` (0..2), added to the screen
+// with no tint: its zoom widens by 0x3C and heightens by 0x50 a frame; 1 (the slot cleared) once it is 0x4B0 wider
+int BattleHud::DrawGrowing(int slot, int id, int x, int y)
+{
+    const auto at = static_cast<std::size_t>(slot);
+    const Picture* picture = this->archive.GetPicture(static_cast<u32>(id), 0);
+    this->lastPicture = picture;
+
+    // A missing picture is read through a null pointer in the original.
+    if (picture != nullptr)
+    {
+        smooth::Scene scene;
+        smooth::ScenePainter painter(*this->services, scene);
+        painter.SetSource(picture->data.data());
+        painter.SetZoom(
+            picture->width >> 1,
+            picture->height >> 1,
+            this->growWidth[at] + kGrowUnit,
+            this->growHeight[at] + kGrowUnit
+        );
+        DrawOptions& options = painter.Options();
+        options.tintRed = 0;
+        options.tintGreen = 0;
+        options.tintBlue = 0;
+        painter.DrawPicture(x, y, picture->width, picture->height, Painter::ZoomAddTinted);
+        scene.Show(*this->services);
+    }
+
+    this->growHeight[at] += kGrowHeightStep;
+    this->growWidth[at] += kGrowWidthStep;
+    --this->growFrames[at];
+
+    if (this->growWidth[at] < kGrowEnd)
+    {
+        return 0;
+    }
+
+    this->growHeight[at] = 0;
+    this->growWidth[at] = 0;
+    this->growFrames[at] = 0;
+    return 1;
+}
+
+// swd3e.exe 0x004594B0: frame 0 of picture `id` at (x, y) with its palette
+int BattleHud::DrawPicturePalette(int id, int x, int y)
+{
+    const Picture* picture = this->archive.GetPicture(static_cast<u32>(id), 0);
+    this->lastPicture = picture;
+
+    // A missing picture is read through a null pointer in the original.
+    if (picture == nullptr)
+    {
+        return 0;
+    }
+
+    smooth::Scene scene;
+    smooth::ScenePainter painter(*this->services, scene);
+    painter.SetSource(picture->data.data());
+    const int result =
+        painter.DrawPicture(x, y, picture->width, picture->height, Painter::Copy, PaletteArgument(*picture));
+    scene.Show(*this->services);
+    return result;
 }
 }  // namespace swd3e

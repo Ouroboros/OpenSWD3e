@@ -2292,4 +2292,62 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         this->FlashFrameWhite();
     }
 }
+
+// swd3e.exe 0x00469F30: enemy `enemy` fell: the roles whose ailment 0x400 it holds are cured of it
+void Game::CureHeldBy(int enemy)
+{
+    BattleState& battle = this->battleState;
+
+    for (std::size_t role = 0; role < battle.ailment400From.size(); ++role)
+    {
+        if (battle.ailment400From[role] == enemy + 1)
+        {
+            battle.ailment400From[role] = 0;
+            this->battleRoles[role].CureEffects(this->battleServices, BattleUnit::UnkStatus400);
+        }
+    }
+}
+
+// swd3e.exe 0x0046A9A0: a party member with a buff (each role skipped by the enemy of its index fallen, as in the
+// original)
+bool Game::AnyRoleBuffed() const
+{
+    const BattleState& battle = this->battleState;
+
+    for (u32 index = 0; index < battle.roleCount; ++index)
+    {
+        const BattleRole& role = this->battleRoles[index];
+
+        if (this->battleEnemies[index].IsDefeated() || role.PartyMember() == 0 || role.HasAnyBuff() != 1)
+        {
+            continue;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+// swd3e.exe 0x0046A930: every party member has an effect of `bits` (each role skipped by the enemy of its index
+// fallen, as in the original)
+bool Game::AllRolesHaveEffect(u32 bits) const
+{
+    const BattleState& battle = this->battleState;
+
+    for (u32 index = 0; index < battle.roleCount; ++index)
+    {
+        const BattleRole& role = this->battleRoles[index];
+
+        if (this->battleEnemies[index].IsDefeated() || role.PartyMember() == 0 ||
+            role.HasEffectBits(bits) != 0)
+        {
+            continue;
+        }
+
+        return false;
+    }
+
+    return true;
+}
 }  // namespace swd3e

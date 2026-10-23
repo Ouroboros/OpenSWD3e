@@ -1491,8 +1491,7 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
 
                 case SkillScript::UnkAilment400:
                     this->status &= ~BattleUnit::UnkStatus400;
-                    services.state.unk5761C8 = 0;
-                    services.state.unk5761CC = 0;
+                    services.state.ailment400From.fill(0);
                     break;
 
                 case SkillScript::PoisonAilment:

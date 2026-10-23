@@ -330,12 +330,15 @@ public:
     i32 unk5772C8 = 0;
     std::unique_ptr<HitPicture> hitPictures;  // 0x00577818 (swd3e) the second-tier spell pictures (DrawHitPictures)
     u16 hitBits = 0;                          // 0x005778CC (swd3e) their target bits of the frame
-    i32 enraging = 0;      // 0x00577310 (swd3e) 1 while an enemy enrages (Enrage sets it, 0x0049C0D0 clears it)
-    i32 enrageDamage = 0;  // 0x005770C4 (swd3e) the damage of enrage 0x3F4 (1.4 times the maximum hit points)
+    u16 experienceBonus = 0;  // 0x00577220 (swd3e) the percent the roulette adds to the battle's experience
+    u16 moneyTimes = 0;       // 0x0057721E (swd3e) the times the roulette multiplies its money
+    i32 enraging = 0;         // 0x00577310 (swd3e) 1 while an enemy enrages (Enrage sets it, 0x0049C0D0 clears it)
+    i32 enrageDamage = 0;     // 0x005770C4 (swd3e) the damage of enrage 0x3F4 (1.4 times the maximum hit points)
     // 0x00536880 the ripple over the battle (a spell with ActFlag13 in rippleHits, the unit effect of 0x0049B9D0)
     std::unique_ptr<ScriptObject> ripple;
-    i32 unk5761C8 = 0;       // 0x005761C8 (swd3e) cleared when ailment 0x400 ends (also by StartBattle, 0x0045EE20)
-    u16 unk5761CC = 0;       // 0x005761CC (swd3e) with it
+    // 0x005761C8 (swd3e) per role (the first three): 1 + the enemy whose hit holds ailment 0x400 on it (0x0045EE20);
+    // cured when that enemy falls (CureHeldBy), all cleared when the ailment ends and by StartBattle
+    std::array<u16, 3> ailment400From = {};
     i16 darkRedShown = 0;    // 0x00577232 the tint applied, a step a frame towards darkRed (or back to 0)
     i16 darkGreenShown = 0;  // 0x00577234
     i16 darkBlueShown = 0;   // 0x00577236

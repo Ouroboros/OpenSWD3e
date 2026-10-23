@@ -125,7 +125,6 @@ constexpr std::size_t kOnesDigit = 3;
 constexpr int kAgilityShift = 2;  // the gauge step is agility / 4, agility / 8 when slowed
 constexpr int kSlowedAgilityShift = 3;
 constexpr int kBoostDivisor = 4;              // a boost adds a quarter of the step plus one
-constexpr u16 kHealBelowShare = 3;            // an enemy heals below a third of its hit points
 constexpr u8 kFirstHeal = 1;                  // healChoice: ObjectData::healCountA
 constexpr u8 kSecondHeal = 2;                 // ObjectData::healCountB
 constexpr u8 kSureEvadeStreak = 0x1A;         // swd3e: failed rolls of a party role after which it evades
@@ -1424,6 +1423,16 @@ constexpr u32 kRefinedKind = 0x8000000;
 
 constexpr double kCounterPercent = 100.0;  // 0x004AAE10 (a float)
 constexpr u16 kCounterFull = 100;          // the percent of a full counter
+constexpr u16 kTreasureKind = 0x25;        // the dragon treasure's accessory kind (TreasureLevel)
+constexpr i16 kFirstTreasureLevel = 0x32;  // AddTreasureExperience: the experience of each level
+constexpr i16 kSecondTreasureLevel = 0x78;
+constexpr i16 kThirdTreasureLevel = 0x12C;
+constexpr i16 kLastTreasureLevel = 0x201;
+constexpr u16 kTreasureTier1 = 4;
+constexpr u16 kTreasureTier2 = 8;
+constexpr i16 kTreasureTier3 = 0x10;
+constexpr i32 kWeakEnemyShare = 3;
+constexpr int kPulseRaise = 30;
 
 // StepGauge.
 constexpr int kAgilityShare = 4;                    // the gauge fills by a quarter of the agility a tick
@@ -1562,7 +1571,7 @@ int BattleUnit::HasEffectElement(i16 element) const
 }
 
 // swd3e.exe 0x00493D50: the effects after the head node
-int BattleUnit::HasEffectBits(u16 bits) const
+int BattleUnit::HasEffectBits(u32 bits) const
 {
     for (const EffectNode* node = this->effects.next.get(); node != nullptr; node = node->next.get())
     {
@@ -2215,11 +2224,16 @@ int BattleUnit::Word2A86Bit12() const
     return (this->commandFlags & BattleUnit::UnkCommandFlag1000) != 0 ? 1 : 0;
 }
 
-// swd32.exe 0x00482030 (unmatched in swd3e): the main act started over (cleared, the cast act marked done and +0x26D2
-// set) when it waits or
-// when forced
+// swd3e.exe 0x00498D40: the main act started over (cleared, the cast act marked done and guardPose set) when it waits
+// or when forced; guard pose 1 also ends the barrier against all attacks
 bool BattleUnit::RestartMainAct(i16 value, int force)
 {
+    if (value == 1)
+    {
+        this->barrierTurns = 0;
+        this->status &= ~BattleUnit::ResistAll;
+    }
+
     if (this->mainAct.waiting != 1 && force != 1)
     {
         return false;
@@ -2267,11 +2281,16 @@ bool BattleUnit::IsSmallMachine() const
     return false;
 }
 
-// swd32.exe 0x00475870 (unmatched in swd3e)
+// swd3e.exe 0x00487F80: the object's unk66 (30% more under flag 26B8 bit 21) and unk90
 void BattleUnit::Unk62And8A(u16& first, u16& second) const
 {
     first = this->data->data.unk66;
     second = this->data->data.unk90;
+
+    if ((this->unk26B8 & kFlag26B8Pulse) != 0)
+    {
+        first = static_cast<u16>(first + kPulseRaise * this->data->data.unk66 / kPercent);
+    }
 }
 
 // swd3e.exe 0x00499FA0: the value (+0x40, low 14 bits) of the worn accessory of `kind`, 0 without one (and for kind
@@ -2424,46 +2443,28 @@ u16 BattleUnit::PrepareCommand(Database& database)
     return 0;
 }
 
-// swd32.exe 0x00476080 (unmatched in swd3e): an enemy below a third of its hit points heals itself half the time (on a
-// roll of 0..4 its
-// first way, 5..9 its second) when it has that way, may heal and is not marked otherwise
+// swd3e.exe 0x00488B30: an enemy that uses objects and is not marked UnkMark100 heals itself: on a roll of 0..4 its
+// first way, on 5..9 its second, when it has uses of it (the hit points are no longer looked at)
 bool BattleUnit::ChooseHeal(BattleServices& services)
 {
-    u16 roll = static_cast<u16>(services.random.Below(kHealRoll));
-
-    if (roll < kHealRoll / 2)
-    {
-        roll = 0;
-    }
-    else if (roll < kHealRoll)
-    {
-        roll = 1;
-    }
-
     const ObjectData& object = this->data->data;
-    i32 hitPoints = object.hitPoints;
 
-    if (this->hitPointsOverride != 0)
-    {
-        hitPoints = this->hitPointsOverride;
-    }
-
-    if (hitPoints >= object.maxHitPoints / kHealBelowShare)
+    if ((this->marks & BattleUnit::UnkMark100) != 0 || object.itemChance == 0)
     {
         return false;
     }
 
-    const bool free = (this->marks & BattleUnit::UnkMark100) == 0 && object.itemChance != 0;
+    const auto roll = static_cast<u16>(services.random.Below(kHealRoll));
 
-    if (roll == 0)
+    if (roll < kHealRoll / 2)
     {
-        if (object.healCountA != 0 && free)
+        if (object.healCountA != 0)
         {
             this->healChoice = kFirstHeal;
             return true;
         }
     }
-    else if (roll == 1 && object.healCountB != 0 && free)
+    else if (roll < kHealRoll && object.healCountB != 0)
     {
         this->healChoice = kSecondHeal;
         return true;
@@ -6912,5 +6913,148 @@ bool BattleUnit::CanHeal() const
 void BattleUnit::SlideHook(int value)
 {
     static_cast<void>(value);
+}
+
+// swd3e.exe 0x0047FF00: the level of the worn dragon treasure (accessory kind 0x25) in `list`, 0 without its counter.
+// Without such a treasure the original reads the id past the two accessories (from the main act); id 0 here
+// (deviations.md).
+u16 BattleUnit::TreasureLevel(const CounterList& list) const
+{
+    i16 id = 0;
+
+    for (const ObjectRecord& accessory : this->accessories)
+    {
+        if (accessory.data.unk48 == kTreasureKind)
+        {
+            id = static_cast<i16>(accessory.data.act);
+            break;
+        }
+    }
+
+    for (const CounterNode* node = &list; node != nullptr; node = node->next.get())
+    {
+        if (node->id == id)
+        {
+            return node->level;
+        }
+    }
+
+    return 0;
+}
+
+// swd3e.exe 0x0047FD20: the worn treasures of `kind` (their unk48) gain `amount` experience in `list` (a missing
+// counter appended, needing 50 less the amount): the counter rises to its counterMax, the amount is taken from what its
+// next level needs (all of it when it is less; then nothing is left for the second treasure), and reaching the level
+// raises it (the next needing 50 below level 4, 0x78 below 8, 0x12C below 16, then 0x201, less what was left over: 1)
+int BattleUnit::AddTreasureExperience(CounterList& list, u16 kind, u16 amount)
+{
+    int leveled = 0;
+    bool found = false;
+    CounterNode* at = list.id != 0 ? list.next.get() : &list;
+
+    for (const ObjectRecord& accessory : this->accessories)
+    {
+        const ObjectData& data = accessory.data;
+        const auto id = static_cast<i16>(data.act);
+
+        if (id == 0 || static_cast<i16>(data.unk48) != static_cast<i16>(kind))
+        {
+            continue;
+        }
+
+        leveled = 0;
+
+        while (at->id != id && at->next != nullptr)
+        {
+            at = at->next.get();
+        }
+
+        if (at->id != id)
+        {
+            if (found)
+            {
+                continue;
+            }
+
+            at->next = std::make_unique<CounterNode>();
+            at = at->next.get();
+            at->id = id;
+            at->value = amount >= data.counterMax ? data.counterMax : amount;
+            at->toNext = static_cast<i16>(kFirstTreasureLevel - amount);
+            at->percent = static_cast<u16>(
+                crt::Ftol(static_cast<double>(at->value) / static_cast<double>(data.counterMax) * kCounterPercent)
+            );
+            ++list.id;
+            continue;
+        }
+
+        found = true;
+
+        if (at->done != 0)
+        {
+            continue;
+        }
+
+        at->value = static_cast<u16>(at->value + amount);
+
+        if (at->value >= data.counterMax)
+        {
+            at->value = data.counterMax;
+        }
+
+        if (at->toNext < static_cast<int>(amount))
+        {
+            at->toNext = 0;
+        }
+        else
+        {
+            at->toNext = static_cast<i16>(at->toNext - amount);
+            amount = 0;
+        }
+
+        if (at->toNext <= 0)
+        {
+            ++at->level;
+            at->toNext = 0;
+
+            if (at->level < kTreasureTier1)
+            {
+                at->toNext = kFirstTreasureLevel;
+            }
+
+            if (at->level >= kTreasureTier1 && at->level < kTreasureTier2)
+            {
+                at->toNext = kSecondTreasureLevel;
+            }
+
+            if (at->level >= kTreasureTier2 && at->level < kTreasureTier3)
+            {
+                at->toNext = kThirdTreasureLevel;
+            }
+
+            if (static_cast<i16>(at->level) >= kTreasureTier3)
+            {
+                at->toNext = kLastTreasureLevel;
+            }
+
+            at->toNext = static_cast<i16>(at->toNext - amount);
+            leveled = 1;
+        }
+
+        at->percent = static_cast<u16>(
+            crt::Ftol(static_cast<double>(at->value) / static_cast<double>(data.counterMax) * kCounterPercent)
+        );
+    }
+
+    return leveled;
+}
+
+// swd3e.exe 0x00488AF0: an enemy below a third of its maximum hit points (its override, else its object's). The test
+// of flag 26B8 bit 21 in the original compares the masked bit with 1, which never holds.
+bool BattleUnit::IsWeakEnemy() const
+{
+    const ObjectData& data = this->data->data;
+    const i32 hitPoints = this->hitPointsOverride != 0 ? this->hitPointsOverride : data.hitPoints;
+    return hitPoints < data.maxHitPoints / kWeakEnemyShare;
 }
 }  // namespace swd3e

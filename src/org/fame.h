@@ -26,7 +26,9 @@ struct CounterNode
     u16 value = 0;                      // +0x06
     u16 percent = 0;                    // +0x08
     u16 done = 0;                       // +0x0A
-    std::array<u8, 6> unk0C = {};       // +0x0C
+    i16 toNext = 0;                     // +0x0C (swd3e) the experience a treasure needs for its next level
+    u16 level = 0;                      // +0x0E (swd3e) a treasure's level (AddTreasureExperience)
+    std::array<u8, 2> unk10 = {};       // +0x10
 };
 
 using CounterList = CounterNode;

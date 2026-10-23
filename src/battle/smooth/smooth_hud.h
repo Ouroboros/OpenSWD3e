@@ -64,7 +64,7 @@ public:
 
     int DrawTimingBarAdvance(int x, int y, Scene& scene);
 
-    int DrawTallGaugeAdvance(int x, int y, int level, Scene& scene);
+    int DrawTallGaugeAdvance(int x, int y, int level, int levels, Scene& scene);
 
     int DrawAnimationAdvance(BattleAnimation& animation, Scene& scene);
 

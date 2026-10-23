@@ -38,6 +38,8 @@ using golden::u64;
 namespace
 {
 
+constexpr int kGaugeLevels = 6;  // the tall gauge of six levels
+
 class NullRasterizer : public swd3e::GlyphRasterizer
 {
 public:
@@ -212,7 +214,7 @@ public:
 
     int TallGauge(int x, int y, int level) override
     {
-        return this->hud.DrawTallGauge(x, y, level) != 0;
+        return this->hud.DrawTallGauge(x, y, level, kGaugeLevels) != 0;
     }
 
     int AnimationLoad(int x, int y, int id, int divisor) override

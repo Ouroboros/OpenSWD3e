@@ -41,6 +41,25 @@ struct BattleAnimation
 
 // The drawing helpers of the battle screen and the menus (0x00450270..0x004512B0, 0x00451420..0x00451730): pictures,
 // gauges, numbers, scroll bars, the coin toss and the timing bar, with the small looping animations they keep.
+// swd3e: the roulette of the dragon treasure (accessory kind 0x25): up to four spinning digits the player stops one by
+// one (DrawRoulette), its number the damage, its prize by the digits (RouletteBonus).
+struct Roulette
+{
+    static constexpr i32 BaseDigits = 2;
+    static constexpr u8 TopDigit = 9;
+    static constexpr u32 Digits = 10;
+    static constexpr int SlowPeriod = 3;  // the first two digits step every third frame
+    static constexpr std::array<u8, 4> InitialTops = {5, 5, 0, 0};
+
+    std::array<u8, 4> tops = InitialTops;  // 0x004BF004 the top value of each digit
+    i32 digits = BaseDigits;               // 0x004BF008
+    i32 stopped = 0;                       // 0x0050CDD8 (a byte) the digits stopped
+    std::array<i8, 4> result = {};         // 0x0050CDDC the stopped digits
+    std::array<u8, 4> spinning = {};       // 0x0050CDE0 the digits shown while they spin
+    std::array<u8, 4> spins = {};          // 0x0050C324 the frames since each stepped
+    std::array<char, 0x40> text = {};      // 0x0050CDE4 the prize announced
+};
+
 class BattleHud
 {
     friend class smooth::HudFrame;
@@ -73,6 +92,13 @@ public:
     int AddToMeter(i16 amount);
     int ResetMeter();
     void DrawMeter(int x, int y);
+    void RaiseRoulette();
+    void SetupRoulette(i16 steps);
+    void ResetRoulette();
+    int DrawRoulette(int x, int y, i32& value, int stop);
+    u16 RouletteBonus();
+    int DrawGrowing(int slot, int id, int x, int y);
+    int DrawPicturePalette(int id, int x, int y);
     void DrawTileBox(int id, int x, int y, int columns, int rows, i8 fill);
     int DrawEffectAt(int id, int action, int x, int y, int mirror);
     int ResetEffectAt();
@@ -82,7 +108,7 @@ public:
     int DrawScrollBar(u16 id, int x, int y, int rows, int offset, int style);
     int DrawCoinToss();
     int DrawTimingBar(int x, int y);
-    int DrawTallGauge(int x, int y, int level);
+    int DrawTallGauge(int x, int y, int level, int levels);
     int DrawAnimation(BattleAnimation& animation);
     int FreeAnimation(BattleAnimation& animation);
     int LoadAnimation(BattleAnimation& animation, int unused, int x, int y, u16 id, u16 divisor);
@@ -121,6 +147,10 @@ public:
     i16 meterLastAdd = 0;  // 0x0050CDD6
     i16 meterLimit = 100;  // 0x004BF002 its top
     i32 meterShown = 0;    // 0x00577368 1: the meter shows
+    Roulette roulette;
+    std::array<i32, 3> growWidth = {};   // 0x0050C3E0 (swd3e) the zoom DrawGrowing adds by slot
+    std::array<i32, 3> growHeight = {};  // 0x0050C3EC
+    std::array<i32, 3> growFrames = {};  // 0x0050C928
 
 private:
     const Picture* Select(int id, int frame);
