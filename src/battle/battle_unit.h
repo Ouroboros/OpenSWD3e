@@ -168,7 +168,8 @@ struct UnitCommand
         UnkAction1000 = 0x1000,
         UnkAction2000 = 0x2000,
         UnkAction4000 = 0x4000,
-        FixedOrigin = 0x40000,  // GetOrigin places slot act 8 from (0xF0, 0x12C) (0x00491CE0)
+        ShrinksInFlight = 0x10000,  // swd3e: FlyAct draws the act shrinking
+        FixedOrigin = 0x40000,      // GetOrigin places slot act 8 from (0xF0, 0x12C) (0x00491CE0)
     };
 
     // The bits of `flags`.
@@ -192,7 +193,7 @@ struct UnitCommand
     u16 followAct = 0;    // +0x12 the follow-up action's act
     u16 castAct = 0;      // +0x14
     u16 unk16 = 0;        // +0x16
-    u16 unk18 = 0;        // +0x18 (swd3e)
+    u16 unk18 = 0;        // +0x18 (swd3e) raised by the wisdom over 50 (SelectSkill)
     u16 ailment = 0;      // +0x1A
     u16 element = 0;      // +0x1C
     u16 pose = 0;         // +0x1E the pose of a defeat (its low byte)
@@ -638,6 +639,7 @@ public:
         int fromX,
         int fromY,
         int steps,
+        i16 delay,
         int backwards
     );
     int CureEffects(BattleServices& services, u32 bits);
@@ -841,6 +843,7 @@ public:
     u8 enrageCounter2FD3 = 0;  // +0x2FD3
     i8 enrageCounter2FD5 = 0;  // +0x2FD5
     i8 enrageCounter2FD6 = 0;  // +0x2FD6
+    u8 unk2FD7 = 0;            // +0x2FD7 (swd3e) only cleared (Reset)
     i8 enrageCounter2FD8 = 0;  // +0x2FD8
     u8 enrageElement = 0;      // +0x2FDC
     // swd3e: a second gauge (0x960 when full, 0x0048B170; drawn by 0x0048B190, run down by 0x004902E0), cleared by
@@ -854,6 +857,10 @@ public:
     // counts them down; -1: none, -2: used), and 1 once it was
     i8 unk2FD1 = 0;       // +0x2FD1
     i32 unk306C = 0;      // +0x306C
+    u16 flightDelay = 0;  // +0x2FBE (swd3e) the frames FlyAct waited before its steps grow
+    i16 unk2EB4 = 0;      // +0x2EB4 (swd3e) a sum kept by Damage (0x00495330)
+    u16 unk2EDE = 0;      // +0x2EDE (swd3e) cleared when a flight arrives (FlyAct, WalkToTarget)
+    u8 evadeCounter = 0;  // +0x2FD4 (swd3e) the evasion rolls of an enemy of skill 4 or more since its last success
     u8 rippleFrames = 0;  // +0x2FDB (swd3e) the frames of the unit's ripple (StartRipple, DrawEffects ends it past 30)
     // swd3e: 1 once an enemy chose its objects or its skills (read by OutOfChoices with the counts left)
     u8 unk2FD9 = 0;  // +0x2FD9

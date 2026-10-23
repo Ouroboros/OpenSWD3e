@@ -132,6 +132,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
             fromX,
             fromY,
             static_cast<i16>(role.command.target),
+            static_cast<i16>(role.command.unk28),
             1,
             scene
         ) != 1)
@@ -309,6 +310,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
                 fromX,
                 fromY,
                 static_cast<i16>(role.command.target),
+                static_cast<i16>(role.command.unk28),
                 0,
                 scene
             ) != 1)
@@ -608,6 +610,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
                     fromX,
                     fromY,
                     static_cast<i16>(enemy.command.target),
+                    static_cast<i16>(enemy.command.unk28),
                     0,
                     scene
                 ) != 1)

@@ -1323,7 +1323,7 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
         u16 flags = 0;
         u16 count = 0;
 
-        if (role.ListObject(battle.listRole, index, name, flags, count) == 0)
+        if (role.ListObject(battle, battle.listRole, index, name, flags, count) == 0)
         {
             break;
         }

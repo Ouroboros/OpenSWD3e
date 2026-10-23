@@ -114,9 +114,6 @@ constexpr u32 kFlag26B8Bit18 = 0x40000;  // cleared by ResetTurn
 
 constexpr u32 kEvadeRoll = 10;       // evade chances are in tenths
 constexpr u16 kInvisibleEvades = 9;  // an invisible unit evades 9 times in kEvadeRoll
-constexpr u32 kLikelyEvadeOdds = 3;
-constexpr u8 kLowEvadeSkill = 6;  // up to this evade skill a hit also needs a roll of kLowEvadeGate or more
-constexpr u16 kLowEvadeGate = 8;
 constexpr int kTenths = 10;
 constexpr int kThousands = 1000;  // the places of the four damage digits
 constexpr int kHundreds = 100;
@@ -126,12 +123,20 @@ constexpr std::size_t kTensDigit = 2;
 constexpr std::size_t kOnesDigit = 3;
 constexpr int kAgilityShift = 2;  // the gauge step is agility / 4, agility / 8 when slowed
 constexpr int kSlowedAgilityShift = 3;
-constexpr int kBoostDivisor = 4;         // a boost adds a quarter of the step plus one
-constexpr u16 kHealBelowShare = 3;       // an enemy heals below a third of its hit points
-constexpr u8 kFirstHeal = 1;             // healChoice: ObjectData::healCountA
-constexpr u8 kSecondHeal = 2;            // ObjectData::healCountB
-constexpr u8 kSureEvadeStreak = 0x18;    // evades in a row from which the next hit lands
-constexpr u8 kLikelyEvadeStreak = 0x14;  // from which it lands one time in three
+constexpr int kBoostDivisor = 4;              // a boost adds a quarter of the step plus one
+constexpr u16 kHealBelowShare = 3;            // an enemy heals below a third of its hit points
+constexpr u8 kFirstHeal = 1;                  // healChoice: ObjectData::healCountA
+constexpr u8 kSecondHeal = 2;                 // ObjectData::healCountB
+constexpr u8 kSureEvadeStreak = 0x1A;         // swd3e: failed rolls of a party role after which it evades
+constexpr u8 kSureEnemyEvadeStreak = 0x1F;    // and of an enemy of skill kLowEnemyEvadeSkill or less
+constexpr u8 kLikelyEnemyEvadeStreak = 0x15;  // from which such an enemy rolls
+constexpr u8 kLowEnemyEvadeSkill = 3;
+constexpr u8 kEvadeCounterLong = 6;  // a better enemy rolls at skill + kEvadeCounterBonus from this count
+constexpr int kEvadeCounterBonus = 2;
+constexpr u8 kEvadeCounterMiddle = 3;  // at its skill over these counts
+constexpr u8 kEvadeCounterMiddleEnd = 5;
+constexpr u8 kEvadeCounterEarlyEnd = 2;  // at half its skill up to this count
+constexpr u8 kLikelyEvadeStreak = 0xD;   // swd3e: from which a party role rolls
 constexpr int kPercent = 100;
 constexpr int kSpeedChangePercent = 0x1E;  // the gauge step a speed buff adds or takes
 constexpr int kInvisibleSlowPercent = 0xA;
@@ -751,30 +756,45 @@ int BattleUnit::SetAD4(int value)
     return value;
 }
 
-// swd32.exe 0x0047CD60 (unmatched in swd3e): the evasion roll. Invisible units (status bit 31) evade 9 in 10; a given
-// chance is out of 10;
-// otherwise the role's evasion (+0x2A93) is rolled, never right after a success, forced after 24 failures in a row and
-// one in three after 20 (a low evasion first passes an 80% no).
+// swd3e.exe 0x00490D20: the evasion roll (none for a unit acting by itself, during a critical attack or while held).
+// Invisible units (status bit 31) evade 9 in 10; a given chance is out of 10; otherwise the evade skill is rolled,
+// never right after a success. A party role is forced through after 26 failures in a row and rolls from the 13th; an
+// enemy of skill 3 or less likewise after 31 and from the 21st, a better one rolls by its own count (evadeCounter) at
+// skill + 2 from the 6th, at skill from the 3rd to the 5th, at half its skill at the 1st and 2nd. A success marks
+// the unit (mark 1, flag kFlag26B8Blocked).
 int BattleUnit::RollEvade(BattleServices& services, u16 chance)
 {
     BattleState& state = services.state;
 
     auto success = [&]
     {
-        state.evadeStreak = 0;
         state.evadeJustSucceeded = 1;
-        this->marks = static_cast<u16>(this->marks | 1);
+        this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark1);
+        this->unk26B8 |= kFlag26B8Blocked;
         return 1;
     };
 
-    if (state.criticalAttack == 1)
+    auto roll = [&services]
+    {
+        return static_cast<u16>(services.random.Below(kEvadeRoll));
+    };
+
+    if (this->autoControl == 1 || state.criticalAttack == 1 || (this->marks & BattleUnit::Held) != 0)
     {
         return 0;
     }
 
-    if (static_cast<i32>(this->status) < 0)
+    if ((this->status & BattleUnit::Invisible) != 0)
     {
-        return static_cast<u16>(services.random.Below(kEvadeRoll) + 1) <= kInvisibleEvades ? success() : 0;
+        if (static_cast<u16>(roll() + 1) <= kInvisibleEvades)
+        {
+            state.evadeStreak = 0;
+            state.evadeJustSucceeded = 1;
+            this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark1);
+            return 1;
+        }
+
+        return 0;
     }
 
     const u8 skill = this->evadeSkill;
@@ -786,7 +806,13 @@ int BattleUnit::RollEvade(BattleServices& services, u16 chance)
 
     if (chance != 0)
     {
-        return static_cast<u16>(services.random.Below(kEvadeRoll)) < chance ? success() : 0;
+        if (roll() < chance)
+        {
+            state.evadeStreak = 0;
+            return success();
+        }
+
+        return 0;
     }
 
     if (state.evadeJustSucceeded == 1)
@@ -795,33 +821,70 @@ int BattleUnit::RollEvade(BattleServices& services, u16 chance)
         return 0;
     }
 
+    if (this->kind == 0)
+    {
+        if (skill <= kLowEnemyEvadeSkill)
+        {
+            const u8 streak = state.enemyEvadeStreak;
+
+            if (streak >= kSureEnemyEvadeStreak)
+            {
+                state.enemyEvadeStreak = 0;
+                return success();
+            }
+
+            if (streak >= kLikelyEnemyEvadeStreak && roll() < this->evadeSkill)
+            {
+                state.enemyEvadeStreak = 0;
+                return success();
+            }
+
+            state.enemyEvadeStreak = static_cast<u8>(state.enemyEvadeStreak + 1);
+            return 0;
+        }
+
+        ++this->evadeCounter;
+
+        if (this->evadeCounter >= kEvadeCounterLong && roll() < this->evadeSkill + kEvadeCounterBonus)
+        {
+            this->evadeCounter = 0;
+            return success();
+        }
+
+        const u8 count = this->evadeCounter;
+
+        if (count >= kEvadeCounterMiddle && count <= kEvadeCounterMiddleEnd && roll() < this->evadeSkill)
+        {
+            this->evadeCounter = 0;
+            return success();
+        }
+
+        const u8 early = this->evadeCounter;
+
+        if (early != 0 && early <= kEvadeCounterEarlyEnd && roll() < (this->evadeSkill >> 1))
+        {
+            this->evadeCounter = 0;
+            return success();
+        }
+
+        return 0;
+    }
+
     const u8 streak = state.evadeStreak;
-    bool hit = false;
 
     if (streak >= kSureEvadeStreak)
     {
-        hit = true;
-    }
-    else if (streak >= kLikelyEvadeStreak)
-    {
-        hit = static_cast<u16>(services.random.Below(kLikelyEvadeOdds)) == kLikelyEvadeOdds - 1;
-    }
-    else if (skill <= kLowEvadeSkill)
-    {
-        hit = static_cast<u16>(services.random.Below(kEvadeRoll)) >= kLowEvadeGate &&
-              static_cast<u16>(services.random.Below(kEvadeRoll)) < this->evadeSkill;
-    }
-    else
-    {
-        hit = static_cast<u16>(services.random.Below(kEvadeRoll)) < this->evadeSkill;
-    }
-
-    if (hit)
-    {
+        state.evadeStreak = 0;
         return success();
     }
 
-    ++state.evadeStreak;
+    if (streak >= kLikelyEvadeStreak && roll() < this->evadeSkill)
+    {
+        state.evadeStreak = 0;
+        return success();
+    }
+
+    state.evadeStreak = static_cast<u8>(state.evadeStreak + 1);
     return 0;
 }
 
@@ -1695,7 +1758,8 @@ void BattleUnit::SetDefeatPoseFixed(u8 pose)
 }
 
 // swd3e.exe 0x00491690: clears the unit between battles: its actions (the slot actions 0..7 and 10), placement,
-// command and target lists, effects (all freed), a party role's block, and its state words; the targets back to -1
+// command and target lists, the start of its skill name, effects (all freed), a party role's block, the weak enemies'
+// evasion streak, and its state words; the targets back to -1
 void BattleUnit::Reset(BattleServices& services)
 {
     this->mainAct = ActState{};
@@ -1717,6 +1781,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->pushedTargets = {};
     this->trails = {};
     this->unk283C = {};
+    std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
     this->ExpireEffects(services, 1);
 
     if (this->kind == BattleUnit::PartyRole && this->data != nullptr)
@@ -1724,6 +1789,8 @@ void BattleUnit::Reset(BattleServices& services)
         this->ownedData.reset();
         this->data = nullptr;
     }
+
+    services.state.enemyEvadeStreak = 0;
 
     this->targets = {BattleUnit::NoTarget, BattleUnit::NoTarget, BattleUnit::NoTarget, BattleUnit::NoTarget};
     this->unk29A2 = BattleUnit::NoUnk29A2;
@@ -1768,6 +1835,18 @@ void BattleUnit::Reset(BattleServices& services)
     this->pendingDamage = 0;
     this->equipmentFlags = 0;
     this->unk26CC = 0;
+    this->unk2BE8 = 0;
+    this->enrageCounter2FD3 = 0;
+    this->enrageCounter2FD5 = 0;
+    this->enrageCounter2FD6 = 0;
+    this->unk2FD7 = 0;
+    this->enrageCounter2FD8 = 0;
+    this->enrageElement = 0;
+    this->evadeCounter = 0;
+    this->unk2FA0 = 0;
+    this->unk2EB4 = 0;
+    this->unk2FD9 = 0;
+    this->unk2FDA = 0;
     this->kind = 0;
     this->unk2AA4 = 0;
     this->unk2AA8 = 0;
@@ -1794,11 +1873,16 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2ACC = 0;
     this->unk2AF8 = 0;
     this->absorbing = 0;
+    this->partyMember = 0;
     this->autoControl = 0;
     this->guestControl = 0;
+    this->ghost = 0;
+    this->unk2BDA = 0;
     this->facing = 0;
     this->unk2B0C = 0;
     this->facingTurnsBack = 0;
+    this->goldGuard = 0;
+    this->unk3070 = 0;
 }
 
 // swd3e.exe 0x00495BF0
@@ -2804,6 +2888,8 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
 // anchor measured from the picture's right edge. Each frame the flight takes flightSteps[slot] line steps, one more
 // than the frame before, or with steps kSpeeding a doubling count (from 1, past 0x20 growing by 0x30). The act's sound
 // plays, the picture is drawn, and 1 tells that the target's x was reached (the steps and the line are cleared).
+// swd3e: the steps grow only after `delay` frames (flightDelay counting them), steps 0 also double, and a command
+// with UnitCommand::ShrinksInFlight draws the act shrinking (zoomed by 0x400 less 10 a step).
 int BattleUnit::FlyAct(
     BattleServices& services,
     const BattleUnit& target,
@@ -2813,12 +2899,13 @@ int BattleUnit::FlyAct(
     int fromX,
     int fromY,
     int steps,
+    i16 delay,
     int backwards
 )
 {
     smooth::Scene scene;
     const int result =
-        smooth::UnitFrame(*this).Fly(services, target, act, slot, id, fromX, fromY, steps, backwards, scene);
+        smooth::UnitFrame(*this).Fly(services, target, act, slot, id, fromX, fromY, steps, delay, backwards, scene);
     scene.Show(services);
     return result;
 }

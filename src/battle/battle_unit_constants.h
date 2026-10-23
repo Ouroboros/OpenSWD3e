@@ -38,6 +38,7 @@ constexpr i16 kNumberFadeEnd = 0x30;
 constexpr int kSpeeding = -1;
 constexpr i32 kFlightDoubling = 0x20;
 constexpr i32 kFlightGrowth = 0x30;
+constexpr int kFlightShrink = 0xA;  // swd3e: FlyAct zooms a shrinking act by 0x400 less this a step
 constexpr int kArrived = -1;
 
 constexpr u8 kBlueFillPose = 0xA;

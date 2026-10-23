@@ -125,7 +125,7 @@ public:
     void FollowUpAdvance(BattleServices& services, PictureSteps& steps);
     // DrawRecoil: its result.
     int RecoilAdvance(BattleServices& services, ActState& act, i16 y, PictureSteps& steps);
-    // DrawTrail, FlyAct (its result), RunQueuedActions (its result).
+    // DrawTrail, RunQueuedActions (its result).
     void TrailAdvance(
         BattleServices& services,
         AfterimageTrail& trail,
@@ -135,18 +135,6 @@ public:
         i16 x,
         i16 y,
         PictureSteps& steps
-    );
-    int FlyAdvance(
-        BattleServices& services,
-        const BattleUnit& target,
-        ActState& act,
-        int slot,
-        i32 id,
-        int fromX,
-        int fromY,
-        int steps,
-        int backwards,
-        PictureSteps& draws
     );
     int QueuedAdvance(BattleServices& services, BattleUnit& target, i32 action, PictureSteps& steps);
 
@@ -162,6 +150,7 @@ public:
         int fromX,
         int fromY,
         int steps,
+        i16 delay,
         int backwards,
         Scene& scene
     );

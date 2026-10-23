@@ -276,6 +276,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
                     fromX,
                     fromY,
                     static_cast<i16>(role.command.target),
+                    static_cast<i16>(role.command.unk28),
                     0,
                     scene
                 ) != 1)
@@ -2085,8 +2086,19 @@ int RoleFrame::BeamSpellFrameAdvance(BattleServices& services, BattleUnit& targe
         const int fromX = role.placement.x - offsetX + static_cast<i16>(role.actAnchorX);
         const int fromY = role.placement.y + static_cast<i16>(magic.anchorY) - magic.y;
 
-        if (UnitFrame(role)
-                .Fly(services, target, role.slotActs[0], 0, kRiseAct, fromX, fromY, kSpeedingFlight, 0, scene) == 1)
+        if (UnitFrame(role).Fly(
+                services,
+                target,
+                role.slotActs[0],
+                0,
+                kRiseAct,
+                fromX,
+                fromY,
+                kSpeedingFlight,
+                static_cast<i16>(role.command.unk28),
+                0,
+                scene
+            ) == 1)
         {
             target.RaiseFlag26B8(services.state);
             i16 spirit = 0;

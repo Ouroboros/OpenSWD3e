@@ -4059,7 +4059,8 @@ void Game::ConfirmItem()
     BattleRole& role = this->battleRoles[unit];
     u16 kind = kNoObjectKind;
     u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
-    const int chosen = role.SelectObject(this->database, this->errors, battle.listRole, battle.listCursor, act, kind);
+    const int chosen =
+        role.SelectObject(this->database, this->battleState, battle.listRole, battle.listCursor, act, kind);
     battle.unk4FE5D4[unit] = static_cast<i32>(act);
 
     if (chosen == 0)
@@ -4414,8 +4415,9 @@ void Game::ConfirmThrow()
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     u16 kind = 0;
     u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
-    const int chosen = this->battleRoles[unit]
-                           .SelectObject(this->database, this->errors, kThrowCategory, battle.listCursor, act, kind);
+    const int chosen =
+        this->battleRoles[unit]
+            .SelectObject(this->database, this->battleState, kThrowCategory, battle.listCursor, act, kind);
     battle.unk4FE5D4[unit] = static_cast<i32>(act);
 
     if (chosen == 0)
@@ -4454,8 +4456,9 @@ void Game::ConfirmRefine()
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     u16 kind = 0;
     u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
-    const int chosen = this->battleRoles[unit]
-                           .SelectObject(this->database, this->errors, kRefineCategory, battle.listCursor, act, kind);
+    const int chosen =
+        this->battleRoles[unit]
+            .SelectObject(this->database, this->battleState, kRefineCategory, battle.listCursor, act, kind);
     battle.unk4FE5D4[unit] = static_cast<i32>(act);
 
     if (chosen == 0)

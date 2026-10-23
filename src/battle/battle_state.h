@@ -65,6 +65,8 @@ class BattleState
 {
 public:
     static constexpr i32 InitialGaugeFull = 900;
+    static constexpr std::size_t ItemUseIds = 0xFF;  // itemUses entries
+    static constexpr u8 CostlyUses = 2;  // past this many uses (itemUses + 1 >= 3) an object costs a third more
     static constexpr int QueueRows = 4;
     static constexpr int QueueColumns = 10;
     static constexpr int Enemies = 20;                 // 0x00539590: 20 enemy units of 0x3078 bytes
@@ -138,6 +140,7 @@ public:
     void RemoveSlotRecord(i32 unit);
     void InsertSlotRecord(int kind, i32 unit, int at);
     void StartFieldFade(int red, int green, int blue, int toRed, int toGreen, int toBlue, int frames);
+    u8 ItemUses(u16 id) const;
     void WipeSlotRecords();
     void SortDrawOrderAround(i32 acting, i32 target);
     void SetReturnedItem(int index, u16 id);
@@ -173,8 +176,12 @@ public:
     u8 attacksSinceCritical = 0;
     i32 lastCriticalRole = 0;   // 0x00578478 the act of the role with the last rolled critical attack
     i32 fadingField = 0;        // 0x00577334 1: an act started the field fade (the background waits for it)
-    u8 evadeStreak = 0;         // swd32 0x0053D028 failed evasion rolls in a row
-    u8 evadeJustSucceeded = 0;  // swd32 0x0053D029
+    u8 evadeStreak = 0;         // 0x005785EC failed evasion rolls in a row of the party roles
+    u8 evadeJustSucceeded = 0;  // 0x005785ED
+    u8 enemyEvadeStreak = 0;    // 0x005785EE (swd3e) failed evasion rolls in a row of the weak enemies
+    // 0x005134A0 (swd3e) the uses of each object id in this battle (0xFF of them: cleared by StartBattle, raised by
+    // MenuConfirm); from the third use an object costs a third more (ListObject, SelectObject)
+    std::array<u8, ItemUseIds> itemUses = {};
     std::array<std::unique_ptr<Surface>, 2> surfaces;  // 0x005379F4 screen sized off-screen surfaces
     // 0x0053477C 4 rows of 10, taken by TakePendingAction
     std::array<i16, QueueRows * QueueColumns> actionQueue = {};

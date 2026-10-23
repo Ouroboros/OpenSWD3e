@@ -160,6 +160,13 @@ void BattleState::RemoveSlotRecord(i32 unit)
     records.back() = BattleSlotRecord{-1, -1, kAllOnes16, kAllOnes16, -1, -1, -1, -1};
 }
 
+// The uses of object `id` in this battle (itemUses, read inline by ListObject and SelectObject); an id past the table
+// reads the bytes after it in the original, 0 here (deviations.md).
+u8 BattleState::ItemUses(u16 id) const
+{
+    return id < this->itemUses.size() ? this->itemUses[id] : u8{0};
+}
+
 // swd3e.exe 0x00467C40: the field fades from (red, green, blue) to (toRed, toGreen, toBlue) over `frames` frames; the
 // steps are taken from the levels truncated to integers
 void BattleState::StartFieldFade(int red, int green, int blue, int toRed, int toGreen, int toBlue, int frames)

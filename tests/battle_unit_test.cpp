@@ -130,7 +130,7 @@ constexpr swd3e::u8 kFallbackDefeatPose = 6;     // the pose of a unit defeated 
 constexpr swd3e::u32 kRaiseBlocked = 0x2000000;  // status bit 25 blocks RaiseFlag26B8
 constexpr swd3e::u32 kFlag26B8Damage = 0x2000;   // set by RaiseFlag26B8 with damage pending (swd3e)
 constexpr swd3e::u8 kEvadeSkill = 9;
-constexpr swd3e::u8 kSureEvadeStreak = 0x18;  // failed rolls after which the evasion succeeds
+constexpr swd3e::u8 kSureEvadeStreak = 0x1A;  // swd3e: the failed rolls after which a party role evades
 constexpr swd3e::u16 kSureChance = 10;        // a chance of ten in ten
 constexpr swd3e::i16 kRefill = -1;            // SetVitals refills the current value
 constexpr swd3e::i16 kLowHitPoints = 5;
@@ -255,6 +255,7 @@ TEST_CASE("battle unit: evasion, vitals and scaling")
     using swd3e::BattleUnit;
     Services all;
     BattleUnit unit;
+    unit.kind = BattleUnit::PartyRole;
     CHECK_EQ(unit.RollEvade(all.services, 0), 0);
     unit.evadeSkill = kEvadeSkill;
     all.state.evadeStreak = kSureEvadeStreak;
@@ -1221,6 +1222,7 @@ TEST_CASE("battle role: counting and listing the inventory")
 
 TEST_CASE("battle role: the object and skill lists of the battle menu")
 {
+    const swd3e::BattleState battle;
     constexpr swd3e::u32 kHerbKind = 0x10;  // category 0
     constexpr swd3e::u32 kThrowKind = 0x8000000;
     constexpr swd3e::u16 kThrownObject = 0x300;
@@ -1272,13 +1274,13 @@ TEST_CASE("battle role: the object and skill lists of the battle menu")
     CHECK_EQ(count, 1);
     std::string name;
     swd3e::u16 flags = 0;
-    CHECK_EQ(role.ListObject(0, 1, name, flags, count), 1);
+    CHECK_EQ(role.ListObject(battle, 0, 1, name, flags, count), 1);
     CHECK_EQ(flags, kShownCostly);
     CHECK_EQ(count, kTwo);
     record.stamina = static_cast<swd3e::i16>(kCostly);
-    role.ListObject(0, 1, name, flags, count);
+    role.ListObject(battle, 0, 1, name, flags, count);
     CHECK_EQ(flags, kShown);
-    CHECK_EQ(role.ListObject(0, 2, name, flags, count), 0);
+    CHECK_EQ(role.ListObject(battle, 0, 2, name, flags, count), 0);
     CHECK_EQ(flags, 0);
 
     CHECK_EQ(role.ThrowableObject(1, 1, name, count), 1);
@@ -1465,7 +1467,6 @@ TEST_CASE("battle role: choosing an object in battle")
     constexpr int kThrowCategory = 5;
     constexpr swd3e::u16 kThrownObject = 0x300;
     constexpr swd3e::u16 kUsable = 1;
-    constexpr swd3e::u16 kThrownChoice = 2;
     Services all;
     const std::u8string directory = swd3e::Utf8Bytes(kNoData);
     swd3e::Database database(directory);
@@ -1486,16 +1487,15 @@ TEST_CASE("battle role: choosing an object in battle")
     role.SetInventory(&head);
     swd3e::u32 act = 0;
     swd3e::u16 kind = 0;
-    CHECK_EQ(role.SelectObject(database, all.errors, 0, 0, act, kind), 0);
-    CHECK_EQ(role.SelectObject(database, all.errors, 0, 1, act, kind), 1);
+    CHECK_EQ(role.SelectObject(database, all.state, 0, 0, act, kind), 0);
+    CHECK_EQ(role.SelectObject(database, all.state, 0, 1, act, kind), 1);
     CHECK_EQ(kind, 1);
     CHECK(role.selectedItem == &herb);
     CHECK_EQ(herb.unk06, 1);
-    CHECK_EQ(all.errors.messages.size(), 1U);
-    CHECK_EQ(role.SelectObject(database, all.errors, 0, 1, act, kind), 0);
-    CHECK_EQ(role.SelectObject(database, all.errors, kThrowCategory, 1, act, kind), 1);
-    CHECK_EQ(kind, kThrownChoice);
-    CHECK_EQ(role.commandFlags & swd3e::BattleUnit::UnkCommandFlag2000, swd3e::BattleUnit::UnkCommandFlag2000);
+    CHECK_EQ(role.SelectObject(database, all.state, 0, 1, act, kind), 0);
+    CHECK_EQ(role.SelectObject(database, all.state, kThrowCategory, 1, act, kind), 1);
+    CHECK_EQ(kind, 0);  // swd3e: the throwing category is no longer told apart
+    CHECK_EQ(role.commandFlags & swd3e::BattleUnit::UnkCommandFlag2000, 0);
 }
 
 TEST_CASE("battle state: the menu kind words after the command kinds")

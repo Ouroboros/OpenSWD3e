@@ -1068,6 +1068,14 @@ void UnitFrame::IdleEffectAdvance(BattleServices& services, PictureSteps& steps)
         return;
     }
 
+    // swd3e: without an effect the stage ends at once.
+    if (main.effectA == 0)
+    {
+        unit.stage &= ~BattleUnit::Recoiling;
+        effect = ActState{};
+        return;
+    }
+
     effect.action = main.effectQ;
     effect.id = main.effectA;
 
@@ -1415,8 +1423,8 @@ void UnitFrame::TrailAdvance(
 }
 
 // What FlyAct decides of the frame: the act stepped with its sound, the line walked; its result (1 once the target's
-// x is reached), the draw into `steps`.
-int UnitFrame::FlyAdvance(
+// x is reached), the draw into `scene`.
+int UnitFrame::Fly(
     BattleServices& services,
     const BattleUnit& target,
     ActState& act,
@@ -1425,10 +1433,12 @@ int UnitFrame::FlyAdvance(
     int fromX,
     int fromY,
     int steps,
+    i16 delay,
     int backwards,
-    PictureSteps& draws
+    Scene& scene
 )
 {
+    const Scene::Owner owner(scene, &this->unit);
     BattleUnit& unit = this->unit;
     u16 targetX = 0;
     u16 targetY = 0;
@@ -1455,7 +1465,6 @@ int UnitFrame::FlyAdvance(
     }
 
     const Picture& picture = *unit.picture;
-    services.painter.SetSource(picture.data.data());
     const u16 anchorX = act.anchorX;
     u32 flags = act.flags;
     auto offsetX = static_cast<u16>(act.x);
@@ -1515,7 +1524,12 @@ int UnitFrame::FlyAdvance(
 
     i32& count = unit.flightSteps[static_cast<std::size_t>(slot)];
 
-    if (steps == kSpeeding)
+    // swd3e: the flight waits `delay` frames before its steps grow.
+    if (unit.flightDelay != static_cast<u16>(delay))
+    {
+        ++unit.flightDelay;
+    }
+    else if (steps == 0 || steps == kSpeeding)
     {
         steps = 1;
 
@@ -1556,24 +1570,45 @@ int UnitFrame::FlyAdvance(
 
     services.audio.PlaySound(act.view, services.config.soundVolume);
     act.view = 0;
-    // The flown act stands at its line's point less the act's anchor: a new picture keeps the point.
-    draws.push_back(
-        PictureStep{
-            .picture = {act.frame, act.picture, true},
-            .x = line.fromX + line.x,
-            .y = line.fromY + line.y,
-            .mode = flags,
-            .held = true,
-            .stand = {line.fromX + line.x + offsetX, line.fromY + line.y + act.y},
-            .who = &count,
-        }
-    );
+
+    if ((unit.command.actionFlags & UnitCommand::ShrinksInFlight) != 0)
+    {
+        // swd3e: the act shrinks about its origin as its steps grow.
+        ScenePainter painter(services, scene);
+        painter.SetSource(picture.data.data());
+        const int zoom = kZoomUnit - kFlightShrink * count;
+        painter.SetZoomSheared(offsetX, act.y, zoom, zoom, 0);
+        painter.DrawPicture(
+            line.fromX + line.x,
+            line.fromY + line.y,
+            picture.width,
+            picture.height,
+            flags | Painter::ZoomCopy
+        );
+    }
+    else
+    {
+        // The flown act stands at its line's point less the act's anchor: a new picture keeps the point.
+        scene.Add(
+            PictureStep{
+                .picture = {act.frame, act.picture, true},
+                .x = line.fromX + line.x,
+                .y = line.fromY + line.y,
+                .mode = flags,
+                .held = true,
+                .stand = {line.fromX + line.x + offsetX, line.fromY + line.y + act.y},
+                .who = &count,
+            }
+        );
+    }
 
     if (taken != kArrived)
     {
         return 0;
     }
 
+    unit.unk2EDE = 0;
+    unit.flightDelay = 0;
     count = 0;
     line = LineWalker{};
     return 1;
@@ -1779,26 +1814,6 @@ int UnitFrame::Recoil(BattleServices& services, ActState& act, i16 y, Scene& sce
     PictureSteps steps;
     const int result = this->RecoilAdvance(services, act, y, steps);
     scene.Add(std::move(steps));
-    return result;
-}
-
-int UnitFrame::Fly(
-    BattleServices& services,
-    const BattleUnit& target,
-    ActState& act,
-    int slot,
-    i32 id,
-    int fromX,
-    int fromY,
-    int steps,
-    int backwards,
-    Scene& scene
-)
-{
-    const Scene::Owner owner(scene, &this->unit);
-    PictureSteps draws;
-    const int result = this->FlyAdvance(services, target, act, slot, id, fromX, fromY, steps, backwards, draws);
-    scene.Add(std::move(draws));
     return result;
 }
 
