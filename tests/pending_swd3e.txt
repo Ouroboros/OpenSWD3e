@@ -10,7 +10,6 @@ party: the object kinds of the equipment slots match swd32.exe
 battle message: texts match swd32.exe
 # battle_unit_test.cpp
 battle role: the swarm offsets match swd32.exe
-battle unit: the hop heights of defeat pose 50 match swd32.exe
 battle state: the initial turn and push values match swd32.exe
 battle state: the quake steps match swd32.exe
 battle unit: the damage digit hops match swd32.exe

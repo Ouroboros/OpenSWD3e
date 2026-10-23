@@ -175,6 +175,7 @@ public:
     int DrawPicture(int x, int y, int width, int height, u32 mode, const DrawArgument& argument = {});
     void DrawOutline(int x, int y, int width, int height, u32 mode, const DrawArgument& argument = {});
     void SetZoom(int anchorX, int anchorY, int zoomX, int zoomY);
+    void SetZoomSheared(int anchorX, int anchorY, int zoomX, int zoomY, int shear);
     void DrawZoomed(int x, int y, int width, int height, bool mirrored = false);
     void DrawZoomedMirrored(int x, int y, int width, int height);
     // The screen copied into a ripple of the shape `ripple` has now, then refracted through it.

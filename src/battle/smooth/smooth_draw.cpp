@@ -388,6 +388,18 @@ void ScenePainter::SetZoom(int anchorX, int anchorY, int zoomX, int zoomY)
     );
 }
 
+void ScenePainter::SetZoomSheared(int anchorX, int anchorY, int zoomX, int zoomY, int shear)
+{
+    this->services.painter.SetZoomSheared(anchorX, anchorY, zoomX, zoomY, shear);
+    this->scene.Add(
+        [anchorX, anchorY, zoomX, zoomY, shear](BattleServices& drawing)
+        {
+            drawing.painter.SetZoomSheared(anchorX, anchorY, zoomX, zoomY, shear);
+        },
+        this->where
+    );
+}
+
 void ScenePainter::DrawZoomed(int x, int y, int width, int height, bool mirrored)
 {
     const PictureRef source = this->Source();

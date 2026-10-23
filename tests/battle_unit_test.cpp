@@ -122,7 +122,6 @@ constexpr std::size_t kTurnSlot = 2;  // one of the first eight slot acts, which
 constexpr swd3e::u32 kSeed = 7;
 constexpr int kRoleGaugeBase = 0x32;  // a role starts a turn with a gauge of kRoleGaugeBase + 0..kRoleGaugeSpread-1
 constexpr int kRoleGaugeSpread = 0x8C;
-constexpr swd3e::u16 kTurnFlashFall = 8;  // the tint pulse falls from here after ResetTurn
 constexpr swd3e::i16 kPlaceX = 30;
 constexpr swd3e::i16 kPlaceY = 40;
 constexpr swd3e::i16 kMoveStep = 5;
@@ -213,10 +212,9 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     unit.slotActs[kTurnSlot].id = kSlotAct;
     unit.kind = BattleUnit::PartyRole;
     all.random.Seed(kSeed);
-    const int gauge = unit.ResetTurn(all.services);
-    CHECK(gauge >= kRoleGaugeBase && gauge < kRoleGaugeBase + kRoleGaugeSpread);
-    CHECK_EQ(unit.gauge, gauge);
-    CHECK_EQ(unit.flashFall, kTurnFlashFall);
+    CHECK_EQ(unit.ResetTurn(all.services), 0);
+    CHECK(unit.gauge >= kRoleGaugeBase && unit.gauge < kRoleGaugeBase + kRoleGaugeSpread);
+    CHECK_EQ(unit.flashFall, BattleUnit::FlashPeak);
     CHECK_EQ(unit.guarding, 0);
     CHECK_EQ(unit.slotActs[kTurnSlot].id, 0);
     CHECK_EQ(unit.slotActs[BattleUnit::UnkSlot9].id, kSlotAct);
@@ -437,14 +435,14 @@ TEST_CASE("battle role: the swarm offsets match swd32.exe")
     CHECK(swd3etest::SameTable(exe, kSwarmOffsetYAt, swd3e::BattleRole::SwarmOffsetY));
 }
 
-TEST_CASE("battle unit: the hop heights of defeat pose 50 match swd32.exe")
+TEST_CASE("battle unit: the hop heights of defeat pose 50 match swd3e.exe")
 {
-    constexpr swd3e::u32 kHopHeightsAt = 0x004A7DB4;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kHopHeightsAt = 0x004BFB68;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

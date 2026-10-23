@@ -363,9 +363,12 @@ public:
     u16 unk53BF16 = 0;
     const ObjectRecord* lastDefeatedObject = nullptr;  // 0x005135A0 the object of the last defeated enemy
     // The hit acts of the units (0x004582B0, 0x00458DE0, PlayHitAct, FadeHitAct).
-    std::array<ActState, Units> hitActs;        // 0x005347F8 the hit act of each unit
-    std::array<ActState, Units> followActs;     // swd32 0x004FE600 the follow act of each unit
-    std::array<ActState, Units> fadeActs;       // 0x00538158 the fading act of each unit
+    std::array<ActState, Units> hitActs;     // 0x005347F8 the hit act of each unit
+    std::array<ActState, Units> followActs;  // swd32 0x004FE600 the follow act of each unit
+    std::array<ActState, Units> fadeActs;    // the fading act of each unit (ending at 0x00538158)
+    // 0x00538158 (swd3e) the step of the battle music volume: Config::musicVolume from BattleIntro, faded to 2 by
+    // defeat pose 0x65
+    i32 musicLevel = 0;
     std::array<i8, Units> fadeActLevels = {};   // swd32 0x00521374 the fade of fadeActs
     std::array<u16, Units> walkLineCalls = {};  // swd32 0x004FDF94 the calls of WalkLine
     // The draw order around the acting unit (SortDrawOrderAround).

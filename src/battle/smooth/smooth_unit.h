@@ -249,8 +249,6 @@ public:
 
     int DefeatWaveAdvance(BattleServices& services, const Picture& picture, Scene& scene);
 
-    int DefeatZoomAdvance(BattleServices& services, const Picture& picture, Scene& scene);
-
     int RunDefeatParticlesAdvance(BattleServices& services, Scene& scene);
 
     int DefeatBurstAdvance(BattleServices& services, const Picture& picture, int x, int y, Scene& scene);

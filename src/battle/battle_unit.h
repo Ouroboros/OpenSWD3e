@@ -386,7 +386,7 @@ public:
 
     // RunQueuedActions: the y offsets of a shaking queued act by its frames left (0x004BFC2C).
     static constexpr std::array<i16, 8> ShakeOffsets = {-1, -3, -3, -6, -6, -3, -3, 0};
-    // DefeatHop: the heights of the hop by frame (0x004A7DB4).
+    // DefeatHop: the heights of the hop by frame (0x004BFB68).
     static constexpr std::array<i32, 15> HopHeights = {0, 4, 12, 24, 32, 24, 16, 8, 4, 0, -4, -12, -16, -20, -32};
     static constexpr int UnkSlot8 = 8;
     static constexpr int UnkSlot9 = 9;
@@ -577,7 +577,7 @@ public:
     int DefeatRising(BattleServices& services, const Picture& picture, int x, int y);
     int DefeatBurst(BattleServices& services, const Picture& picture, int x, int y);
     int RunDefeatParticles(BattleServices& services);
-    void DecodeForParticles(BattleServices& services, const Picture& picture);
+    void DecodeForParticles(BattleServices& services, const Picture& picture, u32 line);
     int DefeatSplitRows(BattleServices& services, const Picture& picture, int x, int y);
     int DefeatSplitColumns(BattleServices& services, const Picture& picture, int x, int y);
     int DefeatFill(BattleServices& services, const Picture& picture, int x, int y);
@@ -592,6 +592,9 @@ public:
     int DefeatHop(BattleServices& services, const Picture& picture, int x, int y);
     int DefeatProjected(BattleServices& services, const Picture& picture);
     int DefeatParticles(BattleServices& services, const Picture& picture, int x, int y);
+    int DefeatFlight(BattleServices& services, const Picture& picture);
+    int DefeatBoss(BattleServices& services, const Picture& picture);
+    void DrawWobble(BattleServices& services, const Picture& picture, smooth::Scene& scene);
     void WalkToTarget(BattleServices& services, const BattleUnit& target);
     void TickEffects(BattleServices& services);
     int CanUseAccessory(u16 kind);
@@ -733,7 +736,7 @@ public:
     i32* roleBlock = nullptr;  // swd32 +0x8 the role's 0x60-byte block at 0x004ACF50 ([0]: the fury gauge, inferred)
     ObjectRecord* data = nullptr;             // swd32 +0xC an enemy's mon.dat object (usually `object`)
     std::unique_ptr<ObjectRecord> ownedData;  // a party role's block at +0x0C (freed by Reset)
-    ObjectRecord object;                      // swd32 +0x10 (its description at +0xB0)
+    ObjectRecord object;                      // +0x14 (its description at +0xB8; ResetTurn clears it)
     ObjectRecord weapon;                      // swd32 +0xB4 a party role's weapon (equipment slot 0)
     std::array<ObjectRecord, 2> accessories;  // swd32 +0x158 equipment slots 7 and 8
 

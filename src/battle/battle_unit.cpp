@@ -17,6 +17,7 @@
 #include "battle/smooth/smooth_draw.h"
 #include "battle/smooth/smooth_unit.h"
 #include "config/config.h"
+#include "core/assertion.h"
 #include "core/error_box.h"
 #include "core/format.h"
 #include "core/spline.h"
@@ -100,12 +101,12 @@ constexpr u32 kSupportBuffs = SkillScript::Invisible | SkillScript::AttackUp | S
 constexpr u8 kSupportKind = 4;                 // ObjectData::kind bit 2
 constexpr u32 kCommandStatusBit = 0x10000000;  // command +0x08 bit 28
 constexpr u16 kAccessoryValueMask = 0x3FFF;
-constexpr u16 kUnkAccessory28 = 0x28;  // the accessory kind UnkEquipment100 takes the value of (swd3e)
-constexpr u32 kHealRoll = 0xA;         // ChooseHeal: a roll of 0..4 picks the first way, 5..9 the second
-constexpr u8 kDefeatPoses = 10;        // a defeated unit takes a pose of 1..kDefeatPoses
-constexpr u8 kFallbackDefeatPose = 6;  // or this one when none was taken
-constexpr u16 kTurnFlashFall = 8;      // the tint pulse falls from here after ResetTurn
-constexpr int kResetClearsGuard = 8;   // ResetTurn mode bit
+constexpr u16 kUnkAccessory28 = 0x28;    // the accessory kind UnkEquipment100 takes the value of (swd3e)
+constexpr u32 kHealRoll = 0xA;           // ChooseHeal: a roll of 0..4 picks the first way, 5..9 the second
+constexpr u8 kDefeatPoses = 10;          // a defeated unit takes a pose of 1..kDefeatPoses
+constexpr u8 kFallbackDefeatPose = 6;    // or this one when none was taken
+constexpr int kResetClearsGuard = 8;     // ResetTurn: the command flag that ends the guard
+constexpr u32 kFlag26B8Bit18 = 0x40000;  // cleared by ResetTurn
 
 constexpr u32 kEvadeRoll = 10;       // evade chances are in tenths
 constexpr u16 kInvisibleEvades = 9;  // an invisible unit evades 9 times in kEvadeRoll
@@ -137,7 +138,7 @@ constexpr int kChanceBase = 0xA;
 // swd3e.exe 0x0048B040
 BattleUnit::BattleUnit() = default;
 
-// swd3e.exe 0x0048B100: frees the description of the unit's own object (+0xB0)
+// swd3e.exe 0x0048B100: frees the description of the unit's own object (+0xB8)
 BattleUnit::~BattleUnit() = default;
 
 // swd3e.exe 0x0048B130
@@ -455,14 +456,14 @@ int BattleUnit::ToggleAF8()
     return value;
 }
 
-// swd32.exe 0x00478850 (unmatched in swd3e): clears the state of a turn; roles get a random gauge of 50..189. The slot
-// actions cleared
-// are the first eight.
+// swd3e.exe 0x0048B7A0: clears the state of a turn: the acts, the first eight slot acts, the unit's own object and its
+// command; a party role gets a random gauge of 50..189 (unless unk306C held it); a unit of StatusBit5 turns to face
+// right. Guarding ends with command flag 8 (not when defeated or with unk2AF8) and with a delayed fade-in.
 int BattleUnit::ResetTurn(BattleServices& services)
 {
     this->gauge = 0;
     this->unk2AAC = 0;
-    const u16 mode = this->command.flags;
+    const i32 wasDefeated = this->defeated;
     this->unk2AB0 = 0;
     this->unk2AB4 = 0;
     this->unk2AA8 = 0;
@@ -484,7 +485,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->brightLevel = 1;
     this->slotTint = 0;
     this->flashPhase = BattleUnit::FlashStart;
-    this->flashFall = kTurnFlashFall;
+    this->flashFall = BattleUnit::FlashPeak;
     this->unk2674 = 0;
     this->action = 0;
     this->readyAction = 0;
@@ -497,7 +498,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->mainAct.anchorY = 0;
     this->unk26CC = 0;
 
-    if ((mode & kResetClearsGuard) != 0)
+    if (wasDefeated == 0 && this->unk2AF8 == 0 && (this->command.flags & kResetClearsGuard) != 0)
     {
         this->guarding = 0;
     }
@@ -509,16 +510,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
         this->marks = static_cast<u16>((this->marks & ~BattleUnit::UnkMark8) | BattleUnit::UnkMark200);
     }
 
-    if (this->autoControl == 1)
-    {
-        this->guarding = 1;
-    }
-
-    if (this->guestControl == 1)
-    {
-        this->placement = this->savedPlacement;
-    }
-
+    this->unk26B8 &= ~kFlag26B8Bit18;
     this->standAct = ActState{};
     this->castAct = ActState{};
     this->recoilAct = ActState{};
@@ -529,15 +521,23 @@ int BattleUnit::ResetTurn(BattleServices& services)
         this->slotActs[static_cast<std::size_t>(i)] = ActState{};
     }
 
-    std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
+    // The object's description is dropped without being freed in the original.
+    this->object = ObjectRecord{};
     this->command = UnitCommand{};
     this->targets = {BattleUnit::NoTarget, BattleUnit::NoTarget, BattleUnit::NoTarget, BattleUnit::NoTarget};
-    int result = this->kind;
 
-    if (result == BattleUnit::PartyRole)
+    if (this->kind == BattleUnit::PartyRole && this->unk306C == 0)
     {
-        result = static_cast<int>(services.random.Below(kRoleGaugeSpread)) + kRoleGaugeBase;
-        this->gauge = static_cast<u16>(result);
+        this->gauge = static_cast<u16>(services.random.Below(kRoleGaugeSpread) + kRoleGaugeBase);
+    }
+
+    this->unk306C = 0;
+    int result = this->StatusBit5();
+
+    if (result == 1)
+    {
+        result = this->SetFacing(0);
+        this->unk26B8 &= ~kFlag26B8Bit28;
     }
 
     return result;
@@ -1311,6 +1311,36 @@ constexpr u8 kSlidePose = 0xF;
 constexpr u8 kHopPose = 0x32;
 constexpr u8 kProjectedPose = 0x33;
 constexpr u8 kParticlePose = 0x64;
+constexpr u32 kFlag26B8Bit16 = 0x10000;  // the defeat takes kStrongDefeatAction
+constexpr i32 kStrongDefeatAction = 0x28;
+constexpr u8 kFlightPose = 0x10;
+constexpr u8 kBossPose = 0x65;
+constexpr std::u8string_view kDecodeFailed = u8"圖形還原失敗";  // 0x004BFC48
+constexpr std::string_view kRoleFile = "C:\\cpp\\SWD102e\\role.cpp";
+constexpr i16 kZoomFrames = 0x10;  // pose 0xC
+constexpr int kZoomWiden = 0x60;
+constexpr int kZoomFlatten = 6;
+constexpr i32 kFlightEndX = 0x15E;  // pose 0x10: the end of the line
+constexpr i32 kFlightEndY = 0x64;
+constexpr int kFlightZoom = 0x200;
+constexpr i16 kFlightStep = 2;
+constexpr i32 kWobbles = 6;  // kParticlePose and kBossPose wobble six times first
+constexpr i16 kWobbleTop = 0x18;
+constexpr i16 kWobbleBottom = -8;
+constexpr i16 kWobbleRise = 4;
+constexpr i32 kBossMusicFloor = 2;  // pose 0x65
+constexpr int kBossShake = 3;
+constexpr i32 kBossDefeatAct = 0x1CB6;
+constexpr int kBossRumbleFrames = 0x1E;
+constexpr u16 kBossRumbleSound = 0x229;
+constexpr int kBossFlashFrames = 0x23;
+constexpr int kBossSecondFlashFrames = 0x2D;
+constexpr u16 kBossFlashSound = 0x233;
+constexpr int kBossFlashRed = 25;
+constexpr int kBossFlashGreen = 5;
+constexpr int kBossFlashBlue = 5;
+constexpr int kBossFlashLong = 3;
+constexpr int kBossFlashShort = 2;
 
 }  // namespace
 
@@ -3200,14 +3230,14 @@ int BattleUnit::Defense() const
     return up + barrier + base - down;
 }
 
-// swd32.exe 0x00479850 (unmatched in swd3e): one frame of the unit's defeat while `dying`; 1 once it is over (the cast
-// act cleared, the
-// turn reset, the unit defeated). A party role or a unit with unk2AF8 (not forced) ends at once: a role is marked
-// Defeated in its record and its effects expire. Others play the defeat pose (the fixed pose, or kParticlePose for
-// an UnkKind20 object) on the picture of the cast act's action kDefeatAction, glowLevel counting the frames.
+// swd3e.exe 0x0048CA10: one frame of the unit's defeat while `dying` (none for the talisman ghost); 1 once it is over
+// (the cast act cleared, the turn reset, the unit defeated). A party role or a unit with unk2AF8 (not forced) ends at
+// once: a role is marked Defeated in its record, flags 26B8 and unk2EB2 are cleared and its effects expire. Others
+// play the defeat pose (the fixed pose, or kParticlePose for an UnkKind20 object; pose 0 ends at once) on the picture
+// of the cast act's action kDefeatAction (0x28 under flag 26B8 bit 16), glowLevel counting the frames.
 int BattleUnit::DefeatFrame(BattleServices& services)
 {
-    if (this->dying == 0)
+    if (this->dying == 0 || this->ghost == 1)
     {
         return 0;
     }
@@ -3217,6 +3247,11 @@ int BattleUnit::DefeatFrame(BattleServices& services)
     ActState& act = this->castAct;
     act.id = this->actId;
     act.action = kDefeatAction;
+
+    if ((this->unk26B8 & kFlag26B8Bit16) != 0)
+    {
+        act.action = kStrongDefeatAction;
+    }
 
     if ((this->kind == 1 || this->unk2AF8 == 1) && this->autoControl == 0 && this->guestControl == 0)
     {
@@ -3237,6 +3272,8 @@ int BattleUnit::DefeatFrame(BattleServices& services)
         this->unk2AAC = 0;
         this->dying = 0;
         this->defeated = 1;
+        this->unk26B8 = 0;
+        this->unk2EB2 = 0;
         this->ExpireEffects(services, 1);
         return 1;
     }
@@ -3284,6 +3321,10 @@ int BattleUnit::DefeatFrame(BattleServices& services)
 
     switch (this->defeatPose)
     {
+        case 0:
+            this->glowLevel = 0;
+            return this->EndDefeat(services);
+
         case kRisingPose:
             return this->DefeatRising(services, picture, x, y);
 
@@ -3325,6 +3366,9 @@ int BattleUnit::DefeatFrame(BattleServices& services)
         case kSlidePose:
             return this->DefeatSlide(services, picture);
 
+        case kFlightPose:
+            return this->DefeatFlight(services, picture);
+
         case kHopPose:
             return this->DefeatHop(services, picture, x, y);
 
@@ -3333,6 +3377,9 @@ int BattleUnit::DefeatFrame(BattleServices& services)
 
         case kParticlePose:
             return this->DefeatParticles(services, picture, x, y);
+
+        case kBossPose:
+            return this->DefeatBoss(services, picture);
 
         default:
             return 0;
@@ -3418,8 +3465,9 @@ int BattleUnit::RunDefeatParticles(BattleServices& services)
     return result;
 }
 
-// The picture decoded into absorbPixels for a particle pose.
-void BattleUnit::DecodeForParticles(BattleServices& services, const Picture& picture)
+// The picture decoded into absorbPixels for a particle pose; a failed decode is reported (圖形還原失敗, role.cpp
+// `line`).
+void BattleUnit::DecodeForParticles(BattleServices& services, const Picture& picture, u32 line)
 {
     this->absorbPixels.clear();
     const std::optional<RawPicture> raw = RleCodec(services.painter).Decode(picture.data);
@@ -3428,6 +3476,10 @@ void BattleUnit::DecodeForParticles(BattleServices& services, const Picture& pic
     {
         this->absorbPixels.resize(raw->pixels.size() / sizeof(u16));
         std::memcpy(this->absorbPixels.data(), raw->pixels.data(), this->absorbPixels.size() * sizeof(u16));
+    }
+    else
+    {
+        MaintenanceAssert(services.errors, kDecodeFailed, 0, kRoleFile, line);
     }
 
     this->absorb.pixels = this->absorbPixels;
@@ -3498,15 +3550,6 @@ int BattleUnit::DefeatSink(BattleServices& services, const Picture& picture)
     return result;
 }
 
-// Pose 12: the picture zooms about the main act's position, wider and flatter each frame, for 0x1E frames.
-int BattleUnit::DefeatZoom(BattleServices& services, const Picture& picture)
-{
-    smooth::Scene scene;
-    const auto result = smooth::UnitFrame(*this).DefeatZoomAdvance(services, picture, scene);
-    scene.Show(services);
-    return result;
-}
-
 // Pose 13: four strips of a quarter of the height slide apart, alternately left and right, by 2 a frame, darkening.
 int BattleUnit::DefeatStrips(BattleServices& services, const Picture& picture, int x, int y)
 {
@@ -3562,6 +3605,242 @@ int BattleUnit::DefeatParticles(BattleServices& services, const Picture& picture
     const auto result = smooth::UnitFrame(*this).DefeatParticlesAdvance(services, picture, x, y, scene);
     scene.Show(services);
     return result;
+}
+
+// Pose 0xC: the picture zooms out wide and flat about the main act's place over 16 frames (mirrored with the unit; an
+// unmirrored one is drawn without its flags).
+int BattleUnit::DefeatZoom(BattleServices& services, const Picture& picture)
+{
+    if (this->glowLevel >= kZoomFrames)
+    {
+        this->glowLevel = 0;
+        this->slotTint = 0;
+        return this->EndDefeat(services);
+    }
+
+    smooth::Scene scene;
+    const smooth::Scene::Owner owner(scene, this);
+    this->StartDefeatDraw(services, picture);
+    smooth::ScenePainter painter(services, scene);
+    painter.SetSource(picture.data.data());
+    painter.SetZoom(
+        this->mainAct.x,
+        this->mainAct.y,
+        kZoomWiden * this->glowLevel + kZoomUnit,
+        (kZoomFrames - this->glowLevel) << kZoomFlatten
+    );
+    const u32 mode = (this->drawFlags & Painter::Mirror) != 0 ? this->drawFlags | Painter::ZoomCopy : Painter::ZoomCopy;
+    painter.DrawPicture(
+        this->placement.x - static_cast<i16>(this->originX),
+        this->placement.y - this->mainAct.y,
+        picture.width,
+        picture.height,
+        mode
+    );
+    ++this->glowLevel;
+    scene.Show(services);
+    return 0;
+}
+
+// Pose 0x10: the picture flies off along a line from its place to (0x15E, 0x64), shrinking and sheared, two steps of
+// the line a frame (the line walked again from its start each frame); over once it reaches the line's end x.
+int BattleUnit::DefeatFlight(BattleServices& services, const Picture& picture)
+{
+    LineWalker& line = this->flight;
+    line = LineWalker{};
+    line.fromX = this->placement.x - static_cast<i16>(this->originX);
+    line.fromY = this->placement.y - this->mainAct.y;
+    line.toX = kFlightEndX;
+    line.toY = kFlightEndY;
+
+    for (int step = 0; step < this->glowLevel; ++step)
+    {
+        LineStep(line);
+    }
+
+    smooth::Scene scene;
+    const smooth::Scene::Owner owner(scene, this);
+    this->StartDefeatDraw(services, picture);
+    smooth::ScenePainter painter(services, scene);
+    painter.SetSource(picture.data.data());
+    const int zoom = 2 * (kFlightZoom - line.x);
+    painter.SetZoomSheared(static_cast<i16>(this->originX), this->mainAct.y, zoom, zoom, kFlightZoom);
+    const u32 mode = (this->drawFlags & Painter::Mirror) != 0 ? this->drawFlags | Painter::ZoomCopy : Painter::ZoomCopy;
+    painter.DrawPicture(line.x + line.fromX, line.fromY + line.y, picture.width, picture.height, mode);
+    scene.Show(services);
+    this->glowLevel = static_cast<i16>(this->glowLevel + kFlightStep);
+    this->slotTint = static_cast<i16>(this->slotTint + kFlightStep);
+
+    if (line.x + line.fromX < line.toX)
+    {
+        return 0;
+    }
+
+    this->glowLevel = 0;
+    this->slotTint = 0;
+    return this->EndDefeat(services);
+}
+
+// Pose 0x65 (swd3e): a boss. It first wobbles brighter and dimmer like kParticlePose (sound 0x31 when done), then
+// sinks into the ground, shaking, under act 0x1CB6 (sound 0x229 every 30 frames, a field flash with sound 0x233 every
+// 35 and 45), while the battle music fades down a step a frame to 2; once sunk the music returns to its volume. An
+// UnkKind20 object sets unk53BFC0 meanwhile.
+int BattleUnit::DefeatBoss(BattleServices& services, const Picture& picture)
+{
+    BattleState& battle = services.state;
+
+    if (this->glowLevel == kDefeatedAtOnce)
+    {
+        battle.unk53BFC0 = 0;
+        battle.musicLevel = services.config.musicVolume;
+        services.audio.Queue().SetVolume(MusicQueue::MaxVolume * services.config.musicVolume / Config::MaxVolume);
+        this->glowLevel = 0;
+        this->gauge = 0;
+        this->castAct = ActState{};
+        this->attackAct = ActState{};
+        this->absorb = ParticleEffect{};
+        this->ResetTurn(services);
+        this->unk2AAC = 0;
+        this->defeated = 1;
+        this->dying = 0;
+        return 1;
+    }
+
+    if ((this->data->data.kind & ObjectData::UnkKind20) != 0)
+    {
+        battle.unk53BFC0 = 1;
+    }
+
+    if (this->glowLevel == 0)
+    {
+        if (this->throwSteps >= kWobbles)
+        {
+            services.audio.PlaySound(kDefeatSound, services.config.soundVolume);
+            this->recoilTint = 0;
+            this->glowLevel = 1;
+            this->throwSteps = 0;
+            return 0;
+        }
+
+        smooth::Scene scene;
+        const smooth::Scene::Owner owner(scene, this);
+        this->DrawWobble(services, picture, scene);
+        scene.Show(services);
+        return 0;
+    }
+
+    const i32 level = battle.musicLevel;
+
+    if (level > kBossMusicFloor)
+    {
+        --battle.musicLevel;
+        services.audio.Queue().SetVolume(MusicQueue::MaxVolume * (level - 1) / Config::MaxVolume);
+    }
+
+    ++this->glowLevel;
+    smooth::Scene scene;
+    const smooth::Scene::Owner owner(scene, this);
+    smooth::ScenePainter painter(services, scene);
+    const int left = this->placement.x - static_cast<i16>(this->originX);
+    painter.SetClipClamped(left, this->placement.y - this->mainAct.y, left + picture.width, this->placement.y);
+    painter.SetSource(picture.data.data());
+    painter.DrawPicture(
+        left + this->glowLevel % kBossShake,
+        this->glowLevel + this->placement.y - this->mainAct.y,
+        picture.width,
+        picture.height,
+        this->drawFlags
+    );
+
+    if (this->glowLevel >= picture.height)
+    {
+        this->glowLevel = kDefeatedAtOnce;
+    }
+
+    painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+    ActState& act = this->attackAct;
+    act.action = 0;
+    act.id = kBossDefeatAct;
+
+    if (services.acts.Run(act) == 0)
+    {
+        scene.Show(services);
+        return 1;
+    }
+
+    this->shadowPicture = services.archive.GetPicture(act.frame, act.picture);
+
+    // A missing picture is read through a null pointer in the original.
+    if (this->shadowPicture != nullptr)
+    {
+        const Picture& effect = *this->shadowPicture;
+        painter.SetSource(effect.data.data());
+        painter
+            .DrawPicture(this->placement.x - act.x, this->placement.y - act.y, effect.width, effect.height, act.flags);
+    }
+
+    scene.Show(services);
+
+    if (this->glowLevel % kBossRumbleFrames == 1)
+    {
+        services.audio.PlaySound(kBossRumbleSound, services.config.soundVolume);
+    }
+
+    if (this->glowLevel % kBossFlashFrames == 0)
+    {
+        battle.fadingField = 1;
+        battle.StartFieldFade(0, 0, 0, kBossFlashRed, kBossFlashGreen, kBossFlashBlue, kBossFlashLong);
+        services.audio.PlaySound(kBossFlashSound, services.config.soundVolume);
+    }
+
+    if (this->glowLevel % kBossSecondFlashFrames == 0)
+    {
+        battle.fadingField = 1;
+        battle.StartFieldFade(0, 0, 0, kBossFlashRed, kBossFlashGreen, kBossFlashBlue, kBossFlashShort);
+        services.audio.PlaySound(kBossFlashSound, services.config.soundVolume);
+    }
+
+    return 0;
+}
+
+// The wobble before kParticlePose and kBossPose (inline in DefeatFrame): the picture drawn additively at its tint
+// (recoilTint, sound 0xEB at its top), the tint rising by 4 on even wobbles and falling by 1 on odd ones; a wobble
+// ends at the top or the bottom.
+void BattleUnit::DrawWobble(BattleServices& services, const Picture& picture, smooth::Scene& scene)
+{
+    if (this->recoilTint == kWobbleTop)
+    {
+        services.audio.PlaySound(kWobbleSound, services.config.soundVolume);
+    }
+
+    smooth::ScenePainter painter(services, scene);
+    painter.SetSource(picture.data.data());
+    DrawOptions& options = painter.Options();
+    options.tintRed = this->recoilTint;
+    options.tintGreen = this->recoilTint;
+    options.tintBlue = this->recoilTint;
+    painter.DrawPicture(
+        this->placement.x - static_cast<i16>(this->originX),
+        this->placement.y - this->mainAct.y,
+        picture.width,
+        picture.height,
+        this->drawFlags | Painter::Additive
+    );
+    const i32 wobble = this->throwSteps;
+
+    if (wobble % 2 != 0)
+    {
+        --this->recoilTint;
+    }
+    else
+    {
+        this->recoilTint = static_cast<i16>(this->recoilTint + kWobbleRise);
+    }
+
+    if (this->recoilTint >= kWobbleTop || this->recoilTint <= kWobbleBottom)
+    {
+        this->throwSteps = wobble + 1;
+    }
 }
 
 // The place of WalkToTarget (part of 0x00482310): the act's offset and the stand pose's mirrored by the facing, the

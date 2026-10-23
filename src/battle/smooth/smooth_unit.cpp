@@ -69,7 +69,7 @@ constexpr u8 kTrailDelay = 1;  // a new image every second frame
 constexpr i16 kTrailLevel = 0xC;
 constexpr int kTrailSpacing = 0x1E;
 constexpr int kTrailTintBase = 0x1F;
-constexpr i16 kBlueFillStep = 4;
+constexpr i16 kBlueFillStep = 6;  // swd3e (swd32: 4)
 constexpr int kBlueFillTint = 0x10;
 constexpr i32 kCommand1Action = 0x28;  // the fade in action after command 1
 constexpr i16 kDarkFillStep = 0xE;
@@ -101,10 +101,12 @@ constexpr u16 kStepPicture = 1;  // the picture of the act that plays the step s
 constexpr u16 kStepSound = 0x10F;
 constexpr i16 kWaveEnd = 0x2D;
 constexpr int kWaveShare = 3;
-constexpr i16 kZoomEnd = 0x1E;
-constexpr i16 kZoomStep = 2;
 constexpr i16 kParticlesStarted = 0x65;
 constexpr i32 kBurstTarget = 2;
+constexpr int kBurstTargetShare = 3;     // swd3e: pose 2 bursts towards a third of the picture (swd32: half)
+constexpr u32 kBurstDecodeLine = 0x75D;  // the lines of role.cpp reported when a particle pose cannot decode
+constexpr u32 kSweepDecodeLine = 0x8EA;
+constexpr u32 kStripDecodeLine = 0xB38;
 constexpr u16 kBurstSpeed = 0x32;
 constexpr u16 kBurstLife = 0xFA;
 constexpr u16 kBurstDivisor = 0xA;
@@ -3129,49 +3131,6 @@ int UnitFrame::DefeatWaveAdvance(BattleServices& services, const Picture& pictur
     return 0;
 }
 
-// What BattleUnit::DefeatZoom decides of the frame; the draws into `scene`.
-int UnitFrame::DefeatZoomAdvance(BattleServices& services, const Picture& picture, Scene& scene)
-{
-    const Scene::Owner owner(scene, &this->unit);
-    BattleUnit& unit = this->unit;
-
-    if (unit.glowLevel >= kZoomEnd)
-    {
-        unit.glowLevel = 0;
-        unit.slotTint = 0;
-        return unit.EndDefeat(services);
-    }
-
-    if (unit.glowLevel == 0)
-    {
-        services.audio.PlaySound(kDefeatSound, services.config.soundVolume);
-    }
-
-    ScenePainter painter(services, scene);
-    painter.SetZoom(
-        unit.mainAct.x,
-        unit.mainAct.y,
-        unit.glowLevel * unit.slotTint + kZoomUnit,
-        kZoomUnit - unit.glowLevel * (unit.slotTint + 1)
-    );
-    painter.SetSource(picture.data.data());
-    const int x = unit.placement.x - static_cast<i16>(unit.originX);
-    const int y = unit.placement.y - unit.mainAct.y;
-
-    if ((unit.drawFlags & Painter::Mirror) != 0)
-    {
-        painter.DrawZoomedMirrored(x, y, picture.width, picture.height);
-    }
-    else
-    {
-        painter.DrawZoomed(x, y, picture.width, picture.height);
-    }
-
-    unit.slotTint = static_cast<i16>(unit.slotTint + kZoomStep);
-    ++unit.glowLevel;
-    return 0;
-}
-
 // What BattleUnit::RunDefeatParticles decides of the frame; the draws into `scene`.
 int UnitFrame::RunDefeatParticlesAdvance(BattleServices& services, Scene& scene)
 {
@@ -3202,7 +3161,7 @@ int UnitFrame::DefeatBurstAdvance(BattleServices& services, const Picture& pictu
     {
         ParticleEffect& effect = unit.absorb;
         effect = ParticleEffect{};
-        unit.DecodeForParticles(services, picture);
+        unit.DecodeForParticles(services, picture, unit.defeatPose == kBurstPose ? kBurstDecodeLine : kSweepDecodeLine);
         effect.width = picture.width;
         effect.height = picture.height;
         effect.x = x;
@@ -3213,7 +3172,7 @@ int UnitFrame::DefeatBurstAdvance(BattleServices& services, const Picture& pictu
 
         if (unit.defeatPose == kBurstPose)
         {
-            effect.targetLeft = x + (picture.width >> 1);
+            effect.targetLeft = x + picture.width / kBurstTargetShare;
             effect.targetTop = y + (picture.height >> 1);
             effect.targetWidth = kBurstTarget;
             effect.targetHeight = kBurstTarget;
@@ -3311,7 +3270,7 @@ int UnitFrame::DefeatParticlesAdvance(BattleServices& services, const Picture& p
     {
         ParticleEffect& effect = unit.absorb;
         effect = ParticleEffect{};
-        unit.DecodeForParticles(services, picture);
+        unit.DecodeForParticles(services, picture, kStripDecodeLine);
         effect.width = picture.width;
         effect.height = picture.height;
         effect.x = x;
