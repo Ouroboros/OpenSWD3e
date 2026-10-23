@@ -81,13 +81,15 @@ struct ObjectData
     u16 stealDifficulty = 0;  // +0x8E 2..5: a steal roll below it succeeds
     u16 unk90 = 0;
     u16 unk92 = 0;
-    u8 itemChance = 0;   // +0x94 tag 0x18 (with the next byte): 0: the enemy uses no objects, else added to the turns
-                         // without one for the roll
-    u8 skillChance = 0;  // +0x95 the same for the skills
-    u8 battleLevel = 0;  // +0x96 tag 0x18 (with the next byte) a unit's level byte in battle
-    u8 catchChance = 0;  // +0x97 near enough, a catch roll of 0..9 below it catches the enemy
-    // +0x98 per element; tag 0x7D0 sets the last five of them
-    std::array<u8, 9> resistances = {};
+    // +0x94..+0x97 tag 0x18 (and tag 1's block): an enemy's enrage (0x0049BB50, 0x0049BE20)
+    u16 enrageCondition = 0;  // +0x94 1..0x1E: what enrages the enemy (EnrageCheck)
+    u16 enrageEffect = 0;     // +0x96 below 1001: a skill it takes up; 1001..: a stat or flag it gains (Enrage)
+    u8 itemChance = 0;        // +0x98 0: the enemy uses no objects, else added to the turns without one for the roll
+    u8 skillChance = 0;       // +0x99 the same for the skills
+    u8 battleLevel = 0;       // +0x9A a unit's evasion skill in battle (also read by 0x00414DB0)
+    u8 catchChance = 0;       // +0x9B near enough, a catch roll of 0..9 below it catches the enemy
+    // +0x9C by element (金 木 水 火 土); tag 0x7D0 sets them
+    std::array<u8, 5> resistances = {};
     u8 altar = 0;  // +0xA1 tags 0x1C, 0x7D0 the altar it belongs to
     u8 unkA2 = 0;  // +0xA2 tags 0x1D, 0x7D0
     u8 unkA3 = 0;  // +0xA3
@@ -100,8 +102,10 @@ static_assert(offsetof(ObjectData, maxHitPoints) == 0x50);
 static_assert(offsetof(ObjectData, act) == 0x54);
 static_assert(offsetof(ObjectData, hitPoints) == 0x68);
 static_assert(offsetof(ObjectData, itemA) == 0x6C);
-static_assert(offsetof(ObjectData, itemChance) == 0x94);
-static_assert(offsetof(ObjectData, resistances) == 0x98);
+static_assert(offsetof(ObjectData, enrageCondition) == 0x94);
+static_assert(offsetof(ObjectData, itemChance) == 0x98);
+static_assert(offsetof(ObjectData, catchChance) == 0x9B);
+static_assert(offsetof(ObjectData, resistances) == 0x9C);
 static_assert(offsetof(ObjectData, altar) == 0xA1);
 
 // A mon.dat object: the fixed part and the description (+0xA0, tag 0x1E; none when the record has no such tag).
@@ -142,9 +146,10 @@ struct SkillScript
         UnkAilment80 = 0x80,
         UnkAilment100 = 0x100,
         StatsScaledAilment = 0x200,
-        UnkAilment1000 = 0x1000,
-        MissedAilment = 0x2000,  // the skill marks the unit missed instead
-        RefreshOnly = 0x8000,    // an effect of the same kind only gets new turns and value
+        UnkAilment400 = 0x400,
+        PoisonAilment = 0x1000,         // swd3e: a poison of the skill's turns (AddAilment)
+        LastingPoisonAilment = 0x2000,  // swd3e: a poison that does not wear off (AddAilment)
+        RefreshOnly = 0x8000,           // an effect of the same kind only gets new turns and value
     };
 
     // The bits of `flags`, each set by an opcode of the skill script.
@@ -179,27 +184,28 @@ struct SkillScript
     // The values of `element` (names from the battle messages of each resistance).
     enum Element : u16
     {
-        Fire = 1,
-        Water = 2,  // its attack buff is named ice
-        UnkElement3 = 3,
-        UnkElement4 = 4,
-        Poison = 5,
-        Light = 6,
-        Dark = 7,
-        UnkElement8 = 8,
-        Physical = 9,
+        Metal = 1,  // swd3e: the five elements 金 木 水 火 土
+        Wood = 2,
+        Water = 3,
+        Fire = 4,
+        Earth = 5,
     };
 
     // The bits of `statusBits` (kept by the effect nodes of a unit, EffectNode::bits).
     enum Buff : u32
     {
+        EarthAttackUp = 0x4000,        // swd3e
+        DispelBuffs = 0x10000,         // swd3e: every buff and lowering is taken off
+        DamageTransferBuff = 0x20000,  // swd3e
+        StrongAttackBuff = 0x40000,    // swd3e
         DefenseDown = 0x80000,
         SpeedDown = 0x100000,
-        DarkAttackUp = 0x200000,
-        LightAttackUp = 0x400000,
-        IceAttackUp = 0x800000,
-        FireAttackUp = 0x1000000,
+        FireAttackUp = 0x200000,  // swd3e: the attack buffs of the elements
+        WaterAttackUp = 0x400000,
+        WoodAttackUp = 0x800000,
+        MetalAttackUp = 0x1000000,
         Barrier = 0x2000000,
+        ResistAllBuff = 0x4000000,  // swd3e: 抵抗所有攻擊
         AttackDown = 0x8000000,
         Invisible = 0x10000000,
         DefenseUp = 0x20000000,
@@ -286,7 +292,7 @@ enum class ObjectTag : u16
     SpiritUp = 0x14,
     StaminaUp = 0x15,
     Unk48 = 0x16,
-    Chances = 0x18,  // swd3e: two words from itemChance (the item and skill chances, the battle level and catch chance)
+    Enrage = 0x18,  // swd3e: the enrage condition and effect (two words from enrageCondition)
     Kind = 0x19,
     UsableBy = 0x1A,
     UseKind = 0x1B,

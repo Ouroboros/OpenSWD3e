@@ -35,6 +35,8 @@ struct BattleMessage
     static constexpr i32 FromRight = 0x10;       // slides in from the right, leaves to the left
     static constexpr i32 FromLeft = 0x20;        // slides in, leaves to the right
     static constexpr i32 Rise = 0x40;            // drops in from the top, leaves upwards (y holds the speed)
+    static constexpr i32 Stacked = 0x1000000;    // swd3e: placed 0x20 lower per message counted in `stacked`
+    static constexpr i32 Exclusive = 0x2000000;  // swd3e: no other message is added while it shows
     static constexpr i32 BlackBar = 0x40000000;  // a black bar behind the text
     static constexpr i32 Frame = static_cast<i32>(0x80000000u);  // a framed box behind the text
 
@@ -46,7 +48,8 @@ struct BattleMessage
     i32 slideY = 0;                       // +0x14
     i32 flags = 0;                        // +0x18
     i16 frames = 0;                       // +0x1C frames left before leaving
-    // +0x20 the text. The original keeps the pointer it is given, so a buffer rewritten while the message shows draws
+    u16 colored = 0;                      // +0x20 (swd3e) 1: the text has $n colour codes
+    // +0x24 the text. The original keeps the pointer it is given, so a buffer rewritten while the message shows draws
     // its new text; a constant text is kept in `constant`.
     std::span<const char> source;
     std::string constant;
@@ -145,18 +148,13 @@ public:
     static constexpr std::u8string_view CraftSuccess = u8"煉符成功";           // 0x004BF8D8
     static constexpr std::u8string_view MasteryLine = u8"法寶%s已完全成長!!";  // 0x004BF870
 
-    // swd32.exe 0x004A79A8 (unmatched in swd3e): the names of the nine elements (pointers to the strings in the
-    // original)
-    static constexpr std::array<std::u8string_view, 9> ElementNames = {
-        u8"火",  // 0x004A718C
-        u8"冰",  // 0x004A7174
-        u8"風",  // 0x004A7184
-        u8"土",  // 0x004A7170
-        u8"毒",  // 0x004A716C
-        u8"光",  // 0x004A7180
-        u8"暗",  // 0x004A7188
-        u8"電",  // 0x004A7168
-        u8"物",  // 0x004A7164
+    // 0x004BF61C: the names of the five elements (pointers to the strings in the original)
+    static constexpr std::array<std::u8string_view, 5> ElementNames = {
+        u8"金",  // 0x004BF73C
+        u8"木",  // 0x004BF738
+        u8"水",  // 0x004BF734
+        u8"火",  // 0x004BED3C
+        u8"土",  // 0x004BED38
     };
 
     static constexpr int LootSlots = 10;
@@ -188,23 +186,27 @@ public:
     void Add(int x, int y, i16 frames, std::span<const char> text, int flags);
     void Add(int x, int y, i16 frames, std::u8string_view text, int flags);
     void Draw();
+    void Clear();
 
-    std::unique_ptr<BattleMessage> messages;                 // 0x00537388
-    std::array<i32, 8> unk5214FC = {};                       // cleared with messages by Game::EndBattle
-    ActState panelAct;                                       // 0x0050AF70 act 0x233B: the frame picture of the panels
-    i32 panelHeight = 0;                                     // 0x00577A48 grown by GrowPanel
-    u16 lootCount = 0;                                       // 0x005777EC
+    std::unique_ptr<BattleMessage> messages;  // 0x00537388
+    i32 stacked = 0;    // 0x00577A7C (swd3e) the Centered messages shown, which Stacked ones are placed below
+    i32 exclusive = 0;  // 0x00577A80 (swd3e) the Exclusive messages shown
+    std::array<u16, 4> colors = {};     // 0x00577A74 (swd3e) the colours of the $0..$3 codes, made by Add
+    std::array<i32, 8> unk5214FC = {};  // cleared with messages by Game::EndBattle
+    ActState panelAct;                  // 0x0050AF70 act 0x233B: the frame picture of the panels
+    i32 panelHeight = 0;                // 0x00577A48 grown by GrowPanel
+    u16 lootCount = 0;                  // 0x005777EC
     std::array<std::string_view, LootSlots> lootNames = {};  // 0x00537970
     std::array<u16, LootSlots> lootCounts = {};              // 0x0053949C
     u8 craftSucceeded = 0;                                   // 0x00577998
-    const ObjectData* panelUnit = nullptr;                   // swd32 0x0053C4B8 the object shown by DrawResistancePanel
+    const ObjectData* panelUnit = nullptr;                   // 0x00577A44 the object shown by DrawResistancePanel
 
 private:
     int PanelFrame();
     void Append(std::unique_ptr<BattleMessage> message, int x, int y, i16 frames, int flags);
     void DrawPanelText(int x, int y, std::string_view text);
     void DrawPanelText(int x, int y, std::u8string_view text);
-    void DrawMessageText(int x, int y, std::string_view text);
+    void DrawMessageText(int x, int y, std::string_view text, Pixel color);
 
     Painter& painter;
     TswArchive& archive;

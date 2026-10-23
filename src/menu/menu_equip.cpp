@@ -237,9 +237,8 @@ constexpr u16 kUpArrow = 0x235E;  // the object tried raises the value (picture 
 constexpr u16 kDownArrow = 0x235F;
 
 // The resistances (0x00447E40).
-constexpr std::size_t kShownResistances = 5;    // Menu::roleResistances: the first five of RoleRecord::resistances
-constexpr std::size_t kObjectElementFirst = 4;  // ObjectData::resistances from here by element
-constexpr i32 kMagicResistancePercent = 0x50;   // a magic's resistance: this percent of its proficiency
+constexpr std::size_t kShownResistances = 5;   // Menu::roleResistances: the first five of RoleRecord::resistances
+constexpr i32 kMagicResistancePercent = 0x50;  // a magic's resistance: this percent of its proficiency
 constexpr i32 kResistanceTop = 100;
 
 }  // namespace
@@ -694,8 +693,7 @@ void Menu::EquipResistances()
                 continue;
             }
 
-            const u8 resistance =
-                worn->record.data.resistances[kObjectElementFirst + static_cast<std::size_t>(element)];
+            const u8 resistance = worn->record.data.resistances[static_cast<std::size_t>(element)];
 
             if (slot == kFirstMagicSlot || slot == kSecondMagicSlot)
             {

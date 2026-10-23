@@ -23,8 +23,7 @@ constexpr int kTextSearch = 0xFF;
 constexpr u16 kEnd = static_cast<u16>(ObjectTag::End);
 constexpr std::size_t kActBlockBytes = 0x4F;
 constexpr std::size_t kTextEndBytes = 2;  // the "$$" after a text
-// Tag 0x7D0 (swd3e): seven bytes from the fifth resistance (to unkA2), then the level and the category.
-constexpr std::size_t kResistFrom = 4;
+// Tag 0x7D0 (swd3e): seven bytes from the first resistance (to unkA2), then the level and the category.
 constexpr std::size_t kResistTailBytes = 7;
 constexpr std::size_t kResistLevelAt = 7;
 constexpr std::size_t kResistCategoryAt = 9;
@@ -503,8 +502,8 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
                 word(data.unk48);
                 break;
 
-            case ObjectTag::Chances:
-                code.Copy(bytes + offsetof(ObjectData, itemChance), 2 * sizeof(u16));
+            case ObjectTag::Enrage:
+                code.Copy(bytes + offsetof(ObjectData, enrageCondition), 2 * sizeof(u16));
                 code.position += 2 * sizeof(u16);
                 break;
 
@@ -567,7 +566,7 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
             }
 
             case ObjectTag::Resistances:
-                code.Copy(bytes + offsetof(ObjectData, resistances) + kResistFrom, kResistTailBytes);
+                code.Copy(bytes + offsetof(ObjectData, resistances), kResistTailBytes);
                 data.level = code.WordAt(at + kResistLevelAt);
                 data.category = code.WordAt(at + kResistCategoryAt);
                 code.position += kResistBytes;

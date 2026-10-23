@@ -155,7 +155,7 @@ void Game::StartBattle(u16 number)
     battle.commandNames[1] = {};
     battle.commandKinds[2] = 0;
     battle.commandNames[2] = {};
-    this->battleMessages.messages.reset();
+    this->battleMessages.Clear();
     battle.unk524268.fill(0);
     std::fill_n(battle.commandEnabled.begin(), kCommandClearBytes, u8{0});
     battle.roleListScrolls[0] = 0;

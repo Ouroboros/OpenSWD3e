@@ -274,7 +274,7 @@ u32 MouseKeys(SDL_MouseButtonFlags buttons)
 // swd3e.exe 0x00459890
 // swd3e.exe 0x004598B0
 // swd3e.exe 0x004598C0
-// swd3e.exe 0x004598E0: the eight enemies (0x00525508): battleEnemies
+// swd3e.exe 0x004598E0: the twenty enemies (0x00539590): battleEnemies
 // swd3e.exe 0x004598F0
 // swd3e.exe 0x00459910
 // swd3e.exe 0x00459920
@@ -346,6 +346,7 @@ Game::Game(std::u8string installDirectory)
     this->database.SetErrorReporter(this->errors);
     this->battleHud.Attach(this->battleServices);
     this->battleMessages.Attach(this->battleServices);
+    this->battleServices.enemies = this->battleEnemies.data();
     this->glyphs.Load(GlyphLibraryPath());
 }
 

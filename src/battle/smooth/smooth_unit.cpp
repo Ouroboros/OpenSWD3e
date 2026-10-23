@@ -103,7 +103,7 @@ constexpr int kBlueFillTint = 0x10;
 constexpr i32 kCommand1Action = 0x28;  // the fade in action after command 1
 constexpr i16 kDarkFillStep = 0xE;
 constexpr int kDarkFillTint = -0x18;
-constexpr u16 kEffectIcons = 0x241D;
+constexpr u16 kEffectIcons = 0x23B6;  // swd3e
 constexpr int kFadeInSound = 0x30;
 constexpr int kFadeOutSound = 0x2F;
 constexpr i16 kFadeOutStep = 2;
@@ -1395,7 +1395,7 @@ bool UnitFrame::HurtAdvance(BattleServices& services, HurtView& view, int& resul
             act.action = kGuardHurtAction;
         }
 
-        if ((unit.status & BattleUnit::UnkStatus1000) != 0)
+        if ((unit.status & BattleUnit::Poisoned) != 0)
         {
             act.action = kHurtAction;
         }
@@ -1969,7 +1969,7 @@ void UnitFrame::EffectsAdvance(BattleServices& services, int x, int y, const Pic
         return;
     }
 
-    if ((unit.status & BattleUnit::UnkStatus1000) != 0)
+    if ((unit.status & BattleUnit::Poisoned) != 0)
     {
         unit.shadowMode = mirrored;
 
@@ -3515,7 +3515,7 @@ void UnitFrame::DrawEffectIconsAdvance(BattleServices& services, int x, int y, S
 
     for (const EffectNode* node = &unit.effects; node != nullptr; node = node->next.get())
     {
-        if (node->icon != 0 && static_cast<i32>(node->bits) >= 0)
+        if (node->icon != 0)
         {
             unit.picture = services.archive.GetPicture(kEffectIcons, static_cast<u16>(node->icon - 1u));
 

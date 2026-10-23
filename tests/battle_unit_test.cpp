@@ -146,7 +146,10 @@ constexpr swd3e::i8 kCutTenths = -15;  // below -10 the value is multiplied inst
 constexpr swd3e::u16 kDamageDelay = 4;
 constexpr swd3e::i16 kAilmentRoll = 10;  // an ailment chance that always lands
 constexpr int kAttackBonus = 100;
-constexpr int kStatScalePercent = 10;  // StatsScaled moves the stats of a role by this percent
+constexpr int kStatScalePercent = 20;         // swd3e: ailment 0x200 cuts the stats of a role by this percent
+constexpr swd3e::u16 kStatsScaledIcon = 0xA;  // picture 0x23B6, frame icon - 1
+constexpr swd3e::u16 kDefenseUpIcon = 0xF;
+constexpr swd3e::i16 kDefenseUpShift = 200;
 constexpr int kPercent = 100;
 constexpr swd3e::i16 kHitPointsLeft = 50;
 constexpr swd3e::i16 kSpiritLeft = 5;
@@ -303,7 +306,7 @@ TEST_CASE("battle unit: evasion, vitals and scaling")
     unit.SetStatus(BattleUnit::StatsScaled);
     CHECK_EQ(unit.brightLevel, BattleUnit::DelayedFadeIn);
     unit.SetGuarding(1);
-    unit.ClearStatus(BattleUnit::UnkStatus1000);
+    unit.ClearStatus(BattleUnit::Poisoned);
     CHECK(!unit.IsGuarding());
 }
 
@@ -333,34 +336,37 @@ TEST_CASE("battle unit: ailments, buffs, expiry and damage")
     constexpr int kScaledBonus = kAttackBonus - kAttackBonus * kStatScalePercent / kPercent;
     CHECK_EQ(stats.attackBonus, kScaledBonus);
     CHECK(unit.effects.next != nullptr);
-    CHECK_EQ(unit.effects.next->icon, swd3e::EffectNode::StatsScaledIcon);
+    CHECK_EQ(unit.effects.next->icon, kStatsScaledIcon);
     CHECK_EQ(unit.effects.next->act.id, kEffectAct);
     CHECK_EQ(unit.status & BattleUnit::StatsScaled, BattleUnit::StatsScaled);
+    // Under StatsScaled the same ailment does not take hold again (CanTakeEffect).
     scaling.turns = kLongerTurns;
-    CHECK_EQ(unit.AddAilment(all.services, scaling), 1);
-    CHECK_EQ(unit.effects.next->turns, kLongerTurns);
+    CHECK_EQ(unit.AddAilment(all.services, scaling), 0);
+    CHECK_EQ(unit.effects.next->turns, kTurns);
     CHECK(unit.effects.next->next == nullptr);
     CHECK_EQ(unit.HasEffectBits(BattleUnit::StatsScaled), 1);
+    unit.effects.next->turns = 0;
+    unit.ExpireEffects(all.services, 0);
+    CHECK_EQ(stats.attackBonus, kAttackBonus);
+    CHECK_EQ(unit.status & BattleUnit::StatsScaled, 0u);
+    CHECK(unit.effects.next == nullptr);
 
     SkillScript defenseUp;
     defenseUp.statusBits = SkillScript::DefenseUp;
     defenseUp.turns = kTurns;
     CHECK_EQ(unit.AddBuff(all.services, defenseUp), 1);
     CHECK_EQ(unit.status & BattleUnit::DefenseUp, BattleUnit::DefenseUp);
+    CHECK_EQ(unit.defenseShift, kDefenseUpShift);
+    CHECK_EQ(unit.effects.next->icon, kDefenseUpIcon);
     CHECK(all.messages.messages != nullptr);
-    const std::string_view shown(all.state.text.data(), all.state.text.size());
-    CHECK(shown.substr(0, shown.find('\0')) == swd3e::Big5(u8"A增加30%防禦力"));
-
+    const std::string_view shown(unit.text.data(), unit.text.size());
+    CHECK(shown.substr(0, shown.find('\0')) == swd3e::Big5(u8"$1A$0防禦力$2上升"));
     unit.effects.next->turns = 0;
-    unit.effects.next->next->turns = 0;
-    unit.ExpireEffects(all.services, 0);
-    CHECK_EQ(stats.attackBonus, kScaledBonus + kScaledBonus * kStatScalePercent / kPercent);
-    CHECK_EQ(unit.status & BattleUnit::StatsScaled, 0u);
-    CHECK(unit.effects.next != nullptr);
-    CHECK_EQ(unit.effects.next->bits, SkillScript::DefenseUp);
     unit.ExpireEffects(all.services, 0);
     CHECK(unit.effects.next == nullptr);
     CHECK_EQ(unit.status & BattleUnit::DefenseUp, 0u);
+    CHECK_EQ(unit.defenseShift, 0);
+    CHECK(shown.substr(0, shown.find('\0')) == swd3e::Big5(u8"$1A$0增加防禦力效果解除"));
     unit.ExpireEffects(all.services, 0);
 
     CHECK_EQ(unit.Damage(all.services, kHit, kSpiritGain, 0), 0);
@@ -499,10 +505,11 @@ constexpr swd3e::u32 kAccessory1DBit = 0x100;
 constexpr swd3e::u16 kAccessoryCost = 30;
 constexpr swd3e::i16 kLowStamina = 20;
 constexpr swd3e::i16 kStamina = 40;
-constexpr swd3e::u16 kEffectTick = 0xF;
+constexpr swd3e::u16 kEffectTick = 0xE;  // swd3e
+constexpr float kPoisonLevel = 50.0F;
+constexpr int kPoisonRise = 7;
 constexpr swd3e::u16 kPoison = 20;
 constexpr swd3e::u16 kPoisonTurns = 2;
-constexpr swd3e::u32 kStaminaDrainBits = 0x2000000;
 constexpr swd3e::i16 kTooLittleStamina = 9;
 constexpr std::string_view kNoData = "/swd3-test-no-data/";
 constexpr swd3e::u16 kEnemyAttack = 15;
@@ -591,34 +598,41 @@ TEST_CASE("battle unit: accessory commands")
     CHECK_EQ(role.CanUseAccessory(kSpiritFan), 0);
 }
 
-TEST_CASE("battle unit: effect timers, poison and stamina drain")
+TEST_CASE("battle unit: effect timers, poison and the barrier's stamina")
 {
     using swd3e::BattleUnit;
+    using swd3e::SkillScript;
     Services all;
     BattleUnit unit;
     swd3e::RoleRecord record;
     record.stamina = kTooLittleStamina;
     unit.battleRecord = &record;
     unit.roleRecord = &record;
+    unit.unk3040 = 1;
     unit.effects.next = std::make_unique<swd3e::EffectNode>();
     swd3e::EffectNode& poison = *unit.effects.next;
-    poison.bits = BattleUnit::UnkStatus1000;
+    poison.bits = SkillScript::PoisonAilment;
     poison.value = kPoison;
+    poison.level = kPoisonLevel;
     poison.turns = kPoisonTurns;
     poison.timer = static_cast<swd3e::u16>(all.state.gaugeFull - kEffectTick);
     poison.next = std::make_unique<swd3e::EffectNode>();
-    swd3e::EffectNode& drain = *poison.next;
-    drain.bits = kStaminaDrainBits;
-    drain.turns = kPoisonTurns;
-    drain.timer = poison.timer;
+    swd3e::EffectNode& barrier = *poison.next;
+    barrier.bits = SkillScript::Barrier;
+    barrier.turns = kPoisonTurns;
+    barrier.timer = poison.timer;
     unit.held = 1;
     unit.TickEffects(all.services);
     CHECK_EQ(poison.timer, all.state.gaugeFull - kEffectTick);
     unit.held = 0;
     unit.TickEffects(all.services);
-    CHECK_EQ(unit.pendingDamage, kPoison);
+    // The level rises by 7 before the damage: value * level / 100.
+    constexpr int kPoisonDamage = kPoison * (static_cast<int>(kPoisonLevel) + kPoisonRise) / 100;
+    CHECK_EQ(unit.pendingDamage, kPoisonDamage);
     CHECK_EQ(poison.timer, 0);
     CHECK_EQ(poison.turns, kPoisonTurns - 1);
+    // A barrier with too little stamina left ends at once.
+    CHECK(poison.next == nullptr);
     CHECK_EQ(record.stamina, kTooLittleStamina);
     unit.TickEffects(all.services);
     CHECK_EQ(poison.timer, kEffectTick);

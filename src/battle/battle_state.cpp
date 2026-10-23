@@ -457,7 +457,7 @@ void BattleState::ClearActing()
     this->unk53AE7C = 0;
     this->unk53AE80 = 0;
     this->unk53AE84 = 0;
-    this->unk53AE88 = 0;
+    this->wholeSide = 0;
 }
 
 // The word at 0x004FE5CA + 2 * `index` that 0x0045FC60 reads as the accessory kind of menu command `index` (4..7):

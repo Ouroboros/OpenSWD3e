@@ -36,7 +36,15 @@ namespace
 
 // The resistance panel: the unit name over one bar per element.
 
-constexpr i32 kRiseSpeed = 1;  // the speed a rising message starts with
+constexpr i32 kRiseSpeed = 1;              // the speed a rising message starts with
+constexpr i32 kStackStep = 0x20;           // a Stacked message sits this much lower per Centered one shown
+constexpr std::size_t kCodeSearch = 0xFF;  // the bytes Add looks through for colour codes
+constexpr char kColorCode = '$';           // a colour code: $ and its digit
+constexpr i32 kCodeBytes = 2;
+constexpr int kWhite = 0x1F;  // the colours of the codes: white, light yellow, orange and red
+constexpr int kLightGreen = 0x1D;
+constexpr int kLightBlue = 0x17;
+constexpr int kOrangeGreen = 0x11;
 
 }  // namespace
 
@@ -85,10 +93,10 @@ void BattleMessages::DrawPanelText(int x, int y, std::u8string_view text)
     this->DrawPanelText(x, y, Big5(text));
 }
 
-void BattleMessages::DrawMessageText(int x, int y, std::string_view text)
+void BattleMessages::DrawMessageText(int x, int y, std::string_view text, Pixel color)
 {
     smooth::Scene scene;
-    smooth::MessagesFrame(*this).DrawMessageTextAdvance(x, y, text, scene);
+    smooth::MessagesFrame(*this).DrawMessageTextAdvance(x, y, text, color, scene);
     scene.Show(*this->services);
 }
 
@@ -144,9 +152,8 @@ int BattleMessages::GrowPanel(int top, int bottom, int divisor)
     return step == 0 ? 1 : 0;
 }
 
-// swd32.exe 0x00469650 (unmatched in swd3e): the name and the nine element resistances (signed tenths) of the panel
-// object as bars, while
-// bit 5 of the battle UI flags is set. The original also formats the percentage of each bar, never drawn.
+// swd3e.exe 0x004785C0: the name and the five element resistances (percent) of the panel object as bars over a grey
+// track, while bit 5 of the panel flags is set (a negative one repeats the bar before it).
 void BattleMessages::DrawResistancePanel()
 {
     smooth::Scene scene;
@@ -154,9 +161,17 @@ void BattleMessages::DrawResistancePanel()
     scene.Show(*this->services);
 }
 
-// swd3e.exe 0x00479220: appends a message; kRise starts with speed 1 at y -32
+// swd3e.exe 0x00479220: appends a message unless an Exclusive one shows (the text is kept by address). Rise starts
+// with speed 1 at y -32; a Stacked one is placed 0x20 lower per Centered one shown; Centered and Exclusive ones are
+// counted. Each '$' in the first 0xFF bytes marks the text coloured and takes two bytes off its length; the colours
+// of the codes are made anew.
 void BattleMessages::Add(int x, int y, i16 frames, std::span<const char> text, int flags)
 {
+    if (this->exclusive > 0)
+    {
+        return;
+    }
+
     auto message = std::make_unique<BattleMessage>();
     message->source = text;
     this->Append(std::move(message), x, y, frames, flags);
@@ -165,6 +180,11 @@ void BattleMessages::Add(int x, int y, i16 frames, std::span<const char> text, i
 // A constant text (the original passes the address of the string in the executable).
 void BattleMessages::Add(int x, int y, i16 frames, std::u8string_view text, int flags)
 {
+    if (this->exclusive > 0)
+    {
+        return;
+    }
+
     auto message = std::make_unique<BattleMessage>();
     message->constant = Big5(text);
     message->source = message->constant;
@@ -185,6 +205,39 @@ void BattleMessages::Append(std::unique_ptr<BattleMessage> message, int x, int y
         message->slideY = kRiseStart;
     }
 
+    if ((message->flags & BattleMessage::Stacked) != 0)
+    {
+        message->y += kStackStep * this->stacked;
+    }
+
+    if ((message->flags & BattleMessage::Centered) != 0)
+    {
+        ++this->stacked;
+    }
+
+    if ((flags & BattleMessage::Exclusive) != 0)
+    {
+        ++this->exclusive;
+    }
+
+    const std::string_view text = message->Text();
+
+    for (std::size_t at = 0; at < kCodeSearch && at < text.size(); ++at)
+    {
+        if (text[at] == kColorCode)
+        {
+            message->colored = 1;
+            message->length -= kCodeBytes;
+        }
+    }
+
+    this->colors = {
+        static_cast<u16>(this->painter.MakeColor(kWhite, kWhite, kWhite)),
+        static_cast<u16>(this->painter.MakeColor(kWhite, kLightGreen, kLightBlue)),
+        static_cast<u16>(this->painter.MakeColor(kWhite, kOrangeGreen, 0)),
+        static_cast<u16>(this->painter.MakeColor(kWhite, 0, 0)),
+    };
+
     std::unique_ptr<BattleMessage>* link = &this->messages;
 
     while (*link != nullptr)
@@ -195,9 +248,26 @@ void BattleMessages::Append(std::unique_ptr<BattleMessage> message, int x, int y
     *link = std::move(message);
 }
 
-// swd32.exe 0x00469960 (unmatched in swd3e): draws the messages and counts their frames down; expired ones slide out
-// (unless the battle is
-// paused) and are freed once off screen. The boxes of expired messages are still drawn.
+// swd3e.exe 0x00479820: every message freed; with any freed, the Centered and Exclusive counts cleared
+void BattleMessages::Clear()
+{
+    if (this->messages == nullptr)
+    {
+        return;
+    }
+
+    while (this->messages != nullptr)
+    {
+        this->messages = std::move(this->messages->next);
+    }
+
+    this->exclusive = 0;
+    this->stacked = 0;
+}
+
+// swd3e.exe 0x00479360: draws the messages (the message font at advance 0x16) and counts their frames down; a coloured
+// one in pieces between its $n codes, 11 pixels a byte; expired ones slide out and are freed once off screen (the
+// Exclusive and Centered counts going down), drawn whole.
 void BattleMessages::Draw()
 {
     smooth::MessagesView view;

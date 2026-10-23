@@ -7,6 +7,7 @@ namespace swd3e
 
 class ActArchive;
 class AudioManager;
+class BattleEnemy;
 class BattleHud;
 class BattleMessages;
 class BattleState;
@@ -44,6 +45,7 @@ struct BattleServices
     // The rebuild's smooth battle: the scene of the battle frame the parts deciding it add their draws to (drawn once
     // the frame is decided); none: each part's draws are drawn at once, in the original's order.
     smooth::Scene* frame = nullptr;
+    BattleEnemy* enemies = nullptr;  // Game::battleEnemies (BattleState::Enemies of them), set with the services
 };
 
 }  // namespace swd3e

@@ -56,13 +56,13 @@ int MessageHalfWidth(const BattleMessage& message)
     return (kSlideGlyph * (kSlideGlyphs - (message.length >> 1))) >> 1;
 }
 
-constexpr i8 kAbsorbBelow = -10;  // a resistance below -10 tenths absorbs: green bar of the excess
 constexpr int kBarHeight = 3;
 constexpr double kBarScale = 120.0;  // pixels of a full resistance
 constexpr int kBarX = 0x11C;
 constexpr int kBoxTextX = 2;
 constexpr int kBoxTextY = 4;
-constexpr int kBrightLevel = 0x1C;
+constexpr int kTrackLevel = 0x1C;      // the grey track under a positive resistance, and the red level of its bar
+constexpr int kBarTrackLength = 0x78;  // the track of a full resistance
 constexpr int kCraftBodyBottom = 0xFC;
 constexpr int kCraftLineX = 0xD0;
 constexpr int kCraftLineY = 0xDE;
@@ -72,7 +72,6 @@ constexpr int kDefeatBodyBottom = 0xF4;
 constexpr int kDefeatTitleX = 0x104;
 constexpr int kElementNameRise = 8;  // the element name sits this far above its bar
 constexpr int kElementNameX = 0xFC;
-constexpr int kElements = 9;
 constexpr int kGrayLevel = 0x10;
 constexpr int kGrowDivisor = 3;
 constexpr int kLootAdvance = 0x12;
@@ -87,12 +86,15 @@ constexpr int kMasteryTextExtra = 0x20;
 constexpr int kMasteryTextX = 0xD8;
 constexpr int kMasteryTextY = 0xDA;
 constexpr Pixel kMessageTextColor = 0xFFFF;
-constexpr int kMiddleLevel = 0xD;
+constexpr int kMessageAdvance = 0x16;  // swd3e: the advance the messages set on their font
+constexpr int kCodedByteWidth = 10;    // a coloured piece moves the next one 11 pixels a byte
+constexpr int kDecimalBase = 10;
+constexpr char kColorCode = '$';
 constexpr float kNeutralBarLength = 2.0F;
 constexpr int kPanelAdvance = 0x10;  // the usual glyph advance of the panel font
 constexpr int kPanelShadeWidth = 0xB8;
 constexpr Pixel kPanelTextColor = 0xFFC0;
-constexpr int kResistBodyBottom = 0x12E;
+constexpr int kResistBodyBottom = 0xDE;
 constexpr int kResistBodyTop = 0x7A;
 constexpr int kResistFirstBar = 0x82;
 constexpr int kResistShadeX = 0xEC;
@@ -108,12 +110,40 @@ constexpr int kResultLeft = kResultShadeX + kShadeMargin;
 constexpr int kResultRight = 0x178;
 constexpr int kResultTitleBottom = 0xC4;
 constexpr int kResultTitleTop = kResultShadeY + kShadeMargin;
-constexpr double kTenth = 0.1;  // resistances are in tenths
+constexpr double kPercent = static_cast<double>(0.01F);  // swd3e: resistances are in percent (a float 0.01)
 constexpr int kTextStyle = TextFont::BoldOutline;
 constexpr int kWhiteLevel = 0x1F;
 constexpr int kWipedAdvance = 0x11;
 constexpr int kWipedX = 0xFE;
 constexpr int kWipedY = 0xD8;
+
+// The number a colour code starts with, read as the C runtime's atoi reads it (blanks, a sign, then digits).
+int ParseCode(std::string_view text)
+{
+    std::size_t at = 0;
+
+    while (at < text.size() && (text[at] == ' ' || (text[at] >= '\t' && text[at] <= '\r')))
+    {
+        ++at;
+    }
+
+    const bool negative = at < text.size() && text[at] == '-';
+
+    if (at < text.size() && (text[at] == '-' || text[at] == '+'))
+    {
+        ++at;
+    }
+
+    int value = 0;
+
+    while (at < text.size() && text[at] >= '0' && text[at] <= '9')
+    {
+        value = value * kDecimalBase + (text[at] - '0');
+        ++at;
+    }
+
+    return negative ? -value : value;
+}
 }  // namespace
 
 MessagesFrame::MessagesFrame(BattleMessages& messages)
@@ -138,7 +168,7 @@ void MessagesFrame::Advance(MessagesView& view)
         return &view.steps.back();
     };
 
-    const bool paused = owner.state.paused != 0;
+    owner.messageFont.SetAdvance(kMessageAdvance);
 
     for (BattleMessage* message = owner.messages.get(); message != nullptr; message = message->next.get())
     {
@@ -155,7 +185,7 @@ void MessagesFrame::Advance(MessagesView& view)
 
         if ((message->flags & BattleMessage::BlackBar) != 0)
         {
-            step(MessageStep::Kind::BlackBar, 0, 0);
+            step(MessageStep::Kind::BlackBar, 0, message->y);
         }
 
         const int flags = message->flags;
@@ -185,11 +215,7 @@ void MessagesFrame::Advance(MessagesView& view)
                 message->slideX = Display::Width;
             }
 
-            if (!paused)
-            {
-                message->slideX = (half + kSlideStopX + message->slideX) >> 1;
-            }
-
+            message->slideX = (half + kSlideStopX + message->slideX) >> 1;
             x = message->slideX;
             step(MessageStep::Kind::Box, x - half, kBarTop);
         }
@@ -198,12 +224,7 @@ void MessagesFrame::Advance(MessagesView& view)
         {
             y = kSlideTextY;
             const int half = MessageHalfWidth(*message);
-
-            if (!paused)
-            {
-                message->slideX = (message->slideX + half + kSlideStopX) >> 1;
-            }
-
+            message->slideX = (message->slideX + half + kSlideStopX) >> 1;
             x = message->slideX;
             step(MessageStep::Kind::Box, x - half, kBarTop);
         }
@@ -217,7 +238,47 @@ void MessagesFrame::Advance(MessagesView& view)
             step(MessageStep::Kind::Box, kSlideStopX, y - kMessageTextDown);
         }
 
-        step(MessageStep::Kind::Text, x, y)->text = message->Text();
+        if (message->colored != 0)
+        {
+            // The pieces between the codes; a piece is drawn from a 0x80-byte buffer of spaces the original does not
+            // end, the rebuild draws the piece only (deviations.md). A text not starting with a code loses its first
+            // byte, as in the original.
+            const std::string_view text = message->Text();
+            Pixel color = kMessageTextColor;
+            std::size_t at = 0;
+
+            do
+            {
+                if (text[at] == kColorCode)
+                {
+                    ++at;
+                    const int code = ParseCode(text.substr(at));
+                    color = code >= 0 && static_cast<std::size_t>(code) < owner.colors.size()
+                                ? owner.colors[static_cast<std::size_t>(code)]
+                                : kMessageTextColor;
+                }
+
+                ++at;
+                std::string piece;
+
+                while (at < text.size() && text[at] != kColorCode)
+                {
+                    piece.push_back(text[at]);
+                    ++at;
+                }
+
+                const int bytes = static_cast<int>(piece.size());
+                MessageStep* const drawn = step(MessageStep::Kind::Text, x, y);
+                drawn->text = std::move(piece);
+                drawn->color = color;
+                x += bytes + kCodedByteWidth * bytes;
+            } while (at < text.size());
+        }
+        else
+        {
+            step(MessageStep::Kind::Text, x, y)->text = message->Text();
+        }
+
         --message->frames;
     }
 
@@ -231,12 +292,7 @@ void MessagesFrame::Advance(MessagesView& view)
         if (!keep && (message.flags & BattleMessage::FromLeft) != 0)
         {
             const int half = MessageHalfWidth(message);
-
-            if (!paused)
-            {
-                message.slideX += kSlideOutStep;
-            }
-
+            message.slideX += kSlideOutStep;
             step(MessageStep::Kind::Box, message.slideX - half, kBarTop);
             step(MessageStep::Kind::Text, message.slideX, kSlideTextY)->text = message.Text();
             keep = message.slideX < Display::Width;
@@ -245,12 +301,7 @@ void MessagesFrame::Advance(MessagesView& view)
         if (!keep && (message.flags & BattleMessage::FromRight) != 0)
         {
             const int half = MessageHalfWidth(message);
-
-            if (!paused)
-            {
-                message.slideX -= kSlideOutStep;
-            }
-
+            message.slideX -= kSlideOutStep;
             step(MessageStep::Kind::Box, message.slideX - half, kBarTop);
             step(MessageStep::Kind::Text, message.slideX, kSlideTextY)->text = message.Text();
             keep = message.slideX > 0;
@@ -259,12 +310,7 @@ void MessagesFrame::Advance(MessagesView& view)
         if (!keep && (message.flags & BattleMessage::Rise) != 0)
         {
             const int half = MessageHalfWidth(message);
-
-            if (!paused)
-            {
-                message.slideY -= message.y;
-            }
-
+            message.slideY -= message.y;
             message.y *= kRiseAcceleration;
             step(MessageStep::Kind::Box, message.slideX - half, message.slideY - kMessageTextDown);
             step(MessageStep::Kind::Text, message.slideX, message.slideY)->text = message.Text();
@@ -274,11 +320,20 @@ void MessagesFrame::Advance(MessagesView& view)
         if (keep)
         {
             link = &message.next;
+            continue;
         }
-        else
+
+        if ((message.flags & BattleMessage::Exclusive) != 0)
         {
-            *link = std::move(message.next);
+            --owner.exclusive;
         }
+
+        if (owner.stacked > 0)
+        {
+            --owner.stacked;
+        }
+
+        *link = std::move(message.next);
     }
 }
 
@@ -317,7 +372,7 @@ void MessagesFrame::Draw(const MessagesView& view)
                 break;
 
             case MessageStep::Kind::BlackBar:
-                owner.hud.FillColor(kBarLeft, kBarTop, kBarWidth, kMessageBarHeight, kBlack);
+                owner.hud.FillColor(kBarLeft, step.y, kBarWidth, kMessageBarHeight, kBlack);
                 break;
 
             case MessageStep::Kind::Box:
@@ -325,7 +380,7 @@ void MessagesFrame::Draw(const MessagesView& view)
                 break;
 
             case MessageStep::Kind::Text:
-                owner.DrawMessageText(step.x, step.y, step.text);
+                owner.DrawMessageText(step.x, step.y, step.text, step.color);
                 break;
         }
     }
@@ -351,11 +406,10 @@ void MessagesFrame::DrawPanelTextAdvance(int x, int y, std::string_view text, Sc
 }
 
 // What BattleMessages::DrawMessageText decides of the frame; the draws into `scene`.
-void MessagesFrame::DrawMessageTextAdvance(int x, int y, std::string_view text, Scene& scene)
+void MessagesFrame::DrawMessageTextAdvance(int x, int y, std::string_view text, Pixel color, Scene& scene)
 {
     BattleMessages& messages = this->messages;
-    SceneFont(messages.messageFont, scene)
-        .DrawText(messages.painter.Target(), x, y, text, kMessageTextColor, kTextStyle);
+    SceneFont(messages.messageFont, scene).DrawText(messages.painter.Target(), x, y, text, color, kTextStyle);
 }
 
 // What BattleMessages::DrawMessageBox decides of the frame; the draws into `scene`.
@@ -623,10 +677,12 @@ void MessagesFrame::DrawResistancePanelAdvance(Scene& scene)
 
     int y = kResistFirstBar;
 
-    for (int element = 0; element < kElements; ++element)
+    for (std::size_t element = 0; element < BattleMessages::ElementNames.size(); ++element)
     {
-        const auto resistance = static_cast<i8>(messages.panelUnit->resistances[static_cast<std::size_t>(element)]);
+        const auto resistance = static_cast<i8>(messages.panelUnit->resistances[element]);
 
+        // A negative resistance sets neither: the bar keeps the colour and length of the element before it. The
+        // original also formats "--" or "%2d%%" for each element, never drawn.
         if (resistance == 0)
         {
             color = messages.painter.MakeColor(kGrayLevel, kGrayLevel, kGrayLevel);
@@ -635,20 +691,10 @@ void MessagesFrame::DrawResistancePanelAdvance(Scene& scene)
 
         if (resistance > 0)
         {
-            color = messages.painter.MakeColor(kBrightLevel, kDarkLevel, kDarkLevel);
-            length = static_cast<float>(static_cast<double>(resistance) * kTenth * kBarScale);
-        }
-
-        if (resistance < 0)
-        {
-            color = messages.painter.MakeColor(kDarkLevel, kMiddleLevel, kBrightLevel);
-            length = static_cast<float>(static_cast<double>(resistance) * -kTenth * kBarScale);
-        }
-
-        if (resistance < kAbsorbBelow)
-        {
-            color = messages.painter.MakeColor(kDarkLevel, kBrightLevel, kMiddleLevel);
-            length = static_cast<float>(static_cast<double>(resistance - kAbsorbBelow) * -kTenth * kBarScale);
+            const u32 track = messages.painter.MakeColor(kTrackLevel, kTrackLevel, kTrackLevel);
+            HudFrame(messages.hud).FillColor(kBarX, y, kBarTrackLength, kBarHeight, track, scene);
+            color = messages.painter.MakeColor(kTrackLevel, kDarkLevel, kDarkLevel);
+            length = static_cast<float>(static_cast<double>(resistance) * kPercent * kBarScale);
         }
 
         const u32 white = messages.painter.MakeColor(kWhiteLevel, kWhiteLevel, kWhiteLevel);

@@ -37,6 +37,7 @@ struct MessageStep
     int y = 0;
     u16 frame = 0;
     std::string text;
+    Pixel color = 0xFFFF;
 };
 
 struct MessagesView
@@ -57,7 +58,7 @@ public:
     void DrawPanelTextAdvance(int x, int y, std::string_view text, Scene& scene);
     void DrawPanelTextAdvance(int x, int y, std::u8string_view text, Scene& scene);
 
-    void DrawMessageTextAdvance(int x, int y, std::string_view text, Scene& scene);
+    void DrawMessageTextAdvance(int x, int y, std::string_view text, Pixel color, Scene& scene);
 
     void DrawMessageBoxAdvance(
         int x,

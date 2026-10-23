@@ -291,6 +291,10 @@ public:
     i32 undarkening = 0;         // 0x005772EC the darkening is undone a level a frame
     // 0x005772C8 set by 0x0049B9D0 and 0x0049BE20, cleared by 0x0049C0D0: the undarkening waits while set
     i32 unk5772C8 = 0;
+    i32 enraging = 0;        // 0x00577310 (swd3e) 1 while an enemy enrages (Enrage sets it, 0x0049C0D0 clears it)
+    i32 enrageDamage = 0;    // 0x005770C4 (swd3e) the damage of enrage 0x3F4 (1.4 times the maximum hit points)
+    i32 unk5761C8 = 0;       // 0x005761C8 (swd3e) cleared when ailment 0x400 ends (also by StartBattle, 0x0045EE20)
+    u16 unk5761CC = 0;       // 0x005761CC (swd3e) with it
     i16 darkRedShown = 0;    // 0x00577232 the tint applied, a step a frame towards darkRed (or back to 0)
     i16 darkGreenShown = 0;  // 0x00577234
     i16 darkBlueShown = 0;   // 0x00577236
@@ -407,7 +411,7 @@ public:
     i32 sweepTotal = 0;  // swd32 0x0053AE74 the units a sweep is to hit
     u16 unk53AE78 = 0;
     i32 unk53AE84 = 0;
-    i32 unk53AE88 = 0;
+    i32 wholeSide = 0;  // 0x00575F2C 1: the hit or effect falls on a whole side (the effect messages name the side)
     u16 unk53BF4A = 0;  // a unit's place read for the debug gauge and the menu
     u16 unk53BF4E = 0;
     i32 hoverScrollPart = 0;    // 0x0057707C the part of the scroll bar under the pointer (1..4)

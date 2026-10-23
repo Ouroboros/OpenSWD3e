@@ -20,48 +20,20 @@ struct RoleRecord;
 struct Picture;
 struct SkillScript;
 
-// A status effect of a unit (a list node in the original: next, the effect animation, the status bits, the timer, the
-// turns left, the element, the icon and a value). The unit holds the head as a node of its own: some walks start there.
+// A status effect of a unit (a 0xBC-byte list node in swd3e). The unit holds the head as a node of its own (+0x2A7C):
+// some walks start there.
 struct EffectNode
 {
-    // EffectNode::icon of each ailment (meanings follow SkillScript::Ailment).
-    enum Icon : u16
-    {
-        UnkIcon1 = 1,
-        Ailment1Icon = 2,
-        Ailment4Icon = 3,
-        Ailment8Icon = 4,
-        Ailment10Icon = 5,
-        SlowedIcon = 6,
-        Ailment80Icon = 7,
-        Ailment2Icon = 8,
-        Ailment20Icon = 9,
-        Ailment100Icon = 0xA,
-        StatsScaledIcon = 0xB,
-    };
-
-    // The action of the effect act shown for each ailment.
-    enum Frame : int
-    {
-        Ailment8Frame = 0,
-        Ailment1Frame = 1,
-        Ailment80Frame = 2,
-        SlowedFrame = 3,
-        Ailment20Frame = 4,
-        Ailment10Frame = 5,
-        StatsScaledFrame = 6,
-        Ailment2Frame = 7,
-        Ailment100Frame = 8,
-    };
-
-    std::unique_ptr<EffectNode> next;  // swd32 +0x0
-    ActState act;                      // swd32 +0x4
-    u32 bits = 0;                      // swd32 +0x9C
-    u16 timer = 0;                     // swd32 +0xA0
-    u16 turns = 0;                     // swd32 +0xA2
-    u16 element = 0;                   // swd32 +0xA4 the element of a resistance effect
-    u16 icon = 0;                      // swd32 +0xA6
-    u16 value = 0;                     // swd32 +0xA8
+    std::unique_ptr<EffectNode> next;  // +0x00
+    ActState act;                      // +0x04 the act shown over the unit (an ailment's, act 0x2AF8)
+    float level = 0.0F;                // +0xA8 the strength a buff or ailment builds up or loses a tick (TickEffects)
+    u32 bits = 0;                      // +0xAC the status bits it holds (SkillScript::Ailment or Buff)
+    u16 timer = 0;                     // +0xB0 counts to the full gauge, then a turn passes
+    u16 turnsMax = 0;                  // +0xB2 the turns it started with
+    u16 turns = 0;                     // +0xB4 the turns left (0xFFFF: lasting)
+    u16 element = 0;                   // +0xB6 the element 1..5 of a resistance buff
+    u16 icon = 0;                      // +0xB8 picture 0x23B6, frame icon - 1 (0: none)
+    u16 value = 0;                     // +0xBA the value of the skill (a poison's damage)
 };
 
 // The afterimages of a moving act (0x98 bytes; in a queued action at +0x134 and eight in a unit at +0xFCC). DrawTrail
@@ -260,14 +232,17 @@ public:
         UnkStatus8 = 8,
         UnkStatus10 = 0x10,  // cleared with mark UnkMark100
         UnkStatus20 = 0x20,
-        UnkStatus40000 = 0x40000,  // swd3e: a role's attacks are always critical (RollCritical)
-        UnkStatus80 = 0x80,        // a struck unit evades 8 times in 10 (Strike)
-        Slowed = 0x40,             // ailment 0x40: the gauge fills at half speed
+        Slowed = 0x40,       // ailment 0x40: the gauge fills at half speed
+        UnkStatus80 = 0x80,  // a struck unit evades 8 times in 10 (Strike)
         UnkStatus100 = 0x100,
         StatsScaled = 0x200,  // a party role's attributes are scaled (undone when it ends)
-        UnkStatus1000 = 0x1000,
+        UnkStatus400 = 0x400,
+        Poisoned = 0x1000,         // swd3e: a poison (EffectNode::bits 0x1000) eats hit points a tick
+        DamageTransfer = 0x20000,  // swd3e: 傷害轉移 (no ailment lands; RaiseFlag26B8 outside a cast spell)
+        StrongAttack = 0x40000,    // swd3e: 強攻擊 (a role's attacks are always critical)
         DefenseDown = 0x100000,
         AttackDown = 0x1000000,
+        ResistAll = 0x2000000,  // swd3e: 抵抗所有攻擊 (no stagger)
         Barrier = 0x4000000,
         SpeedDown = 0x8000000,
         AttackUp = 0x10000000,
@@ -448,7 +423,13 @@ public:
     int AddAilment(BattleServices& services, const SkillScript& skill);
     int AddBuff(BattleServices& services, const SkillScript& skill);
     int HasEffectElement(i16 element) const;
-    int HasEffectKind(i16 kind) const;
+    int HasEffectKind(u16 kind) const;
+    int CanTakeEffect(BattleServices& services, const SkillScript& skill);
+    int HasAnyBuff() const;
+    double EffectShare(u32 bits) const;
+    int AddPoison(BattleServices& services, i16 base, u8 level);
+    int EnrageCheck(BattleServices& services, i16 cause, i16 element);
+    int Enrage(BattleServices& services);
     int HasEffectBits(u16 bits) const;
     bool ApplyPendingDamage(BattleServices& services);
     void DrawEffectIcons(BattleServices& services, int x, int y);
@@ -550,7 +531,7 @@ public:
         int steps,
         int backwards
     );
-    void CureEffects(BattleServices& services, u16 bits);
+    int CureEffects(BattleServices& services, u32 bits);
     int Damage(BattleServices& services, int hitPoints, i16 spirit, i16 stamina);
     int EffectFlag2() const;
     int EffectFlag3() const;
@@ -604,6 +585,7 @@ public:
 private:
     void MirrorRecoil(u32 actFlags, bool forced);
     void Announce(BattleServices& services, std::u8string_view format, int flags);
+    void StartAilment(BattleServices& services, EffectNode& node);
 
     // Where a walk (WalkToTarget, ReturnHome) or a flight (RunQueuedActions) is drawn in a frame, as the frame's acts
     // and steps make it: the line walked, the place, whether it arrived, the act's mirrored offset and draw flags, the
@@ -729,19 +711,47 @@ public:
     // critical attack; shown as "X%2d" plus one by the panel of 0x00478FA0 against a tenth of the proficiency of
     // accessory kind 0x27
     i16 unk2EB2 = 0;
-    u16 restoreHitPoints = 0;  // +0x2EB6 the hit points a command restores
-    u16 restoreSpirit = 0;     // +0x2EB8 the spirit
-    u16 restoreStamina = 0;    // +0x2EBA the stamina
-    u16 actAnchorX = 0;        // +0x2EBC the act's anchor x, from the picture's right edge when mirrored (DrawAction)
-    u16 aimAnchorX = 0;        // +0x2EBE the same for AimAction
-    u16 overlayX = 0;          // +0x2EC0 the x of the overlay picture from the act (DrawAction)
-    u16 originX = 0;           // +0x2EC2
-    u16 actOffsetX = 0;        // +0x2EC6 the act's x offset, mirrored like the picture (DrawAction)
-    u16 aimOffsetX = 0;        // +0x2EC8 the act's x offset of AimAction, mirrored like the picture
-    u16 actX = 0;              // +0x2ECA where DrawAction draws the act
-    u16 actY = 0;              // +0x2ECC
-    u16 aimX = 0;              // +0x2ECE where AimAction places the act
-    u16 aimY = 0;              // +0x2ED0
+    // swd3e: the strength of the attack, defence and speed effects (AddBuff sets them, TickEffects moves them).
+    i16 attackShift = 0;   // +0x2ED6
+    i16 defenseShift = 0;  // +0x2ED8
+    i16 speedShift = 0;    // +0x2EDA
+    // swd3e: a poison (AddAilment 0x2000, AddPoison): its base damage and level (1..; 5 and up count as 4).
+    i16 poisonBase = 0;  // +0x2FA2
+    u8 poisonLevel = 0;  // +0x2FD2
+    // swd3e: bit 15: the stone or freeze overlay wipes in (DrawEffects), the low bits its height so far.
+    u16 overlayWipe = 0;  // +0x2FA4
+    // swd3e: the attack and defence bonuses, the agility and the wisdom of the battle record when ailment 0x200 landed
+    // (restored when it ends).
+    std::array<u16, 4> savedStats = {};  // +0x2FA8
+    // swd3e: the counters the enrage conditions 3..7 and 0x1C test (EnrageCheck), and the element 1..6 an enrage
+    // 0x3F5..0x3FA gives.
+    u8 enrageCounter2FD3 = 0;  // +0x2FD3
+    i8 enrageCounter2FD5 = 0;  // +0x2FD5
+    i8 enrageCounter2FD6 = 0;  // +0x2FD6
+    i8 enrageCounter2FD8 = 0;  // +0x2FD8
+    u8 enrageElement = 0;      // +0x2FDC
+    // swd3e: a second gauge (0x960 when full, 0x0048B170; drawn by 0x0048B190, run down by 0x004902E0), cleared by
+    // ailment 0x200
+    i16 unk2BE8 = 0;  // +0x2BE8
+    u16 unk2FA0 = 0;  // +0x2FA0 (swd3e) cleared when a poison ends
+    // +0x3070 (swd3e) 1: an enemy whose act has no action 0x26 (0x00487D60), or set by DrawEffects; cleared when
+    // ailment 0x200 ends
+    i32 unk3070 = 0;
+    // swd3e: the text of the unit's messages, kept by address by the messages (Announce).
+    std::array<char, 0x40> text = {};  // +0xF84
+    u16 restoreHitPoints = 0;          // +0x2EB6 the hit points a command restores
+    u16 restoreSpirit = 0;             // +0x2EB8 the spirit
+    u16 restoreStamina = 0;            // +0x2EBA the stamina
+    u16 actAnchorX = 0;  // +0x2EBC the act's anchor x, from the picture's right edge when mirrored (DrawAction)
+    u16 aimAnchorX = 0;  // +0x2EBE the same for AimAction
+    u16 overlayX = 0;    // +0x2EC0 the x of the overlay picture from the act (DrawAction)
+    u16 originX = 0;     // +0x2EC2
+    u16 actOffsetX = 0;  // +0x2EC6 the act's x offset, mirrored like the picture (DrawAction)
+    u16 aimOffsetX = 0;  // +0x2EC8 the act's x offset of AimAction, mirrored like the picture
+    u16 actX = 0;        // +0x2ECA where DrawAction draws the act
+    u16 actY = 0;        // +0x2ECC
+    u16 aimX = 0;        // +0x2ECE where AimAction places the act
+    u16 aimY = 0;        // +0x2ED0
     std::array<u16, MaxTargets> pushedTargets = {};  // +0x2EE0
     u16 fadeStep = DefaultFadeStep;                  // +0x2F26 the alpha step of its fades
     u16 actId = 0;                                   // +0x2F28 the unit's act
@@ -823,5 +833,6 @@ public:
 
 int ScaleByTenths(i8 tenths, i16& value);
 bool RollChance(Random& random, int percent);
+void EnrageEnemies(BattleServices& services, i16 cause);
 
 }  // namespace swd3e

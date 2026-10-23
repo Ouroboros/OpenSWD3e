@@ -1451,7 +1451,7 @@ int BattleRole::RollCritical(BattleServices& services)
         return 0;
     }
 
-    if ((this->equipmentFlags & BattleUnit::Unk32) != 0 || (this->status & BattleUnit::UnkStatus40000) != 0)
+    if ((this->equipmentFlags & BattleUnit::Unk32) != 0 || (this->status & BattleUnit::StrongAttack) != 0)
     {
         this->critical = 1;
         return 1;

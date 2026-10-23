@@ -189,7 +189,7 @@ int Game::BattleFrame()
                 battle.unk53AE7C,
                 battle.unk53AE80,
                 battle.unk53AE84,
-                battle.unk53AE88
+                battle.wholeSide
             };
 
             this->TakeSlotRecord(acting);
@@ -200,7 +200,7 @@ int Game::BattleFrame()
             battle.unk53AE7C = acting.unk0C;
             battle.unk53AE80 = acting.unk10;
             battle.unk53AE84 = acting.unk14;
-            battle.unk53AE88 = acting.unk18;
+            battle.wholeSide = acting.unk18;
 
             if (battle.actingUnit != -1)
             {
@@ -391,7 +391,7 @@ void Game::EndBattle()
     battle.actionQueue.fill(0);
     battle.commandNames = {};
     battle.commandKinds = {};
-    messages.messages.reset();
+    messages.Clear();
     messages.unk5214FC.fill(0);
     battle.hitPointsRolling.fill(0);
     battle.hitPoints.fill(0);
