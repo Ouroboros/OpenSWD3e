@@ -253,16 +253,18 @@ public:
     std::array<u8, Party::Roles> inParty = {};
     // 0x004BF578 the party roles by turn, from 1 (swd3e: a party of three rewrites [1..4], StartBattle)
     std::array<i32, 5> roleCycle = InitialRoleCycle;
-    u16 partyMask = 0;                  // 0x005770D2 (swd3e) bit per party role in the battle (StartBattle; not read)
-    i32 unk577224 = 0;                  // 0x00577224 (swd3e) cleared by StartBattle, not read
-    u16 unk577228 = 0;                  // 0x00577228 (swd3e) cleared by StartBattle, not read
-    u8 unk5774E8 = 0;                   // 0x005774E8 (swd3e) cleared by StartBattle, used by EnemyFrame
-    i32 unk576FC4 = 0;                  // 0x00576FC4 (swd3e) cleared by StartBattle, used by EnemyFrame
-    i32 unk576FC8 = 0;                  // 0x00576FC8 (swd3e)
-    i32 unk576FD0 = 0;                  // 0x00576FD0 (swd3e)
-    i32 unk576FCC = 0;                  // 0x00576FCC (swd3e) cleared by StartBattle, used by EnemyFrame
-    std::array<i32, 5> unk50D878 = {};  // 0x0050D878 (swd3e) cleared by StartBattle, used by EnemyFrame
-    u16 unk51359C = 0;                  // 0x0051359C (swd3e) cleared by StartBattle, not read
+    u16 partyMask = 0;  // 0x005770D2 (swd3e) bit per party role in the battle (StartBattle; not read)
+    i32 unk577224 = 0;  // 0x00577224 (swd3e) cleared by StartBattle, not read
+    u16 unk577228 = 0;  // 0x00577228 (swd3e) cleared by StartBattle, not read
+    u8 unk5774E8 = 0;   // 0x005774E8 (swd3e) cleared by StartBattle, used by EnemyFrame
+    i32 unk576FC4 = 0;  // 0x00576FC4 (swd3e) cleared by StartBattle, used by EnemyFrame
+    i32 unk576FC8 = 0;  // 0x00576FC8 (swd3e)
+    i32 unk576FD0 = 0;  // 0x00576FD0 (swd3e)
+    i32 unk576FCC = 0;  // 0x00576FCC (swd3e) cleared by StartBattle, used by EnemyFrame
+    // 0x0050D878 (swd3e) per enemy: 1 while the name of its skill is to show when it acts (EnemyFrame)
+    std::array<u8, Enemies> skillNamePending = {};
+    i32 unk57736C = 0;  // 0x0057736C (swd3e) 1: every party role standing is taunted (EnemyFrame aims at them all)
+    u16 unk51359C = 0;  // 0x0051359C (swd3e) cleared by StartBattle, not read
     u16 unk51359E = 0;
     std::array<u8, Guests> guestUsed = {};  // swd32 0x004FDF80
     // 0x005376A4 (swd3e) per enemy: the party's hits on it (MenuConfirm; cleared when it falls); the roles acting by

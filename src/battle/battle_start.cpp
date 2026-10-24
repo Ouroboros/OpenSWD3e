@@ -208,7 +208,7 @@ void Game::StartBattle(u16 number)
     battle.unk51359C = 0;
     battle.unk51359E = 0;
     battle.ailment400From = {};
-    battle.unk50D878 = {};
+    battle.skillNamePending = {};
     battle.roleNames = {};
     battle.ghostLockTarget = 0;
     battle.unk50CE6C.fill(0);

@@ -499,10 +499,13 @@ private:
     int EnemySpellAction(int enemy, BattleEnemy& unit, int target);
     int CallEnemies(BattleEnemy& unit);
     int EnemyFrame(int enemy);
-    void EnemyGatherSweep(BattleEnemy& unit);
-    void EnemyPickTarget(BattleEnemy& unit, int enemy);
+    void EnemyAimSide(BattleEnemy& unit);
+    bool EnemyMayAim(const BattleRole& role) const;
+    bool EnemyPickTarget(BattleEnemy& unit, int enemy);
     bool AimedDown(i32 index) const;
     void EnemyChooseCommand(BattleEnemy& unit, int enemy);
+    void EnemyAimHeal(BattleEnemy& unit, int enemy);
+    void EnemyActFrame(BattleEnemy& unit, int enemy);
     void ReturnHeldEscort(BattleRole& role, std::size_t index, bool dropCommand);
     void EnemyAfterAction(BattleEnemy& unit, int enemy);
     int RoleActionFrame(int role, int target);

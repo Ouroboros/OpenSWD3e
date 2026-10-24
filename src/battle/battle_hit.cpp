@@ -69,7 +69,6 @@ constexpr i32 kSpellMusicFloor = 5;  // the battle music fades down to this duri
 constexpr i16 kCallX = 0xF0;
 constexpr i16 kCallY = 0xC8;  // swd3e
 constexpr i16 kSecondCallY = 0x154;
-constexpr i32 kBattleLostState = 0x67;  // EnemyFrame
 constexpr int kEnemySlotRecord = 2;
 constexpr int kHangDraws = 0x10000;   // random draws after which a search of the original is taken as never ending
 constexpr int kOrderTargetShift = 8;  // BattleState::enemyOrders: the high byte holds the bits, the low the target
@@ -80,10 +79,19 @@ constexpr u16 kOrderDrain = 0x2000;
 constexpr int kRunCommand = 0x11;
 constexpr i16 kRunWord = 2;
 constexpr int kEnemySkillX = 0x118;
-constexpr i16 kEnemySkillFrames = 0x28;
+constexpr i16 kEnemySkillFrames = 0x23;
 constexpr int kEnemySpellCommand = 2;
 constexpr int kEnemyDrainCommand = 6;
-constexpr i32 kLastAimedUnit = 8;
+constexpr i32 kLastAimedUnit = 0x14;
+constexpr int kStepHomeCommand = 0x12C;                   // CatchRoll 0: the enemy only shows its name and steps home
+constexpr u32 kUnaimedEffect = SkillScript::UnkAilment4;  // an enemy does not aim at a unit with this effect
+constexpr u32 kTauntEffect = SkillScript::UnkAilment8;    // the enemies aim past a role with it while others are free
+constexpr i32 kSameTargetLimit = 3;     // an enemy aims at the same role at most this many times in a row
+constexpr i32 kMarkedRoleBit = 0x1000;  // unk26B8 of an enemy marking a role (unk576FC8)
+constexpr int kMarkedShare = 5;         // HitPointsAtMost: the role marked is at a twentieth of its hit points
+constexpr i32 kMarkedTurns = 2;
+constexpr u16 kTransferTarget = 0x2389;  // the hit picture of a transferred damage
+constexpr i16 kOutOfChoicesCause = 0x1E;
 constexpr i32 kFacingPanel = 0x80;
 constexpr u16 kTalkCountdown = 0x7FFF;
 constexpr u16 kNoAimedEnemy = 0xFFFF;
@@ -2042,29 +2050,33 @@ int Game::CallEnemies(BattleEnemy& unit)
     return 1;
 }
 
-// swd3e.exe 0x004612D0: one frame of enemy `enemy`. While the fight talk lets the battle run (battleRuns): its effects
-// tick and its gauge fills (a full gauge queues its slot record), and unless the battle waits (unk53BF64, unk53BF1C)
-// the acting enemy (actingUnit) takes its turn: a held or defeated one ends it; a sweep (gatheringSweep) gathers its
-// targets; otherwise it picks a target (EnemyPickTarget) and a command (EnemyChooseCommand), then acts
-// (EnemyActionFrame) until the action is over (EnemyAfterAction). Every frame it is drawn at rest (its acts holding
-// while the field is darkened with word 2A74, or while paused), its hit act plays and a defeat is taken out; the
-// result of RemoveDefeated is returned (ResetTurn's when a held or defeated acting enemy ends its turn).
+// swd3e.exe 0x004612D0: one frame of enemy `enemy`. While the fight talk lets the battle run (battleRuns): with no
+// unit acting its effects tick and its gauge fills (a full gauge queues its slot record), and unless the battle waits
+// (unk53BF64, unk53BF1C) the acting enemy (actingUnit) takes its turn: a held or defeated one ends it; a sweep of the
+// whole side aims at the first unit; otherwise it picks a target (EnemyPickTarget) and, once ready, a command
+// (EnemyChooseCommand). A chosen command waits for the second gauge (unk50CE6C) and is slotted again; then the enemy
+// acts (EnemyActionFrame) until the action is over (EnemyAfterAction). Every frame it is drawn at rest (its acts
+// holding while the field is darkened with word 2A74, or while an enemy enrages), its hit act plays, its enrage runs
+// and a defeat is taken out; the result of RemoveDefeated is returned (ResetTurn's when a held or defeated acting enemy
+// ends its turn, the target when no role is left to aim at).
 int Game::EnemyFrame(int enemy)
 {
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
-    BattleEnemy& unit = this->battleEnemies[static_cast<std::size_t>(enemy)];
+    const auto at = static_cast<std::size_t>(enemy);
+    BattleEnemy& unit = this->battleEnemies[at];
 
     if (this->fightTalk.battleRuns == 1)
     {
-        if (!unit.IsDefeated() && battle.unk53BFC0 == 0 && battle.unk53BFC4 == 0)
+        if (battle.actingUnit == -1 && !unit.IsDefeated() && battle.unk53BFC0 == 0 && battle.unk53BFC4 == 0)
         {
             unit.TickEffects(services);
 
-            if (unit.unk2AB0 == 0 && unit.AdvanceGauge(services, battle.enemyGaugeBoost) == 1 &&
-                battle.result != kBattleLostState)
+            if (unit.unk2AB0 == 0 && unit.AdvanceGauge(services, battle.enemyGaugeBoost) == 1)
             {
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
+                battle.unk53BFC4 = 1;
+                battle.unk53BFC0 = 1;
             }
         }
 
@@ -2074,28 +2086,35 @@ int Game::EnemyFrame(int enemy)
             {
                 if (unit.IsHeld() == 1 || unit.IsDefeated())
                 {
-                    if (unit.IsHeld() == 1)
-                    {
-                        battle.heldEnemy = enemy + 1;
-                    }
-
+                    const bool held = unit.IsHeld() == 1;
                     battle.unk53BF5C = 0;
                     battle.unk53BF74 = 0;
                     battle.hitsAllRoles = 0;
                     battle.unk53BFC0 = 0;
                     battle.actingUnit = -1;
+
+                    if (held)
+                    {
+                        battle.heldEnemy = enemy + 1;
+                    }
+
                     return unit.ResetTurn(services);
                 }
 
-                if (battle.gatheringSweep == 1)
+                if (battle.wholeSide == 1)
                 {
-                    this->EnemyGatherSweep(unit);
+                    this->EnemyAimSide(unit);
                 }
                 else
                 {
                     if (battle.enemyTargetPicked == 0)
                     {
-                        this->EnemyPickTarget(unit, enemy);
+                        if (!this->EnemyPickTarget(unit, enemy))
+                        {
+                            battle.actingUnit = -1;
+                            return battle.enemyTarget;
+                        }
+
                         battle.enemyTargetPicked = 1;
                     }
 
@@ -2106,40 +2125,33 @@ int Game::EnemyFrame(int enemy)
                 }
             }
 
-            if (unit.GetValueAB4() == 1)
+            if (battle.unk50CE6C[at] == 1 && battle.actingUnit == -1 && battle.result == 0 &&
+                this->fightTalk.battleRuns == 1 && unit.DrainSecondGauge() == 1)
             {
-                if (battle.actingUnit == enemy)
-                {
-                    battle.hitsAllRoles = 1;
-                    battle.unk53BFC0 = 1;
-                    unit.MarkAC8();
-                }
+                battle.unk53BFC0 = 1;
+                battle.unk53BFC4 = 1;
+                battle.unk50CE6C[at] = 0;
+                battle.AddSlotRecord(kEnemySlotRecord, enemy);
+            }
 
-                battle.darkenUnit = static_cast<i16>(enemy);
-
-                if (this->EnemyActionFrame(enemy, static_cast<i16>(unit.GetWord29A2())) == 1)
-                {
-                    this->EnemyAfterAction(unit, enemy);
-                }
-                else
-                {
-                    battle.hitsAllRoles = 1;
-                }
+            if (battle.actingUnit == enemy && battle.unk50CE6C[at] == 0 && unit.GetValueAB4() == 1)
+            {
+                this->EnemyActFrame(unit, enemy);
             }
         }
     }
 
     const bool holding =
-        (unit.GetWord2A74() != 0 && (battle.unk53BF94 == 1 || battle.unk53BF98 == 1)) || battle.paused == 1;
+        (unit.GetWord2A74() != 0 && (battle.unk53BF94 == 1 || battle.unk53BF98 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
-    const auto at = static_cast<std::size_t>(enemy);
 
     if (battle.unk53AE90[at] != -1 && this->PlayHitAct(unit, static_cast<u32>(battle.enemiesHitAct), enemy) == 1)
     {
         battle.unk53AE90[at] = -1;
     }
 
-    const int removed = this->RemoveDefeated(battle.unk502984[at], 0);
+    unit.EnrageFrame(services);
+    const int removed = this->RemoveDefeated(enemy, 0);
 
     if (removed == 1)
     {
@@ -2154,106 +2166,157 @@ int Game::EnemyFrame(int enemy)
     return removed;
 }
 
-// A sweeping enemy gathers its targets in EnemyFrame (inline in the original): an enemy aiming at the enemies sweeps
-// them all; otherwise each role standing, not a guest (guestControl), not guarding, not unk2AE0 and with unkAAC clear
-// is marked (unmarked AC0, one more hit) while the enemy's unkAB4 is clear; with every role marked the sweep starts at
-// the first role standing (none: the panels just close).
-void Game::EnemyGatherSweep(BattleEnemy& unit)
+// A sweep of the whole side by the acting enemy in EnemyFrame (inline in the original): it aims at the first unit; on
+// the enemies the enemies standing count for the sweep (sweepTargets), on the roles the battle waits.
+void Game::EnemyAimSide(BattleEnemy& unit)
 {
     BattleState& battle = this->battleState;
-
-    if (battle.unk53BF64 != 0 || battle.hitsAllRoles != 0)
-    {
-        return;
-    }
 
     if (battle.unk53AE80 != 0)
     {
+        battle.sweepTargets = 0;
         battle.enemySweeps = 1;
         unit.Retarget(0);
-        battle.sweepTargets = static_cast<i32>(battle.enemyCount) - battle.enemiesGone;
+
+        for (u32 index = 0; index < battle.enemyCount; ++index)
+        {
+            if (!this->battleEnemies[index].IsDefeated())
+            {
+                ++battle.sweepTargets;
+            }
+        }
+
         return;
     }
 
-    for (u32 index = 0; index < battle.roleCount; ++index)
-    {
-        BattleRole& role = this->battleRoles[index];
-
-        if (!role.IsDefeated() && role.guestControl != 1 && !role.IsGuarding() && role.GetAE0() != 1 &&
-            role.GetValueAAC() == 0 && unit.GetValueAB4() == 0)
-        {
-            role.SetAC0(0);
-            role.IncreaseHits();
-            ++battle.sweepTargets;
-        }
-    }
-
-    const auto standing =
-        static_cast<i32>(battle.roleCount) - battle.escortCount - battle.guestCount - battle.defeatedRoles;
-
-    if (battle.sweepTargets < standing)
-    {
-        return;
-    }
-
-    for (u32 index = 0; index < battle.roleCount; ++index)
-    {
-        if (!this->battleRoles[index].IsDefeated())
-        {
-            battle.enemySweeps = 1;
-            unit.SetAA8();
-            unit.Retarget(static_cast<i16>(index));
-            break;
-        }
-    }
-
+    unit.Retarget(0);
+    battle.enemySweeps = 1;
     battle.unk53BFC0 = 1;
 }
 
-// The target of an acting enemy in EnemyFrame (inline in the original): a role at random (not autoControl, not a guest,
-// standing), then ChooseHeal may aim it at itself; an enemy kept from acting (StatusBit5) with other enemies
-// standing aims at another enemy at random instead. The original draws for ever when nothing qualifies.
-void Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
+// A role an enemy may aim at in EnemyPickTarget (inline in the original): standing, not stepped away (unk2AF8), not the
+// talisman ghost and not StatusBit13.
+bool Game::EnemyMayAim(const BattleRole& role) const
+{
+    return !role.IsDefeated() && role.unk2AF8 != 1 && role.Ghost() != 1 && role.StatusBit13() != 1;
+}
+
+// The target of an acting enemy in EnemyFrame (inline in the original); false when every role has fallen (the enemy
+// does not act). An enemy kept from acting (StatusBit5) aims at a role at random when it is the last enemy standing,
+// else at another enemy at random (not StatusBit13, without kUnaimedEffect; unk26B8 bit 28 raised). Otherwise, unless
+// an order aims it already, the role its enrage element points at, else a role at random: the role the enemy marked
+// (unk576FC8, counting down unk576FCC), skipping roles with effect 8 (taunted; all of them: none skipped) and with
+// kUnaimedEffect; the same role three times in a row (unk576FC4, unk5774E8) is drawn again while others are left. The
+// original draws for ever when nothing qualifies.
+bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
 {
     BattleState& battle = this->battleState;
+    i32& target = battle.enemyTarget;
 
-    auto randomRole = [this, &battle]
+    auto roleAt = [this](i32 index) -> BattleRole&
     {
-        for (int tries = 0; tries < kHangDraws; ++tries)
-        {
-            if (battle.roleCount != 0)
-            {
-                battle.enemyTarget = static_cast<i32>(this->random.Below(battle.roleCount));
-            }
-
-            const BattleRole& role = this->battleRoles[static_cast<std::size_t>(battle.enemyTarget)];
-
-            if (role.autoControl != 1 && role.guestControl != 1 && !role.IsDefeated())
-            {
-                return;
-            }
-        }
-
-        Hang();
+        return this->battleRoles[static_cast<std::size_t>(index)];
     };
 
-    if (unit.StatusBit5() == 0)
+    if (unit.StatusBit5() != 0)
     {
-        randomRole();
+        u32 dying = 0;
 
-        if (unit.ChooseHeal(this->battleServices))
+        for (u32 index = 0; index < battle.enemyCount; ++index)
         {
-            battle.unk53AE80 = 1;
-            battle.enemyTarget = enemy;
+            if (this->battleEnemies[index].dying == 1)
+            {
+                ++dying;
+            }
         }
 
-        return;
+        if (static_cast<i32>(battle.enemyCount) - battle.enemiesGone - static_cast<i32>(dying) == 1)
+        {
+            for (int tries = 0;; ++tries)
+            {
+                if (tries >= kHangDraws)
+                {
+                    Hang();
+                }
+
+                if (battle.roleCount != 0)
+                {
+                    target = static_cast<i32>(this->random.Below(battle.roleCount));
+                }
+
+                if (this->EnemyMayAim(roleAt(target)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        for (int tries = 0;; ++tries)
+        {
+            if (tries >= kHangDraws)
+            {
+                Hang();
+            }
+
+            if (battle.enemyCount != 0)
+            {
+                target = static_cast<i32>(this->random.Below(battle.enemyCount));
+            }
+
+            BattleEnemy& other = this->battleEnemies[static_cast<std::size_t>(target)];
+
+            if (!other.IsDefeated() && other.StatusBit13() != 1 && other.HasEffectBits(kUnaimedEffect) != 1 &&
+                target != enemy)
+            {
+                break;
+            }
+        }
+
+        unit.RaiseUnk26B8Bit28();
+        battle.unk53AE80 = 1;
+        return true;
     }
 
-    if (static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1)
+    if (battle.enemyPendingOrders[static_cast<std::size_t>(enemy)].unk00 != 0)
     {
-        randomRole();
-        return;
+        return true;
+    }
+
+    const u32 chosen = this->PickRoleTarget(unit.EnrageElement());
+    target = static_cast<i32>(chosen);
+
+    if (chosen != 0)
+    {
+        target = static_cast<i32>(chosen) - 1;
+        return true;
+    }
+
+    const auto partyRoles = static_cast<i32>(battle.roleCount) - battle.unk5770D4;
+    i32 taunted = 0;
+    battle.unk57736C = 0;
+
+    for (i32 index = 0; index < partyRoles; ++index)
+    {
+        if (!roleAt(index).IsDefeated() && roleAt(index).HasEffectBits(kTauntEffect) == 1)
+        {
+            ++taunted;
+        }
+    }
+
+    if (taunted >= partyRoles - battle.defeatedRoles)
+    {
+        battle.unk57736C = 1;
+        taunted = 0;
+    }
+
+    i32 unaimed = 0;
+
+    for (u32 index = 0; index < battle.roleCount; ++index)
+    {
+        if (this->battleRoles[index].Ghost() != 1 && this->battleRoles[index].HasEffectBits(kUnaimedEffect) == 1)
+        {
+            ++unaimed;
+        }
     }
 
     for (int tries = 0;; ++tries)
@@ -2263,23 +2326,80 @@ void Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
             Hang();
         }
 
-        if (battle.enemyCount != 0)
+        const i32 fighting =
+            static_cast<i32>(battle.roleCount) - battle.escortCount - battle.guestCount - battle.unk5770D4;
+
+        if (static_cast<u32>(battle.defeatedRoles) >= static_cast<u32>(fighting))
         {
-            battle.enemyTarget = static_cast<i32>(this->random.Below(battle.enemyCount));
+            return false;
         }
 
-        if (!this->battleEnemies[static_cast<std::size_t>(battle.enemyTarget)].IsDefeated() &&
-            battle.enemyTarget != enemy)
+        if (battle.roleCount != 0)
         {
-            break;
+            target = static_cast<i32>(this->random.Below(battle.roleCount));
         }
+
+        if (battle.unk576FC8 != 0 && battle.unk576FD0 == enemy)
+        {
+            BattleRole& marked = roleAt(battle.unk576FC8 - 1);
+
+            if (!marked.IsDefeated() && marked.Ghost() != 1)
+            {
+                target = battle.unk576FC8 - 1;
+
+                if (battle.unk576FCC-- == 1)
+                {
+                    battle.unk576FD0 = 0;
+                    battle.unk576FC8 = 0;
+                    unit.ClearUnk26B8(kMarkedRoleBit);
+                }
+
+                return true;
+            }
+
+            battle.unk576FD0 = 0;
+            battle.unk576FC8 = 0;
+            battle.unk576FCC = 0;
+            unit.ClearUnk26B8(kMarkedRoleBit);
+        }
+
+        const i32 others = static_cast<i32>(battle.roleCount) - battle.escortCount - battle.defeatedRoles -
+                           battle.unk5770D4 - unaimed - taunted;
+
+        if (static_cast<u32>(others) > 1 && battle.unk576FC4 == target && battle.unk5774E8 >= kSameTargetLimit)
+        {
+            continue;
+        }
+
+        if (battle.unk57736C == 0 && roleAt(target).HasEffectBits(kTauntEffect) == 1)
+        {
+            continue;
+        }
+
+        BattleRole& aimed = roleAt(target);
+
+        if (aimed.IsDefeated() || aimed.unk2AF8 == 1 || aimed.Ghost() == 1 || aimed.StatusBit13() == 1 ||
+            aimed.HasEffectBits(kUnaimedEffect) == 1)
+        {
+            continue;
+        }
+
+        if (battle.unk5774E8 != 0 && battle.unk576FC4 == target)
+        {
+            ++battle.unk5774E8;
+        }
+        else
+        {
+            battle.unk5774E8 = 1;
+            battle.unk576FC4 = target;
+        }
+
+        return true;
     }
-
-    battle.unk53AE80 = 1;
 }
 
 // A unit `index` of the aimed side is down for the target search of EnemyChooseCommand (inline in the original); the
-// enemies past the last are read past the enemy array by the original: taken as down.
+// units past the last are read past their array by the original: taken as down.
 bool Game::AimedDown(i32 index) const
 {
     if (this->battleState.unk53AE80 == 1)
@@ -2288,20 +2408,25 @@ bool Game::AimedDown(i32 index) const
                this->battleEnemies[static_cast<std::size_t>(index)].IsDefeated();
     }
 
-    return this->battleRoles[static_cast<std::size_t>(index)].IsDefeated();
+    return index < 0 || static_cast<std::size_t>(index) >= this->battleRoles.size() ||
+           this->battleRoles[static_cast<std::size_t>(index)].IsDefeated();
 }
 
-// The command of an acting enemy in EnemyFrame (inline in the original): a role caught by the catch roll (the first
-// party role's level) makes it run (0x11). Without an order from the fight talk (enemyOrders) it chooses its command
-// (with the skill name shown); otherwise the order's bits give it: 0x8000 a prepared command, 0x4000 the spell (with
-// the name shown), 0x2000 the drain (the order's low byte then is the target, also taken without the bits). ActFlag1
-// aims at the party at once, ActFlag0 starts a sweep; otherwise it aims at the target (a downed target passes the aim
-// on to the next standing unit, up to unit 9), a role target counting one more hit.
+// The command of an acting enemy in EnemyFrame (inline in the original): the order's low byte aims it when its bits
+// are set; the catch roll (the first party role's level) makes it run (0x11) or step home (0x12C, its name shown).
+// With an order from the fight talk (enemyOrders) the order's bits give the command: 0x8000 a prepared command, 0x4000
+// the spell (it waits for its second gauge), 0x2000 the drain; ActFlag1 hits at once, ActFlag0 sweeps; the aim passes
+// on from a downed target to the next standing unit (up to unit 0x14). Otherwise a healer may aim at itself or at the
+// weakest enemy, and it chooses its command (then it waits for its second gauge with the skill name to show); a
+// supporting command aims at itself, a sweep starts, and the target is aimed at when it stands.
 void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
 {
     BattleState& battle = this->battleState;
-    const u16 order = battle.enemyOrders[static_cast<std::size_t>(enemy)];
-    battle.gatheringSweep = 0;
+    BattleServices& services = this->battleServices;
+    const auto at = static_cast<std::size_t>(enemy);
+    PendingOrder& pending = battle.enemyPendingOrders[at];
+    const u16 order = battle.enemyOrders[at];
+    pending.unk04 = 0;
 
     if ((order >> kOrderTargetShift) != 0)
     {
@@ -2309,8 +2434,9 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     }
 
     const u8 level = this->party.roles[static_cast<std::size_t>(battle.partyRoles[0])].level;
+    const int caught = unit.CatchRoll(services, level);
 
-    if (unit.CatchRoll(this->battleServices, level) == 1)
+    if (caught == 1)
     {
         unit.Retarget(0);
         unit.SetCommand(kRunCommand);
@@ -2318,118 +2444,250 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
         return;
     }
 
-    auto showName = [this, &unit]
+    if (caught == 0)
     {
-        if (unit.skillName[0] != '\0')
+        unit.Retarget(0);
+        unit.SetCommand(kStepHomeCommand);
+        return;
+    }
+
+    auto waitSecondGauge = [&battle, &unit, at]
+    {
+        battle.actingUnit = -1;
+        battle.unk50CE6C[at] = 1;
+        battle.unk53BF74 = 0;
+        battle.unk53BFC4 = 0;
+        battle.unk53BFC0 = 0;
+        unit.FillSecondGauge();
+    };
+
+    auto hitsAtOnce = [&battle, &unit, &pending]
+    {
+        pending.unk08 = 0;
+
+        if (unit.ActFlag1() == 1)
         {
-            this->battleMessages.Add(kEnemySkillX, 0, kEnemySkillFrames, unit.skillName, BattleMessage::Rise);
+            pending.unk08 = 1;
+            battle.enemyHitsAll = 1;
         }
     };
 
-    auto aim = [this, &battle, &unit]
+    if (static_cast<i16>(order) < 0 || (order & (kOrderSpell | kOrderDrain)) != 0)
     {
-        if (battle.unk53AE80 == 1)
+        if (battle.enemyAimsAtEnemies == 1)
         {
-            if (!this->AimedDown(battle.enemyTarget))
-            {
-                unit.Retarget(static_cast<i16>(battle.enemyTarget));
-            }
+            battle.unk53AE80 = 1;
+            battle.enemyAimsAtEnemies = 0;
+        }
 
-            return;
+        if ((order & kOrderPrepared) != 0)
+        {
+            battle.enemyHitActs[at] = unit.PrepareCommand(this->database);
+            battle.darkenUnit = static_cast<i16>(enemy);
+        }
+
+        if ((order & kOrderSpell) != 0)
+        {
+            unit.SetCommand(kEnemySpellCommand);
+            battle.darkenUnit = static_cast<i16>(enemy);
+            battle.skillNamePending[at] = 1;
+            waitSecondGauge();
+        }
+
+        if ((order & kOrderDrain) != 0)
+        {
+            unit.SetCommand(kEnemyDrainCommand);
+            battle.darkenUnit = static_cast<i16>(enemy);
+        }
+
+        hitsAtOnce();
+
+        if (unit.ActFlag0() == 1)
+        {
+            pending.unk04 = 1;
+            battle.sweepTargets = 0;
+        }
+
+        battle.unk53BD48 = 0;
+
+        if (this->AimedDown(battle.enemyTarget))
+        {
+            while (++battle.enemyTarget <= kLastAimedUnit && this->AimedDown(battle.enemyTarget))
+            {
+            }
         }
 
         if (!this->AimedDown(battle.enemyTarget))
         {
             unit.Retarget(static_cast<i16>(battle.enemyTarget));
-            this->battleRoles[static_cast<std::size_t>(battle.enemyTarget)].IncreaseHits();
-        }
-    };
-
-    if ((order & kOrderPrepared) == 0 && (order & (kOrderSpell | kOrderDrain)) == 0)
-    {
-        u32 act = static_cast<u32>(battle.enemyHitAct);
-        const int chosen = unit.ChooseCommand(this->battleServices, this->database, act);
-        battle.enemyHitAct = static_cast<i32>(act);
-
-        if (chosen == 1)
-        {
-            battle.darkenUnit = static_cast<i16>(enemy);
-            battle.unk53BD0C = 0;
-
-            if (unit.ActFlag1() == 1)
-            {
-                battle.enemyHitsAll = 1;
-            }
-
-            showName();
         }
 
-        if (unit.CommandStatusBit() == 1)
-        {
-            battle.unk53AE80 = 1;
-            battle.enemyTarget = enemy;
-        }
-
-        battle.darkenUnit = static_cast<i16>(enemy);
-
-        if (unit.ActFlag0() == 1)
-        {
-            battle.gatheringSweep = 1;
-            battle.sweepTargets = 0;
-            return;
-        }
-
-        aim();
         return;
     }
 
-    if (battle.enemyAimsAtEnemies == 1)
+    if (unit.StatusBit5() == 0 && unit.CanHeal())
     {
+        this->EnemyAimHeal(unit, enemy);
+    }
+
+    u32 act = static_cast<u32>(battle.enemyHitActs[at]);
+    const int chosen = unit.ChooseCommand(services, this->database, act);
+    battle.enemyHitActs[at] = static_cast<i32>(act);
+
+    if (chosen == 1)
+    {
+        battle.darkenUnit = static_cast<i16>(enemy);
+        battle.unk53BD0C = 0;
+        waitSecondGauge();
+        hitsAtOnce();
+        battle.skillNamePending[at] = 1;
+    }
+
+    if (unit.CommandSupports() == 1)
+    {
+        pending.unk00 = 1;
         battle.unk53AE80 = 1;
-        battle.enemyAimsAtEnemies = 0;
+        battle.enemyTarget = enemy;
     }
 
-    if ((order & kOrderPrepared) != 0)
-    {
-        battle.enemyHitAct = unit.PrepareCommand(this->database);
-        battle.enemyHitActs[static_cast<std::size_t>(enemy)] = battle.enemyHitAct;
-        battle.darkenUnit = static_cast<i16>(enemy);
-    }
-
-    if ((order & kOrderSpell) != 0)
-    {
-        unit.SetCommand(kEnemySpellCommand);
-        battle.darkenUnit = static_cast<i16>(enemy);
-        showName();
-    }
-
-    if ((order & kOrderDrain) != 0)
-    {
-        unit.SetCommand(kEnemyDrainCommand);
-        battle.darkenUnit = static_cast<i16>(enemy);
-    }
-
-    if (unit.ActFlag1() == 1)
-    {
-        battle.enemyHitsAll = 1;
-    }
+    battle.darkenUnit = static_cast<i16>(enemy);
 
     if (unit.ActFlag0() == 1)
     {
-        battle.gatheringSweep = 1;
+        pending.unk04 = 1;
         battle.sweepTargets = 0;
     }
 
-    battle.unk53BD48 = 0;
-
-    if (this->AimedDown(battle.enemyTarget))
+    if (pending.unk04 == 0 && !this->AimedDown(battle.enemyTarget))
     {
-        while (++battle.enemyTarget <= kLastAimedUnit && this->AimedDown(battle.enemyTarget))
+        unit.Retarget(static_cast<i16>(battle.enemyTarget));
+    }
+}
+
+// The heal of an enemy in EnemyChooseCommand (inline in the original), unless an order aims it already: an enemy of a
+// healing kind (UnkKind20) heals itself when weak; otherwise, with a weak enemy standing, it heals the weakest one by
+// hit points (measured against the first enemy standing only, as in the original; a weak one of the healing kind is
+// taken at once).
+void Game::EnemyAimHeal(BattleEnemy& unit, int enemy)
+{
+    BattleState& battle = this->battleState;
+    PendingOrder& pending = battle.enemyPendingOrders[static_cast<std::size_t>(enemy)];
+
+    auto heal = [this, &battle, &unit, &pending](i32 target)
+    {
+        if (pending.unk00 == 0 && unit.ChooseHeal(this->battleServices))
         {
+            battle.unk53AE80 = 1;
+            pending.unk00 = 1;
+            battle.enemyTarget = target;
+        }
+    };
+
+    // Without an object the original reads through a null pointer: taken as not of the healing kind.
+    auto healer = [](const BattleEnemy& other)
+    {
+        const ObjectRecord* data = other.Data();
+        return data != nullptr && (data->data.kind & ObjectData::UnkKind20) != 0;
+    };
+
+    battle.lastDefeatedObject = unit.Data();
+
+    if (healer(unit))
+    {
+        if (unit.IsWeakEnemy())
+        {
+            heal(enemy);
+        }
+
+        return;
+    }
+
+    bool weak = false;
+
+    for (u32 index = 0; index < battle.enemyCount; ++index)
+    {
+        if (!this->battleEnemies[index].IsDefeated() && this->battleEnemies[index].IsWeakEnemy())
+        {
+            weak = true;
+            break;
         }
     }
 
-    aim();
+    if (!weak)
+    {
+        return;
+    }
+
+    u32 first = 0;
+    i32 firstHitPoints = 0;
+    i32 maximum = 0;
+
+    do
+    {
+        this->battleEnemies[first].GetHitPoints(firstHitPoints, maximum);
+        ++first;
+    } while (this->battleEnemies[first - 1].IsDefeated());
+
+    i32 weakest = static_cast<i32>(first) - 1;
+
+    for (u32 index = 1; index < battle.enemyCount; ++index)
+    {
+        BattleEnemy& other = this->battleEnemies[index];
+
+        if (other.IsDefeated() || !other.IsWeakEnemy())
+        {
+            continue;
+        }
+
+        battle.lastDefeatedObject = other.Data();
+
+        if (healer(other))
+        {
+            weakest = static_cast<i32>(index);
+            break;
+        }
+
+        i32 hitPoints = 0;
+        other.GetHitPoints(hitPoints, maximum);
+
+        if (hitPoints < firstHitPoints)
+        {
+            weakest = static_cast<i32>(index);
+        }
+    }
+
+    heal(weakest);
+}
+
+// The acting enemy of EnemyFrame once it is ready (inline in the original): the battle waits on it, its skill name
+// shows once, and it runs EnemyActionFrame until the action is over (EnemyAfterAction).
+void Game::EnemyActFrame(BattleEnemy& unit, int enemy)
+{
+    BattleState& battle = this->battleState;
+    const auto at = static_cast<std::size_t>(enemy);
+    battle.hitsAllRoles = 1;
+    battle.unk53BFC0 = 1;
+    unit.MarkAC8();
+    battle.darkenUnit = static_cast<i16>(enemy);
+
+    if (battle.skillNamePending[at] == 1)
+    {
+        if (unit.skillName[0] != '\0')
+        {
+            this->battleMessages.Add(kEnemySkillX, 0, kEnemySkillFrames, unit.skillName, BattleMessage::Rise);
+        }
+
+        battle.skillNamePending[at] = 0;
+    }
+
+    if (this->EnemyActionFrame(enemy, static_cast<i16>(unit.GetWord29A2())) == 1)
+    {
+        this->EnemyAfterAction(unit, enemy);
+    }
+    else
+    {
+        battle.hitsAllRoles = 1;
+    }
 }
 
 // A held role whose escort is out gives it back (inline in EnemyAfterAction): the escort record and order cleared,
@@ -2459,36 +2717,69 @@ void Game::ReturnHeldEscort(BattleRole& role, std::size_t index, bool dropComman
     AddOneItem(this->party.inventory, battle.rolePlaces[place].actId, 0, this->database);
 }
 
-// The end of an enemy's action in EnemyFrame (inline in the original): the target loses a hit (a sweep over the roles:
-// each role), a held role gives its escort back; the enemy's turn resets, the roles face again after a facing change
-// (panel flag 0x80), the turn state clears (the acting unit when an enemy acted), the fight talk's countdown steps,
-// and a role target with effect flag 3 strikes back with the last damage (a defeat flashing white).
+// The end of an enemy's action in EnemyFrame (inline in the original): the talisman ghost strikes back at the enemy
+// that hit role 0 (unless it is low on hit points); a damage transfer (傷害轉移) on the role hit passes the damage to
+// the enemy it names (or a random one standing); a held role gives its escort back; the enemy's turn resets, the
+// roles face again after a facing change (panel flag 0x80), the turn state clears (the acting unit when an enemy
+// acted), the fight talk's countdown steps, the poison spreads, the enemy checks enrage causes 0 and 0x1E (out of
+// choices), and a named enemy marks the first party role at a twentieth of its hit points for two turns.
 void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
 {
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
     battle.unk53BF9C = 0;
     const auto target = static_cast<i16>(unit.GetWord29A2());
-    unit.ClearWord29A2();
+    BattleRole& ghost = this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)];
+
+    if (ghost.GhostObeys(services) == 1 && target == 0 && battle.unk53AE80 == 0 &&
+        this->battleRoles[0].LowHitPoints(0) != 1)
+    {
+        battle.turnUnit = battle.ghostSlot + BattleState::FirstRoleUnit;
+        battle.aimTarget = battle.actingUnit + 1;
+        battle.aiTarget = battle.actingUnit + 1;
+        ghost.Retarget(static_cast<i16>(battle.actingUnit));
+        ghost.GhostAttackCommand(this->database);
+        battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
+        battle.unk53BFC0 = 1;
+        battle.unk53BFC4 = 1;
+    }
+
+    // A target outside the roles (an enemy, or none) is read past the roles in the original (deviations.md): taken as
+    // no role.
+    BattleRole* hit = target >= 0 && static_cast<std::size_t>(target) < this->battleRoles.size()
+                          ? &this->battleRoles[static_cast<std::size_t>(target)]
+                          : nullptr;
+
+    if (hit != nullptr && hit->HasEffectBits(BattleUnit::DamageTransfer) == 1 && battle.hitDamage > 0)
+    {
+        auto passedTo = static_cast<std::size_t>(hit->Unk34C0());
+
+        if (this->battleEnemies[passedTo].IsDefeated())
+        {
+            do
+            {
+                passedTo = this->random.Below(battle.enemyCount);
+            } while (this->battleEnemies[passedTo].IsDefeated());
+        }
+
+        BattleEnemy& other = this->battleEnemies[passedTo];
+        other.PushTarget(kTransferTarget);
+        other.RaiseFlag26B8(this->battleState);
+        other.SetDamageDigits(services, battle.hitDamage);
+        other.StepTargetCount(services, 1);
+        other.Damage(services, battle.hitDamage, 0, 0);
+    }
 
     if (unit.GetAA8() == 1)
     {
         for (u32 index = 0; index < battle.roleCount; ++index)
         {
-            BattleRole& role = this->battleRoles[index];
-            role.DecreaseHits();
-            this->ReturnHeldEscort(role, index, true);
+            this->ReturnHeldEscort(this->battleRoles[index], index, true);
         }
     }
-    else if (battle.unk53AE80 != 0)
+    else if (battle.unk53AE80 == 0 && hit != nullptr)
     {
-        this->battleEnemies[static_cast<std::size_t>(target)].DecreaseHits();
-    }
-    else
-    {
-        BattleRole& role = this->battleRoles[static_cast<std::size_t>(target)];
-        this->ReturnHeldEscort(role, static_cast<std::size_t>(target), false);
-        role.DecreaseHits();
+        this->ReturnHeldEscort(*hit, static_cast<std::size_t>(target), false);
     }
 
     unit.ResetTurn(services);
@@ -2499,7 +2790,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         {
             BattleRole& role = this->battleRoles[index];
 
-            if (role.guestControl == 0 && !role.IsDefeated())
+            if (role.GuestControl() == 0 && !role.IsDefeated())
             {
                 role.SetFacingIfAble(0);
             }
@@ -2508,10 +2799,21 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         battle.panelFlags &= ~kFacingPanel;
     }
 
+    if (battle.unk5772C8 == 0)
+    {
+        battle.unk53BF74 = 0;
+        battle.unk53BFC0 = 0;
+
+        if (battle.unk53BF98 == 1)
+        {
+            battle.undarkening = 1;
+        }
+    }
+
     battle.enemyTargetPicked = 0;
     battle.hitsAllRoles = 0;
-    battle.unk53BF74 = 0;
-    battle.unk53BFC0 = 0;
+    battle.unk53BFC4 = 0;
+    battle.enemyFaded = 1;
 
     if (battle.actingUnit < BattleState::FirstRoleUnit)
     {
@@ -2520,42 +2822,50 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         battle.unk53AE78 = 0;
     }
 
+    battle.hitDamage = 0;
     battle.unk53BF46 = 0;
     battle.unk53BF48 = 0;
     battle.enemySweeps = 0;
     battle.enemyHitsAll = 0;
     battle.gatheringSweep = 0;
+    battle.enemyPendingOrders[static_cast<std::size_t>(enemy)].unk04 = 0;
     battle.sweepTargets = 0;
     battle.spellStage = 0;
     battle.enemyOrders[static_cast<std::size_t>(enemy)] = 0;
     battle.orderSorted = 0;
-
-    if (battle.unk53BF98 == 1)
-    {
-        battle.undarkening = 1;
-    }
 
     if ((this->fightTalk.unk53CCDC & kTalkCountdown) != 0)
     {
         --this->fightTalk.unk53CCDC;
     }
 
-    if (this->battleRoles[static_cast<std::size_t>(target)].EffectFlag3() != 1)
+    this->SpreadPoison(1);
+    unit.EnrageCheck(services, 0, 0);
+
+    if (unit.OutOfChoices() == 1)
+    {
+        unit.EnrageCheck(services, kOutOfChoicesCause, 0);
+    }
+
+    if (unit.Named() != 1 || battle.unk576FCC != 0)
     {
         return;
     }
 
-    unit.PushTarget(BattleUnit::DamageTarget);
-    unit.RaiseFlag26B8(this->battleState);
-    unit.SetDamageDigits(services, battle.lastDamage);
-    unit.StepTargetCount(services, 1);
+    battle.unk576FC8 = 0;
 
-    if (unit.Damage(services, battle.lastDamage, 0, 0) == 1)
+    for (u32 index = 0; index < battle.roleCount; ++index)
     {
-        battle.unk502984[static_cast<std::size_t>(enemy)] = enemy;
-        battle.hitDamage = -1;
-        battle.flashing = 1;
-        this->FlashFrameWhite();
+        BattleRole& role = this->battleRoles[index];
+
+        if (!role.IsDefeated() && role.PartyMember() != 0 && role.HitPointsAtMost(kMarkedShare))
+        {
+            battle.unk576FC8 = static_cast<i32>(index) + 1;
+            battle.unk576FCC = kMarkedTurns;
+            battle.unk576FD0 = enemy;
+            unit.RaiseUnk26B8(kMarkedRoleBit);
+            break;
+        }
     }
 }
 
