@@ -30,7 +30,7 @@ constexpr std::array<i32, 12> kTabCategories = {0, 1, 2, 3, 4, 5, 6, 7, 8, 0xA, 
 // 0x004AAD34..0x004AAD93: the food value of a category, and on into the icon offsets that follow it (0x0044B670
 // reads index 0x12 for category 0xA)
 constexpr std::array<i32, 0x18> kFoodValues = {
-    0x12, 0xF, 0xC, 0xA, 8, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 3, 0,
+    0x12, 0xF, 0xC, 0xA, 8, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 3, 0, 0, 0,
 };
 
 constexpr std::array<i32, 10> kIconX = {0, 0, 0, 0, 1, 4, 3, 0, 0, 0};  // 0x004AAD6C
@@ -728,7 +728,11 @@ void Menu::GhostCancel()
 
     if (page.stage == GhostPage::Choosing)
     {
-        if (--this->code == 0)
+        // The code is a dword in the original, compared signed after the decrement.
+        const i32 code = static_cast<i32>(this->code) - 1;
+        this->code = static_cast<u16>(code);
+
+        if (code <= 0)
         {
             this->game.menuState = Game::NoMenu;
         }
@@ -845,10 +849,21 @@ void Menu::GhostDrawGauges()
         Marker = 2,
     };
 
-    const i32 growthFrom = (talisman.growthFrom << kGaugeScale) / talisman.cycleDays;
-    const i32 growthTo = (talisman.growthTo << kGaugeScale) / talisman.cycleDays;
-    const i32 end = (talisman.cycleDays << kGaugeScale) / talisman.cycleDays;
-    page.dayMarker = (talisman.day << kGaugeScale) / talisman.cycleDays;
+    // The original divides by the cycle unchecked (0 only without a ghost, when the page draws nothing); 0 then.
+    auto scaled = [&talisman](i32 days)
+    {
+        if (talisman.cycleDays == 0)
+        {
+            return 0;
+        }
+
+        return (days << kGaugeScale) / talisman.cycleDays;
+    };
+
+    const i32 growthFrom = scaled(talisman.growthFrom);
+    const i32 growthTo = scaled(talisman.growthTo);
+    const i32 end = scaled(talisman.cycleDays);
+    page.dayMarker = scaled(talisman.day);
     this->DrawBox(kDayBoxX, kBoxY, kBoxWidth, kBoxHeight, kBoxMode, 0, 0, 0);
     owner.painter.SetClipClamped(kDayLeft, kGaugeTop, end + kDayLeft, kGaugeBottom);
 

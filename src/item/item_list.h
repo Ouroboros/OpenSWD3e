@@ -25,7 +25,7 @@ struct ItemNode
     i16 unk06 = 0;                   // +0x06
     i16 count = 0;                   // +0x08
     i16 pending = 0;                 // +0x0A
-    ObjectRecord record;             // +0x0C (the description at +0xAC)
+    ObjectRecord record;             // +0x0C (the description at +0xB0)
 };
 
 // Where the first node of a list is kept: a list head, or the next of the node a list starts after (a skill list is

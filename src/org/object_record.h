@@ -108,7 +108,7 @@ static_assert(offsetof(ObjectData, catchChance) == 0x9B);
 static_assert(offsetof(ObjectData, resistances) == 0x9C);
 static_assert(offsetof(ObjectData, altar) == 0xA1);
 
-// A mon.dat object: the fixed part and the description (+0xA0, tag 0x1E; none when the record has no such tag).
+// A mon.dat object: the fixed part and the description (+0xA4, tag 0x1E; none when the record has no such tag).
 struct ObjectRecord
 {
     ObjectData data;
