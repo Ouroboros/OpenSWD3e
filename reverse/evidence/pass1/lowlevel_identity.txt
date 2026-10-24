@@ -1,0 +1,208 @@
+0043A380 vs swd32 004358C0: same (174 instructions)
+0043A5B0 vs swd32 00435AF0: same (201 instructions)
+0043A840 vs swd32 00435D80: same (212 instructions)
+0043AAF0 vs swd32 00436030: same (282 instructions)
+0043AED0 vs swd32 00436410: same (298 instructions)
+0043B300 vs swd32 00436840: same (52 instructions)
+0043B390 vs swd32 004368D0: same (61 instructions)
+0043B440 vs swd32 00436980: same (24 instructions)
+0043B480 vs swd32 004369C0: same (95 instructions)
+0043B590 vs swd32 00436AD0: same (343 instructions)
+0043BA70 vs swd32 00436FB0: same (272 instructions)
+0043BD70 vs swd32 004372B0: same (8 instructions)
+0043BD90 vs swd32 004372D0: same (4 instructions)
+0043BDA0 vs swd32 004372E0: same (8 instructions)
+0043BDC0 vs swd32 00437300: same (3 instructions)
+0043BDD0 vs swd32 00437310: same (88 instructions)
+0043BEF0 vs swd32 00437430: same (50 instructions)
+0043BF80 vs swd32 004374C0: same (8 instructions)
+0043BFA0 vs swd32 004374E0: same (34 instructions)
+0043C020 vs swd32 00437560: same (6 instructions)
+0043C030 vs swd32 00437570: same (66 instructions)
+0043C0D0 vs swd32 00437610: same (41 instructions)
+0043C140 vs swd32 00437680: same (34 instructions)
+0043C190 vs swd32 004376D0: same (32 instructions)
+0043C1E0 vs swd32 00437720: same (75 instructions)
+0043C510 vs swd32 00437A50: same (55 instructions)
+0043C590 vs swd32 00437AD0: same (7 instructions)
+0043C5A0 vs swd32 00437AE0: same (52 instructions)
+0043C620 vs swd32 00437B60: same (47 instructions)
+0043C6C0 vs swd32 00437C00: same (21 instructions)
+0043C700 vs swd32 00437C40: same (16 instructions)
+0043C740 vs swd32 00437C80: same (99 instructions)
+0043C840 vs swd32 00437D80: same (19 instructions)
+0043C880 vs swd32 00437DC0: same (20 instructions)
+0043C8B0 vs swd32 00437DF0: same (15 instructions)
+0043C8E0 vs swd32 00437E20: same (2 instructions)
+0043C8F0 vs swd32 00437E30: same (25 instructions)
+0043C970 vs swd32 00437E90: same (7 instructions)
+0043C990 vs swd32 00437EB0: same (24 instructions)
+0043C9D0 vs swd32 00437EF0: same (28 instructions)
+0043CA20 vs swd32 00437F40: same (19 instructions)
+0043CA70 vs swd32 00437F90: same (39 instructions)
+0043CAE0 vs swd32 00438000: same (13 instructions)
+0043CB10 vs swd32 00438030: same (49 instructions)
+0043CB90 vs swd32 004380B0: same (54 instructions)
+0043CC30 vs swd32 00438150: same (55 instructions)
+0043CCC0 vs swd32 004381E0: same (35 instructions)
+0043CD10 vs swd32 00438230: same (29 instructions)
+0043CD70 vs swd32 00438290: same (28 instructions)
+0043CDC0 vs swd32 004382E0: same (28 instructions)
+0043CE20 vs swd32 00438340: same (9 instructions)
+0043CE40 vs swd32 00438360: same (8 instructions)
+0043CF20 vs swd32 00438440: same (37 instructions)
+0043CF80 vs swd32 004384B0: same (6 instructions)
+0043CF90 vs swd32 004384C0: same (6 instructions)
+0043CFA0 vs swd32 004384D0: same (29 instructions)
+0043CFF0 vs swd32 00438520: same (27 instructions)
+0043D040 vs swd32 00438570: same (14 instructions)
+0043D070 vs swd32 004385A0: same (5 instructions)
+0043D080 vs swd32 004385B0: same (5 instructions)
+0043D090 vs swd32 004385C0: same (22 instructions)
+0043D0D0 vs swd32 00438600: same (5 instructions)
+0043D0E0 vs swd32 00438610: same (5 instructions)
+0043D0F0 vs swd32 00438620: same (11 instructions)
+0043D110 vs swd32 00438640: same (2 instructions)
+0043D4A0 vs swd32 004389D0: same (50 instructions)
+0043D530 vs swd32 00438A60: same (2 instructions)
+0043D540 vs swd32 00438A70: same (5 instructions)
+0043D550 vs swd32 00438A80: same (29 instructions)
+0043D590 vs swd32 00438AC0: same (2 instructions)
+0043D5A0 vs swd32 00438AD0: same (2 instructions)
+0043D5B0 vs swd32 00438AE0: same (2 instructions)
+0043D5C0 vs swd32 00438AF0: same (41 instructions)
+0043D620 vs swd32 00438B50: same (200 instructions)
+0043D890 vs swd32 00438DC0: same (3 instructions)
+0043D8A0 vs swd32 00438DD0: same (2 instructions)
+0043D8B0 vs swd32 00438DE0: same (15 instructions)
+0043D8E0 vs swd32 00438E10: same (24 instructions)
+0043D920 vs swd32 00438E50: differs at 23: [mov [esp+18h+G], edx] / [mov [esp+18h+var_4], edx]
+0043DA30 vs swd32 00438F60: same (29 instructions)
+0043DAC0 vs swd32 00438FA0: same (36 instructions)
+0043DB40 vs swd32 00439020: same (17 instructions)
+0043DB90 vs swd32 00439070: same (33 instructions)
+0043DC10 vs swd32 004390F0: same (7 instructions)
+mapping (123 symbols):
+  00411F10 -> 00411F90
+  00417740 -> 00416F10
+  00417790 -> 00416F60
+  00427040 -> 00485610
+  004360C0 -> 004311C0
+  00439DA0 -> 004352E0
+  0043A140 -> 00435680
+  0043A380 -> 004358C0
+  0043A5B0 -> 00435AF0
+  0043A840 -> 00435D80
+  0043AAF0 -> 00436030
+  0043AED0 -> 00436410
+  0043B300 -> 00436840
+  0043B390 -> 004368D0
+  0043B440 -> 00436980
+  0043B480 -> 004369C0
+  0043B960 -> 00436EA0
+  0043BFA0 -> 004374E0
+  0043C140 -> 00437680
+  0043C190 -> 004376D0
+  0043C290 -> 004377D0
+  0043C740 -> 00437C80
+  0043C840 -> 00437D80
+  0043C8F0 -> 00437E30
+  0043C990 -> 00437EB0
+  0043C9D0 -> 00437EF0
+  0043CA20 -> 00437F40
+  0043CE20 -> 00438340
+  0043CE60 -> 00438380
+  0043CEC0 -> 004383E0
+  0043CF20 -> 00438440
+  0043CFF0 -> 00438520
+  0043D090 -> 004385C0
+  0043D0F0 -> 00438620
+  0043D550 -> 00438A80
+  0043D864 -> 00438D94
+  0043D890 -> 00438DC0
+  0043D8A0 -> 00438DD0
+  0043D8B0 -> 00438DE0
+  0043D8E0 -> 00438E10
+  0043D920 -> 00438E50
+  0043DA30 -> 00438F60
+  0043DA70 -> 00487C10
+  0043DAB0 -> 004885A0
+  0043DB40 -> 00439020
+  0043DC10 -> 004390F0
+  0043DC30 -> 00439110
+  004A10E8 -> 00489654
+  004A16B0 -> 00489EB0
+  004A1A36 -> 00489D00
+  004A1AD0 -> 00489E90
+  004A1B81 -> 0048A1F0
+  004AA690 -> 004996B0
+  004AA698 -> 004996B8
+  004AB2A0 -> 00499D88
+  004ABC30 -> 0049A718
+  004ABC40 -> 0049A728
+  004ABCA0 -> 0049A788
+  004ABCE0 -> 0049A7C8
+  004ABCF0 -> 0049A7D8
+  004BE010 -> 004A6474
+  004BE090 -> aCfileCloseview
+  004BE1AC -> 004A6610
+  004BE1B8 -> 004A661C
+  004BE478 -> 004A68DC
+  004BE594 -> 004A69F8
+  004C4F0C -> 004AB784
+  0050A0F8 -> 004FB7E8
+  0050A100 -> 004FB7F0
+  CharNextA -> CharNextA
+  CharPrevA -> CharPrevA
+  CloseHandle -> CloseHandle
+  CreateEventA -> CreateEventA
+  CreateFileA -> CreateFileA
+  CreateFileMappingA -> CreateFileMappingA
+  DirectDrawCreate -> DirectDrawCreate
+  DirectInputCreateA -> DirectInputCreateA
+  DistanceToMoveHigh -> DistanceToMoveHigh
+  FormatMessageA -> FormatMessageA
+  GetFileSize -> GetFileSize
+  GetFileTime -> GetFileTime
+  GetLastError -> GetLastError
+  GetPixel -> GetPixel
+  ImmIsIME -> ImmIsIME
+  MapViewOfFile -> MapViewOfFile
+  MessageBoxA -> MessageBoxA
+  SetEndOfFile -> SetEndOfFile
+  SetFileAttributesA -> SetFileAttributesA
+  SetFilePointer -> SetFilePointer
+  SetPixel -> SetPixel
+  UnmapViewOfFile -> UnmapViewOfFile
+  V -> V
+  aCdinput -> aCdinput
+  aCreateevent -> aCreateevent
+  aCreateeventErr -> aCreateeventErr
+  aDirectInputFai -> aDirectInputFai
+  aDirectdrawClip -> aDirectdrawClip
+  aDirectdrawCrea -> aDirectdrawCrea
+  aDirectdrawCrea_1 -> aDirectdrawCrea_1
+  aDirectdrawSetc -> aDirectdrawSetc
+  aDirectdrawSetc_0 -> aDirectdrawSetc_0
+  aDirectdrawSetd -> aDirectdrawSetd
+  aSetBufferSizeS -> aSetBufferSizeS
+  aSeteventnotifi -> aSeteventnotifi
+  c_dfDIKeyboard -> 00487AC0
+  dwCreationDisposition -> dwCreationDisposition
+  dwDesiredAccess -> dwDesiredAccess
+  dwFileOffsetLow -> dwFileOffsetLow
+  dwMoveMethod -> dwMoveMethod
+  dwNumberOfBytesToMap -> dwNumberOfBytesToMap
+  hWnd -> hWnd
+  lDistanceToMove -> lDistanceToMove
+  lpBuffer -> lpBuffer
+  lpCreationTime -> lpCreationTime
+  lpDD -> lpDD
+  lpFileName -> lpFileName
+  lstrcpyA -> lstrcpyA
+  lstrlenA -> lstrlenA
+  movsb -> movsb
+  movsd -> movsd
+  scasb -> scasb
+  stosb -> stosb
+  stosd -> stosd
