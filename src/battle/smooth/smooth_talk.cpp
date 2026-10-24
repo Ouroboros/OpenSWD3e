@@ -824,7 +824,7 @@ void TalkFrame::DrawWindowAdvance(TalkWindow& window, Surface& surface, u16* pix
     if (!opening && !window.name.empty() && window.page != TalkWindow::Closed)
     {
         const auto length = static_cast<int>(window.name.size());
-        // 0x00417DE0 is given 8 * length + 0x1C pixels and blends half as many pairs.
+        // 0x004187A0 is given 8 * length + 0x1C pixels and blends half as many pairs.
         const int pairs = (kPlateByteWidth * length + kPlateShadePad) >> 1;
 
         scene.Add(
@@ -939,7 +939,7 @@ void TalkFrame::DrawAdvance(Scene& scene)
         ReportActError(owner.errors, u8"Act Err(DlgMessage:EndBtn)", endButton);
     }
 
-    // The original reports the end button's role here too (0x0043012B..0x0043014B push the same globals).
+    // The original reports the end button's role here too (0x00435022..0x00435040 push the same globals).
     if (owner.acts.Run(talk.NextAct()) == 0)
     {
         ReportActError(owner.errors, u8"Act Err(DlgMessage:NextPage)", endButton);
