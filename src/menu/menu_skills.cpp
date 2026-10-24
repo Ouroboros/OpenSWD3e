@@ -1138,7 +1138,12 @@ void Menu::SkillsCancel()
     switch (page.stage)
     {
         case kSkillList:
-            if (static_cast<i16>(--this->code) <= 0)
+        {
+            // The code is a dword in the original, compared signed after the decrement.
+            const i32 code = static_cast<i32>(this->code) - 1;
+            this->code = static_cast<u16>(code);
+
+            if (code <= 0)
             {
                 owner.menuState = Game::NoMenu;
             }
@@ -1146,6 +1151,7 @@ void Menu::SkillsCancel()
             this->SetPage(this->code);
             this->SkillsLeave();
             return;
+        }
 
         case kChooseRole:
             page.stage = kSkillList;

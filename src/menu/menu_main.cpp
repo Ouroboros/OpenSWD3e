@@ -99,10 +99,12 @@ void Menu::MainFrame()
 void Menu::MainLeft()
 {
     Game& owner = this->game;
-    u16 page = static_cast<u16>(this->page - 1);
+    // The page is a dword in the original, compared signed after the decrement.
+    const i32 before = static_cast<i32>(this->page) - 1;
+    u16 page = static_cast<u16>(before);
     this->page = page;
 
-    if (this->page <= FirstRolePage - 1)
+    if (before <= FirstRolePage - 1)
     {
         page = FirstRolePage;
         this->page = FirstRolePage;
@@ -153,7 +155,11 @@ void Menu::MainSelect()
 // swd3e.exe 0x0044DF20: Escape on the main page: the menu closes
 void Menu::MainCancel()
 {
-    if (--this->code == 0)
+    // The code is a dword in the original, compared signed after the decrement.
+    const i32 code = static_cast<i32>(this->code) - 1;
+    this->code = static_cast<u16>(code);
+
+    if (code <= 0)
     {
         this->game.menuState = Game::NoMenu;
     }

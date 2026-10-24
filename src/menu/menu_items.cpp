@@ -402,6 +402,7 @@ void Menu::ItemsEnter()
     page.unk4FC3D0 = InventoryPage::Unk4FC3D0;
     page.unk4FC3DC = InventoryPage::Unk4FC3DC;
     page.glow = this->mode;
+    this->skills.skill = SkillScript{};
     this->scrollBar = MenuScrollBar{};
     this->townBar = MenuScrollBar{};
     this->savedInventory.reset();
