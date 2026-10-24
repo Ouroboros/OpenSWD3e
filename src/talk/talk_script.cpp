@@ -19,6 +19,7 @@ constexpr std::size_t kTextBytes = 0x200;
 constexpr int kExpandLimit = 0x1FE;     // the bytes a replacement may grow the text to
 constexpr std::size_t kItemDigits = 5;  // "%T" with this many digits or more fails
 constexpr int kSkippedCodeBytes = 4;    // an object name code that fails is passed over by this much
+constexpr int kItemCodeCounted = 3;     // "%T" and its dot, counted as used before the number is read
 constexpr std::size_t kNamedRoles = 3;  // the roles whose names ExpandText puts in
 constexpr std::size_t kNameParts = 3;   // surname, given name, nickname
 constexpr std::u8string_view kItemNameTitle = u8"物品名稱代換";  // 0x004B0E04
@@ -159,6 +160,8 @@ u32 Talk::ExpandText(std::string& text)
 
         if (ReadWord(text, at) == kItemName)
         {
+            // The original counts the code and its dot before reading the number (0x0040BBF8, 0x0040BC14).
+            consumed += kItemCodeCounted;
             std::string code = "%T";
             std::size_t digit = at + kCodeBytes;
 
@@ -194,14 +197,14 @@ u32 Talk::ExpandText(std::string& text)
                 {
                     ErrorBox(owner.errors, kItemNameTitle, u8"找不到物品 %d", id);
                     at += kSkippedCodeBytes;
-                    consumed += kSkippedCodeBytes;
+                    consumed += kSkippedCodeBytes - kItemCodeCounted;
                 }
             }
             else
             {
                 ErrorBox(owner.errors, kItemNameTitle, u8"錯誤的號碼字串\n%s", code + ".");
                 at += kSkippedCodeBytes;
-                consumed += kSkippedCodeBytes;
+                consumed += kSkippedCodeBytes - kItemCodeCounted;
             }
 
             continue;
