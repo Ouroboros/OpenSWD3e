@@ -592,8 +592,8 @@ public:
     u16 lastRoleHit = 0xFFFF;       // swd32 0x004A7620 the last role hit
     u16 lastEnemyHit = 0xFFFF;      // swd32 0x004A7622 the last enemy hit
     u16 lastRoleDefeated = 0xFFFF;  // 0x004BF1C8 the last role defeated by a hit
-    i32 enemySweeps = 0;            // swd32 0x0053BF84 1: an enemy's hit sweeps
-    i32 enemyHitsAll = 0;           // swd32 0x0053BFF4 1: an enemy's hit falls on the party at once
+    i32 enemySweeps = 0;            // 0x00577280 1: an enemy's hit sweeps (only written in swd3e)
+    i32 enemyHitsAll = 0;           // 0x005772F4 1: an enemy's hit falls on the party at once (only written in swd3e)
     i32 enemyHitAct = 0;            // swd32 0x0053BD40 the hit act of the acting enemy
     // 0x005135A4 (swd3e) per enemy: the hit act of its command (EnemyFrame); its spell runs it once to time the hits
     std::array<i32, Enemies> enemyHitActs = {};

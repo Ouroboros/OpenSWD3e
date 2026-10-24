@@ -962,8 +962,8 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
 
 // swd3e.exe 0x004665A0: the hits of the acting unit actingUnit once its spell took effect (SpellCast, not SpellOver);
 // 1 once they are over (the hit acts and, after a sweep, the slot totals cleared). The target is the attacker's
-// word 29A2. A defeated target (Damage 1) flashes the frame white and is recorded. See RoleHitFrame and
-// EnemyHitFrame.
+// word 29A2. The coin toss (UnkSpell400) runs YinYangAttack instead. A defeated target (Damage 1) flashes the frame
+// white and is recorded. See RoleHitFrame and EnemyHitFrame.
 int Game::HitFrame()
 {
     BattleState& battle = this->battleState;
@@ -973,12 +973,15 @@ int Game::HitFrame()
         return 0;
     }
 
-    if (battle.actingUnit >= BattleState::FirstRoleUnit)
+    const bool enemy = battle.actingUnit < BattleState::FirstRoleUnit;
+    const int unit = enemy ? battle.actingUnit : battle.actingUnit - BattleState::FirstRoleUnit;
+
+    if ((battle.spellStage & BattleState::UnkSpell400) != 0)
     {
-        return this->RoleHitFrame(battle.actingUnit - BattleState::FirstRoleUnit);
+        return this->YinYangAttack(unit) == 1 ? 1 : 0;
     }
 
-    return this->EnemyHitFrame(battle.actingUnit);
+    return enemy ? this->EnemyHitFrame(unit) : this->RoleHitFrame(unit);
 }
 
 // The white frame of a defeat in HitFrame (inline in the original): the frame filled with 0xFFFF, as many pixels as
@@ -1041,10 +1044,10 @@ void Game::DrainToSpirit(BattleRole& role, i32& damage)
     role.Damage(this->battleServices, 0, static_cast<i16>(damage), 0);
 }
 
-// A role attacking in HitFrame (inline in the original): with wholeSide its hit sweeps a side (hitsAtOnce 1: the
-// whole side at once, the hits taken by the enemies; otherwise one unit after another as the sweep reaches them,
-// until sweepTotal are hit), else one target is hit (hitsAtOnce 1: HitAllFrame on the target alone). unk53AE7C makes
-// the party the target side.
+// A role attacking in HitFrame (inline in the original): its act is its unk4FE5D4. With wholeSide its hit sweeps a
+// side (hitsAtOnce 1: the whole side at once, the hits taken by the enemies; otherwise one unit after another as the
+// sweep reaches them, until sweepTotal are hit), else one target is hit (hitsAtOnce 1: HitAllFrame on the target
+// alone). unk53AE7C makes the party the target side.
 int Game::RoleHitFrame(int role)
 {
     BattleState& battle = this->battleState;
@@ -1084,8 +1087,8 @@ int Game::RoleHitFrame(int role)
                                                      static_cast<i16>(battle.lastStaminaDamage[index])
                                                  ) == 1)
                     {
-                        ++battle.unk53BD88;
                         battle.flashing = 1;
+                        ++battle.unk53BD88;
                         battle.unk4A7626 = 0;
                         battle.unk502984[index] = static_cast<i32>(index);
                         this->FlashFrameWhite();
@@ -1156,8 +1159,8 @@ int Game::RoleHitFrame(int role)
             battle.slotTargets[at] = target;
         }
 
-        this->ClearHitDamage();
         battle.hitActs.fill(ActState{});
+        this->ClearHitDamage();
         return 1;
     }
 
@@ -1207,15 +1210,16 @@ int Game::RoleHitFrame(int role)
         this->FlashFrameWhite();
     }
 
+    this->ClearHitDamage();
     battle.slotDamage[0] = 0;
     battle.hitActs.fill(ActState{});
-    this->ClearHitDamage();
     return 1;
 }
 
 // The sweep of a role's hit in RoleHitFrame (inline in the original): over the enemies (a defeated one widens the
-// sweep at once, lowering sweepTotal) or the roles in battle (unk53AE7C) the sweep has reached, each hit once
-// (slotTargets) takes its slot totals; true once sweepTotal are hit.
+// sweep at once) or the roles in battle (unk53AE7C; not escorts, guests or the ghost; the sweep widens up to the
+// roles less the ghost) the sweep has reached, each hit once (slotTargets) takes its slot totals; true once sweepTotal
+// are hit.
 bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
 {
     BattleState& battle = this->battleState;
@@ -1260,11 +1264,6 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
                 if (battle.sweptUnits < battle.enemyCount)
                 {
                     ++battle.sweptUnits;
-
-                    if (battle.sweepTotal > 1)
-                    {
-                        --battle.sweepTotal;
-                    }
                 }
 
                 battle.pushFrames = 0;
@@ -1285,10 +1284,10 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
 
     for (u32 slot = 0; slot < battle.sweptUnits; ++slot)
     {
-        this->StepSweep(battle.roleCount);
+        this->StepSweep(battle.roleCount - battle.unk5770D4);
         BattleRole& role = this->battleRoles[slot];
 
-        if (role.autoControl != 1 && role.guestControl != 1 &&
+        if (role.AutoControl() != 1 && role.GuestControl() != 1 && role.Ghost() != 1 &&
             this->HitTargetFrame(role, attacker, act, static_cast<int>(slot)) == 1 && battle.slotTargets[slot] == -1 &&
             hitOne(role, slot, false, target))
         {
@@ -1299,11 +1298,12 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
     return false;
 }
 
-// An enemy attacking in HitFrame (inline in the original): its act is enemyHitAct. Without enemySweeps one target is
-// hit: a role (enemyHitsAll 1: HitAllFrame on it alone) steps its orb counters by the enemy's command, takes the drain
-// and its DrainShare as spirit, a held aimed role ends the menu; an enemy (unk53AE80) takes the hit. With enemySweeps
-// the hit sweeps: enemyHitsAll 1 all roles at once, otherwise the enemies (unk53AE80) or the roles the sweep has
-// reached, until sweepTargets are hit (counting the defeats in sweepDefeated).
+// An enemy attacking in HitFrame (inline in the original): its act is its enemyHitActs. Without wholeSide one target
+// is hit: a role (hitsAtOnce 1: HitAllFrame on it alone) steps its orb counters by the enemy's command, takes the drain
+// before the damage and its DrainShare as spirit, a held aimed role ends the menu; an enemy (unk53AE80) takes the hit.
+// With wholeSide the hit sweeps: hitsAtOnce 1 all roles at once, otherwise the enemies (unk53AE80) or the roles the
+// sweep has reached, until sweepTargets are hit (counting the defeats in sweepDefeated); the drains of the roles are
+// summed and given to the enemy at the end (ApplyDrainSums).
 int Game::EnemyHitFrame(int enemy)
 {
     BattleState& battle = this->battleState;
@@ -1311,11 +1311,11 @@ int Game::EnemyHitFrame(int enemy)
     CounterList& proficiency = this->party.fame.lists[Fame::ProficiencyList];
     const auto target = static_cast<i16>(attacker.GetWord29A2());
     const auto at = static_cast<std::size_t>(target);
-    const u32 act = static_cast<u32>(battle.enemyHitAct);
+    const u32 act = static_cast<u32>(battle.enemyHitActs[static_cast<std::size_t>(enemy)]);
 
-    if (battle.enemySweeps == 0)
+    if (battle.wholeSide == 0)
     {
-        if (battle.enemyHitsAll == 1)
+        if (battle.hitsAtOnce == 1)
         {
             BattleRole& role = this->battleRoles[at];
 
@@ -1329,12 +1329,14 @@ int Game::EnemyHitFrame(int enemy)
             battle.unk4FDF7C = attacker.GetWord29A2();
             battle.lastRoleHit = static_cast<u16>(target);
             battle.hitLanded = 1;
+            this->ApplyDrain(battle.hitDamage, attacker, role);
 
-            if (battle.unk53AF68 == 0 && role.Damage(this->battleServices, battle.hitDamage, 0, 0) == 1)
+            if (battle.unk53AF68 == 0 &&
+                role.Damage(this->battleServices, battle.hitDamage, battle.spiritDamage, battle.staminaDamage) == 1)
             {
+                battle.flashing = 1;
                 battle.hitDamage = -1;
                 battle.lastRoleDefeated = static_cast<u16>(target);
-                battle.flashing = 1;
                 this->FlashFrameWhite();
             }
 
@@ -1343,8 +1345,10 @@ int Game::EnemyHitFrame(int enemy)
                 battle.result = 0;
             }
 
-            this->ClearHitDamage();
+            battle.hitDamage = 0;
             battle.hitActs.fill(ActState{});
+            battle.spiritDamage = 0;
+            battle.staminaDamage = 0;
             return 1;
         }
 
@@ -1384,6 +1388,7 @@ int Game::EnemyHitFrame(int enemy)
         battle.unk4FDF7C = attacker.GetWord29A2();
         battle.lastRoleHit = static_cast<u16>(target);
         battle.hitLanded = 1;
+        this->ApplyDrain(battle.slotDamage[0], attacker, role);
 
         if (battle.unk53AF68 == 0 &&
             role.Damage(this->battleServices, battle.slotDamage[0], battle.spiritDamage, battle.staminaDamage) == 1)
@@ -1393,15 +1398,15 @@ int Game::EnemyHitFrame(int enemy)
             this->FlashFrameWhite();
         }
 
-        this->ApplyDrain(battle.hitDamage, attacker, role);
-
         if (role.IsHeld() == 1 && target == battle.currentUnit - BattleState::FirstRoleUnit)
         {
             battle.result = 0;
         }
 
         this->DrainToSpirit(role, battle.slotDamage[0]);
-        this->ClearHitDamage();
+        battle.hitDamage = 0;
+        battle.staminaDamage = 0;
+        battle.spiritDamage = 0;
         battle.slotDamage[0] = 0;
         battle.hitActs.fill(ActState{});
         return 1;
@@ -1412,9 +1417,7 @@ int Game::EnemyHitFrame(int enemy)
         return 0;
     }
 
-    battle.unk53BD80 = 0;
-
-    if (battle.enemyHitsAll != 1)
+    if (battle.hitsAtOnce != 1)
     {
         battle.sweptUnits = 1;
     }
@@ -1422,6 +1425,23 @@ int Game::EnemyHitFrame(int enemy)
     battle.hitActs.fill(ActState{});
     battle.slotDamage.fill(0);
     return 1;
+}
+
+// The drains summed over a sweep of an enemy given to it (inline in EnemyHitFrame), the sums and the sweep count
+// cleared.
+void Game::EndEnemyDrains(BattleEnemy& attacker)
+{
+    BattleState& battle = this->battleState;
+
+    if (battle.deferDrains == 1)
+    {
+        this->ApplyDrainSums(attacker);
+    }
+
+    battle.drainedLife = 0;
+    battle.drainedSpirit = 0;
+    battle.drainedStamina = 0;
+    battle.deferDrains = 0;
 }
 
 // The sweep of an enemy's hit in EnemyHitFrame (inline in the original); see there. True once sweepTargets are hit.
@@ -1432,10 +1452,32 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
 
     auto standing = [](const BattleRole& role)
     {
-        return !role.IsDefeated() && role.guestControl != 1 && role.autoControl != 1;
+        return !role.IsDefeated() && role.GuestControl() != 1 && role.Ghost() != 1;
     };
 
-    if (battle.enemyHitsAll == 1)
+    // A role of the sweep hit (inline in the original): its orb counters, the drain (summed), the damage and the spirit
+    // it drains.
+    auto hitRole = [this, &battle, &attacker, &proficiency](BattleRole& role, std::size_t slot, i32& defeats)
+    {
+        role.StepOrbCounters(proficiency, attacker.command);
+        battle.slotTargets[slot] = static_cast<i32>(slot);
+        battle.hitLanded = 1;
+        battle.sweepHit = 1;
+        battle.deferDrains = 1;
+        this->ApplyDrain(battle.slotDamage[slot], attacker, role);
+
+        if (battle.unk53AF68 == 0 &&
+            role.Damage(this->battleServices, battle.slotDamage[slot], battle.spiritDamage, battle.staminaDamage) == 1)
+        {
+            ++defeats;
+            battle.flashing = 1;
+            this->FlashFrameWhite();
+        }
+
+        this->DrainToSpirit(role, battle.slotDamage[slot]);
+    };
+
+    if (battle.hitsAtOnce == 1)
     {
         if (this->HitAllFrame(this->battleRoles[static_cast<std::size_t>(target)], attacker, act, 0, 1) != 1)
         {
@@ -1458,44 +1500,37 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
                 battle.hitDamage = battle.slotDamage[slot];
             }
 
-            this->ApplyDrain(battle.hitDamage, attacker, role);
-            battle.slotTargets[slot] = static_cast<i32>(slot);
+            battle.deferDrains = 1;
+            this->ApplyDrain(battle.slotDamage[slot], attacker, role);
             battle.hitLanded = 1;
             battle.sweepHit = 1;
+            battle.slotTargets[slot] = static_cast<i32>(slot);
 
-            if (battle.unk53AF68 == 0 && role.Damage(this->battleServices, battle.slotDamage[slot], 0, 0) == 1)
+            if (battle.unk53AF68 == 0 &&
+                role.Damage(this->battleServices, battle.slotDamage[slot], battle.spiritDamage, battle.staminaDamage) ==
+                    1)
             {
-                ++battle.unk53BD88;
                 battle.flashing = 1;
+                ++battle.unk53BD88;
                 this->FlashFrameWhite();
             }
 
             this->DrainToSpirit(role, battle.slotDamage[slot]);
-            this->ClearHitDamage();
+            battle.hitDamage = 0;
+            battle.spiritDamage = 0;
+            battle.staminaDamage = 0;
             battle.slotDamage[slot] = 0;
 
             if (++battle.unk53BD80 == battle.sweepTargets)
             {
+                this->EndEnemyDrains(attacker);
+                battle.unk53BD80 = 0;
                 return true;
             }
         }
 
         return false;
     }
-
-    auto counted = [this, &battle](BattleUnit& unit, std::size_t slot)
-    {
-        battle.slotTargets[slot] = static_cast<i32>(slot);
-        battle.hitLanded = 1;
-        battle.sweepHit = 1;
-
-        if (battle.unk53AF68 == 0 && unit.Damage(this->battleServices, battle.slotDamage[slot], 0, 0) == 1)
-        {
-            ++battle.sweepDefeated;
-            battle.flashing = 1;
-            this->FlashFrameWhite();
-        }
-    };
 
     if (battle.unk53AE80 != 0)
     {
@@ -1510,12 +1545,23 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
                 continue;
             }
 
-            counted(enemy, slot);
+            battle.slotTargets[slot] = static_cast<i32>(slot);
+            battle.hitLanded = 1;
+            battle.sweepHit = 1;
+
+            if (battle.unk53AF68 == 0 && enemy.Damage(this->battleServices, battle.slotDamage[slot], 0, 0) == 1)
+            {
+                battle.flashing = 1;
+                ++battle.sweepDefeated;
+                this->FlashFrameWhite();
+            }
+
             this->ClearHitDamage();
             battle.slotDamage[slot] = 0;
 
             if (++battle.unk53BD80 == battle.sweepTargets)
             {
+                battle.unk53BD80 = 0;
                 return true;
             }
         }
@@ -1534,14 +1580,14 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
             continue;
         }
 
-        role.StepOrbCounters(proficiency, attacker.command);
-        counted(role, slot);
-        this->DrainToSpirit(role, battle.slotDamage[slot]);
-        this->ClearHitDamage();
+        hitRole(role, slot, battle.sweepDefeated);
         battle.slotDamage[slot] = 0;
 
-        if (++battle.unk53BD80 == battle.sweepTargets)
+        if (++battle.unk53BD80 >= battle.sweepTargets)
         {
+            this->EndEnemyDrains(attacker);
+            this->ClearHitDamage();
+            battle.unk53BD80 = 0;
             return true;
         }
     }

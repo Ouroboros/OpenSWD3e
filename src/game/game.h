@@ -494,6 +494,7 @@ private:
     bool SweepFromRole(BattleRole& attacker, i16 target, u32 act);
     int EnemyHitFrame(int enemy);
     bool SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act);
+    void EndEnemyDrains(BattleEnemy& attacker);
     int EnemyActionFrame(int enemy, int target);
     int EnemyAttackAction(int enemy, BattleEnemy& unit, int target);
     int EnemySpellAction(int enemy, BattleEnemy& unit, int target);
