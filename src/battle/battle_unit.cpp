@@ -1277,7 +1277,9 @@ int BattleUnit::SetB04(int value)
 namespace
 {
 
-constexpr int kAnnounceFlags = BattleMessage::BlackBar | BattleMessage::Centered;
+constexpr int kAnnounceFlags =
+    BattleMessage::BlackBar | BattleMessage::Stacked | BattleMessage::Centered;  // 0x41000002
+constexpr std::u8string_view kResistAllEnd = u8"$1%s$0抵抗所有攻擊解除";         // 0x004BFC7C
 constexpr u32 kAilmentRoll = 10;  // an ailment lands on a roll of 1..kAilmentRoll up to the ailment chance
 
 // The damage of a hit (HitDamage).
@@ -1603,7 +1605,7 @@ void BattleUnit::DrawGuardText(BattleServices& services)
 
 // swd3e.exe 0x00491A00: splits `amount` into the four digits of the current target slot (a set bit 15 negates it).
 // While the barrier is up against a damage number, a hit only counts the barrier down and ends it with
-// "抵抗所有攻擊解除".
+// "$1%s$0抵抗所有攻擊解除" (stacked).
 void BattleUnit::SetDamageDigits(BattleServices& services, int amount)
 {
     if ((this->marks & BattleUnit::UnkMark8000) != 0)
@@ -1621,7 +1623,7 @@ void BattleUnit::SetDamageDigits(BattleServices& services, int amount)
             return;
         }
 
-        this->Announce(services, BattleMessages::ResistAllEnd, kAnnounceFlags);
+        this->Announce(services, kResistAllEnd, kAnnounceFlags);
         this->status &= ~BattleUnit::ResistAll;
         return;
     }

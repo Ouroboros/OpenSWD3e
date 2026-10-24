@@ -262,7 +262,7 @@ i16 BattleState::StartSlideBack(i16 x)
 }
 
 // swd3e.exe 0x004682B0: one step of the slide (only while slideEnabled, which nothing sets): mode 1 moves the field
-// (unk4FDF78) an eighth of the way from `unit`'s x to `x` (a pixel when less), mode 2 a quarter of the way from the
+// (fieldX) an eighth of the way from `unit`'s x to `x` (a pixel when less), mode 2 a quarter of the way from the
 // field back to the middle, ending there (mode 0); every unit moves with the step (shake). 0 without a slide.
 int Game::SlideUnits(const BattleUnit& unit, i16 x)
 {
@@ -288,28 +288,28 @@ int Game::SlideUnits(const BattleUnit& unit, i16 x)
             battle.shake = step;
         }
 
-        battle.unk4FDF78 = static_cast<u16>(battle.unk4FDF78 + step);
+        battle.fieldX = static_cast<u16>(battle.fieldX + step);
     }
 
     if (battle.slideMode == BattleState::SlideBack)
     {
-        step = (Display::Width / 2 - static_cast<i16>(battle.unk4FDF78)) / kSlideBackShare;
+        step = (Display::Width / 2 - static_cast<i16>(battle.fieldX)) / kSlideBackShare;
         battle.shake = step;
 
         if (step == 0)
         {
-            if (static_cast<int>(battle.unk4FDF78) == x)
+            if (static_cast<int>(battle.fieldX) == x)
             {
                 battle.slideMode = 0;
                 battle.shake = 0;
                 return 1;
             }
 
-            step = static_cast<i16>(battle.unk4FDF78) <= x ? 1 : -1;
+            step = static_cast<i16>(battle.fieldX) <= x ? 1 : -1;
             battle.shake = step;
         }
 
-        battle.unk4FDF78 = static_cast<u16>(battle.unk4FDF78 + step);
+        battle.fieldX = static_cast<u16>(battle.fieldX + step);
     }
 
     if (step != 0)
@@ -329,7 +329,7 @@ int Game::SlideUnits(const BattleUnit& unit, i16 x)
 }
 
 // swd3e.exe 0x00466310: the push of a hit across the field, every unit moved by `shake` (the background too): while
-// the push (hitPush) lasts it halves each call, the half added to the pushed distance (unk4FDF78) and moved away
+// the push (hitPush) lasts it halves each call, the half added to the pushed distance (fieldX) and moved away
 // from the side (left unless mirrored); 0 while the units move. Once it is spent and the hit act is past picture
 // slideBackPicture, the units slide back by up to kSlideStep a call and the field darkens by tint steps; 1 then
 // (`restart` 1 sets the push again).
@@ -342,7 +342,7 @@ int Game::PushUnits(u16 picture, int restart)
     {
         battle.pushFrames = 0;
         const auto half = static_cast<i16>(battle.hitPush / 2);
-        battle.unk4FDF78 = static_cast<u16>(battle.unk4FDF78 + half);
+        battle.fieldX = static_cast<u16>(battle.fieldX + half);
         battle.hitPush = half;
         battle.shake = battle.mirrored != 0 ? half : -half;
     }
@@ -355,12 +355,12 @@ int Game::PushUnits(u16 picture, int restart)
 
     if (static_cast<int>(picture) > battle.slideBackPicture)
     {
-        const auto pushed = static_cast<i16>(battle.unk4FDF78);
+        const auto pushed = static_cast<i16>(battle.fieldX);
 
         if (pushed > 0)
         {
             const i16 step = pushed < kSlideStep ? pushed : kSlideStep;
-            battle.unk4FDF78 = static_cast<u16>(pushed - step);
+            battle.fieldX = static_cast<u16>(pushed - step);
             battle.shake = battle.mirrored != 0 ? -step : step;
             this->ShiftUnits(battle.shake);
         }

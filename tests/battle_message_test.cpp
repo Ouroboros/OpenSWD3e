@@ -70,18 +70,23 @@ struct Messages
     swd3e::BattleMessages messages;
 };
 
-// Where swd32.exe keeps the texts.
-constexpr std::array<std::pair<swd3e::u32, std::u8string_view>, 6> kTexts = {{
-    {0x004A7E20, swd3e::BattleMessages::ResistAllEnd},
-    {0x004A80E4, swd3e::BattleMessages::DefenseDownEnd},
-    {0x004A7F3C, swd3e::BattleMessages::ResistPhysicalEnd},
-    {0x004A7B3C, swd3e::BattleMessages::CraftSuccess},
-    {0x004A7AD4, swd3e::BattleMessages::MasteryLine},
-    {0x004A7EB4, swd3e::BattleMessages::SpeedDown},
+// Where swd3e.exe keeps the texts.
+constexpr std::array<std::pair<swd3e::u32, std::u8string_view>, 11> kTexts = {{
+    {0x004BF890, swd3e::BattleMessages::LootTitle},
+    {0x004BF898, swd3e::BattleMessages::PartyWiped},
+    {0x004BF8A4, swd3e::BattleMessages::DefeatTitle},
+    {0x004BF8B0, swd3e::BattleMessages::NothingGained},
+    {0x004BF8C0, swd3e::BattleMessages::CraftFailed},
+    {0x004BF8CC, swd3e::BattleMessages::CraftGot},
+    {0x004BF8D8, swd3e::BattleMessages::CraftSuccess},
+    {0x004BF870, swd3e::BattleMessages::MasteryLine},
+    {0x004BF858, swd3e::BattleMessages::EvolvedLine},
+    {0x004BEB60, swd3e::BattleMessages::TreasureWord},
+    {0x004BF850, swd3e::BattleMessages::EvolveWord},
 }};
 
-constexpr swd3e::u32 kLootLineAt = 0x004A7AE8;
-constexpr swd3e::u32 kElementTable = 0x004A79A8;  // the pointers to the element names
+constexpr swd3e::u32 kLootLineAt = 0x004BF884;
+constexpr swd3e::u32 kElementTable = 0x004BF61C;  // the pointers to the element names
 
 constexpr int kFirstX = 1;
 constexpr int kFirstY = 2;
@@ -98,13 +103,13 @@ constexpr int kGrowDivisor = 3;
 
 }  // namespace
 
-TEST_CASE("battle message: texts match swd32.exe")
+TEST_CASE("battle message: texts match swd3e.exe")
 {
-    const std::vector<u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

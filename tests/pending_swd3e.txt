@@ -5,15 +5,8 @@ act: matches the golden results of the legacy archives and ActRun
 # battle_hud_test.cpp
 battle hud: matches the golden results of the legacy helpers
 # battle_items_test.cpp
-party: the object kinds of the equipment slots match swd32.exe
 # battle_message_test.cpp
-battle message: texts match swd32.exe
 # battle_unit_test.cpp
-battle role: the swarm offsets match swd32.exe
-battle state: the initial turn and push values match swd32.exe
-battle state: the quake steps match swd32.exe
-battle unit: the damage digit hops match swd32.exe
-battle role: the cost refusals match swd32.exe
 # cheat_dialog_test.cpp
 # config_test.cpp
 # database_test.cpp

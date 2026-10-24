@@ -437,15 +437,15 @@ TEST_CASE("battle unit: role and enemy blocks, reset")
     CHECK(enemy.data != nullptr);
 }
 
-TEST_CASE("battle role: the swarm offsets match swd32.exe")
+TEST_CASE("battle role: the swarm offsets match swd3e.exe")
 {
-    constexpr swd3e::u32 kSwarmOffsetXAt = 0x004A7C04;
-    constexpr swd3e::u32 kSwarmOffsetYAt = 0x004A7C14;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kSwarmOffsetXAt = 0x004BF9B0;
+    constexpr swd3e::u32 kSwarmOffsetYAt = 0x004BF9C0;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
@@ -839,47 +839,51 @@ TEST_CASE("battle state: with no unit left the draw order reads the dword after 
     CHECK_EQ(state.drawOrder[0], static_cast<swd3e::i32>(kActingRole));
 }
 
-TEST_CASE("battle state: the initial turn and push values match swd32.exe")
+TEST_CASE("battle state: the initial turn and push values match swd3e.exe")
 {
-    constexpr swd3e::u32 kTurnEnemyAt = 0x004A754C;
-    constexpr swd3e::u32 kAimedEnemyAt = 0x004A7626;
-    constexpr swd3e::u32 kLastHitsAt = 0x004A7620;
-    constexpr swd3e::u32 kAutoAimAt = 0x004A7554;
-    constexpr swd3e::u32 kOpeningPlacesAt = 0x004A7580;
-    constexpr swd3e::u32 kPanelsArgumentAt = 0x004A7628;
-    constexpr swd3e::u32 kEndFlagAt = 0x004A763C;
-    constexpr swd3e::u32 kPushAt = 0x004A7638;
-    constexpr swd3e::u32 kTurnPointerAt = 0x004A7640;
-    constexpr swd3e::u32 kTurnStepAt = 0x004A7550;
-    constexpr swd3e::u32 kListMarksAt = 0x004A7558;
-    constexpr swd3e::u32 kListRoleAt = 0x004A7570;
-    constexpr swd3e::u32 kRoleCycleAt = 0x004A796C;
-    constexpr swd3e::u32 kAutoEnemyAt = 0x004A7564;
-    constexpr swd3e::u32 kMenuCommandAt = 0x004A7548;
-    constexpr swd3e::u32 kMasteryRoleAt = 0x004A7646;
-    constexpr swd3e::u32 kListMarkAt = 0x004A7560;
-    constexpr swd3e::u32 kTalkRolesAt = 0x004A762C;
-    constexpr swd3e::u32 kFrameMillisecondsAt = 0x004A75E8;
-    constexpr swd3e::u32 kHoverTabsAt = 0x004A7578;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kMenuRowsAt = 0x004BF0D8;  // menuCommand .. hoverRoleTab, one dword each
+    constexpr swd3e::u32 kOpeningPlacesAt = 0x004BF114;
+    constexpr swd3e::u32 kPartyRolesAt = 0x004BF16C;
+    constexpr swd3e::u32 kFrameMillisecondsAt = 0x004BF18C;
+    constexpr swd3e::u32 kSweepAt = 0x004BF1A0;  // sweptUnits (word), flashLevel, panelGlow
+    constexpr swd3e::u32 kLastHitsAt = 0x004BF1C4;
+    constexpr swd3e::u32 kTalkRolesAt = 0x004BF1D0;
+    constexpr swd3e::u32 kPushAt = 0x004BF1DC;  // fieldX, hitPush
+    constexpr swd3e::u32 kSlideXAt = 0x004BF1E0;
+    constexpr swd3e::u32 kEndFlagAt = 0x004BF1E4;
+    constexpr swd3e::u32 kRoleCycleAt = 0x004BF578;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
     const swd3e::BattleState state;
-    CHECK(swd3etest::SameTable(exe, kTurnEnemyAt, std::array<swd3e::i32, 1>{state.aimTarget}));
-    CHECK(swd3etest::SameTable(exe, kAimedEnemyAt, std::array<swd3e::u16, 1>{state.unk4A7626}));
     CHECK(
         swd3etest::SameTable(
             exe,
-            kLastHitsAt,
-            std::array<swd3e::u16, 3>{state.lastRoleHit, state.lastEnemyHit, state.lastRoleDefeated}
+            kMenuRowsAt,
+            std::array<swd3e::i32, 15>{
+                state.menuCommand,
+                state.aimTarget,
+                state.orderStep,
+                state.aiTarget,
+                state.pageListRow,
+                state.roleListRow,
+                state.specialRow,
+                state.autoTarget,
+                state.ghostOrderRow,
+                state.controlRows,
+                state.controlCursor,
+                state.listRole,
+                state.darkenedAt,
+                state.hoverPageTab,
+                state.hoverRoleTab
+            }
         )
     );
-    CHECK(swd3etest::SameTable(exe, kAutoAimAt, std::array<swd3e::i32, 1>{state.aiTarget}));
     CHECK(
         swd3etest::SameTable(
             exe,
@@ -894,33 +898,63 @@ TEST_CASE("battle state: the initial turn and push values match swd32.exe")
             }
         )
     );
-    CHECK(swd3etest::SameTable(exe, kPanelsArgumentAt, std::array<swd3e::u16, 1>{state.unk4A7628}));
-    CHECK(swd3etest::SameTable(exe, kEndFlagAt, std::array<swd3e::i32, 1>{state.unk4A763C}));
-    CHECK(swd3etest::SameTable(exe, kPushAt, std::array<swd3e::i16, 1>{state.hitPush}));
-    CHECK(swd3etest::SameTable(exe, kTurnPointerAt, std::array<swd3e::i32, 1>{state.turnPointer}));
-    CHECK(swd3etest::SameTable(exe, kTurnStepAt, std::array<swd3e::i32, 1>{state.orderStep}));
-    CHECK(swd3etest::SameTable(exe, kListMarksAt, std::array<swd3e::i32, 2>{state.pageListRow, state.roleListRow}));
-    CHECK(swd3etest::SameTable(exe, kListRoleAt, std::array<swd3e::i32, 1>{state.listRole}));
-    CHECK(swd3etest::SameTable(exe, kRoleCycleAt, swd3e::BattleState::InitialRoleCycle));
-    CHECK(swd3etest::SameTable(exe, kAutoEnemyAt, std::array<swd3e::i32, 1>{state.autoTarget}));
-    CHECK(swd3etest::SameTable(exe, kMenuCommandAt, std::array<swd3e::i32, 1>{state.menuCommand}));
-    CHECK(swd3etest::SameTable(exe, kMasteryRoleAt, std::array<swd3e::u8, 1>{state.levelUpRole}));
+    CHECK(swd3etest::SameTable(exe, kPartyRolesAt, state.partyRoles));
+    CHECK(swd3etest::SameTable(exe, kFrameMillisecondsAt, std::array<swd3e::i32, 1>{state.frameMilliseconds}));
+    CHECK(swd3etest::SameTable(exe, kSweepAt, std::array<swd3e::u16, 1>{state.sweptUnits}));
     CHECK(
         swd3etest::SameTable(
             exe,
-            kListMarkAt,
-            std::array<swd3e::i32, 5>{
-                state.specialRow,
-                state.autoTarget,
-                state.controlRows,
-                state.controlCursor,
-                state.listRole
+            kSweepAt + sizeof(swd3e::u16),
+            std::array<swd3e::u8, 2>{static_cast<swd3e::u8>(state.flashLevel), state.panelGlow}
+        )
+    );
+    CHECK(
+        swd3etest::SameTable(
+            exe,
+            kLastHitsAt,
+            std::array<swd3e::u16, 6>{
+                state.lastRoleHit,
+                state.lastEnemyHit,
+                state.lastRoleDefeated,
+                state.unk4A7626,
+                state.unk4A7628,
+                state.timingWindow
             }
         )
     );
-    CHECK(swd3etest::SameTable(exe, kTalkRolesAt, std::array<swd3e::u16, 2>{state.controlledEnemy, state.talkRole}));
-    CHECK(swd3etest::SameTable(exe, kFrameMillisecondsAt, std::array<swd3e::i32, 1>{state.frameMilliseconds}));
-    CHECK(swd3etest::SameTable(exe, kHoverTabsAt, std::array<swd3e::i32, 2>{state.hoverPageTab, state.hoverRoleTab}));
+    CHECK(
+        swd3etest::SameTable(
+            exe,
+            kTalkRolesAt,
+            std::array<swd3e::i16, 5>{
+                static_cast<swd3e::i16>(state.controlledEnemy),
+                static_cast<swd3e::i16>(state.talkRole),
+                state.darkenUnit,
+                state.darkCopyTint[0],
+                state.darkCopyTint[1]
+            }
+        )
+    );
+    CHECK(
+        swd3etest::SameTable(
+            exe,
+            kPushAt,
+            std::array<swd3e::u16, 2>{state.fieldX, static_cast<swd3e::u16>(state.hitPush)}
+        )
+    );
+    CHECK(swd3etest::SameTable(exe, kSlideXAt, std::array<swd3e::i32, 1>{state.slideX}));
+    CHECK(swd3etest::SameTable(exe, kEndFlagAt, std::array<swd3e::i32, 2>{state.unk4A763C, state.turnPointer}));
+    CHECK(
+        swd3etest::SameTable(exe, kEndFlagAt + 2 * sizeof(swd3e::i32), std::array<swd3e::u16, 1>{state.anyStateRole})
+    );
+    CHECK(
+        swd3etest::SameTable(
+            exe,
+            kEndFlagAt + 2 * sizeof(swd3e::i32) + sizeof(swd3e::u16),
+            std::array<swd3e::u8, 1>{state.levelUpRole}
+        )
+    );
+    CHECK(swd3etest::SameTable(exe, kRoleCycleAt, swd3e::BattleState::InitialRoleCycle));
 }
 
 TEST_CASE("battle unit: element orbs gain proficiency from hits of an element")
@@ -984,14 +1018,14 @@ TEST_CASE("battle role: the share of a spirit drain")
     CHECK_EQ(amount, kDrained * (kProficiency / 2) / kPercent + 1);
 }
 
-TEST_CASE("battle state: the quake steps match swd32.exe")
+TEST_CASE("battle state: the quake steps match swd3e.exe")
 {
-    constexpr swd3e::u32 kQuakeStepsAt = 0x004A75EC;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kQuakeStepsAt = 0x004BF190;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
@@ -1078,14 +1112,14 @@ TEST_CASE("battle unit: a damage number hops, rises and fades")
     CHECK_EQ(unit.damageDigits[1][0], kExtraDigit);
 }
 
-TEST_CASE("battle unit: the damage digit hops match swd32.exe")
+TEST_CASE("battle unit: the damage digit hops match swd3e.exe")
 {
-    constexpr swd3e::u32 kDigitHopsAt = 0x004A7D8C;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kDigitHopsAt = 0x004BFB40;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
@@ -1468,16 +1502,16 @@ TEST_CASE("battle role: choosing a skill and paying for it")
     CHECK(role.selectedItem == items.get());
 }
 
-TEST_CASE("battle role: the cost refusals match swd32.exe")
+TEST_CASE("battle role: the cost refusals match swd3e.exe")
 {
-    constexpr swd3e::u32 kNotEnoughItemsAt = 0x004A7CD0;
-    constexpr swd3e::u32 kNotEnoughSpiritAt = 0x004A7CC0;
-    constexpr swd3e::u32 kNotEnoughStaminaAt = 0x004A7CB0;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kNotEnoughItemsAt = 0x004BFA90;
+    constexpr swd3e::u32 kNotEnoughSpiritAt = 0x004BFA80;
+    constexpr swd3e::u32 kNotEnoughStaminaAt = 0x004BFA70;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

@@ -99,8 +99,7 @@ static_assert(sizeof(RoleName) == 0x20);
 class Party
 {
 public:
-    // swd32.exe 0x0049E344 (unmatched in swd3e): the object kind of each equipment slot (the kinds match in all of
-    // their bits).
+    // 0x004AF920: the object kind of each equipment slot (the kinds match in all of their bits).
     static constexpr std::array<u32, 11> SlotKinds =
         {0x100, 0x10000200, 0x40000200, 0x20000200, 0x80000200, 0x400, 0x400, 0x40, 0x40, 0x800, 0x800};
     static constexpr int Roles = 4;

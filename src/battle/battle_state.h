@@ -16,6 +16,7 @@
 #include "party/party.h"
 #include "pic/picture.h"
 #include "pic/projector.h"
+#include "platform/display.h"
 #include "platform/surface.h"
 #include "res/act_state.h"
 
@@ -440,7 +441,9 @@ public:
     i32 drainedStamina = 0;
     i32 deferDrains = 0;
     i16 spiritDamage = 0;  // 0x005761CE
-    u16 unk4FDF78 = 0;
+    // 0x004BF1DC (swd3e) the x of the middle of the field as it is pushed or slid (PushUnits, SlideUnits); the push
+    // hitPush in the word after it
+    u16 fieldX = Display::Width / 2;
     i16 staminaDamage = 0;     // 0x0050CE68
     i32 lastDamage = 0;        // 0x00575F34 the damage of the last hit with the proficiency bonus
     i16 proficiencyBonus = 0;  // 0x005373B4 the weapon proficiency step of the last strike
@@ -489,7 +492,7 @@ public:
     i32 unk53AE80 = 0;
     i32 orderSorted = 0;  // 0x00577344 set once the order is sorted around the acting unit
     // The push of a hit (Game::PushUnits).
-    i16 hitPush = 0x1A4;       // swd32 0x004A7638 the push, halved each frame
+    i16 hitPush = 0x1A4;       // 0x004BF1DE the push, halved each frame
     u16 pushFrames = 0;        // 0x005770CC frames since the push was halved
     i16 slideBackPicture = 0;  // 0x00575F22 the hit act picture after which the units slide back
     i32 quakeStepFrames = 0;   // 0x00577038 frames of a quake step

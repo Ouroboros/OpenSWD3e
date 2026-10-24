@@ -173,14 +173,14 @@ TEST_CASE("battle items: counts of the inventory and the equipment, the list lim
     CHECK_EQ(swd3e::SetGaugeFull(battle, 0), kGaugePerSpeed * kSpeeds);
 }
 
-TEST_CASE("party: the object kinds of the equipment slots match swd32.exe")
+TEST_CASE("party: the object kinds of the equipment slots match swd3e.exe")
 {
-    constexpr swd3e::u32 kSlotKindsAt = 0x0049E344;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kSlotKindsAt = 0x004AF920;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
