@@ -84,7 +84,8 @@ constexpr i32 kTitleActions = 5;  // the title of page p is action p + kTitleAct
 constexpr i32 kTitleArrowDirection = ActState::Left;
 // The title's offsets by page 0xB..0x10 (a local table of 0x0043F3B0; the other entries are never read).
 constexpr std::array<int, Menu::Pages> kTitleOffsets = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3, -2, 2, 7, 0xB, 0};
-// 0x004AAC88: the role panel's mode (DrawRoleTabs) by page; the items 1, the equipment 2, the ghost page 3
+// 0x004AAC88 by page: the role panel's mode (DrawRoleTabs); the items 1, the equipment 2, the ghost page 3. Only
+// pages 0xB..0x10 read it (exe bytes 1, 2, 1, 1, 3, 1); the dwords before them are the end of a string.
 constexpr std::array<int, Menu::Pages> kPanelModes = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 3, 1, 0};
 
 // The role panel (0x0043F4A0).
@@ -345,8 +346,8 @@ void Menu::Open(int menuMode, u16 menuCode)
     this->roleTab = Menu::NoTab;
     this->page = static_cast<u16>((menuMode - Menu::FirstPageMode) / Menu::PageModeStep + Menu::FirstRolePage);
     this->mode = static_cast<u16>(menuMode);
-    this->unk4FC200 = static_cast<u16>(menuMode);
-    this->unk4FBAB8 = static_cast<u16>(menuMode);
+    this->lastMode = static_cast<u16>(menuMode);
+    this->openedMode = static_cast<u16>(menuMode);
     this->SetPage(menuCode);
     this->BuildTabs(this->roleTab);
     owner.controls.buttons = {};
@@ -707,9 +708,8 @@ void Menu::ReadMouse()
     }
 }
 
-// swd32.exe 0x0043A610 (unmatched in swd3e): the page drawn over its background (sliding in on the role pages), then
-// the role tabs, the
-// gold on page 1, the pointer, a tint, the corner notices, and the frame shown
+// swd3e.exe 0x0043F110: the page drawn over its background (sliding in on the role pages), then the role tabs, the
+// gold on page 1, the pointer, a tint, the corner notices, and the frame shown; the last page and the pointer kept.
 void Menu::Present()
 {
     Game& owner = this->game;

@@ -27,6 +27,7 @@ constexpr int kBarBoxMode = 4;
 constexpr int kBarClipWidth = 0x20;
 constexpr int kThumbLeft = 3;
 constexpr int kArrowHeight = 0x10;
+constexpr int kArrowLeft = 2;  // swd3e draws the arrows two pixels left of the bar (0x004407A8)
 constexpr i32 kUpArrowAction = 0x1A;
 constexpr i32 kDownArrowAction = 0x1B;
 constexpr i32 kUpPressedAction = 0x1E;
@@ -353,21 +354,22 @@ void Menu::DrawScrollBar(int x, int y, int height, int arrows, float from, float
     owner.painter.SetClipClamped(x, y, x + kBarClipWidth, thumbBottom);
     tile(this->barThumbAct, u8"Act Err(Menu:Prop:Render:bar)", x + kThumbLeft, thumbTop, thumbBottom);
     owner.painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+    const int arrowX = x - kArrowLeft;
     this->upArrowAct.action = kUpArrowAction;
-    owner.actDrawer.Draw(this->upArrowAct, x, y - kArrowHeight);
+    owner.actDrawer.Draw(this->upArrowAct, arrowX, y - kArrowHeight);
     this->downArrowAct.action = kDownArrowAction;
-    owner.actDrawer.Draw(this->downArrowAct, x, bottom);
+    owner.actDrawer.Draw(this->downArrowAct, arrowX, bottom);
 
     if ((arrows & kUpPressed) != 0)
     {
         this->upArrowAct.action = kUpPressedAction;
-        owner.actDrawer.Draw(this->upArrowAct, x, y - kArrowHeight);
+        owner.actDrawer.Draw(this->upArrowAct, arrowX, y - kArrowHeight);
     }
 
     if ((arrows & kDownPressed) != 0)
     {
         this->downArrowAct.action = kDownPressedAction;
-        owner.actDrawer.Draw(this->downArrowAct, x, bottom);
+        owner.actDrawer.Draw(this->downArrowAct, arrowX, bottom);
     }
 }
 }  // namespace swd3e

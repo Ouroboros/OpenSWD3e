@@ -54,7 +54,8 @@ void GameDatabases::LoadMaps()
 }
 
 // swd3e.exe 0x00441200: the description of object `id` in maps.dat (its table entry, up to "%Q"; kept in a buffer at
-// 0x004FC2A0 in the original); "無" for the empty entry
+// 0x0050AC3C in the original, emptied for a missing object, which the callers return as an empty text); "無" for
+// the empty entry
 std::string ObjectDescription(const std::vector<u8>& data, u16 id)
 {
     if (id == ItemNode::Empty)

@@ -19,8 +19,8 @@ struct Menu::FrameState
     u16 code = 0;
     u16 page = 0;
     u16 mode = 0;
-    u16 unk4FC200 = 0;
-    u16 unk4FBAB8 = 0;
+    u16 lastMode = 0;
+    u16 openedMode = 0;
     u16 roleTab = 0;
     u16 openedOnEquipment = 0;
     u16 unk4A6AA8 = 0;
@@ -134,8 +134,8 @@ void Menu::SaveFrame(FrameState& kept) const
     kept.code = this->code;
     kept.page = this->page;
     kept.mode = this->mode;
-    kept.unk4FC200 = this->unk4FC200;
-    kept.unk4FBAB8 = this->unk4FBAB8;
+    kept.lastMode = this->lastMode;
+    kept.openedMode = this->openedMode;
     kept.roleTab = this->roleTab;
     kept.openedOnEquipment = this->openedOnEquipment;
     kept.unk4A6AA8 = this->unk4A6AA8;
@@ -264,8 +264,8 @@ void Menu::LoadFrame(const FrameState& kept)
     this->code = kept.code;
     this->page = kept.page;
     this->mode = kept.mode;
-    this->unk4FC200 = kept.unk4FC200;
-    this->unk4FBAB8 = kept.unk4FBAB8;
+    this->lastMode = kept.lastMode;
+    this->openedMode = kept.openedMode;
     this->roleTab = kept.roleTab;
     this->openedOnEquipment = kept.openedOnEquipment;
     this->unk4A6AA8 = kept.unk4A6AA8;

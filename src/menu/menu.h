@@ -211,11 +211,11 @@ struct OptionsPage
     i32 row = 0;       // 0x0050BE78 the row of the settings or of the quit box
     i32 locked = 0;    // 0x0050BF14 the quit fade runs
     i32 choice = 0;    // 0x0050BF10 the confirmation's choice, then the fade's frames from 0x1E
-    i32 quitKind = 0;  // swd32 0x004FD2EC 1: end the game, 2: restart
+    i32 quitKind = 0;  // 0x0050BE58 1: end the game, 2: restart
     i32 keyRow = 0;    // 0x0050BE5C the key row (0x10..0x12: the buttons)
-    std::array<i32, Config::Keys> keys = {};  // swd32 0x004FD324 the keys being set
-    i32 heldKey = 0;                          // swd32 0x004FD314 a key down since the last one taken
-    // swd32 0x004FD2E8 the key a swap took from another row (kept, never read)
+    std::array<i32, Config::Keys> keys = {};  // 0x0050BE90 the keys being set
+    i32 heldKey = 0;                          // 0x0050BE80 a key down since the last one taken
+    // 0x0050BE54 the key a swap took from another row (kept, never read)
     i32 swappedKey = 0;
     std::vector<u16> notes;  // 0x0050BE84 the numbers of the notes
     i32 noteCount = 0;       // 0x0050BE8C
@@ -224,9 +224,9 @@ struct OptionsPage
     i32 noteRow = 0;         // 0x0050BE50 (kept, never read)
     std::size_t noteAt = 0;  // 0x0050BE68 (kept, never read)
     u32 arrows = 0;          // 0x0050BE4C frames the scroll arrows stay pressed (bits 0..3 up, 4..7 down)
-    i32 sampleLength = 0;    // swd32 0x004FD300 characters of the speed sample shown
-    i32 textSpeedShown = 0;  // swd32 0x004FD304
-    i32 sampleDelay = 0;     // swd32 0x004FD308
+    i32 sampleLength = 0;    // 0x0050BE6C characters of the speed sample shown
+    i32 textSpeedShown = 0;  // 0x0050BE70
+    i32 sampleDelay = 0;     // 0x0050BE74
     i32 displayRow = 0;      // the rebuild's display setup (stage 8): the row chosen
 };
 
@@ -740,36 +740,36 @@ public:
     Handler end = &Menu::Nothing;                // 0x0050A8D8
     Handler select = &Menu::Nothing;             // 0x0050AD6C
     Handler draw = &Menu::Nothing;               // swd32 0x004FBEC8
-    std::array<Handler, Pages> enterTable = {};  // swd32 0x004FC8B0 the role pages opened (entries 0xB..0x11)
+    std::array<Handler, Pages> enterTable = {};  // 0x0050B35C the role pages opened (entries 0xB..0x11)
     std::array<Handler, Pages> leaveTable = {};  // swd32 0x004FB884 left
     std::array<Handler, Pages> drawTable = {};   // swd32 0x004FBF54 drawn
 
-    u16 code = 0;       // swd32 0x004FC900 the code the menu was opened with
-    u16 page = 0;       // swd32 0x004FC3C4 (low word) the page index
-    u16 mode = 0;       // swd32 0x004FB8A8
-    u16 unk4FC200 = 0;  // swd32 0x004FC200
-    u16 unk4FBAB8 = 0;  // swd32 0x004FBAB8
-    u16 roleTab = 0;    // swd32 0x004FBECC (low word) the role tab raised (the equipment page's role)
-    // swd32 0x004FC82C bit 0: the menu opened on the equipment, left back to the item choice
+    u16 code = 0;        // 0x0050B3AC the code the menu was opened with
+    u16 page = 0;        // 0x0050AD70 (low word) the page index
+    u16 mode = 0;        // 0x0050A1C4
+    u16 lastMode = 0;    // 0x0050AB94 the menu mode (the items page: its row) last set; no code reads it
+    u16 openedMode = 0;  // 0x0050A40C the mode Open was given; no code reads it
+    u16 roleTab = 0;     // 0x0050A820 (low word) the role tab raised (the equipment page's role)
+    // 0x0050B2C8 bit 0: the menu opened on the equipment, left back to the item choice
     u16 openedOnEquipment = 0;
     u16 unk4A6AA8 = 0;  // 0x004BE644 the word after the tabs (BuildTabs sets it to NoRole)
     i32 tint = 0;       // 0x0050ACBC a screen tint while non-zero
     std::array<int, Party::Roles> visibleRoles = {};  // 0x0050A344 the roles in the party in order (ListPartyRoles)
     int visibleCount = 0;                             // 0x0050AB90
     // 0x0050B99C the five element resistances of each role with its equipment (0x00447E40)
-    std::array<std::array<i8, 5>, Party::Roles> roleResistances = {};
-    i32 frames = 0;                // swd32 0x004FC784
-    u32 flags = 0;                 // swd32 0x004FBED8
-    i32 pointerX = 0;              // swd32 0x004FBAC4 the pointer of the last frame
-    i32 pointerY = 0;              // swd32 0x004FBED0
+    std::array<std::array<i8, 5>, Party::Roles> roleResistances = {};  // 0x0050B99C (5 bytes a role)
+    i32 frames = 0;                                                    // 0x0050B218
+    u32 flags = 0;                                                     // 0x0050A82C
+    i32 pointerX = 0;                                                  // 0x0050A418 the pointer of the last frame
+    i32 pointerY = 0;                                                  // 0x0050A824
     i32 escapeDelay = 0;           // 0x0050B3B4 frames before RightControl acts as Escape again
     u32 clicks = 0;                // 0x0050A1C8 bits 0..1: a left click (single, double), bits 2..3: a right click
     i32 slide = 0;                 // swd32 0x004FC3C8
-    i32 lastPage = FirstRolePage;  // swd32 0x004A6AB0
-    i32 titleGlow = 0;             // swd32 0x004FC780
+    i32 lastPage = FirstRolePage;  // 0x004BE64C (initial 0xB)
+    i32 titleGlow = 0;             // 0x0050B214 counted by DrawPageTitle, no code reads it for drawing
     // swd32 0x004A6AAC
     std::array<i8, Tabs> tabGlow = {InitialTabGlow, InitialTabGlow, InitialTabGlow, InitialTabGlow};
-    // swd32 0x004A6A38
+    // 0x004BE5D4
     std::array<MenuTab, Tabs> tabs = InitialTabs;
 
     ActState background;               // 0x0050A2A0
@@ -815,17 +815,17 @@ public:
     std::vector<MenuTown> towns;  // 0x0050A1EC (its count at 0x004FC834)
     i32 townTop = 0;              // swd32 0x004FBED4
     i32 townRow = 0;              // swd32 0x004FC510
-    i32 townShown = 0;            // swd32 0x004FB8D4
-    MenuScrollBar townBar;        // swd32 0x004FC500
-    MenuScrollBar unk4FBAB4;      // swd32 0x004FBAB4 a second bar of the equipment list (only drawn)
+    i32 townShown = 0;            // 0x0050A1F0
+    MenuScrollBar townBar;        // 0x0050AEB0
+    MenuScrollBar unk4FBAB4;      // 0x0050A408 a second bar of the equipment list (only drawn)
     i32 descriptionSlide = 0;     // 0x0050B014 the description box slides (up while positive)
     i32 descriptionTop = 0x1E0;   // 0x0050B2CC its top
-    i32 buttonPress = 0;          // swd32 0x004FC904 -1 while the description button is pressed
-    ActState buttonAct;           // swd32 0x004FD0A8 the description button (the skills page's button)
+    i32 buttonPress = 0;          // 0x0050B3B0 -1 while the description button is pressed
+    ActState buttonAct;           // 0x0050BC00 the description button (the skills page's button)
     ItemLink itemObjects;         // 0x0050BD50 the objects of the items page
-    ItemLink savedInventory;      // swd32 0x004FD15C the inventory kept while the items page saves
-    ItemLink savedItems;          // swd32 0x004FD140 `itemObjects` kept with it
-    std::string description;      // swd32 0x004FC2A0 the description of the chosen object
+    ItemLink savedInventory;      // 0x0050BCC0 the inventory kept while the items page saves
+    ItemLink savedItems;          // 0x0050BCA4 `itemObjects` kept with it
+    std::string description;      // 0x0050AC3C the description of the chosen object
     OptionsPage options;
     InventoryPage itemsPage;
 

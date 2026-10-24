@@ -109,7 +109,7 @@ void Menu::MainLeft()
     }
 
     this->mode = static_cast<u16>(PageModeStep * page - (PageModeStep * FirstRolePage - FirstPageMode));
-    this->unk4FC200 = this->mode;
+    this->lastMode = this->mode;
     this->ShowPageBackground(page);
     owner.audio.PlaySound(kTitleSound, owner.config.soundVolume);
 }
@@ -128,7 +128,7 @@ void Menu::MainRight()
     }
 
     this->mode = static_cast<u16>(PageModeStep * page - (PageModeStep * FirstRolePage - FirstPageMode));
-    this->unk4FC200 = this->mode;
+    this->lastMode = this->mode;
     this->ShowPageBackground(page);
     owner.audio.PlaySound(kTitleSound, owner.config.soundVolume);
 }

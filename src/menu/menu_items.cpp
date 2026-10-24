@@ -371,7 +371,7 @@ void Menu::ItemsMoved(u16 arrows)
     SkipItems(this->itemList.top, this->itemObjects, this->itemList.first);
     CountShown(this->itemList.first, this->itemList.shown, kItemRows);
     this->itemsPage.arrows |= arrows;
-    this->unk4FC200 = static_cast<u16>(this->itemList.row);
+    this->lastMode = static_cast<u16>(this->itemList.row);
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
     this->ItemsDescribe();
 }
