@@ -1059,7 +1059,12 @@ void Menu::EquipCancel()
     switch (page.stage)
     {
         case 0:
-            if (--this->code == 0)
+        {
+            // The code is a dword in the original, compared signed after the decrement.
+            const i32 code = static_cast<i32>(this->code) - 1;
+            this->code = static_cast<u16>(code);
+
+            if (code <= 0)
             {
                 owner.menuState = Game::NoMenu;
             }
@@ -1073,6 +1078,7 @@ void Menu::EquipCancel()
             this->EquipReturn();
             this->EquipLeave();
             return;
+        }
 
         case 1:
             --page.stage;
