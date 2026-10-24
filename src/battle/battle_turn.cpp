@@ -232,6 +232,24 @@ constexpr i32 kAimedCommand17 = 0x17;
 constexpr i32 kAimedCommand1D = 0x1D;
 constexpr i32 kAimedCommand1F = 0x1F;
 constexpr i32 kAimedCommand21 = 0x21;
+constexpr i32 kAimedCommand25 = 0x25;      // swd3e
+constexpr i32 kChangeCommand = 0x26;       // 改變: the elements choice, then the role acts at once (swd3e)
+constexpr i32 kLockOrder = 8;              // 鎖定目標, the last order of the ghost: its target is aimed (state 9)
+constexpr i32 kCaptureOption = 1;          // 收化, the first 煉妖 choice: aims at an enemy
+constexpr i32 kBaitOption = 2;             // 誘餌: state 0x50
+constexpr i32 kRefineOptionsSlide = 0x50;  // the menu slides of the choices
+constexpr i32 kGhostOrdersSlide = 0x64;
+constexpr i32 kElementsSlide = 0x32;
+constexpr int kNoticeX = 0x118;  // the notices of MenuConfirm
+constexpr int kNoticeY = 0xA;
+constexpr i16 kNoticeFrames = 0x14;
+constexpr int kNoticeFlags = BattleMessage::BlackBar | BattleMessage::Centered;  // 0x40000002
+constexpr std::u8string_view kGatherRefused = u8"法寶經驗不足,無法繼續蓄勁!!";   // 0x004BF5E8
+constexpr std::u8string_view kFusedAlready = u8"已融合過,不能再選!!";            // 0x004BF5B0
+constexpr std::u8string_view kFuseRefused = u8"法寶經驗不足,無法融合!!";         // 0x004BF598
+constexpr std::u8string_view kNoEscortToFuse = u8"沒有護駕,不能融合!!";          // 0x004BF5C4
+constexpr int kFuseCategory = 3;  // the object categories of SelectObject for 融合 and 誘餌
+constexpr int kBaitCategory = 6;
 constexpr i32 kLeaveCommand = 0x11;
 constexpr i32 kLeaveState = 6;
 constexpr i32 kSelfCommand = 0x16;
@@ -252,12 +270,12 @@ constexpr int kRefusalMessageY = 0xA;
 constexpr i16 kRefusalMessageFrames = 0x14;
 constexpr int kRefusalMessageFlags = BattleMessage::BlackBar | BattleMessage::Centered;
 constexpr std::u8string_view kStaminaShort = u8"體力點數不夠!!";  // 0x004BF5D8
-constexpr std::u8string_view kEscortCalling = u8"護駕召喚中!!";   // swd32.exe 0x004A7980 (unmatched in swd3e)
 constexpr u16 kRefusedSound = 0x8C;
 constexpr i32 kEscortOrder = 0xF;
-constexpr i16 kEscortX = 0x12C;
-constexpr i16 kFirstEscortY = 0x10E;
-constexpr i16 kSecondEscortY = 0x154;
+constexpr i16 kEscortX = 0x177;  // swd3e: the place of a called escort and of the first row
+constexpr i16 kSecondEscortX = 0x190;
+constexpr i16 kFirstEscortY = 0xC8;
+constexpr i16 kSecondEscortY = 0x15E;
 constexpr i32 kTalkOrder = 0x63;
 constexpr int kRefineCategory = 5;
 constexpr i32 kEndCraft = 0x62;  // battle states of the end
@@ -4365,9 +4383,10 @@ int Game::HoverTarget()
 }
 
 // swd3e.exe 0x0046F920: the confirm key of the battle menu (while unk53BF5C), by battle state: 1 takes the menu
-// command; 2, 4, 8, 0x1B and 0x1E take a list entry; 3 takes the aimed unit and ends the role's choice; 5 places an
-// escort; 7 answers the talk; 0x62..0x71 step the end of the battle (the messages wait out endFrames frames);
-// 0xC8 closes the menu.
+// command or an open choice; 2, 4, 8, 0x1B, 0x1E, 0x29 (融合) and 0x50 (誘餌) take a list entry; 3 takes the aimed
+// unit and ends the role's choice; 5 places an escort, 0xA fuses with one; 7 answers the talk; 9 locks the ghost on
+// the aimed enemy; 0x62..0x71 step the end of the battle (the messages wait out endFrames frames); 0xC8 closes the
+// menu.
 void Game::MenuConfirm()
 {
     BattleState& battle = this->battleState;
@@ -4415,6 +4434,22 @@ void Game::MenuConfirm()
 
         case kWaitState1E:
             this->ConfirmRefine();
+            return;
+
+        case kTurnState9:
+            this->ConfirmGhostTarget();
+            return;
+
+        case kWaitStateA:
+            this->ConfirmFusePlace();
+            return;
+
+        case kWaitState29:
+            this->ConfirmFuse();
+            return;
+
+        case kWaitState50:
+            this->ConfirmBait();
             return;
 
         default:
@@ -4494,8 +4529,12 @@ void Game::EndChoice()
     battle.listedCommands = 0;
 }
 
-// Battle state 1 of MenuConfirm (once the menu has opened, menuGrow at least 6): the command (an accessory command
-// its kind) opens its list, aims, or acts at once.
+// Battle state 1 of MenuConfirm (once the menu has opened, menuGrow at least 6). An open choice takes its row: an
+// order of the ghost (鎖定目標: state 9 aims it), a 煉妖 choice (收化 aims at an enemy, keeping the choices shown;
+// 誘餌 opens state 0x50), an element of 改變 (the role acts at once). Otherwise a disabled command refuses (the role
+// that took 蓄勁 may still take its second one); the command (a listed one its kind; for the role that took 蓄勁 the
+// first goes on gathering while its treasure's experience allows, the second attacks) opens its list or choice, aims,
+// or acts at once. The panels close unless a choice opened.
 void Game::ConfirmCommand()
 {
     BattleState& battle = this->battleState;
@@ -4505,26 +4544,108 @@ void Game::ConfirmCommand()
         return;
     }
 
+    const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
+    BattleRole& role = this->battleRoles[unit];
+
+    if (battle.ghostOrdersOpen == 1)
+    {
+        battle.ghostLockTarget = 0;
+
+        if (battle.ghostOrderRow == kLockOrder)
+        {
+            battle.result = kTurnState9;
+        }
+        else
+        {
+            this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetGhostOrder(
+                static_cast<u16>(battle.ghostOrderRow)
+            );
+        }
+
+        battle.ghostOrdersOpen = 0;
+        battle.menuCommand = kGhostMenuEntry;
+        return;
+    }
+
+    if (battle.refineOptionsOpen == 1)
+    {
+        if (battle.refineOptionRow == kCaptureOption)
+        {
+            battle.result = kTargetState;
+            battle.refineOptionsOpen = kRefineOptionTaken;
+        }
+        else if (battle.refineOptionRow == kBaitOption)
+        {
+            battle.result = kWaitState50;
+            battle.refineOptionsOpen = kRefineOptionTaken;
+            return;
+        }
+    }
+
+    if (battle.elementsOpen == 1)
+    {
+        role.SetElement(this->ProficiencyList(), static_cast<i8>(battle.elementRow));
+        battle.turnCommand = kChangeCommand;
+        battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = kChangeCommand;
+        role.SetTarget(1);
+        battle.unk53BF60 = 1;
+        battle.turnUnit = battle.currentUnit;
+        battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
+        battle.currentUnit = 0;
+        battle.commandNames = {};
+        battle.pendingOrders[unit].unk00 = 1;
+        battle.result = 0;
+        battle.elementsOpen = 0;
+        battle.unk53BFB8 = 0;
+        battle.listedCommands = 0;
+        return;
+    }
+
     i32 command = battle.menuCommand;
+    const bool charging = battle.chargingRole == battle.currentUnit;
+
+    // Commands past the table read the bytes beside it in the original (deviations.md): taken as disabled.
+    const auto at = static_cast<std::size_t>(command - 1);
+    const bool enabled = command >= 1 && at < battle.commandEnabled.size() && battle.commandEnabled[at] != 0;
+
+    if (!enabled && (!charging || command == kAttackCommand))
+    {
+        this->audio.PlaySound(kRefusedSound, this->config.soundVolume);
+        return;
+    }
+
     battle.unk53BFB8 = 0;
     battle.unk53BF88 = 0;
     battle.unk53BFF0 = 0;
     battle.unk53C49C = 1;
     battle.listReturnCommand = command;
 
-    if (command >= kFirstAccessoryMenuCommand)
+    if (command >= kFirstAccessoryMenuCommand && battle.MenuKind(command) != 0)
     {
-        const auto at = static_cast<std::size_t>(command - kFirstAccessoryMenuCommand);
+        command = battle.MenuKind(command);
+        battle.menuCommand = command;
+    }
 
-        if (at < battle.commandKinds.size() && battle.commandKinds[at] != 0)
+    if (charging)
+    {
+        if (command == kAttackCommand)
         {
-            command = battle.commandKinds[at];
+            if (!role.Unk2EB2BelowProficiency(this->ProficiencyList()))
+            {
+                this->battleMessages.Add(kNoticeX, kNoticeY, kNoticeFrames, kGatherRefused, kNoticeFlags);
+                this->audio.PlaySound(kRefusedSound, this->config.soundVolume);
+                return;
+            }
+
+            command = kGatherCommand;
+            battle.menuCommand = command;
+        }
+        else if (command == kSpellCommand)
+        {
+            command = kAttackCommand;
             battle.menuCommand = command;
         }
     }
-
-    const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
-    BattleRole& role = this->battleRoles[unit];
 
     auto aimedEnemy = [&battle]
     {
@@ -4587,12 +4708,15 @@ void Game::ConfirmCommand()
             break;
 
         case kRefineMenuCommand:
-        case kAimedCommand15:
-        case kAimedCommand17:
-        case kAimedCommand1D:
-        case kAimedCommand1F:
-        case kAimedCommand21:
-            battle.result = kTargetState;
+            battle.refineOptionsOpen = 1;
+            battle.refineOptionRow = 1;
+            battle.menuSlide = kRefineOptionsSlide;
+            break;
+
+        case kGhostMenuEntry:
+            battle.ghostOrdersOpen = 1;
+            battle.ghostOrderRow = this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].GhostOrder();
+            battle.menuSlide = kGhostOrdersSlide;
             break;
 
         case kLeaveCommand:
@@ -4601,23 +4725,16 @@ void Game::ConfirmCommand()
             battle.result = kLeaveState;
             break;
 
-        case kSelfCommand:
-            battle.turnCommand = command;
-            battle.result = 0;
-            battle.unk53BFB8 = 1;
-            battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = command;
-            role.SetTarget(1);
-            battle.commandNames[0] = {};
-            battle.turnUnit = battle.currentUnit;
-            battle.commandNames[1] = {};
-            battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
-            battle.currentUnit = 0;
-            battle.unk53BF60 = 1;
-            battle.unk53BFB8 = 0;
-            battle.commandNames[2] = {};
-            battle.listedCommands = 0;
+        case kAimedCommand15:
+        case kAimedCommand17:
+        case kAimedCommand1D:
+        case kAimedCommand1F:
+        case kAimedCommand21:
+        case kAimedCommand25:
+            battle.result = kTargetState;
             break;
 
+        case kSelfCommand:
         case kPartyAimCommand:
             battle.result = kTargetState;
             battle.unk53BFB8 = 1;
@@ -4655,6 +4772,50 @@ void Game::ConfirmCommand()
             this->input.SetMousePosition(kListMouseX, kListMouseY);
             break;
 
+        case kChangeCommand:
+            battle.elementsOpen = 1;
+            battle.menuCommand = battle.listReturnCommand;
+            battle.elementRow = 1;
+            battle.menuSlide = kElementsSlide;
+            break;
+
+        case kGatherCommand:
+            battle.chargingRole = battle.currentUnit;
+            actAtOnce(command);
+            break;
+
+        case kStrikeBackCommand:
+            battle.turnCommand = command;
+            battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = command;
+
+            if (this->battleHud.meterShown != 0)
+            {
+                battle.result = kTargetState;
+            }
+            else
+            {
+                role.SetTarget(1);
+                battle.meterRole = battle.currentUnit;
+                battle.turnUnit = battle.currentUnit;
+                battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
+                battle.currentUnit = 0;
+                battle.unk53BF60 = 1;
+                battle.pendingOrders[unit].unk00 = 1;
+                battle.result = 0;
+                battle.unk53BFB8 = 0;
+            }
+
+            battle.listedCommands = 0;
+            battle.commandNames = {};
+            break;
+
+        case kFuseCommand:
+            battle.result = kWaitState29;
+            battle.roleListRow = 1;
+            battle.menuSlide = kListSlideStart;
+            this->input.SetMousePosition(kListMouseX, kListMouseY);
+            break;
+
         default:
             break;
     }
@@ -4665,9 +4826,13 @@ void Game::ConfirmCommand()
     }
 
     this->controls.PressConfirm();
-    battle.listRows = kOpenListRows;
-    battle.listPanelFrames = 0;
-    battle.menuGrow = 0;
+
+    if (battle.menuCommand != kGhostMenuEntry && battle.menuCommand != kRefineMenuCommand && battle.elementsOpen != 1)
+    {
+        battle.listRows = kOpenListRows;
+        battle.listPanelFrames = 0;
+        battle.menuGrow = 0;
+    }
 }
 
 // Battle state 2 of MenuConfirm: a page tab under the pointer opens its page; otherwise the chosen spell (affordable)
@@ -4712,7 +4877,10 @@ void Game::ConfirmSpell()
     battle.unk4FE5D4[unit] = static_cast<i32>(act);
     PendingOrder& order = battle.pendingOrders[unit];
 
-    if (this->PrepareOrder())
+    const bool aimsEnemies = this->PrepareOrder();
+    battle.unk57735C = role.ActFlag17() == 1 ? 1 : 0;
+
+    if (aimsEnemies)
     {
         battle.unk53BF88 = 1;
         battle.unk53BFB8 = 1;
@@ -4732,6 +4900,11 @@ void Game::ConfirmSpell()
     {
         order.unk00 = kind == 0 ? 1 : 0;
 
+        if (battle.unk57735C == 1)
+        {
+            order.unk00 = 0;
+        }
+
         if (order.unk00 == 1)
         {
             this->AimAtParty();
@@ -4748,10 +4921,12 @@ void Game::ConfirmSpell()
     this->OpenTargets();
 }
 
-// Battle state 3 of MenuConfirm: the aimed unit taken (not for menu command 6 when turnPointer refuses: the refusal
-// sound): the order is the menu command, the role's choice ends, every unit is unmarked and the lists reset. Command
-// 0x1E throws the chosen object (state 0xD when it lands, a talisman paper back otherwise); a guard command takes
-// its stamina; the auto battle remembers the aim.
+// Battle state 3 of MenuConfirm: the aimed unit taken (kept as aiTarget; refused with 煉妖 and state 0x50 while
+// turnPointer is off): an ActFlag17 skill turns on the role itself, its enemy kept in unk34C0; the order is the menu
+// command, the role's choice ends (蓄勁 and, once the meter is gone, 逆攻 no longer the role's), the party's hits on
+// the aimed enemy (on each standing enemy for a whole side) counted, every unit unmarked and the lists reset, the
+// command back on 1. Command 0x1E throws the chosen object (state 0xD when it lands, a talisman paper back otherwise);
+// a skill takes its stamina; 奇術 fills the second gauge; the auto battle remembers the aim.
 void Game::ConfirmTarget()
 {
     BattleState& battle = this->battleState;
@@ -4761,7 +4936,31 @@ void Game::ConfirmTarget()
         return;
     }
 
-    if (battle.menuCommand == kRefineMenuCommand && battle.turnPointer == 0)
+    // In the auto battle without a current unit the original works on the role 20 before the first and its order
+    // before the orders: those calls and accesses are left out, the rest done.
+    auto roleOf = [this](i32 unitNumber) -> BattleRole*
+    {
+        return unitNumber >= BattleState::FirstRoleUnit
+                   ? &this->battleRoles[static_cast<std::size_t>(unitNumber - BattleState::FirstRoleUnit)]
+                   : nullptr;
+    };
+
+    auto orderOf = [&battle](i32 unitNumber) -> PendingOrder*
+    {
+        return unitNumber >= BattleState::FirstRoleUnit
+                   ? &battle.pendingOrders[static_cast<std::size_t>(unitNumber - BattleState::FirstRoleUnit)]
+                   : nullptr;
+    };
+
+    battle.aiTarget = battle.aimTarget;
+    PendingOrder* order = orderOf(battle.currentUnit);
+
+    if (order != nullptr && order->unk00 == 1)
+    {
+        battle.orderStep = 1;
+    }
+
+    if ((battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50) && battle.turnPointer == 0)
     {
         this->audio.PlaySound(kRefusedSound, this->config.soundVolume);
         return;
@@ -4773,36 +4972,79 @@ void Game::ConfirmTarget()
         return;
     }
 
-    battle.turnCommand = battle.menuCommand;
-    battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = battle.menuCommand;
-    battle.turnUnit = battle.currentUnit;
-    battle.currentUnit = 0;
-    battle.unk53BF60 = 1;
+    if (battle.unk57735C == 1)
+    {
+        if (order != nullptr)
+        {
+            order->unk00 = 1;
+        }
 
-    // In the auto battle without a current unit the original works on the role 8 before the first and its order
-    // before the orders: those calls and writes are left out, the rest done.
-    const bool hasRole = battle.turnUnit >= BattleState::FirstRoleUnit;
-    const auto unit = hasRole ? static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit) : 0;
-    BattleRole* role = hasRole ? &this->battleRoles[unit] : nullptr;
+        if (BattleRole* aiming = roleOf(battle.currentUnit); aiming != nullptr)
+        {
+            aiming->SetUnk34C0(static_cast<i16>(battle.aimTarget - 1));
+        }
+
+        battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
+    }
+
+    battle.unk57735C = 0;
+    const i32 chooser = battle.currentUnit;
+    battle.turnCommand = battle.menuCommand;
+    battle.turnTaken[static_cast<std::size_t>(chooser)] = battle.menuCommand;
+    battle.turnUnit = chooser;
+    battle.currentUnit = 0;
+
+    if (battle.chargingRole == chooser)
+    {
+        battle.chargingRole = -1;
+    }
+
+    if (battle.meterRole == chooser && this->battleHud.meterShown == 0)
+    {
+        battle.meterRole = -1;
+    }
+
+    battle.unk53BF60 = 1;
+    BattleRole* role = roleOf(battle.turnUnit);
+    order = orderOf(battle.turnUnit);
 
     if (role != nullptr)
     {
         role->SetTarget(1);
     }
 
+    const i32 wholeSide = battle.unk53BF88;
     battle.result = 0;
     battle.unk53BFBC = 0;
     battle.unk53BFB8 = 0;
 
-    if (battle.unk53BF88 == 1)
+    if (wholeSide == 1)
     {
-        if (role != nullptr)
+        if (order != nullptr)
         {
-            battle.pendingOrders[unit].unk04 = 1;
-            battle.pendingOrders[unit].targetCount = 0;
+            order->unk04 = 1;
+            order->targetCount = 0;
         }
 
         battle.turnTaken[static_cast<std::size_t>(battle.turnUnit)] = battle.turnCommand;
+    }
+
+    if (order != nullptr && order->unk00 == 0)
+    {
+        if (wholeSide == 1)
+        {
+            for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
+            {
+                if (!this->battleEnemies[enemy].IsDefeated())
+                {
+                    ++battle.enemyHits[enemy];
+                }
+            }
+        }
+        else
+        {
+            ++battle.enemyHits[static_cast<std::size_t>(battle.aimTarget - 1)];
+        }
     }
 
     if (battle.menuCommand == kWaitState1E)
@@ -4832,11 +5074,13 @@ void Game::ConfirmTarget()
         role->TakeCommand2F18();
     }
 
-    if (battle.menuCommand == kListState1B)
+    if (battle.menuCommand == kListState1B || battle.menuCommand == kWaitState50)
     {
         battle.roleListRow = 1;
         battle.roleListScroll = 0;
     }
+
+    battle.refineOptionsOpen = 0;
 
     for (u32 index = 0; index < battle.enemyCount; ++index)
     {
@@ -4853,25 +5097,29 @@ void Game::ConfirmTarget()
     battle.menuGrow = 0;
     this->battleHud.scrollCount = 0;
     battle.roleListRow = 1;
-    battle.unk53BFC0 = 0;
-    battle.unk53BFC4 = 0;
+
+    if (battle.menuCommand == kSpellCommand)
+    {
+        battle.unk53BFC0 = 0;
+        battle.unk53BFC4 = 0;
+
+        if (role != nullptr)
+        {
+            role->FillSecondGauge();
+        }
+    }
+
     battle.unk53BFC8 = 0;
     this->controls.PressConfirm();
 
     if (battle.autoBattle == 1)
     {
-        if (role != nullptr && role->MarkBit1() == 1)
-        {
-            battle.turnCommand = kGuardCommand;
-            battle.turnTaken[static_cast<std::size_t>(battle.turnUnit)] = kGuardCommand;
-            role->ResetAfterGuard();
-            role->SetTarget(1);
-            battle.pendingOrders[unit].unk00 = 1;
-        }
-
+        battle.unk53BFC0 = 0;
+        battle.unk53BFC4 = 0;
         battle.autoTarget = battle.aimTarget;
     }
 
+    battle.menuCommand = 1;
     battle.commandNames = {};
     battle.listedCommands = 0;
 }
@@ -5004,19 +5252,12 @@ void Game::ConfirmItem()
     this->controls.PressConfirm();
 }
 
-// An escort object of ConfirmItem (inline in the original); see ConfirmItem. The escort comes at once: the order 0xF
-// and the role's choice ends, its object held back (returned item 1) and the escort placed after the roles.
+// An escort object of ConfirmItem (inline in the original): with escorts out the 佈置護駕 panel opens (state 5);
+// otherwise the escort comes at once: the order 0xF and the role's choice ends, its object used (counted, held back
+// as returned item 1) and the escort placed after the roles.
 void Game::CallEscort(BattleRole& role)
 {
     BattleState& battle = this->battleState;
-
-    if (battle.callingEscort != 0)
-    {
-        this->battleMessages
-            .Add(kRefusalMessageX, kRefusalMessageY, kRefusalMessageFrames, kEscortCalling, kRefusalMessageFlags);
-        this->audio.PlaySound(kRefusedSound, this->config.soundVolume);
-        return;
-    }
 
     if (battle.escortCount != 0)
     {
@@ -5036,9 +5277,7 @@ void Game::CallEscort(BattleRole& role)
     battle.unk53BFB8 = 0;
     battle.listPanelFrames = 0;
     battle.menuGrow = 0;
-    battle.unk53BFC0 = 0;
     battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
-    battle.unk53BFC4 = 0;
     this->controls.PressConfirm();
 
     if (battle.autoBattle == 1)
@@ -5049,6 +5288,7 @@ void Game::CallEscort(BattleRole& role)
     battle.commandNames = {};
     battle.listedCommands = 0;
     battle.callingEscort = role.UseSelectedItem(battle.listRole);
+    battle.CountItemUse(battle.callingEscort);
     battle.SetReturnedItem(1, battle.callingEscort);
 
     // With every place taken the original writes the escort past the places.
@@ -5074,9 +5314,9 @@ void Game::CallEscort(BattleRole& role)
     battle.escortCalled[static_cast<std::size_t>(battle.turnUnit)] = static_cast<u16>(battle.roleCount);
 }
 
-// Battle state 5 of MenuConfirm: the escort object used takes the place of escort row guardCursor (an escort there
-// gives its object back and marks UnkPanel4): row 1 the first place, row 2 the second; the order 0xF ends the
-// role's choice and the units are measured again.
+// Battle state 5 of MenuConfirm: the escort object used (counted) takes the place of escort row guardCursor (an
+// escort there gives its object back and marks UnkPanel4): row 1 the first place, row 2 the second; the order 0xF ends
+// the role's choice and the units are measured again.
 void Game::ConfirmEscort()
 {
     BattleState& battle = this->battleState;
@@ -5089,6 +5329,7 @@ void Game::ConfirmEscort()
     BattleRole& role = this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
     battle.callingEscort = role.UseSelectedItem(battle.listRole);
     battle.turnUnit = battle.currentUnit;
+    battle.CountItemUse(battle.callingEscort);
     battle.turnCommand = kEscortOrder;
     battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = kEscortOrder;
     battle.currentUnit = 0;
@@ -5099,16 +5340,14 @@ void Game::ConfirmEscort()
     battle.unk53BFB8 = 0;
     battle.listPanelFrames = 0;
     battle.menuGrow = 0;
-    battle.unk53BFC0 = 0;
     battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
-    battle.unk53BFC4 = 0;
     this->controls.PressConfirm();
     const auto row =
         static_cast<std::size_t>(battle.guardCursor - battle.escortCount + static_cast<i32>(battle.roleCount) - 1);
     UnitPlacement& place = battle.rolePlaces[row];
     u16 placed = battle.callingEscort;
 
-    auto replace = [this, &battle, &place](i16 y)
+    auto replace = [this, &battle, &place](i16 x, i16 y)
     {
         if (place.actId != 0)
         {
@@ -5116,7 +5355,7 @@ void Game::ConfirmEscort()
             battle.panelFlags |= BattleState::UnkPanel4;
         }
 
-        place.x = kEscortX;
+        place.x = x;
         place.y = y;
         place.actId = battle.callingEscort;
         place.kind = 1;
@@ -5129,7 +5368,7 @@ void Game::ConfirmEscort()
 
     if (battle.guardCursor == 1)
     {
-        replace(kFirstEscortY);
+        replace(kEscortX, kFirstEscortY);
         battle.SetReturnedItem(1, battle.callingEscort);
         placed = static_cast<u16>(row);
         battle.callingEscort = static_cast<u16>(row);
@@ -5137,7 +5376,7 @@ void Game::ConfirmEscort()
 
     if (battle.guardCursor == kEscortRows)
     {
-        replace(kSecondEscortY);
+        replace(kSecondEscortX, kSecondEscortY);
         battle.SetReturnedItem(kEscortRows, battle.callingEscort);
         placed = static_cast<u16>(row);
     }
@@ -5337,7 +5576,166 @@ void Game::ConfirmRefine()
     this->controls.PressConfirm();
 }
 
-// The end states of MenuConfirm (0x62..0x71, 0xC8): the messages of the end wait out endFrames frames, the level-up
+// Battle state 9 of MenuConfirm (swd3e): the ghost locks on the aimed enemy (鎖定目標): the order taken, the menu
+// back on 符鬼 with the enemy unmarked.
+void Game::ConfirmGhostTarget()
+{
+    BattleState& battle = this->battleState;
+    battle.ghostLockTarget = battle.aiTarget;
+    battle.result = kMenuState;
+    battle.menuCommand = kGhostMenuEntry;
+    battle.ghostOrdersOpen = 0;
+    this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetGhostOrder(static_cast<u16>(battle.ghostOrderRow));
+    this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
+}
+
+// Battle state 0xA of MenuConfirm (swd3e): the escort of row guardCursor takes the chosen 融合 object: refused without
+// an escort there, for an escort already fused, or when the role's 融合 proficiency does not reach the object's level;
+// otherwise the object is used and the role's choice ends with order 0x29 on the escort.
+void Game::ConfirmFusePlace()
+{
+    BattleState& battle = this->battleState;
+    const i32 row = battle.guardCursor - battle.escortCount + static_cast<i32>(battle.roleCount) - 1;
+
+    if (battle.givenBack[static_cast<std::size_t>(battle.guardCursor)] == 0)
+    {
+        this->battleMessages.Add(kNoticeX, kNoticeY, kNoticeFrames, kNoEscortToFuse, kNoticeFlags);
+        return;
+    }
+
+    BattleRole& escort = this->battleRoles[static_cast<std::size_t>(row)];
+
+    if (escort.Flag26B8Bit17() == 1)
+    {
+        this->battleMessages.Add(kNoticeX, kNoticeY, kNoticeFrames, kFusedAlready, kNoticeFlags);
+        return;
+    }
+
+    BattleRole& role = this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
+    const auto proficiency = static_cast<u16>(role.AccessoryProficiency(kFuseCommand, this->ProficiencyList()));
+
+    if (escort.LevelInReach(this->database, role.SelectedItemId(), proficiency) == 0)
+    {
+        this->battleMessages.Add(kNoticeX, kNoticeY, kNoticeFrames, kFuseRefused, kNoticeFlags);
+        return;
+    }
+
+    battle.usedUpItem = role.UseSelectedItem(kFuseCategory);
+    battle.turnUnit = battle.currentUnit;
+    battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = kFuseCommand;
+    battle.turnCommand = kFuseCommand;
+    battle.currentUnit = 0;
+    battle.aimTarget = row + 1;
+    battle.unk53BF60 = 1;
+    role.SetTarget(1);
+    battle.result = 0;
+    battle.unk53BFBC = 0;
+    battle.unk53BFB8 = 0;
+    battle.listPanelFrames = 0;
+    battle.menuGrow = 0;
+    battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
+    this->controls.PressConfirm();
+}
+
+// Battle state 0x29 of MenuConfirm (swd3e): the chosen 融合 object (category 3) opens state 0xA on the first escort
+// row, aiming at the first standing escort; refused without escorts.
+void Game::ConfirmFuse()
+{
+    BattleState& battle = this->battleState;
+
+    if (battle.unk53BFB8 == 0)
+    {
+        return;
+    }
+
+    battle.unk53BFB8 = 0;
+
+    if (battle.unk53BD9C != 0 || battle.hoverScrollPart != 0 || battle.currentUnit == 0)
+    {
+        return;
+    }
+
+    if (battle.escortCount == 0)
+    {
+        this->battleMessages.Add(kNoticeX, kNoticeY, kNoticeFrames, kNoEscortToFuse, kNoticeFlags);
+        return;
+    }
+
+    const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
+    u16 kind = 0;
+    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    const int chosen =
+        this->battleRoles[unit]
+            .SelectObject(this->database, this->battleState, kFuseCategory, battle.listCursor, act, kind);
+    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+
+    if (chosen == 0)
+    {
+        return;
+    }
+
+    // The original searches past the roles when none is a standing escort (deviations.md): the search ends there.
+    i32 escort = 0;
+
+    while (escort < static_cast<i32>(BattleState::RoleUnits) &&
+           (this->battleRoles[static_cast<std::size_t>(escort)].IsDefeated() ||
+            this->battleRoles[static_cast<std::size_t>(escort)].AutoControl() != 1))
+    {
+        ++escort;
+    }
+
+    battle.aimTarget = escort + 1;
+    battle.unk53BFD0 = 1;
+    battle.menuCommand = kFuseCommand;
+    battle.result = kWaitStateA;
+    battle.guardCursor = 1;
+    battle.pendingOrders[unit].unk00 = 1;
+    this->controls.PressConfirm();
+}
+
+// Battle state 0x50 of MenuConfirm (swd3e): the chosen 誘餌 object (category 6) aims at the enemies with the menu
+// command 0x50.
+void Game::ConfirmBait()
+{
+    BattleState& battle = this->battleState;
+
+    if (battle.unk53BFB8 == 0)
+    {
+        return;
+    }
+
+    battle.unk53BFB8 = 0;
+
+    if (battle.unk53BD9C != 0 || battle.hoverScrollPart != 0 || battle.currentUnit == 0 || battle.roleListEntries == 0)
+    {
+        return;
+    }
+
+    const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
+    u16 kind = 0;
+    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    const int chosen =
+        this->battleRoles[unit]
+            .SelectObject(this->database, this->battleState, kBaitCategory, battle.listCursor, act, kind);
+    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+
+    if (chosen == 0)
+    {
+        return;
+    }
+
+    if (battle.unk53BFBC == 0)
+    {
+        this->NextEnemyTurn();
+    }
+
+    battle.menuCommand = kWaitState50;
+    battle.result = kTargetState;
+    this->controls.PressConfirm();
+}
+
+// The end states of MenuConfirm (0x62..0x71, 0xC8): the messages of the end wait out endFrames frames (0x64 not for a
+// victory without its panel), the level-up
 // steps (0x65: a level-up shows 0x6E, a learned skill 0x6F; none ends), 0xC8 closes the menu and unmarks every unit.
 void Game::ConfirmEnd()
 {
@@ -5357,7 +5755,7 @@ void Game::ConfirmEnd()
             return;
 
         case kEndVictory:
-            if (battle.endFrames >= kEndMessageFrames)
+            if (battle.victoryWithoutPanel != 1 && battle.endFrames >= kEndMessageFrames)
             {
                 battle.endFrames = 0;
                 messages.panelHeight = 0;

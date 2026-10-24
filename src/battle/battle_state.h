@@ -174,6 +174,7 @@ public:
     i16 StartSlideTo(i16 x);
     i16 StartSlideBack(i16 x);
     u8 ItemUses(u16 id) const;
+    void CountItemUse(u16 id);
     u8 MostHitEnemy() const;
     void ClearHitBits();
     HitPicture& AddHitPicture(ErrorReporter& errors, i32 id, i32 action, i16 x, i16 y, i32 mirrored);
@@ -321,7 +322,11 @@ public:
     std::array<PendingOrder, Enemies> enemyPendingOrders = {};
     i32 unk53BF80 = 0;  // cleared when a party unit's order is taken (InsertSlotRecord)
     i32 unk53BFD0 = 0;
-    i16 unk53BF46 = 0;  // cleared when a stagger ends (HurtFrame)
+    // 0x0057735C (swd3e) 1: the skill chosen (ActFlag17) is turned on the role itself once its enemy is aimed at, the
+    // enemy kept in the role's unk34C0 (MenuConfirm states 2 and 3)
+    i32 unk57735C = 0;
+    i32 ghostLockTarget = 0;  // 0x00576FBC (swd3e) the enemy (1-based) the ghost's 鎖定目標 aims at; 0: none
+    i16 unk53BF46 = 0;        // cleared when a stagger ends (HurtFrame)
     i16 unk53BF48 = 0;
     u16 unk53BF28 = 0;  // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
     std::array<i32, 0x12> unk4FF0BC = {};

@@ -457,6 +457,10 @@ private:
     void ConfirmSpecial();
     void ConfirmThrow();
     void ConfirmRefine();
+    void ConfirmGhostTarget();
+    void ConfirmFusePlace();
+    void ConfirmFuse();
+    void ConfirmBait();
     void ConfirmEnd();
     void ConfirmKey();
     static bool KeyRepeats(const ButtonState& button);

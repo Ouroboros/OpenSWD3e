@@ -183,6 +183,16 @@ u8 BattleState::ItemUses(u16 id) const
     return id < this->itemUses.size() ? this->itemUses[id] : u8{0};
 }
 
+// One more use of object `id` (MenuConfirm, inline in states 4 and 5); an id past the table is not counted
+// (deviations.md).
+void BattleState::CountItemUse(u16 id)
+{
+    if (id < this->itemUses.size())
+    {
+        ++this->itemUses[id];
+    }
+}
+
 // swd3e.exe 0x00469F80: 1 + the enemy hit most (the first of them)
 u8 BattleState::MostHitEnemy() const
 {
