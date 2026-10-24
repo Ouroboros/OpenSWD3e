@@ -268,7 +268,7 @@ constexpr int kStatsFirstY = 0x78;
 constexpr int kStatsLineHeight = 0x14;
 constexpr std::array<std::u8string_view, kStatLines> kStatLabels = {
     u8"生命力:%4d",  // 0x004BF81C
-    u8"魔法力:%4d",  // swd32.exe 0x004A7A94 (unmatched in swd3e)
+    u8"靈  力:%4d",  // 0x004BF810
     u8"體  力:%4d",  // 0x004BF804
     u8"力  量:%4d",  // 0x004BF7F8
     u8"耐  力:%4d",  // 0x004BF7EC

@@ -2972,11 +2972,11 @@ void Game::LearnSpecials()
     }
 }
 
-// swd32.exe 0x00467F00 (unmatched in swd3e): the stats of the role that levelled up (levelUpRole): its name over a
-// frame of the seven values
-// before the level-up (levelUpBefore); once grown, after kRollStart frames (levelUpFrames, kShowNow shows at once) each
-// value that rose shows " ==> " and the new value less a roll that counts down a point a frame (kRollSound each point),
-// one after another: the maxima first, then the attributes (strength does not wait for the maxima, as in the original).
+// swd3e.exe 0x00476CB0: the stats of the role that levelled up (levelUpRole): its name over a frame of the seven
+// values before the level-up (levelUpBefore); once grown, after kRollStart frames (levelUpFrames, kShowNow shows at
+// once) each value that rose shows " ==> " and the new value less a roll that counts down a point a frame (kRollSound
+// each point), one after another: the maxima first, then the attributes (strength does not wait for the maxima, as in
+// the original).
 void Game::DrawLevelUpStats()
 {
     smooth::Scene scene;
