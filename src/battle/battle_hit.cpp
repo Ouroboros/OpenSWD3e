@@ -2402,7 +2402,9 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
         const i32 others = static_cast<i32>(battle.roleCount) - battle.escortCount - battle.defeatedRoles -
                            battle.unk5770D4 - unaimed - taunted;
 
-        if (static_cast<u32>(others) > 1 && battle.unk576FC4 == target && battle.unk5774E8 >= kSameTargetLimit)
+        // The count is compared as a signed byte (0x004616F9): from 0x80 on it no longer holds the enemy back.
+        if (static_cast<u32>(others) > 1 && battle.unk576FC4 == target &&
+            static_cast<i8>(battle.unk5774E8) >= kSameTargetLimit)
         {
             continue;
         }
