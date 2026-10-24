@@ -1252,8 +1252,8 @@ void RolePath::RunScript(int index)
 
 // swd3e.exe 0x00432630: a held role (flag bit 31) leaving an event: its scripted move takes the move queued after it
 // (a new path from where the role stands) or, with none queued, is freed. False when it has no scripted move.
-// swd3e.exe EH funclet (tail) of 0x00432630, swd32 0x004982B0 (EH unwind: the path finder, freed by its destructor)
-// swd3e.exe EH funclet (tail) of 0x00432630, swd32 0x004982B8 (EH handler of 0x0042D920)
+// swd3e.exe EH funclet (tail) of 0x00432630, 0x004A9650 (EH unwind: the path finder, freed by its destructor)
+// swd3e.exe EH funclet (tail) of 0x00432630, 0x004A9658 (EH handler)
 bool RolePath::ResumeMove(int index)
 {
     GameState& state = this->game.state;
@@ -1441,7 +1441,7 @@ int RolePath::ScriptStep(int index)
                 role.y,
                 move.x,
                 move.y
-            );  // 0x004A1D10 + 0x004A1D20
+            );  // 0x004B2D4C + 0x004B2D5C
         }
 
         role.act.speed = 0;
@@ -1492,8 +1492,8 @@ int RolePath::ScriptStep(int index)
 // bits 0..3 or no path the role is put there at once, otherwise a scripted move (mode 2) follows a new path, its steps
 // off the camera skipped. Option 0x8000 lets the event go on meanwhile. 0 when there is no free move or the target is
 // past the map.
-// swd3e.exe EH funclet (tail) of 0x00432800, swd32 0x004982D0 (EH unwind: the path finder, freed by its destructor)
-// swd3e.exe EH funclet (tail) of 0x00432800, swd32 0x004982D8 (EH handler of 0x0042DAF0)
+// swd3e.exe EH funclet (tail) of 0x00432800, 0x004A9670 (EH unwind: the path finder, freed by its destructor)
+// swd3e.exe EH funclet (tail) of 0x00432800, 0x004A9678 (EH handler)
 int RolePath::MoveRoleTo(int index, u16 x, u16 y, u32 options, i16 act, i16 action, i16 direction)
 {
     Game& owner = this->game;
@@ -1589,14 +1589,14 @@ int RolePath::MoveRoleTo(int index, u16 x, u16 y, u32 options, i16 act, i16 acti
     {
         if (state.GameFlag(GameState::DebugReports) && (options & RolePath::PlaceMask) == 0)
         {
-            // The options (pushed last, 0x0042DDA3) fill the GUID of the text; the id (0x0042DDA2) is left over.
+            // The options (0x00432AB4) fill the GUID of the text; the id (0x00432AB3) is left over.
             ErrorBox(
                 this->game.errors,
                 u8"警告:對話系統(isetpos:mode0)",
                 u8"GUID(%d) 找不到可以使用的路徑\n角色將會直接移到目的地",
                 options,
                 this->RoleId(static_cast<u32>(index))
-            );  // 0x004A1CB8 + 0x004A1CD8
+            );  // 0x004B2CF4 + 0x004B2D14
         }
 
         owner.field.ClearRoleCells(role, leader);

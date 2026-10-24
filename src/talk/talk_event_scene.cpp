@@ -1463,7 +1463,7 @@ bool Talk::RunSceneCommand(EventRun& run)
 
             if (!this->keepArchiveClosed)
             {
-                owner.field.ReopenArchive();
+                owner.field.ReopenArchive(owner.currentMap);
             }
 
             this->keepArchiveClosed = false;

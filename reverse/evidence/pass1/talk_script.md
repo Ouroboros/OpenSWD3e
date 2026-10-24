@@ -31,3 +31,21 @@
 ## 0x0040BF20 Talk::AppendWindow — exact
 
 - 从对话窗表头（0x004C66B0 哨兵，+0x48 为 next）走到尾，挂上新窗口并清其 next。
+
+## 0x00433140 Talk::SeekScript — exact
+
+- 角色 +0x14 = 偏移、+0x20 = 0，Seek(偏移 + 0x200)，读 0x8000 字节到剧本缓冲（0x004D1DA8 指向），返回 1。databases.h 的 script 成员注释改为 0x004D1DA8。
+
+## 0x00433190 Talk::OpenScript — exact
+
+- 关闭 0x004C2FA0，"%sTalk%d.dat"（安装目录，序号/2000+1）只读打开；失败时 “劇情資料(1)無法讀取/%s”（0x004B2D94）复制到 0x004C4658，第 9 字节改为 序号/2000+'1'，以 “檔案開啟”（0x004B2D88）报（%s 无参数，偏差已登记），发 WM_DESTROY（Game::Destroy），返回 0。
+- 成功：Seek(序号%2000×4 + 0x200) 读偏移，写 +0x14、+0x20 = 0，Seek(偏移 + 0x200) 读 0x8000 字节，返回 1。
+
+## 0x00433440 Talk::CommandsRole — exact
+
+- 指令字为 0xA、0xB、0x2D 时 FindRoleOrPlayer(第二字) 找到且槽号等于参数返回 1，否则 0。
+
+## 0x00433590 Talk::RoleVariable、0x00433620 Talk::FindRoleRecord — exact
+
+- FindRoleRecord：从 0x004C65F0 起每 0x18 字节，首 dword 为 −1 结束返回 0；+2 字等于 id 时返回该记录。
+- RoleVariable：无记录返回 0；记录 +0x16 字：模式 1 读（变量 1 低字节、2 高字节，零扩展）；模式 2 写（只换对应字节）；其余不动；返回 id。数据截断时的处理是重建的边界保护。

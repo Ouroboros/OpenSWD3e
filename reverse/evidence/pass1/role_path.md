@@ -59,3 +59,26 @@
 ## 0x00405220 RolePath::RunScript — 第一遍复核 exact（TileStart 修改后）
 
 - FollowLeader 验证时修改了共用的 RolePath::TileStart（余数不能被步长整除时 Hang，原循环 0x004057E6／0x00405806 同样永不结束），RunScript 指令 0x18 的对齐调用受影响，恢复为待复核后重新核对：0x00405796..0x00405830 先判低 4 位、ClearRoleCells、取方向字节、按 0x004AA408／0x004AA428（与 StepX/StepY 相同）逐次减到格上、RemoveRole，与实现一致；函数其余部分源码未改动，结论维持。
+
+## 0x00432630 RolePath::ResumeMove — exact
+
+- 角色无 0x80000000 时返回 1。找 role == 序号且种类（+0x1B 低 4 位）> 1 的移动记录（72 项），找不到返回 0。
+- 记录的下一个角色（+8）为 0xFFFF 时：种类不为 1 即 Clear（0x0040E0B0），返回 1。否则 role/x/y = next 三字，step = 0，种类 = 1（&0xF1|1 与 SetKind 相同），FindPath(角色 x, y, 目标 x, y, act 宽 +0x2C, 高 +0x30, 方向表 +0x1C)；不为 1 时以 “對話系統(unlock)”（0x004B2C5C）、“路徑無法還原 >> RId(%d)\n Start(%d/%d) Dest(%d/%d)”（0x004B2C70）报（序号、x>>4、y>>4、目标/16），返回 1。EH 尾 0x004A9650／0x004A9658 为寻路对象析构，注释改为 swd3e 地址。
+
+## 0x00432800 RolePath::MoveRoleTo — exact
+
+- 去 0x2000000。控制角色：行 = (y>>4)−1，按两组步长对齐（AlignPlayer），清 0x004D1288、键表 0x200 字节、0x004D0E80、0x004C2B64、0x004C2B60，RemoveRole(id, 层, 行, 0)。
+- 找 role == 序号的记录（任意种类）：种类 1 时写 act/action/direction、next = 当前三字，选项 0x8000 时去 0x80；角色不在格点时 ClearRoleCells，非控制角色按当前方向退回格点并 RemoveRole（第 133 行偏差）。
+- 选项低 4 位为 0 且没有记录时找空记录；仍没有：旗标 2 且低 4 位为 0 时报 “警告:對話系統(isetpos:mode0)”（0x004B2CF4／0x004B2D14，参数为选项与 RoleId），直接放到目的地、重标格子、RemoveRole(…, 0, 0)，控制角色停键、镜头未锁（0x004E5820 位 2）时居中，返回 0。
+- 记录写入 act/action/direction、role、step 0、x、y，种类 2（&0xF2|2），0x8000 时去 0x80；x > 宽×16 或 y > 高×16（无符号）返回 0。低 4 位非 0：步长与速度清零、放到目的地后标格子、居中、RemoveRole，置 0x80000000 返回 1。否则 0x40000 时 SetMask(0)，FindPath 失败报 “對話系統(isetpos)”（0x004B2CA4／0x004B2CB8，参数 记录号、RoleId、起点、终点格）后同样直接放置。
+- 成功：ClearRoleCells，可见范围 左−0xA0、上−0x50（负数取 0）、右+0xA0、下+0xA0，严格在范围内或方向 0xFF 为止跳过步（每步 4×步长），范围内时朝向取 Facing，到终点时套用 act/action/direction（−1 不改）；step |= 0x8000，重算格子、标格子、RemoveRole，置 0x80000000 返回 1。
+- 只改注释：错误串地址、EH 尾地址、walkStepX（0x004C2B60）与 screenFlags（0x004E5820）的成员注释。
+
+## 0x00432F90 RolePath::ScriptStep — exact
+
+- 找 role == 序号且种类 2 的记录，没有返回 0。当前方向（step & 0x7FFF）为 0xFF：位置与目标不同时报 “對話系統(iMove)”（0x004B2D4C）“沒有到達終點\nGUID(%d)\nrx%d,ry%d\ndx%d,dy%d”（0x004B2D5C；id、x、y、目标 x、y），速度清零、去 0x44000000，控制角色停键并按镜头锁定居中，返回 2。
+- 否则无 0x40000 时 ProbeCells(格子, 宽, 高, 0x40000000)，step |= 0x8000、尝试次数 +1，方向未被挡时去 0x8000、写两步长、次数清零；置 0x40000000 返回 1。注释地址改为 swd3e。
+
+## 0x004332A0 RolePath::HoldRole — exact
+
+- 控制角色：行 = (y>>4)−1、对齐、清四个步长（不清键表）、RemoveRole(id, 层, 行, 0)。找 role == 序号的记录：种类 1 时 step |= 0x8000、next = 当前三字；不在格点时 ClearRoleCells，非控制角色退回格点并 RemoveRole。置 0x80000000 返回 1。

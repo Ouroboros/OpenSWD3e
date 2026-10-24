@@ -50,8 +50,8 @@ void PutDword(std::array<u8, Size>& bytes, std::size_t at, u32 value)
 // swd3e.exe 0x004352D0: the `width` x `height` picture `pixels` saved as a 24-bit BMP named `fileName` (the pixels
 // converted back to RGB555 in a copy, rows bottom up padded to 4 bytes; swd3e no longer serves the audio while it
 // writes); the file size and the pixel offset are written into the header last. 0 when the file does not open.
-// swd3e.exe EH funclet (tail) of 0x004352D0, swd32 0x004982F0 (EH unwind: the cFile, closed by its destructor)
-// swd3e.exe EH funclet (tail) of 0x004352D0, swd32 0x004982F8 (EH handler of 0x004303D0)
+// swd3e.exe EH funclet (tail) of 0x004352D0, 0x004A9690 (EH unwind: the cFile, closed by its destructor)
+// swd3e.exe EH funclet (tail) of 0x004352D0, 0x004A9698 (EH handler)
 int SaveScreenshot(
     const Painter& painter,
     std::span<const u16> pixels,

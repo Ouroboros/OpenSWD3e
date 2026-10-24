@@ -673,7 +673,7 @@ private:
     Notices notices;
     i32 scrollStepX = 0;        // 0x004D0E80 the step of the camera and the controlled role across (-1, 0, 1)
     i32 scrollStepY = 0;        // 0x004D1288 and down
-    i32 walkStepX = 0;          // swd32 0x004A9488 the step of the controlled role alone across
+    i32 walkStepX = 0;          // 0x004C2B60 the step of the controlled role alone across
     i32 walkStepY = 0;          // 0x004C2B64 and down
     i32 lastPointerAction = 0;  // 0x004E6D48
     Menu menu;

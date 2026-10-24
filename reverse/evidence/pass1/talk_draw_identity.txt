@@ -1,0 +1,72 @@
+00433440 vs swd32 0042E740: same (24 instructions)
+00433720 vs swd32 0042E850: same (437 instructions)
+00435080 vs swd32 00430180: same (59 instructions)
+00435130 vs swd32 00430230: same (60 instructions)
+004351F0 vs swd32 004302F0: same (24 instructions)
+00435250 vs swd32 00430350: same (34 instructions)
+004357C0 vs swd32 004308C0: same (216 instructions)
+00435A60 vs swd32 00430B60: same (38 instructions)
+00435AE0 vs swd32 00430BE0: same (55 instructions)
+00435B60 vs swd32 00430C60: same (46 instructions)
+00435BF0 vs swd32 00430CF0: same (11 instructions)
+00435C10 vs swd32 00430D10: same (25 instructions)
+00435C50 vs swd32 00430D50: same (17 instructions)
+00435C80 vs swd32 00430D80: same (102 instructions)
+00435DB0 vs swd32 00430EB0: same (106 instructions)
+00435EF0 vs swd32 00430FF0: same (131 instructions)
+00436050 vs swd32 00431150: same (41 instructions)
+mapping (54 symbols):
+  0040C4D0 -> 0040C0D0
+  0040DFC0 -> 0040DC50
+  0040DFF0 -> 0040DC80
+  00417820 -> 00416FF0
+  00417A60 -> 004170E0
+  00435080 -> 00430180
+  00436720 -> 004315D0
+  00436C80 -> 004321E0
+  0043A120 -> 00435660
+  0043A130 -> 00435670
+  0043B590 -> 00436AD0
+  0043DA70 -> 00487C10
+  0043DAB0 -> 004885A0
+  004A10E8 -> 00489654
+  004A14EC -> 00489B20
+  004A19E5 -> 00489D90
+  004AF720 -> 0049E0C8
+  004AF760 -> 0049E108
+  004B1E8C -> 004A0E74
+  004B6E00 -> 004A5DC4
+  004B6E0C -> 004A5DD0
+  004C2A9C -> 004A93D4
+  004C2FF0 -> 004A9918
+  004C31B0 -> 004A9A30
+  004C31B8 -> 004A9A38
+  004C31E4 -> 004A9A64
+  004C31FA -> 004A9A7A
+  004C31FC -> 004A9A7C
+  004C3658 -> 004A9ED0
+  004C5130 -> 004AB998
+  004D1298 -> 004B7930
+  004D12B0 -> 004B7948
+  004D3F9C -> 004BAB78
+  004D3FA0 -> 004BAB7C
+  004E5598 -> 004C97E8
+  004E559C -> 004C97EC
+  004E6B50 -> 004CAD20
+  004E6D58 -> 004CC2F0
+  004E6D64 -> 004CC2F8
+  004ED9BC -> 004CD730
+  004EDA44 -> 004CD76C
+  004F4850 -> 004CF740
+  004F48D0 -> 004CF7C0
+  MessageBoxA -> MessageBoxA
+  SendMessageA -> SendMessageA
+  V -> V
+  lpString -> lpString
+  lstrlenA -> lstrlenA
+  movsb -> movsb
+  movsd -> movsd
+  stosb -> stosb
+  stosd -> stosd
+  wsprintfA -> wsprintfA
+  xmmword_4C5118 -> xmmword_4AB980

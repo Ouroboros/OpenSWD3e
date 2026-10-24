@@ -475,14 +475,14 @@ i32 Field::ScreenTop() const
 
 // swd3e.exe 0x00433650: HUGE.lmf opened again after a map movie or command 0xC2 closed it (the minimal installation's
 // from the CD after a CD check in the original; the rebuild reads the installation's, see deviations.md). A file that
-// cannot be opened is only logged.
-void Field::ReopenArchive()
+// cannot be opened is only logged with the map shown.
+void Field::ReopenArchive(int map)
 {
     const std::u8string path = PathFormat("%s%s", {this->config.installDirectory, kLmf});
 
     if (!this->cache.lmf.Open(path, File::Disposition::OpenExisting, File::Access::Read))
     {
-        ErrorLog(u8"LMF can't open:%s", path);
+        ErrorLog(u8"Load(%d)  ,LMF can't open:%s", map, path);  // 0x004B21AC
     }
 }
 

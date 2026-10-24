@@ -427,7 +427,7 @@ struct Scene
     i32 followerCount = 0;          // swd32 0x004BABA0 one past the last follower listed (slot 0 unused)
     i32 mapWalkSpeed = 0;           // swd32 0x004C8BD8 the walking speed of the map
     u16 weatherActions = 0;         // 0x004E55A6 how many actions follow it
-    i32 screenFlags = 0;            // swd32 0x004C9A18 ScreenFlag bits
+    i32 screenFlags = 0;            // 0x004E5820 ScreenFlag bits
     i32 encounterSteps = 0;         // swd32 0x004C9A20 steps on the map since the last battle (bit 31 aside)
     i32 spotlightTargetY = 0;       // 0x004E6CC4
     i32 layerTick = 0;              // swd32 0x004CC2DC frames the layer has shown

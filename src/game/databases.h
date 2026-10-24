@@ -29,7 +29,7 @@ public:
     const u8* pathData = nullptr;  // 0x004C6338 the mapped path.dat
     File story;                    // 0x004C2FA0
     std::vector<u8> mapsData;      // 0x004E5818 maps.dat from offset 0x200
-    std::vector<u8> script;        // swd32 0x004B8860 0x8000 bytes: the script of the running event
+    std::vector<u8> script;        // 0x004D1DA8 (pointer) 0x8000 bytes: the script of the running event
 };
 
 // The records of the maps.dat tables (reverse/analysis/maps-dat.md); offsets in bytes unless named words.

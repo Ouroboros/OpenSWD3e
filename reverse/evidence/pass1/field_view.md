@@ -136,3 +136,8 @@
 ## 0x004172A0 Game::NameBoxFrame — exact
 
 - 0x004D1404 位 6 未置返回 0（角色序号越界与空框补登 deviations.md）。左键按下的第一帧：Y<0x104 时 Y>0xEC 且 X∈(0x11C,0x154) 选姓、X∈(0x174,0x1AE) 选名；Y∈(0x116,0x12E) 且 X∈(0x144,0x1AE) 选字号（无符号比较）。按键槽 2 第一帧时 姓→名→字号→姓 轮换。三个框依次 DrawTextInput（当前框、仅姓带图）。结果 = 当前框 GetResult；左键第一帧点在 (0x178,0x1B6)×(0x134,0x148) 或结果为 1 时：名字记录（0x004E4C30+32×角色）取回 0x004E4AF8 的原名，三部分以 CopyText 写入 +0、+6（各 4 字节）、+0xC（8 字节），三个框析构释放、指针与当前框清空；结果为 2 时不取名；这两种情况都清旗标 0x50、0x004D1404 位 6 与命名角色。返回 1。
+
+## hash 配对一组（0x00433440..0x00436050）— exact
+
+- asm_identity.py 结果见 talk_draw_identity.txt：0x00433440 CommandsRole、0x00433720 DrawWindowFrame、0x00435080 FillCellMark、0x00435130 MarkCells、0x004351F0 DrawDebugText、0x00435250 DrawColoredText、0x004357C0 DrawTimer、0x00435A60 StartTimer、0x00435AE0 ParseNumber、0x00435B60／0x00435BF0 ScriptObject 构造与析构、0x00435C10 MoveTo、0x00435C50 CopyScreen、0x00435C80 Refract、0x00435DB0 Step、0x00435EF0 Splash、0x00436050 MaintenanceAssert 与 swd32 对应函数逐条相同（54 个地址一一对应）。
+- 源码函数体与 swd3-rebuild 中已为 assembly_exact 的版本逐行相同，只有 MarkCells 不同：外传版本按汇编读镜头 0x004C5118 左上（(左+16)>>4 + 宽×((上+16)>>4)），行 28、列 38（x 16..0x26E），偏移参数只取低 4 位；与汇编一致。
