@@ -44,6 +44,18 @@ public:
 
     void DrawItemListAdvance(int x, int y, int cursor, int top, Scene& scene);
     void DrawObjectStatsAdvance(int x, int y, Scene& scene);
+    void DrawRefineStatsAdvance(int x, int y, Scene& scene);
+    int DrawChargePanelAdvance(int x, int y, int cursor, Scene& scene);
+    void DrawEscortFusionListAdvance(int x, int y, Scene& scene);
+    void DrawTitledItemListAdvance(
+        int x,
+        int y,
+        int cursor,
+        int top,
+        int category,
+        std::u8string_view title,
+        Scene& scene
+    );
 
     void DrawVictoryPanelAdvance(Scene& scene);
 

@@ -111,6 +111,7 @@ public:
     int ListedObject(int index, std::string& name, u16& count);
     ItemNode* StepItem();
     u16 TakeRandomItem(BattleServices& services);
+    int Pose36Frame(BattleServices& services);
     static u32 CategoryKinds(int category, int categories);
     ItemNode* StepSkill();
     void CountSkills(int category, int type, u8& count);

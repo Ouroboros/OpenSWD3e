@@ -41,9 +41,10 @@ constexpr i32 kWaitState5 = 5;
 constexpr i32 kWaitState8 = 8;
 constexpr i32 kWaitState1B = 0x1B;
 constexpr i32 kWaitState1E = 0x1E;
-constexpr i32 kWaitState29 = 0x29;  // swd3e
-constexpr i32 kWaitState50 = 0x50;  // swd3e
-constexpr i32 kTurnState9 = 9;      // swd3e: prompts as kTurnState
+constexpr i32 kWaitState29 = 0x29;     // swd3e
+constexpr i32 kWaitState50 = 0x50;     // swd3e
+constexpr i32 kMenuSlideStart = 0x50;  // BattleState::menuSlide when a list of state 0x29 or 0x50 scrolls (swd3e)
+constexpr i32 kTurnState9 = 9;         // swd3e: prompts as kTurnState
 constexpr int kNoUnitPointer = 0x238C;
 constexpr int kUnitPointer = 0x238D;
 constexpr int kWaitPointer = 0x238E;
@@ -57,7 +58,13 @@ constexpr u16 kGrayBandCloses = 2;   // BattleState::grayBandState
 constexpr u16 kYinYangHitPicture = 0x2389;
 constexpr i32 kYinYangMost = 0x270F;  // the number shown is at most 9999
 constexpr u8 kYinYangDefeatPose = 6;
-constexpr u16 kWhitePixel = 0xFFFF;  // the frame whitened by a defeat (0xFF bytes)
+constexpr u16 kWhitePixel = 0xFFFF;       // the frame whitened by a defeat (0xFF bytes)
+constexpr i8 kTargetFewestHitPoints = 1;  // PickRoleTarget (swd3e): the criteria
+constexpr i8 kTargetMostSpirit = 2;
+constexpr i8 kTargetMostStamina = 3;
+constexpr i8 kTargetLeastAgility = 4;
+constexpr i8 kTargetLeastDefense = 5;
+constexpr i8 kTargetMostAttack = 6;
 constexpr int kNoTurnPointer = 0x2393;
 constexpr int kMarkEffect = 0x23A0;
 constexpr i32 kListPage = 7;  // a back key scrolls a list up by this
@@ -102,10 +109,7 @@ constexpr std::size_t kNextSpecial = 3;    // the next special skill with bit 31
 constexpr i32 kNoSpecial = -1;
 constexpr u32 kSpecialMark = 0x80000000u;
 constexpr u32 kSpecialIdMask = 0x7FFFFFFF;
-constexpr u16 kSpecialType = 0x1F;
-constexpr int kSpecialsFlag = 0x1BB0;
-constexpr u32 kBarredSpecialA = 0x665;
-constexpr u32 kBarredSpecialB = 0x669;
+constexpr u16 kSpecialType = 0x14;  // the skill type LearnSpecials reads (swd3e; swd32 0x1F)
 
 constexpr i32 kLastMenuCommand = 8;  // the up key
 constexpr i32 kEscortRows = 2;
@@ -981,6 +985,111 @@ int Game::YinYangAttack(int role)
     return 1;
 }
 
+// swd3e.exe 0x0046A320: the party role (1-based) an enemy aims at by `criterion` (its low byte): 1 the fewest hit
+// points, 2 the most spirit, 3 the most stamina, 4 the least agility, 5 the least defence, 6 the most attack bonus
+// (16-bit compares, signed for 2 and 3, unsigned for 4..6); 0 for other criteria or without a party role to aim at
+// (none past the escorts and unk5770D4). The reference is the value of the first standing party member; every later
+// role (from the second) that beats it is taken in turn, so the last one does.
+u32 Game::PickRoleTarget(i16 criterion)
+{
+    BattleState& battle = this->battleState;
+    const auto kind = static_cast<i8>(criterion);
+
+    if (kind < kTargetFewestHitPoints || kind > kTargetMostAttack)
+    {
+        return 0;
+    }
+
+    auto value = [kind](const BattleRole& role) -> i32
+    {
+        u16 maximum = 0;
+        u16 have = 0;
+        i32 hitPoints = 0;
+        i32 most = 0;
+
+        switch (kind)
+        {
+            case kTargetFewestHitPoints:
+                role.GetHitPoints(hitPoints, most);
+                return hitPoints;
+
+            case kTargetMostSpirit:
+                role.GetSpirit(maximum, have);
+                return static_cast<i16>(have);
+
+            case kTargetMostStamina:
+                role.GetStamina(maximum, have);
+                return static_cast<i16>(have);
+
+            case kTargetLeastAgility:
+                return static_cast<u16>(role.RoleAgility());
+
+            case kTargetLeastDefense:
+                return static_cast<u16>(role.Defense());
+
+            default:
+                return role.RoleAttackBonus();
+        }
+    };
+
+    auto beats = [kind](i32 candidate, i32 reference)
+    {
+        switch (kind)
+        {
+            case kTargetFewestHitPoints:
+            case kTargetLeastAgility:
+            case kTargetLeastDefense:
+                return candidate < reference;
+
+            default:
+                return candidate > reference;
+        }
+    };
+
+    const u32 limit = battle.roleCount - battle.unk5770D4 - battle.escortCount;
+
+    if (limit < 1)
+    {
+        return 0;
+    }
+
+    u32 chosen = 1;
+    i32 reference = value(this->battleRoles[0]);
+
+    while (true)
+    {
+        const BattleRole& role = this->battleRoles[chosen - 1];
+
+        if (!role.IsDefeated() && role.PartyMember() != 0)
+        {
+            break;
+        }
+
+        // The next role's value (past the ten roles the original reads after them; none is needed then).
+        if (chosen < this->battleRoles.size())
+        {
+            reference = value(this->battleRoles[chosen]);
+        }
+
+        if (++chosen > limit)
+        {
+            return 0;
+        }
+    }
+
+    for (u32 at = 1; at < battle.roleCount; ++at)
+    {
+        const BattleRole& role = this->battleRoles[at];
+
+        if (!role.IsDefeated() && role.PartyMember() != 0 && beats(value(role), reference))
+        {
+            chosen = at + 1;
+        }
+    }
+
+    return chosen;
+}
+
 // swd3e.exe 0x0046ACB0: the next slot record taken into `taken`: the records of held roles (IsHeld) at the
 // front are passed over, the first role (unit 20) not counting as one; a used record taken is removed (the later ones
 // move up, the free ones after the used ones cleared). The original reads past the records when all are held; the
@@ -1185,7 +1294,8 @@ void Game::NextRoleTurn()
 }
 
 // swd3e.exe 0x0046E630: the back key in a list (kBackSound): battle state 2 scrolls listScroll up by kListPage, states
-// 4 and 0x1B roleListScroll (state 4 also keeps roleListRow and the scroll for role listRole); each first only marks
+// 4, 0x1B, 0x29 and 0x50 roleListScroll (state 4 also keeps roleListRow and the scroll for role listRole, 0x29 and 0x50
+// slide in again from menuSlide 0x50); each first only marks
 // its list (pageListRow, roleListRow) unless unk53BD9C.
 void Game::ScrollListBack()
 {
@@ -1221,6 +1331,23 @@ void Game::ScrollListBack()
     {
         if (battle.result != kListState1B)
         {
+            // swd3e: the lists of states 0x29 and 0x50 slide in again.
+            if (battle.result != kWaitState29 && battle.result != kWaitState50)
+            {
+                return;
+            }
+
+            this->audio.PlaySound(kBackSound, this->config.soundVolume);
+            battle.menuSlide = kMenuSlideStart;
+
+            if (battle.unk53BD9C == 0 && battle.roleListRow != 1)
+            {
+                battle.roleListRow = 1;
+                return;
+            }
+
+            scroll(battle.roleListScroll);
+            battle.unk53BFB8 = 1;
             return;
         }
 
@@ -1253,7 +1380,8 @@ void Game::ScrollListBack()
 }
 
 // swd3e.exe 0x0046E820: the forward key in a list (kBackSound): battle state 2 scrolls listScroll down by kListPage
-// within listEntries entries (nothing below a page), states 4 and 0x1B roleListScroll within roleListEntries; each
+// within listEntries entries (nothing below a page), states 4, 0x1B, 0x29 and 0x50 roleListScroll within
+// roleListEntries (0x29 and 0x50 sliding in again from menuSlide 0x50, otherwise as 0x1B); each
 // first only marks the last row of its page (pageListRow, roleListRow, at most the entries) unless unk53BD9C. A list
 // shorter than a page goes back to 0 with the mark on its end. State 4, and the first mark of state 0x1B (the original
 // shares that code), keep the mark and the scroll for role listRole.
@@ -1308,12 +1436,20 @@ void Game::ScrollListForward()
         return;
     }
 
-    if (battle.result != kListState4 && battle.result != kListState1B)
+    const bool slides = battle.result == kWaitState29 || battle.result == kWaitState50;
+
+    if (battle.result != kListState4 && battle.result != kListState1B && !slides)
     {
         return;
     }
 
     this->audio.PlaySound(kBackSound, this->config.soundVolume);
+
+    // swd3e: the lists of states 0x29 and 0x50 slide in again, as state 0x1B otherwise.
+    if (slides)
+    {
+        battle.menuSlide = kMenuSlideStart;
+    }
 
     if (battle.unk53BD9C == 0 && battle.roleListRow != kListPage)
     {
@@ -1334,7 +1470,7 @@ void Game::ScrollListForward()
         battle.roleListRow = battle.roleListEntries;
     }
 
-    if (battle.result == kListState1B)
+    if (battle.result == kListState1B || slides)
     {
         battle.unk53BFB8 = 1;
         return;
@@ -2156,12 +2292,58 @@ int Game::DrawObjectStats(int x, int y)
     return x;
 }
 
-// swd3e.exe 0x00476200: the 戰鬥勝利 panel. The first time (the gold not yet given, bit 15 of unk53BF12): the music
-// and the sounds stop, kVictorySound plays; each enemy's drop is added to the inventory as pending and to the loot
-// list (a new object at the end, at most LootSlots of them); each party role standing (not forced) below the level
-// cap (timingWindow) gains unk53BF14 experience, every worn accessory unk53BF16 proficiency (accessoryGained when one
-// counts), its battle count 1 (2 against three enemies or more), its effects end and its main act restarts; then the
-// gold is given. Once the panel has grown, the experience, the gold and the proficiency are shown.
+// swd3e.exe 0x00478C50: the refine stats panel: the panel act run, the menu slide cleared, a quarter-dark box and a
+// frame, then 攻, 防 and 敏 of the selected object and the object given back at guardCursor added up (as dwords: each
+// sum carries the next field of the second object 65536 times over), each followed by an arrow (0x23B6 frame 0x13).
+// Returns x.
+int Game::DrawRefineStats(int x, int y)
+{
+    smooth::Scene scene;
+    smooth::TurnFrame(*this).DrawRefineStatsAdvance(x, y, scene);
+    scene.Show(this->battleServices);
+    return x;
+}
+
+// swd3e.exe 0x00478FA0: the 蓄勁 panel of the current role: a quarter-dark box with two frames, the role's icon, its
+// charge count ("X%2d", unk2EB2 + 1) and the choices 繼續 and 放勁 in columns (繼續 dark once unk2EB2 reaches a tenth
+// of the proficiency of kind 0x27), choice `cursor` drawn again a pixel up and left on the highlight. Returns 2.
+int Game::DrawChargePanel(int x, int y, int cursor)
+{
+    smooth::Scene scene;
+    const int result = smooth::TurnFrame(*this).DrawChargePanelAdvance(x, y, cursor, scene);
+    scene.Show(this->battleServices);
+    return result;
+}
+
+// swd3e.exe 0x004753C0: the 護駕融合 panel: as the 佈置護駕 panel (DrawEscortList), an escort with flag 26B8 bit 17
+// dark and the refine stats (DrawRefineStats) by the escort counted guardCursor from the last, the gradient bar on row
+// guardCursor drawn after the names.
+void Game::DrawEscortFusionList(int x, int y)
+{
+    smooth::Scene scene;
+    smooth::TurnFrame(*this).DrawEscortFusionListAdvance(x, y, scene);
+    scene.Show(this->battleServices);
+}
+
+// swd3e.exe 0x00474710: the object list of `category` with `title` at (x, y): the panel act restarted, a quarter-dark
+// box with a title and a body frame, its scroll bar past 7 entries, then from entry `top` + 1 up to 7 objects with
+// their counts ("%2d", light). Row `cursor` (from 1) is drawn again a pixel up and left under a gradient bar, its
+// entry becomes listCursor, and category 3 shows DrawObjectStats at x 0x194.
+void Game::DrawTitledItemList(int x, int y, int cursor, int top, int category, std::u8string_view title)
+{
+    smooth::Scene scene;
+    smooth::TurnFrame(*this).DrawTitledItemListAdvance(x, y, cursor, top, category, title, scene);
+    scene.Show(this->battleServices);
+}
+
+// swd3e.exe 0x00476200: the 戰鬥勝利 panel. The first time (the gold not yet given, bit 15 of unk53BF12): the meter is
+// reset, the music and the sounds stop, kVictorySound plays; unless unk5772F8 each enemy's drop is added to the
+// inventory as pending and to the loot list (a new object at the end, at most LootSlots of them); the roulette's
+// experienceBonus raises the experience and moneyTimes multiplies the gold; each party role (not auto, guest, ghost or
+// defeated) below the level cap (timingWindow) and not turned to stone gains unk53BF14 experience, and unless
+// unk5772F8 every worn accessory unk53BF16 proficiency (accessoryGained when one counts) and, with a next special, its
+// battle count 1 (2 against three enemies or more); its main act restarts and its effects end; then the gold is given
+// and the bonuses cleared. Once the panel has grown, the experience, the gold and the proficiency are shown.
 void Game::DrawVictoryPanel()
 {
     smooth::Scene scene;
@@ -2333,12 +2515,12 @@ void Game::DrawLearnedBox(std::u8string_view line, bool sound)
     scene.Show(this->battleServices);
 }
 
-// swd3e.exe 0x00477A00: each battle role standing (not forced) whose next special skill is not exhausted (battle
-// block [3] not -1) learns it once it has fought enough battles: its type 1 skills (from Party::skills by battle role
-// index, as in the original) set the battle block's needed battles ([2], the skill's unk44) and next special ([3],
-// its unk42 with bit 31). With [1] battles at least [2] and a next special (not 0x665 or 0x669 while game flag
-// kSpecialsFlag is set), the special is appended to the list, its name kept for the message (learnedPending,
-// levelUpRole the role) and the block restarted from it (-1 without a further one).
+// swd3e.exe 0x00477A00: the first battle role (not auto, guest, ghost or defeated) whose next special skill is not
+// exhausted (battle block [3] not -1) and has fought enough battles learns it: its first type 0x14 skill (from
+// Party::skills by party role) sets, while [3] is not yet marked, the battle block's needed battles ([2], the skill's
+// counterMax) and next special ([3], its unk42 with bit 31). With [1] battles at least [2] and a next special, the
+// special is appended to the list, its name kept for the message (learnedPending, levelUpRole the role) and the block
+// restarted from it (-1 without a further one); no other role learns in the same call.
 void Game::LearnSpecials()
 {
     BattleState& battle = this->battleState;
@@ -2346,39 +2528,32 @@ void Game::LearnSpecials()
     for (u32 index = 0; index < battle.roleCount; ++index)
     {
         BattleRole& role = this->battleRoles[index];
-        RoleBattleBlock& block = this->party.battleBlocks[static_cast<std::size_t>(battle.partyRoles[index])];
-        std::unique_ptr<ItemNode>& list = this->party.skills[index];
+        const auto partyRole = static_cast<std::size_t>(battle.partyRoles[index]);
+        RoleBattleBlock& block = this->party.battleBlocks[partyRole];
+        std::unique_ptr<ItemNode>& list = this->party.skills[partyRole];
 
-        if (role.autoControl == 1 || role.guestControl == 1 || role.IsDefeated() ||
+        // An empty list is read through a null pointer in the original.
+        if (role.AutoControl() == 1 || role.GuestControl() == 1 || role.Ghost() == 1 || role.IsDefeated() ||
             block.values[kNextSpecial] == kNoSpecial || list == nullptr)
         {
             continue;
         }
 
-        auto takeNext = [this, &battle, &block](u16 id)
+        for (ItemNode* node = list->next.get(); node != nullptr; node = node->next.get())
         {
-            this->database.LoadObject(battle.lastObject, id);
+            if (node->record.data.category != kSpecialType || block.values[kNextSpecial] < 0)
+            {
+                continue;
+            }
+
+            this->database.LoadObject(battle.lastObject, node->id);
             Database::FreeDescription(battle.lastObject);
             block.values[kNeededBattles] = battle.lastObject.data.counterMax;
             block.values[kNextSpecial] = static_cast<i32>(battle.lastObject.data.unk42 | kSpecialMark);
-        };
-
-        for (ItemNode* node = list->next.get(); node != nullptr; node = node->next.get())
-        {
-            if (node->record.data.category == kSpecialType)
-            {
-                takeNext(node->id);
-            }
         }
 
-        const auto next = static_cast<u32>(block.values[kNextSpecial]) & kSpecialIdMask;
-
-        if (block.values[kBattlesFought] < block.values[kNeededBattles] || next == 0)
-        {
-            continue;
-        }
-
-        if (this->state.GameFlag(kSpecialsFlag) && (next == kBarredSpecialA || next == kBarredSpecialB))
+        if (block.values[kBattlesFought] < block.values[kNeededBattles] ||
+            (static_cast<u32>(block.values[kNextSpecial]) & kSpecialIdMask) == 0)
         {
             continue;
         }
@@ -2408,6 +2583,8 @@ void Game::LearnSpecials()
         {
             block.values[kNextSpecial] = kNoSpecial;
         }
+
+        return;
     }
 }
 

@@ -6,6 +6,7 @@
 #include "battle/battle_hud.h"
 #include "battle/battle_hud_constants.h"
 #include "battle/battle_services.h"
+#include "config/config.h"
 #include "core/words.h"
 #include "crt/msvc.h"
 #include "draw/painter.h"
@@ -26,16 +27,20 @@ constexpr int kArrowAct = 0x2392;
 constexpr int kArrowTint = -4;  // the tint of all three channels of an arrow
 constexpr int kBodyInset = 4;
 constexpr int kBottomCapStyle = 2;
-constexpr u16 kCoinAct = 0x2329;
-constexpr i32 kCoinAction = 2;
+constexpr u16 kCoinAct = 0x239B;  // the coin toss (swd3e)
 constexpr u32 kCoinSides = 2;
 constexpr i32 kCoinSlowFrames = 0x19;  // the coin flips kCoinSlowdown times slower every kCoinSlowFrames frames
 constexpr int kCoinSlowdown = 2;
 constexpr u16 kCoinSound = 0x2E;
 constexpr u16 kCoinStopDelay = 0x40;
-constexpr u16 kCoinVolume = 1;
-constexpr i32 kCoinWinAction = 3;  // the coin showing the winning side
-constexpr int kCoinX = 0x104;      // a coin is drawn kCoinStep further right on the winning side
+constexpr int kCoinFullZoom = 0x400;
+constexpr u16 kCoinStopSound = 0x117;
+constexpr u16 kCoinFaceFrames = 0x1E;  // the face shows this long
+constexpr u16 kCoinFaceSound = 0x197;
+constexpr i32 kCoinEndAction = 3;  // grows out at the end
+constexpr int kCoinEndGrowth = 5;
+constexpr int kCoinZoomStep = 0x3C;
+constexpr int kCoinX = 0x104;  // the centre of the coin
 constexpr int kCoinY = 0xC8;
 constexpr int kDecimal = 10;
 constexpr u32 kDigitFont =
@@ -662,65 +667,163 @@ int HudFrame::DrawCoinTossAdvance(Scene& scene)
         }
     }
 
-    ActState& state = hud.scrollAct;
-    state.id = kCoinAct;
-    state.action = LowWord(hud.coinState) == kWinningSide ? kCoinWinAction : kCoinAction;
+    ActState& spin = hud.scrollAct;
+    spin.id = kCoinAct;
+    spin.action = 0;
 
-    if (hud.acts.Run(state) == 0)
+    if (hud.acts.Run(spin) == 0)
     {
         return 0;
     }
 
-    const Picture* picture = hud.archive.GetPicture(state.frame, 0);
+    const Picture* picture = hud.archive.GetPicture(spin.frame, spin.picture);
 
+    // A missing picture is read through a null pointer in the original.
     if (picture != nullptr)
     {
+        if (hud.coinZoom < kCoinFullZoom)
+        {
+            painter.SetZoom(
+                picture->width >> 1,
+                picture->height >> 1,
+                kCoinFullZoom - hud.coinZoom,
+                kCoinFullZoom - hud.coinZoom
+            );
+        }
+
         painter.SetSource(*picture);
         painter.DrawPicture(
-            kCoinStep * LowWord(hud.coinState) + kCoinX,
-            kCoinY,
+            kCoinX - spin.x,
+            kCoinY - spin.y,
             picture->width,
             picture->height,
-            state.flags
+            spin.flags | Painter::ZoomCopy
         );
     }
 
-    u16 delay = 0;
-
-    if (++hud.coinFrames % kCoinSlowFrames != 0)
+    if (spin.hold == 0)
     {
-        delay = LowWord(hud.coinDelay);
-    }
-    else
-    {
-        delay = static_cast<u16>(kCoinSlowdown * hud.coinDelay);
-        hud.coinDelay = MakeWords(delay, delay);
-    }
+        u16 delay = 0;
 
-    if (delay < kCoinStopDelay)
-    {
-        auto countdown = HighWord(hud.coinDelay);
+        if (++hud.coinFrames % kCoinSlowFrames != 0)
+        {
+            delay = LowWord(hud.coinDelay);
+        }
+        else
+        {
+            delay = static_cast<u16>(kCoinSlowdown * hud.coinDelay);
+            ++spin.frameDelay;
+            hud.coinDelay = MakeWords(delay, delay);
+            spin.delay = spin.frameDelay;
+        }
 
-        if (--countdown == 0)
+        if (delay >= kCoinStopDelay)
+        {
+            hud.coinDelay = BattleHud::InitialCoinDelay;
+            hud.coinZoom = 0;
+
+            if (LowWord(hud.coinState) == kWinningSide)
+            {
+                hud.coinState = MakeWords(static_cast<u16>(HighWord(hud.coinState) + 1), LowWord(hud.coinState));
+            }
+
+            spin.hold = 1;
+            hud.audio.PlaySound(kCoinStopSound, services.config.soundVolume);
+            delay = LowWord(hud.coinDelay);
+        }
+
+        auto countdown = static_cast<u16>(HighWord(hud.coinDelay) - 1);
+
+        if (countdown == 0)
         {
             countdown = delay;
-            hud.coinState = MakeWords(HighWord(hud.coinState), LowWord(hud.coinState) == 0 ? u16{1} : u16{0});
-            hud.audio.PlaySound(kCoinSound, kCoinVolume);
         }
 
         hud.coinDelay = MakeWords(countdown, LowWord(hud.coinDelay));
+
+        if (spin.delay == 0)
+        {
+            hud.audio.PlaySound(kCoinSound, services.config.soundVolume);
+        }
+
         return 0;
     }
 
-    hud.coinDelay = BattleHud::InitialCoinDelay;
-    hud.coinFrames = 0;
+    ActState& face = hud.coinFaceAct;
+    face.id = kCoinAct;
 
-    if (LowWord(hud.coinState) == kWinningSide)
+    if (hud.coinFrames != 1)
     {
-        hud.coinState = MakeWords(static_cast<u16>(HighWord(hud.coinState) + 1), LowWord(hud.coinState));
+        face.action = static_cast<u32>(LowWord(hud.coinState)) + 1;
+
+        if (hud.acts.Run(face) == 0)
+        {
+            return 0;
+        }
+
+        const Picture* shown = hud.archive.GetPicture(face.frame, face.picture);
+
+        // A missing picture is read through a null pointer in the original.
+        if (shown != nullptr)
+        {
+            painter.SetSource(*shown);
+            painter.DrawPicture(kCoinX - face.x, kCoinY - face.y, shown->width, shown->height, face.flags);
+        }
+
+        const auto shownFrames = static_cast<u16>(HighWord(hud.coinDelay) + 1);
+        hud.coinDelay = MakeWords(shownFrames, LowWord(hud.coinDelay));
+
+        if (shownFrames > kCoinFaceFrames)
+        {
+            hud.audio.PlaySound(kCoinFaceSound, services.config.soundVolume);
+            face = ActState{};
+            hud.coinFrames = 1;
+            hud.coinDelay = MakeWords(1, LowWord(hud.coinDelay));
+        }
+
+        return 0;
     }
 
-    state = ActState{};
+    face.action = kCoinEndAction;
+
+    if (hud.acts.Run(face) == 0)
+    {
+        return 0;
+    }
+
+    const Picture* end = hud.archive.GetPicture(face.frame, face.picture);
+
+    // A missing picture is read through a null pointer in the original.
+    if (end != nullptr)
+    {
+        const int zoom = kCoinEndGrowth * hud.coinZoom + kCoinFullZoom;
+        painter.SetZoom(end->width >> 1, end->height >> 1, zoom, zoom);
+        DrawOptions& options = painter.Options();
+        options.tintRed = 0;
+        options.tintGreen = 0;
+        options.tintBlue = 0;
+        painter.SetSource(*end);
+        painter.DrawPicture(
+            kCoinX - face.x,
+            kCoinY - face.y,
+            end->width,
+            end->height,
+            Painter::ZoomCopy | Painter::Additive
+        );
+    }
+
+    hud.coinZoom += kCoinZoomStep;
+
+    if (hud.coinZoom < kCoinFullZoom)
+    {
+        return 0;
+    }
+
+    hud.coinFrames = 0;
+    hud.coinZoom = 0;
+    hud.coinDelay = MakeWords(1, LowWord(hud.coinDelay));
+    spin = ActState{};
+    face = ActState{};
     return 1;
 }
 

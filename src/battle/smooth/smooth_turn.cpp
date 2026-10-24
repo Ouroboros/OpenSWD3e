@@ -93,6 +93,13 @@ constexpr int kEscortTitleTop = 0xB4;
 constexpr int kEscortTitleBottom = 0xC4;
 constexpr int kEscortTitleX = 0xFC;
 constexpr std::u8string_view kEscortTitle = u8"佈置護駕";  // 0x004BF748
+constexpr std::u8string_view kFusionTitle = u8"護駕融合";  // 0x004BF754 (swd3e)
+constexpr int kFusionStatsX = 0x172;                       // the refine stats of the escort at guardCursor
+constexpr int kFusionStatsRow = 0x18;
+constexpr int kFusionStatsTop = 0xAA;
+constexpr int kTitledBoxHeight = 0xBC;  // DrawTitledItemList (swd3e)
+constexpr int kTitledScrollX = 0x192;
+constexpr int kTitledStatsX = 0x194;
 constexpr int kEscortBodyTop = 0xD4;
 constexpr int kEscortBodyBottom = 0x104;
 constexpr int kEscortBarLeft = 2;
@@ -176,6 +183,27 @@ constexpr u16 kTintedFame = 10;  // the fame from which the panel takes the tint
 constexpr std::u8string_view kAttackLabel = u8"攻:";   // 0x004BF8F0
 constexpr std::u8string_view kDefenseLabel = u8"防:";  // 0x004BF8EC
 constexpr std::u8string_view kAgilityLabel = u8"敏:";  // 0x004BF8E8
+constexpr int kRefineStatsWidth = 0x44;                // DrawRefineStats (swd3e)
+constexpr int kRefineStatsHeight = 0x40;
+constexpr int kRefineArrow = 0x23B6;  // the arrow after each value
+constexpr int kRefineArrowFrame = 0x13;
+constexpr int kRefineArrowX = 0x16;
+constexpr std::u8string_view kRefineAttack = u8"攻";   // 0x004BEFF0
+constexpr std::u8string_view kRefineDefense = u8"防";  // 0x004BEFDC
+constexpr std::u8string_view kRefineAgility = u8"敏";  // 0x004BEFD8
+constexpr u32 kWordBits = 16;
+constexpr u32 kHighWord = 0xFFFF0000u;
+constexpr int kChargeWidth = 0x6E;  // DrawChargePanel (swd3e)
+constexpr int kChargeHeight = 0x44;
+constexpr int kChargeFrameRight = 0x6A;
+constexpr int kChargeFrameBottom = 0x40;
+constexpr int kChargeIconOffset = 0x14;
+constexpr std::string_view kChargeCount = "X%2d";
+constexpr int kChargeCountX = 0x32;
+constexpr std::array<std::u8string_view, 2> kChargeChoices = {u8"繼續", u8"放勁"};  // 0x004BF66C
+constexpr int kChargeColumn = 0x30;
+constexpr int kChargeChoiceX = 8;
+constexpr int kChargeChoiceY = 0x2C;
 constexpr int kItemBarWidth = 0xCE;
 constexpr int kVictoryShadeExtra = 0x28;  // the 戰鬥勝利 panel
 constexpr int kVictoryTitleX = 0xF8;
@@ -183,6 +211,9 @@ constexpr std::u8string_view kVictoryTitle = u8"戰鬥勝利";  // 0x004BF7A8
 constexpr u16 kGoldGiven = 0x8000;                          // BattleState::unk53BF12: the gold of the battle is given
 constexpr u16 kGoldMask = 0x7FFF;
 constexpr u32 kManyEnemies = 3;
+constexpr int kVictoryPercent = 100;            // DrawVictoryPanel (swd3e): experienceBonus is in percent
+constexpr std::size_t kVictoryNextSpecial = 3;  // RoleBattleBlock: the next special (-1: none)
+constexpr i32 kVictoryNoSpecial = -1;
 constexpr std::size_t kGoldVariable = 0;
 constexpr int kVictoryBodyBottom = 0x11C;
 constexpr int kVictoryGrowDivisor = 2;
@@ -191,7 +222,7 @@ constexpr int kVictoryExperienceY = 0xDC;
 constexpr int kVictoryGoldY = 0xF0;
 constexpr int kVictoryProficiencyY = 0x104;
 constexpr std::u8string_view kExperienceLine = u8"每人得到經驗值:%d";   // 0x004BF794
-constexpr std::u8string_view kGoldLine = u8"得到銀幣:%d";               // swd32.exe 0x004A7A0C (unmatched in swd3e)
+constexpr std::u8string_view kGoldLine = u8"得到銀兩:%d";               // 0x004BF788
 constexpr std::u8string_view kProficiencyLine = u8"得到法寶經驗值:%d";  // 0x004BF774
 constexpr int kLevelUpTitleX = 0x108;
 constexpr std::u8string_view kLevelUpTitle = u8"升級";  // 0x004BF7C0
@@ -1614,6 +1645,468 @@ void TurnFrame::DrawObjectStatsAdvance(int x, int y, Scene& scene)
     }
 }
 
+// What Game::DrawRefineStats decides of the frame; the draws into `scene`.
+void TurnFrame::DrawRefineStatsAdvance(int x, int y, Scene& scene)
+{
+    Game& game = this->game;
+    BattleState& battle = game.battleState;
+    BattleMessages& messages = game.battleMessages;
+    SceneFont font(game.smallFont, scene);
+    messages.panelAct.id = BattleMessages::PanelAct;
+    messages.panelAct.action = 0;
+    game.acts.Run(messages.panelAct);
+    battle.menuSlide = 0;
+    Box(game.painter, x, y, kRefineStatsWidth, kRefineStatsHeight, 0, kListShade, kListShade, FillMode::Quarter, scene);
+    WindowFrame(
+        game.painter,
+        game.archive,
+        messages.panelAct.frame,
+        x + kObjectStatsFrameInset,
+        y + kObjectStatsFrameInset,
+        x + kObjectStatsFrameRight,
+        y + kObjectStatsFrameBottom,
+        0,
+        kListFrameBorder,
+        scene
+    );
+    BattleRole& role = game.battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
+    game.database.LoadObject(battle.lastObject, role.SelectedItemId());
+    Database::FreeDescription(battle.lastObject);
+    const ObjectData first = battle.lastObject.data;
+    battle.lastObject = ObjectRecord{};
+    game.database.LoadObject(battle.lastObject, battle.givenBack[static_cast<std::size_t>(battle.guardCursor)]);
+    Database::FreeDescription(battle.lastObject);
+    const ObjectData& second = battle.lastObject.data;
+
+    // The sums are of dwords in the original: each word with the next one after it (the second object's next field,
+    // the high word of the panel's x or y for the first) carried into the high word.
+    auto sum = [](u32 firstHigh, u16 firstValue, u16 secondValue, u16 secondNext)
+    {
+        return static_cast<i32>((firstHigh | firstValue) + ((static_cast<u32>(secondNext) << kWordBits) | secondValue));
+    };
+
+    const std::array<std::pair<std::u8string_view, i32>, 3> rows = {{
+        {kRefineAttack, sum(static_cast<u32>(x) & kHighWord, first.attack, second.attack, second.defense)},
+        {kRefineDefense,
+         sum(static_cast<u32>(first.agility) << kWordBits, first.defense, second.defense, second.agility)},
+        {kRefineAgility, sum(static_cast<u32>(y) & kHighWord, first.agility, second.agility, second.unk60)},
+    }};
+
+    const auto green = static_cast<u16>(game.painter.MakeColor(0, kObjectStatsValueGreen, 0));
+    int top = y + kObjectStatsFirstRow;
+
+    for (const auto& [label, value] : rows)
+    {
+        font.DrawText(
+            game.drawSurface,
+            x + kObjectStatsLabelX,
+            top,
+            Big5(label),
+            battle.lightColor,
+            TextFont::BoldOutline
+        );
+        font.DrawText(
+            game.drawSurface,
+            x + kObjectStatsValueX,
+            top,
+            WinFormat(kCostFormat, {value}),
+            green,
+            TextFont::BoldOutline
+        );
+        HudFrame(game.battleHud)
+            .DrawPictureFrameAdvance(kRefineArrow, kRefineArrowFrame, x + kRefineArrowX, top, scene);
+        top += kObjectStatsRowStep;
+    }
+}
+
+// What Game::DrawChargePanel decides of the frame; the draws into `scene`.
+int TurnFrame::DrawChargePanelAdvance(int x, int y, int cursor, Scene& scene)
+{
+    Game& game = this->game;
+    BattleState& battle = game.battleState;
+    BattleMessages& messages = game.battleMessages;
+    SceneFont font(game.largeFont, scene);
+    messages.panelAct.id = BattleMessages::PanelAct;
+    messages.panelAct.action = 0;
+    game.acts.Run(messages.panelAct);
+    Box(game.painter, x, y, kChargeWidth, kChargeHeight, 0, kListShade, kListShade, FillMode::Quarter, scene);
+    WindowFrame(
+        game.painter,
+        game.archive,
+        messages.panelAct.frame,
+        x + kListFrameInset,
+        y + kThrowTitleTop,
+        x + kChargeFrameRight,
+        y + kThrowTitleBottom,
+        0,
+        kListFrameBorder,
+        scene
+    );
+    WindowFrame(
+        game.painter,
+        game.archive,
+        messages.panelAct.frame,
+        x + kListFrameInset,
+        y + kListFrameTop,
+        x + kChargeFrameRight,
+        y + kChargeFrameBottom,
+        0,
+        kListFrameBorder,
+        scene
+    );
+    const auto roleIndex = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
+    BattleRole& role = game.battleRoles[roleIndex];
+    HudFrame(game.battleHud)
+        .DrawRoleIconAdvance(battle.partyRoles[roleIndex], x + kChargeIconOffset, y + kChargeIconOffset, scene);
+    const std::string count = WinFormat(kChargeCount, {role.Unk2EB2Shown()});
+    font.DrawText(
+        game.drawSurface,
+        x + kChargeCountX,
+        y + kThrowTitleTop,
+        count,
+        battle.lightColor,
+        TextFont::BoldShadow
+    );
+    CounterList& proficiency = game.party.fame.lists[Fame::ProficiencyList];
+    int choice = 0;
+
+    for (; choice < static_cast<int>(kChargeChoices.size()); ++choice)
+    {
+        const int left = kChargeColumn * choice + x;
+        const std::string name = Big5(kChargeChoices[static_cast<std::size_t>(choice)]);
+        font.DrawText(
+            game.drawSurface,
+            left + kChargeChoiceX,
+            y + kChargeChoiceY,
+            name,
+            battle.lightColor,
+            TextFont::BoldShadow
+        );
+
+        // The first choice (繼續) is dark once unk2EB2 reaches its share of the proficiency.
+        if (choice == 0 && !role.Unk2EB2BelowProficiency(proficiency))
+        {
+            font.DrawText(
+                game.drawSurface,
+                x + kChargeChoiceX,
+                y + kChargeChoiceY,
+                name,
+                battle.darkColor,
+                TextFont::BoldShadow
+            );
+        }
+
+        if (choice + 1 == cursor)
+        {
+            font.SetBackground(kHighlightBackground);
+            font.DrawText(
+                game.drawSurface,
+                left + kChargeChoiceX - 1,
+                y + kChargeChoiceY - 1,
+                name,
+                battle.lightColor,
+                TextFont::BoldShadow
+            );
+
+            if (choice == 0 && !role.Unk2EB2BelowProficiency(proficiency))
+            {
+                font.DrawText(
+                    game.drawSurface,
+                    x + kChargeChoiceX - 1,
+                    y + kChargeChoiceY - 1,
+                    name,
+                    battle.darkColor,
+                    TextFont::BoldShadow
+                );
+            }
+
+            font.SetBackground(TextFont::NoBackground);
+        }
+    }
+
+    return choice;
+}
+
+// What Game::DrawEscortFusionList decides of the frame; the draws into `scene`.
+void TurnFrame::DrawEscortFusionListAdvance(int x, int y, Scene& scene)
+{
+    Game& game = this->game;
+    const Scene::Still still(scene);
+    BattleState& battle = game.battleState;
+    BattleMessages& messages = game.battleMessages;
+    SceneFont font(game.mediumFont, scene);
+    messages.panelAct.id = BattleMessages::PanelAct;
+    messages.panelAct.action = 0;
+    game.acts.Run(messages.panelAct);
+    Box(game.painter,
+        kEscortShadeX,
+        kEscortShadeY,
+        kEscortShadeWidth,
+        kEscortShadeHeight,
+        0,
+        kListShade,
+        kListShade,
+        FillMode::Blend,
+        scene);
+    WindowFrame(
+        game.painter,
+        game.archive,
+        messages.panelAct.frame,
+        kEscortFrameLeft,
+        kEscortTitleTop,
+        kEscortFrameRight,
+        kEscortTitleBottom,
+        0,
+        kListFrameBorder,
+        scene
+    );
+    font.DrawText(
+        game.drawSurface,
+        kEscortTitleX,
+        kEscortTitleTop,
+        Big5(kFusionTitle),
+        kTitleColor,
+        TextFont::BoldOutline
+    );
+    WindowFrame(
+        game.painter,
+        game.archive,
+        messages.panelAct.frame,
+        kEscortFrameLeft,
+        kEscortBodyTop,
+        kEscortFrameRight,
+        kEscortBodyBottom,
+        0,
+        kListFrameBorder,
+        scene
+    );
+
+    for (int left = battle.escortCount; left > 0; --left)
+    {
+        const BattleRole& escort = game.battleRoles[battle.roleCount - static_cast<u32>(left)];
+        const int rowY = y + kSpecialRowHeight * (battle.escortCount - left) + kEscortRowTop;
+
+        if (escort.IsDefeated())
+        {
+            font.DrawText(
+                game.drawSurface,
+                x + kEscortNameX,
+                rowY,
+                Big5(kNoObject),
+                battle.darkColor,
+                TextFont::BoldOutline
+            );
+            continue;
+        }
+
+        font.SetAdvance(kEscortAdvance);
+        const std::string name = ObjectName(*escort.Data());
+
+        if (escort.Flag26B8Bit17() == 1)
+        {
+            font.DrawText(game.drawSurface, x + kEscortNameX, rowY, name, battle.darkColor, TextFont::BoldOutline);
+            continue;
+        }
+
+        font.DrawText(game.drawSurface, x + kEscortNameX, rowY, name, kWhite, TextFont::BoldOutline);
+
+        if (left == battle.guardCursor)
+        {
+            this->DrawRefineStatsAdvance(kFusionStatsX, kFusionStatsRow * left + kFusionStatsTop, scene);
+        }
+    }
+
+    Box(game.painter,
+        x - kEscortBarLeft,
+        y + kSpecialRowHeight * battle.guardCursor - kEscortBarUp,
+        kEscortShadeWidth,
+        kListBarHeight,
+        kListBarRed,
+        kListBarGreen,
+        0,
+        FillMode::Gradient,
+        scene);
+
+    if (battle.escortCount == 1)
+    {
+        font.DrawText(
+            game.drawSurface,
+            x + kEscortNameX,
+            y + kEscortNoneTop,
+            Big5(kNoObject),
+            battle.darkColor,
+            TextFont::BoldOutline
+        );
+    }
+
+    font.SetAdvance(kListAdvance);
+}
+
+// What Game::DrawTitledItemList decides of the frame; the draws into `scene`.
+void TurnFrame::DrawTitledItemListAdvance(
+    int x,
+    int y,
+    int cursor,
+    int top,
+    int category,
+    std::u8string_view title,
+    Scene& scene
+)
+{
+    Game& game = this->game;
+    const Scene::Still still(scene);
+    BattleState& battle = game.battleState;
+    BattleMessages& messages = game.battleMessages;
+    SceneFont font(game.mediumFont, scene);
+
+    if (battle.currentUnit == 0)
+    {
+        return;
+    }
+
+    BattleRole& role = game.battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
+    messages.panelAct = ActState{};
+    messages.panelAct.id = BattleMessages::PanelAct;
+    messages.panelAct.action = 0;
+    game.acts.Run(messages.panelAct);
+    Box(game.painter, x, y, kListBoxWidth, kTitledBoxHeight, 0, kListShade, kListShade, FillMode::Quarter, scene);
+    WindowFrame(
+        game.painter,
+        game.archive,
+        messages.panelAct.frame,
+        x + kListFrameInset,
+        y + kThrowTitleTop,
+        x + kListFrameRight,
+        y + kThrowTitleBottom,
+        0,
+        kListFrameBorder,
+        scene
+    );
+    WindowFrame(
+        game.painter,
+        game.archive,
+        messages.panelAct.frame,
+        x + kListFrameInset,
+        y + kListFrameTop,
+        x + kListFrameRight,
+        y + kListFrameBottom,
+        0,
+        kListFrameBorder,
+        scene
+    );
+    font.DrawText(
+        game.drawSurface,
+        x + kThrowTitleX,
+        y + kThrowTitleTop,
+        Big5(title),
+        kTitleColor,
+        TextFont::BoldOutline
+    );
+    font.SetShadow(0);
+    font.SetBackground(TextFont::NoBackground);
+    font.SetAdvance(kListAdvance);
+    battle.roleListEntries = 0;
+    role.CountObjects(category, battle.roleListEntries);
+    role.ShowAllItems();
+    game.battleHud.scrollCount = static_cast<u16>(battle.roleListEntries);
+    game.battleHud.scrollFirst = battle.roleListScroll;
+
+    if (static_cast<u16>(battle.roleListEntries) > kListRowsShown)
+    {
+        HudFrame(game.battleHud)
+            .DrawScrollBarAdvance(
+                kItemScrollBar,
+                kTitledScrollX,
+                kItemScrollY,
+                kItemScrollRows,
+                battle.unk53BD70,
+                battle.unk53BD9C,
+                scene
+            );
+    }
+
+    int index = top + 1;
+    int row = 0;
+
+    while (true)
+    {
+        std::string name;
+        u16 flags = 0;
+        u16 count = 0;
+
+        if (role.ListObject(battle, category, index, name, flags, count) == 0)
+        {
+            break;
+        }
+
+        if (row >= kListRowsShown)
+        {
+            font.SetBackground(TextFont::NoBackground);
+            return;
+        }
+
+        const int rowY = y + kListRowHeight * row;
+        font.DrawText(
+            game.drawSurface,
+            x + kListNameX,
+            rowY + kListRowTop,
+            name,
+            battle.lightColor,
+            TextFont::BoldOutline
+        );
+        const std::string number = WinFormat(kCountFormat, {static_cast<i32>(static_cast<i16>(count))});
+        font.DrawText(
+            game.drawSurface,
+            x + kListCountX,
+            rowY + kListRowTop,
+            number,
+            battle.lightColor,
+            TextFont::BoldOutline
+        );
+
+        if (cursor == row + 1)
+        {
+            font.DrawText(
+                game.drawSurface,
+                x + kListNameX - 1,
+                rowY + kListRowTop - 1,
+                name,
+                battle.lightColor,
+                TextFont::BoldOutline
+            );
+            font.SetBackground(TextFont::NoBackground);
+            Box(game.painter,
+                x,
+                rowY + kListBarTop,
+                kListBarWidth,
+                kListBarHeight,
+                kListBarRed,
+                kListBarGreen,
+                0,
+                FillMode::Gradient,
+                scene);
+            battle.listCursor = index;
+            battle.unk53BFB8 = 1;
+
+            if (category == kObjectStatsCategory)
+            {
+                this->DrawObjectStatsAdvance(
+                    kTitledStatsX,
+                    kObjectStatsRowHeight * battle.roleListRow + kObjectStatsTop,
+                    scene
+                );
+            }
+        }
+
+        font.SetBackground(TextFont::NoBackground);
+        ++row;
+        ++index;
+    }
+
+    role.ShowAllItems();
+    font.SetBackground(TextFont::NoBackground);
+}
+
 // What Game::DrawVictoryPanel decides of the frame; the draws into `scene`.
 void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
 {
@@ -1672,11 +2165,12 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
 
     if ((battle.unk53BF12 & kGoldGiven) == 0)
     {
+        game.battleHud.ResetMeter();
         game.audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
         game.audio.StopAllSounds();
         game.audio.PlaySound(kVictorySound, game.config.soundVolume);
 
-        for (u32 index = 0; index < battle.enemyCount; ++index)
+        for (u32 index = 0; index < battle.enemyCount && battle.unk5772F8 == 0; ++index)
         {
             const u16 drop = game.battleEnemies[index].RollDrop(services);
 
@@ -1711,11 +2205,23 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
             battle.lootIds[slot] = drop;
         }
 
+        // swd3e: the roulette's bonus on the experience and its times on the gold.
+        if (battle.experienceBonus != 0)
+        {
+            battle.unk53BF14 =
+                static_cast<u16>(battle.unk53BF14 + battle.experienceBonus * battle.unk53BF14 / kVictoryPercent);
+        }
+
+        if (battle.moneyTimes != 0)
+        {
+            battle.unk53BF12 = static_cast<u16>(battle.unk53BF12 * battle.moneyTimes);
+        }
+
         for (u32 index = 0; index < battle.roleCount; ++index)
         {
             BattleRole& role = game.battleRoles[index];
 
-            if (role.autoControl == 1 || role.guestControl == 1 || role.IsDefeated())
+            if (role.AutoControl() == 1 || role.GuestControl() == 1 || role.Ghost() == 1 || role.IsDefeated())
             {
                 continue;
             }
@@ -1723,35 +2229,45 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
             const auto partyRole = static_cast<std::size_t>(battle.partyRoles[index]);
             RoleRecord& record = game.party.roles[partyRole];
 
-            if (record.level < battle.timingWindow)
+            if (record.level < battle.timingWindow && role.HasEffectBits(BattleUnit::UnkStatus4) == 0)
             {
                 record.totalExperience += battle.unk53BF14;
             }
 
-            if (role.StepWornCounters(
-                    game.battleServices,
-                    game.party.fame.lists[Fame::ProficiencyList],
-                    battle.unk53BF16
-                ) == 1)
+            if (battle.unk5772F8 == 0)
             {
-                battle.accessoryGained = 1;
+                if (role.StepWornCounters(
+                        game.battleServices,
+                        game.party.fame.lists[Fame::ProficiencyList],
+                        battle.unk53BF16
+                    ) == 1)
+                {
+                    battle.accessoryGained = 1;
+                }
+
+                RoleBattleBlock& block = game.party.battleBlocks[partyRole];
+
+                if (block.values[kVictoryNextSpecial] != kVictoryNoSpecial)
+                {
+                    i32& battles = block.values[kBattlesFought];
+                    ++battles;
+
+                    if (battle.enemyCount >= kManyEnemies)
+                    {
+                        ++battles;
+                    }
+                }
             }
 
-            i32& battles = game.party.battleBlocks[partyRole].values[kBattlesFought];
-            ++battles;
-
-            if (battle.enemyCount >= kManyEnemies)
-            {
-                ++battles;
-            }
-
-            role.ExpireEffects(services, 1);
             role.RestartMainAct(1, 1);
+            role.ExpireEffects(services, 1);
         }
 
         battle.endFrames = 0;
         battle.unk53BF12 = static_cast<u16>(battle.unk53BF12 | kGoldGiven);
+        battle.experienceBonus = 0;
         game.party.variables[kGoldVariable] += battle.unk53BF12 & kGoldMask;
+        battle.moneyTimes = 0;
     }
 
     if (messages.GrowPanel(kEscortBodyTop, kVictoryBodyBottom, kVictoryGrowDivisor) != 1)

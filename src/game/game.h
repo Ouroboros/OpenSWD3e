@@ -362,6 +362,7 @@ private:
     void DarkenByTint();
     void SpreadPoison(int enemies);
     int YinYangAttack(int role);
+    u32 PickRoleTarget(i16 criterion);
     void RaiseLevel(u16 role, u16 level);
     void ApplyDrain(i32& amount, BattleUnit& attacker, BattleUnit& target);
     void ApplyDrainSums(BattleUnit& unit);
@@ -426,6 +427,10 @@ private:
     void DrawSpellList(int x, int y, int cursor, int top);
     void DrawItemList(int x, int y, int cursor, int top);
     int DrawObjectStats(int x, int y);
+    int DrawRefineStats(int x, int y);
+    int DrawChargePanel(int x, int y, int cursor);
+    void DrawEscortFusionList(int x, int y);
+    void DrawTitledItemList(int x, int y, int cursor, int top, int category, std::u8string_view title);
     void DrawVictoryPanel();
     void DrawLevelUpPanel();
     void CheckLevelUps();

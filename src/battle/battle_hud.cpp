@@ -260,8 +260,10 @@ int BattleHud::DrawScrollBar(u16 id, int x, int y, int rows, int offset, int sty
     return result;
 }
 
-// swd3e.exe 0x00458670: the coin of act 0x2329 flips between two positions, slowing down every 25 frames; 1 once the
-// delay reaches 64 (a coin ending on side 1 counts in the high word of coinState)
+// swd3e.exe 0x00458670: the coin toss of act 0x239B (a side drawn first, the wins cleared once counted): the coin spins
+// centred at (0x104, 0xC8), shrinking by coinZoom, its turns slowing down every 25 frames (a sound on each turn); at a
+// delay of 64 it stops (0x117; side 1 counts a win in the high word of coinState); its face (action side + 1) shows
+// for 30 frames (0x197), then action 3 grows by five times coinZoom (0x3C a frame) up to 0x400, 1 at its end.
 int BattleHud::DrawCoinToss()
 {
     smooth::Scene scene;

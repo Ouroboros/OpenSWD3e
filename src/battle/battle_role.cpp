@@ -84,6 +84,9 @@ constexpr u32 kNoActLine = 0x10B;
 constexpr u32 kNoEscortActLine = 0x15B;
 constexpr u16 kRandomItemFirst = 0xB;  // TakeRandomItem: the object categories it takes (swd3e)
 constexpr u16 kRandomItemLast = 0xE;
+constexpr u32 kPose36Action = 0x36;
+constexpr int kPoseScreenMiddle = 0x140;  // a picture starting right of it pans its sound right
+constexpr int kPoseSidePan = 0x30;
 
 // LevelInReach: the reach up to each top and the level span it allows.
 struct ReachSpan
@@ -2112,6 +2115,108 @@ u16 BattleRole::TakeRandomItem(BattleServices& services)
     }
 
     return id;
+}
+
+// swd3e.exe 0x004838A0: 1 at once at a quarter of its hit points or less; otherwise one frame of action 0x36 of the
+// role's act over its shadow (as CastPoseFrame, always tinted -6; mirrored when facing back, actAnchorX from the right
+// edge then; its sound panned by where the picture starts), with the act's overlay picture (rotation, actionCode - 1)
+// at overlayX and offsetY, cleared when the act ends; 1 once it ends (the act cleared), 0 before.
+int BattleRole::Pose36Frame(BattleServices& services)
+{
+    const RoleRecord& record = *this->roleRecord;
+
+    if (record.hitPoints <= record.maxHitPoints / kQuarter)
+    {
+        return 1;
+    }
+
+    ActState& pose = this->standAct;
+    pose.id = this->actId;
+    pose.action = kPose36Action;
+
+    if (services.acts.Run(pose) == 0)
+    {
+        return 0;
+    }
+
+    this->picture = services.archive.GetPicture(pose.frame, pose.picture);
+
+    // A missing picture is read through a null pointer in the original.
+    if (this->picture == nullptr)
+    {
+        return 0;
+    }
+
+    const Picture& picture = *this->picture;
+    u32 flags = pose.flags;
+    auto originX = static_cast<i16>(pose.x);
+    this->overlayX = pose.offsetX;
+    this->actAnchorX = pose.anchorX;
+
+    if (this->facing == 1)
+    {
+        flags ^= Painter::Mirror;
+        originX = static_cast<i16>(picture.width - pose.x);
+
+        if (pose.anchorX != 0)
+        {
+            this->actAnchorX = static_cast<u16>(picture.width - pose.anchorX);
+        }
+    }
+
+    const int left = this->placement.x - originX;
+    services.audio.PlaySound(pose.view, services.config.soundVolume);
+    services.audio.SetSoundPan(pose.view, left >= kPoseScreenMiddle ? kPoseSidePan : -kPoseSidePan);
+    pose.view = 0;
+    smooth::Scene scene;
+    smooth::ScenePainter painter(services, scene);
+    const int shadowHeight = picture.height / kShadowShare;
+    DrawOptions& options = painter.Options();
+    options.scaleHeight = shadowHeight;
+    options.tintRed = kShadowTint;
+    options.tintGreen = kShadowTint;
+    options.tintBlue = kShadowTint;
+    options.shear = picture.height >> kShadowShearShift;
+    this->shadowMode = (flags & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::Shadow;
+    painter.SetSource(picture.data.data());
+    painter.DrawPicture(left, this->placement.y - shadowHeight, picture.width, picture.height, this->shadowMode);
+    painter.DrawPicture(left, this->placement.y - pose.y, picture.width, picture.height, flags);
+
+    if (pose.rotation != 0 && pose.actionCode != 0)
+    {
+        this->overlayPicture = services.archive.GetPicture(pose.rotation, pose.actionCode - 1u);
+
+        // A missing picture is read through a null pointer in the original.
+        if (this->overlayPicture != nullptr)
+        {
+            painter.SetSource(this->overlayPicture->data.data());
+            painter.DrawPicture(
+                this->placement.x + static_cast<i16>(this->overlayX) - originX,
+                static_cast<i16>(pose.offsetY) + this->placement.y - pose.y,
+                this->overlayPicture->width,
+                this->overlayPicture->height,
+                flags | Painter::Additive
+            );
+        }
+
+        if (pose.waiting == 1)
+        {
+            pose.rotation = 0;
+            pose.actionCode = 0;
+            pose.offsetX = 0;
+            pose.offsetY = 0;
+        }
+    }
+
+    scene.Show(services);
+
+    if (pose.waiting != 1)
+    {
+        return 0;
+    }
+
+    pose = ActState{};
+    return 1;
 }
 
 // swd3e.exe 0x00481460: `count` raised by the objects of `category` usable by roles bit 0 or 2 with some left (for
