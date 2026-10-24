@@ -230,7 +230,7 @@ struct OptionsPage
     i32 displayRow = 0;      // the rebuild's display setup (stage 8): the row chosen
 };
 
-// The items page (role page 0xB; 0x004FD088..0x004FD164): the inventory of one category with its counts, used, sorted
+// The items page (role page 0xB; 0x0050BBE0..0x0050BE04): the inventory of one category with its counts, used, sorted
 // or discarded.
 struct InventoryPage
 {

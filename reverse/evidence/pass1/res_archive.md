@@ -3,7 +3,7 @@
 ## hash 配对一组（第 400–470 行中的 40 个）— exact
 
 - asm_identity.py 结果见 res_identity.txt：0x004360C0 ShowDeviceError、0x004367E0 FindPicture、0x00436B50 ActArchive::OpenFile、0x00437D10 ActArchive::CacheClear、0x00437FC0 IndexClear、0x00438020 TswArchive::OpenFile、0x00438560 PictureHitTest、0x004386B0 FreeBuffers、Projector 一组（0x00438700..0x00439890）、0x00438A30 ShiftPicture、0x00438E10 LineStep、TextFont 一组（0x00439BA0..0x0043A140）与 swd32 对应函数逐条相同（98 个地址一一对应）。
-- 源码函数体与 swd3-rebuild 中已为 assembly_exact 的版本逐行相同，两处例外按外传汇编直接核对：CacheClear 只差 `entry.size` 的转换写法（同为 u32 减法）；FreeBuffers 外传版本另把 0x004F82EC（offsets[0]，缓存载入缓冲的容量）与 0x00509C30（capacityB）清零，正是汇编 0x004386E3／0x004386E9 写的两个全局。
+- 源码函数体与 swd3-rebuild 中已为 assembly_exact 的版本逐行相同，两处例外另对照汇编直接核对：CacheClear 只差 `entry.size` 的转换写法（同为 u32 减法）；FreeBuffers 外传版本另把 0x004F82EC（offsets[0]，缓存载入缓冲的容量）与 0x00509C30（capacityB）清零，正是汇编 0x004386E3／0x004386E9 写的两个全局。
 
 ## TswArchive — exact
 

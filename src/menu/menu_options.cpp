@@ -1956,17 +1956,20 @@ void Menu::OptionsDrawKeys(Pixel color)
         return;
     }
 
-    // The Enter key past its first frame is only kept as held.
-    const bool enterHeld = key == settings.keys[static_cast<std::size_t>(Button::Enter)] &&
-                           owner.controls.At(Button::Enter).heldFrames != 1;
+    // The Enter key past its first frame is passed over (the held key is not taken from it either).
+    if (key == settings.keys[static_cast<std::size_t>(Button::Enter)] &&
+        owner.controls.At(Button::Enter).heldFrames != 1)
+    {
+        return;
+    }
 
-    if (!enterHeld && key == page.keys[slot])
+    if (key == page.keys[slot])
     {
         page.stage = kKeys;
         return;
     }
 
-    if (!enterHeld && key != 0)
+    if (key != 0)
     {
         if (std::find(kReservedKeys.begin(), kReservedKeys.end(), key) != kReservedKeys.end())
         {
