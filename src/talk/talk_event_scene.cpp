@@ -130,7 +130,7 @@ bool Talk::PanCamera(EventRun& run)
 
     if (view.panAcross != 0 && stepX == 0)
     {
-        Fault(owner.errors, u8"Integer divide by zero (0x00427920 pan)");
+        Fault(owner.errors, u8"Integer divide by zero (0x0042D482 pan)");
     }
 
     if (view.panAcross != 0 && view.panAcross % stepX != 0)
@@ -149,7 +149,7 @@ bool Talk::PanCamera(EventRun& run)
 
     if (pixelsDown != 0 && stepY == 0)
     {
-        Fault(owner.errors, u8"Integer divide by zero (0x00427920 pan)");
+        Fault(owner.errors, u8"Integer divide by zero (0x0042D4C0 pan)");
     }
 
     if (pixelsDown != 0 && pixelsDown % stepY != 0)
@@ -225,7 +225,7 @@ bool Talk::PanCamera(EventRun& run)
 
     if (clamped)
     {
-        // 0x004A1A20 + 0x004A1994: the four operand words as they stand (sign-extended) and the camera in tiles
+        // 0x0042D5B2: the four operand words as they stand (sign-extended) and the camera in tiles
         ErrorBox(
             this->game.errors,
             u8"對話系統(Scroll_map)",
@@ -510,7 +510,6 @@ bool Talk::OpenMapMovie(EventRun& run)
     }
 
     film.chunks.next.reset();
-    owner.audioDevice.Serve();
     constexpr u32 kReadRetryWait = 0xFA;  // milliseconds
     std::array<u8, MovieHeader::Bytes> bytes = {};
     u32 read = static_cast<u32>(bytes.size());
@@ -547,7 +546,6 @@ bool Talk::OpenMapMovie(EventRun& run)
     {
         if (film.paletteCount != 0)
         {
-            owner.audioDevice.Serve();
             film.paletteFrames.assign(MapMovie::PaletteTailBytes / sizeof(u16), 0);
             u32 frames = MapMovie::PaletteTailBytes;
             film.file.SeekEnd(-static_cast<i32>(MapMovie::PaletteTailBytes));
@@ -563,7 +561,6 @@ bool Talk::OpenMapMovie(EventRun& run)
             );
         }
 
-        owner.audioDevice.Serve();
         std::array<u8, MapMovie::PaletteBytes> colors = {};
         film.file.SeekEnd(-back);
         u32 colorBytes = MapMovie::PaletteBytes;
@@ -678,8 +675,9 @@ bool Talk::RunSceneCommand(EventRun& run)
             state.FindRoleOrPlayer(id, run.found);
             run.valueB = steps;
             run.valueA = 0;
+            Role* role = this->FoundRole(run);
 
-            if (Role* role = this->FoundRole(run))
+            if (role != nullptr)
             {
                 role->act.delay = 0;
                 role->act.position = 0;
@@ -688,8 +686,13 @@ bool Talk::RunSceneCommand(EventRun& run)
                 {
                     ReportActError(owner.errors, u8"Act Err(Talk:SeekAct1)", *role);
                 }
+            }
 
-                for (int step = 0; step < run.valueB; ++step)
+            // The count is left behind for the commands after it even when the role is missing (the original steps
+            // role -1 as often).
+            for (int step = 0; step < run.valueB; ++step)
+            {
+                if (role != nullptr)
                 {
                     role->act.delay = 0;
 
@@ -699,8 +702,9 @@ bool Talk::RunSceneCommand(EventRun& run)
                     }
 
                     role->act.view = 0;
-                    run.valueA = step + 1;
                 }
+
+                run.valueA = step + 1;
             }
 
             this->Next(run);
@@ -714,6 +718,7 @@ bool Talk::RunSceneCommand(EventRun& run)
             Operands operands = this->OperandsOf(run);
             const u16 id = this->EventRoleId(run, operands.Word());
             state.FindRoleOrPlayer(id, run.found);
+            run.valueA = 0;  // the layer of a missing role (role -1, read as all zero)
 
             if (Role* role = this->FoundRole(run))
             {
@@ -1122,7 +1127,7 @@ bool Talk::RunSceneCommand(EventRun& run)
             sprite->headX = static_cast<i16>(-ScriptSprite::HeadMargin);
             sprite->targetY = static_cast<i16>(place & (kPlaceAtTarget - 1));
 
-            if (target > Display::Width / 2)
+            if (static_cast<i16>(target) > Display::Width / 2)  // a signed compare (0x0042E6A8)
             {
                 sprite->headX = static_cast<i16>(Display::Width + ScriptSprite::HeadMargin);
             }
@@ -1153,7 +1158,8 @@ bool Talk::RunSceneCommand(EventRun& run)
                 {
                     if (sprite->headSpeed >= 0)
                     {
-                        sprite->headSpeed = static_cast<u16>(sprite->headX) <= Display::Width / 2 ? i16{-1} : i16{1};
+                        sprite->headSpeed =
+                            sprite->headX <= Display::Width / 2 ? i16{-1} : i16{1};  // signed (0x0042E76E)
                     }
                     else
                     {
@@ -1253,6 +1259,7 @@ bool Talk::RunSceneCommand(EventRun& run)
             }
 
             effect->mode |= kind;
+            run.valueA = 0;  // the column count left behind (0 without columns, whatever the search found)
 
             for (int column = 0; column < effect->count; ++column)
             {
@@ -1384,7 +1391,7 @@ bool Talk::RunSceneCommand(EventRun& run)
 
             if (count == 0)
             {
-                Fault(owner.errors, u8"Integer divide by zero (0x00439070)");
+                Fault(owner.errors, u8"Integer divide by zero (0x0043DB9D)");
             }
 
             run.valueB = static_cast<i32>(owner.random.Below(count));

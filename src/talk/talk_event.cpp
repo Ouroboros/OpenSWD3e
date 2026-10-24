@@ -75,7 +75,6 @@ void Talk::RunEvent(Role& context)
         const u32 file = context.event / Talk::EventsPerFile;
         const std::u8string path = PathFormat("%sTalk%d.dat", {owner.config.installDirectory, file + 1});
         File& story = owner.databases.story;
-        owner.audioDevice.Serve();
         story.Close();
 
         if (!story.Open(path, File::Disposition::OpenExisting, File::Access::Read))
@@ -100,8 +99,6 @@ void Talk::RunEvent(Role& context)
         {
             ReportActError(owner.errors, u8"Act Err(Talk:LoadTalk)", player);
         }
-
-        owner.audioDevice.Serve();
     }
 
     EventRun run{context, context.eventCursor};
@@ -110,17 +107,10 @@ void Talk::RunEvent(Role& context)
     {
         run.code = static_cast<EventCommand>(this->Word(run, kCodeWord) & kCommandMask);
         const bool next = this->RunCommand(run);
-
-        if (run.stopped)
-        {
-            return;
-        }
-
         this->lastCommand = static_cast<u16>(run.code);
 
-        if (!next && !run.running)
+        if ((owner.systemFlags & Game::QuitRequested) != 0 || (!next && !run.running))
         {
-            owner.audioDevice.Serve();
             return;
         }
     }
@@ -468,7 +458,7 @@ bool Talk::OpenDialog(EventRun& run)
     {
         if (context.id != TalkWindow::NoRole)
         {
-            DebugLog(u8"不是從劇情點啟動 !不要用R_TRIG!");  // wsprintfA of 0x004A1BBC, then nullsub_1
+            DebugLog(u8"不是從劇情點啟動 !不要用R_TRIG!");  // wsprintfA of 0x004B2BF8 into FileName, then nullsub_1
         }
 
         window->fromX = static_cast<u16>(context.x);
@@ -543,7 +533,6 @@ bool Talk::OpenDialog(EventRun& run)
         options |= Talk::Centred;
     }
 
-    owner.audioDevice.Serve();
     const std::vector<u8>& script = owner.databases.script;
     const std::size_t recordAt = std::min(run.cursor + kOpcodeBytes, script.size());
     const std::string_view name(this->dialogName.data(), strnlen(this->dialogName.data(), this->dialogName.size()));
@@ -1464,7 +1453,7 @@ bool Talk::RunRoleCommand(EventRun& run)
                 ++count;
             }
 
-            if (this->choice > count)
+            if (static_cast<u32>(this->choice) > static_cast<u32>(count))
             {
                 ErrorBox(
                     this->game.errors,

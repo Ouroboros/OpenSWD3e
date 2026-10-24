@@ -33,7 +33,8 @@ void AudioSystem::Startup(const std::u8string& redistDirectory)
     this->started = true;
 }
 
-// swd3e.exe 0x0049CE10 (AIL_shutdown)
+// swd3e.exe 0x0049CE10: a jump to 0x0049CE40, the import thunk of AIL_shutdown
+// swd3e.exe 0x0049CE40
 void AudioSystem::Shutdown()
 {
     this->started = false;

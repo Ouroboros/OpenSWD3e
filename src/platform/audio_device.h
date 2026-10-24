@@ -55,8 +55,6 @@ public:
     void CloseOutput();
     std::string Configuration() const;
     const std::string& LastError() const;
-    // AIL_serve: the mixer runs on its own thread, there is nothing to serve.
-    void Serve();
 
     VoiceHandle CreateVoice();
     void ReleaseVoice(const VoiceHandle& voice);

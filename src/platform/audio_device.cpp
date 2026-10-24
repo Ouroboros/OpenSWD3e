@@ -150,11 +150,6 @@ const std::string& AudioDevice::LastError() const
     return this->lastError;
 }
 
-// swd3e.exe 0x0049CE40: the import thunk of AIL_serve
-void AudioDevice::Serve()
-{
-}
-
 VoiceHandle AudioDevice::CreateVoice()
 {
     return std::make_shared<AudioVoice>();

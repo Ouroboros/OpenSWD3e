@@ -27,7 +27,7 @@ class Game;
 struct Role;
 struct TalkWindow;
 
-// One pass of the event script (0x00427920): the event role and the locals that last from one command to the next.
+// One pass of the event script (0x0042BAF0): the event role and the locals that last from one command to the next.
 // The original reads the commands through a pointer of its own (`cursor`) beside the offset kept in the role
 // (context.eventCursor); a few commands move only one of them.
 struct EventRun
@@ -35,7 +35,6 @@ struct EventRun
     Role& context;
     std::size_t cursor = 0;  // the byte the commands are read from
     bool running = false;    // between commands 0x400 and 0x401 the commands run on without waiting for a frame
-    bool stopped = false;    // the original returns at once (the CD is missing)
     EventCommand code = EventCommand::None;  // the command
     u32 found = 0;                           // the index of the role last looked up
     i32 valueA = 0;                          // two values a command leaves behind (commands 0x54 and 0x4D read them)
@@ -158,30 +157,30 @@ public:
     bool CommandsRole(std::span<const u8> command, u32 role);
     void RunEvent(Role& context);
 
-    i32 unit = 0;     // swd32 0x004A99F8 the text cell in pixels
-    i32 advance = 0;  // swd32 0x004A99F4 the text is to move on (a key or a click)
-    i32 skipAll = 0;  // swd32 0x004CAEB8
-    i32 choice = 0;   // swd32 0x004CAE7C the choice under the pointer
+    i32 unit = 0;     // 0x004C30D4 the text cell in pixels
+    i32 advance = 0;  // 0x004C30D0 the text is to move on (a key or a click)
+    i32 skipAll = 0;  // 0x004E6CFC
+    i32 choice = 0;   // 0x004E6CC0 the choice under the pointer
     // The marks of a finished text and of a full page are the acts of Scene::pointerButtonRole (0x004C9708) and
     // Scene::pointerPageRole (0x004CADE0): EndAct() and NextAct().
     ActState& EndAct();
     ActState& NextAct();
     MarchingRect marker;               // 0x004E6D30 around the chosen choice
-    std::vector<std::string> history;  // swd32 0x004C99FC the texts kept by the talk log
-    // swd32 0x004A135C the place of the next talk window (NoOriginX: by its speaker)
+    std::vector<std::string> history;  // 0x004E5804 the texts kept by the talk log
+    // 0x004B2338 the place of the next talk window (NoOriginX: by its speaker)
     u32 dialogOrigin = Talk::NoOrigin;
-    u32 dialogOptions = Talk::AllOff;          // swd32 0x004A1360 its options, a cleared bit turns one on
-    u32 dialogTimeout = Talk::DefaultTimeout;  // swd32 0x004A1364
-    i32 dialogOffsetX = 0;                     // swd32 0x004CF730
-    i32 dialogOffsetY = 0;                     // swd32 0x004CF734
-    i32 dialogTimed = 0;                       // swd32 0x004CF738 dialogTimeout applies
-    i32 dialogCentred = 0;                     // swd32 0x004CF73C
-    std::array<char, 0x20> dialogName = {};    // swd32 0x004CF6B8 the name plate
+    u32 dialogOptions = Talk::AllOff;          // 0x004B233C its options, a cleared bit turns one on
+    u32 dialogTimeout = Talk::DefaultTimeout;  // 0x004B2340
+    i32 dialogOffsetX = 0;                     // 0x004F4838
+    i32 dialogOffsetY = 0;                     // 0x004F483C
+    i32 dialogTimed = 0;                       // 0x004F4844 dialogTimeout applies
+    i32 dialogCentred = 0;                     // 0x004F4848
+    std::array<char, 0x20> dialogName = {};    // 0x004F43E0 the name plate
     u32 lastCommand = 0;                       // 0x004F47E0
     // 0x004F484C swd3e: set by command 0xD6, the next command 0x61 or 0xC4 leaves HUGE.lmf closed (once)
     bool keepArchiveClosed = false;
-    u32 waitLength = 0;  // swd32 0x004CF6B0 command 0x43
-    u32 waitStart = 0;   // swd32 0x004CF6B4
+    u32 waitLength = 0;  // 0x004F43D8 command 0x43
+    u32 waitStart = 0;   // 0x004F43DC
 
 private:
     Operands OperandsOf(const EventRun& run) const;

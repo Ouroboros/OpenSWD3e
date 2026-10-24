@@ -18,6 +18,8 @@ IDAT、构建工具、脚本与 WSL 中的单元测试由 Agent 运行。Agent �
 
 工作区根目录是Git仓库顶层。保留分支、历史、暂存区及用户改动。维护.gitignore，忽略工作区/tmp/和实际构建产物目录，保留已有规则，不整目录忽略reverse/。提交只在用户要求时进行，提交说明按commit Skill的标准（`feat:`等前缀、主题独立成句、必要时编号正文概括核心改动类别），提交前展示说明与作者；每次提交后立即推送。
 
+每次提交推送后用TG汇报进度：以process后台运行`python3 /mnt/d/Dev/Source/Project/stockkit/scripts/tg_notify.py "<文本>"`（文本先写入工作区tmp/再以参数传入），成功时不打断。文本四行：“SWD3E <做了什么>（<提交号>，已推送）。”“实现：<大体做了什么>”“进度：已验证 N／总数（百分比），测试结果”“下一项：<接下来做什么>”。必须带整体进度百分比，不写代码细节；回答问题不发TG。
+
 ## 核心流程
 
 目标：原程序逻辑100%一致，包含原有逻辑BUG，即bug-for-bug compatibility。越界读写、破坏内存类BUG不复现，读取未初始化内存时改为确定初值；这类偏差及显示方式、平台API替换须在reverse/analysis/deviations.md逐条记录（类别见reverse/analysis/architecture.md）。实现语言由用户指定，记录在根目录GOAL.md中。

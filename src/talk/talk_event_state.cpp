@@ -512,7 +512,6 @@ bool Talk::RunStateCommand(EventRun& run)
             owner.storyState = Game::SaveSlotsState;
             owner.ResetSaveSlots();
             this->Next(run);
-            owner.audioDevice.Serve();
             return false;
 
         case EventCommand::StopMusic:
@@ -762,7 +761,6 @@ bool Talk::RunSystemCommand(EventRun& run)
             return true;
 
         case EventCommand::OpenScript:
-            owner.audioDevice.Serve();
             run.valueA = static_cast<i16>(this->OperandsOf(run).Word());
             this->OpenScript(state.leader, static_cast<u32>(run.valueA));
             run.cursor = 0;
