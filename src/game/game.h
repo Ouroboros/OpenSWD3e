@@ -542,10 +542,8 @@ private:
     std::vector<u8> PackSurface(Surface& surface);
     void TargetFrame();
     void ClearFrame();
-    void SwayFrame(int step, int scale);
     void BattleIntro(u16 style);
     void StartBattleMusic();
-    void FirstStrike();
     int FightTalkFrame();
     void FightTalkEnd();
     int FightTalkWait();
