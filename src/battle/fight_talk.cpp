@@ -84,7 +84,7 @@ void FightTalk::Close()
     this->unk53CE9A = 0;
     this->unk53CE9C = 0;
     this->unk53CE9E = 0;
-    this->unk578458 = 0;
+    this->repeatLimit = 0;
     this->windowTimeout = kNoTalk;
     this->unk53CEA0 = 0;
     this->unk53CCD4 = 0;

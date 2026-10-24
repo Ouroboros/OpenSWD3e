@@ -55,7 +55,8 @@ public:
     u16 unk53CE9A = 0;
     u16 unk53CE9C = 0;
     u16 unk53CE9E = 0;
-    u16 unk578458 = 0;  // (swd3e) set by FightTalkFrame (0x0047DEF6), read by 0x00464ED0 and BattleIntro
+    // 0x00578458 (swd3e) the times the battle may be fought for the full rewards (talk opcode 0x54; battleRepeats)
+    u16 repeatLimit = 0;
     i32 unk53CEA0 = 0;
     i32 offset = 0;     // 0x00578460 the place of the script read last (Seek)
     i32 wonByTalk = 0;  // 0x00578468 1: the battle ends as won (Game::CheckBattleEnd)

@@ -301,7 +301,7 @@ public:
     std::array<i32, 0xA> unk4FE5D4 = {};
     std::array<std::u8string_view, 4> commandNames;  // 0x0050EBF0 the listed commands of the menu (pointers)
     std::array<u16, 4> commandKinds = {};            // 0x0050D870 their kinds (swd3e: four)
-    std::array<i32, 8> unk524268 = {};
+    std::array<i32, RoleUnits> unk524268 = {};       // 0x005376B8 per role (swd3e: ten)
     // 0x005378EC the five commands of the menu and the four listed ones (swd3e; the ninth byte is the low byte of
     // hitDamage in the original, kept apart here: deviations.md)
     std::array<u8, 9> commandEnabled = {};
@@ -576,6 +576,13 @@ public:
     std::array<u8, Enemies> escapedEnemies = {};  // 0x005379C0 (swd3e) per enemy: 1 once it ran away (0x00464ED0)
     // 0x0050F41C (swd3e) per enemy: the items it stole (0x20 a enemy, the first free one taken; 0x00464ED0)
     std::array<std::array<u16, 0x20>, Enemies> stolenItems = {};
+    i32 unk577324 =
+        0;  // 0x00577324 (swd3e) 1: the next defeated enemy gives no first reward and keeps its stolen items
+    i32 unk577370 = 0;  // 0x00577370 (swd3e) set when battle role 0 falls with the ghost in the battle
+    std::array<i32, Enemies> unk50CE6C = {};  // 0x0050CE6C (swd3e) per enemy, set by EnemyFrame, cleared once it falls
+    // 0x00576DE8 (swd3e) by battle number - 1: the times the battle was fought while a battle talk limits it
+    // (FightTalk::repeatLimit, BattleIntro); past the limit its enemies give half their first two rewards
+    std::array<u8, 0x1B4> battleRepeats = {};
     std::array<char, 0x40> noticeText = {};  // 0x00577494 (swd3e) the shared text of the notices (a stolen item)
     i32 slideUnit = 0;      // 0x00577800 (swd3e) the enemy attacking last: SlideUnits slides by it (never enabled)
     i16 slideX = 0x140;     // 0x004BF1E0 (swd3e) the x the units slide to

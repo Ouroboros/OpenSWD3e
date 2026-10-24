@@ -26,7 +26,13 @@ constexpr u32 kGhostRescueAct = 0x17B7;    // ApplyHits: the act of the ghost he
 constexpr int kGhostRescuePercent = 0x50;  // of the master's hit points
 constexpr u16 kBossReward = 0x14;          // unk53BF16 gained by an enemy of ObjectData::UnkKind20
 constexpr u16 kEnemyReward = 3;
-constexpr i16 kDefeatCount = 1;  // the bestiary count of a defeated enemy
+constexpr i16 kDefeatCount = 1;         // the bestiary count of a defeated enemy
+constexpr u16 kItemsBackSound = 0x117;  // RemoveDefeated (swd3e): the stolen items back
+constexpr i16 kItemsBackFrames = 0x32;
+constexpr std::u8string_view kItemsBackText = u8"取回被偷的物品!!";  // 0x004BF3C4
+constexpr i16 kLastStandingCause = 2;  // the enrage causes of a defeat: the last enemy standing, a role down
+constexpr i16 kRoleDownCause = 0x17;
+constexpr u32 kGhostGoneStatus = 0x5008;  // the status of the ghost when battle role 0 falls
 constexpr std::size_t kLastTurnUnit = BattleState::RoleUnits - 1;
 
 constexpr u16 kThrownObject = 0x300;  // the object a thrown attack takes (given back unless it lands)
@@ -464,13 +470,14 @@ void Game::RetargetRoles(int role, int enemy)
     }
 }
 
-// swd32.exe 0x0045AA00 (unmatched in swd3e): one frame of the defeat of unit `index` (a role when `role` is 1, else an
-// enemy, none for
-// -1); 1 once it is over. An enemy adds its rewards (unk53BF14, unk53BF12, unk53BF16), its bestiary count and the
-// defeated count; all down wins the battle, and a lone standing first enemy of a unk53BF28 battle ends the others. A
-// role counts as defeated (a forced one as a defeated guest: once all are down their places go and the units are
-// measured again), drops its command, slot record, turn and order; with no party role standing the battle is lost,
-// else one with EffectFlag2 takes the next turn.
+// swd3e.exe 0x00464ED0: one frame of the defeat of unit `index` (a role when `role` is 1, else an enemy); 1 once it is
+// over. An enemy (none counted once the battle is won) adds its rewards (unk53BF14, unk53BF12 unless unk5772F8,
+// unk53BF16), halved past the battle talk's repeat limit; one that ran away gives none and no bestiary count; its
+// stolen items come back (unless unk577324) with their notice. All down wins the battle, a last one standing is
+// enraged, and a lone standing first enemy of a unk53BF28 battle ends the others. A role counts as defeated (an escort
+// clears its place and returned object: once all are down their places go and the units are measured again), drops
+// 蓄勁, its command, slot record, order and its panel; a role with a special act left is not counted. Battle role 0
+// with the ghost takes the ghost out; with no role left standing the battle is lost, else the enemies are enraged.
 int Game::RemoveDefeated(int index, int role)
 {
     BattleState& battle = this->battleState;
@@ -478,6 +485,7 @@ int Game::RemoveDefeated(int index, int role)
 
     if (role != 1)
     {
+        // The rebuild's callers pass -1 for none (the original's do not).
         if (index == -1)
         {
             return 0;
@@ -490,15 +498,85 @@ int Game::RemoveDefeated(int index, int role)
             return 0;
         }
 
+        if (battle.result == kEndVictory)
+        {
+            return 1;
+        }
+
         u16 first = 0;
         u16 second = 0;
         enemy.Unk62And8A(first, second);
-        battle.unk53BF14 = static_cast<u16>(battle.unk53BF14 + first);
-        battle.unk53BF12 = static_cast<u16>(battle.unk53BF12 + second);
         battle.lastDefeatedObject = enemy.Data();
         const bool boss = (battle.lastDefeatedObject->data.kind & ObjectData::UnkKind20) != 0;
-        battle.unk53BF16 = static_cast<u16>(battle.unk53BF16 + (boss ? kBossReward : kEnemyReward));
-        AddCounterCapped(this->party.fame.lists[Fame::FameList], static_cast<i16>(enemy.ActId()), kDefeatCount);
+        u16 third = boss ? kBossReward : kEnemyReward;
+        u8& escaped = battle.escapedEnemies[static_cast<std::size_t>(index)];
+
+        if (escaped == 1)
+        {
+            escaped = 0;
+            first = 0;
+            second = 0;
+            third = 0;
+        }
+        else
+        {
+            AddCounterCapped(this->party.fame.lists[Fame::FameList], static_cast<i16>(enemy.ActId()), kDefeatCount);
+        }
+
+        if (battle.unk577324 == 1)
+        {
+            first = 0;
+            battle.unk577324 = 0;
+        }
+        else if (escaped == 0)
+        {
+            bool returned = false;
+
+            for (u16& item : battle.stolenItems[static_cast<std::size_t>(index)])
+            {
+                if (item != 0)
+                {
+                    AddOneItem(this->party.inventory, item, 1, this->database);
+                    item = 0;
+                    returned = true;
+                }
+            }
+
+            if (returned)
+            {
+                this->audio.PlaySound(kItemsBackSound, this->config.soundVolume);
+                this->battleMessages.Add(
+                    kRefusalMessageX,
+                    kRefusalMessageY,
+                    kItemsBackFrames,
+                    kItemsBackText,
+                    BattleMessage::Frame | BattleMessage::Centered
+                );
+            }
+
+            escaped = 0;
+        }
+
+        // Battle numbers past the table read the variables after it in the original (deviations.md): taken as 0.
+        const auto repeat = static_cast<std::size_t>(battle.battle - 1);
+        const u8 repeats = repeat < battle.battleRepeats.size() ? battle.battleRepeats[repeat] : u8{0};
+
+        if (this->fightTalk.repeatLimit != 0 && repeats > this->fightTalk.repeatLimit)
+        {
+            first = static_cast<u16>(first >> 1);
+            second = static_cast<u16>(second >> 1);
+        }
+
+        battle.unk53BF14 = static_cast<u16>(battle.unk53BF14 + first);
+
+        if (battle.unk5772F8 == 0)
+        {
+            battle.unk53BF12 = static_cast<u16>(battle.unk53BF12 + second);
+        }
+
+        battle.unk53BF16 = static_cast<u16>(battle.unk53BF16 + third);
+        this->CureHeldBy(index);
+        battle.enemyHits[static_cast<std::size_t>(index)] = 0;
         battle.RemoveSlotRecord(index);
         const auto count = static_cast<i32>(battle.enemyCount);
 
@@ -515,6 +593,11 @@ int Game::RemoveDefeated(int index, int role)
             battle.unk53BFC0 = 1;
         }
 
+        if (count + battle.unk53BF02 - battle.enemiesGone == 1)
+        {
+            EnrageEnemies(services, kLastStandingCause);
+        }
+
         if (battle.unk53BF28 != 0 && !this->battleEnemies[0].IsDefeated() &&
             static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1)
         {
@@ -526,6 +609,7 @@ int Game::RemoveDefeated(int index, int role)
             battle.ListEnemyOrder();
         }
 
+        battle.unk50CE6C[static_cast<std::size_t>(index)] = 0;
         return 1;
     }
 
@@ -536,22 +620,40 @@ int Game::RemoveDefeated(int index, int role)
         return 0;
     }
 
-    if (unit.autoControl == 1)
+    if (unit.AutoControl() == 1)
     {
+        const u16 escorts = battle.escortCount;
+        const auto roles = static_cast<i32>(battle.roleCount);
+        const i32 row = index + escorts - roles;
+        battle.rolePlaces[static_cast<std::size_t>(index)].actId = 0;
         ++battle.unk53BF01;
 
-        if (battle.unk53BF01 >= battle.escortCount)
+        // Rows outside the escorts write the words beside givenBack in the original; none here.
+        if (row >= 0 && static_cast<std::size_t>(row + 1) < battle.givenBack.size())
         {
-            const u16 guests = battle.escortCount;
+            battle.givenBack[static_cast<std::size_t>(row + 1)] = 0;
+        }
 
-            // The original clears the places from the end of the list down, before it when there are fewer.
-            for (u16 cleared = 0; cleared < guests && cleared < battle.roleCount; ++cleared)
+        if (battle.unk53BF01 < escorts)
+        {
+            if (row == 1)
             {
-                battle.rolePlaces[battle.roleCount - 1 - cleared] = UnitPlacement{};
+                battle.escortCount = static_cast<u16>(escorts - 1);
+                battle.roleCount = static_cast<u32>(roles - 1);
+                battle.rolePlaces[static_cast<std::size_t>(roles - 1)] = UnitPlacement{};
+            }
+        }
+        else
+        {
+            // The original clears the places from the end of the list down, before it when there are fewer.
+            for (u16 cleared = 0; cleared < escorts && cleared < static_cast<u16>(roles); ++cleared)
+            {
+                battle.rolePlaces[static_cast<std::size_t>(roles - 1 - cleared)] = UnitPlacement{};
             }
 
             battle.escortCount = 0;
-            battle.roleCount -= guests;
+            battle.roleCount = static_cast<u32>(roles - escorts);
+            battle.unk53BF01 = 0;
         }
 
         this->MeasureUnits();
@@ -563,8 +665,14 @@ int Game::RemoveDefeated(int index, int role)
         ++battle.defeatedRoles;
     }
 
-    unit.CancelCommand();
     const int unitId = index + BattleState::FirstRoleUnit;
+
+    if (battle.chargingRole == unitId)
+    {
+        battle.chargingRole = -1;
+    }
+
+    unit.CancelCommand();
     battle.RemoveSlotRecord(unitId);
     battle.unk524268[static_cast<std::size_t>(index)] = 0;
 
@@ -611,25 +719,26 @@ int Game::RemoveDefeated(int index, int role)
         break;
     }
 
-    if (battle.defeatedRoles >= battle.roleCount - battle.guestCount - battle.escortCount)
+    if (unit.StartSpecialAct(battle) == 1)
     {
-        battle.WipeSlotRecords();
-        battle.actingUnit = -1;
-        battle.unk53BFC0 = 1;
-        battle.unk53BFC4 = 1;
-        battle.result = kBattleLost;
-        return 1;
+        --battle.defeatedRoles;
     }
 
-    if (unit.EffectFlag2() == 1)
+    if (battle.unk5770D4 == 1 && index == 0)
     {
-        battle.aimTarget = battle.actingUnit + 1;
-        battle.turnUnit = unitId;
-        unit.SetTarget(1);
-        battle.turnCommand = 1;
-        battle.turnTaken[static_cast<std::size_t>(unitId)] = 1;
-        battle.unk53BF60 = 1;
-        battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)] = PendingOrder{};
+        battle.unk577370 = 1;
+        this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetStatus(kGhostGoneStatus);
+        battle.RemoveSlotRecord(battle.ghostSlot + BattleState::FirstRoleUnit);
+    }
+
+    if (battle.defeatedRoles <
+        static_cast<i32>(battle.roleCount) - battle.guestCount - battle.unk5770D4 - battle.escortCount)
+    {
+        EnrageEnemies(services, kRoleDownCause);
+    }
+    else
+    {
+        battle.result = kBattleLost;
     }
 
     return 1;
