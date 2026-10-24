@@ -1447,7 +1447,7 @@ int RoleFrame::ChargeOnTargetAdvance(BattleServices& services, BattleUnit& targe
 }
 
 // What BattleRole::MagicFrame decides of the frame; the draws into `scene`.
-int RoleFrame::MagicFrameAdvance(BattleServices& services, const BattleUnit& target, Scene& scene)
+int RoleFrame::MagicFrameAdvance(BattleServices& services, BattleUnit& target, Scene& scene)
 {
     const Scene::Owner owner(scene, &this->role);
     BattleRole& role = this->role;

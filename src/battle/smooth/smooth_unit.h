@@ -88,10 +88,8 @@ struct ActionView
     int y = 0;
     u32 flags = 0;
     u32 mirrored = 0;
-    bool outline = false;
     int shadowY = 0;
     int shadowTint = 0;
-    bool smear = false;
     bool signal = false;
     int alpha = 0;
     int wave = 0;
@@ -139,7 +137,7 @@ public:
     int QueuedAdvance(BattleServices& services, BattleUnit& target, i32 action, PictureSteps& steps);
 
     // The same decided into a scene, for the parts that run them.
-    void Action(BattleServices& services, const BattleUnit& target, ActState& act, Scene& scene);
+    int Action(BattleServices& services, BattleUnit& target, ActState& act, Scene& scene);
     int Recoil(BattleServices& services, ActState& act, i16 y, Scene& scene);
     int Fly(
         BattleServices& services,
@@ -171,7 +169,7 @@ public:
     int Numbers(BattleServices& services, Scene& scene);
     void Guard(Scene& scene);
     // DrawAction: false when it draws nothing.
-    bool ActionAdvance(BattleServices& services, const BattleUnit& target, ActState& act, ActionView& view);
+    int ActionAdvance(BattleServices& services, BattleUnit& target, ActState& act, ActionView& view);
     static void DrawActionView(BattleServices& services, const ActionView& view);
 
     void DrawActionAtAdvance(BattleServices& services, i16 x, i16 y, ActState& act, Scene& scene);

@@ -3058,16 +3058,18 @@ int BattleUnit::FlyAct(
     return result;
 }
 
-// swd3e.exe 0x0049A220: one frame of `act` drawn over its shadow, on the target (a command with AtTarget) or at the
-// unit's place with its outline. Mirrored by the facing like the unit (a forced draw also adds Additive); a nudged
-// unit shakes, the nudge halving to 1 and staying there. The act's sound pans to the side of the screen it is on. An
-// invisible unit draws a fainter shadow and smears the destination instead of the picture. The act's overlay picture
-// follows, cleared once the act waits.
-void BattleUnit::DrawAction(BattleServices& services, const BattleUnit& target, ActState& act)
+// swd3e.exe 0x0049A220: one frame of `act` drawn over its shadow, on the target (a command with AtTarget; under
+// HasFixedOrigin at (0xF0, 0x12C), an enemy's at (0x1A4, 0x118)) or at the unit's place with its outline. Mirrored by
+// the facing like the unit (a forced draw also adds Additive); target bit 0x1000 nudges the target once (0x28). The
+// act's sound pans to the side of the screen it is on. An act following up with target bit 0x100 starts afterimages
+// (unk26B8 bit 18) that each frame adds one until the act waits. An invisible unit draws a fainter shadow. The act's
+// overlay picture follows, cleared once the act waits. 0 when the act cannot run, 1 otherwise.
+int BattleUnit::DrawAction(BattleServices& services, BattleUnit& target, ActState& act)
 {
     smooth::Scene scene;
-    smooth::UnitFrame(*this).Action(services, target, act, scene);
+    const int result = smooth::UnitFrame(*this).Action(services, target, act, scene);
     scene.Show(services);
+    return result;
 }
 
 // swd3e.exe 0x0049AA60: one frame of `act` placed on the target (mirrored by the facing like the unit), or with a
@@ -3199,11 +3201,12 @@ void BattleUnit::DrawTrail(
 }
 
 // swd3e.exe 0x00495FF0: one frame of the queued acts (`action`, when not 0, given to each first); 1 when there are none
-// (queuedActions cleared). Each act, mirrored by the facing, shakes on its line for its shake frames (its y from
-// kShakeOffsets), then flies it (one step more a frame, doubling while speeding) with its trail; at the line's end its
-// impact act (if any) plays to its end within the frame (the original runs the whole node again until it waits), the
-// node is done and, unless the command is UnkAction1 or the impact is negative, the hit lands on `target`. Done nodes
-// are freed. A shaking node takes the arrival of the node before it (the original's first is uninitialised).
+// (queuedActions cleared). Each act, mirrored by the facing, waits on its line (from its anchor when set) for its shake
+// frames, then flies it (`steps` more a frame, or doubling to 0x20 and 0x30 more after while speeding) with its trail,
+// drawn until it arrives (UnkFlag2); at the line's end its impact act (if any) plays a frame at a time until it waits,
+// then the node is done and, unless it has UnkFlag4, the hit lands on `target` once its evasion (a chance of 8 under
+// status bit 7) fails or was already rolled. Done nodes are freed. A shaking node takes the arrival of the node before
+// it (the original's first is uninitialised).
 int BattleUnit::RunQueuedActions(BattleServices& services, BattleUnit& target, i32 action)
 {
     smooth::Scene scene;
@@ -4186,99 +4189,6 @@ void BattleUnit::DrawWobble(BattleServices& services, const Picture& picture, sm
     {
         this->throwSteps = wobble + 1;
     }
-}
-
-// The place of a queued act (part of 0x0047FC40): its line less the act's offset (mirrored by the facing; a line end
-// at y 0 stays at 0); while it shakes its y comes from ShakeOffsets and the shake frames count down, then it flies
-// (one step more a frame, doubling while speeding) and arrives at the line's end. A shaking act keeps `taken`.
-BattleUnit::Stride BattleUnit::FlightStride(
-    BattleServices& services,
-    const QueuedAction& node,
-    const ActState& act,
-    int taken
-) const
-{
-    Stride stride;
-    stride.picture = services.archive.GetPicture(act.frame, act.picture);
-    stride.shakeFrames = node.shakeFrames;
-    stride.flown = node.flown;
-    stride.taken = taken;
-
-    if (stride.picture == nullptr)
-    {
-        return stride;
-    }
-
-    stride.flags = act.flags;
-    auto offsetX = static_cast<i16>(act.x);
-
-    if (this->facing == 1)
-    {
-        stride.flags ^= Painter::Mirror;
-        offsetX = static_cast<i16>(stride.picture->width - static_cast<u16>(act.x));
-    }
-
-    stride.offsetX = static_cast<u16>(offsetX);
-    LineWalker& line = stride.line;
-    line.fromX = node.fromX - offsetX;
-    line.fromY = node.fromY - act.y;
-    line.toX = node.toX - offsetX;
-    line.toY = node.toY - act.y;
-
-    if (node.fromY == 0)
-    {
-        line.fromY = 0;
-    }
-
-    if (node.toY == 0)
-    {
-        line.toY = 0;
-    }
-
-    if (stride.shakeFrames != 0)
-    {
-        // A negative phase (shake frames past 0x7FFF) is read before the table in the original.
-        const int phase = static_cast<i16>(stride.shakeFrames) % static_cast<int>(BattleUnit::ShakeOffsets.size());
-        line.y = phase >= 0 ? BattleUnit::ShakeOffsets[static_cast<std::size_t>(phase)] : 0;
-        --stride.shakeFrames;
-    }
-    else
-    {
-        if (node.steps == 1)
-        {
-            if (stride.flown == 0)
-            {
-                stride.flown = 1;
-            }
-
-            stride.flown =
-                static_cast<i16>(stride.flown <= kFlightDoubling ? 2 * stride.flown : stride.flown + kFlightGrowth);
-        }
-        else
-        {
-            ++stride.flown;
-        }
-
-        stride.taken = 0;
-
-        while (stride.taken < stride.flown * node.steps)
-        {
-            LineStep(line);
-
-            if (line.fromX + line.x == line.toX && line.fromY + line.y == line.toY)
-            {
-                stride.taken = kArrived;
-                break;
-            }
-
-            ++stride.taken;
-        }
-    }
-
-    stride.x = line.fromX + line.x;
-    stride.y = line.fromY + line.y;
-    stride.arrived = stride.taken == kArrived;
-    return stride;
 }
 
 // swd3e.exe 0x00499060: one frame of the unit walking from its saved place (a ghost: its place) to the target (or the

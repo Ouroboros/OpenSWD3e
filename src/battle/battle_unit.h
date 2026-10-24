@@ -577,7 +577,7 @@ public:
     void ExpireEffects(BattleServices& services, int clearAll);
     SkillScript CommandSkill() const;
     i16 HitDamage(BattleServices& services, BattleUnit& target, i16& spiritDamage, i16& staminaDamage);
-    void DrawAction(BattleServices& services, const BattleUnit& target, ActState& act);
+    int DrawAction(BattleServices& services, BattleUnit& target, ActState& act);
     void AimAction(BattleServices& services, BattleUnit& target, ActState& act, i16 shiftX, i16 shiftY);
     int DrawAimed(BattleServices& services, BattleUnit& target, ActState& act, i16 shiftX, i16 shiftY);
     int RunQueuedActions(BattleServices& services, BattleUnit& target, i32 action);
@@ -737,28 +737,6 @@ private:
     void MirrorRecoil(u32 actFlags, bool forced);
     void Announce(BattleServices& services, std::u8string_view format, int flags);
     void StartAilment(BattleServices& services, EffectNode& node);
-
-    // Where a walk (WalkToTarget, ReturnHome) or a flight (RunQueuedActions) is drawn in a frame, as the frame's acts
-    // and steps make it: the line walked, the place, whether it arrived, the act's mirrored offset and draw flags, the
-    // stand pose's offset, the steps or frames after the frame. The rebuild's smooth battle reckons the next frame
-    // with the same functions.
-    struct Stride
-    {
-        LineWalker line;
-        int x = 0;
-        int y = 0;
-        bool arrived = false;
-        u16 offsetX = 0;
-        i32 poseX = 0;
-        u32 flags = 0;
-        i32 steps = 0;
-        u16 shakeFrames = 0;
-        i16 flown = 0;
-        int taken = 0;
-        const Picture* picture = nullptr;
-    };
-
-    Stride FlightStride(BattleServices& services, const QueuedAction& node, const ActState& act, int taken) const;
 
 public:
     // swd32 +0x0..+0x0F: what the unit is.

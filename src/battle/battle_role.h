@@ -95,7 +95,7 @@ public:
     int CanAbsorb(BattleServices& services, const BattleUnit& target) const;
     int DirectAttack(BattleServices& services, BattleUnit& target);
     int CastAt(BattleServices& services, const BattleUnit& target, i32 spell);
-    int MagicFrame(BattleServices& services, const BattleUnit& target);
+    int MagicFrame(BattleServices& services, BattleUnit& target);
     int BeamSpellFrame(BattleServices& services, BattleUnit& target);
     int ChargeAttackFrame(BattleServices& services, BattleUnit& target, int slot);
     int ChargeOnTarget(BattleServices& services, BattleUnit& target);

@@ -53,7 +53,7 @@ public:
 
     int ChargeOnTargetAdvance(BattleServices& services, BattleUnit& target, Scene& scene);
 
-    int MagicFrameAdvance(BattleServices& services, const BattleUnit& target, Scene& scene);
+    int MagicFrameAdvance(BattleServices& services, BattleUnit& target, Scene& scene);
 
     int ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& target, int slot, Scene& scene);
 

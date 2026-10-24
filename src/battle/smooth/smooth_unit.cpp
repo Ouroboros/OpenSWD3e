@@ -57,8 +57,18 @@ constexpr i32 kVanishAction = 0x39;
 constexpr u16 kVanishingAct = 1;  // a unit of act 1 sets kVanishWalk when it arrives
 constexpr int kWalkSteps = 0x18;  // WalkToTarget: line steps per frame walked
 constexpr int kGhostWalkSteps = 0x10;
-constexpr int kWalkShare = 16;   // with UnkFlag20 a sixteenth of the distance once the act follows up
-constexpr u16 kArrivedMark = 6;  // unk2EDC when the walk arrives
+constexpr int kWalkShare = 16;         // with UnkFlag20 a sixteenth of the distance once the act follows up
+constexpr u16 kArrivedMark = 6;        // unk2EDC when the walk arrives
+constexpr u16 kNudgesTarget = 0x1000;  // DrawAction (swd3e): ActState::target bit nudging the target once
+constexpr u16 kActNudge = 0x28;
+constexpr u16 kEnemyFixedX = 0x1A4;  // HasFixedOrigin: an enemy's act stands here
+constexpr u16 kEnemyFixedY = 0x118;
+constexpr u16 kAfterImageTarget = 0x100;  // with FollowsUp the act leaves afterimages
+constexpr u32 kAfterImages = 0x40000;     // unk26B8: the unit's acts leave afterimages
+constexpr int kRoundShift = 8;            // ActState::counter: the round in the high byte
+constexpr i16 kAfterImageTintBlue = 0xA;
+constexpr i16 kAfterImageLevel = 0xE;
+constexpr i16 kAfterImageFade = 1;
 
 constexpr int kNumberAbove = 0x1E;
 constexpr int kDigitWidth = 0x10;  // swd3e (swd32: 0xC)
@@ -71,13 +81,15 @@ constexpr i16 kGuardTextRise = 0x18;    // pixels the guard text rises before it
 constexpr i16 kGuardTextStep = 4;       // pixels the guard text rises a frame
 constexpr int kGuardTextHeight = 0x1A;
 constexpr std::array<int, 4> kGuardLetterX = {0, 0x12, 0x1E, 0x2E};  // swd3e: the guard letters from the left
-constexpr u32 kNudgeChance = 2;                                      // a nudged unit shakes in one frame of two
-constexpr int kNudgeShift = 0x28;                                    // the shake moves the act by nudge - 0x28
 constexpr i16 kRecoilFadeStep = 2;
 constexpr i16 kRecoilFadeEnd = -0x20;  // DrawRecoil: the tint at which a waiting recoil act is over
 constexpr i8 kAdditiveTrailFade = 3;   // an additive act's images fade by 3 a frame, the others by 1
 constexpr i16 kAdditiveTrailLevel = 0x18;
 constexpr i32 kQueuedMaxDamage = 0x270F;
+constexpr u16 kSpeedingTop = 0x20;  // RunQueuedActions (swd3e): a speeding flight doubles up to it, then adds 0x30
+constexpr i16 kSpeedingStep = 0x30;
+constexpr u32 kEvadeChanceStatus = 0x80;  // status bit 7: the target evades with a chance of kStatusEvadeChance
+constexpr u16 kStatusEvadeChance = 8;
 constexpr int kTrailBlue = -16;
 constexpr int kTrailCentre = 0xC;
 constexpr u8 kTrailDelay = 1;  // a new image every second frame
@@ -1012,17 +1024,15 @@ void UnitFrame::DrawGuard(BattleServices& services, const GuardView& view)
     }
 }
 
-// What DrawAction decides of the frame: the act stepped, its place on the target or the unit (shaken by the nudge),
-// its sound, the overlay chosen and cleared once the act waits; false when it draws nothing.
-bool UnitFrame::ActionAdvance(BattleServices& services, const BattleUnit& target, ActState& act, ActionView& view)
+// What DrawAction decides of the frame: the act stepped, its place on the target or the unit, the target nudged, its
+// sound, the afterimages, the overlay chosen and cleared once the act waits; 0 when the act cannot run.
+int UnitFrame::ActionAdvance(BattleServices& services, BattleUnit& target, ActState& act, ActionView& view)
 {
     BattleUnit& unit = this->unit;
-    u16 targetX = 0;
-    u16 targetY = 0;
 
     if (services.acts.Run(act) == 0)
     {
-        return false;
+        return 0;
     }
 
     unit.picture = services.archive.GetPicture(act.frame, act.picture);
@@ -1030,11 +1040,10 @@ bool UnitFrame::ActionAdvance(BattleServices& services, const BattleUnit& target
     // A missing picture is read through a null pointer in the original.
     if (unit.picture == nullptr)
     {
-        return false;
+        return 0;
     }
 
     const Picture& picture = *unit.picture;
-    services.painter.SetSource(picture.data.data());
     unit.frameFlags = act.flags;
     unit.actOffsetX = static_cast<u16>(act.x);
     unit.actAnchorX = act.anchorX;
@@ -1071,25 +1080,27 @@ bool UnitFrame::ActionAdvance(BattleServices& services, const BattleUnit& target
         mirror();
     }
 
-    target.GetDrawPosition(targetX, targetY);
-    u16 x = targetX;
-
-    if (unit.nudge > 0 && services.random.Below(kNudgeChance) == 1)
+    // swd3e: target bit 0x1000 nudges the target once.
+    if ((act.target & kNudgesTarget) != 0)
     {
-        x = static_cast<u16>(x + unit.nudge - kNudgeShift);
-        unit.nudge = static_cast<u16>(unit.nudge >> 1);
-
-        if (unit.nudge <= 1)
-        {
-            unit.nudge = 1;
-        }
+        target.SetNudge(kActNudge, 0);
+        act.target = static_cast<u16>(act.target & ~kNudgesTarget);
     }
 
+    u16 targetX = 0;
+    u16 targetY = 0;
+    target.GetDrawPosition(targetX, targetY);
     const u32 mirrored = unit.frameFlags & (Painter::RleSource | Painter::Mirror | Painter::Flip);
 
     if ((unit.command.flags & UnitCommand::AtTarget) != 0)
     {
-        unit.actX = static_cast<u16>(x - unit.actOffsetX);
+        if (unit.HasFixedOrigin() == 1)
+        {
+            targetX = unit.kind == 0 ? kEnemyFixedX : kFixedOriginX;
+            targetY = unit.kind == 0 ? kEnemyFixedY : kFixedOriginY;
+        }
+
+        unit.actX = static_cast<u16>(targetX - unit.actOffsetX);
         unit.actY = static_cast<u16>(targetY - static_cast<u16>(act.y));
     }
     else
@@ -1097,10 +1108,20 @@ bool UnitFrame::ActionAdvance(BattleServices& services, const BattleUnit& target
         unit.actX = static_cast<u16>(unit.placement.x - unit.actOffsetX);
         unit.actY = static_cast<u16>(unit.placement.y - static_cast<u16>(act.y));
 
+        // The outline is drawn at once, before the afterimages (as in the original).
         if (unit.outline == 1)
         {
             unit.colorPair = BattleUnit::OutlineColorPair;
-            view.outline = true;
+            services.painter.SetSource(picture.data.data());
+            services.painter.DrawOutline(
+                static_cast<i16>(unit.actX),
+                static_cast<i16>(unit.actY),
+                picture.width,
+                picture.height,
+                unit.frameFlags & (Painter::RleSource | Painter::Mirror | Painter::Flip),
+                DrawArgument{.colorPair = unit.colorPair}
+            );
+            unit.colorPair = BattleUnit::OutlineColorPair;
         }
     }
 
@@ -1108,31 +1129,64 @@ bool UnitFrame::ActionAdvance(BattleServices& services, const BattleUnit& target
     const int centre = static_cast<i16>(unit.actX) + static_cast<i16>(unit.actOffsetX);
     services.audio.SetSoundPan(act.view, centre >= kPanCentre ? kFadePan : -kFadePan);
     act.view = 0;
-    const bool invisible = (unit.status & BattleUnit::Invisible) != 0;
+
+    // swd3e: an act that follows up with target bit 0x100 leaves afterimages (unk26B8 bit 18; not for an auto unit).
+    if ((act.target & ActState::FollowsUp) != 0 && (act.target & kAfterImageTarget) != 0)
+    {
+        if (unit.autoControl == 0)
+        {
+            unit.unk26B8 |= kAfterImages;
+        }
+
+        act.target = 0;
+    }
+
+    if ((unit.unk26B8 & kAfterImages) != 0)
+    {
+        if (act.waiting == 0)
+        {
+            unit.images.Add(
+                ImageList::Image{
+                    .x = static_cast<i16>(unit.actX),
+                    .y = static_cast<i16>(unit.actY),
+                    .mode = unit.frameFlags,
+                    .frame = act.frame,
+                    .picture = act.picture,
+                    .unkB8 = static_cast<u16>(act.counter >> kRoundShift),
+                    .flags = ImageList::Image::Once,
+                    .tintBlue = kAfterImageTintBlue,
+                    .level = kAfterImageLevel,
+                    .step = kAfterImageFade,
+                }
+            );
+        }
+
+        unit.images.Draw(services);
+    }
+
     view.picture = {act.frame, act.picture, true};
     view.x = static_cast<i16>(unit.actX);
     view.y = static_cast<i16>(unit.actY);
     view.mirrored = mirrored;
     view.flags = unit.frameFlags;
     view.shadowY = act.y + static_cast<i16>(unit.actY);
-    view.shadowTint = invisible ? kInvisibleShadowTint : kShadowTint;
-    view.smear = invisible;
+    view.shadowTint = (unit.status & BattleUnit::Invisible) != 0 ? kInvisibleShadowTint : kShadowTint;
     view.signal = (unit.frameFlags & ActState::Signal) != 0;
     view.alpha = act.signal;
     view.wave = unit.mainAct.wait;
-    // What the draws leave in the unit: the last mode drawn with.
-    unit.shadowMode = invisible ? mirrored : mirrored | Painter::Shadow;
+    unit.shadowMode = mirrored | Painter::Shadow;
 
     if (act.rotation == 0 || act.actionCode == 0)
     {
-        return true;
+        return 1;
     }
 
     unit.overlayPicture = services.archive.GetPicture(act.rotation, static_cast<u16>(act.actionCode - 1));
 
+    // A missing picture is read through a null pointer in the original.
     if (unit.overlayPicture == nullptr)
     {
-        return true;
+        return 1;
     }
 
     if (forced && unit.facing == 1 && act.offsetX != 0)
@@ -1158,7 +1212,7 @@ bool UnitFrame::ActionAdvance(BattleServices& services, const BattleUnit& target
         act.offsetY = 0;
     }
 
-    return true;
+    return 1;
 }
 
 // What DrawAction draws, as ActionAdvance decided it: the outline, the shadow, the act (smeared when invisible), the
@@ -1175,18 +1229,6 @@ void UnitFrame::DrawActionView(BattleServices& services, const ActionView& view)
 
     const Picture& picture = *drawn;
     painter.SetSource(picture.data.data());
-
-    if (view.outline)
-    {
-        painter.DrawOutline(
-            view.x,
-            view.y,
-            picture.width,
-            picture.height,
-            view.mirrored,
-            DrawArgument{.colorPair = BattleUnit::OutlineColorPair}
-        );
-    }
 
     const int shadowHeight = picture.height / kShadowShare;
     DrawOptions& options = painter.Options();
@@ -1205,25 +1247,18 @@ void UnitFrame::DrawActionView(BattleServices& services, const ActionView& view)
     );
     painter.SetSource(picture.data.data());
 
-    if (view.smear)
+    if (view.signal)
     {
-        painter.DrawPicture(view.x, view.y, picture.width, picture.height, view.mirrored | Painter::SmearUnder);
+        painter.Options().alpha = view.alpha;
     }
-    else
+
+    if (view.wave != 0)
     {
-        if (view.signal)
-        {
-            painter.Options().alpha = view.alpha;
-        }
-
-        if (view.wave != 0)
-        {
-            painter.SetWave(view.wave);
-        }
-
-        painter.DrawPicture(view.x, view.y, picture.width, picture.height, view.flags);
-        painter.SetWave(0);
+        painter.SetWave(view.wave);
     }
+
+    painter.DrawPicture(view.x, view.y, picture.width, picture.height, view.flags);
+    painter.SetWave(0);
 
     if (const Picture* overlay = view.overlay.Get(services.archive); overlay != nullptr)
     {
@@ -1816,15 +1851,15 @@ int UnitFrame::Fly(
 }
 
 // What RunQueuedActions decides of the frame: each queued act stepped, shaken or flown with its trail, its impact
-// played to its end, the hits landed and the done nodes freed; its result (1 when there are none), the draws into
-// `steps`.
+// played, the hits landed and the done nodes freed; its result (1 when there are none), the draws into `steps`.
 int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 action, PictureSteps& steps)
 {
     BattleUnit& unit = this->unit;
     BattleState& battle = services.state;
     LineWalker& line = unit.flight;
     QueuedAction* node = unit.actions.get();
-    int taken = 0;
+    // A shaking node keeps the outcome of the node before it (the original's first is uninitialised).
+    int outcome = 0;
 
     if (node == nullptr)
     {
@@ -1838,7 +1873,7 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
 
         if (action != 0)
         {
-            act.action = action;
+            act.action = static_cast<u32>(action);
         }
 
         if (services.acts.Run(act) == 0)
@@ -1854,17 +1889,93 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
             return 0;
         }
 
-        services.painter.SetSource(unit.picture->data.data());
-        const BattleUnit::Stride stride = unit.FlightStride(services, *node, act, taken);
-        const u32 flags = stride.flags;
-        line = stride.line;
-        node->shakeFrames = stride.shakeFrames;
-        node->flown = stride.flown;
-        taken = stride.taken;
+        u32 flags = act.flags;
+        auto offsetX = static_cast<i16>(act.x);
+
+        if (unit.facing == 1)
+        {
+            flags ^= Painter::Mirror;
+            offsetX = static_cast<i16>(unit.picture->width - static_cast<u16>(act.x));
+        }
+
+        line = LineWalker{};
+        line.fromX = node->fromX - offsetX;
+        line.fromY = node->fromY - act.y;
+        line.toX = node->toX - offsetX;
+        line.toY = node->toY - act.y;
+
+        if (act.anchorX != 0)
+        {
+            line.fromX = node->fromX - static_cast<i16>(act.anchorX);
+        }
+
+        if (act.anchorY != 0)
+        {
+            line.fromY = node->fromY - static_cast<i16>(act.anchorY);
+        }
+
+        if (node->fromY == 0)
+        {
+            line.fromY = 0;
+        }
+
+        if (node->toY == 0)
+        {
+            line.toY = 0;
+        }
+
+        if (node->shakeFrames != 0)
+        {
+            --node->shakeFrames;
+        }
+        else
+        {
+            int stepsPerFrame = 1;
+
+            if (node->steps > 0)
+            {
+                ++node->flown;
+                stepsPerFrame = node->steps;
+            }
+            else
+            {
+                if (node->flown == 0)
+                {
+                    node->flown = 1;
+                }
+
+                node->flown = static_cast<i16>(
+                    static_cast<u16>(node->flown) > kSpeedingTop ? node->flown + kSpeedingStep : 2 * node->flown
+                );
+            }
+
+            outcome = 0;
+
+            if (stepsPerFrame * node->flown > 0)
+            {
+                while (true)
+                {
+                    LineStep(line);
+
+                    if (line.fromX + line.x == line.toX && line.fromY + line.y == line.toY)
+                    {
+                        outcome = -1;
+                        node->flags = static_cast<u8>(node->flags | QueuedAction::UnkFlag2);
+                        break;
+                    }
+
+                    if (++outcome >= stepsPerFrame * node->flown)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
         services.audio.PlaySound(act.view, services.config.soundVolume);
         act.view = 0;
-        const int x = stride.x;
-        const int y = stride.y;
+        const int x = line.fromX + line.x;
+        const int y = line.fromY + line.y;
 
         if (node->trailed == 1)
         {
@@ -1890,19 +2001,22 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
             }
         }
 
-        steps.push_back(
-            PictureStep{
-                .picture = {act.frame, act.picture, true},
-                .x = x,
-                .y = y,
-                .mode = flags,
-                .held = true,
-                .stand = {x + static_cast<i16>(stride.offsetX), y + act.y},
-                .who = node,
-            }
-        );
+        if ((node->flags & QueuedAction::UnkFlag2) == 0)
+        {
+            steps.push_back(
+                PictureStep{
+                    .picture = {act.frame, act.picture, true},
+                    .x = x,
+                    .y = y,
+                    .mode = flags,
+                    .held = true,
+                    .stand = {x + offsetX, y + act.y},
+                    .who = node,
+                }
+            );
+        }
 
-        if (taken != kArrived)
+        if (outcome != -1)
         {
             node = node->next.get();
             continue;
@@ -1910,7 +2024,7 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
 
         ActState& impact = node->impact;
 
-        if (impact.id > 0)
+        if (static_cast<i32>(impact.id) > 0)
         {
             if (services.acts.Run(impact) == 0)
             {
@@ -1924,7 +2038,6 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
                 return 0;
             }
 
-            services.painter.SetSource(unit.picture->data.data());
             u32 impactFlags = impact.flags;
 
             if (unit.facing == 1)
@@ -1938,14 +2051,15 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
             steps.push_back(
                 PictureStep{
                     .picture = {impact.frame, impact.picture, true},
-                    .x = line.fromX + line.x,
-                    .y = line.fromY + line.y,
+                    .x = x,
+                    .y = y,
                     .mode = impactFlags,
                 }
             );
 
             if (impact.waiting == 0)
             {
+                node = node->next.get();
                 continue;
             }
         }
@@ -1954,12 +2068,21 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
         ++unit.landedActions;
         line = LineWalker{};
 
-        if ((unit.command.actionFlags & UnitCommand::UnkAction1) == 0 && impact.id >= 0)
+        if ((node->flags & QueuedAction::UnkFlag4) != 0)
         {
-            target.RaiseFlag26B8(services.state);
+            node = node->next.get();
+            continue;
+        }
+
+        const u16 chance = (unit.status & kEvadeChanceStatus) != 0 ? kStatusEvadeChance : u16{0};
+
+        if (unit.evadeRolled != 0 || target.RollEvade(services, chance) == 0)
+        {
+            target.RaiseFlag26B8(battle);
             i16 spirit = 0;
             i16 stamina = 0;
-            i32 damage = unit.HitDamage(services, target, spirit, stamina);
+            i32 damage = unit.kind != 0 ? unit.HitDamage(services, target, spirit, stamina)
+                                        : unit.EnemyHitDamage(services, target);
             battle.lastDamage = damage;
 
             if (damage >= kQueuedMaxDamage)
@@ -1993,12 +2116,13 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
     return 0;
 }
 
-void UnitFrame::Action(BattleServices& services, const BattleUnit& target, ActState& act, Scene& scene)
+int UnitFrame::Action(BattleServices& services, BattleUnit& target, ActState& act, Scene& scene)
 {
     const Scene::Owner owner(scene, &this->unit);
     ActionView view;
+    const int result = this->ActionAdvance(services, target, act, view);
 
-    if (this->ActionAdvance(services, target, act, view))
+    if (view.picture.shown)
     {
         scene.Add(
             [view](BattleServices& drawing)
@@ -2007,6 +2131,8 @@ void UnitFrame::Action(BattleServices& services, const BattleUnit& target, ActSt
             }
         );
     }
+
+    return result;
 }
 
 int UnitFrame::Recoil(BattleServices& services, ActState& act, i16 y, Scene& scene)

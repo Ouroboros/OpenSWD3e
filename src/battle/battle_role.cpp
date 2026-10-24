@@ -1182,7 +1182,7 @@ int BattleRole::CastAt(BattleServices& services, const BattleUnit& target, i32 s
 // by DrawAction; its target bits play the effect in the recoil act (holding the act) and fade the field by its lights;
 // a follow-up marks the spell cast in BattleState::spellStage. 1 (slot act 8 and the stages cleared) once the battle
 // marks the spell over.
-int BattleRole::MagicFrame(BattleServices& services, const BattleUnit& target)
+int BattleRole::MagicFrame(BattleServices& services, BattleUnit& target)
 {
     smooth::Scene scene;
     const auto result = smooth::RoleFrame(*this).MagicFrameAdvance(services, target, scene);
