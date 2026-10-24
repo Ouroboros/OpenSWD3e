@@ -564,7 +564,7 @@ public:
     i32 unk53BDA4 = 0;
     i32 unk53BCDC = 0;
     i32 unk53C01C = 0;
-    std::array<u16, Units> escortCalled = {};  // swd32 0x0052137C per unit: the escort place it called
+    std::array<u16, Units> escortCalled = {};  // 0x00536EA8 per unit: the escort place it called
     u16 callingEscort = 0;                     // 0x0057720C the escort being called (its low word)
     i32 levelUpPending = 0;                    // 0x0057733C a level-up to show at the end
     u16 unk53BF1C = 0;

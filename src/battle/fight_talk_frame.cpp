@@ -44,7 +44,6 @@ constexpr u16 kFixedSpeakerY = 0xB4;
 constexpr u16 kRoleLineShiftX = 0x3C;  // command 0x3B: the one-line window of a role stands left of and above it
 constexpr u16 kRoleLineShiftY = 0x14;
 constexpr u32 kLowWordMask = 0xFFFF;
-constexpr u32 kHighWordMask = 0xFFFF0000u;
 constexpr int kHighWordShift = 16;
 constexpr int kEscapeCommand = 0x11;
 constexpr int kAimSelfCommand = 0xB;
@@ -1133,10 +1132,7 @@ int Game::FightTalkSkill()
             order = static_cast<u16>(order | kOrderSpell);
             BattleEnemy& enemy = this->battleEnemies[actor];
             enemy.ClearTurnCommand();
-            u16 act = static_cast<u16>(battle.enemyHitActs[actor]);
-            enemy.LoadSkillAction(this->database, static_cast<u16>(talk.unk53CCE8), act);
-            battle.enemyHitActs[actor] =
-                static_cast<i32>((static_cast<u32>(battle.enemyHitActs[actor]) & kHighWordMask) | act);
+            enemy.LoadSkillAction(this->database, static_cast<u16>(talk.unk53CCE8), battle.enemyHitActs[actor]);
             battle.AddSlotRecord(kEnemySlot, talk.unk53CCEC);
         }
         else

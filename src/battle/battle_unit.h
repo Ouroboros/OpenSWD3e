@@ -540,7 +540,7 @@ public:
     int Enrage(BattleServices& services);
     int EnrageFrame(BattleServices& services);
     int KnockBackFrame(BattleServices& services);
-    int ZoomEntranceFrame(BattleServices& services, int unused, u16 act);
+    int ZoomEntranceFrame(BattleServices& services, BattleUnit& anchor, u16 act);
     int CastPoseFrame(BattleServices& services, i32 slotAct);
     i32 HitPointShare(int scale) const;
     int CancelHitNumber(BattleServices& services);
@@ -719,7 +719,7 @@ public:
     void SetWords66(i16 a, i16 b, i16 c, i16 d, i16 e, i16 f);
     void SetResistances(std::span<const i16, 5> values);
     bool ShowsPicture(i16 picture) const;
-    void LoadSkillAction(Database& database, u16 id, u16& act);
+    void LoadSkillAction(Database& database, u16 id, i32& act);
     u16 PrepareCommand(Database& database);
     bool ChooseHeal(BattleServices& services);
     void ClearMoveAxes(u16& x, u16& y) const;

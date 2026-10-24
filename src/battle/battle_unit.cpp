@@ -2556,9 +2556,9 @@ bool BattleUnit::ShowsPicture(i16 picture) const
     return this->mainAct.waiting == 1;
 }
 
-// swd3e.exe 0x00488BB0: skill `id` of mon.dat taken as the unit's action: its act, its name, its command script (the
-// command's +0x0E adding to +0x29A4) and command 2
-void BattleUnit::LoadSkillAction(Database& database, u16 id, u16& act)
+// swd3e.exe 0x00488BB0: skill `id` of mon.dat taken as the unit's action: its act (written to the whole dword, the
+// high word 0), its name, its command script (the command's +0x0E adding to +0x29A4) and command 2
+void BattleUnit::LoadSkillAction(Database& database, u16 id, i32& act)
 {
     database.LoadObject(this->object, id);
     act = this->object.data.act;
@@ -7425,14 +7425,13 @@ int BattleUnit::DrainSecondGauge()
 namespace swd3e
 {
 
-// swd3e.exe 0x004873C0: one frame of an entrance (`unused` is not read): the field darkens by tint (darkRed, darkGreen
-// and darkBlue -12, unk53BF94 set, darkenByTint as by Game::DarkenByTint), then while `stage` is 0 action 0x24 of act
-// `act` grows in mirrored, zoomed from 0xC18 down by glowLevel (0x28 more a frame) about its origin, until glowLevel
-// reaches 0x800 (stage 1, the act cleared); from stage 1 act 0x1C98 plays at the unit's place, 1 once it ends
-// (glowLevel and stage 0, the act cleared). 0 otherwise, or when an act cannot run.
-int BattleUnit::ZoomEntranceFrame(BattleServices& services, int unused, u16 act)
+// swd3e.exe 0x004873C0: one frame of an entrance at the draw position of `anchor`: the field darkens by tint (darkRed,
+// darkGreen and darkBlue -12, unk53BF94 set, darkenByTint as by Game::DarkenByTint), then while `stage` is 0 action
+// 0x24 of act `act` grows in mirrored, zoomed from 0xC18 down by glowLevel (0x28 more a frame) about its origin, until
+// glowLevel reaches 0x800 (stage 1, the act cleared); from stage 1 act 0x1C98 plays at the anchor's place, 1 once it
+// ends (glowLevel and stage 0, the act cleared). 0 otherwise, or when an act cannot run.
+int BattleUnit::ZoomEntranceFrame(BattleServices& services, BattleUnit& anchor, u16 act)
 {
-    static_cast<void>(unused);
     BattleState& battle = services.state;
     battle.darkRed = kEntranceDark;
     battle.darkGreen = kEntranceDark;
@@ -7453,7 +7452,7 @@ int BattleUnit::ZoomEntranceFrame(BattleServices& services, int unused, u16 act)
         }
 
         this->picture = services.archive.GetPicture(state.frame, state.picture);
-        this->GetDrawPosition(x, y);
+        anchor.GetDrawPosition(x, y);
         smooth::Scene scene;
         smooth::ScenePainter painter(services, scene);
         const int zoom = kEntranceZoom - this->glowLevel;
@@ -7498,7 +7497,7 @@ int BattleUnit::ZoomEntranceFrame(BattleServices& services, int unused, u16 act)
     }
 
     this->picture = services.archive.GetPicture(state.frame, state.picture);
-    this->GetDrawPosition(x, y);
+    anchor.GetDrawPosition(x, y);
 
     // A missing picture is read through a null pointer in the original.
     if (this->picture != nullptr)

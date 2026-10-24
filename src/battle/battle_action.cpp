@@ -751,7 +751,7 @@ int Game::RoleCommandFrame(BattleRole& unit, int role, int target, u16 command)
         {
             BattleRole& other = this->battleRoles[at];
 
-            if (unit.ZoomEntranceFrame(services, 0, battle.usedUpItem) != 1)
+            if (unit.ZoomEntranceFrame(services, other, battle.usedUpItem) != 1)
             {
                 return 0;
             }
@@ -1590,9 +1590,7 @@ int Game::ControlFrame(BattleRole& unit, int role, int target)
     if (battle.orderedSkill != 0)
     {
         order = kOrderSpell;
-        u16 act = static_cast<u16>(hitAct);
-        enemy.LoadSkillAction(this->database, static_cast<u16>(battle.orderedSkill), act);
-        hitAct = static_cast<i32>((static_cast<u32>(hitAct) & kHighWord) | act);
+        enemy.LoadSkillAction(this->database, static_cast<u16>(battle.orderedSkill), hitAct);
         battle.orderedSkill = 0;
     }
 
