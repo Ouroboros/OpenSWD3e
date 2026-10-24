@@ -438,12 +438,12 @@ bool Talk::SetupDialog(
         frame = 0;
     }
 
-    // The original passes only the act number: qq and dir take what is on the stack (0 here, see deviations.md).
     auto runAct = [&owner](ActState& act, std::u8string_view title)
     {
         if (owner.acts.Run(act) == 0)
         {
-            ErrorBox(owner.errors, title, u8"設定錯誤 \nact[%d] qq[%d] dir[%d]", act.id, 0, 0);  // 0x004B0D58
+            // 0x004B0D58
+            ErrorBox(owner.errors, title, u8"設定錯誤 \nact[%d] qq[%d] dir[%d]", act.id, act.action, act.direction);
         }
     };
 

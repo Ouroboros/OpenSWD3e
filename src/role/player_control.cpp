@@ -10,7 +10,6 @@
 #include "game/game.h"
 #include "input/input.h"
 #include "item/item_list.h"
-#include "platform/display.h"
 #include "platform/system_info.h"
 #include "role/role_control.h"
 #include "talk/talk_event.h"
@@ -40,15 +39,11 @@ constexpr std::array<u16, 8> kDebugKinds = {0x12, 0x13, 0x11, 0x10, 0xF, 0x14, 0
 constexpr i32 kCounterFade = 2;
 constexpr i32 kCounterDelay = 0x64;  // standing frames before the counter fades in
 constexpr i32 kCounterOpaque = 0x10;
-// The camera follows the controlled role past the middle of the screen (a tile before it across: 0x130 and 0xF0); the
-// role steps alone up to this far before the right and bottom edges (0x258 and 0x1C2). The original has them as
-// constants of the 640x480 screen, whatever the size of the field view.
+// The camera follows the controlled role past the middle of the view (a tile before it across: 0x130 and 0xF0 on
+// 640x480); the role steps alone up to this far before the right and bottom edges (0x258 and 0x1C2). The original has
+// the 640x480 constants; the wide map (deviations.md, [display] wide_map) takes them from the canvas.
 constexpr i32 kStepRightMargin = 0x28;
 constexpr i32 kStepDownMargin = 0x1E;
-constexpr auto kScrollX = static_cast<u32>(Display::Width / 2 - MapHeader::TileSize);
-constexpr auto kScrollY = static_cast<u32>(Display::Height / 2);
-constexpr auto kStepRight = static_cast<u32>(Display::Width - kStepRightMargin);
-constexpr auto kStepDown = static_cast<u32>(Display::Height - kStepDownMargin);
 constexpr i32 kRegionLeaderSteps = 0x10;  // a region event is placed this many steps behind the controlled role
 constexpr i32 kDoublePress = 2;           // ButtonState::press of a second click
 constexpr int kRunSpeedFactor = 2;
@@ -355,14 +350,16 @@ void RoleControl::ControlPlayer()
 
     const auto screenX = static_cast<u32>(player.x - field.cameraLeft);
     const auto screenY = static_cast<u32>(player.y - field.cameraTop);
-    this->scrollLeft = field.cameraLeft > 0 && screenX <= kScrollX ? 1 : 0;
-    this->scrollRight = screenX >= kScrollX && field.cameraRight < MapHeader::TileSize * state.map.width ? 1 : 0;
-    this->scrollUp = field.cameraTop > 0 && screenY <= kScrollY ? 1 : 0;
-    this->scrollDown = screenY >= kScrollY && field.cameraBottom < MapHeader::TileSize * state.map.height ? 1 : 0;
+    const auto scrollX = static_cast<u32>(field.viewWidth / 2 - MapHeader::TileSize);
+    const auto scrollY = static_cast<u32>(field.viewHeight / 2);
+    this->scrollLeft = field.cameraLeft > 0 && screenX <= scrollX ? 1 : 0;
+    this->scrollRight = screenX >= scrollX && field.cameraRight < MapHeader::TileSize * state.map.width ? 1 : 0;
+    this->scrollUp = field.cameraTop > 0 && screenY <= scrollY ? 1 : 0;
+    this->scrollDown = screenY >= scrollY && field.cameraBottom < MapHeader::TileSize * state.map.height ? 1 : 0;
     this->stepLeft = player.x != 0 ? 1 : 0;
-    this->stepRight = screenX < kStepRight ? 1 : 0;
+    this->stepRight = screenX < static_cast<u32>(field.viewWidth - kStepRightMargin) ? 1 : 0;
     this->stepUp = player.y != 0 ? 1 : 0;
-    this->stepDown = screenY < kStepDown ? 1 : 0;
+    this->stepDown = screenY < static_cast<u32>(field.viewHeight - kStepDownMargin) ? 1 : 0;
     const bool choices = !state.clickRegions.regions.empty();
     const ButtonState& space = controls.At(Button::Space);
     const ButtonState& enter = controls.At(Button::Enter);

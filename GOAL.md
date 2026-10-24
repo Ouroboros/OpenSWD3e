@@ -26,12 +26,12 @@
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
 - 已实现／总数：1710／1710。
-- 已验证／总数：158／1710。
-- 待实现／待验证：0／1552。
+- 已验证／总数：159／1710。
+- 待实现／待验证：0／1551。
 
 ## 当前工作
 
-函数全集1710个均已实现，范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试170项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。第4阶段第一遍逐函数验证进行中，证据按模块记入reverse/evidence/pass1/。停点：函数表第130行 Talk::SetupDialog（0x0040B370）。
+函数全集1710个均已实现，范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试170项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。第4阶段第一遍逐函数验证进行中，证据按模块记入reverse/evidence/pass1/。停点：函数表第131行 Talk::ExpandText（0x0040BB90）。
 
 ## 下一步
 

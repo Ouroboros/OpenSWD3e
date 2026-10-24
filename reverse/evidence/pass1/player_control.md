@@ -15,7 +15,7 @@
 ## 地图操作
 
 - advance=0；counterWait 为 0 时 counterAlpha-=2，负则 0。systemFlags&0x40、mouseSuppressed、任一步进非 0、menuState 非 0 时返回。
-- 滚屏与走步旗标用固定阈值 0x130、0xF0、0x258、0x1C2（无符号比较），与地图宽高 ×16 比较相机右、下边。
+- 滚屏与走步旗标用固定阈值 0x130、0xF0、0x258、0x1C2（无符号比较），与地图宽高 ×16 比较相机右、下边。实现按画布宽高（viewWidth/2−16、viewHeight/2、viewWidth−0x28、viewHeight−0x1E）计算，默认 640×480 时与原值相同；宽地图下按画布计算是用户要求的增强（deviations.md 第 92 行宽地图条目，已补列 0x00402AA0）。
 - Space/Enter：按下且 heldFrames==1。无选项时 Space 置 advance=1；有对话框时 Enter 使 advance+1；有选项时两键之一：选项旗标 0x1000 则释放选项，都返回。Space 且 leader 空闲：FindRoleAhead(AheadX/AheadY[方向])，角色存在、无旗标 4、talkState 为 0 时转向（旗标 0x800 时角色保存并转向、运行动作，失败报 Talk1，格式 0x004AF288）、主角转向 (f&0xFFFE)+((f-1)&1)、运行主角动作（失败报 Talk2，格式 0x004AF244）、复制事件到 leader、日志、advance=0，返回。Enter 且 leader 空闲：menuState=0x80000001，返回。playerHold 且无选项：返回。
 - 方向键：左/右（互斥）置方向 2/3 与 stepX；上/下（互斥）在已有左右时把 2→4/3→7（上）或 2→6/3→5（下），否则方向 0/1；有选项时改为移动选择（heldFrames==1 或 &7==7，绕回，choiceMoved=1）。pressed 记左右的 press 再或上上下的 press。
 - 旗标 0x14 未置且有步进时 Slide；StepEvent 先用滑后的步进、事件为 0 再用原步进；找到角色时事件取角色 event；旗标 0x18 时事件取脚下格子 &0xFF、找到的角色清为 -1。
@@ -27,7 +27,7 @@
 ## 修正的差异
 
 1. 两处进战斗前原程序调用 0x004367D0（TswArchive::Flush：清缓存、档案保持打开），实现调用的是 TswArchive::CloseAll（0x004366B0）。已改为 Flush。
-2. 滚屏/走步阈值原程序是 640×480 的常量，实现按 field.viewWidth/viewHeight 推算（视图尺寸非 640×480 时不同）。已改为常量。
+2. （更正）滚屏/走步阈值按画布推算属宽地图增强，保留实现原写法，见上。
 3. F6 原程序把背包链表头本身传给 AddItem（0x00454970 从 *list 开始找），实现在背包非空时传的是首节点的 next（沿用 swd32 的写法），会跳过首个物品并在错误位置插入。已改为 party.inventory；deviations.md 中相应的“空背包空指针”说法删除。
 
 ## 依赖数据
