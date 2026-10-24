@@ -19,17 +19,12 @@ constexpr std::size_t kScalesAt = 0x10;
 
 }  // namespace
 
-// swd3e.exe 0x0042B1C0: no kind, the default scale; the constructor fills the levels with the default as dwords, so
-// they alternate between 0x400 and 0 (its writes run on past the object into the globals after it, not repeated
-// here: deviations.md)
+// swd3e.exe 0x0042B1C0 (from 0x0042B1F0): no kind, no rows, the default scale in every dword of unk00C and every
+// level, no picture
 MapScale::MapScale()
 {
     this->unk00C.fill(this->defaultScale);
-
-    for (std::size_t level = 0; level < this->levels.size(); ++level)
-    {
-        this->levels[level] = level % 2 == 0 ? static_cast<i16>(this->defaultScale) : i16{0};
-    }
+    this->levels.fill(static_cast<i16>(this->defaultScale));
 }
 
 // swd3e.exe 0x0042B250 (the atexit destructor, which clears it)
