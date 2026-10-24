@@ -1,0 +1,139 @@
+004360C0 vs swd32 004311C0: same (206 instructions)
+004367E0 vs swd32 00431A20: same (9 instructions)
+00436B50 vs swd32 00432020: same (15 instructions)
+00437D10 vs swd32 00432FA0: same (35 instructions)
+00437FC0 vs swd32 00433220: same (27 instructions)
+00438020 vs swd32 00433270: same (15 instructions)
+00438560 vs swd32 00433AA0: same (114 instructions)
+004386B0 vs swd32 00433BF0: same (20 instructions)
+00438700 vs swd32 00433C40: same (84 instructions)
+00438830 vs swd32 00433D70: same (19 instructions)
+00438880 vs swd32 00433DC0: same (34 instructions)
+004388E0 vs swd32 00433E20: same (36 instructions)
+00438950 vs swd32 00433E90: same (36 instructions)
+004389C0 vs swd32 00433F00: same (11 instructions)
+004389F0 vs swd32 00433F30: same (21 instructions)
+00438A30 vs swd32 00433F70: same (307 instructions)
+00438DA0 vs swd32 004342E0: same (39 instructions)
+00438E10 vs swd32 00434350: same (84 instructions)
+00438EE0 vs swd32 00434420: same (81 instructions)
+00438FA0 vs swd32 004344E0: same (195 instructions)
+00439250 vs swd32 00434790: same (509 instructions)
+00439890 vs swd32 00434DD0: same (249 instructions)
+00439BA0 vs swd32 004350E0: same (28 instructions)
+00439BF0 vs swd32 00435130: same (14 instructions)
+00439C20 vs swd32 00435160: same (48 instructions)
+00439CB0 vs swd32 004351F0: same (23 instructions)
+00439D00 vs swd32 00435240: same (37 instructions)
+00439D80 vs swd32 004352C0: same (11 instructions)
+00439DA0 vs swd32 004352E0: same (86 instructions)
+00439E80 vs swd32 004353C0: same (29 instructions)
+00439ED0 vs swd32 00435410: same (11 instructions)
+00439EF0 vs swd32 00435430: same (53 instructions)
+00439F90 vs swd32 004354D0: same (11 instructions)
+00439FC0 vs swd32 00435500: same (51 instructions)
+0043A070 vs swd32 004355B0: same (45 instructions)
+0043A0E0 vs swd32 00435620: same (9 instructions)
+0043A110 vs swd32 00435650: same (3 instructions)
+0043A120 vs swd32 00435660: same (3 instructions)
+0043A130 vs swd32 00435670: same (3 instructions)
+0043A140 vs swd32 00435680: same (176 instructions)
+mapping (98 symbols):
+  004211A0 -> 004207E0
+  00436378 -> 00431478
+  004364A0 -> 004315A0
+  00436950 -> 00431DF0
+  004388E0 -> 00433E20
+  00438950 -> 00433E90
+  004389C0 -> 00433F00
+  00438DA0 -> 004342E0
+  00438E10 -> 00434350
+  00438EE0 -> 00434420
+  00439D00 -> 00435240
+  00439D80 -> 004352C0
+  00439E80 -> 004353C0
+  00439ED0 -> 00435410
+  00439EF0 -> 00435430
+  00439F90 -> 004354D0
+  00439FC0 -> 00435500
+  0043A070 -> 004355B0
+  0043A110 -> 00435650
+  0043A120 -> 00435660
+  0043A130 -> 00435670
+  0043C620 -> 00437B60
+  0043C6C0 -> 00437C00
+  0043C970 -> 00437E90
+  0043DA70 -> 00487C10
+  0043DAB0 -> 004885A0
+  004A10E8 -> 00489654
+  004A14E2 -> 00489B10
+  004A14EC -> 00489B20
+  004A151B -> 00489B70
+  004AA684 -> 004996A4
+  004AA688 -> 004996A8
+  004B0BF4 -> 0049FB74
+  004B70C4 -> 004A60B0
+  004EC178 -> 004CD304
+  004EC180 -> 004CD30C
+  004ED9A4 -> 004CD71C
+  004EF530 -> 004CDE20
+  004EF588 -> 004CDE78
+  004F4B80 -> 004FB0C8
+  004F4FB8 -> 004FB1F0
+  004F4FBC -> 004FB1F4
+  004F4FE0 -> 004FB208
+  004F5120 -> 004FB2D0
+  004F5140 -> 004FB2EC
+  004F5168 -> 004FB304
+  004F5178 -> 004FB314
+  004F5180 -> 004FB318
+  004F5300 -> 004FB408
+  00509C30 -> 004FB514
+  00509E74 -> 004FB558
+  00509E7C -> 004FB568
+  CreateFileA -> CreateFileA
+  CreateFontIndirectA -> CreateFontIndirectA
+  DeleteObject -> DeleteObject
+  GetSystemMetrics -> GetSystemMetrics
+  MessageBoxA -> MessageBoxA
+  SelectObject -> SelectObject
+  SetBkColor -> SetBkColor
+  SetBkMode -> SetBkMode
+  SetTextColor -> SetTextColor
+  String -> 004A6248
+  TextOutA -> TextOutA
+  V -> V
+  aDderrDirectdra -> aDderrDirectdra
+  aDderrExclusive -> aDderrExclusive
+  aDderrGeneric -> aDderrGeneric_0
+  aDderrHwndalrea -> aDderrHwndalrea
+  aDderrHwndsubcl -> aDderrHwndsubcl
+  aDderrIncompati -> aDderrIncompati
+  aDderrInvalidca -> aDderrInvalidca
+  aDderrInvalidcl -> aDderrInvalidcl_0
+  aDderrInvaliddi -> aDderrInvaliddi
+  aDderrInvalidob -> aDderrInvalidob
+  aDderrInvalidpa -> aDderrInvalidpa
+  aDderrInvalidsu -> aDderrInvalidsu
+  aDderrNoclipper -> aDderrNoclipper
+  aDderrNocoopera -> aDderrNocoopera
+  aDderrNodirectd -> aDderrNodirectd
+  aDderrNoemulati -> aDderrNoemulati
+  aDderrNoexclusi -> aDderrNoexclusi
+  aDderrNofliphw -> aDderrNofliphw
+  aDderrOutofmemo -> aDderrOutofmemo
+  aDderrOutofvide -> aDderrOutofvide
+  aDderrPrimarysu -> aDderrPrimarysu
+  aDderrUnsupport -> aDderrUnsupport_0
+  aParticlePut -> aParticlePut
+  aParticlePut_0 -> aParticlePut_0
+  h -> h
+  hdc -> hdc
+  lDistanceToMove -> 004FB50C
+  lpBuffer -> lpBuffer
+  lstrcpyA -> lstrcpyA
+  movsb -> movsb
+  movsd -> movsd
+  scasb -> scasb
+  stosb -> stosb
+  stosd -> stosd
