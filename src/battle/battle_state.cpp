@@ -498,7 +498,7 @@ void BattleState::ClearActing()
     this->slideBackPicture = 0;
     this->unk53AE7C = 0;
     this->unk53AE80 = 0;
-    this->unk53AE84 = 0;
+    this->hitsAtOnce = 0;
     this->wholeSide = 0;
 }
 

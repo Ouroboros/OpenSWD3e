@@ -1043,9 +1043,9 @@ void Game::DrainToSpirit(BattleRole& role, i32& damage)
     role.Damage(this->battleServices, 0, static_cast<i16>(damage), 0);
 }
 
-// A role attacking in HitFrame (inline in the original): with unk53AE84 its hit sweeps a side (wholeSide 1: the
+// A role attacking in HitFrame (inline in the original): with wholeSide its hit sweeps a side (hitsAtOnce 1: the
 // whole side at once, the hits taken by the enemies; otherwise one unit after another as the sweep reaches them,
-// until sweepTotal are hit), else one target is hit (wholeSide 1: HitAllFrame on the target alone). unk53AE7C makes
+// until sweepTotal are hit), else one target is hit (hitsAtOnce 1: HitAllFrame on the target alone). unk53AE7C makes
 // the party the target side.
 int Game::RoleHitFrame(int role)
 {
@@ -1055,9 +1055,9 @@ int Game::RoleHitFrame(int role)
     const auto at = static_cast<std::size_t>(target);
     const u32 act = static_cast<u32>(battle.unk4FE5D4[static_cast<std::size_t>(role)]);
 
-    if (battle.unk53AE84 != 0)
+    if (battle.wholeSide != 0)
     {
-        if (battle.wholeSide == 1)
+        if (battle.hitsAtOnce == 1)
         {
             if (this->HitAllFrame(this->battleEnemies[at], attacker, act, 0, 1) != 1)
             {
@@ -1120,7 +1120,7 @@ int Game::RoleHitFrame(int role)
         return 1;
     }
 
-    if (battle.wholeSide == 1)
+    if (battle.hitsAtOnce == 1)
     {
         if (battle.unk53AE7C == 0)
         {

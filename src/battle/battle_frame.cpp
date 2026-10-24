@@ -162,8 +162,8 @@ int Game::BattleFrame()
             static_cast<u16>(battle.slideBackPicture),
             battle.unk53AE7C,
             battle.unk53AE80,
-            battle.unk53AE84,
-            battle.wholeSide
+            battle.wholeSide,
+            battle.hitsAtOnce
         };
 
         this->TakeSlotRecord(acting);
@@ -173,8 +173,8 @@ int Game::BattleFrame()
         battle.slideBackPicture = static_cast<i16>(acting.unk0A);
         battle.unk53AE7C = acting.unk0C;
         battle.unk53AE80 = acting.unk10;
-        battle.unk53AE84 = acting.unk14;
-        battle.wholeSide = acting.unk18;
+        battle.wholeSide = acting.unk14;
+        battle.hitsAtOnce = acting.unk18;
 
         if (battle.actingUnit != -1)
         {
