@@ -2281,7 +2281,7 @@ void Game::AnnounceMastery()
             node->id = ItemNode::Empty;
             node->count = 1;
             node->pending = 0;
-            node->unk06 = 0;
+            node->workCount = 0;
             std::fill_n(node->record.data.name.begin(), kClearedNameStart, '\0');
             const std::string empty = Big5(kEmptySlotName);
             std::copy(empty.begin(), empty.end(), node->record.data.name.begin());

@@ -1309,7 +1309,7 @@ TEST_CASE("battle role: the object and skill lists of the battle menu")
     spent.record.data.usableBy = kUsable;
     spent.record.data.costBits = kListedBit;
     spent.count = kTwo;
-    spent.unk06 = kTwo;
+    spent.workCount = kTwo;
     spent.next = std::make_unique<swd3e::ItemNode>();
     swd3e::ItemNode& thrown = *spent.next;
     thrown.id = kThrownObject;
@@ -1551,7 +1551,7 @@ TEST_CASE("battle role: choosing an object in battle")
     CHECK_EQ(role.SelectObject(database, all.state, 0, 1, act, kind), 1);
     CHECK_EQ(kind, 1);
     CHECK(role.selectedItem == &herb);
-    CHECK_EQ(herb.unk06, 1);
+    CHECK_EQ(herb.workCount, 1);
     CHECK_EQ(role.SelectObject(database, all.state, 0, 1, act, kind), 0);
     CHECK_EQ(role.SelectObject(database, all.state, kThrowCategory, 1, act, kind), 1);
     CHECK_EQ(kind, 0);  // swd3e: the throwing category is no longer told apart

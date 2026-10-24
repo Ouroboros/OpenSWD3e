@@ -1,0 +1,60 @@
+00451210: no swd32 pair
+004513D0 vs swd32 00448840: lengths 270 / 233
+004517D0 vs swd32 00448BB0: differs at 7: [cmp eax, 4] / [cmp eax, 5]
+00451820 vs swd32 00448C00: same (17 instructions)
+00451860 vs swd32 00448C40: differs at 5: [mov G, 4] / [mov G, 5]
+00451890 vs swd32 00448C70: same (9 instructions)
+004518C0 vs swd32 00448CA0: lengths 67 / 64
+004519C0 vs swd32 00448DA0: lengths 68 / 66
+00451AD0: no swd32 pair
+00451B30 vs swd32 00448EB0: same (10 instructions)
+00451B60: no swd32 pair
+00451D30 vs swd32 00449050: same (28 instructions)
+00451DA0 vs swd32 004490C0: lengths 678 / 734
+00452800: no swd32 pair
+00452890 vs swd32 0044AF30: differs at 5: [mov G, 5] / [mov word ptr G, 5]
+00452970 vs swd32 0044B010: same (25 instructions)
+004529D0 vs swd32 0044B070: lengths 358 / 364
+00452EA0 vs swd32 0044B560: differs at 35: [cmp eax, 6] / [cmp eax, 7]
+00453020 vs swd32 0044B6E0: same (87 instructions)
+00453180 vs swd32 0044B840: differs at 31: [mov G, 5] / [mov G, 6]
+00453270 vs swd32 0044B930: same (63 instructions)
+00453360 vs swd32 0044BA20: lengths 110 / 107
+00453510 vs swd32 0044BBD0: lengths 106 / 110
+004536D0 vs swd32 0044BDA0: lengths 194 / 208
+004539C0 vs swd32 0044C0E0: lengths 23 / 24
+00453A40 vs swd32 0044C160: lengths 1004 / 1013
+004548D0 vs swd32 0044D010: same (15 instructions)
+00454910 vs swd32 0044D050: same (12 instructions)
+00454930: no swd32 pair
+00454970 vs swd32 0044D2D0: differs at 2: [mov ebx, [esp+4+G]] / [mov ebx, [esp+4+arg_4]]
+00454B80 vs swd32 0044D4E0: same (21 instructions)
+00454BC0 vs swd32 0044D520: differs at 11: [push 0B4h] / [push 0B0h]
+00454C40 vs swd32 0044D5A0: differs at 8: [mov ecx, [esi+0B0h]] / [mov ecx, [esi+0ACh]]
+00454C70 vs swd32 0044D5D0: differs at 2: [push 0B4h] / [push 0B0h]
+00454CC0 vs swd32 0044D620: same (16 instructions)
+00454CF0 vs swd32 0044D650: same (17 instructions)
+00454D20 vs swd32 0044D680: same (14 instructions)
+00454D50 vs swd32 0044D6B0: same (15 instructions)
+00454D80 vs swd32 0044D6E0: differs at 4: [push 2Ch] / [push 28h]
+00454FC0 vs swd32 0044D920: lengths 65 / 64
+004550E0 vs swd32 0044DA40: differs at 15: [mov ecx, 2Dh] / [mov ecx, 2Ch]
+00455140 vs swd32 0044DAA0: lengths 57 / 47
+00455240 vs swd32 0044DBC0: same (204 instructions)
+00455580 vs swd32 0044DF00: same (63 instructions)
+00455670 vs swd32 0044DFF0: same (57 instructions)
+00455740 vs swd32 0044E0C0: same (57 instructions)
+00455830 vs swd32 0044E1B0: same (44 instructions)
+004558E0 vs swd32 0044E260: same (56 instructions)
+004559B0 vs swd32 0044E330: same (110 instructions)
+00455B20 vs swd32 0044E4A0: differs at 57: [push 0B4h] / [push 0B0h]
+00456050 vs swd32 0044E9D0: same (30 instructions)
+004560E0 vs swd32 0044EA60: lengths 862 / 892
+00456D80 vs swd32 0044F770: same (34 instructions)
+00456DE0 vs swd32 0044F7D0: same (13 instructions)
+00456E10 vs swd32 0044F800: same (79 instructions)
+00456EF0 vs swd32 0044F8E0: differs at 6: [mov ecx, [esi+0B0h]] / [mov ecx, [esi+0ACh]]
+00456F30 vs swd32 0044F920: same (90 instructions)
+00457050 vs swd32 0044FA40: same (71 instructions)
+00457100 vs swd32 0044FAF0: differs at 0: [sub esp, 8Ch] / [sub esp, 84h]
+00457340 vs swd32 0044FD30: lengths 215 / 195

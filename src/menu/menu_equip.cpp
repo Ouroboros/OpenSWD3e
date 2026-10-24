@@ -989,7 +989,7 @@ void Menu::EquipPutOn()
 
     ItemNode removed;
     removed.id = worn->id;
-    removed.unk06 = worn->unk06;
+    removed.workCount = worn->workCount;
     removed.count = worn->count;
     removed.pending = worn->pending;
     removed.record = worn->record;
@@ -998,7 +998,7 @@ void Menu::EquipPutOn()
     worn->record = chosen->record;
     worn->count = 1;
     worn->pending = 0;
-    worn->unk06 = 0;
+    worn->workCount = 0;
     worn->next.reset();
     const u16 putOn = chosen->id;
     AddItem(page.objects, putOn, -1, ItemCountMode::Pending, owner.database);

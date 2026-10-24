@@ -22,10 +22,10 @@ struct ItemNode
 
     std::unique_ptr<ItemNode> next;  // +0x00
     u16 id = 0;                      // +0x04
-    i16 unk06 = 0;                   // +0x06
-    i16 count = 0;                   // +0x08
-    i16 pending = 0;                 // +0x0A
-    ObjectRecord record;             // +0x0C (the description at +0xB0)
+    i16 workCount = 0;    // +0x06 a count the menu or battle at work keeps aside (to buy or sell, to use, to morph)
+    i16 count = 0;        // +0x08
+    i16 pending = 0;      // +0x0A
+    ObjectRecord record;  // +0x0C (the description at +0xB0)
 };
 
 // Where the first node of a list is kept: a list head, or the next of the node a list starts after (a skill list is
