@@ -126,7 +126,7 @@ public:
     static constexpr u32 OriginEdge = 0x10;      // where a place past the screen is moved to
     static constexpr u16 DefaultTimeout = 0x3C;  // tenths of a second
 
-    // swd32.exe 0x004994F4 (unmatched in swd3e) and 0x00499514: where a speaker's talk window goes by the way it faces.
+    // 0x004AA4C4 and 0x004AA4E4: where a speaker's talk window goes by the way it faces.
     static constexpr std::array<i32, 8> WindowShiftX = {0, 0, 160, -160, 80, -80, 80, -80};
     static constexpr std::array<i32, 8> WindowShiftY = {96, -104, -64, -56, 56, -112, -112, 56};
 

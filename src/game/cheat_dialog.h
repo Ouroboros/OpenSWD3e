@@ -18,7 +18,7 @@ class ExeResources;
 class Game;
 class Party;
 
-// The cheat dialog of the debug keys (F4; dialog 0x6A of swd32.exe): ten tabs (the items, the skills of the four
+// The cheat dialog of the debug keys (F4; dialog 0x6A of swd3e.exe): ten tabs (the items, the skills of the four
 // roles, the attributes of the four roles, the variables) with a list and three fields to add, top up, delete or set
 // entries. On Windows it is the original's dialog from swd3e.exe's resources (asset/launcher/<id>.dlg); elsewhere
 // it cannot be shown. Also the name dialog (0x70) the launcher's start command would open.
@@ -31,7 +31,7 @@ public:
     static constexpr int FirstAttributesTab = 5;
     static constexpr int VariablesTab = 9;
     static constexpr int Tabs = 10;
-    // The labels of the attributes (swd32.exe 0x0049FC14, eight bytes each).
+    // The labels of the attributes (0x004B0C60, eight bytes each).
     static constexpr std::array<std::u8string_view, 17> AttributeNames = {
         u8"生命",
         u8"魔法",

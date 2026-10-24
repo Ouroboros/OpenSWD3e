@@ -14,7 +14,7 @@ class Painter;
 struct TextColors
 {
     static constexpr int Colors = 16;
-    // swd32.exe 0x0049E0C8 (unmatched in swd3e)
+    // 0x004AF720
     static constexpr std::array<u32, Colors> Primary = {
         0xFFFFFF,
         0x000000,
@@ -34,7 +34,7 @@ struct TextColors
         0x002CEC,
     };
 
-    // swd32.exe 0x0049E108 (unmatched in swd3e)
+    // 0x004AF760
     static constexpr std::array<u32, Colors> Secondary = {
         0x606060,
         0x808080,

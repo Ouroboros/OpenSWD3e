@@ -7,7 +7,7 @@
 namespace swd3e
 {
 
-// sin(degree) * 8192 for 0..89 degrees (swd32.exe 0x0049F250; the table goes on, only these entries are read).
+// sin(degree) * 8192 for 0..89 degrees (0x004B086C; the table goes on, only these entries are read).
 constexpr std::array<i16, 90> kSineTable = {
     0,    142,  285,  428,  571,  713,  856,  998,  1140, 1281, 1422, 1563, 1703, 1842, 1981, 2120, 2258, 2395,
     2531, 2667, 2801, 2935, 3068, 3200, 3331, 3462, 3591, 3719, 3845, 3971, 4096, 4219, 4341, 4461, 4580, 4698,

@@ -65,19 +65,19 @@ TEST_CASE("fight talk: load, seek and close")
     std::filesystem::remove_all(directory);
 }
 
-TEST_CASE("fight talk: the initial state matches swd32.exe")
+TEST_CASE("fight talk: the initial state matches swd3e.exe")
 {
-    constexpr swd3e::u32 kTalkAt = 0x004A7B54;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kTimeoutAt = 0x004BF8FC;
+    constexpr swd3e::u32 kRunsAt = 0x004BF904;  // after the curve step 0x004BF900 (0.05f) of TalkCurvePoint
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
     const swd3e::FightTalk talk;
-    CHECK(
-        swd3etest::SameTable(exe, kTalkAt, std::array<swd3e::i32, 3>{talk.windowTimeout, talk.battleRuns, talk.enabled})
-    );
+    CHECK(swd3etest::SameTable(exe, kTimeoutAt, std::array<swd3e::i32, 1>{talk.windowTimeout}));
+    CHECK(swd3etest::SameTable(exe, kRunsAt, std::array<swd3e::i32, 2>{talk.battleRuns, talk.enabled}));
 }

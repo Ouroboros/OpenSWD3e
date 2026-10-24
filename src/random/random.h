@@ -14,7 +14,7 @@ class Random
 public:
     static constexpr int Size = 250;
     static constexpr int Tap = 147;
-    // The R250 table and the LCG state as stored in swd32.exe (0x004A6610, 0x004A69F8): the values drawn before
+    // The R250 table and the LCG state as stored in swd3e.exe (0x004BE1AC, 0x004BE594): the values drawn before
     // WinMain seeds the generator.
     static constexpr std::array<u32, Size> InitialTable = {
         15301, 57764, 10921, 56345, 19316, 43154, 54727, 49252, 32360, 49582, 26124, 25833, 34404, 11030, 26232, 13965,

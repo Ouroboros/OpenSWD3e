@@ -223,7 +223,7 @@ public:
     void MixPixels(std::span<const u16> other, std::span<u16> pixels);
     void GrayPixels(std::span<u16> pixels) const;
 
-    // Per-line horizontal offsets of the wave effect: 15 rows of 33 (0x004A06A8).
+    // Per-line horizontal offsets of the wave effect: 15 rows of 33 (0x004B16B8).
     static std::span<const i32> WaveOffsets();
 
 private:

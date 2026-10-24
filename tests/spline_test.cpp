@@ -21,14 +21,14 @@ constexpr swd3e::i32 kEndY = 24;
 
 }  // namespace
 
-TEST_CASE("spline: the basis matches swd32.exe")
+TEST_CASE("spline: the basis matches swd3e.exe")
 {
-    constexpr swd3e::u32 kBasisAt = 0x004A6474;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kBasisAt = 0x004BE010;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

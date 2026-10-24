@@ -14,8 +14,8 @@ using swd3e::u8;
 namespace
 {
 
-constexpr swd3e::u32 kWindowShiftXAt = 0x004994F4;  // where swd32.exe keeps the window shift tables
-constexpr swd3e::u32 kWindowShiftYAt = 0x00499514;
+constexpr swd3e::u32 kWindowShiftXAt = 0x004AA4C4;  // where swd3e.exe keeps the window shift tables
+constexpr swd3e::u32 kWindowShiftYAt = 0x004AA4E4;
 
 constexpr int kUntouched = 7;
 constexpr std::array<std::pair<std::string_view, int>, 4> kNumbers = {{
@@ -45,13 +45,13 @@ TEST_CASE("talk: numbers of the sound code")
     CHECK_EQ(value, 0);
 }
 
-TEST_CASE("talk: window shift tables match swd32.exe")
+TEST_CASE("talk: window shift tables match swd3e.exe")
 {
-    const std::vector<u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

@@ -3,7 +3,7 @@
 namespace swd3e
 {
 
-// swd32.exe data 0x004A06A8: the wave offsets in pixels, 15 amplitudes of one 33-line period
+// swd3e.exe data 0x004B16B8: the wave offsets in pixels, 15 amplitudes of one 33-line period
 const std::array<i32, 495> Painter::WaveTable = {
     0,   0,   0,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   0,   0,   0,   0,   0,   0,   -1,  -1,  -1,
     -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  0,   0,   0,   0,   1,   1,   1,   2,   2,   2,   2,   2,   2,   2,   2,

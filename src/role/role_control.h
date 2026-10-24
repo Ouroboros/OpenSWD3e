@@ -27,9 +27,9 @@ public:
     u32 FindRoleAhead(int index, int stepX, int stepY) const;
     void ControlPlayer();
 
-    // swd32.exe 0x004993C0 (unmatched in swd3e): the run toggle.
+    // 0x004AA38C: the run toggle.
     static constexpr std::array<i32, 3> RunToggle = {1, 0, 0};
-    // swd32.exe 0x004993CC (unmatched in swd3e) and 0x004993EC: the tile in front of a role by its act direction.
+    // 0x004AA398 and 0x004AA3B8: the tile in front of a role by its act direction.
     static constexpr std::array<i32, 8> AheadX = {0, 0, -1, 1, -1, 1, -1, 1};
     static constexpr std::array<i32, 8> AheadY = {-1, 1, 0, 0, -1, 1, 1, -1};
 

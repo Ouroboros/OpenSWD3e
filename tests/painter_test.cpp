@@ -47,7 +47,7 @@ std::vector<u16> RlePicture(int width, const std::vector<std::vector<u16>>& line
     return data;
 }
 
-constexpr u32 kWaveOffsetsAt = 0x004A06A8;
+constexpr u32 kWaveOffsetsAt = 0x004B16B8;
 constexpr int kTopLevel = 31;  // a five-bit channel at its top
 constexpr int kPastTop = 40;   // a ramp index past the top saturates
 constexpr u16 kBackground = 0x1234;
@@ -67,13 +67,13 @@ constexpr u16 kSkipTwo = swd3e::RleHeader::SkipRun | 2;
 
 }  // namespace
 
-TEST_CASE("painter: wave offsets match swd32.exe")
+TEST_CASE("painter: wave offsets match swd3e.exe")
 {
-    const std::vector<u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

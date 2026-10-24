@@ -52,8 +52,8 @@ std::vector<u8> ReadBytes(const std::string& path)
     return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 }
 
-constexpr swd3e::u32 kPrimaryColorsAt = 0x0049E0C8;
-constexpr swd3e::u32 kSecondaryColorsAt = 0x0049E108;
+constexpr swd3e::u32 kPrimaryColorsAt = 0x004AF720;
+constexpr swd3e::u32 kSecondaryColorsAt = 0x004AF760;
 constexpr std::size_t kBlackColor = 1;  // text colours 1 and 8 are black and pure blue
 constexpr std::size_t kBlueColor = 8;
 
@@ -68,13 +68,13 @@ constexpr std::size_t kBlocks = 8;
 
 }  // namespace
 
-TEST_CASE("game init: text colour tables match swd32.exe")
+TEST_CASE("game init: text colour tables match swd3e.exe")
 {
-    const std::vector<u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

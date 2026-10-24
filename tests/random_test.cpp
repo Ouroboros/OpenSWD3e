@@ -14,8 +14,8 @@ using swd3e::u8;
 namespace
 {
 
-constexpr u32 kInitialTableAt = 0x004A6610;  // where swd32.exe keeps the R250 table and the LCG state
-constexpr u32 kInitialLcgAt = 0x004A69F8;
+constexpr u32 kInitialTableAt = 0x004BE1AC;  // where swd3e.exe keeps the R250 table and the LCG state
+constexpr u32 kInitialLcgAt = 0x004BE594;
 
 constexpr u32 kLcgSeed = 7;
 constexpr u32 kLcgMultiplier = 0x015A4E35;  // the seeding LCG: 15-bit values from bit kLcgShift
@@ -28,13 +28,13 @@ constexpr u32 kRange = 0xFFFF;  // Below rejects draws past the last multiple of
 
 }  // namespace
 
-TEST_CASE("random: initial table and LCG state match swd32.exe")
+TEST_CASE("random: initial table and LCG state match swd3e.exe")
 {
-    const std::vector<u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

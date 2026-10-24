@@ -104,8 +104,7 @@ public:
     static constexpr int FrameInterval = 0x23;
     static constexpr int AutoRenderScale = 0;  // renderScaleSetting: the largest whole scale the window shows
     static constexpr int MaxRenderScale = MaxWeaveScale;  // DisplaySettings::MaximumRenderScale
-    // swd32.exe 0x0049FBA8 (unmatched in swd3e): the signed speeds of the nibbles of a map setting (8 and above count
-    // down from -7).
+    // 0x004B0C20: the signed speeds of the nibbles of a map setting (8 and above count down from -7).
     static constexpr std::array<i32, 16> SpeedNibbles = {0, 1, 2, 3, 4, 5, 6, 7, 8, -7, -6, -5, -4, -3, -2, -1};
 
     // `menuState`: the menu shown (0: none), bit 31 while it is being entered.

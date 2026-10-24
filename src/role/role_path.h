@@ -21,9 +21,7 @@ struct Role;
 class RolePath
 {
 public:
-    // swd32.exe 0x0049941C (unmatched in swd3e) (a copy at 0x0049961C): the probe bits (Field::ProbeCells) that block a
-    // step in each path
-    // direction.
+    // 0x004AA3E8 (a copy at 0x004AA5F4): the probe bits (Field::ProbeCells) that block a step in each path direction.
     static constexpr std::array<u32, 8> BlockedBy = {
         BlockingMap::ProbeDownRight,
         BlockingMap::ProbeDown,
@@ -35,12 +33,11 @@ public:
         BlockingMap::ProbeRight,
     };
 
-    // swd32.exe 0x0049943C (unmatched in swd3e) and 0x0049945C (copies at 0x0049963C and 0x0049965C, 0x004994AC and
-    // 0x004994CC, 0x00499380
-    // and 0x004993A0): the pixels of a step in each path direction.
+    // 0x004AA408 and 0x004AA428 (copies at 0x004AA34C, 0x004AA47C and 0x004AA614, each with its y after it): the
+    // pixels of a step in each path direction.
     static constexpr std::array<i32, 8> StepX = {4, 0, -4, -4, -4, 0, 4, 4};
     static constexpr std::array<i32, 8> StepY = {4, 4, 4, 0, -4, -4, -4, 0};
-    // swd32.exe 0x0049947C (unmatched in swd3e) (a copy at 0x0049967C): the act direction of each path direction.
+    // 0x004AA448 (copies at 0x004AA544 and 0x004AA654): the act direction of each path direction.
     static constexpr std::array<i32, 8> Facing = {
         ActState::DownRight,
         ActState::Down,

@@ -134,10 +134,10 @@ TEST_CASE("field: the first map of a new game from HUGE.lmf")
     std::filesystem::remove_all(all.config.installDirectory);
 }
 
-TEST_CASE("field: the speed nibbles of the map settings match swd32.exe")
+TEST_CASE("field: the speed nibbles of the map settings match swd3e.exe")
 {
-    constexpr swd3e::u32 kSpeedNibblesAt = 0x0049FBA8;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kSpeedNibblesAt = 0x004B0C20;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {

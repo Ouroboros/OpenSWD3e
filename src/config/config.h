@@ -49,7 +49,7 @@ public:
     // The key slots in the order Env.dat stores them (from offset 4).
     static constexpr std::array<int, EnvKeys> EnvKeyOrder = {4, 6, 3, 5, 1, 12, 9, 0, 10, 2, 16, 17, 18, 19, 7, 8};
 
-    // RGB555 channel masks (swd32.exe 0x0049E0B4), converted to the display format at startup.
+    // RGB555 channel masks (0x004AF70C), converted to the display format at startup.
     // The order of channelMasks.
     enum Channel : std::size_t
     {

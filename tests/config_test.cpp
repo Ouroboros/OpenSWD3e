@@ -58,17 +58,17 @@ u8 EnvKey(const Config& config, int index)
     return static_cast<u8>(config.keys[static_cast<std::size_t>(Config::EnvKeyOrder[static_cast<std::size_t>(index)])]);
 }
 
-constexpr swd3e::u32 kChannelMasksAt = 0x0049E0B4;
+constexpr swd3e::u32 kChannelMasksAt = 0x004AF70C;
 
 }  // namespace
 
-TEST_CASE("config: channel masks match swd32.exe")
+TEST_CASE("config: channel masks match swd3e.exe")
 {
-    const std::vector<u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 

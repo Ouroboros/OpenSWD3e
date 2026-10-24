@@ -22,15 +22,15 @@ using swd3e::u8;
 namespace
 {
 
-// Where swd32.exe keeps the tables.
-constexpr swd3e::u32 kSineTableAt = 0x0049F250;
-constexpr swd3e::u32 kBitMasksAt = 0x004994EC;
-constexpr std::array<swd3e::u32, 2> kBlockedByCopies = {0x0049941C, 0x0049961C};
-constexpr std::array<swd3e::u32, 4> kStepCopies = {0x0049943C, 0x0049963C, 0x004994AC, 0x00499380};  // x, then y
-constexpr std::array<swd3e::u32, 2> kFacingCopies = {0x0049947C, 0x0049967C};
-constexpr swd3e::u32 kAheadXAt = 0x004993CC;
-constexpr swd3e::u32 kAheadYAt = 0x004993EC;
-constexpr swd3e::u32 kRunToggleAt = 0x004993C0;
+// Where swd3e.exe keeps the tables: every copy a function reads (the compiler keeps one per translation unit).
+constexpr swd3e::u32 kSineTableAt = 0x004B086C;
+constexpr std::array<swd3e::u32, 4> kBitMasksCopies = {0x004AA468, 0x004AA474, 0x004AA4BC, 0x004AA674};
+constexpr std::array<swd3e::u32, 2> kBlockedByCopies = {0x004AA3E8, 0x004AA5F4};
+constexpr std::array<swd3e::u32, 4> kStepCopies = {0x004AA34C, 0x004AA408, 0x004AA47C, 0x004AA614};  // x, then y
+constexpr std::array<swd3e::u32, 3> kFacingCopies = {0x004AA448, 0x004AA544, 0x004AA654};
+constexpr swd3e::u32 kAheadXAt = 0x004AA398;
+constexpr swd3e::u32 kAheadYAt = 0x004AA3B8;
+constexpr swd3e::u32 kRunToggleAt = 0x004AA38C;
 
 constexpr int kFlag = 13;
 constexpr int kNeighbourFlag = 8;  // in the byte of kFlag
@@ -67,19 +67,23 @@ constexpr int kActPosition = 9;
 
 }  // namespace
 
-TEST_CASE("game state: constant tables match swd32.exe")
+TEST_CASE("game state: constant tables match swd3e.exe")
 {
-    const std::vector<u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
     using swd3etest::SameTable;
     CHECK(SameTable(exe, kSineTableAt, swd3e::kSineTable));
-    CHECK(SameTable(exe, kBitMasksAt, GameState::BitMasks));
+
+    for (const swd3e::u32 copy : kBitMasksCopies)
+    {
+        CHECK(SameTable(exe, copy, GameState::BitMasks));
+    }
 
     for (const swd3e::u32 copy : kBlockedByCopies)
     {

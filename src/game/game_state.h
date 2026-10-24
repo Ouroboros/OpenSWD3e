@@ -205,7 +205,7 @@ public:
     static constexpr int Roles = 300;  // 0x004D3FC8..0x004E4AF8 (0x0040FA20 reports an index from 0x12C on)
     static constexpr int Moves = 72;
     static constexpr int FlagBytes = 0x400;
-    // 1 << n (swd32.exe 0x004994EC).
+    // 1 << n (0x004AA4BC; copies at 0x004AA468, 0x004AA474 and 0x004AA674).
     static constexpr std::array<u8, 8> BitMasks = {1, 2, 4, 8, 16, 32, 64, 128};
     static constexpr int FlagByteShift = 3;           // a flag number to its byte
     static constexpr int FlagBitMask = CHAR_BIT - 1;  // and to its bit in BitMasks
