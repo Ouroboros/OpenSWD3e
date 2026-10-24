@@ -38,3 +38,18 @@
 - 共同：行数、列数取放置（0x004ED9EC、0x004ED9F8），目标逐行以正跨度 0x004B1E8C 前进（翻转时从放置的终点起仍向下走），源逐行前进图片宽。16 位路径为 do-while（列、行至少 1，DrawPicture 已保证为正）；8 位路径为前测循环经调色板 0x004EDA34。
 - RawCopy：16 位复制或 8 位查调色板。RawCopyMirrored：总按 16 位读，源每像素后退一个字（调色板图片也按 16 位读）。RawKeyed：16 位跳过等于填充色低字的像素，8 位跳过索引 1。RawKeyedMirrored：零扩展的像素与整个填充色对 0x004EEE94 比较（填充色对为 0 时 0 像素透明，否则无透明），注释原写“永不透明”已更正。
 - 各绘制函数的返回值为寄存器残留值，无调用者依赖其内容（实现返回 0）。
+
+## 0x00418310 Painter::BlitRawTranslucent — exact
+
+- 透明度先减 1 再乘 4 作跳转表下标（改写全局 0x004E6D58，DrawPicture 结束时复位）；16 项分支：下标 L 的四项 (>>1、>>2、>>3、>>4，各与 0x004EEE98..0x004EEEA4 掩码）中 L 的位 3..0 为 1 的取源、为 0 的取目标；L=0 不写，L=15 复制源。源总按 16 位读，等于填充色低字的像素跳过。实现 Blend(dest, src, alpha−1) 同此（32 位读入后移位，掩码去掉相邻像素移入的位，与 16 位计算相同）。
+
+## 0x00418880 Painter::BlitRawGradient — exact
+
+- 颜色取来源首字（零扩展）；层级从 15 起，每行后计数加 1，超过 (高>>4) 时清零、层级减 1；每像素 Blend(目标, 颜色, 层级)（层级 0 不写，15 写颜色）；目标逐行以正跨度前进。
+
+## 0x00418D10..0x00423380 RLE 核心与像素函数（31 个）— exact（与 swd32 同码）
+
+- 范围：BlitCopy/Mirrored、BlitAdditive/Mirrored、BlitAlphaMap/Mirrored、BlitTint/Mirrored、BlitFadeDown、BlitEdgeMark/Mirrored、BlitTranslucent/Mirrored、BlitShadow/Mirrored、TintPixels、ShiftRed、ShiftGreenPairs、ShiftBluePairs、MixPixels、BlitScaledGlow/Mirrored、BlitSilhouette/Mirrored、BlitGray/Mirrored、GrayPixels、BlitSubtractive/Mirrored、BlitSmear/Mirrored。
+- 汇编：reverse/analysis/scripts/asm_identity.py 把每个函数与其 swd32 配对函数逐条比对（跳转目标换成函数内偏移），31 个全部逐条相同，数据与被调函数地址在 52 个地址上一一对应、跨函数一致（swd3e 绘图全局块 0x004E6D54..0x004EF534 对 swd32 0x004CC2EC..0x004CDE24，波形表 0x004B16B8 对 0x004A06A8）；输出存于 reverse/evidence/pass1/painter_rle_identity.txt。
+- 源码：src/draw/painter_rle.cpp 与 swd3-rebuild 中已对照 swd32 汇编验证（assembly_exact）的同名文件除命名空间与地址注释外逐行相同；src/draw/painter_pixels.cpp 另加 PaintRecord 记录钩子（只记录参数，不改像素）。同一份机器码对同一份源码的对照结论因此对 swd3e 成立；本次又抽读 BlitCopy（0x00418D10）全文与实现的 WalkRuns 参数（有符号跨度、字面段后一段视作透明、波形行偏移每行 +4 并回绕、结束时相位 +4 于 0x84 回绕）核对一致。
+- 测试：正传遗留黄金结果 1300 个画面情景逐像素一致；波形表与 exe 比对。
