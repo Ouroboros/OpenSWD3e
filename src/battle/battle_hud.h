@@ -32,12 +32,12 @@ struct BattleAnimation
     static constexpr int Pictures = 6;
 
     ActState act;                                             // +0x00
-    i32 unk98 = 0;                                            // +0x98
-    std::array<std::unique_ptr<Picture>, Pictures> pictures;  // +0x9C
-    i32 x = 0;                                                // +0xB4
-    i32 y = 0;                                                // +0xB8
-    i32 wave = 0;                                             // +0xBC
-    u16 id = 0;                                               // +0xC0
+    i32 unkA4 = 0;                                            // +0xA4 (no code reads it)
+    std::array<std::unique_ptr<Picture>, Pictures> pictures;  // +0xA8 swd3e: six 0x14-byte picture headers kept inline
+    i32 x = 0;                                                // +0x120
+    i32 y = 0;                                                // +0x124
+    i32 wave = 0;                                             // +0x128
+    u16 id = 0;                                               // +0x12C
 };
 
 // The drawing helpers of the battle screen and the menus (0x00450270..0x004512B0, 0x00451420..0x00451730): pictures,
