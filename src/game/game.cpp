@@ -348,6 +348,7 @@ Game::Game(std::u8string installDirectory)
     this->battleHud.Attach(this->battleServices);
     this->battleMessages.Attach(this->battleServices);
     this->battleServices.enemies = this->battleEnemies.data();
+    this->battleServices.roles = this->battleRoles.data();
     this->battleServices.database = &this->database;
     this->glyphs.Load(GlyphLibraryPath());
 }

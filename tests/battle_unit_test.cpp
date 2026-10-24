@@ -521,7 +521,6 @@ constexpr swd3e::u16 kPoisonTurns = 2;
 constexpr swd3e::i16 kTooLittleStamina = 9;
 constexpr std::string_view kNoData = "/swd3-test-no-data/";
 constexpr swd3e::u16 kEnemyAttack = 15;
-constexpr swd3e::u32 kIdleRoll = 2;  // the unused roll when no idle turn has passed
 constexpr swd3e::u16 kSkill = 0x123;
 constexpr swd3e::u8 kSureSkill = 10;  // a skill chance no roll of 0..9 reaches
 constexpr swd3e::u32 kFirstSkillRoll = 6;
@@ -664,8 +663,8 @@ TEST_CASE("battle unit: an enemy with nothing to use attacks")
     all.random.Seed(kSeed);
     swd3e::Random reference;
     reference.Seed(kSeed);
+    // swd3e: no roll is drawn before the attack.
     CHECK_EQ(enemy.ChooseCommand(all.services, database, act), 0);
-    reference.Below(kIdleRoll);
     CHECK_EQ(all.random.Below(kCatchRoll), reference.Below(kCatchRoll));
     CHECK_EQ(enemy.commandA, BattleUnit::UnkCommand1);
     CHECK_EQ(enemy.choicePhase, 1);
@@ -694,20 +693,21 @@ TEST_CASE("battle unit: an enemy chooses its first skill")
         BattleUnit enemy;
         enemy.data = &object;
         enemy.idleTurns = 1;
+        enemy.unk2FDD = swd3e::BattleEnemy::NoObjects;  // swd3e: an enemy without objects takes its skills
         swd3e::u32 act = 0;
         all.random.Seed(seed);
         swd3e::Random reference;
         reference.Seed(seed);
         const bool first = reference.Below(kCatchRoll) <= kFirstSkillRoll;
         CHECK_EQ(enemy.ChooseCommand(all.services, database, act), 0);
-        CHECK_EQ(enemy.choicePhase, 2);
+        CHECK_EQ(enemy.choicePhase, 0);
         CHECK_EQ(enemy.commandA, BattleUnit::UnkCommand1);
 
         if (first)
         {
             CHECK_EQ(object.data.skillACount, 0);
             CHECK_EQ(enemy.unk2A8C, 1);
-            CHECK_EQ(enemy.idleTurns, 0);
+            CHECK_EQ(enemy.idleTurns, 1);  // swd3e: a skill leaves the idle turns
         }
         else
         {

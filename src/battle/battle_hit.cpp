@@ -2401,15 +2401,13 @@ void Game::CureHeldBy(int enemy)
 
 // swd3e.exe 0x0046A9A0: a party member with a buff (each role skipped by the enemy of its index fallen, as in the
 // original)
-bool Game::AnyRoleBuffed() const
+bool AnyRoleBuffed(const BattleServices& services)
 {
-    const BattleState& battle = this->battleState;
-
-    for (u32 index = 0; index < battle.roleCount; ++index)
+    for (u32 index = 0; index < services.state.roleCount; ++index)
     {
-        const BattleRole& role = this->battleRoles[index];
+        const BattleRole& role = services.roles[index];
 
-        if (this->battleEnemies[index].IsDefeated() || role.PartyMember() == 0 || role.HasAnyBuff() != 1)
+        if (services.enemies[index].IsDefeated() || role.PartyMember() == 0 || role.HasAnyBuff() != 1)
         {
             continue;
         }
@@ -2422,15 +2420,13 @@ bool Game::AnyRoleBuffed() const
 
 // swd3e.exe 0x0046A930: every party member has an effect of `bits` (each role skipped by the enemy of its index
 // fallen, as in the original)
-bool Game::AllRolesHaveEffect(u32 bits) const
+bool AllRolesHaveEffect(const BattleServices& services, u32 bits)
 {
-    const BattleState& battle = this->battleState;
-
-    for (u32 index = 0; index < battle.roleCount; ++index)
+    for (u32 index = 0; index < services.state.roleCount; ++index)
     {
-        const BattleRole& role = this->battleRoles[index];
+        const BattleRole& role = services.roles[index];
 
-        if (this->battleEnemies[index].IsDefeated() || role.PartyMember() == 0 || role.HasEffectBits(bits) != 0)
+        if (services.enemies[index].IsDefeated() || role.PartyMember() == 0 || role.HasEffectBits(bits) != 0)
         {
             continue;
         }

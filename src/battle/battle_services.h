@@ -8,6 +8,7 @@ namespace swd3e
 class ActArchive;
 class AudioManager;
 class BattleEnemy;
+class BattleRole;
 class BattleHud;
 class BattleMessages;
 class BattleState;
@@ -49,7 +50,11 @@ struct BattleServices
     // the frame is decided); none: each part's draws are drawn at once, in the original's order.
     smooth::Scene* frame = nullptr;
     BattleEnemy* enemies = nullptr;  // Game::battleEnemies (BattleState::Enemies of them), set with the services
+    BattleRole* roles = nullptr;     // Game::battleRoles (BattleState::RoleUnits of them), set with the services
     Database* database = nullptr;    // Game::database (swd3e: the talisman ghost loads its fed skills in StepGauge)
 };
+
+bool AnyRoleBuffed(const BattleServices& services);
+bool AllRolesHaveEffect(const BattleServices& services, u32 bits);
 
 }  // namespace swd3e
