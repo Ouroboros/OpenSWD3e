@@ -33,8 +33,9 @@ constexpr std::array<int, 4> kCurrentPanelX = {0xEF, 0x4F, 0x18F, 0x18F};
 constexpr int kTimerY = 8;
 constexpr int kFadeFrames = 8;
 constexpr int kQuakePanel = 0x100;
-constexpr std::size_t kClearedTurnUnits = 8;  // EndBattle: 0x0053AF30..0x0053AF57
-constexpr std::size_t kSharedEscortWords = 5;
+constexpr std::size_t kClearedTurnFrom = 10;  // EndBattle (swd3e): turnTaken[10..19] (0x0057604C, 0x28 bytes)
+constexpr std::size_t kClearedTurnUnits = 10;
+constexpr std::size_t kClearedFadeUnits = 29;  // fadeActLevels[0..28] (0x00536EAC, 0x1D bytes)
 constexpr std::array<i32, 6> kOpeningPlaces = {0x60, 0x60, 0xF0, 0xFA, 0xF2, 0x64};
 constexpr u16 kOpeningPanels = 6;
 constexpr i32 kAnswersStart = 2;
@@ -320,14 +321,28 @@ int Game::BattleFrame()
     return battle.frameResult;
 }
 
-// swd3e.exe 0x00465B00: the battle is over: its surfaces, the background animation, the projector and the background
-// picture freed, the state of the battle cleared field by field (the menu and list cursors back to 1, the hit
-// records to -1, unk4A7580..unk4A7594 to their opening places 0x60, 0x60, 0xF0, 0xFA, 0xF2, 0x64: the second
-// differs from the exe's 0x180), the archives closed, the sounds and music stopped, the database files closed.
+// swd3e.exe 0x00465B00: the battle is over: every enemy and role reset, its surfaces, the background animations, the
+// projector, the meter and the background picture freed, the state of the battle cleared field by field (the menu and
+// list cursors back to 1, the hit records to -1, unk4A7580..unk4A7594 to their opening places 0x60, 0x60, 0xF0, 0xFA,
+// 0xF2, 0x64: the second differs from the exe's 0x180; the first three command names, every listed kind, the turns
+// of units 10..19, the fades of the first 29 units), the archives flushed and closed, the sounds stopped, the effects
+// off, the messages cleared, the database files closed.
 void Game::EndBattle()
 {
     BattleState& battle = this->battleState;
     BattleMessages& messages = this->battleMessages;
+    BattleServices& services = this->battleServices;
+
+    for (u32 index = 0; index < battle.enemyCount; ++index)
+    {
+        this->battleEnemies[index].Reset(services);
+    }
+
+    for (u32 index = 0; index < battle.roleCount; ++index)
+    {
+        static_cast<BattleUnit&>(this->battleRoles[index]).Reset(services);
+    }
+
     ReleaseBattleSurfaces(battle);
 
     for (std::size_t index = 0; index < std::min<std::size_t>(battle.animationCount, BattleFormation::Animations);
@@ -337,17 +352,12 @@ void Game::EndBattle()
     }
 
     battle.projector.Release();
+    this->battleHud.ResetMeter();
     battle.background = Picture{};
-    battle.unk502944 = 0;
-    battle.unk502948 = 0;
-    battle.unk5240C4 = 0;
-    battle.unk50294C = 0;
     battle.roleOrder.fill(0);
     battle.unk524200.fill(0);
-    battle.unk53AF30 = 0;
-    battle.unk53AF34 = 0;
-    std::fill_n(battle.turnTaken.begin(), kClearedTurnUnits, 0);
-    battle.unk502950 = 0;
+    std::fill_n(battle.turnTaken.begin() + kClearedTurnFrom, kClearedTurnUnits, 0);
+    battle.unk5240C4 = 0;
     battle.unk5244E8.fill(-1);
     battle.enemyOrders.fill(0);
     battle.enemyPlaces.fill(UnitPlacement{});
@@ -365,8 +375,10 @@ void Game::EndBattle()
     battle.unk524324.fill(0);
     battle.unk4FE5D4.fill(0);
     battle.actionQueue.fill(0);
-    battle.commandNames = {};
+    battle.commandNames[0] = {};
     battle.commandKinds = {};
+    battle.commandNames[1] = {};
+    battle.commandNames[2] = {};
     messages.Clear();
     messages.unk5214FC.fill(0);
     battle.hitPointsRolling.fill(0);
@@ -381,10 +393,13 @@ void Game::EndBattle()
     battle.unk525470 = ActState{};
     battle.spiritRolling.fill(0);
     battle.spirit.fill(0);
+    battle.enemyHitActs.fill(0);
+    battle.enemyHitAct = 0;
     battle.unk53AEE4 = 0;
     battle.roleListRows.fill(1);
     battle.controlRows = kAnswersStart;
     battle.listRole = kHealPage;
+    messages.panelAct.id = BattleMessages::MenuPanelAct;
     this->talk.choice = 0;
     battle.panelFlags = 0;
     battle.unk53BCDC = 0;
@@ -408,7 +423,6 @@ void Game::EndBattle()
     battle.listCursor = 0;
     battle.menuX = 0;
     battle.menuY = 0;
-    battle.enemyHitAct = 0;
     battle.unk4A7580 = kOpeningPlaces[0];
     battle.unk53BD4C = 0;
     battle.turnUnit = 0;
@@ -424,25 +438,16 @@ void Game::EndBattle()
     battle.unk53BF46 = 0;
     battle.unk53BF48 = 0;
     battle.unk53BD74 = 0;
-    battle.darkCopyTint.fill(-1);
-    battle.darkenUnit = -1;
-    battle.autoTarget = -1;
-    battle.controlledEnemy = kNoUnit;
-    battle.anyStateRole = kNoUnit;
-
-    // 0x00521374..0x00521385 in the original: fadeActLevels whole and the first five words of escortCalled, which share
-    // the bytes of its upper half.
-    battle.fadeActLevels.fill(0);
-    std::fill_n(battle.escortCalled.begin(), kSharedEscortWords, u16{0});
-    battle.lootIds = {};
-    battle.unk520FBC = 0;
-    battle.unk520FC0 = 0;
-    battle.unk520FC4 = 0;
     battle.unk53BD78 = 0;
     battle.sweepTargets = 0;
     battle.unk53BD80 = 0;
     battle.sweepDefeated = 0;
     battle.unk53BD88 = 0;
+    std::fill_n(battle.fadeActLevels.begin(), kClearedFadeUnits, i8{0});
+    battle.lootIds = {};
+    battle.unk520FBC = 0;
+    battle.unk520FC0 = 0;
+    battle.unk520FC4 = 0;
     battle.unk53BD9C = 0;
     battle.hoverScrollPart = 0;
     battle.unk53BF12 = 0;
@@ -470,31 +475,41 @@ void Game::EndBattle()
     battle.darkRed = 0;
     battle.darkGreen = 0;
     battle.darkBlue = 0;
+    battle.darkCopyTint.fill(-1);
+    battle.darkenUnit = -1;
     battle.proficiencyBonus = 0;
     battle.listPanelFrames = 0;
     battle.menuGrow = 0;
     battle.listRows = 0;
+    battle.autoTarget = -1;
     battle.listedCommands = 0;
     battle.callingEscort = 0;
     battle.escortCount = 0;
+    battle.controlledEnemy = kNoUnit;
+    battle.anyStateRole = kNoUnit;
     battle.endFrames = 0;
     battle.unk53BDEE = 0;
     battle.fieldFade = ColorFade{};
+    messages.craftSucceeded = 0;
+    battle.ghostOrdersOpen = 0;
+    battle.refineOptionsOpen = 0;
+    battle.elementsOpen = 0;
     battle.unk53BF28 = 0;
     battle.unk53BF2A = 0;
     battle.quakeStepFrames = 0;
     battle.unk53C4C0 = 0;
+    battle.chargingRole = -1;
     messages.lootCount = 0;
-    messages.lootCounts = {};
-    battle.unk53BF5C = 0;
-    battle.unk53BF60 = 0;
-    battle.unk53BF64 = 0;
     messages.lootNames = {};
     battle.unitY.fill(0);
     battle.drawOrder.fill(0);
     battle.drawTaken.fill(0);
+    messages.lootCounts = {};
     battle.unk524268.fill(0);
     battle.hitFading.fill(0);
+    battle.unk53BF5C = 0;
+    battle.unk53BF60 = 0;
+    battle.unk53BF64 = 0;
     battle.hitsAllRoles = 0;
     battle.unk53BF6C = 0;
     battle.unk53BF70 = 0;
@@ -527,6 +542,7 @@ void Game::EndBattle()
     battle.endFade = 0;
     battle.unk53BFF0 = 0;
     battle.enemyHitsAll = 0;
+    battle.unk5772F8 = 0;
     battle.unk4A763C = 1;
     battle.learnedPending = 0;
     battle.mirrored = 0;
@@ -539,9 +555,11 @@ void Game::EndBattle()
     battle.levelUpPending = 0;
     battle.orderSorted = 0;
     battle.unk53C048 = 0;
-    this->archive.CloseAll();
+    this->archive.Flush();
     this->acts.CloseAll();
     this->audio.StopAllSounds();
+    this->acts.SetEffectEnabled(0);
+    messages.Clear();
     this->database.CloseFiles();
     battle.learnedPending = 0;
     battle.lastLearned = LearnedSkill{};

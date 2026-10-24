@@ -343,7 +343,8 @@ public:
     std::array<i32, 0x12> unk502984 = {};
     std::array<i32, 0x12> slotTargets = {};  // 0x005378F8 per slot: the unit it hits (-1: none)
     std::array<i32, 0x12> unk53AE90 = {};
-    std::array<i32, 0x7E> unk5244E8 = {};
+    std::array<i32, 0xD2> unk5244E8 =
+        {};  // 0x00537A20 (swd3e, 0x348 bytes) set to -1 by StartBattle and EndBattle only
     i32 unk53C048 = 0;
     i32 actingUnit = 0;      // 0x00575F18 the unit acting now (-1: none)
     u16 listedCommands = 0;  // 0x0057720A the commands the menu lists beyond its fixed ones
