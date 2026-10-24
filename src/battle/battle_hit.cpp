@@ -4,6 +4,7 @@
 #include "battle/battle_hit_constants.h"
 #include "battle/smooth/smooth_hit.h"
 #include "core/fault.h"
+#include "core/format.h"
 #include "platform/display.h"
 
 namespace swd3e
@@ -36,7 +37,8 @@ constexpr u16 kWhitePixel = 0xFFFF;  // HitFrame: the frame flashed white on a d
 constexpr u16 kEnemyAttack = 1;      // EnemyActionFrame: the command A of the acting enemy
 constexpr u16 kEnemySpell = 2;
 constexpr u16 kEnemyDrain = 6;
-constexpr u16 kEnemyDefeatRole = 7;
+constexpr u16 kEnemySkill = 4;       // swd3e: the enemy's skill act (EnemySkillFrame)
+constexpr u16 kEnemyDefeatRole = 9;  // swd3e (swd32: 7)
 constexpr u16 kEnemyFadeOut = 0xA;
 constexpr u16 kEnemyFadeIn = 0xB;
 constexpr u16 kEnemyHide = 0xC;
@@ -54,9 +56,19 @@ constexpr int kAfterAttackCommand = 0x12C;
 constexpr u16 kCallStarted = 0x8000;
 constexpr u16 kCallCount = 0x7FFF;
 constexpr u16 kCallFrames = 0x19;
+constexpr i16 kSlideMiddle = 0x140;  // swd3e: slideX around an enemy's attack
+constexpr u32 kHoldingAilment = 0x400;
+constexpr u16 kEnemyStoleSound = 0x117;
+constexpr int kStealNoticeX = 0x118;
+constexpr int kStealNoticeY = 0xA;
+constexpr i16 kStealNoticeFrames = 0x32;
+constexpr std::u8string_view kEnemyStoleFormat = u8"敵人成功偷走了[%s]";  // 0x004BF3A4
+constexpr std::u8string_view kEnemyStealFailed = u8"偷竊失敗";            // 0x004BF398
+constexpr u16 kEnrageHitPicture = 0x2389;                                 // the picture of the enrage damage
+constexpr i32 kSpellMusicFloor = 5;  // the battle music fades down to this during an enemy spell
 constexpr i16 kCallX = 0xF0;
-constexpr i16 kCallY = 0xDC;
-constexpr i16 kSecondCallY = 0x15E;
+constexpr i16 kCallY = 0xC8;  // swd3e
+constexpr i16 kSecondCallY = 0x154;
 constexpr i32 kBattleLostState = 0x67;  // EnemyFrame
 constexpr int kEnemySlotRecord = 2;
 constexpr int kHangDraws = 0x10000;   // random draws after which a search of the original is taken as never ending
@@ -1539,15 +1551,15 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
     return false;
 }
 
-// swd32.exe 0x00455D60 (unmatched in swd3e): one frame of the action of enemy `enemy` (its command A) on role `target`
-// (or enemy `target`
-// while unk53AE80); 1 once the action is over. 1: the attack (the drain and the damage, a defeat flashing white; on a
-// role it goes on with command 0x12C and stays 0); 2: the spell (SpellCast set, the sweep reset, a ripple battle for
-// ActFlag13) until SpellOver; 6: the drain of a role out of battle; 7: the role's defeat, with unit `target` + 4
-// taken out of the slot records and the menu (kept); 0xA the fade out; 0xB and 0xC the fade in and out (0xC ends the
-// battle once every enemy left); 0xF calls unk53BF2A enemies of act unk53BF28 for 0x19 frames; 0x11 the escape
-// (the battle ends once every enemy left; a called enemy left alone takes the field again); 100 at once; 200 walks
-// to the role; 300 returns home.
+// swd3e.exe 0x0045EE20: one frame of the action of enemy `enemy` (its command A) on role `target` (or enemy `target`
+// while unk53AE80); 1 once the action is over (a defeated enemy or one without commands at once). 1: the attack (the
+// stolen item, the drain and the damage, a defeat flashing white, the enrage damage; on a role it goes on with
+// command 0x12C and stays 0); 2: the spell (SpellCast set, the sweep reset, the hit act timed, a ripple battle for
+// ActFlag13; the music fades meanwhile) until SpellOver; 4: the enemy's skill act (EnemySkillFrame, then command
+// 0x12C); 6: the drain of a role out of battle; 9: the role's defeat, with unit `target` + 4 taken out of the slot
+// records and the menu (as in the original); 0xA the fade out; 0xB and 0xC the fade in and out (0xC ends the battle
+// once every enemy left); 0xF calls unk53BF2A enemies of act unk53BF28 for 0x19 frames; 0x11 the escape; 100 at once;
+// 200 walks to the role; 300 returns home.
 // swd32.exe 0x00498370 (unmatched in swd3e) (EH unwind: the new ripple, freed by its unique_ptr)
 // swd32.exe 0x0049837B (unmatched in swd3e) (EH handler of 0x00455D60)
 int Game::EnemyActionFrame(int enemy, int target)
@@ -1557,43 +1569,31 @@ int Game::EnemyActionFrame(int enemy, int target)
     BattleEnemy& unit = this->battleEnemies[static_cast<std::size_t>(enemy)];
     const auto at = static_cast<std::size_t>(target);
 
+    if (unit.IsDefeated())
+    {
+        return 1;
+    }
+
+    if (unit.GetCommandA() == 0 && unit.GetCommandB() == 0)
+    {
+        return 1;
+    }
+
     switch (unit.GetCommandA())
     {
         case kEnemyAttack:
-            return this->EnemyAttackAction(unit, target);
+            return this->EnemyAttackAction(enemy, unit, target);
 
         case kEnemySpell:
-            if ((battle.spellStage & BattleState::SpellCast) == 0)
-            {
-                battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast);
-                battle.sweepGap = unit.GetWordDA6();
-                battle.slotTargets.fill(-1);
-                battle.sweptUnits = 1;
-                battle.slotDamage.fill(0);
+            return this->EnemySpellAction(enemy, unit, target);
 
-                if (unit.ActFlag13() == 1)
-                {
-                    battle.rippleHits = 1;
-                    this->battleState.ripple =
-                        std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
-                }
+        case kEnemySkill:
+            if (this->EnemySkillFrame(unit, this->battleRoles[at]) == 1)
+            {
+                unit.SetCommand(kAfterAttackCommand);
             }
 
-            if ((battle.spellStage & BattleState::SpellOver) == 0)
-            {
-                return 0;
-            }
-
-            this->ClearHitDamage();
-
-            if (battle.rippleHits == 1)
-            {
-                this->battleState.ripple.reset();
-            }
-
-            battle.rippleHits = 0;
-            battle.undarkening = 1;
-            return 1;
+            return 0;
 
         case kEnemyDrain:
         {
@@ -1706,29 +1706,9 @@ int Game::EnemyActionFrame(int enemy, int target)
             unit.SetGuarding(1);
             unit.SetWord2A0A(kFadedWord);
             unit.StartDefeat(1);
+            unit.SetDefeatPose(0);
+            battle.escapedEnemies[static_cast<std::size_t>(enemy)] = 1;
             battle.enemyFaded = 1;
-            ++battle.enemiesGone;
-
-            if (battle.enemiesGone >= battle.enemyCount)
-            {
-                battle.slotRecords.fill(BattleSlotRecord{});
-                battle.unk53BFC0 = 1;
-                battle.autoBattle = 0;
-                battle.result = kEndCheckState;
-            }
-
-            if (battle.unk53BF28 != 0 && !this->battleEnemies[0].IsDefeated() &&
-                static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1)
-            {
-                battle.enemyCount = 1;
-                battle.enemiesGone = 0;
-                battle.unk53BF28 = 0;
-                battle.orderSorted = 0;
-                this->MeasureUnits();
-                battle.SortDrawOrder();
-                battle.ListEnemyOrder();
-            }
-
             return 1;
 
         case kEnemyDone:
@@ -1752,37 +1732,120 @@ int Game::EnemyActionFrame(int enemy, int target)
     }
 }
 
-// Command 1 of EnemyActionFrame (inline in the original); see there.
-int Game::EnemyAttackAction(BattleEnemy& unit, int target)
+// Command 1 of EnemyActionFrame (inline in the original): the attack of enemy `enemy`. On a role: the units slide
+// back after it; ailment 0x400 on the role remembers the enemy (the first three roles); a stolen item (itemStolen)
+// goes to the enemy's first free slot of stolenItems with its notice (偷竊失敗 without one); the drain and the
+// damage (a defeat flashing white), the enemy then on command 0x12C, and the enrage damage of a step-in attack that
+// felled the enemy (1 then). On an enemy: the damage, a defeat flashing white.
+int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
 {
     BattleState& battle = this->battleState;
+    BattleServices& services = this->battleServices;
     const auto at = static_cast<std::size_t>(target);
 
     if (battle.unk53AE80 == 0)
     {
+        battle.slideUnit = enemy;
+        battle.slideX = kSlideMiddle;
         BattleRole& role = this->battleRoles[at];
 
-        if (this->EnemyAttackFrame(unit, role) == 1)
+        if (this->EnemyAttackFrame(unit, role) != 1)
         {
-            battle.hitLanded = 1;
-            battle.unk53BFC0 = 0;
-            battle.lastRoleHit = static_cast<u16>(target);
-            this->ApplyDrain(battle.hitDamage, unit, role);
-
-            if (battle.unk53AF68 == 0 &&
-                role.Damage(this->battleServices, battle.hitDamage, battle.spiritDamage, battle.staminaDamage) == 1)
-            {
-                battle.lastRoleDefeated = static_cast<u16>(target);
-                battle.flashing = 1;
-                this->FlashFrameWhite();
-            }
-
-            this->ClearHitDamage();
-            battle.darkenUnit = -1;
-            unit.SetCommand(kAfterAttackCommand);
+            return 0;
         }
 
-        return 0;
+        battle.slideX = kSlideMiddle;
+        battle.slideMode = BattleState::SlideBack;
+
+        // Roles past the first three write the words after ailment400From in the original (deviations.md).
+        if (role.HasEffectBits(kHoldingAilment) == 1 && at < battle.ailment400From.size() &&
+            battle.ailment400From[at] == 0)
+        {
+            battle.ailment400From[at] = static_cast<u16>(enemy + 1);
+        }
+
+        if (battle.itemStolen == 1)
+        {
+            battle.noticeText.fill(' ');
+            std::array<u16, 0x20>& stolen = battle.stolenItems[static_cast<std::size_t>(enemy)];
+            std::size_t slot = 0;
+
+            while (slot < stolen.size() && stolen[slot] != 0)
+            {
+                ++slot;
+            }
+
+            const u16 item = role.TakeRandomItem(services);
+
+            // A full list writes the item past it in the original (deviations.md): not kept.
+            if (slot < stolen.size())
+            {
+                stolen[slot] = item;
+            }
+
+            if (item != 0)
+            {
+                this->database.LoadObject(battle.lastObject, item);
+                this->database.FreeDescription(battle.lastObject);
+                const std::string name = ObjectName(battle.lastObject);
+                const std::string line = WinFormat(kEnemyStoleFormat, {std::string_view(name)});
+                const std::size_t length = std::min(line.size(), battle.noticeText.size() - 1);
+                std::copy_n(line.begin(), length, battle.noticeText.begin());
+                battle.noticeText[length] = '\0';
+                this->audio.PlaySound(kEnemyStoleSound, this->config.soundVolume);
+                this->battleMessages.Add(
+                    kStealNoticeX,
+                    kStealNoticeY,
+                    kStealNoticeFrames,
+                    std::span<const char>(battle.noticeText.data(), length),
+                    BattleMessage::Frame | BattleMessage::Centered
+                );
+                battle.itemStolen = 0;
+            }
+            else
+            {
+                this->battleMessages.Add(
+                    kStealNoticeX,
+                    kStealNoticeY,
+                    kStealNoticeFrames,
+                    kEnemyStealFailed,
+                    BattleMessage::BlackBar | BattleMessage::Centered
+                );
+            }
+        }
+
+        battle.hitLanded = 1;
+        battle.unk53BFC0 = 0;
+        battle.lastRoleHit = static_cast<u16>(target);
+        this->ApplyDrain(battle.hitDamage, unit, role);
+
+        if (battle.unk53AF68 == 0 &&
+            role.Damage(services, battle.hitDamage, battle.spiritDamage, battle.staminaDamage) == 1)
+        {
+            battle.lastRoleDefeated = static_cast<u16>(target);
+            battle.flashing = 1;
+            this->FlashFrameWhite();
+        }
+
+        battle.staminaDamage = 0;
+        battle.spiritDamage = 0;
+        battle.darkenUnit = -1;
+        role.ClearUnk2FD1();
+        unit.SetCommand(kAfterAttackCommand);
+
+        if (battle.unk577360 != 1)
+        {
+            return 0;
+        }
+
+        role.RaiseFlag26B8(battle);
+        role.SetDamageDigits(services, battle.enrageDamage);
+        role.PushTarget(kEnrageHitPicture);
+        role.StepTargetCount(services, 1);
+        role.Damage(services, battle.enrageDamage, 0, 0);
+        battle.unk577360 = 0;
+        battle.enrageDamage = 0;
+        return 1;
     }
 
     BattleEnemy& aimed = this->battleEnemies[at];
@@ -1796,7 +1859,7 @@ int Game::EnemyAttackAction(BattleEnemy& unit, int target)
     battle.lastRoleHit = static_cast<u16>(target);
     battle.unk53BFC0 = 0;
 
-    if (battle.unk53AF68 == 0 && aimed.Damage(this->battleServices, battle.hitDamage, 0, 0) == 1)
+    if (battle.unk53AF68 == 0 && aimed.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
         battle.unk502984[at] = target;
         battle.lastRoleDefeated = static_cast<u16>(target);
@@ -1806,6 +1869,117 @@ int Game::EnemyAttackAction(BattleEnemy& unit, int target)
 
     battle.hitDamage = 0;
     battle.darkenUnit = -1;
+    return 1;
+}
+
+// Command 2 of EnemyActionFrame (inline in the original): the first frame (SpellCast clear) casts the spell: the
+// sweep reset, a ripple for ActFlag13, the turns of the command kept for the roles, the enemy's hit act run once
+// (half its round limit kept), the standing targets of a whole side counted (otherwise a defeated target gives way
+// to the first role that can be hit). The battle music fades a step a frame down to 5 until SpellOver, which
+// restores it and ends the action.
+int Game::EnemySpellAction(int enemy, BattleEnemy& unit, int target)
+{
+    BattleState& battle = this->battleState;
+
+    auto hittable = [](const BattleRole& role)
+    {
+        return !role.IsDefeated() && !role.IsGuarding() && role.Ghost() != 1;
+    };
+
+    if ((battle.spellStage & BattleState::SpellCast) == 0)
+    {
+        battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast);
+        battle.sweepGap = unit.GetWordDA6();
+        battle.slotTargets.fill(-1);
+        battle.sweptUnits = 1;
+        battle.slotDamage.fill(0);
+
+        if (unit.ActFlag13() == 1)
+        {
+            battle.rippleHits = 1;
+            battle.ripple =
+                std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
+        }
+
+        battle.enemyCommandTurns[0] = unit.CommandTurns();
+        ActState& hit = battle.hitActs[0];
+        hit.id = battle.enemyHitActs[static_cast<std::size_t>(enemy)];
+        hit.action = 0;
+        this->acts.Run(hit);
+        battle.unk575FD0 = static_cast<u8>(LowByte(hit.counter) >> 1);
+
+        if (battle.wholeSide == 1)
+        {
+            battle.sweepTargets = 0;
+
+            if (battle.unk53AE80 != 0)
+            {
+                for (u32 index = 0; index < battle.enemyCount; ++index)
+                {
+                    if (!this->battleEnemies[index].IsDefeated())
+                    {
+                        ++battle.sweepTargets;
+                    }
+                }
+            }
+            else
+            {
+                for (u32 index = 0; index < battle.roleCount; ++index)
+                {
+                    if (hittable(this->battleRoles[index]))
+                    {
+                        ++battle.sweepTargets;
+                    }
+                }
+            }
+
+            for (u32 index = 0; index < battle.roleCount; ++index)
+            {
+                battle.enemyCommandTurns[index] = unit.CommandTurns();
+            }
+        }
+        else if (this->battleRoles[static_cast<std::size_t>(target)].IsDefeated())
+        {
+            for (u32 index = 0; index < battle.roleCount; ++index)
+            {
+                if (hittable(this->battleRoles[index]))
+                {
+                    unit.Retarget(static_cast<i16>(index));
+                    break;
+                }
+            }
+        }
+
+        hit = ActState{};
+    }
+
+    MusicQueue& queue = this->audio.Queue();
+
+    if (battle.musicLevel > kSpellMusicFloor)
+    {
+        --battle.musicLevel;
+        queue.SetVolume(MusicQueue::MaxVolume * battle.musicLevel / Config::MaxVolume);
+    }
+
+    if ((battle.spellStage & BattleState::SpellOver) == 0)
+    {
+        return 0;
+    }
+
+    battle.musicLevel = this->config.musicVolume;
+    queue.SetVolume(MusicQueue::MaxVolume * this->config.musicVolume / Config::MaxVolume);
+    battle.enemyCommandTurns = {};
+    battle.hitDamage = 0;
+    battle.spiritDamage = 0;
+    battle.staminaDamage = 0;
+
+    if (battle.rippleHits == 1)
+    {
+        battle.ripple.reset();
+    }
+
+    battle.rippleHits = 0;
+    battle.undarkening = 1;
     return 1;
 }
 
@@ -2218,6 +2392,7 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     if ((order & kOrderPrepared) != 0)
     {
         battle.enemyHitAct = unit.PrepareCommand(this->database);
+        battle.enemyHitActs[static_cast<std::size_t>(enemy)] = battle.enemyHitAct;
         battle.darkenUnit = static_cast<i16>(enemy);
     }
 

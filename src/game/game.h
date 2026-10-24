@@ -372,6 +372,7 @@ private:
     int DrainSpellFrame(BattleRole& role, BattleUnit& target);
     int MagicAttackFrame(BattleRole& role, BattleUnit& target);
     int EnemyAttackFrame(BattleUnit& enemy, BattleUnit& target);
+    int EnemySkillFrame(BattleUnit& enemy, BattleUnit& target);
     void StartRoleTurn(int unit);
     void RetargetRoles(int role, int enemy);
     int RemoveDefeated(int index, int role);
@@ -492,7 +493,8 @@ private:
     int EnemyHitFrame(int enemy);
     bool SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act);
     int EnemyActionFrame(int enemy, int target);
-    int EnemyAttackAction(BattleEnemy& unit, int target);
+    int EnemyAttackAction(int enemy, BattleEnemy& unit, int target);
+    int EnemySpellAction(int enemy, BattleEnemy& unit, int target);
     int CallEnemies(BattleEnemy& unit);
     int EnemyFrame(int enemy);
     void EnemyGatherSweep(BattleEnemy& unit);

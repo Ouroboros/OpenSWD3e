@@ -459,7 +459,7 @@ public:
     std::array<ActState, Units> fadeActs;    // the fading act of each unit (ending at 0x00538158)
     // 0x00538158 (swd3e) the step of the battle music volume: Config::musicVolume from BattleIntro, faded to 2 by
     // defeat pose 0x65
-    i32 musicLevel = 0;
+    i32 musicLevel = 0;  // 0x00538158 (swd3e) the battle music's volume while a boss sinks or an enemy casts (0..11)
     std::array<i8, Units> fadeActLevels = {};   // swd32 0x00521374 the fade of fadeActs
     std::array<u16, Units> walkLineCalls = {};  // 0x0050CED0 the step factor of WalkLine, doubling while it has none
     std::array<u16, Units> walkDelays = {};     // 0x005372FC (swd3e) the calls WalkLine has waited
@@ -550,7 +550,7 @@ public:
     i32 unk53C024 = 0;
     i32 victoryWithoutPanel = 0;  // swd32 0x0053C004 1: the victory ends without its panel (BattleEndFrame; inferred)
     // The hit act of a slot (Game::HitTargetFrame).
-    i32 rippleHits = 0;                             // swd32 0x0053C03C 1: hits run the ripple instead of their pictures
+    i32 rippleHits = 0;                             // 0x00577340 1: hits run the ripple instead of their pictures
     std::array<i32, Units> rippleFrames = {};       // 0x00575FD4 per slot: the frames of the ripple
     i32 hitPictureX = 0;                            // 0x005770BC the place the hit picture is drawn at
     i32 hitPictureY = 0;                            // 0x005770C0
@@ -569,9 +569,19 @@ public:
     i32 enemySweeps = 0;            // swd32 0x0053BF84 1: an enemy's hit sweeps
     i32 enemyHitsAll = 0;           // swd32 0x0053BFF4 1: an enemy's hit falls on the party at once
     i32 enemyHitAct = 0;            // swd32 0x0053BD40 the hit act of the acting enemy
-    i32 sweepTargets = 0;           // 0x0057704C the units an enemy's sweep hits
-    i32 sweepDefeated = 0;          // swd32 0x0053BD84 the units an enemy's sweep defeated
-    i32 enemyFaded = 0;             // 0x005772E0 1 once an enemy faded or left (Game::EnemyActionFrame)
+    // 0x005135A4 (swd3e) per enemy: the hit act of its command (EnemyFrame); its spell runs it once to time the hits
+    std::array<i32, Enemies> enemyHitActs = {};
+    std::array<u8, 20> enemyCommandTurns = {};  // 0x00537690 (swd3e) per role: the turns of the casting enemy's command
+    u8 unk575FD0 = 0;  // 0x00575FD0 (swd3e) half the round limit of the spell's hit act (only written)
+    std::array<u8, Enemies> escapedEnemies = {};  // 0x005379C0 (swd3e) per enemy: 1 once it ran away (0x00464ED0)
+    // 0x0050F41C (swd3e) per enemy: the items it stole (0x20 a enemy, the first free one taken; 0x00464ED0)
+    std::array<std::array<u16, 0x20>, Enemies> stolenItems = {};
+    std::array<char, 0x40> noticeText = {};  // 0x00577494 (swd3e) the shared text of the notices (a stolen item)
+    i32 slideUnit = 0;      // 0x00577800 (swd3e) the enemy attacking last: SlideUnits slides by it (never enabled)
+    i16 slideX = 0x140;     // 0x004BF1E0 (swd3e) the x the units slide to
+    i32 sweepTargets = 0;   // 0x0057704C the units an enemy's sweep hits
+    i32 sweepDefeated = 0;  // swd32 0x0053BD84 the units an enemy's sweep defeated
+    i32 enemyFaded = 0;     // 0x005772E0 1 once an enemy faded or left (Game::EnemyActionFrame)
     // The turn of an enemy (Game::EnemyFrame).
     std::array<u16, Enemies> enemyOrders = {};  // swd32 0x005028AC the order of the fight talk for each enemy
     i32 enemyGaugeBoost = 0;                    // 0x00577348 the boost of the enemies' gauges

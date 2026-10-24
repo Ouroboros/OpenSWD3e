@@ -895,4 +895,98 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     return 0;
 }
 
+// What Game::EnemySkillFrame decides of the frame; the draws into `scene`.
+int DamageFrame::EnemySkillFrameAdvance(BattleUnit& enemy, BattleUnit& target, Scene& scene)
+{
+    Game& game = this->game;
+    BattleState& battle = game.battleState;
+    BattleServices& services = game.battleServices;
+    ActState& act = enemy.standAct;
+    enemy.unk2AAC = 1;
+
+    if ((enemy.command.flags & UnitCommand::UnkFlag8) != 0 && enemy.fadedIn == 0)
+    {
+        if (UnitFrame(enemy).DrawFadeOutAdvance(services, scene) == 0)
+        {
+            return 0;
+        }
+
+        if ((enemy.unk26B8 & kStandsAsideFlag) != 0)
+        {
+            enemy.SetFacing(1);
+        }
+
+        if (UnitFrame(enemy).DrawFadeInAdvance(services, target, scene) != 1)
+        {
+            return 0;
+        }
+
+        enemy.fadedIn = 1;
+    }
+
+    act.action = enemy.readyAction;
+    act.id = enemy.actId;
+    UnitFrame(enemy).Action(services, target, act, scene);
+
+    if ((act.target & ActState::Recoils) != 0)
+    {
+        if (act.effectA != 0)
+        {
+            enemy.recoilAct.id = act.effectA;
+            enemy.stage |= BattleUnit::Recoiling;
+            enemy.recoilAct.action = act.effectQ;
+        }
+
+        if ((act.target & ActState::Holds) != 0)
+        {
+            act.hold = 1;
+        }
+
+        act.effectA = 0;
+        act.target = static_cast<u16>(act.target & ~ActState::Recoils);
+        act.effectQ = 0;
+    }
+
+    if ((enemy.stage & BattleUnit::Recoiling) != 0 &&
+        UnitFrame(enemy).Recoil(services, enemy.recoilAct, static_cast<i16>(act.anchorY), scene) == 1)
+    {
+        act.target = 0;
+        enemy.stage &= ~BattleUnit::Recoiling;
+        act.hold = 0;
+        enemy.recoilAct = ActState{};
+    }
+
+    if ((act.target & ActState::FollowsUp) != 0)
+    {
+        if ((act.target & ActState::FadesField) != 0)
+        {
+            battle.fadingField = 1;
+            battle.StartFieldFade(
+                static_cast<i16>(act.lights[0]),
+                static_cast<i16>(act.lights[1]),
+                static_cast<i16>(act.lights[2]),
+                static_cast<i16>(act.lights[3]),
+                static_cast<i16>(act.lights[4]),
+                static_cast<i16>(act.lights[5]),
+                static_cast<i16>(act.lights[6])
+            );
+            act.target = static_cast<u16>(act.target & ~ActState::FadesField);
+        }
+
+        if ((battle.spellStage & BattleState::SpellCast) == 0)
+        {
+            battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast);
+        }
+    }
+
+    if ((battle.spellStage & BattleState::SpellOver) == 0)
+    {
+        return 0;
+    }
+
+    enemy.stage = 0;
+    act = ActState{};
+    return 1;
+}
+
 }  // namespace swd3e::smooth

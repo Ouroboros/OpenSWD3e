@@ -217,4 +217,16 @@ int Game::EnemyAttackFrame(BattleUnit& enemy, BattleUnit& target)
     return result;
 }
 
+// swd3e.exe 0x00489490 (a method of the unit in the original): one frame of `enemy`'s skill act (its readyAction) on
+// `target`; 1 once the spell it starts is over. An UnkFlag8 command fades the enemy out and in at the target first
+// (turning first with unk26B8 bit 28). Its target bits play the effect in the recoil act and, with FollowsUp, fade the
+// field by the act's lights and cast the spell (SpellCast); once SpellOver the stage and the act are cleared.
+int Game::EnemySkillFrame(BattleUnit& enemy, BattleUnit& target)
+{
+    smooth::Scene scene;
+    const auto result = smooth::DamageFrame(*this).EnemySkillFrameAdvance(enemy, target, scene);
+    scene.Show(this->battleServices);
+    return result;
+}
+
 }  // namespace swd3e

@@ -28,6 +28,7 @@ public:
     int MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, Scene& scene);
 
     int EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, Scene& scene);
+    int EnemySkillFrameAdvance(BattleUnit& enemy, BattleUnit& target, Scene& scene);
 
 private:
     Game& game;
