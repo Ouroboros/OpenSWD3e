@@ -1518,7 +1518,7 @@ int Game::RoleFrame(int role)
                 {
                     if (unit.StatusBit5() == 1)
                     {
-                        this->StartRoleTurn(role + BattleState::FirstRoleUnit);
+                        this->RandomRoleAct(role + BattleState::FirstRoleUnit);
                     }
                     else
                     {

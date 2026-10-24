@@ -323,14 +323,11 @@ constexpr std::size_t kBlockNextExperienceAt = 2;
 constexpr std::size_t kBlockNextSpecialAt = 3;
 constexpr i32 kBlockSpecialMask = 0x7FFFFFFF;
 constexpr std::string_view kFrameDebugLine = "FRAME:%d";
-constexpr int kMenuPointerShiftX = 0x10;
-constexpr int kMenuPointerShiftY = 0x30;
-constexpr int kMenuHomeX = 0x122;
-constexpr int kMenuHomeY = 0xA0;
-constexpr i32 kMenuPointerLeft = 0x32;
-constexpr i32 kMenuPointerRight = 0x23A;
-constexpr i32 kMenuPointerTop = 0x1E;
-constexpr i32 kMenuPointerBottom = 0x168;
+constexpr int kMenuHomeX = 0xF0;  // swd3e: where the command menu opens
+constexpr int kMenuHomeY = 0x8C;
+constexpr i32 kLastGridCommand = 9;  // a command past the grid goes back to 1
+constexpr int kRoleIconX = 0x1E;     // the role's icon over the menu
+constexpr int kRoleIconY = 0x21;
 constexpr int kMenuNameStep = 8;
 constexpr int kMenuNameCenter = 5;
 constexpr int kMenuNameShift = 2;
@@ -2888,30 +2885,16 @@ void TurnFrame::DrawCommandPanelAdvance(i32 nameIndex, Scene& scene)
     BattleState& battle = game.battleState;
     i32 grown = battle.menuGrow;
 
+    // swd3e: the menu opens at its place.
     if (grown != kMenuOpened)
     {
         if (battle.unk53BFB0 == 0)
         {
-            battle.menuX = game.state.pointerX - kMenuPointerShiftX;
-            battle.menuY = game.state.pointerY - kMenuPointerShiftY;
             battle.unk53BFB0 = 1;
         }
 
-        // The rebuild (deviations.md): after a key the menu opens at its place, whatever the pointer did.
-        if (battle.promptFrames >= kMenuIdleFrames || !battle.menuByMouse)
-        {
-            battle.menuX = kMenuHomeX;
-            battle.menuY = kMenuHomeY;
-        }
-
-        if (battle.pointerX < kMenuPointerLeft || battle.pointerX > kMenuPointerRight ||
-            battle.pointerY < kMenuPointerTop || battle.pointerY > kMenuPointerBottom)
-        {
-            battle.menuX = kMenuHomeX;
-            battle.menuY = kMenuHomeY;
-            game.input.SetMousePosition(kMenuHomeX, kMenuHomeY);
-            grown = battle.menuGrow;
-        }
+        battle.menuX = kMenuHomeX;
+        battle.menuY = kMenuHomeY;
     }
 
     if (grown >= kMenuOpened)
@@ -2925,7 +2908,7 @@ void TurnFrame::DrawCommandPanelAdvance(i32 nameIndex, Scene& scene)
         battle.listRows = 0;
     }
 
-    // swd3e: a menu of fewer than two extra commands has the short gauge.
+    // swd3e: a menu of fewer than two listed commands has the short gauge.
     const int levels = battle.listedCommands < kShortGaugeCommands ? kShortGaugeLevels : kFullGaugeLevels;
     HudFrame(game.battleHud).DrawTallGaugeAdvance(battle.menuX, battle.menuY, grown, levels, scene);
 
@@ -2939,13 +2922,21 @@ void TurnFrame::DrawCommandPanelAdvance(i32 nameIndex, Scene& scene)
     SceneFont font(game.mediumFont, scene);
     font.SetShadow(0);
     font.SetBackground(TextFont::NoBackground);
-    const auto& name =
-        battle.roleNames[static_cast<std::size_t>(battle.partyRoles[static_cast<std::size_t>(nameIndex)])];
+    const auto partyRole = static_cast<std::size_t>(battle.partyRoles[static_cast<std::size_t>(nameIndex)]);
+    const auto& name = battle.roleNames[partyRole];
     const std::string text(name.data(), std::find(name.begin(), name.end(), '\0') - name.begin());
     const int halfLength = static_cast<int>(text.size()) >> 1;
     const int x = battle.menuX + kMenuNameStep * (kMenuNameCenter - (halfLength - kMenuNameShift));
     font.DrawText(game.drawSurface, x, battle.menuY + kMenuNameY, text, kTitleColor, TextFont::BoldOutline);
+
+    if (battle.menuCommand > kLastGridCommand)
+    {
+        battle.menuCommand = 1;
+    }
+
     this->DrawCommandMenuAdvance(battle.menuX + kCommandMenuX, battle.menuY + kCommandMenuY, battle.menuCommand, scene);
+    HudFrame(game.battleHud)
+        .DrawRoleIconAdvance(static_cast<int>(partyRole), battle.menuX + kRoleIconX, battle.menuY + kRoleIconY, scene);
 }
 
 }  // namespace swd3e::smooth

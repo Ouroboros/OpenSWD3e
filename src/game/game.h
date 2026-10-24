@@ -373,7 +373,7 @@ private:
     int MagicAttackFrame(BattleRole& role, BattleUnit& target);
     int EnemyAttackFrame(BattleUnit& enemy, BattleUnit& target);
     int EnemySkillFrame(BattleUnit& enemy, BattleUnit& target);
-    void StartRoleTurn(int unit);
+    void RandomRoleAct(int unit);
     void RetargetRoles(int role, int enemy);
     int RemoveDefeated(int index, int role);
     int PlayHitAct(BattleUnit& unit, u32 act, int index);
@@ -470,6 +470,7 @@ private:
     void DrawBattleMenu();
     void DrawCommandPanel(i32 nameIndex);
     void DrawAimPointers();
+    void DrawGhostAimPointer();
     void BattleEndFrame();
     void EndCheckFrame();
     int HitTargetFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index);

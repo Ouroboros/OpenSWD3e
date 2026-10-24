@@ -32,7 +32,12 @@ constexpr i16 kItemsBackFrames = 0x32;
 constexpr std::u8string_view kItemsBackText = u8"取回被偷的物品!!";  // 0x004BF3C4
 constexpr i16 kLastStandingCause = 2;  // the enrage causes of a defeat: the last enemy standing, a role down
 constexpr i16 kRoleDownCause = 0x17;
-constexpr u32 kGhostGoneStatus = 0x5008;  // the status of the ghost when battle role 0 falls
+constexpr u32 kGhostGoneStatus = 0x5008;   // the status of the ghost when battle role 0 falls
+constexpr u32 kChargeEndsAilment = 0x200;  // the ailment that ends 蓄勁 (DrawBattleMenu)
+constexpr int kChargePanelX = 0x32;
+constexpr u32 kRandomActs = 3;  // RandomRoleAct: guard, attack or leave
+constexpr u32 kRandomGuard = 0;
+constexpr u32 kRandomLeave = 2;
 constexpr std::size_t kLastTurnUnit = BattleState::RoleUnits - 1;
 
 constexpr u16 kThrownObject = 0x300;  // the object a thrown attack takes (given back unless it lands)
@@ -230,19 +235,6 @@ constexpr int kListPointerX = 0x108;
 constexpr int kListPointerY = 0xB0;
 constexpr int kListMouseX = 0xF0;
 constexpr int kListMouseY = 0xC6;
-// The rebuild: the keys after which the menu opens at its place (BattleKeys).
-constexpr std::array<Button, 9> kMenuKeys = {
-    Button::Escape,
-    Button::Space,
-    Button::Left,
-    Button::Up,
-    Button::Right,
-    Button::Down,
-    Button::PageUp,
-    Button::PageDown,
-    Button::Enter,
-};
-
 constexpr i32 kOpenListRows = 4;
 constexpr i32 kAttackCommand = 1;
 constexpr i32 kGuardCommand = 5;
@@ -374,32 +366,88 @@ std::u8string_view CommandKindName(u16 kind)
 
 }  // namespace
 
-// swd32.exe 0x00464CC0 (unmatched in swd3e): role unit `unit` takes the turn (turnUnit, its unit turn and SetTarget 1);
-// while an enemy
-// stands, aimTarget picks one at random (1-based), going on past defeated ones for at most enemyCount tries.
-void Game::StartRoleTurn(int unit)
+// swd3e.exe 0x004729B0: role unit `unit` that may not choose (StatusBit5) acts by chance: one in three guards (the
+// menu confirming 防禦), attacks or leaves (without the retreat, NoRetreat, one in two guards or attacks). An attack
+// aims, while an enemy stands, at a random role (one in two, with more than one role standing besides the left-out
+// and escort ones: not defeated, not the ghost, not itself; unk26B8 bit 28 raised) or a random enemy, going on past
+// defeated ones for at most enemyCount tries.
+void Game::RandomRoleAct(int unit)
 {
     BattleState& battle = this->battleState;
-    battle.turnUnit = unit;
-    battle.turnCommand = 1;
-    battle.unk53BF60 = 1;
-    battle.turnTaken[static_cast<std::size_t>(unit)] = 1;
-    this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].SetTarget(1);
-    const auto count = static_cast<i32>(battle.enemyCount);
+    u32 choice = this->random.Below(kRandomActs);
 
-    if (battle.enemiesGone >= count)
+    if ((battle.panelFlags & BattleState::NoRetreat) != 0)
+    {
+        choice = this->random.Below(kRandomActs - 1);
+    }
+
+    BattleRole& role = this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)];
+
+    auto takeTurn = [&battle, &role, unit](i32 command)
+    {
+        battle.turnUnit = unit;
+        battle.turnCommand = command;
+        battle.result = 0;
+        battle.unk53BF60 = 1;
+        battle.turnTaken[static_cast<std::size_t>(unit)] = command;
+        role.SetTarget(1);
+        battle.unk53BFC4 = 1;
+        battle.unk53BFC0 = 1;
+    };
+
+    if (choice == kRandomGuard)
+    {
+        battle.menuCommand = kGuardCommand;
+        battle.menuGrow = kMenuOpened;
+        battle.result = kMenuState;
+        battle.unk53BFB8 = 1;
+        this->MenuConfirm();
+        return;
+    }
+
+    if (choice == kRandomLeave)
+    {
+        takeTurn(kLeaveCommand);
+        return;
+    }
+
+    takeTurn(kAttackCommand);
+
+    if (battle.enemiesGone >= static_cast<i32>(battle.enemyCount))
     {
         return;
     }
 
+    const u32 aimsAtRole = this->random.Below(2);
+    const auto roles = static_cast<i32>(battle.roleCount);
+
+    if (roles - battle.defeatedRoles - battle.unk5770D4 - battle.escortCount > 1 && aimsAtRole != 0)
+    {
+        battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
+        battle.aimTarget = static_cast<i32>(this->random.Below(battle.roleCount)) + 1;
+        this->battleRoles[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].RaiseUnk26B8Bit28();
+
+        while (true)
+        {
+            const BattleRole& aimed = this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)];
+
+            if (!aimed.IsDefeated() && aimed.Ghost() != 1 &&
+                battle.aimTarget != battle.turnUnit - (BattleState::FirstRoleUnit - 1))
+            {
+                return;
+            }
+
+            battle.aimTarget = static_cast<i32>(this->random.Below(battle.roleCount)) + 1;
+        }
+    }
+
+    const auto count = static_cast<i32>(battle.enemyCount);
     battle.aimTarget = static_cast<i32>(this->random.Below(battle.enemyCount)) + 1;
     int tries = 0;
 
     while (this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].IsDefeated())
     {
-        ++battle.aimTarget;
-
-        if (battle.aimTarget > count)
+        if (++battle.aimTarget > count)
         {
             battle.aimTarget = 1;
         }
@@ -6240,21 +6288,6 @@ void Game::BattleKeys()
     Controls& controls = this->controls;
     battle.unk53BD9C = 0;
 
-    // The rebuild (deviations.md): whether the mouse or a key was pressed last (the right button is taken for Escape
-    // below).
-    for (const Button key : kMenuKeys)
-    {
-        if (controls.At(key).press != 0)
-        {
-            battle.menuByMouse = false;
-        }
-    }
-
-    if (controls.At(Button::MouseLeft).press != 0 || controls.At(Button::MouseRight).press != 0)
-    {
-        battle.menuByMouse = true;
-    }
-
     i32 unit = battle.currentUnit;
 
     if (battle.result <= kMenuState && battle.currentUnit != 0 && this->scene.talkWindows == nullptr &&
@@ -6640,13 +6673,11 @@ void Game::BattleKeys()
     }
 }
 
-// swd32.exe 0x00464270 (unmatched in swd3e): the battle menu of a frame (not in battle state 0x67; without a current
-// unit only in the auto
-// battle). A held current role drops its command and gives the panel to the next role in roleOrder not held; one
-// that may not act (StatusBit5) takes its turn at once. By battle state: 1 the command menu with the role's name
-// over the tall gauge (grown for six frames at the pointer, or at kMenuHome after kMenuIdleFrames or with the pointer
-// near the edge), 2, 4, 8, 0x1B and 0x1E the lists (with a scroll bar past seven rows), 3 the aim pointers, 5 the
-// 佈置護駕 panel, 6 the retreat, 7 the 控制 menu.
+// swd3e.exe 0x00471E80: the battle menu of a frame (not in battle state 0x67; without a current unit only in the auto
+// battle). A current role that may not choose (StatusBit5) acts by chance at once (RandomRoleAct); another opens the
+// menu. By battle state: 1 the command menu (the role that took 蓄勁 sees its charge panel until it holds ailment
+// 0x200), 2, 4, 8, 0x1B, 0x1E, 0x29 and 0x50 the lists (2, 0x1B and 0x50 with a scroll bar past seven rows), 3 the aim
+// pointers, 5 and 0xA the 佈置護駕 panels, 6 the retreat, 7 the 控制 menu, 9 the ghost's target.
 void Game::DrawBattleMenu()
 {
     BattleState& battle = this->battleState;
@@ -6657,64 +6688,21 @@ void Game::DrawBattleMenu()
         return;
     }
 
-    // Without a current unit (the auto battle) the original reads the role 8 before the first: taken as neither held
-    // nor kept from acting.
-    auto currentRole = [this, &battle]() -> BattleRole*
+    i32 unit = battle.currentUnit;
+
+    if (battle.currentUnit != 0)
     {
-        if (battle.currentUnit < BattleState::FirstRoleUnit)
+        if (this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].StatusBit5() ==
+            1)
         {
-            return nullptr;
+            this->RandomRoleAct(battle.currentUnit);
+            unit = 0;
+            battle.currentUnit = 0;
         }
-
-        return &this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
-    };
-
-    i32 nameIndex = battle.currentUnit - BattleState::FirstRoleUnit;
-
-    if (BattleRole* role = currentRole(); role != nullptr && role->IsHeld() == 1)
-    {
-        battle.listName = {};
-        battle.result = 0;
-        battle.unk53BFC4 = 0;
-        battle.unk53BFC0 = 0;
-        battle.unk53BFC8 = 0;
-        battle.unk53BFB0 = 0;
-        battle.unk53C49C = 1;
-        battle.listRows = kListRows;
-        role->CancelCommand();
-
-        for (u32 index = 0; index < battle.enemyCount; ++index)
+        else if (battle.result == 0)
         {
-            this->battleEnemies[index].SetAC0(0);
+            battle.result = kMenuState;
         }
-
-        nameIndex = 0;
-
-        for (; nameIndex < static_cast<i32>(battle.roleCount) - 1; ++nameIndex)
-        {
-            i32& next = battle.roleOrder[static_cast<std::size_t>(nameIndex)];
-            const i32 unit = next;
-
-            if (unit == 0)
-            {
-                next = battle.currentUnit;
-                battle.currentUnit = 0;
-                break;
-            }
-
-            if (this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeld() != 1)
-            {
-                next = battle.currentUnit;
-                battle.currentUnit = unit;
-                break;
-            }
-        }
-    }
-
-    if (BattleRole* role = currentRole(); role != nullptr && role->StatusBit5() == 1)
-    {
-        this->StartRoleTurn(battle.currentUnit);
-        battle.currentUnit = 0;
     }
 
     battle.unk53BF5C = 1;
@@ -6739,11 +6727,26 @@ void Game::DrawBattleMenu()
     switch (battle.result)
     {
         case kMenuState:
-            if (battle.currentUnit != 0)
+            if (unit == 0)
             {
-                this->DrawCommandPanel(nameIndex);
+                return;
             }
 
+            if (battle.chargingRole != -1 && unit == battle.chargingRole)
+            {
+                if (this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].HasEffectBits(
+                        kChargeEndsAilment
+                    ) != 1)
+                {
+                    this->DrawChargePanel(battle.menuX + kChargePanelX, battle.menuY, battle.menuCommand);
+                    battle.menuGrow = kMenuOpened;
+                    return;
+                }
+
+                battle.chargingRole = -1;
+            }
+
+            this->DrawCommandPanel(unit - BattleState::FirstRoleUnit);
             return;
 
         case kListState2:
@@ -6777,10 +6780,10 @@ void Game::DrawBattleMenu()
             if (battle.unk53BF64 == 0 && battle.hitsAllRoles == 0)
             {
                 battle.unk53BF1C |= kRetreatMark;
-                battle.unk53BFC0 = 1;
-                battle.unk53BFC4 = 1;
                 battle.result = 0;
                 battle.currentUnit = 0;
+                battle.unk53BFC0 = 1;
+                battle.unk53BFC4 = 1;
             }
 
             return;
@@ -6796,6 +6799,14 @@ void Game::DrawBattleMenu()
             listDrawn();
             return;
 
+        case kTurnState9:
+            this->DrawGhostAimPointer();
+            return;
+
+        case kWaitStateA:
+            this->DrawEscortFusionList(kEscortListX, kEscortListY);
+            return;
+
         case kListState1B:
             battle.unk53BFC8 = 1;
             this->DrawThrowList(kListX, kListY, battle.roleListRow, battle.roleListScroll);
@@ -6809,8 +6820,73 @@ void Game::DrawBattleMenu()
             listDrawn();
             return;
 
+        case kWaitState29:
+            battle.unk53BFC8 = 1;
+            this->DrawTitledItemList(
+                kListX,
+                kListY,
+                battle.roleListRow,
+                battle.roleListScroll,
+                kFuseCategory,
+                BattleState::AccessoryCommandNames[kFuseCommand - kFirstAccessoryCommand]
+            );
+            listDrawn();
+            return;
+
+        case kWaitState50:
+            battle.unk53BFC8 = 1;
+            this->DrawTitledItemList(
+                kListX,
+                kListY,
+                battle.roleListRow,
+                battle.roleListScroll,
+                kBaitCategory,
+                BattleState::RefineOptionNames[kBaitOption - 1]
+            );
+            scrollBar(battle.roleListEntries, battle.roleListScroll, kThrowScrollX);
+            listDrawn();
+            return;
+
         default:
             return;
+    }
+}
+
+// Battle state 9 of DrawBattleMenu (swd3e, inline in the original): unless the pointer moved, the first standing
+// enemy is aimed at (as the ghost's target too) and marked, with the pointer over it and the name tag.
+void Game::DrawGhostAimPointer()
+{
+    BattleState& battle = this->battleState;
+    battle.unk53BFC0 = 1;
+    battle.unk53BFC4 = 1;
+    this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
+    battle.actingEnemy = 0;
+
+    if (battle.unk53BFBC == 0)
+    {
+        // The original searches past the enemies when every one is down (deviations.md): the search ends there.
+        while (battle.actingEnemy < static_cast<i32>(battle.enemyCount) - 1 &&
+               this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].IsDefeated())
+        {
+            ++battle.actingEnemy;
+        }
+
+        battle.unk53BFB8 = 1;
+        battle.unk53BF4E = 0;
+        battle.unk53BF4A = 0;
+        BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)];
+        enemy.SetAC0(1);
+        UnitRect rect;
+        enemy.GetShadowRect(this->battleServices, rect);
+        enemy.GetOffset(battle.unk53BF4A, battle.unk53BF4E);
+        battle.aimTarget = battle.actingEnemy + 1;
+        battle.aiTarget = battle.actingEnemy + 1;
+        this->battleHud.DrawSlotAnimation(kTurnPointer, 0, rect.x + (rect.width >> 1), rect.y + (rect.height >> 1));
+    }
+
+    if (battle.unk53BFB8 == 1)
+    {
+        this->DrawTargetTag(kTargetTagX, kTargetTagY);
     }
 }
 
@@ -6825,10 +6901,10 @@ void Game::DrawCommandPanel(i32 nameIndex)
 }
 
 // Battle state 3 of DrawBattleMenu (inline in the original). Aiming at every unit (unk53BF88), a pointer over each
-// role standing (for a command at the party) or each enemy standing (at its anchor when it has one). Otherwise a
-// defeated aimed enemy passes the aim on through enemyOrder (state 1 when none stands), and the pointer marks the
-// aimed role or enemy (turnPointer 0: the refusing pointer; command 6 refuses an enemy not a small machine), with the
-// name tag while unk53BFB8.
+// role standing that is not the ghost (for a command at the party) or each enemy standing (at its anchor when it has
+// one). Otherwise a defeated aimed enemy passes the aim on through enemyOrder (state 1 when none stands), and the
+// pointer marks the aimed role or enemy (turnPointer 0: the refusing pointer; 煉妖 and 誘餌 refuse an enemy not a small
+// machine), with the name tag while unk53BFB8.
 void Game::DrawAimPointers()
 {
     BattleState& battle = this->battleState;
@@ -6850,7 +6926,7 @@ void Game::DrawAimPointers()
             {
                 BattleRole& role = this->battleRoles[index];
 
-                if (role.autoControl != 1 && role.guestControl != 1 && role.StatusBit13() == 0)
+                if (role.AutoControl() != 1 && role.GuestControl() != 1 && role.Ghost() != 1 && role.StatusBit13() == 0)
                 {
                     role.GetShadowRect(this->battleServices, rect);
                     role.SetAC0(1);
@@ -6960,7 +7036,7 @@ void Game::DrawAimPointers()
             enemy.GetOffset(battle.unk53BF4A, battle.unk53BF4E);
             battle.aimTarget = battle.actingEnemy + 1;
 
-            if (battle.menuCommand == kRefineMenuCommand)
+            if (battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50)
             {
                 battle.turnPointer = enemy.IsSmallMachine() ? 1 : 0;
             }

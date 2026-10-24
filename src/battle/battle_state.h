@@ -652,9 +652,6 @@ public:
     i32 listPage = 0;     // 0x00576FEC the page of the list of state 2 (0..2)
     // The menu (MenuCancel).
     i32 unk53BFB0 = 0;
-    // The rebuild (deviations.md): the last button pressed was the mouse's (a key: false); the menu opens at the
-    // pointer only after the mouse.
-    bool menuByMouse = false;
     // The rebuild (deviations.md): the unit the keys went to last frame; a new one spends the keys held.
     i32 keysUnit = 0;
     i32 listPanelFrames = 0;               // 0x0057706C the frames of the list panel act
