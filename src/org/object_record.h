@@ -79,7 +79,7 @@ struct ObjectData
     u16 dropChance = 0;       // +0x8A a roll of 0..19 below it drops it
     u16 stealItem = 0;        // +0x8C the item an enemy can be robbed of (BattleRole::Steal), 0: none
     u16 stealDifficulty = 0;  // +0x8E 2..5: a steal roll below it succeeds
-    u16 unk90 = 0;
+    u16 unk90 = 0;            // +0x90 (swd3e) the gold an enemy stole (EnemyHitDamage)
     u16 unk92 = 0;
     // +0x94..+0x97 tag 0x18 (and tag 1's block): an enemy's enrage (0x0049BB50, 0x0049BE20)
     u16 enrageCondition = 0;  // +0x94 1..0x1E: what enrages the enemy (EnrageCheck)

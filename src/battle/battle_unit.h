@@ -333,6 +333,7 @@ public:
         UnkCommand22 = 0x22,
         UnkCommand23 = 0x23,
         UnkCommand24 = 0x24,
+        UnkCommand28 = 0x28,  // swd3e: the hit is the meter's sum (HitDamage)
     };
 
     // BattleUnit::stage bits: the stages of an attack (AttackFrame).
@@ -971,7 +972,6 @@ public:
     i32 goldGuard = 0;    // +0x3060
 };
 
-int ScaleByTenths(i8 tenths, i16& value);
 int ApplyElement(const std::array<u8, 5>& resistances, i16 element, i16& value);
 bool RollChance(Random& random, int percent);
 void EnrageEnemies(BattleServices& services, i16 cause);

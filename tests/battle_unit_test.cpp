@@ -139,10 +139,16 @@ constexpr swd3e::i16 kSpirit = 30;
 constexpr swd3e::i16 kEnemyHitPoints = 500;
 constexpr swd3e::i16 kDefense = 12;
 constexpr swd3e::i16 kAgility = 7;
-constexpr int kTenths = 10;
 constexpr swd3e::i16 kScaled = 100;
-constexpr swd3e::i8 kRaiseTenths = 3;
-constexpr swd3e::i8 kCutTenths = -15;  // below -10 the value is multiplied instead
+constexpr swd3e::i16 kMetal = 1;  // ApplyElement: 金
+constexpr swd3e::i16 kNoElement = 6;
+constexpr std::size_t kLessensMetal = 3;
+constexpr std::size_t kRaisesMetal = 1;
+constexpr std::size_t kAbsorbsMetal = 2;
+constexpr swd3e::u8 kLessenPercent = 20;
+constexpr swd3e::u8 kRaisePercent = 10;
+constexpr swd3e::u8 kAbsorbPercent = 50;
+constexpr int kPercentScale = 100;
 constexpr swd3e::u16 kDamageDelay = 4;
 constexpr swd3e::i16 kAilmentRoll = 10;  // an ailment chance that always lands
 constexpr int kAttackBonus = 100;
@@ -288,12 +294,21 @@ TEST_CASE("battle unit: evasion, vitals and scaling")
     CHECK_EQ(enemy.data.defense, kDefense);
     CHECK_EQ(enemy.data.agility, kAgility);
 
+    // swd3e: an attack of 金 is lessened by 火 (slot 3), raised by 木 (slot 1) and absorbed by 水 (slot 2).
+    std::array<swd3e::u8, 5> resistances = {};
+    resistances[kLessensMetal] = kLessenPercent;
+    resistances[kRaisesMetal] = kRaisePercent;
     swd3e::i16 value = kScaled;
-    CHECK_EQ(swd3e::ScaleByTenths(kRaiseTenths, value), 0);
-    CHECK_EQ(value, kScaled + kScaled * kRaiseTenths / kTenths);
+    CHECK_EQ(swd3e::ApplyElement(resistances, kMetal, value), 0);
+    const int lessened = kScaled - kLessenPercent * kScaled / kPercentScale;
+    CHECK_EQ(value, lessened + lessened * kRaisePercent / kPercentScale);
+    resistances[kAbsorbsMetal] = kAbsorbPercent;
     value = kScaled;
-    CHECK_EQ(swd3e::ScaleByTenths(kCutTenths, value), 1);
-    CHECK_EQ(value, kScaled * (kCutTenths + kTenths) / kTenths);
+    CHECK_EQ(swd3e::ApplyElement(resistances, kMetal, value), 1);
+    CHECK_EQ(value, (lessened + lessened * kRaisePercent / kPercentScale) * kAbsorbPercent / -kPercentScale);
+    value = kScaled;
+    CHECK_EQ(swd3e::ApplyElement(resistances, kNoElement, value), 0);
+    CHECK_EQ(value, kScaled);
 
     constexpr swd3e::u16 kLastTarget = BattleUnit::MaxTargets - 1;
     unit.targetCount = kLastTarget;
