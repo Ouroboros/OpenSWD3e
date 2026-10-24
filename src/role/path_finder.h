@@ -61,11 +61,12 @@ class PathFinder
 public:
     static constexpr int MaxSteps = 0x1FE;
     static constexpr u8 End = 0xFF;
-    // The direction byte of a step, by pathDeltaY[dy + 1] + pathDeltaX[dx + 1] + 4 (swd32.exe 0x00499348..0x0049936B).
+    // The direction byte of a step, by DeltaY[dy + 1] + DeltaX[dx + 1] + 4 (swd3e.exe 0x004AA320, DeltaX 0x004AA32C,
+    // DeltaY 0x004AA338).
     static constexpr std::array<i8, 9> DirectionByDelta = {0, 1, 2, 7, 0, 3, 6, 5, 4};
     static constexpr std::array<i32, 3> DeltaX = {-1, 0, 1};
     static constexpr std::array<i32, 3> DeltaY = {-3, 0, 3};
-    // swd32.exe 0x0049936C (unmatched in swd3e)
+    // swd3e.exe 0x004AA344: the direction a child stores back to its parent (TryNeighbour)
     static constexpr std::array<u8, 8> OppositeDirection = {4, 5, 6, 7, 0, 1, 2, 3};
 
     PathFinder(PathNodePool& pool, const BlockingMap& map, ErrorReporter& reporter);

@@ -5,7 +5,7 @@
 namespace swd3e
 {
 
-// The dialogs of swd32.exe's resources are Win32 dialogs; none can be shown here (the game runs on).
+// The dialogs of swd3e.exe's resources are Win32 dialogs; none can be shown here (the game runs on).
 int CheatDialog::Run()
 {
     LogWarning(u8"the cheat dialog is only available on Windows");

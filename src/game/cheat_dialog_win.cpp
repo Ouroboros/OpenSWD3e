@@ -29,7 +29,7 @@ namespace swd3e
 namespace
 {
 
-// The dialogs of swd32.exe's resources.
+// The dialogs of swd3e.exe's resources.
 constexpr WORD kCheatDialogId = 0x6A;
 
 // The controls of the cheat dialog.
@@ -139,7 +139,7 @@ HWND GameWindow(const CheatDialog& cheat)
     );
 }
 
-// The dialog `id` of swd32.exe's resources run with `procedure` and `context`; 0 when it cannot be.
+// The dialog `id` of swd3e.exe's resources run with `procedure` and `context`; 0 when it cannot be.
 int RunDialog(CheatDialog& cheat, WORD id, DLGPROC procedure)
 {
     const std::vector<u8> stored = cheat.resources.ReadDialog(id);

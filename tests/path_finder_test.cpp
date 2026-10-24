@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "game/game_state.h"
+#include "game_data.h"
 #include "map/blocking_map.h"
 #include "recording_reporter.h"
 #include "role/path_finder.h"
@@ -96,4 +97,24 @@ TEST_CASE("path finder: a path around a wall, and the second search of one finde
     CHECK_EQ(pool.peak, swd3e::PathNodePool::Initial);
     CHECK(pool.Release());
     CHECK(reporter.messages.empty());
+}
+
+TEST_CASE("path finder: the direction tables match swd3e.exe")
+{
+    constexpr swd3e::u32 kDirectionByDeltaAt = 0x004AA320;
+    constexpr swd3e::u32 kDeltaXAt = 0x004AA32C;
+    constexpr swd3e::u32 kDeltaYAt = 0x004AA338;
+    constexpr swd3e::u32 kOppositeDirectionAt = 0x004AA344;
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
+
+    if (exe.empty())
+    {
+        std::printf("  (swd3e.exe not found, skipped)\n");
+        return;
+    }
+
+    CHECK(swd3etest::SameTable(exe, kDirectionByDeltaAt, swd3e::PathFinder::DirectionByDelta));
+    CHECK(swd3etest::SameTable(exe, kDeltaXAt, swd3e::PathFinder::DeltaX));
+    CHECK(swd3etest::SameTable(exe, kDeltaYAt, swd3e::PathFinder::DeltaY));
+    CHECK(swd3etest::SameTable(exe, kOppositeDirectionAt, swd3e::PathFinder::OppositeDirection));
 }
