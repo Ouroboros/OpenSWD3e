@@ -277,7 +277,7 @@ TEST_CASE("projector: matches the golden results of the legacy projector")
 
     auto gameFile = [](const std::string& name)
     {
-        return std::string(swd3e::AsBytes(swd3etest::GameFile(name)));
+        return std::string(swd3e::AsBytes(swd3etest::LegacyFile(name)));
     };
 
     const std::vector<golden::Frame> frames = golden::LoadGoldenFrames(gameFile, decompress);

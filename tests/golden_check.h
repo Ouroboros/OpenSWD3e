@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <map>
 #include <string>
 
@@ -17,14 +18,18 @@ class GoldenCheck
 {
 public:
     explicit GoldenCheck(const std::map<std::string, std::string>& golden);
+    // A check that leaves out the scenarios `excluded` accepts (counted in `excluded`).
+    GoldenCheck(const std::map<std::string, std::string>& golden, std::function<bool(const std::string&)> excludes);
 
     void operator()(const std::string& name, swd3e::u64 hash);
 
     int compared = 0;
     int mismatches = 0;
+    int excluded = 0;
 
 private:
     const std::map<std::string, std::string>& golden;
+    std::function<bool(const std::string&)> excludes;
 };
 
 }  // namespace swd3etest

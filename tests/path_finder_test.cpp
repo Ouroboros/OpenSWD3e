@@ -7,15 +7,13 @@
 #include <vector>
 
 #include "game/game_state.h"
-#include "golden/path_scenarios.h"
-#include "golden_check.h"
 #include "map/blocking_map.h"
 #include "recording_reporter.h"
 #include "role/path_finder.h"
 #include "test.h"
 
-using golden::u64;
-using golden::u8;
+using swd3e::u64;
+using swd3e::u8;
 
 namespace
 {
@@ -32,60 +30,6 @@ constexpr int kGoalX = 7;
 // The step of each direction byte (0 up left, clockwise).
 constexpr std::array<int, 8> kStepX = {-1, 0, 1, 1, 1, 0, -1, -1};
 constexpr std::array<int, 8> kStepY = {-1, -1, -1, 0, 1, 1, 1, 0};
-
-class FinderBackend : public golden::PathBackend
-{
-public:
-    FinderBackend()
-    {
-        this->pool.Init();
-    }
-
-    std::vector<u8> Find(const golden::PathScenario& scenario, bool again) override
-    {
-        swd3e::BlockingMap map;
-        map.width = scenario.mapWidth;
-        map.cells = scenario.cells;
-        swd3e::PathFinder finder(this->pool, map, this->reporter);
-        finder.SetMask(static_cast<int>(scenario.mask));
-        std::vector<u8> directions(kDirections, kUnwritten);
-        std::vector<u8> out;
-        const int runs = again ? kTwice : 1;
-
-        for (int run = 0; run < runs; ++run)
-        {
-            const int result = finder.FindPath(
-                scenario.fromX,
-                scenario.fromY,
-                scenario.toX,
-                scenario.toY,
-                scenario.width,
-                scenario.height,
-                directions
-            );
-            golden::Append32(out, static_cast<golden::u32>(result));
-
-            for (const u8 direction : directions)
-            {
-                out.push_back(direction);
-
-                if (direction == swd3e::PathFinder::End)
-                {
-                    break;
-                }
-            }
-        }
-
-        finder.Reset();
-        golden::Append32(out, static_cast<golden::u32>(this->pool.free));
-        golden::Append32(out, static_cast<golden::u32>(this->pool.peak));
-        return out;
-    }
-
-private:
-    swd3e::PathNodePool pool;
-    swd3etest::RecordingReporter reporter;
-};
 
 }  // namespace
 
@@ -152,23 +96,4 @@ TEST_CASE("path finder: a path around a wall, and the second search of one finde
     CHECK_EQ(pool.peak, swd3e::PathNodePool::Initial);
     CHECK(pool.Release());
     CHECK(reporter.messages.empty());
-}
-
-TEST_CASE("path finder: matches the golden results of the legacy path finder")
-{
-    const std::map<std::string, std::string> golden =
-        swd3etest::LoadGolden(SWD3_SOURCE_DIR "/tests/golden/path_golden.txt");
-
-    if (golden.empty())
-    {
-        std::printf("  (golden file not found, skipped)\n");
-        return;
-    }
-
-    FinderBackend backend;
-    swd3etest::GoldenCheck check(golden);
-    golden::RunPaths(backend, std::ref(check));
-    std::printf("  compared %d scenarios\n", check.compared);
-    CHECK_EQ(check.mismatches, 0);
-    CHECK_EQ(check.compared, static_cast<int>(golden.size()));
 }

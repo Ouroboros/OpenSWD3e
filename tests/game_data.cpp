@@ -32,6 +32,17 @@ std::u8string GameFile(std::string_view name)
     return swd3e::ResolvePath(GameDirectory() + swd3e::Utf8Bytes(name));
 }
 
+std::u8string LegacyFile(std::string_view name)
+{
+    const std::string configured = golden::Environment("SWD3_LEGACY_DIR");
+#if defined(_WIN32)
+    const std::string directory = !configured.empty() ? configured : "E:/Game/swd3";
+#else
+    const std::string directory = !configured.empty() ? configured : "/mnt/e/Game/swd3";
+#endif
+    return swd3e::ResolvePath(swd3e::Utf8Bytes(directory + "/") + swd3e::Utf8Bytes(name));
+}
+
 std::vector<u8> ReadGameFile(std::string_view name)
 {
     std::ifstream stream(std::filesystem::path(GameFile(name)), std::ios::binary);

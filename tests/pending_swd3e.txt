@@ -1,21 +1,17 @@
 # Test cases copied from swd3-rebuild that still check swd32 data (golden results, saves, swd32.exe bytes).
 # They are skipped (reported [PEND]) until their module is rebuilt for swd3e.exe; the list is empty at the end.
 # act_test.cpp
-act: matches the golden results of the legacy archives and ActRun
 # battle_hud_test.cpp
-battle hud: matches the golden results of the legacy helpers
 # battle_items_test.cpp
 # battle_message_test.cpp
 # battle_unit_test.cpp
 # cheat_dialog_test.cpp
 # config_test.cpp
 # database_test.cpp
-database: mon.dat objects and skills, level.dat entries match the legacy readers
 # fame_test.cpp
 # field_test.cpp
 # fight_talk_test.cpp
 # font_test.cpp
-text font: matches the golden results of the legacy renderer
 # game_init_test.cpp
 # game_state_test.cpp
 # input_test.cpp
@@ -23,20 +19,12 @@ text font: matches the golden results of the legacy renderer
 # lzo_test.cpp
 # menu_test.cpp
 # painter_golden_test.cpp
-painter: matches the golden hashes of the legacy drawing kernel
 # painter_test.cpp
 # path_finder_test.cpp
-path finder: matches the golden results of the legacy path finder
 # projector_test.cpp
-projector: the colour keys are compared unconverted
-projector: the first explosion frame counts the opaque pixels
-projector: matches the golden results of the legacy projector
 # random_test.cpp
 # rle_test.cpp
-rle: matches the golden hashes of the legacy codec
 # spline_test.cpp
 # talk_test.cpp
 # tsw_test.cpp
-tsw: matches the golden results of the legacy archives
 # ui_draw_test.cpp
-ui drawing: matches the golden results of the legacy boxes and frames

@@ -4,6 +4,7 @@
 #include <cinttypes>
 #include <cstdio>
 #include <fstream>
+#include <utility>
 
 namespace swd3etest
 {
@@ -40,8 +41,23 @@ GoldenCheck::GoldenCheck(const std::map<std::string, std::string>& golden)
 {
 }
 
+GoldenCheck::GoldenCheck(
+    const std::map<std::string, std::string>& golden,
+    std::function<bool(const std::string&)> excludes
+)
+    : golden(golden),
+      excludes(std::move(excludes))
+{
+}
+
 void GoldenCheck::operator()(const std::string& name, swd3e::u64 hash)
 {
+    if (this->excludes != nullptr && this->excludes(name))
+    {
+        ++this->excluded;
+        return;
+    }
+
     std::array<char, kHashText> text = {};
     std::snprintf(text.data(), text.size(), "%016" PRIx64, hash);
     const auto found = this->golden.find(name);

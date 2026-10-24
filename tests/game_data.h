@@ -19,6 +19,10 @@ std::u8string GameDirectory();
 // Path of a file in the original game directory (SWD3_GAME_DIR, else the default install location).
 std::u8string GameFile(std::string_view name);
 
+// Path of a file of swd32's game directory (SWD3_LEGACY_DIR, else /mnt/e/Game/swd3): the legacy golden results of
+// swd3-rebuild were recorded on its data, and the tests of code swd3e shares with swd32 still run on it.
+std::u8string LegacyFile(std::string_view name);
+
 // The whole file, empty when it cannot be read (tests on game data then skip).
 std::vector<u8> ReadGameFile(std::string_view name);
 

@@ -22,7 +22,7 @@
 
 ## 整体进度
 
-- 当前阶段：第3阶段（还原）收尾：函数全部实现、范围缺口已闭合，待外传化测试；第4阶段（验证）未开始。
+- 当前阶段：第3阶段（还原）完成；第4阶段（验证）第一遍待开始。
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
 - 已实现／总数：1710／1710。
@@ -31,13 +31,12 @@
 
 ## 当前工作
 
-已识别的1710个函数均已按swd3e汇编实现（implemented_pending_review，验证0次）；Linux与Windows构建通过，Linux测试139项通过，另有35项仍列为待外传化（tests/pending_swd3e.txt）。停点：范围缺口已闭合（函数全集1710，见reverse/analysis/scope-and-gaps.md），第3阶段剩余为待外传化测试。
+函数全集1710个均已按swd3e汇编实现（implemented_pending_review，验证0次），范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux与Windows构建通过，Linux测试168项全部通过，待外传化清单已清空（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。停点：第4阶段第一遍从函数表第一行开始。
 
 ## 下一步
 
-1. 把tests/pending_swd3e.txt中的35项测试改为对照swd3e.exe或外传语义，清空待外传化清单。
-2. 进入第4阶段：从函数表第一行开始第一遍逐函数汇编验证，结论记入reverse/evidence/，用scripts/mark_verified.py登记。
-3. 产出Windows可游玩构建，提供试玩命令交用户运行。
+1. 第4阶段：从函数表第一行开始第一遍逐函数汇编验证，结论记入reverse/evidence/，用scripts/mark_verified.py登记。
+2. 产出Windows可游玩构建，提供试玩命令交用户运行。
 
 ## GOAL完成条件
 

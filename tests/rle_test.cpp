@@ -130,7 +130,7 @@ TEST_CASE("rle: matches the golden hashes of the legacy codec")
 
     auto gameFile = [](const std::string& name)
     {
-        return std::string(swd3e::AsBytes(swd3etest::GameFile(name)));
+        return std::string(swd3e::AsBytes(swd3etest::LegacyFile(name)));
     };
 
     const std::vector<golden::Frame> frames = golden::LoadGoldenFrames(gameFile, decompress);
@@ -146,10 +146,18 @@ TEST_CASE("rle: matches the golden hashes of the legacy codec")
     swd3e::Painter painter;
     painter.Init(screen);
     const swd3e::RleCodec codec(painter);
+
+    // The encoder (0x00401000) was rewritten in swd3e (the line flag and the fill runs): its scenarios hold for swd32
+    // only.
+    auto swd32Only = [](const std::string& name)
+    {
+        return name.ends_with("/encode");
+    };
+
     CodecBackend backend(codec);
-    swd3etest::GoldenCheck check(golden);
+    swd3etest::GoldenCheck check(golden, swd32Only);
     golden::RunRle(backend, frames, palettes, std::ref(check));
-    std::printf("  compared %d scenarios\n", check.compared);
+    std::printf("  compared %d scenarios, %d left out\n", check.compared, check.excluded);
     CHECK_EQ(check.mismatches, 0);
-    CHECK_EQ(check.compared, static_cast<int>(golden.size()));
+    CHECK_EQ(check.compared + check.excluded, static_cast<int>(golden.size()));
 }

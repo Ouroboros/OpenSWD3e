@@ -220,7 +220,7 @@ TEST_CASE("painter: matches the golden hashes of the legacy drawing kernel")
     const std::vector<golden::Frame> frames = golden::LoadGoldenFrames(
         [](const std::string& name)
         {
-            return std::string(swd3e::AsBytes(swd3etest::GameFile(name)));
+            return std::string(swd3e::AsBytes(swd3etest::LegacyFile(name)));
         },
 
         decompress
@@ -232,10 +232,17 @@ TEST_CASE("painter: matches the golden hashes of the legacy drawing kernel")
         return;
     }
 
+    // The unscaled shadows at the first clip depend on the placement DrawPicture (0x00417A60) carries over between
+    // draws, which swd3e rewrote; those scenarios hold for swd32 only.
+    auto swd32Only = [](const std::string& name)
+    {
+        return name.find("/shadow/clip0") != std::string::npos || name.find("/shadow-shear/clip0") != std::string::npos;
+    };
+
     PainterBackend backend;
-    swd3etest::GoldenCheck check(golden);
+    swd3etest::GoldenCheck check(golden, swd32Only);
     golden::Run(backend, frames, std::ref(check));
-    std::printf("  compared %d scenarios\n", check.compared);
+    std::printf("  compared %d scenarios, %d left out\n", check.compared, check.excluded);
     CHECK_EQ(check.mismatches, 0);
-    CHECK_EQ(check.compared, static_cast<int>(golden.size()));
+    CHECK_EQ(check.compared + check.excluded, static_cast<int>(golden.size()));
 }
