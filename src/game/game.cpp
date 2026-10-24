@@ -542,7 +542,7 @@ void Game::Start()
     }
     else
     {
-        LogError(u8"the resources of swd32.exe are missing from %s (scripts/make_resources.py)", assets);
+        LogError(u8"the resources of swd3e.exe are missing from %s (scripts/make_resources.py)", assets);
     }
 
     this->config.SetDefaultKeys();
@@ -1989,7 +1989,7 @@ void Game::MainFrame()
         return;
     }
 
-    this->unk4A99FC = crt::Time();
+    this->frameWallTime = crt::Time();
     const u32 now = SystemUptime();
     this->frameStart = now;
 
@@ -2067,7 +2067,7 @@ void Game::MainFrame()
         }
     }
 
-    this->unk4C9A14 = 0;
+    this->frameUnkCleared = 0;
     this->battleRequest = 0;
 
     if (this->inBattle != 0)
@@ -2260,12 +2260,13 @@ void Game::BattleMainFrame()
     MapCache& cache = this->mapCache;
     const int result = this->FightTalkFrame();
 
-    auto remap = [&cache]
+    // The lost battle maps the view again without checking it (0x0040AC44); the others log a failure (0x004B0BD0).
+    auto remap = [&cache](bool report)
     {
         cache.unitFile.CreateMapping();
         cache.view = cache.unitFile.MapView(0, 0);
 
-        if (cache.view == nullptr)
+        if (report && cache.view == nullptr)
         {
             ErrorLog(u8"After fight ,Remapping map fail!");
         }
@@ -2284,7 +2285,7 @@ void Game::BattleMainFrame()
         this->battleRequest = 0;
         this->inBattle = 0;
         setUp();
-        remap();
+        remap(true);
         this->audio.Queue().Switch(this->musicBeforeBattle, MusicQueue::RepeatList, 1);
     }
     else if (result == kBattleLost)
@@ -2295,7 +2296,7 @@ void Game::BattleMainFrame()
         this->inBattle = 0;
         this->battleRequest = 0;
         setUp();
-        remap();
+        remap(false);
         Role& leader = this->state.leader;
         leader.eventOffset = 0;
         leader.eventCursor = 0;
@@ -2308,7 +2309,7 @@ void Game::BattleMainFrame()
         this->inBattle = 0;
         this->battleRequest = 0;
         this->state.ClearGameFlag(GameState::TimerExpired);
-        remap();
+        remap(true);
     }
 
     this->AudioPump();

@@ -741,8 +741,8 @@ private:
     i32 debugText = 0;           // swd32 0x004CAE9C the debug lines (debug key F1)
     i32 debugCells = 0;          // swd32 0x004CAEA0 the debug cell marks (debug key F2)
     i32 frameTime = 0;           // swd32 0x0049E1C8
-    i32 unk4A99FC = 0;
-    i32 unk4C9A14 = 0;    // swd32 0x004C9A14 only cleared (MainFrame)
+    i32 frameWallTime = 0;       // 0x004C30D8 time(0) at each MainFrame (0x0040A7B0); no code reads it
+    i32 frameUnkCleared = 0;     // 0x004E581C cleared by MainFrame (0x0040A7B0); no code reads it
     i32 counterWait = 0;  // swd32 0x004CAD24 frames the controlled role stood still (the counter fades in after 0x64)
     i32 loadingPercent = 0;  // swd32 0x004CC2B8
     i32 loadingUnk4CC2C0 = 0;
