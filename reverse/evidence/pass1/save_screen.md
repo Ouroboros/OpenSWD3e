@@ -72,3 +72,15 @@
 ## 0x00409A30 SaveSlots::ResetActs — exact
 
 - 三格 × 四个动作（0x004C1618 起每个 0xA4）：ResetPlayback，id=1..4，action=0，direction=6；newest%3 等于该格时 action=8。
+
+## 0x00409AC0 SaveGames::AnyExists — exact
+
+- 一个 File 对象循环槽 0..0x62，以 OPEN_EXISTING 读写打开成功则计数，每槽 Close；计数非 0 返回 1。
+
+## 0x00409B90 Game::SaveFameFile — exact
+
+- 0x400 字节缓冲清零；名声计数 1..500 各以 FindCounterValue(列表 0x004D3458, n) 的低 16 位写入第 n 个字；以 OPEN_ALWAYS 读写打开 "%sFame.dat"（0x004AF6FC，安装目录），成功则写 0x400 字节；Close。
+
+## 0x00409C80 Game::LoadFameFile — exact
+
+- 0x400 字节缓冲清零；以 OPEN_EXISTING 读写打开 "%sFame.dat"，成功则读 0x400 字节；Close；名声计数 1..500 以 SetCounterCapped(列表 0x004D3458, n, 第 n 个字) 写回。

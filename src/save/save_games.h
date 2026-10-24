@@ -11,7 +11,7 @@ class SaveGames
 {
 public:
     static constexpr int LastSlot = 0x62;
-    // swd32.exe 0x0049FA18 (unmatched in swd3e) "%ssave\\%d.sav", the directory part taken from Config::SaveDirectory
+    // swd3e.exe 0x004AF65C "%ssave\\%d.sav", the directory part taken from Config::SaveDirectory
     static constexpr std::string_view NameFormat = "%s%d.sav";
 
     static std::u8string SlotPath(std::u8string_view saveDirectory, int slot);

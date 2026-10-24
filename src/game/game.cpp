@@ -195,103 +195,101 @@ u32 MouseKeys(SDL_MouseButtonFlags buttons)
 
 }  // namespace
 
-// The dynamic initializers of the original's global objects: each constructs its object and registers the destructor
-// with atexit. Here the objects are members of the game, constructed and destroyed with it; the ones nothing uses are
-// not made.
-// swd32.exe 0x00401000 (unmatched in swd3e): MemMgr (0x004B6C78), used by nothing: not made
-// swd32.exe 0x00401010 (unmatched in swd3e)
-// swd32.exe 0x00401020 (unmatched in swd3e)
-// swd32.exe 0x00401030 (unmatched in swd3e)
-// swd32.exe 0x00401040 (unmatched in swd3e): the Miles startup (0x004A9AC8): AudioManager::system
-// swd32.exe 0x00401050 (unmatched in swd3e)
-// swd32.exe 0x00401060 (unmatched in swd3e)
-// swd32.exe 0x00401070 (unmatched in swd3e)
-// swd32.exe 0x00401080 (unmatched in swd3e): the sound effects (0x004C8450): AudioManager::effects
-// swd32.exe 0x00401090 (unmatched in swd3e)
-// swd32.exe 0x004010A0 (unmatched in swd3e)
-// swd32.exe 0x004010B0 (unmatched in swd3e)
-// swd32.exe 0x004010C0 (unmatched in swd3e): the MIDI player (0x004B7EB8): AudioManager::midi
-// swd3e.exe 0x0049C8F0
-// swd32.exe 0x004010E0 (unmatched in swd3e)
-// swd32.exe 0x004010F0 (unmatched in swd3e)
-// swd32.exe 0x00401100 (unmatched in swd3e): the music stream player (0x004C9288): AudioManager::streams
-// swd3e.exe 0x0049E060
-// swd32.exe 0x00401120 (unmatched in swd3e)
-// swd32.exe 0x00401130 (unmatched in swd3e)
-// swd32.exe 0x00401140 (unmatched in swd3e): the music queue (0x004BA6E8): AudioManager::queue
-// swd32.exe 0x00401150 (unmatched in swd3e)
-// swd32.exe 0x00401160 (unmatched in swd3e)
-// swd32.exe 0x00401170 (unmatched in swd3e)
-// swd32.exe 0x00401180 (unmatched in swd3e): the head of the script objects (0x004AC990, an object of its own):
-// Scene::objects swd3e.exe 0x00409DE0 swd3e.exe 0x00409E00 swd3e.exe 0x00409E10 swd3e.exe 0x00409E20: the 20-pixel font
-// (0x004AB998): largeFont swd3e.exe 0x00409E30 swd3e.exe 0x00409E40 swd3e.exe 0x00409E50 swd3e.exe 0x00409E60: the
-// 16-pixel font (0x004C9A28): mediumFont swd3e.exe 0x00409E70 swd3e.exe 0x00409E80 swd3e.exe 0x00409E90 swd3e.exe
-// 0x00409EA0: the 12-pixel font (0x004A9ED0): smallFont swd3e.exe 0x00409EB0 swd3e.exe 0x00409EC0 swd3e.exe 0x00409ED0
-// swd3e.exe 0x00409EE0: the file of maps.dat (0x004B74A0): GameDatabases::maps
+// The dynamic initializers of the original's global objects: each group constructs its object (a pair calling the
+// constructor and the atexit registration of the destructor) or only constructs it. Here the objects are members of the
+// game, constructed and destroyed with it; the ones no other code uses are not made.
+// swd3e.exe 0x00409D70: MemoryManager (0x004D0470): a private heap made at start and a report of the blocks not
+// released at exit; no other code uses this instance: not made
+// swd3e.exe 0x00409D80
+// swd3e.exe 0x00409D90
+// swd3e.exe 0x00409DA0
+// swd3e.exe 0x00409DB0: the talisman ghost (0x004D0C10, no destructor registered): talismanGhost
+// swd3e.exe 0x00409DC0
+// swd3e.exe 0x00409DD0: the sentinel of the script objects (0x004C6128, a ripple of 1 x 1 cells; its link at +0x28 is
+// the list head 0x004C6150, the other fields are never read): Scene::objects
+// swd3e.exe 0x00409DE0
+// swd3e.exe 0x00409E00
+// swd3e.exe 0x00409E10
+// swd3e.exe 0x00409E20: the 20-pixel font (0x004C5130): largeFont
+// swd3e.exe 0x00409E30
+// swd3e.exe 0x00409E40
+// swd3e.exe 0x00409E50
+// swd3e.exe 0x00409E60: the 16-pixel font (0x004E5830): mediumFont
+// swd3e.exe 0x00409E70
+// swd3e.exe 0x00409E80
+// swd3e.exe 0x00409E90
+// swd3e.exe 0x00409EA0: the 12-pixel font (0x004C3658): smallFont
+// swd3e.exe 0x00409EB0
+// swd3e.exe 0x00409EC0
+// swd3e.exe 0x00409ED0
+// swd3e.exe 0x00409EE0: the file of maps.dat (0x004D0E08): GameDatabases::maps
 // swd3e.exe 0x00409EF0
 // swd3e.exe 0x00409F00
 // swd3e.exe 0x00409F10
-// swd3e.exe 0x00409F20: the file of HUGE.lmf (0x004B8868): MapCache::lmf
+// swd3e.exe 0x00409F20: the file of HUGE.lmf (0x004D1DB0): MapCache::lmf
 // swd3e.exe 0x00409F30
 // swd3e.exe 0x00409F40
 // swd3e.exe 0x00409F50
-// swd3e.exe 0x00409F60: a file (0x004CAD50) used by nothing: not made
+// swd3e.exe 0x00409F60: a file (0x004E6B88) no other code uses: not made
 // swd3e.exe 0x00409F70
 // swd3e.exe 0x00409F80
 // swd3e.exe 0x00409F90
-// swd3e.exe 0x00409FA0: the file of path.dat (0x004B9F18): GameDatabases::paths
+// swd3e.exe 0x00409FA0: the file of path.dat (0x004D3470): GameDatabases::paths
 // swd3e.exe 0x00409FB0
 // swd3e.exe 0x00409FC0
 // swd3e.exe 0x00409FD0
-// swd3e.exe 0x00409FE0: the file of the story (0x004A98C8): GameDatabases::story
+// swd3e.exe 0x00409FE0: the file of the story (0x004C2FA0): GameDatabases::story
 // swd3e.exe 0x00409FF0
 // swd3e.exe 0x0040A000
 // swd3e.exe 0x0040A010
-// swd3e.exe 0x0040A020: the file of the mapped unit (0x004CAA28): MapCache::unitFile
+// swd3e.exe 0x0040A020: the file of the mapped unit (0x004E6830): MapCache::unitFile
 // swd3e.exe 0x0040A030
 // swd3e.exe 0x0040A040
 // swd3e.exe 0x0040A050
-// swd3e.exe 0x0040A060: a file (0x004B7AD0) used by nothing: not made
+// swd3e.exe 0x0040A060: a file (0x004D1438) no other code uses: not made
 // swd3e.exe 0x0040A070
 // swd3e.exe 0x0040A080
 // swd3e.exe 0x0040A090
-// swd3e.exe 0x0040A0A0: the file of the map movies (0x004A9380): FieldView::file
+// swd3e.exe 0x0040A0A0: the file of the map movies (0x004C2A48): FieldView::file
 // swd3e.exe 0x0040A0B0
 // swd3e.exe 0x0040A0C0
 // swd3e.exe 0x0040A0D0
-// swd3e.exe 0x0040A0E0: the DirectDraw wrapper (0x004AB870, no destructor registered): graphics
+// swd3e.exe 0x0040A0E0: the DirectDraw wrapper (0x004C5008, no destructor registered): graphics
 // swd3e.exe 0x0040A0F0
-// swd3e.exe 0x0040A100: the DirectInput object (0x004B8748): input
+// swd3e.exe 0x0040A100: the DirectInput object (0x004D1C90): input
 // swd3e.exe 0x0040A110
-// swd32.exe 0x004014D0 (unmatched in swd3e)
-// swd32.exe 0x004014E0 (unmatched in swd3e)
-// swd3e.exe 0x0042B480: a file (0x004CF6E0) used by nothing: not made
+// swd3e.exe 0x0040A120
+// swd3e.exe 0x0040A130
+// swd3e.exe 0x0042B480: a file (0x004F47E8) no other code uses: not made
 // swd3e.exe 0x0042B490
 // swd3e.exe 0x0042B4A0
 // swd3e.exe 0x0042B4B0
-// swd3e.exe 0x00459880: the ten battle roles (0x005029D0, by the vector constructor and destructor iterators):
-// battleRoles
+// swd3e.exe 0x00459880: the ten battle roles (0x005136E0, 0x34D4 bytes each, by the vector constructor and destructor
+// iterators): battleRoles
 // swd3e.exe 0x00459890
 // swd3e.exe 0x004598B0
 // swd3e.exe 0x004598C0
-// swd3e.exe 0x004598E0: the twenty enemies (0x00539590): battleEnemies
+// swd3e.exe 0x004598E0: the twenty enemies (0x00539590, 0x3078 bytes each): battleEnemies
 // swd3e.exe 0x004598F0
 // swd3e.exe 0x00459910
 // swd3e.exe 0x00459920
-// swd32.exe 0x00451860 (unmatched in swd3e): a battle unit (0x00521598) used by nothing: not made
-// swd32.exe 0x00451870 (unmatched in swd3e)
-// swd32.exe 0x00451880 (unmatched in swd3e)
-// swd32.exe 0x00451890 (unmatched in swd3e)
-// swd3e.exe 0x00459940: the battle's projector (0x0053B0B8, released at exit): BattleState::projector
+// swd3e.exe 0x00459940: the battle's projector (0x005761D0, released at exit): BattleState::projector
 // swd3e.exe 0x00459950
 // swd3e.exe 0x00459960
 // swd3e.exe 0x00459970
-// swd3e.exe 0x00459980: battle.ffd's reader (0x004FF5B8, no destructor registered): BattleState::file
+// swd3e.exe 0x00459980: battle.ffd's reader (0x0050F620 on the projector, no destructor registered): BattleState::file
 // swd3e.exe 0x00459990
-// swd3e.exe 0x004599A0: a file (0x00521538) used by nothing: not made
+// swd3e.exe 0x004599A0: a file (0x005373C8) no other code uses: not made
 // swd3e.exe 0x004599B0
 // swd3e.exe 0x004599C0
 // swd3e.exe 0x004599D0
+// swd3e.exe 0x0049C8E0: the MIDI player (0x00578628, closed at exit by 0x0049C930): AudioManager::midi
+// swd3e.exe 0x0049C8F0
+// swd3e.exe 0x0049C900
+// swd3e.exe 0x0049D3C0: the sound effects (0x0049D3D0 constructs them): AudioManager::effects
+// swd3e.exe 0x0049E050: the music stream player (0x005795C0, destroyed at exit by 0x0049E0B0): AudioManager::streams
+// swd3e.exe 0x0049E060
+// swd3e.exe 0x0049E070
 Game::Game(std::u8string installDirectory)
     : screen(Display::Width, Display::Height),
       inputDevice(this->display),
