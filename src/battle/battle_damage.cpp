@@ -188,9 +188,10 @@ int Game::DrainSpellFrame(BattleRole& role, BattleUnit& target)
 // swd3e.exe 0x004854B0: one frame of `role`'s magic attack (its magic act in slot act 8, drawn by DrawAction; the
 // act's colour darkens the field); 1 once it is over. The magic act's target bits play the effect in the recoil act
 // (holding the act), quake, raise flag 26B8 of the target, fade the field, start the follow-up (the cast act or the
-// effect, slot act 0) or strike. The follow-up flies to the target (TargetsUnit; the original takes the start from
-// the stand act and marks the stand act waiting) or is placed on it, and may quake, raise flag 26B8 or strike; once
-// it waits it darkens by 8 a frame (not while held) before the acts, the trails and the targets are cleared.
+// effect, slot act 0; none: it waits at once) or strike. The follow-up flies to the target (TargetsUnit; the original
+// takes the start from the stand act and marks the stand act waiting) or is placed on it, and may quake, raise flag
+// 26B8 or strike; once it waits a placed one darkens by 8 a frame (not while held) before, with the afterimages done,
+// the acts, the trails and the targets are cleared.
 int Game::MagicAttackFrame(BattleRole& role, BattleUnit& target)
 {
     smooth::Scene scene;

@@ -305,7 +305,11 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
         follow.action = magic.effectQ;
     }
 
-    if ((role.command.flags & UnitCommand::TargetsUnit) != 0)
+    if (follow.id == 0)
+    {
+        follow.waiting = 1;
+    }
+    else if ((role.command.flags & UnitCommand::TargetsUnit) != 0)
     {
         const int fromX = role.placement.x + static_cast<i16>(role.actAnchorX) - static_cast<i16>(role.actOffsetX);
         const int fromY = static_cast<i16>(role.standAct.anchorY) + role.placement.y - role.standAct.y;
@@ -390,7 +394,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     magic.effectA = 0;
     role.attackAct.effectA = 0;
 
-    if ((role.command.flags & UnitCommand::TargetsUnit) == 0)
+    if (follow.id != 0 && (role.command.flags & UnitCommand::TargetsUnit) == 0)
     {
         if (role.slotTint > kMagicFadeEnd)
         {
@@ -424,7 +428,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
         role.slotTint = 0;
     }
 
-    if (magic.waiting != 1 || role.slotTint != 0)
+    if (magic.waiting != 1 || !role.images.Empty() || role.slotTint != 0)
     {
         return 0;
     }
@@ -542,12 +546,12 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
             painter.SetSource(enemy.picture->data.data());
             enemy.shadowMode = enemy.drawFlags & (Painter::RleSource | Painter::Mirror | Painter::Flip);
             DrawOptions& options = painter.Options();
-            options.tintBlue = enemy.glowLevel;
+            options.tintRed = enemy.glowLevel;
 
             if (enemy.glowLevel >= kStepAwayTintFrom)
             {
                 options.tintGreen = enemy.glowLevel - kStepAwayTintFrom;
-                options.tintRed = enemy.glowLevel - kStepAwayTintFrom;
+                options.tintBlue = enemy.glowLevel - kStepAwayTintFrom;
             }
 
             painter.DrawPicture(
