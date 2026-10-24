@@ -141,7 +141,7 @@ constexpr int kClearedOnLoadFlag = 0xA;
 constexpr u32 kGameSavedFlag = 2;  // Menu::flags
 
 // The slots page.
-constexpr u16 kUnk4CC2AALimit = 0xD;
+constexpr u16 kSlotsPageFramesLimit = 0xD;
 constexpr u32 kTextRed = 0x1D;
 constexpr u32 kTextGreen = 0x17;
 constexpr u32 kTextBlue = 0x10;
@@ -162,13 +162,13 @@ constexpr int kPlaceHeight = 0xE;
 constexpr int kPlaceShade = -12;
 constexpr int kPlaceCharWidth = 3;
 constexpr int kPlaceChars = 0x20;
-// swd32.exe 0x0049E0DC (unmatched in swd3e): the low word of the converted primary text colour 5
+// swd3e.exe 0x004AF734: the low word of primary text colour 5 (TextColors::primary, 0x004AF720)
 constexpr std::size_t kPlaceColor = 5;
 constexpr u16 kAbsentRole = 0xFFFF;  // SavePreviewRole::maxHitPoints of a role not in the party
 constexpr int kFaceStep = 0x48;
 constexpr int kFaceX = 0xE0;
 constexpr int kFaceTop = 0x88;
-constexpr std::u8string_view kLevelFormat = u8"%d級";  // swd32.exe 0x0049FA84 (unmatched in swd3e)
+constexpr std::u8string_view kLevelFormat = u8"%d級";  // swd3e.exe 0x004AF6C8
 constexpr int kDigitWidth = 4;
 constexpr int kLevelStep = 0x12;
 constexpr int kLevelX = 0xF0;
@@ -177,7 +177,7 @@ constexpr int kGoldTop = 0x3C;
 constexpr int kPlayTimeRight = 0x26C;
 constexpr int kPlayTimeCharWidth = 9;
 constexpr int kNoSaveX = 0x1FC;
-constexpr std::u8string_view kNoSave = u8"沒有存檔資訊";  // swd32.exe 0x0049FA74 (unmatched in swd3e)
+constexpr std::u8string_view kNoSave = u8"沒有存檔資訊";  // swd3e.exe 0x004AF6B8
 constexpr int kFrameLeftA = 0x16;
 constexpr int kFrameRightA = 0xB2;
 constexpr int kFrameLeftB = 0xC4;
@@ -192,8 +192,8 @@ constexpr int kPromptRight = 0x1F4;
 constexpr int kPromptTop = 0x46;
 constexpr int kPromptBottom = 0x78;
 constexpr int kPromptStyle = 8;
-constexpr std::u8string_view kOverwrite = u8"要覆蓋嗎?";  // swd32.exe 0x0049FA60 (unmatched in swd3e)
-constexpr std::u8string_view kAnswers = u8"  是  否";     // swd32.exe 0x0049FA54 (unmatched in swd3e)
+constexpr std::u8string_view kOverwrite = u8"要覆蓋嗎?";  // swd3e.exe 0x004AF6A4
+constexpr std::u8string_view kAnswers = u8"  是  否";     // swd3e.exe 0x004AF698
 constexpr int kAnswerBase = 0xB4;
 constexpr int kAnswerHeight = 0x18;
 constexpr int kAnswerRed = 0x14;
@@ -406,7 +406,7 @@ void Game::LeaveSaveScreen()
     this->FreeSavePreviews();
 }
 
-// swd3e.exe 0x00406C20: the three previews freed (0x004099C0 three times)
+// swd3e.exe 0x00406C20: the three previews freed (0x00409840 three times)
 void Game::FreeSavePreviews()
 {
     for (SavePreview& preview : this->saveSlots.previews)
@@ -1457,9 +1457,9 @@ void Game::UnpackParty(std::span<const u8> data)
 // under the pointer, pressed a few frames after paging) and the pointer
 void Game::DrawSlotsPage()
 {
-    if (++this->unk4CC2AA > kUnk4CC2AALimit)
+    if (++this->slotsPageFrames > kSlotsPageFramesLimit)
     {
-        this->unk4CC2AA = 0;
+        this->slotsPageFrames = 0;
     }
 
     const auto color = static_cast<Pixel>(this->painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
@@ -1687,15 +1687,14 @@ void Game::DrawSlotsPage()
 
     if (this->acts.Run(pointer) == 0)
     {
-        // Only the GUID is passed: act, qq and dir take what is on the stack (0 here, see deviations.md).
         ErrorBox(
             this->errors,
             u8"Act Err(RefrashCursor)",
             u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
             this->scene.pointerRole.id,
-            0,
-            0,
-            0
+            pointer.id,
+            pointer.action,
+            pointer.direction
         );
     }
 

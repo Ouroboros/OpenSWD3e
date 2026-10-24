@@ -685,7 +685,7 @@ private:
     ActState saveScreenAct;               // 0x004C2700 reset by ResetSaveSlots (0x00406B50); no code reads it
     i32 flagCursor = 0;                   // 0x004C27A8 the flag chosen in the flag view
     u32 saveFrames = 0;                   // 0x004C27B0 frames since the save screen opened
-    u16 unk4CC2AA = 0;                    // swd32 0x004CC2AA
+    u16 slotsPageFrames = 0;              // 0x004C27B6 counted 0..13 by DrawSlotsPage (0x00408CC0); no code reads it
     u8 downArrowPress = 0;                // 0x004C2650 frames the lit down arrow of the slots stays pressed down
     u8 upArrowPress = 0;                  // 0x004C2651 and the up arrow up
     i32 slotPrompt = 0;                   // 0x004C27A4 browsing, the overwrite answer or the slot chosen

@@ -31,3 +31,44 @@
 - 队伍资料打包/解包与汇编逐段一致（时钟、0x40 个变量、4 条 0x3C 字节角色记录并清 +0x26/+0x28、0x40 个装备号、4 个法术表、背包（数量与待定数量，后者 |0x8000）、场景音乐记录 8 字节，各以 0 结束；读回时装备号 0xFFDC 为“無”，未定义的装备与法术报 "載入道具"/"載入法術"，背包以模式 1/2 加回，音乐记录 cue 位 0x800 时不覆盖）。
 - 差异（已修正）：旗标块的原长度字段原程序写 0x400（0x004079A7 `push 400h`），实现写 0（save-format.md 依据反编译误记）。改为写旗标数组大小；save-format.md 同步更正。游戏目录的四个存档在该处均为 0x400，与汇编一致。
 - 偏差：deviations.md 0x00406EC0 四条（读出映射之外、0x2000 缓冲、空装备指针、音乐偏移数组无结尾）。
+
+## 0x00408B40 DrawSaveScreen — exact
+
+- 锁定离屏表面得到绘制指针（0x004EDA44）并解锁（0x00417790 即表面 Unlock；实现另把同一指针交给画笔，原程序各绘制函数直接读该全局）；第 0 页清屏为黑并画旗标页，第 1 页画存档页；随后以 DDBLT_WAIT 把离屏表面送上屏幕（平台替换为 ShowFrame）。
+
+## 0x00408BC0 DrawFlagView — exact
+
+- 起始旗标 = (cursor/120)·120（有符号）；行 y 从 0x20 每行 +0x16 到 0x1D8 之前，列 x 从 0 每列 +0x64 到 0x258 之前；当前旗标以背景 0xFFFF、黑字画 "[%5d:  ]"（0x004AF674），其余白字（0xFFFF），之后背景恢复 0xFFFE；x+0x40 处已置旗标画黄色（0xFF00）"@"（0x004AF670），否则黑色 " "（0x004AF66C）；到 0x2000 即止。
+
+## 0x00408CC0 DrawSlotsPage — exact（修正后）
+
+- 0x004C27B6 自增，>13 归零（无读取者，成员由带 swd32 地址的 `unk4CC2AA` 改名 `slotsPageFrames`）；文字色 MakeColor(0x1D,0x17,0x10)；背景动作 0x232A，存档页动作 0、读档页 0xC，画于 (0,0)。
+- 每格（行高 0x8C）：底框 FillBox(0xC0, y+0x32, 0x1B8, 0x7C, 黑, 当前槽模式 4 否则 2)；运行面板动作（0x0050AF70）；预览已载入时：日期（中字体，0xC8, y+0x34，样式 4）、缩略图 160×120 逐行复制到 (0x14, y+0x34)，非当前槽再以模式 3 变灰；地名底 FillBox(0x14, y+0x9C, 0xA0, 0xE, −12×3, 模式 1)，地名小字体右对齐 x=(0x20−字节数)·3、y+0x9D、颜色为主文字色 5 的低字（0x004AF734）；四个角色（maxHitPoints≠0xFFFF）在 x=0xE0+0x48·n、y+0x88 画头像动作，等级 "%d級"（0x004AF6C8）x=(0x12·n−字节数)·4+0xF0、y+0x9C；金钱计数（0x00411B50，第三参数未用）在 0x26E、y+0x3C；徽章图 0x2357+unk24 于 0x25A、y+0x82；游戏时间 x=0x26C−字节数·9；未载入时 "沒有存檔資訊"（0x004AF6B8）于 0x1FC。当前槽画两个窗框（0x16..0xB2、0xC4..0x270，y+0x37..y+0xA9，边框 0x80000008）。编号 "%02d"（0x004AF6B0）小字体于 (0x14, y+0x34)。
+- 存档模式提示 5/6：窗框 0x190..0x1F4、row+0x46..row+0x78；大字体 "要覆蓋嗎?"（0x004AF6A4）；答案高亮 FillBox(0xB4+0x2C·提示, row+0x5E, 0x2C, 0x18, 0x14, 0xD, 0, 模式 5)；"  是  否"（0x004AF698）。
+- 翻页箭头：newest+2≤0x62 时画图 0x235B 帧 0 于 (0x130,0x1C0)，指针 y 在 (0x1C2,0x1E5) 内时帧 1 于 y 0x1C0+downArrowPress；newest−2≥0 时帧 2 于 (0x130,4)，指针 y 在 [0,0x1E) 内时帧 3 于 y 4−upArrowPress；两个按下计数非 0 时各减 1。
+- 指针：运行指针动作，失败时报 "Act Err(RefrashCursor)"，参数为 GUID、act.id、动作、方向（0x004092AB 起四个压栈）；在指针坐标减动作偏移处画当前帧。
+- 差异（已修正）：实现只传 GUID、其余三项为 0（并在 deviations.md 记为“取栈残值”），与 swd3e 汇编不符；改为传四项并删除该偏差条目。字符串常量注释由 swd32 地址改为 swd3e 地址。
+
+## 0x00409320 SaveGames::IsFree — exact
+
+- 以 OPEN_EXISTING 读写打开 "%ssave\%d.sav"，打开失败即为空槽（返回 1）；总是 Close。
+
+## 0x004093C0 LeaveSaveScreen — exact
+
+- menuMode 1/2：storyState=0、DrawSaveScreen、Sleep 150、menuMode=0；3：SystemEnter、menuState=0x80000003、menuMode=0、storyState=0；4：storyState=0、menuState=0、menuMode=0；5：storyState=0、menuMode=0、ItemsAfterSave(0)；其他不动。最后释放三个预览，返回 1。
+
+## 0x00409480 SaveSlots::LoadPreview — exact
+
+- 以 OPEN_EXISTING 只读打开，失败时状态 1。成功：映射文件；日期模板 "____/__/__ __:__"（0x004AF6E8）的 12 个下划线依次填入文件头 12 字节；缩略图 0x9600 字节经 ConvertPixels；地名（lstrcpy 到首个 0）；旗标块按“压缩长度、字数”解压（缓冲 2×字数），旗标 0x1E..0x21（位表第二份拷贝 0x004AA474 的掩码）未置时该角色 maxHitPoints=0xFFFF，unk24 = 旗标 0x53 ? 3 : 2；unk20 取位置块的地图号；队伍块同样按 2× 解压，金钱取 +4，四条角色记录（+0x104 起每条 0x3C）在角色存在时取 maxHitPoints（+0xA）、maxSpirit（+0xC）、maxStamina（+0xE）、等级字节（+0x2C）；名字 0x80 字节；秒数格式化为 "%02d時"、"%02d分"、"%02d秒"（0x004AF6E0/D8/D0，无符号除法）；关闭后状态 2。
+
+## 0x00409840 SaveSlots::Free — exact
+
+- 空指针直接返回；释放缩略图、日期、地名、名字、时间五个指针，再把整个 0x2D8 字节结构清零。
+
+## 0x004098C0 SaveSlots::FindNewest — exact
+
+- 槽 0..0x62 依次以 OPEN_EXISTING 读写打开，成功时取最后写入时间，高 dword（有符号）≥ 当前最大值时 newest=该槽并更新最大值（平手取后者）；每槽 Close；然后释放并读入 newest 所在页的三个预览、ResetActs。
+
+## 0x00409A30 SaveSlots::ResetActs — exact
+
+- 三格 × 四个动作（0x004C1618 起每个 0xA4）：ResetPlayback，id=1..4，action=0，direction=6；newest%3 等于该格时 action=8。
