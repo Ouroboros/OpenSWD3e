@@ -119,9 +119,11 @@ constexpr u32 kSpecialMark = 0x80000000u;
 constexpr u32 kSpecialIdMask = 0x7FFFFFFF;
 constexpr u16 kSpecialType = 0x14;  // the skill type LearnSpecials reads (swd3e; swd32 0x1F)
 
-constexpr i32 kLastMenuCommand = 9;    // swd3e: the last command of the grid (the up key from below 0, the down key)
-constexpr i32 kFewAimRoles = 3;        // AimStep: fewer roles step through the roles, more through RoleCycle
-constexpr i32 kListSlideStart = 0x50;  // the lists of states 0x29 and 0x50 slide in again from this
+constexpr i32 kLastMenuCommand = 9;      // swd3e: the last command of the grid (the up key from below 0, the down key)
+constexpr i32 kFewAimRoles = 3;          // AimStep: fewer roles step through the roles, more through RoleCycle
+constexpr i32 kListSlideStart = 0x50;    // the lists of states 0x29 and 0x50 slide in again from this
+constexpr u8 kRefineOptionTaken = 0x80;  // refineOptionsOpen once a 煉妖 choice was taken (MenuConfirm)
+constexpr i32 kControlRowsStart = 2;     // controlRows when the 控制 menu closes
 constexpr i32 kEscortRows = 2;
 constexpr int kHangTries = 2;      // full cycles after which a search of the original would never end
 constexpr u32 kDebugPause = 0xC8;  // the debug keys
@@ -2109,20 +2111,24 @@ void Game::AnnounceMastery()
 }
 
 // swd3e.exe 0x0046EAC0: the cancel key of the battle menu. In the auto battle it ends it (the aimed enemy unmarked,
-// the menu closed). Otherwise by battle state: 1 closes the menu; 2 (a list) and 0x1B, 0x1E, 8 go back to the menu
-// (its name buffer cleared, the role's command cancelled); 3 (choosing a target) goes back to the list the menu
-// command opened (state 2, 4, 0x1B, 0x1E or 8 for commands 2, 3, 0x1B, 0x1E, 4; to the menu with command
-// listReturnCommand for others), every unit unmarked and the portraits plain, the role's order cleared; 4 goes back to
-// the menu; 5 to state 4; 7 closes the menu with the command back on 1.
+// the listed commands cleared; the menu of a role on its panel opens again). Otherwise by battle state: 1 closes an
+// open choice (the ghost's orders back on 符鬼 at the ghost's order, 煉妖, the elements of 改變 at the command before
+// it) and keeps the menu; 2, 8, 0x1B, 0x1E and 0x29 go back to the menu (the list's name cleared, the role's command
+// cancelled; 0x1B, 0x1E and 0x29 with the command listReturnCommand); 3 (choosing a target) goes back to the list the
+// menu command opened (state 2, 4, 0x1B, 0x1E or 8 for commands 2, 3, 0x1B, 0x1E, 4) with the role's order cleared,
+// otherwise to the menu (or the talk) with the command listReturnCommand, or to the 煉妖 choices (state 0x50) once
+// one was taken, every unit unmarked and the portraits plain; 4 goes back to the menu; 5 to state 4; 7 closes the
+// menu with the command back on 1; 9 back to the ghost's orders; 0xA to state 0x29; 0x50 back to the 煉妖 choices.
+// The panels close unless the menu shows.
 void Game::MenuCancel()
 {
     BattleState& battle = this->battleState;
     battle.unk53BFBC = 0;
     battle.unk53BFB8 = 1;
 
-    auto role = [this, &battle]() -> BattleRole&
+    auto cancelCommand = [this, &battle]
     {
-        return this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
+        this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].CancelCommand();
     };
 
     auto closePanels = [&battle]
@@ -2133,52 +2139,68 @@ void Game::MenuCancel()
 
     auto clearList = [&battle]
     {
-        battle.unk53BFC4 = 0;
-        battle.unk53BFC0 = 0;
+        battle.listName = {};
         battle.unk53BFC8 = 0;
         battle.unk53BFB0 = 0;
-        battle.listName = {};
         battle.unk53C49C = 1;
         battle.listRows = kListRows;
     };
 
     if (battle.autoBattle == 1)
     {
-        battle.result = 0;
+        battle.commandNames = {};
         battle.unk53BFB8 = 0;
-        this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
+        battle.unk53BF5C = 1;
         battle.unk53BFC4 = 0;
-        battle.commandNames[0] = {};
         battle.unk53BFC0 = 0;
-        battle.commandNames[1] = {};
         battle.autoBattle = 0;
-        battle.listedCommands = 0;
+        battle.result = 0;
         battle.autoTarget = -1;
-        battle.commandNames[2] = {};
+        battle.listedCommands = 0;
+        this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
+
+        if (battle.currentUnit != 0)
+        {
+            battle.result = kMenuState;
+            battle.unk53BFC4 = 1;
+            battle.unk53BFC0 = 1;
+        }
+
         return;
     }
 
     switch (battle.result)
     {
         case kMenuState:
-            battle.result = 0;
-            battle.commandNames[0] = {};
-            battle.unk53BFB0 = 0;
-            battle.commandNames[1] = {};
-            battle.listedCommands = 0;
-            battle.unk53BFB8 = 0;
-            closePanels();
-            battle.listRows = kListRows;
-            battle.commandNames[2] = {};
-            return;
+            if (battle.ghostOrdersOpen == 1)
+            {
+                battle.ghostOrdersOpen = 0;
+                battle.menuCommand = kGhostMenuEntry;
+                BattleRole& ghost = this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)];
+                battle.ghostOrderRow = ghost.GhostOrder();
+            }
+
+            if (battle.refineOptionsOpen == 1)
+            {
+                battle.refineOptionsOpen = 0;
+                battle.menuCommand = kRefineMenuCommand;
+            }
+
+            if (battle.elementsOpen == 1)
+            {
+                battle.elementsOpen = 0;
+                battle.elementRow = 1;
+                battle.menuCommand = battle.listReturnCommand;
+            }
+
+            break;
 
         case kListState2:
             battle.result = kMenuState;
             battle.pageListRow = 1;
             clearList();
-            role().CancelCommand();
-            closePanels();
-            return;
+            cancelCommand();
+            break;
 
         case kTargetState:
         {
@@ -2197,7 +2219,7 @@ void Game::MenuCancel()
 
             battle.turnPointer = 1;
             battle.unk53C02C = 0;
-            role().CancelCommand();
+            cancelCommand();
 
             for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
             {
@@ -2236,9 +2258,24 @@ void Game::MenuCancel()
                     break;
 
                 default:
-                    closePanels();
                     battle.menuCommand = battle.listReturnCommand;
-                    return;
+
+                    // A 煉妖 choice taken (0x80) brings its choices back.
+                    if ((battle.refineOptionsOpen & kRefineOptionTaken) != 0)
+                    {
+                        closePanels();
+                        battle.refineOptionsOpen = 1;
+                        battle.result = kWaitState50;
+                        battle.menuCommand = kRefineMenuCommand;
+                        return;
+                    }
+
+                    break;
+            }
+
+            if (list == 0)
+            {
+                break;
             }
 
             battle.result = list;
@@ -2257,28 +2294,22 @@ void Game::MenuCancel()
             battle.result = kMenuState;
             battle.roleListScroll = 0;
             battle.listRows = kListRows;
-            battle.unk53BFC4 = 0;
-            battle.unk53BFC0 = 0;
             battle.unk53BFC8 = 0;
             battle.unk53BFB0 = 0;
-            role().CancelCommand();
-            closePanels();
-            return;
+            cancelCommand();
+            break;
 
         case kWaitState5:
             battle.result = kListState4;
-            role().CancelCommand();
-            closePanels();
-            return;
+            cancelCommand();
+            break;
 
         case kTalkState:
-            battle.result = 0;
-            battle.unk53BFC0 = 0;
-            battle.unk53BFC4 = 0;
-            closePanels();
-            battle.controlRows = 2;
             battle.controlCursor = 1;
             battle.menuCommand = 1;
+            battle.result = 0;
+            closePanels();
+            battle.controlRows = kControlRowsStart;
             return;
 
         case kSkillListState:
@@ -2286,32 +2317,60 @@ void Game::MenuCancel()
             battle.roleListRow = 1;
             battle.specialRow = 1;
             clearList();
-            role().CancelCommand();
-            closePanels();
-            return;
+            cancelCommand();
+            break;
+
+        case kTurnState9:
+            battle.ghostOrdersOpen = 1;
+            battle.result = kMenuState;
+            this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
+            break;
+
+        case kWaitStateA:
+            battle.result = kWaitState29;
+            cancelCommand();
+            break;
 
         case kListState1B:
             battle.result = kMenuState;
-            battle.roleListRow = 1;
             battle.menuCommand = battle.listReturnCommand;
             battle.roleListScroll = 0;
+            battle.roleListRow = 1;
             clearList();
-            role().CancelCommand();
-            closePanels();
-            return;
+            cancelCommand();
+            break;
 
         case kWaitState1E:
             battle.result = kMenuState;
             battle.menuCommand = battle.listReturnCommand;
             battle.roleListRow = 1;
             clearList();
-            role().CancelCommand();
-            closePanels();
+            cancelCommand();
+            break;
+
+        case kWaitState29:
+            battle.menuCommand = battle.listReturnCommand;
+            battle.result = kMenuState;
+            battle.roleListRow = 1;
+            clearList();
+            cancelCommand();
+            battle.unk53BFD0 = 1;
+            battle.pendingOrders[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].unk00 = 0;
+            break;
+
+        case kWaitState50:
+            battle.result = kMenuState;
+            battle.refineOptionsOpen = 1;
+            battle.menuCommand = kRefineMenuCommand;
             return;
 
         default:
-            closePanels();
-            return;
+            break;
+    }
+
+    if (battle.result != kMenuState)
+    {
+        closePanels();
     }
 }
 
