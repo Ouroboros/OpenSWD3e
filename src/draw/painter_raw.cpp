@@ -102,7 +102,7 @@ int Painter::BlitRawKeyed(int, int, int width, int, const DrawArgument&)
 }
 
 // swd3e.exe 0x00418800: mirrored 16-bit keyed copy. The pixel is compared with the whole fill colour pair, so no
-// pixel is ever transparent.
+// pixel is transparent only while that pair is 0 (a black fill colour).
 int Painter::BlitRawKeyedMirrored(int, int, int width, int, const DrawArgument&)
 {
     const Placement& place = this->placement;

@@ -581,7 +581,8 @@ void Painter::DrawOutline(int x, int y, int width, int height, u32 mode, const D
 
 // swd3e.exe 0x00417A60: clips the picture against the clip rectangle and runs the blitter of the mode. Vertical
 // scaling (DrawOptions::scaleHeight) and shear take the clipping path of the sheared effects; every option is reset
-// afterwards.
+// afterwards. A draw clipped away returns what the original leaves in eax: the alpha (not above 0), the height (cut off
+// above), the rows or columns left (not above 0), or, on the scaled and sheared paths, the clip's top or left.
 int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const DrawArgument& argument)
 {
     if (DrawPlacer* placer = DrawPlacer::Active(); placer != nullptr)
@@ -630,6 +631,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
         if (this->options.alpha <= 0)
         {
             visible = false;
+            result = this->options.alpha;
         }
         else if (this->options.alpha > Painter::MaxAlpha)
         {
@@ -650,6 +652,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
             rows = y - this->clipY + height;
             place.rows = rows;
             visible = rows > 0;
+            result = height;
             place.skipTop = height - rows;
             destY = this->clipY;
         }
@@ -661,6 +664,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
             place.skipBottom = bottomSkip;
             place.rows = rows;
             visible = rows > 0;
+            result = rows;
         }
 
         sheared = this->options.shear != 0;
@@ -675,6 +679,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
                 columns = x - this->clipX + width;
                 place.width = columns;
                 visible = columns > 0;
+                result = columns;
                 place.skipLeft = width - columns;
                 destX = this->clipX;
             }
@@ -684,6 +689,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
                 columns = this->clipWidth - destX + this->clipX;
                 place.width = columns;
                 visible = columns > 0;
+                result = columns;
             }
         }
     }
@@ -709,6 +715,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
             rows = rows - this->clipY + y - 1;
             place.rows = rows;
             visible = rows > 0;
+            result = this->clipY;
             place.skipTop = this->clipY - y;
             destY = this->clipY;
         }
@@ -720,6 +727,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
             place.skipBottom = bottomSkip;
             place.rows = rows;
             visible = rows > 0;
+            result = this->clipY;
         }
 
         if (this->options.shear == 0)
@@ -745,6 +753,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
             columns = x - this->clipX + width;
             place.width = columns;
             visible = columns > 0;
+            result = this->clipX;
             place.skipLeft = this->clipX - x;
             destX = this->clipX;
         }
@@ -754,6 +763,7 @@ int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const Dr
             columns = this->clipWidth - destX + this->clipX;
             place.width = columns;
             visible = columns > 0;
+            result = this->clipX;
         }
     }
 

@@ -8,7 +8,7 @@ swd3-rebuild 的黄金结果（tests/golden/*_golden.txt）由其遗留实现在
 | --- | --- | --- |
 | text font: matches the golden results of the legacy renderer | 不读游戏数据 | src/font/ 29 个函数中 28 个 hash 配对；69 个情景全部一致 |
 | projector: matches the golden results of the legacy projector | swd32 数据（`SWD3_LEGACY_DIR`，默认 /mnt/e/Game/swd3） | src/pic/projector* 13 个函数全部 hash 配对；769 个情景一致（非 MSVC rand 序列时跳过爆炸情景） |
-| painter: matches the golden hashes of the legacy drawing kernel | swd32 数据 | 1300 个情景一致；排除 24 个：未缩放阴影在首个裁剪下依赖 DrawPicture（0x00417A60，外传改写）在两次绘制间保留的放置状态 |
+| painter: matches the golden hashes of the legacy drawing kernel | swd32 数据 | 1300 个情景的画面一致；排除 24 个：未缩放阴影在首个裁剪下依赖 DrawPicture（0x00417A60，外传改写）在两次绘制间保留的放置状态；情景名中各次绘制返回值之和不再比较：DrawPicture 被裁掉时按原程序返回 eax 中的值（遗留实现返回 0），由逐函数汇编对照核对 |
 | rle: matches the golden hashes of the legacy codec | swd32 数据 | 50 个情景一致；排除编码情景 19 个：RleCodec::Encode（0x00401000）外传改写（行旗标与填充段）；排除 8 位 to16 与 tile 情景各 7 个：0x00401780、0x00401950 多复制的末尾字取自 Allocate（0x0043DA70）清零的工作块，为 0（正传为 0xCDCD），由“rle: an 8-bit picture and a map tile converted to 16 bits end in a cleared word”直接检查 |
 | projector: the colour keys are compared unconverted / the first explosion frame counts the opaque pixels | swd3e 数据 | 不依赖黄金结果，在 swd3e 数据上通过 |
 

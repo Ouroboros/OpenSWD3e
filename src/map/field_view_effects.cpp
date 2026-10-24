@@ -680,7 +680,7 @@ void FieldView::DrawLightning()
 
     const int pitch = owner.painter.ScreenPitch();
     const Field& field = owner.field;
-    // 0x00416610: the end of the screen is fixed at 0x96000 bytes, whatever the pitch. The rebuild's map filling the
+    // 0x00416B80: the end of the screen is fixed at 0x96000 bytes, whatever the pitch. The rebuild's map filling the
     // window has the bolts over the whole canvas, as many to its width (deviations.md).
     const bool canvas = this->FillsWindow();
     const int across = canvas ? field.viewWidth : Display::Width;

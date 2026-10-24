@@ -395,9 +395,9 @@ struct Scene
     i32 spotlightStepY = 0;                           // 0x004C660C
     u16 weatherAction = 0;   // 0x004C66A4 the first action of the weather particles in the effect act
     i16 lightningCount = 0;  // 0x004C4650 bolts wanted (up to 8)
-    i16 firefliesShown = 0;  // swd32 0x004B737C
+    i16 firefliesShown = 0;  // 0x004D0B88
     static constexpr std::size_t ClearedBolts = 0x30;  // the bolts a new map clears
-    std::array<Streak, 0x40> bolts;                    // swd32 0x004B7520
+    std::array<Streak, 0x40> bolts;                    // 0x004D0E88
     i32 layerIndex = 0;                                // swd32 0x004B7944 the tile layer shown
     std::array<i32, 0x20> trailY = {};                 // swd32 0x004B7998 the places of the leader, the latest first
     std::array<i32, 0x20> trailDirection = {};         // swd32 0x004C8C00
@@ -413,9 +413,9 @@ struct Scene
     i32 spotlightX = 0;                         // 0x004D3450 the centre of the spotlight (screen pixels)
     i32 spotlightY = 0;                         // 0x004D3454
     std::array<i16, 0x100> soundRise = {};      // swd32 0x004BA430 by role: how far below the controlled role
-    i16 fireflyCount = 0;                       // swd32 0x004BAB80 (up to 1)
+    i16 fireflyCount = 0;                       // 0x004D3FA4 (up to 1)
     std::array<i16, 0x100> soundDistance = {};  // swd32 0x004C97F8 by role
-    std::array<Streak, 0x60> fireflies;         // swd32 0x004C8C80
+    std::array<Streak, 0x60> fireflies;         // 0x004E4E60
     std::array<i16, 0x40> heatLengths = {};     // 0x004C5094 bytes copied per line
     std::array<i16, 0x40> heatCounts = {};      // 0x004C4A80 lines
     std::array<i32, 0x30> heatOffsets = {};     // 0x004C6154 pixels
