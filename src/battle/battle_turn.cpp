@@ -518,7 +518,7 @@ void Game::RetargetRoles(int role, int enemy)
 // swd3e.exe 0x00464ED0: one frame of the defeat of unit `index` (a role when `role` is 1, else an enemy); 1 once it is
 // over. An enemy (none counted once the battle is won) adds its rewards (unk53BF14, unk53BF12 unless unk5772F8,
 // unk53BF16), halved past the battle talk's repeat limit; one that ran away gives none and no bestiary count; its
-// stolen items come back (unless unk577324) with their notice. All down wins the battle, a last one standing is
+// stolen items come back (unless absorbSucceeded) with their notice. All down wins the battle, a last one standing is
 // enraged, and a lone standing first enemy of a unk53BF28 battle ends the others. A role counts as defeated (an escort
 // clears its place and returned object: once all are down their places go and the units are measured again), drops
 // 蓄勁, its command, slot record, order and its panel; a role with a special act left is not counted. Battle role 0
@@ -568,10 +568,10 @@ int Game::RemoveDefeated(int index, int role)
             AddCounterCapped(this->party.fame.lists[Fame::FameList], static_cast<i16>(enemy.ActId()), kDefeatCount);
         }
 
-        if (battle.unk577324 == 1)
+        if (battle.absorbSucceeded == 1)
         {
             first = 0;
-            battle.unk577324 = 0;
+            battle.absorbSucceeded = 0;
         }
         else if (escaped == 0)
         {
@@ -1483,8 +1483,7 @@ void Game::NextRoleTurn()
             at = 1;
         }
 
-        if (++steps > static_cast<int>(battle.roleCycle.size()) ||
-            at >= static_cast<i32>(battle.roleCycle.size()))
+        if (++steps > static_cast<int>(battle.roleCycle.size()) || at >= static_cast<i32>(battle.roleCycle.size()))
         {
             Hang();
         }

@@ -156,8 +156,9 @@ public:
     // Bits of spellStage.
     enum SpellStage : u16
     {
-        SpellOver = 0x1,     // the spell is over (MagicFrame ends)
-        SpellCast = 0x8000,  // the magic act followed up: the spell takes effect
+        SpellOver = 0x1,      // the spell is over (MagicFrame ends)
+        UnkSpell400 = 0x400,  // swd3e: set with SpellCast once the coin toss of command 0x16 closes the grey band
+        SpellCast = 0x8000,   // the magic act followed up: the spell takes effect
     };
 
     BattleState();
@@ -428,7 +429,7 @@ public:
     // steps 0x0052151C, 0x00525430, 0x00520D58.
     ColorFade fieldFade;
 
-    // The damage of the hit being dealt (0x004539B0, 0x0045D690).
+    // The damage of the hit being dealt (0x0045BEA0, 0x0045D690).
     i32 hitDamage = 0;  // 0x005378F4
     // swd3e: the drains of a hit on many units summed (0x00577054, 0x00577058, 0x0057705C; ApplyDrain) and 1 while
     // the attacker's numbers of them wait (0x00577374, set by HitFrame)
@@ -442,7 +443,7 @@ public:
     i32 lastDamage = 0;        // 0x00575F34 the damage of the last hit with the proficiency bonus
     i16 proficiencyBonus = 0;  // 0x005373B4 the weapon proficiency step of the last strike
 
-    // The state of the turns (0x004539B0, 0x00456680 and the commands).
+    // The state of the turns (0x0045BEA0, 0x00456680 and the commands).
     i32 unk53BFC0 = 0;
     i32 unk53BFC4 = 0;
     i32 unk53BF5C = 0;
@@ -594,8 +595,6 @@ public:
     std::array<u8, Enemies> escapedEnemies = {};  // 0x005379C0 (swd3e) per enemy: 1 once it ran away (0x00464ED0)
     // 0x0050F41C (swd3e) per enemy: the items it stole (0x20 a enemy, the first free one taken; 0x00464ED0)
     std::array<std::array<u16, 0x20>, Enemies> stolenItems = {};
-    i32 unk577324 =
-        0;  // 0x00577324 (swd3e) 1: the next defeated enemy gives no first reward and keeps its stolen items
     i32 unk577370 = 0;  // 0x00577370 (swd3e) set when battle role 0 falls with the ghost in the battle
     std::array<i32, Enemies> unk50CE6C = {};  // 0x0050CE6C (swd3e) per enemy, set by EnemyFrame, cleared once it falls
     // 0x00576DE8 (swd3e) by battle number - 1: the times the battle was fought while a battle talk limits it
@@ -619,8 +618,10 @@ public:
     i32 enemiesHitAct = 0;  // swd32 0x0053BDBC the hit act of the enemies (unk53AE90)
     i32 unk53BFDC = 0;
     // The commands of a role (Game::RoleActionFrame).
-    i32 absorbSucceeded = 0;  // swd32 0x0053C020 1: the absorb succeeded
-    u16 usedUpItem = 0;       // 0x0057721C the item used up by the last command
+    // 0x00577324 1: the taking (收化) succeeded; the enemy taken then gives no first reward and keeps its stolen
+    // items (RemoveDefeated)
+    i32 absorbSucceeded = 0;
+    u16 usedUpItem = 0;  // 0x0057721C the item used up by the last command
     i32 unk53BDD4 = 0;
     i32 unk53BDD8 = 0;
     SkillScript accessoryEffect;  // swd32 0x004FF140 the buff or ailment of an accessory command
