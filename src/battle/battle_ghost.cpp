@@ -215,15 +215,15 @@ int BattleRole::RestoreGhostSpirit(BattleServices& services)
     return 1;
 }
 
-// swd3e.exe 0x004866C0: the unit already has an effect of the command's ailment or of its unk08
-int BattleRole::HasCommandEffect() const
+// swd3e.exe 0x004866C0: `target` already has an effect of the command's ailment or of its unk08
+int BattleRole::HasCommandEffect(const BattleUnit& target) const
 {
-    if (this->HasEffectBits(this->command.ailment) == 1)
+    if (target.HasEffectBits(this->command.ailment) == 1)
     {
         return 1;
     }
 
-    return this->HasEffectBits(static_cast<u32>(this->command.unk08)) == 1 ? 1 : 0;
+    return target.HasEffectBits(static_cast<u32>(this->command.unk08)) == 1 ? 1 : 0;
 }
 
 // swd3e.exe 0x00486700

@@ -539,12 +539,13 @@ private:
     int RouletteFrame(BattleRole& unit, int target);
     int MeterAttackFrame(BattleRole& unit, int target);
     int RoleFrame(int role);
-    void RoleFrameEnd(int role);
+    void RoleGaugeFull(BattleRole& unit, int role);
+    void RoleTakeTurn(BattleRole& unit, int role);
     void RoleAutoCommand(BattleRole& unit, int role);
     void RoleOrderFrame(BattleRole& unit, int role);
     void RoleGatherSweep(BattleRole& unit, PendingOrder& order);
     void RoleTakeOrder(BattleRole& unit, int role);
-    bool RoleActFrame(BattleRole& unit, int role);
+    void RoleActFrame(BattleRole& unit, int role);
     void RoleAfterAction(BattleRole& unit, int role);
     void RoleRetreatFrame(BattleRole& unit, int role);
     void UpdateUnits();

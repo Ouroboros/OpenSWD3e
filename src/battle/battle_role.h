@@ -155,7 +155,7 @@ public:
     int TakeOrder7();
     int GhostObeys(BattleServices& services);
     int RestoreGhostSpirit(BattleServices& services);
-    int HasCommandEffect() const;
+    int HasCommandEffect(const BattleUnit& target) const;
     int SetGhostActs(int value);
     int ChooseGhostSkill(BattleServices& services, Database& database);
     bool LoadGhostSkill(Database& database, i32 skill);
