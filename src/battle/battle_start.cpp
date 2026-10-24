@@ -17,7 +17,6 @@ namespace
 
 constexpr std::size_t kBattleNameBytes = 10;    // the bytes of a RoleName a battle name is gathered from
 constexpr std::size_t kCommandClearBytes = 8;   // the original clears commandEnabled as two dwords (not the ninth)
-constexpr std::size_t kClearedItemUses = 0xFC;  // the first 0xFC of the 0xFF item uses are cleared
 constexpr std::size_t kClearedStolenLists = 8;  // 0x200 bytes: the stolen items of the first eight enemies
 // swd3e.exe 0x004BF17C: the battle act of each party role, dwords read as words.
 constexpr std::array<u16, Party::Roles> kRoleActs = {1, 2, 3, 4};
@@ -32,8 +31,8 @@ constexpr int kDarkBlue = 0xB;
 constexpr int kGreyRed = 0x19;  // swd3e: unk50D86C
 constexpr int kGreyGreen = 0x19;
 constexpr int kGreyBlue = 0x1D;
-constexpr int kPointerX = Display::Width / 2;  // the pointer starts in the middle of the screen
-constexpr int kPointerY = Display::Height / 2;
+constexpr int kPointerX = 0x140;  // the pointer starts at (320, 200) (0x00459FF8)
+constexpr int kPointerY = 0xC8;
 constexpr int kBarLength = 48;    // swd3e: the pixels of a full gauge of the role panels
 constexpr u32 kRowSpeeds = 0x14;  // SlideBattleIn: a row moves kRowStep + 2 * (0..kRowSpeeds-1) pixels a frame
 constexpr int kRowStep = 0x1E;
@@ -199,14 +198,11 @@ void Game::StartBattle(u16 number)
     battle.unk5244D8 = 0;
     battle.unk5244DC = 0;
     battle.inParty.fill(0);
-    battle.guestUsed.fill(0);
     battle.unk524268.fill(0);
     battle.enemyHits.fill(0);
     battle.unk577224 = 0;
     battle.unk577228 = 0;
-    std::fill_n(battle.itemUses.begin(), kClearedItemUses, u8{0});
-    battle.unk51359C = 0;
-    battle.unk51359E = 0;
+    battle.itemUses.fill(0);
     battle.ailment400From = {};
     battle.skillNamePending = {};
     battle.roleNames = {};
@@ -312,8 +308,10 @@ void Game::StartBattle(u16 number)
     battle.scene = static_cast<u16>(this->random.Below(kScenes) + 1);
     this->LoadBattleBackground(battle.formation.background, battle.scene);
     battle.unk525470 = ActState{};
+    // Past the 20 enemy units the original writes beyond its unit array (deviations.md): those are not built.
+    const u32 builtEnemies = std::min<u32>(battle.enemyCount, BattleState::Enemies);
 
-    for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
+    for (u32 enemy = 0; enemy < builtEnemies; ++enemy)
     {
         BattleEnemy& unit = this->battleEnemies[enemy];
         unit.Reset(services);
@@ -474,7 +472,7 @@ void Game::StartBattle(u16 number)
         {
             const u32 steps = this->random.Below(kHeadStartRoll);
 
-            for (u32 step = 0; step < steps; ++step)
+            for (u32 step = 0; enemy < builtEnemies && step < steps; ++step)
             {
                 this->battleEnemies[enemy].AdvanceGauge(services, 0);
             }
@@ -491,9 +489,10 @@ void Game::StartBattle(u16 number)
         this->battleRoles[role].RandomizeGauge(services, role == battle.startPoseRole ? 1 : 0);
     }
 
-    const i32 fighting = static_cast<i32>(battle.roleCount) - battle.escortCount - battle.guestCount - battle.unk5770D4;
+    // Unsigned as in the original: more left out than in the battle wraps around and does not end it.
+    const u32 fighting = battle.roleCount - battle.escortCount - battle.guestCount - battle.unk5770D4;
 
-    if (battle.defeatedRoles >= fighting)
+    if (static_cast<u32>(battle.defeatedRoles) >= fighting)
     {
         battle.result = kNoParty;
     }

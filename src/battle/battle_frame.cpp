@@ -761,9 +761,12 @@ void Game::BattleIntro(u16 style)
         ++battle.battleRepeats[repeat];
     }
 
-    for (u32 first = 0; first < battle.enemyCount; ++first)
+    // Past the 20 enemy units the original reads beyond its unit array (deviations.md): those are left out.
+    const u32 units = std::min<u32>(battle.enemyCount, BattleState::Enemies);
+
+    for (u32 first = 0; first < units; ++first)
     {
-        for (u32 second = 0; second < battle.enemyCount; ++second)
+        for (u32 second = 0; second < units; ++second)
         {
             if (first != second && battle.enemyPlaces[first].actId == battle.enemyPlaces[second].actId)
             {
@@ -773,9 +776,9 @@ void Game::BattleIntro(u16 style)
         }
     }
 
-    auto enrageStanding = [this, &battle](i16 cause)
+    auto enrageStanding = [this, units](i16 cause)
     {
-        for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
+        for (u32 enemy = 0; enemy < units; ++enemy)
         {
             if (!this->battleEnemies[enemy].IsDefeated())
             {

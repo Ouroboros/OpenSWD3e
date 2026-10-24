@@ -265,9 +265,6 @@ public:
     // 0x0050D878 (swd3e) per enemy: 1 while the name of its skill is to show when it acts (EnemyFrame)
     std::array<u8, Enemies> skillNamePending = {};
     i32 unk57736C = 0;  // 0x0057736C (swd3e) 1: every party role standing is taunted (EnemyFrame aims at them all)
-    u16 unk51359C = 0;  // 0x0051359C (swd3e) cleared by StartBattle, not read
-    u16 unk51359E = 0;
-    std::array<u8, Guests> guestUsed = {};  // swd32 0x004FDF80
     // 0x005376A4 (swd3e) per enemy: the party's hits on it (MenuConfirm; cleared when it falls); the roles acting by
     // themselves aim at the most hit (MostHitEnemy)
     std::array<u8, Enemies> enemyHits = {};
@@ -349,17 +346,17 @@ public:
     i16 unk53BF46 = 0;        // cleared when a stagger ends (HurtFrame)
     i16 unk53BF48 = 0;
     u16 unk53BF28 = 0;  // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
-    std::array<i32, 0x12> unk4FF0BC = {};
+    std::array<i32, Units> unk4FF0BC = {};  // 0x0050EBFC (swd3e: 30 slots, 0x78 bytes)
     i32 unk502944 = 0;
     i32 unk502948 = 0;
     i32 unk50294C = 0;
     i32 unk502950 = 0;
     i32 unk5244D8 = 0;
     i32 unk5244DC = 0;
-    std::array<i32, 0x12> slotDamage = {};  // 0x00537758 per slot: the damage of the hit so far
-    std::array<i32, 0x12> unk502984 = {};
-    std::array<i32, 0x12> slotTargets = {};  // 0x005378F8 per slot: the unit it hits (-1: none)
-    std::array<i32, 0x12> unk53AE90 = {};
+    std::array<i32, Units> slotDamage = {};   // 0x00537758 per slot: the damage of the hit so far
+    std::array<i32, Units> unk502984 = {};    // 0x00513664 per slot: the slot of a unit the hit felled (-1: none)
+    std::array<i32, Units> slotTargets = {};  // 0x005378F8 per slot: the unit it hits (-1: none)
+    std::array<i32, Units> unk53AE90 = {};    // 0x00575F38 (swd3e: 30 slots) set to -1 by StartBattle
     std::array<i32, 0xD2> unk5244E8 =
         {};  // 0x00537A20 (swd3e, 0x348 bytes) set to -1 by StartBattle and EndBattle only
     i32 unk53C048 = 0;
@@ -383,7 +380,7 @@ public:
     i32 grayBandShown = 0;       // 0x00577218
     i32 flashing = 0;            // 0x005772CC the field flashes, flashLevel falling by FlashStep a frame
     u16 sweptUnits = 1;          // 0x004BF1A0 the units a sweep has reached
-    i8 flashLevel = FlashStart;  // swd32 0x004A75FE tint steps of the flash
+    i8 flashLevel = FlashStart;  // 0x004BF1A2 tint steps of the flash
     u8 panelGlow = 1;            // 0x004BF1A3 the highlight of the current role's panel; bit 7: falling
     i32 darkenByTint = 0;        // 0x005777F4 the field is darkened by tint steps instead of the darkened copies
     i16 darkLevel = 0;           // 0x0057723A 0..MaxDarkLevel
