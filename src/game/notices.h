@@ -21,7 +21,7 @@ struct Notice
     std::unique_ptr<Notice> next;      // +0x84
 };
 
-// The corner notices (the list headed at 0x004B8970; the head is a node of its own and never shown).
+// The corner notices (the list headed at 0x004D1EC8; the head is a node of its own and never shown).
 class Notices
 {
 public:

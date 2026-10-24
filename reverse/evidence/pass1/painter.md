@@ -53,3 +53,19 @@
 - 汇编：reverse/analysis/scripts/asm_identity.py 把每个函数与其 swd32 配对函数逐条比对（跳转目标换成函数内偏移），31 个全部逐条相同，数据与被调函数地址在 52 个地址上一一对应、跨函数一致（swd3e 绘图全局块 0x004E6D54..0x004EF534 对 swd32 0x004CC2EC..0x004CDE24，波形表 0x004B16B8 对 0x004A06A8）；输出存于 reverse/evidence/pass1/painter_rle_identity.txt。
 - 源码：src/draw/painter_rle.cpp 与 swd3-rebuild 中已对照 swd32 汇编验证（assembly_exact）的同名文件除命名空间与地址注释外逐行相同；src/draw/painter_pixels.cpp 另加 PaintRecord 记录钩子（只记录参数，不改像素）。同一份机器码对同一份源码的对照结论因此对 swd3e 成立；本次又抽读 BlitCopy（0x00418D10）全文与实现的 WalkRuns 参数（有符号跨度、字面段后一段视作透明、波形行偏移每行 +4 并回绕、结束时相位 +4 于 0x84 回绕）核对一致。
 - 测试：正传遗留黄金结果 1300 个画面情景逐像素一致；波形表与 exe 比对。
+
+## 0x00423630 Painter::SetZoom、0x00423670 Painter::SetZoomSheared、0x004236B0 起建表 — exact
+
+- 两入口写锚点 0x004EC188/0x004ED9C4、倍数 0x004B1E7C/0x004B1E80（初值均 0x400，exe 字节 `00 04 00 00`）、斜切 0x004EEE74（SetZoom 写 0）后同跳 0x004236B0。
+- 列表 0x004EAD6C、行表 0x004EC5A0 各 0x500 项：表 i 项 = i*0x400/倍数（idiv 截断）；仅在倍数与“已建值”0x004EEE78/0x004EEE7C 不同时重建，倍数为 0 时先写成 1。斜切表 0x004EDA4C 0x500 项：i*斜切/1024（cdq、and 3FFh、sar 10 的有符号截断）；斜切与 0x004EEE80 不同时：斜切非 0 才重建，已建值无论如何更新。实现 BuildZoomTables 同此。
+
+## 0x00423830..0x004265B0 七个缩放绘制 — exact
+
+- 公共遍历（实现 BlitZoomed）逐段核对 BlitZoomCopy 全文：镜像时列步 −1、锚点 X 取 宽−锚点；翻转时行步 −跨度、行号步 −1（旗标 0x20000000，行后 +1 再 −2）、斜切行号起点 = 高*纵倍/1024、y += 2*锚点Y − 高、锚点 Y 取 高−锚点；左 = x+锚X−锚X*横倍/1024，上 = y+锚Y−锚Y*纵倍/1024，右/下 = 宽(高)*倍/1024+左(上)−1；四边完全在裁剪外时返回；左 ≤ 裁剪左、右 ≥ 裁剪右或斜切非 0 时逐列检查（旗标 0x40000000；0x80000000 写而不读）。行窗口：Copy 为裁剪顶行 clipY 起 clipHeight 行（行表 0x004E6D64[clipY]、[clipHeight]），其余六个为 clipY+1 起 clipHeight−1 行（0x004E6D68、0x004E6D60）。斜切时行起点加 行号步*(斜切表[锚点缩放行]−斜切表[斜切行号])。跳过段（0xC000）按列表推进目标；字面段对列表值 < 段尾的每一项写像素 `literal[列表值−段起]`，段后前进 (段长+1)*2 字节；行后按行表推进源行（行表值等于当前行时重复本行）。
+- 归一化寄存器后的整函数对比：Silhouette（0x00425B10）与 Copy 只差裁剪行窗口与像素操作（填 0x004ED9DC，全库无写入，实现 ZoomFill = 0）；Gray（0x00425FF0）与 SubtractTinted（0x004265B0）只差染色设置与像素操作；Tint（0x00424620，未优化形态，全文读过）与 AddTinted（0x00423D40）只差像素操作与栈槽；Translucent（0x00424E40）遍历同优化形态。
+- 像素操作：Gray 为三通道右移后和 >>2 再左移相加；Tint 为 (目标&掩码)+步长，反掩码有位时取饱和值（染色 ≥0 为掩码、<0 为 0；步长 = 0x004EF308/0x004EF524/0x004EEED8 × 染色 0x004ED9A4/0x004EC180/0x004EC178）；AddTinted 先逐通道饱和相加再染色；SubtractTinted 为 目标通道 −（源通道+步长，溢出取饱和值），符号位置位时取 0；Translucent 按 0x004E6D58（DrawOptions::alpha）跳 15 项表（0x00425A8C、0x00425AC8 字节核对）：0 不写，1..14 按位取源或目标的 >>1..>>4 四项（掩码 0x004EEE98..0x004EEEA4），越过 14（含负）复制源。实现对应 Gray、TintPixel、Add+TintPixel、SubtractTintedSource、BlendFine（alphaFraction 为 battle-smooth 增强，deviations.md 第 99 行；原逻辑下为 0 即 Blend）。
+- 返回值为寄存器残留，无调用者读取。偏差：deviations.md 第 316 行（表外下标、行表递减、画面缓冲外写入）。
+
+## 0x00426C80 Painter::BlitPaletteCopy — exact
+
+- 不缩放：上下左右 = y、y+高−1、x、x+宽−1，四边裁剪后返回；左 ≤ 裁剪左或右 ≥ 裁剪右时逐列检查。列窗口起点 = 行起点 + (裁剪左 − 首列)，终点 = 起点 + 宽−1（原有 BUG：按图宽而非裁剪宽）；行窗口 clipY+1 起 clipHeight−1 行，以列窗口位置判断。跳过段目标前进段长（不看镜像方向，原有 BUG）；字面段每字节经调色板 0x004EDA34 查色，段后紧接下一码；行后按行首码推进源并加行步。锚点、行表等写入不影响结果。偏差：deviations.md 第 317 行（空调色板、画面缓冲外写入）。

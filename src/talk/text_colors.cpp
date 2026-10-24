@@ -33,7 +33,7 @@ u32 ConvertColor(const Painter& painter, u32 color)
 
 }  // namespace
 
-// Part of the draw kernel start (0x00424B90): the colour loop
+// Part of the draw kernel start (0x004288B0): the colour loop
 void TextColors::Convert(const Painter& painter)
 {
     for (int index = 0; index < TextColors::Colors; ++index)

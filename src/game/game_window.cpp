@@ -144,9 +144,9 @@ void Game::ReleaseBattle()
 // swd3e.exe 0x00428EC0: the game released as its window is destroyed: the fonts, the save previews, the battle, the
 // counters, the map's lists and roles, the item lists, the act archives, the picture cache flushed, the sounds, the
 // surfaces and the devices, the files (failures logged), the databases, the map cache marked clean, the pointer shown,
-// the picture archives closed, then the stream player, the sound effects and Miles. The original
-// frees the map's 8-bit palette twice (its pointer 0x004CD764 and 0x004B7404) after an 8-bit map; it is freed once
-// here.
+// the picture archives closed, then the stream player, the sound effects and Miles. The original also frees the
+// painter's palette pointer 0x004EDA34, which only Paint (0x00412F60) sets and clears again, so that frees nothing.
+// mapBehind belongs to the wide map shown behind the menus (an enhancement, deviations.md).
 void Game::ReleaseGame()
 {
     LogInfo(u8"game released");

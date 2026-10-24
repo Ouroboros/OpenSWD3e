@@ -432,7 +432,7 @@ struct Scene
     i32 spotlightTargetY = 0;       // 0x004E6CC4
     i32 layerTick = 0;              // swd32 0x004CC2DC frames the layer has shown
     i32 playerHold = 0;             // 0x004C2FF8 HoldLocked (kept across maps) and the blocking talk windows open
-    MapTrigger triggers;            // swd32 0x004A9A18 (the list from +0x14)
+    MapTrigger triggers;            // 0x004C3198 (the list from +0x14, 0x004C31AC)
     std::array<RoleMark, 4> marks;  // 0x004E6B10
     std::unique_ptr<ScriptEffect> effects;         // 0x004D3FBC
     std::unique_ptr<ScriptSprite> spritesA;        // 0x004C6BD4

@@ -129,7 +129,7 @@ public:
     void CameraAround(int x, int y, CameraRect& rect) const;
 
     MapRegion regions;                            // 0x004C6258
-    std::unique_ptr<MapOverlay> overlays;         // swd32 0x004AB2F4
+    std::unique_ptr<MapOverlay> overlays;         // 0x004C4A7C
     std::array<std::vector<Role*>, Layers> rows;  // 0x004C3184 the roles by row, RowMargin rows above the map
     u32 unitBase = 0;                             // 0x004F01B8 the map in HUGE.lmf
     std::array<MapObject, Objects> objects = {};  // 0x004F0DBC, 0x004F25BC, 0x004F19BC, 0x004F31BC
@@ -147,7 +147,7 @@ public:
     i32 viewHeight = Display::Height;
     i32 screenX = 0;
     i32 screenY = 0;
-    std::vector<u16> palette;  // swd32 0x004B7404 the colours of an 8-bit map
+    std::vector<u16> palette;  // 0x004D0D58 the colours of an 8-bit map
 
 private:
     GameState& state;

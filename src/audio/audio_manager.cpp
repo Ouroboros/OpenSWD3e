@@ -72,7 +72,8 @@ MusicQueue& AudioManager::Queue()
     return this->queue;
 }
 
-// swd3e.exe 0x00427040: sound `id` once, centred, at the options' volume 0..11
+// swd3e.exe 0x00427040: sound `id` once, centred, at the options' volume 0..11 (`muted` is the smooth menu replay of a
+// frame, an enhancement in deviations.md; the original has no such check)
 int AudioManager::PlaySound(u16 id, int volume)
 {
     if (this->muted)

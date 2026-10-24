@@ -1,0 +1,231 @@
+00418D10 vs swd32 00418350: same (195 instructions)
+00418F80 vs swd32 004185C0: same (207 instructions)
+00419200 vs swd32 00418840: same (468 instructions)
+00419870 vs swd32 00418EB0: same (492 instructions)
+00419F30 vs swd32 00419570: same (1086 instructions)
+0041AD70 vs swd32 0041A3B0: same (1134 instructions)
+0041BC40 vs swd32 0041B280: same (274 instructions)
+0041BFE0 vs swd32 0041B620: same (291 instructions)
+0041C3B0 vs swd32 0041B9F0: same (1430 instructions)
+0041D6B0 vs swd32 0041CCF0: same (249 instructions)
+0041D9D0 vs swd32 0041D010: same (264 instructions)
+0041DD00 vs swd32 0041D340: same (1404 instructions)
+0041EF80 vs swd32 0041E5C0: same (1447 instructions)
+00420290 vs swd32 0041F8D0: same (412 instructions)
+00420860 vs swd32 0041FEA0: same (433 instructions)
+00420E50 vs swd32 00420490: same (69 instructions)
+00420F20 vs swd32 00420560: same (61 instructions)
+00420FC0 vs swd32 00420600: same (90 instructions)
+004210B0 vs swd32 004206F0: same (90 instructions)
+004211A0 vs swd32 004207E0: same (64 instructions)
+00421290 vs swd32 004208D0: same (341 instructions)
+00421730 vs swd32 00420D70: same (356 instructions)
+00421BF0 vs swd32 00421230: same (241 instructions)
+00421F00 vs swd32 00421540: same (254 instructions)
+00422210 vs swd32 00421850: same (273 instructions)
+004225A0 vs swd32 00421BE0: same (290 instructions)
+00422970 vs swd32 00421FB0: same (42 instructions)
+004229F0 vs swd32 00422030: same (250 instructions)
+00422D60 vs swd32 004223A0: same (262 instructions)
+004230F0 vs swd32 00422730: same (200 instructions)
+00423380 vs swd32 004229C0: same (210 instructions)
+004271A0 vs swd32 004233D0: same (10 instructions)
+004271D0 vs swd32 00423400: same (268 instructions)
+00427680 vs swd32 004238B0: same (7 instructions)
+004276A0 vs swd32 004238D0: same (7 instructions)
+004276C0 vs swd32 004238F0: same (15 instructions)
+004276F0 vs swd32 00423920: same (21 instructions)
+00427720 vs swd32 00423950: same (21 instructions)
+00427760 vs swd32 00423990: same (21 instructions)
+004277A0 vs swd32 004239D0: same (21 instructions)
+004277E0 vs swd32 00423A10: same (68 instructions), EH handler chunks left out 1 / 0
+004278C0 vs swd32 00423AF0: same (261 instructions), EH handler chunks left out 1 / 0
+00427BD0 vs swd32 00423E00: same (130 instructions), EH handler chunks left out 1 / 0
+00427D80 vs swd32 00423FB0: same (238 instructions), EH handler chunks left out 1 / 0
+00428750 vs swd32 00424930: same (91 instructions)
+00428E60 vs swd32 00425150: same (22 instructions)
+004291B0 vs swd32 00425570: same (261 instructions), EH handler chunks left out 1 / 0
+00429520 vs swd32 004258E0: same (61 instructions), EH handler chunks left out 1 / 0
+004295F0 vs swd32 004259B0: same (53 instructions), EH handler chunks left out 1 / 0
+004296B0 vs swd32 00425A70: same (60 instructions), EH handler chunks left out 1 / 0
+00429780 vs swd32 00425B40: same (2 instructions)
+00429B10 vs swd32 00425B50: differs at 22: [add esi, 0E4h] / [add esi, 0D8h]
+00429C00 vs swd32 00426820: same (12 instructions)
+0042A670 vs swd32 00427140: lengths 94 / 99, EH handler chunks left out 1 / 0
+mapping (176 symbols):
+  004271A0 -> 004233D0
+  00427680 -> 004238B0
+  004276C0 -> 004238F0
+  004276F0 -> 00423920
+  00427720 -> 00423950
+  00427760 -> 00423990
+  004278C0 -> 00423AF0
+  00428160 -> 00424390
+  004296B0 -> 00425A70
+  0043CAE0 -> 00438000
+  0043CB10 -> 00438030
+  0043CB90 -> 004380B0
+  0043CC30 -> 00438150
+  0043CE20 -> 00438340
+  0043CE40 -> 00438360
+  0043CE60 -> 00438380
+  0043CEC0 -> 004383E0
+  0043CF80 -> 004384B0
+  0043CF90 -> 004384C0
+  0043D070 -> 004385A0
+  0043D0D0 -> 00438600
+  0043DA70 -> 00487C10
+  0043DAB0 -> 004885A0
+  0043E500 -> 004399E0
+  004A16B0 -> 00489EB0
+  004A1A36 -> 00489D00
+  004A1AD0 -> 00489E90
+  004AF66C -> 0049FA28
+  004AF70C -> 0049E0B4
+  004AF70E -> 0049E0B6
+  004AF710 -> 0049E0B8
+  004AF71C -> 0049E0C4
+  004AF7A0 -> 004CAE98
+  004B16B8 -> 004A06A8
+  004B1E74 -> 004A0E64
+  004B1E78 -> 004A0E68
+  004B1E84 -> 004A0E6C
+  004B1E88 -> 004A0E70
+  004B1E8C -> 004A0E74
+  004B1E90 -> 004A0E78
+  004B1E94 -> 004A0E7C
+  004C2B94 -> Buffer
+  004D0B90 -> 004B7384
+  004D0B94 -> 004B7388
+  004D0B98 -> 004B738C
+  004D0B9C -> 004B7390
+  004D0BA0 -> 004B7394
+  004D0BA4 -> 004B7398
+  004D0BA8 -> 004B739C
+  004D0BAC -> 004B73A0
+  004D0BB0 -> 004B73A4
+  004D0BB4 -> 004B73A8
+  004D0BB8 -> 004B73AC
+  004D0BC0 -> 004B73B4
+  004D0BD0 -> 004B73C4
+  004D0BD4 -> 004B73C8
+  004D0BD8 -> 004B73CC
+  004D0BDC -> 004B73D0
+  004D1298 -> 004B7930
+  004D12B0 -> 004B7948
+  004D12B4 -> 004B794C
+  004D1F70 -> 004B8A18
+  004D1F74 -> 004B8A1C
+  004D1F78 -> 004B8A20
+  004D4000 -> 004BABE0
+  004E55A4 -> 004C97F4
+  004E6D54 -> 004CC2EC
+  004E6D58 -> 004CC2F0
+  004E6D5C -> 004CC2F4
+  004E6D64 -> 004CC2F8
+  004EAD68 -> 004CD2F8
+  004EC16C -> 004CD2FC
+  004EC170 -> 004CD300
+  004EC178 -> 004CD304
+  004EC180 -> 004CD30C
+  004EC18C -> 004CD310
+  004EC194 -> 004CD314
+  004ED9A0 -> 004CD718
+  004ED9A4 -> 004CD71C
+  004ED9AC -> 004CD724
+  004ED9B4 -> 004CD728
+  004ED9BC -> 004CD730
+  004ED9D0 -> 004CD738
+  004ED9EC -> 004CD740
+  004ED9F0 -> 004CD744
+  004ED9F4 -> 004CD748
+  004ED9F8 -> 004CD74C
+  004ED9FC -> 004CD750
+  004EDA00 -> 004CD754
+  004EDA04 -> 004CD758
+  004EDA2C -> 004CD760
+  004EDA3C -> 004CD768
+  004EDA44 -> 004CD76C
+  004EEE84 -> 004CD774
+  004EEE88 -> 004CD778
+  004EEE8C -> 004CD77C
+  004EEE90 -> 004CD780
+  004EEE94 -> 004CD784
+  004EEE98 -> 004CD788
+  004EEE9C -> 004CD78C
+  004EEEA0 -> 004CD790
+  004EEEA4 -> 004CD794
+  004EEEA8 -> 004CD798
+  004EEEAC -> 004CD79C
+  004EEEB0 -> 004CD7A0
+  004EEEB4 -> 004CD7A4
+  004EEEC4 -> 004CD7B4
+  004EEEC8 -> 004CD7B8
+  004EEECC -> 004CD7BC
+  004EEED8 -> 004CD7C8
+  004EEEE0 -> 004CD7D0
+  004EEF60 -> 004CD850
+  004EEFE0 -> 004CD8D0
+  004EF0E0 -> 004CD9D0
+  004EF0E4 -> 004CD9D4
+  004EF164 -> 004CDA54
+  004EF1E4 -> 004CDAD4
+  004EF2E4 -> 004CDBD4
+  004EF2E8 -> 004CDBD8
+  004EF2F8 -> 004CDBE8
+  004EF2FC -> 004CDBEC
+  004EF308 -> 004CDBF8
+  004EF310 -> 004CDC00
+  004EF314 -> 004CDC04
+  004EF394 -> 004CDC84
+  004EF414 -> 004CDD04
+  004EF514 -> 004CDE04
+  004EF518 -> 004CDE08
+  004EF524 -> 004CDE14
+  004EF52C -> 004CDE1C
+  004EF530 -> 004CDE20
+  004EF534 -> 004CDE24
+  004EF540 -> 004CDE30
+  004EF558 -> 004CDE48
+  004EF55C -> 004CDE4C
+  004EF560 -> 004CDE50
+  004EF564 -> 004CDE54
+  004EF56C -> 004CDE5C
+  004EF584 -> 004CDE74
+  004EF588 -> 004CDE78
+  004EF58C -> 004CDE7C
+  $ -> $
+  Buffer -> ExistingFileName
+  CmdLine -> CmdLine
+  CreateDirectoryA -> CreateDirectoryA
+  FileName -> FileName
+  RegCloseKey -> RegCloseKey
+  RegOpenKeyExA -> RegOpenKeyExA
+  RegQueryValueExA -> RegQueryValueExA
+  SEH_4277E0 -> SEH_423A10
+  SEH_4278C0 -> SEH_423AF0
+  SEH_427BD0 -> SEH_423E00
+  SEH_427D80 -> SEH_423FB0
+  SEH_4291B0 -> SEH_425570
+  SEH_429520 -> SEH_4258E0
+  SEH_4295F0 -> SEH_4259B0
+  SEH_4296B0 -> SEH_425A70
+  SetCurrentDirectoryA -> SetCurrentDirectoryA
+  SubKey -> SubKey
+  V -> V
+  ValueName -> ValueName
+  WinExec -> WinExec
+  aEnvDat -> aEnvDat
+  aSS -> aSS
+  aSdataDCm -> aSdataDCm
+  aSdataMcacheDat -> aSdataMcacheDat
+  aSenvDat -> aSenvDat
+  aShellOpenComma -> aShellOpenComma
+  lstrcatA -> lstrcatA
+  lstrcpyA -> lstrcpyA
+  lstrlenA -> lstrlenA
+  movsb -> movsb
+  movsd -> movsd
+  nullsub_1 -> nullsub_1
+  stosd -> stosd
+  wsprintfA -> wsprintfA
