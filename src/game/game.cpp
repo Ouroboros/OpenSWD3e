@@ -1699,7 +1699,7 @@ void Game::ResetSaveSlots()
     this->upArrowPress = 1;
     this->slotPrompt = 0;
     this->slotMouseBlock = 0;
-    ResetPlayback(this->unk4CC200);
+    ResetPlayback(this->saveScreenAct);
     this->saveSlots.LoadPage(this->config.SaveDirectory(), this->painter);
 }
 

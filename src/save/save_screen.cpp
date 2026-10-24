@@ -906,8 +906,7 @@ void Game::WriteSave(File& file)
     const auto& name = this->state.map.name;
     std::copy_n(name.begin(), std::min(strnlen(name.data(), name.size()), location.size()), location.begin());
     write(location.data(), location.size());
-    // swd3e writes 0 as the unpacked size of the flags (reading uses only the packed size)
-    writeBlock(this->state.flags, 0);
+    writeBlock(this->state.flags, static_cast<u32>(this->state.flags.size()));
     const std::vector<u8>& maps = this->databases.mapsData;
     const std::size_t rolesAt = std::min<std::size_t>(this->scene.rolesTable, maps.size());
     const std::size_t rolesBytes = std::min<std::size_t>(this->scene.rolesTableBytes, maps.size() - rolesAt);

@@ -682,16 +682,16 @@ private:
     std::array<std::unique_ptr<TextInput>, NameBoxCount> nameBoxes;
     TextInput* currentNameBox = nullptr;  // 0x004C6620 the box the keyboard goes to (with flag 0x50)
     u32 nameRole = 0;                     // 0x004E6CD0 the role talk command 209 names
-    ActState unk4CC200;
-    i32 flagCursor = 0;      // 0x004C27A8 the flag chosen in the flag view
-    u32 saveFrames = 0;      // 0x004C27B0 frames since the save screen opened
-    u16 unk4CC2AA = 0;       // swd32 0x004CC2AA
-    u8 downArrowPress = 0;   // 0x004C2650 frames the lit down arrow of the slots stays pressed down
-    u8 upArrowPress = 0;     // 0x004C2651 and the up arrow up
-    i32 slotPrompt = 0;      // 0x004C27A4 browsing, the overwrite answer or the slot chosen
-    i32 slotMouseBlock = 0;  // 0x004C1610 frames a key or click keeps the pointer from choosing a slot
-    u32 systemFlags = 0;     // 0x004D1404 SystemFlag bits
-    i32 counterAlpha = 0;    // swd32 0x004C9A24
+    ActState saveScreenAct;               // 0x004C2700 reset by ResetSaveSlots (0x00406B50); no code reads it
+    i32 flagCursor = 0;                   // 0x004C27A8 the flag chosen in the flag view
+    u32 saveFrames = 0;                   // 0x004C27B0 frames since the save screen opened
+    u16 unk4CC2AA = 0;                    // swd32 0x004CC2AA
+    u8 downArrowPress = 0;                // 0x004C2650 frames the lit down arrow of the slots stays pressed down
+    u8 upArrowPress = 0;                  // 0x004C2651 and the up arrow up
+    i32 slotPrompt = 0;                   // 0x004C27A4 browsing, the overwrite answer or the slot chosen
+    i32 slotMouseBlock = 0;               // 0x004C1610 frames a key or click keeps the pointer from choosing a slot
+    u32 systemFlags = 0;                  // 0x004D1404 SystemFlag bits
+    i32 counterAlpha = 0;                 // swd32 0x004C9A24
     i32 unk4A9484 = 0;
     static constexpr u32 ScriptedBattle = 0x80000000;  // in `battleRequest`: started by a talk command
     i32 battleRequest = 0;                             // 0x004C2B84 a battle to start (its number in the low word)
