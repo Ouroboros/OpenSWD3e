@@ -7,6 +7,7 @@
 #include "game/direction.h"
 #include "game/game_state.h"
 #include "game_data.h"
+#include "map/field_view.h"
 #include "platform/display.h"
 #include "platform/surface.h"
 #include "res/act_state.h"
@@ -31,6 +32,8 @@ constexpr std::array<swd3e::u32, 3> kFacingCopies = {0x004AA448, 0x004AA544, 0x0
 constexpr swd3e::u32 kAheadXAt = 0x004AA398;
 constexpr swd3e::u32 kAheadYAt = 0x004AA3B8;
 constexpr swd3e::u32 kRunToggleAt = 0x004AA38C;
+constexpr swd3e::u32 kCellStepXAt = 0x004AA504;
+constexpr swd3e::u32 kCellStepYAt = 0x004AA524;
 
 constexpr int kFlag = 13;
 constexpr int kNeighbourFlag = 8;  // in the byte of kFlag
@@ -104,6 +107,8 @@ TEST_CASE("game state: constant tables match swd3e.exe")
     CHECK(SameTable(exe, kAheadXAt, swd3e::RoleControl::AheadX));
     CHECK(SameTable(exe, kAheadYAt, swd3e::RoleControl::AheadY));
     CHECK(SameTable(exe, kRunToggleAt, swd3e::RoleControl::RunToggle));
+    CHECK(SameTable(exe, kCellStepXAt, swd3e::FieldView::CellStepX));
+    CHECK(SameTable(exe, kCellStepYAt, swd3e::FieldView::CellStepY));
 }
 
 TEST_CASE("game state: story flags")

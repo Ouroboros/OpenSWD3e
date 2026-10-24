@@ -1,3 +1,4 @@
+#include "core/fault.h"
 #include "map/field_view_internal.h"
 
 namespace swd3e
@@ -79,12 +80,19 @@ void FieldView::DrawDebug(int cameraLeft, int cameraTop)
         state.pointerY
     );
     const ButtonState& click = owner.controls.At(Button::MouseLeft);
+
+    // The frames per second divide (div) by the milliseconds between the last two frames: none faults.
+    if (owner.frameTime == 0)
+    {
+        Fault(owner.errors, u8"Integer divide by zero (0x004147B4)");
+    }
+
     this->DrawDebugText(
         kDebugLeft,
         DebugRow(2),
         white,
         u8"FPS[%2d] FUsed(%d),kr.d[%1d] ,kr.p[%4d] _IPA[%4d]",
-        owner.frameTime != 0 ? kMillisecondsPerSecond / static_cast<u32>(owner.frameTime) : 0u,
+        kMillisecondsPerSecond / static_cast<u32>(owner.frameTime),
         owner.mainFrameTime,
         click.press,
         click.heldFrames,
@@ -240,7 +248,7 @@ void FieldView::DrawDebug(int cameraLeft, int cameraTop)
                 index
             );
             mapX = variableX;
-            row -= DebugRow(1);
+            row -= DebugRow(kRoleLineRows);
         }
     }
 }

@@ -16,7 +16,7 @@ i32 Sign(i32 value)
 
 }  // namespace
 
-// The end of the map's frame (0x004120B0) for the controlled role on a tile: its cells and trail follow its step and
+// The end of the map's frame (0x004126A0) for the controlled role on a tile: its cells and trail follow its step and
 // the step ends.
 void FieldView::SettlePlayer()
 {

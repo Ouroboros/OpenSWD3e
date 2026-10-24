@@ -34,7 +34,9 @@ u16 MapMovie::Rgb555(u8 red, u8 green, u8 blue)
 }
 
 // swd3e.exe 0x00415D50: the rows of the movie frame, centred vertically: 8-bit rows through the palette, 16-bit rows
-// converted to the display in the frame itself (so a frame drawn again is converted again) and copied
+// converted to the display in the frame itself (so a frame drawn again is converted again) and copied. The rows are
+// counted signed; a row's pixels are its length less its 8-byte header (an 8-bit row shorter than that draws nothing),
+// and the converter of the 16-bit rows runs at least once (a row without a pair converts the word after it).
 void FieldView::DrawMovieFrame()
 {
     Game& owner = this->game;
@@ -44,7 +46,7 @@ void FieldView::DrawMovieFrame()
     const std::size_t screenBytes = sizeof(Pixel) * static_cast<std::size_t>(pitch) * Display::Height;
     const std::ptrdiff_t base =
         static_cast<std::ptrdiff_t>(sizeof(Pixel)) * pitch * ((Display::Height - film.height) >> 1);
-    const u32 rows = film.current != nullptr ? film.current->rows : 0;
+    const i32 rows = film.current != nullptr ? static_cast<i32>(film.current->rows) : 0;
     std::size_t at = 0;
 
     auto dword = [&film](std::size_t offset) -> u32
@@ -52,24 +54,24 @@ void FieldView::DrawMovieFrame()
         return ByteReader::Word32At(film.frame, offset);
     };
 
-    for (u32 row = 0; row < rows && static_cast<i32>(row) >= 0; ++row)
+    for (i32 row = 0; row < rows; ++row)
     {
-        const u32 length = dword(at);
-        const std::ptrdiff_t target = base + static_cast<std::ptrdiff_t>(dword(at + kRowTargetAt));
-
-        if (length < kRowHeaderBytes || at + length > film.frame.size())
+        if (at + kRowHeaderBytes > film.frame.size())
         {
             break;
         }
 
-        const std::size_t count = length - kRowHeaderBytes;
+        const u32 length = dword(at);
+        const std::ptrdiff_t target = base + static_cast<i32>(dword(at + kRowTargetAt));
+        const auto count = static_cast<i32>(length - kRowHeaderBytes);
         u8* pixels = film.frame.data() + at + kRowHeaderBytes;
+        const std::size_t left = film.frame.size() - at - kRowHeaderBytes;
 
         if (!film.palette.empty())
         {
-            for (std::size_t index = 0; index < count; ++index)
+            for (i32 index = 0; index < count && static_cast<std::size_t>(index) < left; ++index)
             {
-                const std::ptrdiff_t out = target + static_cast<std::ptrdiff_t>(sizeof(Pixel) * index);
+                const std::ptrdiff_t out = target + static_cast<std::ptrdiff_t>(sizeof(Pixel)) * index;
 
                 if (out >= 0 && static_cast<std::size_t>(out) + sizeof(Pixel) <= screenBytes)
                 {
@@ -80,14 +82,27 @@ void FieldView::DrawMovieFrame()
         }
         else
         {
-            std::vector<u16> converted(count / sizeof(Pixel));
-            std::memcpy(converted.data(), pixels, converted.size() * sizeof(Pixel));
-            owner.painter.ConvertPixels(converted);
-            std::memcpy(pixels, converted.data(), converted.size() * sizeof(Pixel));
-
-            if (target >= 0 && static_cast<std::size_t>(target) + count <= screenBytes)
+            // A row shorter than its header converts and copies about 4 GB in the original (deviations.md).
+            if (count < 0)
             {
-                std::memcpy(screen + target, pixels, count);
+                break;
+            }
+
+            const auto words = static_cast<std::size_t>(std::max(count >> 1, 1));
+
+            if (words * sizeof(Pixel) <= left)
+            {
+                std::vector<u16> converted(words);
+                std::memcpy(converted.data(), pixels, words * sizeof(Pixel));
+                owner.painter.ConvertPixels(converted);
+                std::memcpy(pixels, converted.data(), words * sizeof(Pixel));
+            }
+
+            const auto bytes = static_cast<std::size_t>(count);
+
+            if (target >= 0 && static_cast<std::size_t>(target) + bytes <= screenBytes && bytes <= left)
+            {
+                std::memcpy(screen + target, pixels, bytes);
             }
         }
 
@@ -120,11 +135,10 @@ int FieldView::ReadMovieFrame()
 
             if (bytes != 0)
             {
-                owner.audioDevice.Serve();
                 u32 read = bytes;
                 film.buffer.resize(std::max<std::size_t>(film.buffer.size(), bytes));
                 film.file.Read(film.buffer.data(), read);
-                unpack(bytes);
+                unpack(read);  // the bytes actually read (0x004160A1)
             }
 
             film.current = chunk;
@@ -154,7 +168,6 @@ int FieldView::ReadMovieFrame()
         fresh->rows = previous->nextRows;
         fresh->size = previous->nextSize;
         fresh->frame = frame;
-        owner.audioDevice.Serve();
         u32 read = fresh->size;
         film.buffer.resize(std::max<std::size_t>(film.buffer.size(), fresh->size));
         film.file.Read(film.buffer.data(), read);
@@ -162,7 +175,6 @@ int FieldView::ReadMovieFrame()
         if (film.paletteCount != 0 && film.paletteIndex < film.paletteFrames.size() &&
             film.frameIndex == film.paletteFrames[film.paletteIndex])
         {
-            owner.audioDevice.Serve();
             const auto back = static_cast<i32>(
                 MapMovie::PaletteBytes * (film.paletteCount - film.paletteIndex++) + MapMovie::PaletteTailBytes
             );

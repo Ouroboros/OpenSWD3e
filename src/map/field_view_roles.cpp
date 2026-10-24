@@ -13,18 +13,20 @@ void FieldView::DrawRoles()
     for (const int layer : kLayerOrder)
     {
         const std::vector<Role*>& rows = this->game.field.rows[static_cast<std::size_t>(layer)];
-        auto row = static_cast<u32>(this->game.field.cameraTop / MapHeader::TileSize - Field::RowMargin);
+        // The rows compare signed (jge): those above the map (roles with y < 0) are drawn too.
+        int row = this->game.field.cameraTop / MapHeader::TileSize - Field::RowMargin;
 
         for (int count = 0; count < this->ViewRows() + 2 * Field::RowMargin; ++count, ++row)
         {
-            const std::size_t index = row + Field::RowMargin;
+            const int index = row + Field::RowMargin;
 
-            if (row >= static_cast<u32>(state.map.height + Field::RowMargin) || index >= rows.size())
+            if (row >= state.map.height + Field::RowMargin || index < 0 ||
+                static_cast<std::size_t>(index) >= rows.size())
             {
                 continue;
             }
 
-            for (Role* role = rows[index]; role != nullptr; role = role->next)
+            for (Role* role = rows[static_cast<std::size_t>(index)]; role != nullptr; role = role->next)
             {
                 this->DrawRole(*role);
 
@@ -231,7 +233,7 @@ void FieldView::UpdateRoleSound(Role& role)
     Scene& view = this->game.scene;
     SoundEffects& effects = this->game.audio.Effects();
     const Role& player = state.roles[static_cast<std::size_t>(state.playerRole)];
-    // 0x00413CA0: the differences and the sum of their squares wrap in 32 bits (sub, imul, add).
+    // 0x004143D7..0x004143E8: the differences and the sum of their squares wrap in 32 bits (sub, imul, add).
     const auto dx = static_cast<u32>(role.x) - static_cast<u32>(player.x);
     const auto dy = static_cast<u32>(role.y) - static_cast<u32>(player.y);
     const auto squared = static_cast<i32>(dx * dx + dy * dy);
@@ -408,7 +410,7 @@ void FieldView::DrawBubbles(int x, int y, u16 role)
 
     for (RoleMark& mark : view.marks)
     {
-        // 0x00415F7D: the mark's role is sign-extended (movsx) against the zero-extended id, so ids from 0x8000 on
+        // 0x004164ED: the mark's role is sign-extended (movsx) against the zero-extended id, so ids from 0x8000 on
         // never match.
         if (static_cast<i16>(mark.role) != static_cast<int>(role))
         {

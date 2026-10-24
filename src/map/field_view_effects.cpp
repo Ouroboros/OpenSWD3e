@@ -63,7 +63,7 @@ void FieldView::DrawLines()
     const int pitch = painter.ScreenPitch();
     const std::span<u16> screen(owner.drawSurface, static_cast<std::size_t>(pitch) * Display::Height);
 
-    // 0x00417DE0 is given the pixels of the run and blends half as many pairs (none below one pair, deviations.md).
+    // 0x004187A0 is given the pixels of the run and blends half as many pairs (none below one pair, deviations.md).
     auto blend = [&painter, screen](int at, u32 color, int pixels)
     {
         const u32 pairs = static_cast<u32>(pixels) >> 1;

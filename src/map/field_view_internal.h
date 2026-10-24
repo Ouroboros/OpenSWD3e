@@ -234,6 +234,7 @@ constexpr int kOverlapColumns = 3;  // roles this near the pointer are counted a
 constexpr int kOverlapRows = 4;
 constexpr int kOverlapRoles = 2;
 constexpr int kOverlapLineRows = 2;  // swd3e: the overlap line is two rows above the story line of the role
+constexpr int kRoleLineRows = 2;     // each role found moves the next story line two rows up (0x00414B45)
 constexpr int kFirstVariable = 1;    // DrawDebug shows role variable 1 (Talk::RoleVariable)
 constexpr int kFastFactor = 2;
 constexpr int kTimerX = 0x190;

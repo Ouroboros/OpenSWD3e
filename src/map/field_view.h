@@ -113,12 +113,16 @@ struct MapMovie
     u32 options = 0;                 // swd32 0x004B7AA0 bit 0: fade out darkening, bit 1: no fade in, bit 4: paused
 };
 
-// The drawing of the map (the original's picPaint, 0x00412930..0x00416CC0): its tiles, the roles by row with their
+// The drawing of the map (the original's picPaint, 0x004126A0..0x00417290): its tiles, the roles by row with their
 // shadows, reflections, sounds and bubbles, the script lists (animations, sprites, role heads, lines), the overlays and
 // the screen effects of the map (weather, leaves, heat, lightning, fireflies, spotlight, ripples).
 class FieldView
 {
 public:
+    // The cell step of each path direction (0x004AA504 across, 0x004AA524 down), read by Render.
+    static constexpr std::array<i32, 8> CellStepX = {1, 0, -1, -1, -1, 0, 1, 1};
+    static constexpr std::array<i32, 8> CellStepY = {1, 1, 1, 0, -1, -1, -1, 0};
+
     explicit FieldView(Game& game);
 
     void DrawTiles16(int unused);

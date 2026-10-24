@@ -8,11 +8,8 @@ namespace
 
 constexpr double kGhostOffsetX = 16.0;   // 0x004AA5E4: the talisman ghost drifts to 16 right of the role
 constexpr double kGhostOffsetUp = 64.0;  // 0x004AA5E8 and 64 above it
-// swd32.exe 0x00499534 (unmatched in swd3e) and 0x00499554: the cell step of each path direction.
-constexpr std::array<i32, 8> kCellX = {1, 0, -1, -1, -1, 0, 1, 1};
-constexpr std::array<i32, 8> kCellY = {1, 1, 1, 0, -1, -1, -1, 0};
 
-// The cell of a role moved a step in path direction `direction` (inline in 0x004120B0).
+// The cell of a role moved a step in path direction `direction` (inline in 0x004126A0).
 void MoveCell(GameState& state, Role& role, int direction)
 {
     if (role.cell == nullptr || direction < 0 || direction >= RolePath::Directions)
@@ -21,8 +18,8 @@ void MoveCell(GameState& state, Role& role, int direction)
     }
 
     const std::ptrdiff_t at =
-        role.cell - state.map.blocks.data() + kCellX[static_cast<std::size_t>(direction)] +
-        static_cast<std::ptrdiff_t>(state.map.width) * kCellY[static_cast<std::size_t>(direction)];
+        role.cell - state.map.blocks.data() + FieldView::CellStepX[static_cast<std::size_t>(direction)] +
+        static_cast<std::ptrdiff_t>(state.map.width) * FieldView::CellStepY[static_cast<std::size_t>(direction)];
     role.cell = at >= 0 && static_cast<std::size_t>(at) < state.map.blocks.size()
                     ? &state.map.blocks[static_cast<std::size_t>(at)]
                     : nullptr;
@@ -116,7 +113,7 @@ void FieldView::MarkCells(u32 mask, int color, int offsetX, int offsetY, int ins
     }
 }
 
-// swd3e.exe 0x00414B70: the camera pans by the step of the pan still to go (0x004A99F0 across, 0x004A98C0 down); a step
+// swd3e.exe 0x00414B70: the camera pans by the step of the pan still to go (0x004C30CC across, 0x004C2F98 down); a step
 // is cleared once its distance is covered
 void FieldView::PanCamera()
 {
@@ -156,7 +153,7 @@ void FieldView::PanCamera()
     }
 }
 
-// swd3e.exe 0x00414EC0: the quake: the camera is offset by the pairs of the shake table (0x004ACE70, ended by 0xCFCF)
+// swd3e.exe 0x00414EC0: the quake: the camera is offset by the pairs of the shake table (0x004C6624, ended by 0xCFCF)
 // in turn, each held for 0x004C6880 frames (on every map: swd3e drops swd32's exception of map 0x16); the camera
 // before it is kept to be restored
 void FieldView::ShakeCamera()
@@ -383,7 +380,7 @@ void FieldView::Paint()
     owner.notices.Draw(owner.smallFont, painter, state, owner.textColors);
 }
 
-// The spotlight's square of the screen as the clip (part of 0x00412930).
+// The spotlight's square of the screen as the clip (part of 0x00412F60).
 void FieldView::ClipToSpotlight()
 {
     const Scene& view = this->game.scene;
@@ -504,7 +501,7 @@ void FieldView::UpdateRoleCellFlags(Role& role)
     }
 }
 
-// A role on a move whose step lands on a tile (part of 0x004120B0): it leaves its old line; at the end of the move it
+// A role on a move whose step lands on a tile (part of 0x004126A0): it leaves its old line; at the end of the move it
 // takes the move's act, action and direction, resumes a held move and, for role 1, stops the keys and recentres; its
 // cells follow its step.
 void FieldView::ArriveMoving(std::size_t index, std::size_t slot, u8 direction)
@@ -580,7 +577,7 @@ void FieldView::ArriveMoving(std::size_t index, std::size_t slot, u8 direction)
     this->UpdateRoleCellFlags(role);
 }
 
-// A follower whose step lands on a tile (part of 0x004120B0): its cells follow its step.
+// A follower whose step lands on a tile (part of 0x004126A0): its cells follow its step.
 void FieldView::ArriveFollower(std::size_t index, std::size_t slot, u8 direction)
 {
     Game& owner = this->game;
@@ -598,11 +595,11 @@ void FieldView::ArriveFollower(std::size_t index, std::size_t slot, u8 direction
 }
 
 // swd3e.exe 0x004126A0: a frame of the map: the screen acts step, the camera and the controlled role move by their
-// step, every role on a move steps along it (twice as fast without flag 0xD4 or with flag 0x4000000; at the end it
-// takes the move's act, resumes a held move and, for role 1, stops the keys and recentres), touch roles start their
-// event, the followers step, the camera pans and shakes; then the frame is painted with the timer and the debug display
-// and shown; the controlled role's cells and trail follow its step, the tile layers cycle, and a shaken camera is put
-// back
+// step, every role on a move steps along it (twice as fast while its act's mask is clear and again with flag 0x4000000;
+// at the end it takes the move's act, resumes a held move and, for role 1, stops the keys and recentres), touch roles
+// start their event, the followers step, the camera pans and shakes; then the frame is painted with the timer and the
+// debug display and shown; the controlled role's cells and trail follow its step, the tile layers cycle, and a shaken
+// camera is put back
 void FieldView::Render()
 {
     Game& owner = this->game;
@@ -669,7 +666,8 @@ void FieldView::Render()
             int stepX = move.stepX;
             int stepY = move.stepY;
 
-            if (role.unkD4 == 0)
+            // role +0xE0, the last field of its act (swd32 read the same field at role +0xD4)
+            if (role.act.mask == 0)
             {
                 stepX *= kFastFactor;
                 stepY *= kFastFactor;
