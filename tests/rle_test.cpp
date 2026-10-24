@@ -147,11 +147,13 @@ TEST_CASE("rle: matches the golden hashes of the legacy codec")
     painter.Init(screen);
     const swd3e::RleCodec codec(painter);
 
-    // The encoder (0x00401000) was rewritten in swd3e (the line flag and the fill runs): its scenarios hold for swd32
-    // only.
+    // The encoder (0x00401000) was rewritten in swd3e (the line flag and the fill runs), and the 8-bit conversions
+    // (0x00401780, 0x00401950) copy the word past the end from a cleared buffer (0xCDCD in swd32): those scenarios hold
+    // for swd32 only.
     auto swd32Only = [](const std::string& name)
     {
-        return name.ends_with("/encode");
+        return name.ends_with("/encode") ||
+               (name.starts_with("rle8/") && (name.ends_with("/to16") || name.ends_with("/tile")));
     };
 
     CodecBackend backend(codec);
@@ -160,4 +162,43 @@ TEST_CASE("rle: matches the golden hashes of the legacy codec")
     std::printf("  compared %d scenarios, %d left out\n", check.compared, check.excluded);
     CHECK_EQ(check.mismatches, 0);
     CHECK_EQ(check.compared + check.excluded, static_cast<int>(golden.size()));
+}
+
+// An 8-bit picture of one literal pixel (palette entry 5) becomes 16-bit: the line header holds the line length, and
+// the word the original copies past the picture end comes from its work buffer, cleared by Allocate (0x0043DA70).
+TEST_CASE("rle: an 8-bit picture and a map tile converted to 16 bits end in a cleared word")
+{
+    constexpr u8 kIndex = 5;
+    constexpr u16 kColor = 0x1234;
+    constexpr std::array<u16, 4> kHeader = {0xFFFF, 1, 1, swd3e::RleHeader::Indexed};
+    constexpr std::array<u8, 9> kLine = {0x07, 0x00, 0x01, 0x00, kIndex, 0x00, 0x00, 0x00, 0x00};
+    constexpr u16 kLineBytes = 8;  // its header, the literal code, the pixel and the line end
+    swd3e::Surface screen(swd3e::Display::Width, swd3e::Display::Height);
+    swd3e::Painter painter;
+    painter.Init(screen);
+    const swd3e::RleCodec codec(painter);
+    std::array<u16, 1> converted = {kColor};
+    painter.ConvertPixels(converted);
+    const std::array<u16, 10> expected =
+        {0xFFFF, 1, 1, swd3e::RleHeader::TrueColor, kLineBytes, 0x0001, converted[0], 0x0000, 0x0000, 0x0000};
+
+    std::vector<u8> rle(sizeof(kHeader));
+    std::memcpy(rle.data(), kHeader.data(), sizeof(kHeader));
+    rle.insert(rle.end(), kLine.begin(), kLine.end());
+
+    swd3e::Picture picture;
+    picture.data = rle;
+    picture.palette.assign(kIndex + 1, 0);
+    picture.palette[kIndex] = kColor;
+    codec.ConvertTo16(picture);
+    CHECK_EQ(picture.data.size(), sizeof(expected));
+    CHECK(std::memcmp(picture.data.data(), expected.data(), sizeof(expected)) == 0);
+
+    constexpr std::size_t kPaletteBytes = 0x200;
+    std::vector<u8> tile(kPaletteBytes);
+    std::memcpy(tile.data() + sizeof(u16) * kIndex, &kColor, sizeof(kColor));
+    tile.insert(tile.end(), rle.begin(), rle.end());
+    codec.ConvertTileTo16(tile);
+    CHECK_EQ(tile.size(), sizeof(expected));
+    CHECK(std::memcmp(tile.data(), expected.data(), sizeof(expected)) == 0);
 }

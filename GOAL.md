@@ -22,16 +22,16 @@
 
 ## 整体进度
 
-- 当前阶段：第3阶段（还原）完成；第4阶段（验证）第一遍待开始。
+- 当前阶段：第4阶段（验证）第一遍进行中。
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
 - 已实现／总数：1710／1710。
-- 已验证／总数：0／1710。
-- 待实现／待验证：0／1710。
+- 已验证／总数：5／1710。
+- 待实现／待验证：0／1705。
 
 ## 当前工作
 
-函数全集1710个均已按swd3e汇编实现（implemented_pending_review，验证0次），范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux与Windows构建通过，Linux测试168项全部通过，待外传化清单已清空（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。停点：第4阶段第一遍从函数表第一行开始。
+函数全集1710个均已实现，范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试169项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。第4阶段第一遍逐函数验证进行中，证据按模块记入reverse/evidence/pass1/。停点：函数表第6行 PathNodePool::Init（0x00401B30）。
 
 ## 下一步
 
