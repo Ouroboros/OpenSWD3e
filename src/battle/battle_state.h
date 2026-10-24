@@ -154,8 +154,12 @@ public:
     void RemoveSlotRecord(i32 unit);
     void InsertSlotRecord(int kind, i32 unit, int at);
     void StartFieldFade(int red, int green, int blue, int toRed, int toGreen, int toBlue, int frames);
+    i16 StartSlideTo(i16 x);
+    i16 StartSlideBack(i16 x);
     u8 ItemUses(u16 id) const;
     u8 MostHitEnemy() const;
+    void ClearHitBits();
+    HitPicture& AddHitPicture(ErrorReporter& errors, i32 id, i32 action, i16 x, i16 y, i32 mirrored);
     bool HitPicturesDone() const;
     u16 HitBits() const;
     void WipeSlotRecords();

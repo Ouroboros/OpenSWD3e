@@ -37,12 +37,9 @@ constexpr u32 kStepsAway = 0x10000;           // unk26B8: the attack fells the e
 constexpr i16 kStepAwayTintFrom = 0xF;
 constexpr i16 kStepAwayFrames = 0x1F;
 constexpr u8 kStepAwayPose = 2;
-constexpr u16 kSlidesTo = 0x800;           // ActState::target: the units slide to the unit (swd3e)
-constexpr u16 kSlidesBack = 0x40;          // and back
 constexpr u32 kEvadeStatus = 0x80;         // status bit 7: the target evades with kStatusEvade
 constexpr i16 kEvadedEnrageCause = 0x1B;   // an evaded strike checks this enrage cause
 constexpr u32 kFliesMirrored = 0x1000000;  // unk26B8: the follow-up flies mirrored once
-constexpr u16 kAddsHitPicture = 0x20;      // ActState::target: the follow-up adds a hit picture
 }  // namespace
 
 DamageFrame::DamageFrame(Game& game)
@@ -653,17 +650,17 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         battle.quakePhase = 0;
     }
 
-    if ((attack.target & kSlidesTo) != 0)
+    if ((attack.target & ActState::SlidesTo) != 0)
     {
-        game.StartSlideTo(0);
-        attack.target = static_cast<u16>(attack.target & ~kSlidesTo);
+        battle.StartSlideTo(0);
+        attack.target = static_cast<u16>(attack.target & ~ActState::SlidesTo);
         enemy.stage &= ~BattleUnit::FollowingUp;
     }
 
-    if ((attack.target & kSlidesBack) != 0)
+    if ((attack.target & ActState::SlidesBack) != 0)
     {
-        game.StartSlideBack(0);
-        attack.target = static_cast<u16>(attack.target & ~kSlidesBack);
+        battle.StartSlideBack(0);
+        attack.target = static_cast<u16>(attack.target & ~ActState::SlidesBack);
         enemy.stage &= ~BattleUnit::FollowingUp;
     }
 
@@ -866,10 +863,11 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         );
     }
 
-    if ((follow.target & kAddsHitPicture) != 0)
+    if ((follow.target & ActState::AddsPicture) != 0)
     {
-        follow.target = static_cast<u16>(follow.target & ~kAddsHitPicture);
-        game.AddHitPicture(
+        follow.target = static_cast<u16>(follow.target & ~ActState::AddsPicture);
+        battle.AddHitPicture(
+            services.errors,
             follow.effectA,
             follow.effectQ,
             static_cast<i16>(enemy.aimX + follow.anchorX),
@@ -878,7 +876,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         );
     }
 
-    game.DrawHitPictures();
+    DrawHitPictures(services, scene);
     follow.target = static_cast<u16>(follow.target | battle.HitBits());
 
     if ((follow.target & kEnemyStrikeBits) == 0)

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <string_view>
 
 #include "audio/audio_manager.h"
 #include "battle/battle_message.h"
@@ -12,6 +13,7 @@
 #include "battle/smooth/smooth_projector.h"
 #include "battle/smooth/smooth_unit.h"
 #include "config/config.h"
+#include "core/error_box.h"
 #include "core/words.h"
 #include "draw/painter.h"
 #include "org/database.h"
@@ -34,6 +36,10 @@ constexpr i32 kForcedAttackAction2 = 0x31;  // unk2A8C 2
 constexpr i16 kForcedX = 0x140;             // a unit with guestControl attacks from the middle of the field
 constexpr i16 kForcedY = 0x136;
 constexpr u16 kSecondForcedAttack = 2;
+constexpr u32 kTurnsBeforeFadeIn = 0x10000000;  // unk26B8 bit 28: the role turns before it fades in (swd3e)
+constexpr i32 kMarkedAttackAct = 0xFA;          // swd3e: the attack act of a role under MarkBit4
+constexpr std::u8string_view kAttackActTitle = u8"Attack Act";   // 0x004BFA50
+constexpr std::u8string_view kActError = u8"[%s]QQ:%d號錯誤!!";  // 0x004BFA5C
 constexpr u32 kBoomerangBackHome = 2;
 constexpr u32 kBoomerangGoing = 0;
 constexpr u32 kBoomerangReturning = 1;
@@ -115,11 +121,18 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
         return 0;
     }
 
-    if (role.autoControl == 1 && (role.command.flags & UnitCommand::FadesIn) != 0 && role.fadedIn == 0 &&
-        UnitFrame(role).DrawFadeInAdvance(services, target, scene) == 0)
+    if ((role.autoControl == 1 || role.StatusBit5() == 1) && (role.command.flags & UnitCommand::AtTarget) != 0)
     {
-        role.fadedIn = 1;
-        return 0;
+        if ((role.unk26B8 & kTurnsBeforeFadeIn) != 0)
+        {
+            role.SetFacing(1);
+        }
+
+        if (role.fadedIn == 0 && UnitFrame(role).DrawFadeInAdvance(services, target, scene) == 0)
+        {
+            role.fadedIn = 1;
+            return 0;
+        }
     }
 
     if (role.guestControl == 1)
@@ -143,26 +156,34 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
     }
 
     const bool forced = role.autoControl == 1 || role.guestControl == 1;
+    attack.id = role.actId;
+    attack.action = kAttackAction;
 
-    if (role.critical == 1)
+    // A critical attack (the role's or one under way) of a party member unless MarkBit4; the weapon's act follows it
+    // up when the role is not forced. The critical action is taken back by a forced role (as in the original).
+    if ((role.critical == 1 || battle.criticalAttack == 1) && role.MarkBit4() == 0)
     {
-        battle.criticalAttack = 1;
-        attack.id = role.actId;
-        attack.action = kCriticalAction;
+        if (role.PartyMember() == 1)
+        {
+            battle.criticalAttack = 1;
+            attack.action = kCriticalAction;
 
-        if (forced)
-        {
-            attack.action = kAttackAction;
-        }
-        else
-        {
-            role.command.castAct = role.weapon.data.unk48;
+            if (!forced)
+            {
+                role.command.castAct = role.weapon.data.unk48;
+            }
+            else
+            {
+                attack.action = kAttackAction;
+            }
         }
     }
     else
     {
-        attack.id = role.actId;
-        attack.action = kAttackAction;
+        if (role.MarkBit4() == 1)
+        {
+            attack.id = kMarkedAttackAct;
+        }
 
         if (forced && role.unk2A8C != 0)
         {
@@ -170,7 +191,12 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
         }
     }
 
-    UnitFrame(role).Action(services, target, attack, scene);
+    if (UnitFrame(role).Action(services, target, attack, scene) == 0)
+    {
+        const std::string_view name(role.displayName.data(), role.displayName.size());
+        ErrorBox(services.errors, kAttackActTitle, kActError, name.substr(0, name.find('\0')), attack.action);
+        return 1;
+    }
 
     if ((attack.target & ActState::Recoils) != 0)
     {
@@ -207,6 +233,18 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
     {
         battle.quaking = 1;
         battle.quakePhase = 0;
+    }
+
+    if ((attack.target & ActState::SlidesTo) != 0)
+    {
+        battle.StartSlideTo(0);
+        attack.target = static_cast<u16>(attack.target & ~ActState::SlidesTo);
+    }
+
+    if ((attack.target & ActState::SlidesBack) != 0)
+    {
+        battle.StartSlideBack(0);
+        attack.target = static_cast<u16>(attack.target & ~ActState::SlidesBack);
     }
 
     ActState& follow = role.slotActs[static_cast<std::size_t>(slot)];
@@ -255,16 +293,22 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
         return 0;
     }
 
-    follow.id = kDirectFollowAct;
-    follow.action = 0;
-
-    if (attack.effectA != 0)
+    if (follow.waiting != 1)
     {
-        follow.id = attack.effectA;
-    }
+        follow.id = role.command.castAct;
+        follow.action = 0;
 
-    if (follow.id != 0)
-    {
+        if (attack.effectA != 0)
+        {
+            follow.id = attack.effectA;
+        }
+
+        if (follow.id == 0)
+        {
+            follow.waiting = 1;
+            return 0;
+        }
+
         if ((role.command.flags & UnitCommand::TargetsUnit) != 0)
         {
             const int fromX = static_cast<i16>(role.actAnchorX) - static_cast<i16>(role.actOffsetX) + role.placement.x;
@@ -300,32 +344,41 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
                 static_cast<i16>(attack.anchorX),
                 static_cast<i16>(attack.anchorY)
             );
+
+            // A missing picture is read through a null pointer in the original.
+            if (role.picture != nullptr)
+            {
+                scene.Add(
+                    PictureStep{
+                        .picture = RefOf(services.archive, role.picture),
+                        .x = static_cast<i16>(role.aimX),
+                        .y = static_cast<i16>(role.aimY),
+                        .mode = role.shadowMode,
+                    }
+                );
+            }
         }
+
+        if ((follow.target & ActState::AddsPicture) != 0)
+        {
+            follow.target = static_cast<u16>(follow.target & ~ActState::AddsPicture);
+            battle.AddHitPicture(
+                services.errors,
+                follow.effectA,
+                follow.effectQ,
+                static_cast<i16>(follow.anchorX + role.aimX),
+                static_cast<i16>(follow.anchorY + role.aimY),
+                0
+            );
+        }
+
+        DrawHitPictures(services, scene);
+        follow.target = static_cast<u16>(follow.target | battle.HitBits());
 
         if ((follow.target & ActState::Strikes) != 0)
         {
-            role.Strike(services, target, 1);
             follow.target = 0;
-        }
-    }
-    else
-    {
-        follow.waiting = 1;
-    }
-
-    if (follow.waiting != 1)
-    {
-        // A missing picture is read through a null pointer in the original.
-        if (role.picture != nullptr)
-        {
-            scene.Add(
-                PictureStep{
-                    .picture = RefOf(services.archive, role.picture),
-                    .x = static_cast<i16>(role.aimX),
-                    .y = static_cast<i16>(role.aimY),
-                    .mode = role.shadowMode,
-                }
-            );
+            role.Strike(services, target, 1);
         }
 
         return 0;
@@ -381,7 +434,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
         return 0;
     }
 
-    if (attack.waiting != 1)
+    if (attack.waiting != 1 || !role.images.Empty() || !battle.HitPicturesDone())
     {
         return 0;
     }

@@ -126,6 +126,9 @@ struct ActState
         Dashes = 0x100,      // with FollowsUp: the role dashes (BattleRole::ChargeAttackFrame)
         Holds = 0x200,       // the act stays on its step while the unit recoils
         FadesField = 0x400,  // with FollowsUp: the field fades by the act's lights
+        AddsPicture = 0x20,  // swd3e: the act's effect is added as a second-tier spell picture (AddHitPicture)
+        SlidesBack = 0x40,   // swd3e: the units slide back (BattleState::StartSlideBack)
+        SlidesTo = 0x800,    // swd3e: the units slide to the unit (BattleState::StartSlideTo)
         Quakes = 0x8000,     // starts the screen quake (0x0045E7D0 shakes while BattleState::quaking)
     };
 

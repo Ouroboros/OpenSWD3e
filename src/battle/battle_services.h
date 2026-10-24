@@ -56,5 +56,7 @@ struct BattleServices
 
 bool AnyRoleBuffed(const BattleServices& services);
 bool AllRolesHaveEffect(const BattleServices& services, u32 bits);
+void DrawHitPictures(BattleServices& services);
+void DrawHitPictures(BattleServices& services, smooth::Scene& scene);
 
 }  // namespace swd3e

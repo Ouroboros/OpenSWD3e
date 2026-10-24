@@ -226,18 +226,18 @@ int Game::WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, u32 s
 }
 
 // swd3e.exe 0x00468440: the units start sliding to `x` (SlideUnits mode 1)
-i16 Game::StartSlideTo(i16 x)
+i16 BattleState::StartSlideTo(i16 x)
 {
-    this->battleState.slideMode = BattleState::SlideToUnit;
-    this->battleState.slideTarget = x;
+    this->slideMode = BattleState::SlideToUnit;
+    this->slideTarget = x;
     return x;
 }
 
 // swd3e.exe 0x00468460: and back (mode 2)
-i16 Game::StartSlideBack(i16 x)
+i16 BattleState::StartSlideBack(i16 x)
 {
-    this->battleState.slideMode = BattleState::SlideBack;
-    this->battleState.slideTarget = x;
+    this->slideMode = BattleState::SlideBack;
+    this->slideTarget = x;
     return x;
 }
 

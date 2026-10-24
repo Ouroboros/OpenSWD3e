@@ -860,13 +860,15 @@ void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadab
     this->evadeRolled = 1;
 }
 
-// swd3e.exe 0x0047FFD0: one frame of the role's attack on `target`; 1 once it is over. A unit with autoControl and a
-// FadesIn command fades in first; one with guestControl attacks from the middle of the field. The attack act (the
-// critical one, with the weapon's act, while critical) is drawn, and its target bits play the effect in the recoil act,
-// quake the screen, start the follow-up in slotActs[slot] (fading the field by the act's lights), or strike. The
-// follow-up flies to the target (TargetsUnit) or is placed on it and may strike again; once it waits it darkens by 4 a
-// frame. When the attack act waits too, the acts are cleared; without a critical attack an extra attack repeats it, and
-// the recoil tint is left at 1.
+// swd3e.exe 0x0047FFD0: one frame of the role's attack on `target`; 1 once it is over. A unit with autoControl or
+// StatusBit5 and an AtTarget command fades in first (turning first under unk26B8 bit 28); one with guestControl attacks
+// from the middle of the field. The attack act (the critical one of a party member, with the weapon's act, unless
+// MarkBit4; act 0xFA under MarkBit4) is drawn, an error box (returning 1) when it cannot run; its target bits play the
+// effect in the recoil act, quake the screen, slide the units, start the follow-up in slotActs[slot] (fading the field
+// by the act's lights), or strike. The follow-up (the command's cast act) flies to the target (TargetsUnit) or is
+// placed on it, may add a hit picture and strike again; once it waits it darkens by 4 a frame. When the attack act
+// waits too and the afterimages and hit pictures are done, the acts are cleared; without a critical attack an extra
+// attack repeats it, and the recoil tint is left at 1.
 int BattleRole::AttackFrame(BattleServices& services, BattleUnit& target, int slot)
 {
     smooth::Scene scene;

@@ -366,11 +366,6 @@ private:
     void RaiseLevel(u16 role, u16 level);
     void ApplyDrain(i32& amount, BattleUnit& attacker, BattleUnit& target);
     void ApplyDrainSums(BattleUnit& unit);
-    void ClearHitBits();
-    HitPicture& AddHitPicture(i32 id, i32 action, i16 x, i16 y, i32 mirrored);
-    void DrawHitPictures();
-    i16 StartSlideTo(i16 x);
-    i16 StartSlideBack(i16 x);
     int SlideUnits(const BattleUnit& unit, i16 x);
     void CureHeldBy(int enemy);
     void TryRetreat(int role);
