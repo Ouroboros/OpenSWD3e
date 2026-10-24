@@ -25,7 +25,9 @@ constexpr int kRippleSplashRadius = 0xC;
 constexpr int kRippleSplashX = 0x64;
 constexpr int kRippleSplashY = 0x32;
 constexpr int kRippleStartShiftY = 0x96;
-constexpr i32 kRippleWalked = 0x3E8;  // HitTargetFrame: the ripple frames once the walk reached the target
+constexpr i32 kRippleWalked = 0x12C;   // HitTargetFrame: the ripple frames once the walk reached the target
+constexpr i32 kAllHitCentreX = 0x190;  // HitAllFrame: the place of a cast that defeats every enemy (unk5772F8)
+constexpr i32 kAllHitCentreY = 0xC8;
 constexpr i32 kSplashEvery = 9;
 constexpr i32 kSplashFrames = 0x64;
 constexpr int kSplashFromX = 0x3C;
@@ -189,16 +191,7 @@ int HitFrame::FadeHitActAdvance(BattleUnit& unit, u32 act, i32 action, int index
 }
 
 // What Game::DrawHitPicture decides of the frame; the draws into `scene`.
-bool HitFrame::DrawHitPictureAdvance(
-    BattleUnit& target,
-    BattleUnit& attacker,
-    u32 act,
-    int index,
-    u16& x,
-    u16& y,
-    int& originX,
-    Scene& scene
-)
+bool HitFrame::DrawHitPictureAdvance(BattleUnit& target, BattleUnit& attacker, u32 act, int index, Scene& scene)
 {
     Game& game = this->game;
     BattleState& battle = game.battleState;
@@ -209,11 +202,6 @@ bool HitFrame::DrawHitPictureAdvance(
     hit.action = 0;
     hit.hold = 0;
 
-    if (battle.paused == 1)
-    {
-        hit.hold = 1;
-    }
-
     if (game.acts.Run(hit) == 0)
     {
         battle.followActs[at] = ActState{};
@@ -221,22 +209,27 @@ bool HitFrame::DrawHitPictureAdvance(
         return false;
     }
 
-    const Picture* picture = game.archive.LoadPictureKept(hit.frame, hit.picture);
+    if (hit.unknown5E != 0 || hit.unknown60 != 0)
+    {
+        hit.flags |= Painter::ZoomModes;
+        painter.SetZoom(hit.x, hit.y, hit.unknown5E, hit.unknown60);
+    }
+
+    // Once the walk reached the target the picture is not loaded again (nothing is drawn).
+    const Picture* picture = battle.hitWalked[at] == 0 ? game.archive.LoadPictureKept(hit.frame, hit.picture) : nullptr;
     const int width = picture != nullptr ? picture->width : 0;
     u32 flags = hit.flags;
+    int originX = hit.x;
     u16 anchorX = hit.anchorX;
-    originX = hit.x;
-
-    // A picture that does not load is read through a null pointer in the original.
-    if (picture != nullptr)
-    {
-        painter.SetSource(picture->data.data());
-    }
 
     if (attacker.kind == 0)
     {
         flags ^= Painter::Mirror;
-        originX = width - hit.x;
+
+        if (hit.x != 0)
+        {
+            originX = width - hit.x;
+        }
 
         if (hit.anchorX != 0)
         {
@@ -247,7 +240,11 @@ bool HitFrame::DrawHitPictureAdvance(
     if (battle.mirrored == 1)
     {
         flags ^= Painter::Mirror;
-        originX = width - hit.x;
+
+        if (hit.x != 0)
+        {
+            originX = width - hit.x;
+        }
 
         if (hit.anchorX != 0)
         {
@@ -257,17 +254,16 @@ bool HitFrame::DrawHitPictureAdvance(
 
     u16 offsetX = 0;
     u16 offsetY = 0;
+    u16 x = 0;
+    u16 y = 0;
     attacker.GetOffset(offsetX, offsetY);
 
-    if (offsetX != 0 || offsetY != 0)
+    if ((offsetX != 0 || offsetY != 0) && (anchorX != 0 || hit.anchorY != 0))
     {
         attacker.GetOrigin(x, y);
         x = static_cast<u16>(x + offsetX);
         y = static_cast<u16>(y + offsetY);
-    }
 
-    if (anchorX != 0 || hit.anchorY != 0)
-    {
         if (x != 0 || y != 0)
         {
             y = static_cast<u16>(y - hit.anchorY);
@@ -277,12 +273,12 @@ bool HitFrame::DrawHitPictureAdvance(
     else
     {
         target.GetDrawPosition(x, y);
-        x = static_cast<u16>(x - originX);
         y = static_cast<u16>(y - static_cast<u16>(hit.y));
+        x = static_cast<u16>(x - originX);
     }
 
     game.audio.PlaySound(hit.view, game.config.soundVolume);
-    game.audio.SetSoundPan(hit.view, originX + static_cast<i16>(x) >= kHitPanCentre ? kHitPan : -kHitPan);
+    game.audio.SetSoundPan(hit.view, static_cast<i16>(x) >= kHitPanCentre ? kHitPan : -kHitPan);
     hit.view = 0;
     attacker.ClearMoveAxes(x, y);
     battle.hitPictureX = static_cast<i16>(x);
@@ -292,36 +288,65 @@ bool HitFrame::DrawHitPictureAdvance(
 
     if (attacker.CommandTarget(speed, second) == 1)
     {
-        u16 fromX = 0;
-        u16 fromY = 0;
-        attacker.GetDrawPosition(fromX, fromY);
-        fromX = static_cast<u16>(fromX - originX);
-        fromY = static_cast<u16>(fromY - static_cast<u16>(hit.y));
+        u16 toX = 0;
+        u16 toY = 0;
+        target.GetDrawPosition(toX, toY);
+        toY = static_cast<u16>(toY - static_cast<u16>(hit.y));
+        toX = static_cast<u16>(toX - originX);
 
         if (x == 0)
         {
             x = static_cast<u16>(-originX);
         }
 
-        if (game.WalkLine(
-                battle.hitPictureX,
-                battle.hitPictureY,
-                static_cast<i16>(fromX),
-                static_cast<i16>(fromY),
-                static_cast<i16>(x),
-                static_cast<i16>(y),
-                speed,
-                0,
-                index
-            ) == 1)
+        if (battle.hitWalked[at] == 0 && game.WalkLine(
+                                             battle.hitPictureX,
+                                             battle.hitPictureY,
+                                             static_cast<i16>(x),
+                                             static_cast<i16>(y),
+                                             static_cast<i16>(toX),
+                                             static_cast<i16>(toY),
+                                             speed,
+                                             static_cast<i16>(second),
+                                             index
+                                         ) == 1)
         {
+            // The walk reached the target: the hit strikes, and a command of several turns walks again.
+            battle.unk577250 = 0;
+            hit.effectA = attacker.FollowAct();
+            battle.unk535B38[at].id = attacker.FollowAct();
+            battle.unk535B38[at].action = 0;
             hit.target |= ActState::Strikes;
-            hit.waiting = 1;
+            battle.hitWalked[at] = 1;
+            auto& turns = battle.enemyCommandTurns[at];
+
+            if (static_cast<i8>(turns) <= 0)
+            {
+                hit.waiting = 1;
+            }
+            else
+            {
+                battle.hitWalked[at] = 0;
+                turns = static_cast<u8>(turns - 1);
+            }
+
+            if (hit.effectA != 0)
+            {
+                hit.target |= ActState::AddsPicture;
+                picture = nullptr;
+                target.GetDrawPosition(x, y);
+                battle.hitPictureX = static_cast<i16>(x) - hit.anchorX;
+                battle.hitPictureY = static_cast<i16>(y) - hit.anchorY;
+            }
         }
     }
 
+    battle.hitDrawX = battle.hitPictureX;
+    battle.hitDrawY = battle.hitPictureY;
+
     if (picture != nullptr)
     {
+        painter.SetSource(picture->data.data());
         painter.DrawPicture(
             battle.hitPictureX,
             battle.hitPictureY,
@@ -336,7 +361,7 @@ bool HitFrame::DrawHitPictureAdvance(
 }
 
 // What Game::RippleHitFrame decides of the frame; the draws into `scene`.
-void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, int index, u16& targetX, Scene& scene)
+void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, int index, Scene& scene)
 {
     Game& game = this->game;
     BattleState& battle = game.battleState;
@@ -345,6 +370,7 @@ void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, i
     i32& frames = battle.rippleFrames[at];
     u16 speed = 0;
     u16 second = 0;
+    u16 targetX = 0;
     u16 targetY = 0;
     ScenePainter painter(game.battleServices, scene);
 
@@ -377,7 +403,7 @@ void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, i
                                           static_cast<i16>(targetX),
                                           static_cast<i16>(targetY),
                                           speed,
-                                          0,
+                                          static_cast<i16>(second),
                                           index
                                       ) == 1)
         {
@@ -445,26 +471,57 @@ void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, i
     }
 }
 
+// The second-tier spell picture of a hit act (inline in 0x004626D0 and 0x004632B0): an act marked AddsPicture adds
+// its effect at the place it was drawn (unk4FF0BC set); then the pictures are drawn and their target bits join the
+// act's.
+void HitFrame::AddAndDrawHitPictures(BattleUnit& target, BattleUnit& attacker, int index, Scene& scene)
+{
+    Game& game = this->game;
+    BattleState& battle = game.battleState;
+    const auto at = static_cast<std::size_t>(index);
+    ActState& hit = battle.hitActs[at];
+
+    if ((hit.target & ActState::AddsPicture) != 0)
+    {
+        hit.target = static_cast<u16>(hit.target & ~ActState::AddsPicture);
+        u16 x = 0;
+        u16 y = 0;
+        target.GetDrawPosition(x, y);
+        battle.AddHitPicture(
+            game.errors,
+            hit.effectA,
+            hit.effectQ,
+            static_cast<i16>(battle.hitDrawX + hit.anchorX),
+            static_cast<i16>(battle.hitDrawY + hit.anchorY),
+            attacker.kind == 0 ? 1 : 0
+        );
+        battle.unk4FF0BC[at] = 1;
+    }
+
+    DrawHitPictures(game.battleServices, scene);
+    const u16 bits = battle.HitBits();
+
+    if (bits != 0)
+    {
+        hit.target = static_cast<u16>(hit.target | bits);
+    }
+}
+
 // What Game::HitTargetFrame decides of the frame; the draws into `scene`.
 int HitFrame::HitTargetFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 act, int index, Scene& scene)
 {
     Game& game = this->game;
     BattleState& battle = game.battleState;
-    ScenePainter painter(game.battleServices, scene);
     const auto at = static_cast<std::size_t>(index);
     ActState& hit = battle.hitActs[at];
-    ActState& follow = battle.followActs[at];
-    u16 targetX = 0;
-    u16 targetY = 0;
-    int originX = 0;
 
     if (hit.waiting == 0)
     {
         if (battle.rippleHits == 1)
         {
-            this->RippleHitFrameAdvance(target, attacker, index, targetX, scene);
+            this->RippleHitFrameAdvance(target, attacker, index, scene);
         }
-        else if (!this->DrawHitPictureAdvance(target, attacker, act, index, targetX, targetY, originX, scene))
+        else if (!this->DrawHitPictureAdvance(target, attacker, act, index, scene))
         {
             return 1;
         }
@@ -477,59 +534,7 @@ int HitFrame::HitTargetFrameAdvance(BattleUnit& target, BattleUnit& attacker, u3
         battle.unk53BF98 = 1;
     }
 
-    if (battle.unk4FF0BC[at] == 1)
-    {
-        follow.id = hit.effectA;
-        follow.action = hit.effectQ;
-        follow.hold = 0;
-
-        if (battle.paused == 1)
-        {
-            follow.hold = 1;
-        }
-
-        if (game.acts.Run(follow) == 0)
-        {
-            follow = ActState{};
-            battle.unk4FF0BC[at] = 0;
-            return 1;
-        }
-
-        if (follow.target != 0)
-        {
-            hit.target = follow.target;
-            follow.target = 0;
-        }
-
-        const Picture* picture = game.archive.LoadPictureKept(follow.frame, follow.picture);
-        game.audio.PlaySound(follow.view, game.config.soundVolume);
-        game.audio.SetSoundPan(follow.view, originX + static_cast<i16>(targetX) >= kHitPanCentre ? kHitPan : -kHitPan);
-        follow.view = 0;
-        u32 flags = follow.flags;
-
-        if (attacker.kind == 0)
-        {
-            flags ^= Painter::Mirror;
-        }
-
-        if (battle.mirrored == 1)
-        {
-            flags ^= Painter::Mirror;
-        }
-
-        // A picture that does not load is read through a null pointer in the original.
-        if (picture != nullptr)
-        {
-            painter.SetSource(picture->data.data());
-            painter.DrawPicture(battle.hitPictureX, battle.hitPictureY, picture->width, picture->height, flags);
-        }
-
-        if (follow.waiting == 1)
-        {
-            battle.unk4FF0BC[at] = 0;
-        }
-    }
-
+    this->AddAndDrawHitPictures(target, attacker, index, scene);
     game.TakeHitBits(target, attacker, index);
 
     if (battle.hitFading[at] == 1 && this->FadeHitActAdvance(target, hit.effectA, hit.effectQ, index, scene) == 1)
@@ -543,15 +548,17 @@ int HitFrame::HitTargetFrameAdvance(BattleUnit& target, BattleUnit& attacker, u3
         return 0;
     }
 
-    if (hit.waiting != 1 || battle.hitFading[at] != 0 || battle.unk4FF0BC[at] != 0)
+    if (hit.waiting != 1 || !battle.HitPicturesDone())
     {
         return 0;
     }
 
     battle.hitPictureY = 0;
-    follow = ActState{};
+    battle.followActs[at] = ActState{};
+    battle.unk535B38[at] = ActState{};
     battle.hitPictureX = 0;
     battle.rippleFrames[at] = 0;
+    battle.hitWalked[at] = 0;
     return 1;
 }
 
@@ -563,7 +570,6 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
     ScenePainter painter(game.battleServices, scene);
     const auto at = static_cast<std::size_t>(index);
     ActState& hit = battle.hitActs[at];
-    ActState& follow = battle.followActs[at];
     u16 delay = 0;
     battle.lastDamage = 0;
 
@@ -572,11 +578,6 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         hit.id = static_cast<i32>(act);
         hit.action = 0;
         hit.hold = 0;
-
-        if (battle.paused == 1)
-        {
-            hit.hold = 1;
-        }
 
         if (game.acts.Run(hit) == 0)
         {
@@ -593,7 +594,6 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
             painter.SetSource(picture->data.data());
         }
 
-        game.PlaceAllHit(attacker, picture != nullptr ? picture->width : 0, index, delay);
         u32 flags = hit.flags;
 
         if (attacker.kind == 0)
@@ -605,6 +605,17 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         {
             flags ^= Painter::Mirror;
         }
+
+        game.PlaceAllHit(attacker, picture != nullptr ? picture->width : 0, index, delay);
+
+        if (battle.unk5772F8 == 1)
+        {
+            battle.hitPictureX = kAllHitCentreX - hit.x;
+            battle.hitPictureY = kAllHitCentreY - hit.y;
+        }
+
+        battle.hitDrawX = battle.hitPictureX;
+        battle.hitDrawY = battle.hitPictureY;
 
         if (picture != nullptr)
         {
@@ -620,49 +631,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         game.DarkenByTint();
     }
 
-    if (battle.unk4FF0BC[at] == 1)
-    {
-        follow.id = hit.effectA;
-        follow.action = hit.effectQ;
-
-        if (game.acts.Run(follow) == 0)
-        {
-            return 0;
-        }
-
-        if (follow.target != 0)
-        {
-            hit.target = follow.target;
-            follow.target = 0;
-        }
-
-        const Picture* picture = game.archive.LoadPictureKept(follow.frame, follow.picture);
-        game.audio.PlaySound(follow.view, game.config.soundVolume);
-        u32 flags = follow.flags;
-        hit.view = 0;
-
-        if (attacker.kind == 0)
-        {
-            flags ^= Painter::Mirror;
-        }
-
-        if (picture != nullptr)
-        {
-            painter.SetSource(picture->data.data());
-            painter.DrawPicture(battle.hitPictureX, battle.hitPictureY, picture->width, picture->height, flags);
-        }
-
-        if (follow.waiting == 1)
-        {
-            battle.unk4FF0BC[at] = 0;
-        }
-    }
-
-    if ((hit.target & ActState::Recoils) != 0)
-    {
-        battle.unk4FF0BC[at] = 1;
-        hit.target = 0;
-    }
+    this->AddAndDrawHitPictures(target, attacker, index, scene);
 
     if ((hit.target & ActState::Quakes) != 0)
     {
@@ -716,18 +685,29 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         }
     }
 
-    if (hit.waiting != 1 || battle.unk4FF0BC[at] != 0)
+    if (battle.unk5772F8 == 1)
     {
-        return 0;
+        // A cast that defeats every enemy ends once they are all gone.
+        if (static_cast<i32>(battle.enemiesGone) - battle.unk53BF02 < static_cast<i32>(battle.enemyCount))
+        {
+            return 0;
+        }
     }
-
-    if (battle.slideBackPicture > 0)
+    else
     {
-        game.PushUnits(hit.picture, 1);
+        if (hit.waiting != 1 || !battle.HitPicturesDone())
+        {
+            return 0;
+        }
+
+        if (battle.slideBackPicture > 0)
+        {
+            game.PushUnits(hit.picture, hit.waiting);
+        }
     }
 
     battle.hitAllFrames = 0;
-    follow = ActState{};
+    battle.followActs[at] = ActState{};
     battle.unk4FF0BC[at] = 0;
     return 1;
 }

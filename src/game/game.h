@@ -475,8 +475,8 @@ private:
     void BattleEndFrame();
     void EndCheckFrame();
     int HitTargetFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index);
-    void RippleHitFrame(BattleUnit& target, BattleUnit& attacker, int index, u16& targetX);
-    bool DrawHitPicture(BattleUnit& target, BattleUnit& attacker, u32 act, int index, u16& x, u16& y, int& originX);
+    void RippleHitFrame(BattleUnit& target, BattleUnit& attacker, int index);
+    void DrawHitPicture(BattleUnit& target, BattleUnit& attacker, u32 act, int index);
     void TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index);
     int HitAllFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index, int all);
     void PlaceAllHit(BattleUnit& attacker, int width, int index, u16& delay);

@@ -460,13 +460,14 @@ void Game::QuakeFrame()
 }
 
 // swd3e.exe 0x004626D0: one frame of the hit act `act` of `attacker` on `target` (unit slot `index`, its hit act
-// hitActs and follow act followActs); 1 once the hit act waits with no fade or follow act left (the follow act and
-// the ripple frames cleared), 1 too when an act ends. In the ripple battle (rippleHits) a ripple runs instead: walking
-// from the attacker to the target (then held for kRippleHold frames) for a moving attack, splashes over the target
-// otherwise. Else the picture is read straight from its file and drawn, walking from the attacker to the target for a
-// moving attack. The follow act plays its effects over it. The target bits: Recoils starts the follow act, Quakes
-// the quake, FollowsUp the nudges and the field fade, UnkTarget4 raises flag 26B8, Strikes (and UnkTarget10) take
-// the damage of the hit with its digits (and the spirit and stamina digits of a role's hit).
+// hitActs); 1 once the hit act waits with no second-tier spell picture left (the follow act and the ripple frames
+// cleared), 1 too when an act ends. In the ripple battle (rippleHits) a ripple runs instead: walking from the attacker
+// to the target (then held for kRippleHold frames) for a moving attack, splashes over the target otherwise. Else the
+// picture is read straight from its file (zoomed by its 'CS' values) and drawn, walking to the target for a moving
+// attack; reaching it strikes, a command of several turns (enemyCommandTurns) walks again, and the attacker's follow
+// act becomes the act's effect: added as a second-tier spell picture where the act was drawn. The target bits:
+// Quakes the quake, FollowsUp the nudges and the field fade, UnkTarget4 raises flag 26B8, Strikes (and UnkTarget10)
+// take the damage of the hit with its digits (and the spirit and stamina digits of a role's hit).
 int Game::HitTargetFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index)
 {
     smooth::Scene scene;
@@ -477,24 +478,21 @@ int Game::HitTargetFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int 
 
 // The ripple of HitTargetFrame (inline in the original); see there. The ripple (BattleState::ripple) is refracted over
 // the frame at the walked point (kRippleSound once it reaches the target) or over the target.
-void Game::RippleHitFrame(BattleUnit& target, BattleUnit& attacker, int index, u16& targetX)
+void Game::RippleHitFrame(BattleUnit& target, BattleUnit& attacker, int index)
 {
     smooth::Scene scene;
-    smooth::HitFrame(*this).RippleHitFrameAdvance(target, attacker, index, targetX, scene);
+    smooth::HitFrame(*this).RippleHitFrameAdvance(target, attacker, index, scene);
     scene.Show(this->battleServices);
 }
 
 // The picture of HitTargetFrame (inline in the original); see there. The act runs a step (false once it ends: the
 // follow act cleared); the picture is mirrored for an enemy attacker and with the sides, placed at the attacker's
 // offset from its origin less the act's anchor, or at the target less the act's place, its sound panned by the side.
-// For a moving attack it walks the line from the attacker; reaching the target strikes and ends the act.
-bool Game::DrawHitPicture(BattleUnit& target, BattleUnit& attacker, u32 act, int index, u16& x, u16& y, int& originX)
+void Game::DrawHitPicture(BattleUnit& target, BattleUnit& attacker, u32 act, int index)
 {
     smooth::Scene scene;
-    const auto result =
-        smooth::HitFrame(*this).DrawHitPictureAdvance(target, attacker, act, index, x, y, originX, scene);
+    smooth::HitFrame(*this).DrawHitPictureAdvance(target, attacker, act, index, scene);
     scene.Show(this->battleServices);
-    return result;
 }
 
 // The target bits of HitTargetFrame (inline in the original); see there. A strike's damage (capped at kMaxHitDamage,
@@ -506,12 +504,6 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
     BattleMessages& messages = this->battleMessages;
     const auto at = static_cast<std::size_t>(index);
     ActState& hit = battle.hitActs[at];
-
-    if ((hit.target & ActState::Recoils) != 0)
-    {
-        hit.target = 0;
-        battle.unk4FF0BC[at] = 1;
-    }
 
     if ((hit.target & ActState::Quakes) != 0)
     {
@@ -618,14 +610,15 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
 }
 
 // swd3e.exe 0x004632B0: one frame of the hit act `act` of `attacker` on `target` or, with `all` 1, on its whole side
-// (unit slot `index`); 1 once the hit act waits with no follow act left (the follow act cleared), 0 when an act ends.
-// The picture is read straight from its file (counting hitAllFrames), placed at the attacker's offset from its origin
-// less the act's anchor, or on a fixed place by the side (kAllHitLeftX, kAllHitRightX, kAllHitY: an enemy attacker
-// unmirrored keeps y 0), walking along y 0 for a moving attack. The follow act clears the hit act's sound instead of
-// its own (kept). The target bits work as in HitTargetFrame, on every unit of the side with `all`: the roles hit by
-// a role while unk53BF64 and unk53AE7C take the damage at once (Damage), as do all roles while hitsAllRoles; the spirit
-// and stamina of a hit are cleared after their digits (so the slots record 0 for them), and the digit delay of the
-// enemies runs on from the walk speed without a reset (kept).
+// (unit slot `index`); 1 once the hit act waits with no second-tier spell picture left (a cast that defeats every
+// enemy, unk5772F8: once they are all gone), 0 when an act ends. The picture is read straight from its file (counting
+// hitAllFrames), placed at the attacker's offset from its origin less the act's anchor, or on a fixed place by the
+// side (kAllHitLeftX, kAllHitRightX, kAllHitY: an enemy attacker unmirrored keeps y 0; with unk5772F8 the middle of the
+// field), walking along y 0 for a moving attack; an act marked AddsPicture adds its effect as a second-tier picture.
+// The target bits work as in HitTargetFrame, on every unit of the side with `all`: the roles hit by a role while
+// unk53BF64 and unk53AE7C take the damage at once (Damage), as do all roles while hitsAllRoles; the spirit and stamina
+// of a hit are cleared after their digits (so the slots record 0 for them), and the digit delay of the enemies runs
+// on from the walk speed without a reset (kept).
 int Game::HitAllFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index, int all)
 {
     smooth::Scene scene;
@@ -646,14 +639,6 @@ void Game::PlaceAllHit(BattleUnit& attacker, int width, int index, u16& delay)
     u16 x = 0;
     u16 y = 0;
     attacker.GetOffset(offsetX, offsetY);
-
-    if (offsetX != 0 && offsetY != 0)
-    {
-        attacker.GetOrigin(x, y);
-        x = static_cast<u16>(x + offsetX);
-        y = static_cast<u16>(y + offsetY);
-    }
-
     int originX = hit.x;
     u16 anchorX = hit.anchorX;
 
@@ -683,8 +668,13 @@ void Game::PlaceAllHit(BattleUnit& attacker, int width, int index, u16& delay)
         }
     }
 
-    if (anchorX != 0 || hit.anchorY != 0)
+    // An offset with an anchor places the picture at the attacker's origin; otherwise it stands on a fixed place.
+    if ((offsetX != 0 || offsetY != 0) && (anchorX != 0 || hit.anchorY != 0))
     {
+        attacker.GetOrigin(x, y);
+        x = static_cast<u16>(x + offsetX);
+        y = static_cast<u16>(y + offsetY);
+
         if (x != 0 || y != 0)
         {
             x = static_cast<u16>(x - anchorX);
@@ -746,7 +736,7 @@ void Game::PlaceAllHit(BattleUnit& attacker, int width, int index, u16& delay)
             static_cast<i16>(x),
             0,
             delay,
-            0,
+            static_cast<i16>(second),
             0
         ) == 1)
     {
@@ -801,7 +791,7 @@ void Game::RaiseAllHit(BattleUnit& target, int all)
         {
             BattleRole& role = this->battleRoles[index];
 
-            if (role.autoControl != 1 && role.guestControl != 1 && !role.IsDefeated())
+            if (role.GuestControl() != 1 && role.Ghost() != 1 && !role.IsDefeated())
             {
                 role.RaiseFlag26B8(this->battleState);
             }
@@ -900,7 +890,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
         {
             BattleRole& role = this->battleRoles[slot];
 
-            if (role.autoControl == 1 || role.guestControl == 1 || role.StatusBit13() == 1)
+            if (role.GuestControl() == 1 || role.Ghost() == 1 || role.StatusBit13() == 1)
             {
                 continue;
             }

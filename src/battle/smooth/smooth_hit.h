@@ -25,18 +25,11 @@ public:
 
     int FadeHitActAdvance(BattleUnit& unit, u32 act, i32 action, int index, Scene& scene);
 
-    bool DrawHitPictureAdvance(
-        BattleUnit& target,
-        BattleUnit& attacker,
-        u32 act,
-        int index,
-        u16& x,
-        u16& y,
-        int& originX,
-        Scene& scene
-    );
+    bool DrawHitPictureAdvance(BattleUnit& target, BattleUnit& attacker, u32 act, int index, Scene& scene);
 
-    void RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, int index, u16& targetX, Scene& scene);
+    void RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, int index, Scene& scene);
+
+    void AddAndDrawHitPictures(BattleUnit& target, BattleUnit& attacker, int index, Scene& scene);
 
     int HitTargetFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 act, int index, Scene& scene);
 

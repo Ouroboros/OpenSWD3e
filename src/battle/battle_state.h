@@ -571,10 +571,15 @@ public:
     i32 unk53C024 = 0;
     i32 victoryWithoutPanel = 0;  // swd32 0x0053C004 1: the victory ends without its panel (BattleEndFrame; inferred)
     // The hit act of a slot (Game::HitTargetFrame).
-    i32 rippleHits = 0;                             // 0x00577340 1: hits run the ripple instead of their pictures
-    std::array<i32, Units> rippleFrames = {};       // 0x00575FD4 per slot: the frames of the ripple
-    i32 hitPictureX = 0;                            // 0x005770BC the place the hit picture is drawn at
-    i32 hitPictureY = 0;                            // 0x005770C0
+    i32 rippleHits = 0;                        // 0x00577340 1: hits run the ripple instead of their pictures
+    std::array<i32, Units> rippleFrames = {};  // 0x00575FD4 per slot: the frames of the ripple
+    std::array<u8, Units> hitWalked = {};   // 0x005379D4 (swd3e) per slot: 1 once the hit picture walked to its target
+    std::array<ActState, Units> unk535B38;  // 0x00535B38 (swd3e) per slot: the follow act of the hit (only written)
+    i32 hitDrawX = 0;     // 0x00537A04 (swd3e) where the hit picture was drawn last (its second-tier picture there)
+    i32 hitDrawY = 0;     // 0x00537A08
+    i32 unk577250 = 0;    // 0x00577250 (swd3e) cleared once a hit picture reaches its target (only written)
+    i32 hitPictureX = 0;  // 0x005770BC the place the hit picture is drawn at
+    i32 hitPictureY = 0;  // 0x005770C0
     std::array<i32, Units> lastSpiritDamage = {};   // 0x0053754C per slot: the spirit damage of the last hit
     std::array<i32, Units> lastStaminaDamage = {};  // 0x00537618 per slot: the stamina damage of the last hit
     std::array<i32, Units> hitFading = {};          // 0x00537484 per slot: 1 while the hit fades (FadeHitAct)
