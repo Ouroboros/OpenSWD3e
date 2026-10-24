@@ -353,7 +353,7 @@ void Talk::EndEvent(EventRun& run)
         {
             if (run.found >= GameState::Roles)
             {
-                // 0x0042D29D (nullsub_1 with the title 0x004A01B4 and the text 0x004A01C8)
+                // 0x00431F4B (never reached: FindRoleOrPlayer only finds slots below the count)
                 ErrorBox(
                     this->game.errors,
                     u8"對話系統(TalkEnd)",
@@ -396,7 +396,7 @@ void Talk::EndEvent(EventRun& run)
         }
         else if (state.GameFlag(GameState::DebugReports) && run.found >= GameState::Roles)
         {
-            DebugLog(u8"G(%d)啟動的角色不在地圖上(%d) ", id, owner.currentMap);  // 0x0042D3AA
+            DebugLog(u8"G(%d)啟動的角色不在地圖上(%d) ", id, owner.currentMap);  // 0x00432051
         }
     }
 
@@ -778,11 +778,14 @@ bool Talk::ChangeVariable(EventRun& run)
         case EventCommand::JumpIfVariableAtMost:
         case EventCommand::JumpIfVariableAtMostWide:
         {
+            // Unsigned compares (0x0042F8BC jb, 0x0042F8EF ja).
             const u32 target = operands.Dword();
+            const auto current = static_cast<u32>(variable);
+            const auto limit = static_cast<u32>(value);
             const bool jumps =
                 run.code == EventCommand::JumpIfVariableAtLeast || run.code == EventCommand::JumpIfVariableAtLeastWide
-                    ? variable >= value
-                    : variable <= value;
+                    ? current >= limit
+                    : current <= limit;
 
             if (jumps)
             {

@@ -93,6 +93,7 @@ bool Talk::OpenNameBoxes(EventRun& run)
         ErrorBox(owner.errors, u8"對話系統(NAME_BOX)", u8"號碼超過範圍");  // 0x004B2424, 0x004B2438
     }
 
+    run.valueA = operand;
     owner.nameRole = operand;
     owner.systemFlags |= Game::NameBoxesOpen;
     owner.state.SetGameFlag(GameState::TextBox);
@@ -203,6 +204,7 @@ bool Talk::RunStateCommand(EventRun& run)
     Game& owner = this->game;
     GameState& state = owner.state;
     Scene& view = owner.scene;
+    Party& party = owner.party;
     const i32 leader = owner.partyLeaderId;
 
     switch (run.code)
@@ -284,7 +286,7 @@ bool Talk::RunStateCommand(EventRun& run)
             {
                 DebugLog(
                     u8"(Sar_**)角色()不在地圖上"
-                );  // wsprintfA of 0x004A1504 (no conversion in it), then nullsub_1
+                );  // wsprintfA of 0x004B2538 (no conversion in it), then nullsub_1
                 run.valueA = set ? static_cast<i32>(bit) : 0;
                 run.valueB = set ? -1 : static_cast<i32>(~bit);
                 owner.UpdateRoleRecord(
@@ -502,6 +504,555 @@ bool Talk::RunStateCommand(EventRun& run)
             tunes[Scene::StoryFade] = (marks & kMusicGivesBack) != 0 ? 1 : 0;
             this->Next(run);
             DebugLog(u8"S_M[%d,%d]", tunes[Scene::StoryFirst], tunes[Scene::StorySecond]);
+            return true;
+        }
+
+        case EventCommand::MusicVolume:
+            // swd3e passes over the command (swd32 set the music volume).
+            this->Next(run);
+            return false;
+
+        case EventCommand::PutRoles:
+        {
+            constexpr std::size_t kRolesAt = kFirstOperand + 1;  // the entries follow the count
+            constexpr std::size_t kEntryWords = 3;               // a role, a column and a row
+            constexpr std::size_t kColumnWord = 1;
+            constexpr std::size_t kRowWord = 2;
+            const u16 count = this->Word(run, kFirstOperand);
+            run.valueA = 0;
+
+            for (u16 index = 0; index < count; ++index)
+            {
+                const std::size_t entry = kRolesAt + kEntryWords * index;
+                const u16 id = this->EventRoleId(run, this->Word(run, entry));
+                const u16 column = this->Word(run, entry + kColumnWord);
+                const u16 row = this->Word(run, entry + kRowWord);
+                state.FindRoleOrPlayer(id, run.found);
+
+                if (run.found < GameState::Roles)
+                {
+                    owner.rolePath.MoveRoleTo(
+                        static_cast<int>(run.found),
+                        static_cast<u16>(MapHeader::TileSize * column),
+                        static_cast<u16>(MapHeader::TileSize * row),
+                        RolePath::WalkThere,
+                        RolePath::Keep,
+                        RolePath::Keep,
+                        RolePath::Keep
+                    );
+                }
+
+                if (static_cast<i32>(run.found) == state.playerRole)
+                {
+                    view.playerHold |= Scene::HoldLocked;
+                }
+            }
+
+            this->Advance(run, static_cast<int>(kWordBytes * (kRolesAt + kEntryWords * count)));
+            return true;
+        }
+
+        case EventCommand::CloseDialog:
+        {
+            Operands operands = this->OperandsOf(run);
+            const u16 id = this->EventRoleId(run, operands.Word());
+            std::unique_ptr<TalkWindow>* link = &view.talkWindows;
+
+            while (*link != nullptr)
+            {
+                TalkWindow& window = **link;
+
+                if (owner.rolePath.RoleId(window.role) != id)
+                {
+                    link = &window.next;
+                    continue;
+                }
+
+                if (window.role != TalkWindow::NoRole && window.role < GameState::Roles)
+                {
+                    state.roles[window.role].talkState = Role::NoTalk;
+                }
+
+                std::unique_ptr<TalkWindow> gone = std::move(*link);
+                *link = std::move(gone->next);
+                run.valueA = view.playerHold & Scene::HoldLocked;
+                run.valueB = std::max((view.playerHold & Scene::HoldCountMask) - 1, 0);
+                view.playerHold = run.valueA | run.valueB;
+            }
+
+            this->Next(run);
+            return true;
+        }
+
+        case EventCommand::WaitDialogRead:
+        case EventCommand::WaitDialogTyped:
+        {
+            Operands operands = this->OperandsOf(run);
+            const u16 id = this->EventRoleId(run, operands.Word());
+            run.found = TalkWindow::NoRole;
+
+            if (id != TalkWindow::NoRole && !state.FindRoleOrPlayer(id, run.found))
+            {
+                ErrorBox(
+                    this->game.errors,
+                    u8"Talk(wait_dlg2)",
+                    u8"角色號碼(GUID:%d)不存在此地圖(%d)",
+                    id,
+                    owner.currentMap
+                );  // 0x004B26BC, 0x004B2B88
+                this->Next(run);
+                return true;
+            }
+
+            const TalkWindow* window = view.talkWindows.get();
+
+            while (window != nullptr && static_cast<u32>(window->role) != run.found)
+            {
+                window = window->next.get();
+            }
+
+            if (window == nullptr)
+            {
+                this->Next(run);
+                return true;
+            }
+
+            const u32 done = run.code == EventCommand::WaitDialogRead ? window->flags & TalkWindow::Read
+                                                                      : window->flags & TalkWindow::Typed;
+
+            if (done != 0)
+            {
+                this->Next(run);
+                return true;
+            }
+
+            return false;
+        }
+
+        case EventCommand::SetActData:
+        {
+            Operands operands = this->OperandsOf(run);
+            const u16 id = this->EventRoleId(run, operands.Word());
+            const u16 act = operands.Word();
+            const u16 action = operands.Word();
+            const u16 direction = operands.Word();
+
+            if (state.FindRoleOrPlayer(id, run.found))
+            {
+                Role& role = state.roles[run.found];
+
+                if (act != Talk::Keep)
+                {
+                    role.act.id = static_cast<i16>(act);
+                }
+
+                if (action != Talk::Keep)
+                {
+                    role.act.action = static_cast<i16>(action);
+                }
+
+                if (direction != Talk::Keep)
+                {
+                    role.act.direction = direction;
+                }
+
+                role.act.delay = 0;
+
+                if (owner.acts.Run(role.act) == 0)
+                {
+                    ReportActError(owner.errors, u8"TakeActData(Talk,TakeActData)", role);
+                }
+
+                role.flags |= Role::StepsAct;
+            }
+            else
+            {
+                owner.UpdateRoleRecord(
+                    id,
+                    static_cast<i16>(act),
+                    static_cast<i16>(action),
+                    static_cast<i16>(direction),
+                    Game::KeepValue,
+                    Game::KeepValue,
+                    Game::KeepValue,
+                    Game::KeepValue,
+                    Role::StepsAct,
+                    Game::KeepValue,
+                    Game::KeepValue
+                );
+            }
+
+            this->Next(run);
+            return true;
+        }
+
+        case EventCommand::DialogBubble:
+            this->dialogOptions &= ~Talk::ShowMark;
+            this->Next(run);
+            return true;
+
+        case EventCommand::StopSkipping:
+            this->skipAll = 0;
+            this->Next(run);
+            return true;
+
+        case EventCommand::SceneMusic:
+        {
+            constexpr std::size_t kRecordWords = 3;  // the map and its two tunes; the marks stay
+            Operands operands = this->OperandsOf(run);
+            const u16 operand = operands.Word();
+            const u16 firstTune = operands.Word();
+            const u16 secondTune = operands.Word();
+            const u16 marks = operands.Word();
+            const std::array<u16, kRecordWords> record = {operand, firstTune, secondTune};
+            const u16 map = operand == Talk::Current ? static_cast<u16>(owner.currentMap) : operand;
+            std::vector<u8>& data = owner.databases.mapsData;
+            std::size_t at = MapsDword(
+                data,
+                MapsDword(data, MapsTable(data, MapsDataTable::Music) + sizeof(u32) * MapsRecord::SceneMusicItem)
+            );
+            run.valueA = 0;
+
+            while (MapsWord(data, at) != 0 && at + 1 < data.size() && MapsWord(data, at) != map)
+            {
+                at += MapsRecord::MusicBytes;
+            }
+
+            if (MapsWord(data, at) != 0 && at + MapsRecord::MusicMarksAt - 1 < data.size())
+            {
+                for (std::size_t index = 0; index < kRecordWords; ++index)
+                {
+                    const u16 value = record[index];
+                    data[at + sizeof(u16) * index] = static_cast<u8>(value);
+                    data[at + sizeof(u16) * index + 1] = static_cast<u8>(value >> CHAR_BIT);
+                }
+            }
+
+            // swd3e: on the map shown the scene's tunes change at once, from the operands one word too early (the
+            // map, the first and the second tune go to the first tune, the second and the fade mode; a bug kept).
+            if (map == static_cast<u16>(owner.currentMap))
+            {
+                view.musicTunes[Scene::SceneFirst] = operand;
+                view.musicTunes[Scene::SceneSecond] = firstTune;
+                view.musicTunes[Scene::SceneFade] = secondTune;
+            }
+
+            if (MapsWord(data, at) == 0)
+            {
+                ErrorBox(
+                    this->game.errors,
+                    u8"TalkOp:Scene_Music",
+                    u8"找不到地圖音樂定義\n[%d,%d,%d,%d]",
+                    operand,
+                    firstTune,
+                    secondTune,
+                    marks
+                );  // 0x004B2664, 0x004B2678
+            }
+
+            this->Next(run);
+            return true;
+        }
+
+        case EventCommand::DialogLogged:
+            this->dialogOptions &= ~Talk::Logged;
+            this->Next(run);
+            return true;
+
+        case EventCommand::AddLog:
+        {
+            constexpr std::size_t kLogLineBytes = 0xFD;  // a log line before its "%Q"
+            const std::vector<u8>& script = owner.databases.script;
+            const std::size_t start = run.cursor + kOpcodeBytes;
+            const std::size_t end = TextEndAt(script, start);
+            std::string text = start < end ? std::string(script.begin() + start, script.begin() + end) : std::string();
+            run.valueA = static_cast<i32>(text.size());
+
+            if (text.size() > kLogLineBytes)
+            {
+                text.resize(kLogLineBytes);
+            }
+
+            this->history.push_back(text + "%Q");
+            run.cursor = end + kWordBytes;
+            this->SyncOffset(run);
+            return false;
+        }
+
+        case EventCommand::JumpIfActionNot:
+        case EventCommand::JumpIfAction:
+        {
+            Operands operands = this->OperandsOf(run);
+            const u16 operand = operands.Word();
+            const u16 id = operand == Talk::Current ? static_cast<u16>(state.playerRole) : operand;
+            const u16 action = operands.Word();
+            const u32 target = operands.Dword();
+            Role loaded;
+            const Role* role = &loaded;
+
+            if (state.FindRoleOrPlayer(id, run.found))
+            {
+                role = &state.roles[run.found];
+            }
+            else
+            {
+                owner.LoadRoleRecord(loaded, id);
+            }
+
+            run.valueA = role->act.action;
+
+            if ((run.code == EventCommand::JumpIfAction) != (run.valueA == action))
+            {
+                this->Jump(run, target);
+            }
+            else
+            {
+                this->Next(run);
+            }
+
+            return true;
+        }
+
+        case EventCommand::AddItem:
+        {
+            Operands operands = this->OperandsOf(run);
+            const u16 id = operands.Word();
+            const auto count = static_cast<i16>(operands.Word());
+            const ItemNode* item = AddItem(party.inventory, id, count, ItemCountMode::Pending, owner.database);
+
+            if (item != nullptr)
+            {
+                DebugLog(u8"%s,%d", ObjectName(item->record), count);  // the name at +0xC
+            }
+            else
+            {
+                DebugLog(u8"%d,%d", id, count);
+            }
+
+            this->Next(run);
+            return false;
+        }
+
+        case EventCommand::JumpIfItem:
+        case EventCommand::JumpIfNoItem:
+        case EventCommand::JumpIfWorn:
+        case EventCommand::JumpIfNotWorn:
+        {
+            Operands operands = this->OperandsOf(run);
+            const auto id = static_cast<i16>(operands.Word());
+            const ItemNode* carried = FindItemOfKind(party.inventory, id);
+            const ItemNode* worn = FindRoleItem(party.equipment, id);
+            const bool wanted = run.code == EventCommand::JumpIfNoItem || run.code == EventCommand::JumpIfNotWorn;
+
+            if (run.code == EventCommand::JumpIfWorn || run.code == EventCommand::JumpIfNotWorn)
+            {
+                carried = nullptr;
+            }
+
+            // The original leaves the two item pointers behind (deviations.md).
+            run.valueA = 0;
+            run.valueB = 0;
+
+            if (wanted == (carried != nullptr || worn != nullptr))
+            {
+                this->Next(run);
+                return true;
+            }
+
+            this->Jump(run, operands.Dword());
+            return true;
+        }
+
+        case EventCommand::LearnSkill:
+        {
+            Operands operands = this->OperandsOf(run);
+            const u16 role = operands.Word();
+            const u16 skill = operands.Word();
+            run.found = role;
+
+            if (role >= Party::Roles)
+            {
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(Mag_Learn)",
+                    u8"角色序號超過四(%d)",
+                    role
+                );  // 0x004B262C, 0x004B2640
+                this->Next(run);
+                return true;
+            }
+
+            ItemLink& skills = party.skills[role]->next;
+
+            if (FindItemOfKind(skills, static_cast<i16>(skill)) == nullptr)
+            {
+                ItemNode* learned = AddItem(skills, skill, 1, ItemCountMode::Count, owner.database);
+
+                if (learned != nullptr)
+                {
+                    learned->record.data.kind &= ~ObjectData::UnkKind8000;
+
+                    if ((learned->record.data.usableBy & (ObjectData::FirstRoleBit >> role)) == 0)
+                    {
+                        ErrorBox(
+                            this->game.errors,
+                            u8"對話系統(Mag_Learn)",
+                            u8"角色(%d)\n不應該學到這種法術%s",
+                            role,
+                            ObjectName(learned->record)
+                        );  // 0x004B262C, 0x004B260C
+                        AddItem(skills, learned->id, -1, ItemCountMode::Pending, owner.database);
+                    }
+                }
+            }
+
+            this->Next(run);
+            return true;
+        }
+
+        case EventCommand::Equip:
+        {
+            constexpr u16 kEquipSlots = 0xC;  // of the Party::SlotsPerRole a role has
+            Operands operands = this->OperandsOf(run);
+            const u16 role = operands.Word();
+            const u16 slot = operands.Word();
+            const auto kind = static_cast<i16>(operands.Word());
+            run.found = role;
+
+            if (role >= Party::Roles || slot >= kEquipSlots)
+            {
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(Mag_Learn)",
+                    u8"角色序號或部位超過有效範圍\nrs(%d) bp(%d)",
+                    role,
+                    slot
+                );  // 0x004B262C, 0x004B25BC
+                this->Next(run);
+                return true;
+            }
+
+            const ItemNode* item = FindItemOfKind(party.inventory, kind);
+
+            if (item == nullptr)
+            {
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(Equip)",
+                    u8"隊伍沒有物品(%d)",
+                    static_cast<u16>(kind)
+                );  // 0x004B25E8, 0x004B25F8
+                this->Next(run);
+                return true;
+            }
+
+            std::unique_ptr<ItemNode>& worn =
+                party.equipment[static_cast<std::size_t>(Party::SlotsPerRole * role + slot)];
+            const u16 oldId = worn != nullptr ? worn->id : u16{0};
+            const u16 newId = item->id;
+
+            if (worn == nullptr)
+            {
+                worn = std::make_unique<ItemNode>();
+            }
+
+            worn->id = item->id;
+            worn->record = item->record;
+            worn->count = 1;
+            worn->pending = 0;
+            worn->unk06 = 0;
+            AddItem(party.inventory, oldId, 1, ItemCountMode::Pending, owner.database);
+            AddItem(party.inventory, newId, -1, ItemCountMode::Pending, owner.database);
+            this->Next(run);
+            return true;
+        }
+
+        case EventCommand::ItemMenu:
+        {
+            constexpr std::size_t kItemsAt = 1;  // the items follow the command, ended by 0
+            constexpr std::size_t kMaxItems = 0x7F;
+            std::size_t count = 0;
+
+            while (this->Word(run, kItemsAt + count) != 0 &&
+                   run.cursor + kWordBytes * (kItemsAt + count) + 1 < owner.databases.script.size())
+            {
+                ++count;
+            }
+
+            owner.shopGoods.clear();
+
+            for (std::size_t index = 0; index < count && index < kMaxItems; ++index)
+            {
+                owner.shopGoods.push_back(this->Word(run, kItemsAt + index));
+            }
+
+            owner.shopGoods.push_back(0);
+
+            owner.menuState = Game::MenuEntering | Game::ItemChoiceMenu;
+            this->Advance(run, static_cast<int>(kWordBytes * (kItemsAt + count + 1)));
+            return false;
+        }
+
+        case EventCommand::ChangeVitals:
+        {
+            Operands operands = this->OperandsOf(run);
+            const auto index = static_cast<u16>(operands.Word() - 1);  // the roles count from 1
+            const u16 hitPoints = operands.Word();
+            const u16 spirit = operands.Word();
+            const u16 stamina = operands.Word();
+
+            if (index >= Party::Roles)
+            {
+                ErrorBox(
+                    this->game.errors,
+                    u8"對話系統(Healing)",
+                    u8"角色序號[%d]超過有效範圍 4.",
+                    index
+                );  // 0x004B258C, 0x004B25A0
+                this->Next(run);
+                return true;
+            }
+
+            RoleRecord& record = party.roles[index];
+            record.hitPoints = static_cast<i16>(record.hitPoints + hitPoints);
+            record.spirit = static_cast<i16>(record.spirit + spirit);
+            record.stamina = static_cast<i16>(record.stamina + stamina);
+            record.hitPoints = std::min(record.hitPoints, record.maxHitPoints);
+            record.spirit = std::min(record.spirit, record.maxSpirit);
+            record.stamina = std::min(record.stamina, record.maxStamina);
+            record.condition = 0;
+
+            // swd3e: a role brought to 0 is defeated; only when no role in the party has hit points left does the
+            // command after this one become EndGame.
+            if (record.hitPoints <= 0)
+            {
+                record.hitPoints = 0;
+                record.condition |= RoleRecord::Defeated;
+                bool standing = false;
+                run.valueA = 0;  // the role the search stops at is left behind (Party::Roles when none stands)
+
+                for (std::size_t role = 0; role < Party::Roles; ++role)
+                {
+                    run.valueA = static_cast<i32>(role);
+
+                    if (state.GameFlag(GameState::InParty + static_cast<int>(role)) && party.roles[role].hitPoints > 0)
+                    {
+                        standing = true;
+                        break;
+                    }
+
+                    run.valueA = static_cast<i32>(role + 1);
+                }
+
+                if (!standing)
+                {
+                    this->SetWord(run, CommandBytes(run.code) / kWordBytes, static_cast<u16>(EventCommand::EndGame));
+                }
+            }
+
+            record.spirit = std::max<i16>(record.spirit, 0);
+            record.stamina = std::max<i16>(record.stamina, 0);
+            this->Next(run);
             return true;
         }
 
@@ -1302,6 +1853,8 @@ bool Talk::RunSystemCommand(EventRun& run)
             const Role& other = state.roles[secondSlot];
             const i32 dx = one.x - other.x;
             const i32 dy = one.y - other.y;
+            run.valueA = dx;
+            run.valueB = dy;
             const auto distance = static_cast<i32>(crt::Ftol(std::sqrt(static_cast<double>(dx * dx + dy * dy))));
 
             if (distance > MapHeader::TileSize * tiles)
@@ -1389,6 +1942,8 @@ bool Talk::RunSystemCommand(EventRun& run)
 
         case EventCommand::ShowFollowers:
         case EventCommand::HideFollowers:
+            run.valueA = std::max(state.roleCount, 1);  // the loop's end is left behind
+
             for (int index = 1; index < state.roleCount && index < GameState::Roles; ++index)
             {
                 Role& role = state.roles[static_cast<std::size_t>(index)];

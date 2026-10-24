@@ -433,7 +433,7 @@ bool Talk::LoadName(EventRun& run)
         }
     }
 
-    this->ReadNamePlate(index, this->dialogName);
+    run.valueA = this->ReadNamePlate(index, this->dialogName);
     // The original expands in place, the text and its moves reaching past the 0x20 bytes of the plate; here the
     // expansion is made on a copy and its first 0x20 bytes kept.
     std::string name(this->dialogName.data(), this->dialogName.size());
