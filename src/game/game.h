@@ -595,7 +595,7 @@ private:
     int FightTalkSlide();
     int FightTalkSpeaker();
     int FightTalkTimedWindow();
-    void ClearTalkMarks(bool actions);
+    void ClearTalkMarks();
     void SkipTalkText();
     int FightTalkMirror();
     int FightTalkEnemyCommand();
@@ -606,6 +606,9 @@ private:
     int FightTalkCatch();
     int FightTalkDamage();
     int FightTalkMisc(u16 command);
+    int FightTalkIntro();
+    int FightTalkChanceJump();
+    void FightTalkEnemyFollows(i16 enemy);
     int FightTalkAddLoot();
     int FightTalkMusic();
     int FightTalkCounters();

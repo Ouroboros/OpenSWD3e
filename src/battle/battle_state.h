@@ -211,7 +211,7 @@ public:
     i32 gaugeFull = InitialGaugeFull;  // 0x004BEFF8 the full action gauge
     std::array<i16, 3> darkCopyTint = {-1, -1, -1};  // 0x004BF1D6 the darkRed, darkGreen, darkBlue of the copies
     // 0x00578474 1: a role's critical attack is under way (not evaded)
-    i32 criticalAttack = 0;
+    i32 criticalAttack = 0;  // 0x00578474 1: the next attack of a role is critical (battle talk command 0x43)
     // 0x00578470 (low byte) the attacks since the last critical one
     u8 attacksSinceCritical = 0;
     i32 lastCriticalRole = 0;   // 0x00578478 the act of the role with the last rolled critical attack

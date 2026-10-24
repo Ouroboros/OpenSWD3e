@@ -462,7 +462,6 @@ public:
     int Flag26B8() const;
     int PushTarget(u16 target);
     int StartDefeat(int kind);
-    int ToggleAF8();
     int ResetTurn(BattleServices& services);
     int Retarget(i16 target);
     u16 FollowAct() const;

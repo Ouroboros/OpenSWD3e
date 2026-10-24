@@ -22,20 +22,23 @@
 
 ## 整体进度
 
-- 当前阶段：第2阶段（对齐）基本完成，第3阶段（还原）进行中。
+- 当前阶段：第3阶段（还原）收尾：已识别函数全部实现，待闭合范围缺口与待外传化测试；第4阶段（验证）未开始。
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：待确定（间接调用目标、运行时跳转表未闭合；`.rsrc`资源已提取至third_party/asset/launcher）。
-- 已实现／总数：1709／待确定（已识别1710）。
+- 已实现／总数：1710／待确定（已识别1710）。
 - 已验证／总数：0／待确定（已识别1710）。
-- 待实现／待验证：1／1710（以已识别函数计）。
+- 待实现／待验证：0／1710（以已识别函数计）。
 
 ## 当前工作
 
-以swd3-rebuild提交`6f7214a`为底稿复制源码、测试与构建配置，Linux与Windows构建通过，Linux测试128项通过、43项列为待外传化（tests/pending_swd3e.txt）。res模块（tsw、act档案与动作解释器）已按swd3e汇编重写；CRT全部映射；与swd32代码一致的函数已登记；role与role_path（寻路器）模块已按swd3e核对完毕；外传新增的小游戏（src/minigame/，0x0049EFF0起13个函数）已还原；外传的“Act Err”报告统一改为错误对话框。停点：三段式角色名、三框命名（0x004172A0）与标题系统页已按外传改写；剧本指令209随RunEvent（0x0042BAF0，外传新增指令0xC2～0xD6）整体改写时接入；map模块全部改写完毕（含符鬼跟随精灵）；地图进入LoadCity及其被调函数已按外传改写；符鬼数据（0x004D0C10、swdghost.dat）已还原；剧情指令RunEvent（0x0042BAF0）已逐条按外传改写（含新增指令0xC1～0xD6、命名指令209与Bink影片模块）；audio模块的三组音乐队列（0x00578A70）已按外传重写，地图、剧情、系统页、读档与战斗的音乐调用均改用队列；talk、pic、saveload、launcher与audio模块的剩余已配对函数已按外传改写（启动器为外传的五按钮布局）；game模块的主循环、新游戏、主帧（含攀升小游戏与符鬼计时）、设备初始化与释放、存档页已按外传改写，角色表扩为300项；存档帧（0x00406EC0，格式见reverse/analysis/save-format.md）也已改写；menu模块已按reverse/analysis/menu-rewrite.md全部改写（框架、主页、符鬼喂食、物品、装备、法术、祭坛、系统页签、图鉴与商店；菜单处理表引用的10个尾块入口已拆为独立函数，总数1710）；battle模块按reverse/analysis/battle-rewrite.md推进：HUD、阵形（外传0x1EC字节记录、20个敌方单位）、背景、战斗消息、效果子系统（五行）与敌人变身已改写，单位待机帧（0x0048BA60，含击退帧与残影列表）、效果绘制、受击帧、倒下帧、回合重置、闪避与飞行动作已改写，符鬼参战子系统（battle_ghost.cpp）已还原，下一处是战斗单位其余大差异函数（攻击、伤害、行走、指令选择）与回合、菜单，之后是开战与unknown。
+已识别的1710个函数均已按swd3e汇编实现（implemented_pending_review，验证0次）；Linux与Windows构建通过，Linux测试139项通过，另有35项仍列为待外传化（tests/pending_swd3e.txt）。停点：战斗对话帧（0x00479860）已逐条按外传改写，第3阶段剩余为范围缺口（reverse/analysis/scope-and-gaps.md）与待外传化测试。
 
 ## 下一步
 
-按依赖自底向上改写剩余已配对函数（codec、gfx、draw、pic、font、audio、map、talk、battle、menu、game），以reverse/analysis/diff_swd32/与decomp_diff.py的差异为线索，其中map的地图载入（0x0042A7D0，HUGE.lmf）与audio的音乐对象（0x00578A70）需整体按swd3e重写；各模块“Act Err”调用改为错误对话框0x0040C530；再从汇编还原未配对函数并确定`unknown`归属。
+1. 闭合范围缺口：核对间接调用目标、运行时跳转表与未识别代码，发现遗漏函数时补表并还原。
+2. 把tests/pending_swd3e.txt中的35项测试改为对照swd3e.exe或外传语义，清空待外传化清单。
+3. 进入第4阶段：从函数表第一行开始第一遍逐函数汇编验证，结论记入reverse/evidence/，用scripts/mark_verified.py登记。
+4. 产出Windows可游玩构建，提供试玩命令交用户运行。
 
 ## GOAL完成条件
 

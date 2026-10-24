@@ -533,14 +533,6 @@ int BattleUnit::StartDefeat(int defeat)
     return 1;
 }
 
-// swd32.exe 0x00478830 (unmatched in swd3e)
-int BattleUnit::ToggleAF8()
-{
-    const int value = this->unk2AF8 == 0 ? 1 : 0;
-    this->unk2AF8 = value;
-    return value;
-}
-
 // swd3e.exe 0x0048B7A0: clears the state of a turn: the acts, the first eight slot acts, the unit's own object and its
 // command; a party role gets a random gauge of 50..189 (unless unk306C held it); a unit of StatusBit5 turns to face
 // right. Guarding ends with command flag 8 (not when defeated or with unk2AF8) and with a delayed fade-in.
