@@ -154,10 +154,26 @@ constexpr int kPanelsTop = 0x182;  // the pointer over the battle
 constexpr int kPanelLeftMargin = 0x18;
 constexpr int kPanelWidth = 0x74;
 constexpr int kMenuHitLeft = 0xA;
-constexpr int kMenuHitRight = 0x76;
+constexpr int kMenuHitRight = 0xAC;  // swd3e: three columns of 0x36
 constexpr int kMenuHitTop = 0x28;
-constexpr int kMenuHitBottom = 0x88;
+constexpr int kMenuHitBottom = 0x70;  // swd3e: three rows
 constexpr int kMenuHitColumn = 0x36;
+constexpr int kGhostOrdersLeft = 0x158;  // swd3e: the choices of the menu under the pointer
+constexpr int kGhostOrdersRight = 0x1B0;
+constexpr int kGhostOrdersFirst = 0x8A;
+constexpr int kGhostOrdersEnd = 0x14A;
+constexpr int kRefineOptionsLeft = 0x180;
+constexpr int kRefineOptionsRight = 0x1AC;
+constexpr int kRefineOptionsFirst = 0xE4;
+constexpr int kRefineOptionsEnd = 0x114;
+constexpr int kElementsHitTop = 0x112;
+constexpr int kElementsHitBottom = 0x12C;
+constexpr int kElementsHitFirst = 0x11C;
+constexpr int kElementsHitEnd = 0x194;
+constexpr int kGatherHitTop = 0x2C;  // the two commands of the role that took 蓄勁
+constexpr int kGatherHitBottom = 0x46;
+constexpr int kGatherHitFirst = 0x6A;
+constexpr int kMenuColumnWidth = 0x30;
 constexpr int kTabsHitTop = 0x82;
 constexpr int kTabsHitBottom = 0xA0;
 constexpr int kTabsHitFirst = 0x10A;
@@ -199,12 +215,9 @@ constexpr int kRefineRowEnd = 0x11E;
 constexpr int kHitSquare = 8;
 constexpr int kEnemyHitStep = 2;
 constexpr i32 kRefineMenuCommand = 6;
-constexpr int kPortraitHitTop = 0x16A;
-constexpr int kPortraitHitBottom = 0x1B6;
-constexpr int kPortraitHitWidth = 0x7C;
-constexpr int kNoPicture = -1;
-constexpr int kPictureMissed = 0;
-constexpr int kPictureHit = 1;
+constexpr int kPortraitRowTop = 0x180;  // swd3e: HoverTarget, the portraits of the party
+constexpr int kPortraitHitMargin = 0xA;
+constexpr int kPortraitHitRight = 0x96;
 
 constexpr i32 kFirstAccessoryMenuCommand = 6;
 constexpr int kListPointerX = 0x108;
@@ -3716,10 +3729,11 @@ void Game::DrawBattleDebug()
 
 // swd3e.exe 0x0046BFB0: the pointer over the battle (only when it moved, or while unk53BFBC): the click regions of
 // a talk choose Talk::choice; then by battle state: 0 and 1 (outside the menu) find the party panel under it
-// (anyStateRole); 1 picks the menu command under it (an accessory command checked with the kind words after
-// commandKinds, as in the original); 2, 4 and 0x1B pick a page tab and a list row, or the scroll arrows, track and
-// thumb (hoverScrollPart 1..4); 3 aims at the unit whose picture is under it (or the party portrait); 5, 8 and 0x1E
-// pick a row or a cell. 1 when something is under the pointer.
+// (anyStateRole); 1 picks the row of an open choice (ghost's orders, 煉妖, elements), the command of the role that
+// took 蓄勁, or the enabled menu command under it (a grid of three a row); 2, 4, 0x1B, 0x29 and 0x50 pick a page tab
+// and a list row, or the scroll arrows, track and thumb (hoverScrollPart 1..4); 3 aims at the unit whose picture is
+// under it (or the party portrait), 9 the ghost's target; 5, 0xA, 8 and 0x1E pick a row or a cell. 1 when something
+// is under the pointer.
 int Game::MouseHover()
 {
     BattleState& battle = this->battleState;
@@ -3904,26 +3918,73 @@ int Game::MouseHover()
                 return 0;
             }
 
+            // A choice under the pointer takes its row (kBackSound when it changes); 0 either way, as in the
+            // original.
+            auto choose = [this, &battle](i32& row, int found)
+            {
+                if (row != found + 1)
+                {
+                    this->audio.PlaySound(kBackSound, this->config.soundVolume);
+                }
+
+                row = found + 1;
+                battle.unk53BFB8 = 1;
+                return 0;
+            };
+
+            battle.unk53BFB8 = 0;
+
+            if (battle.ghostOrdersOpen == 1)
+            {
+                const int row = inside(x, kGhostOrdersLeft, kGhostOrdersRight)
+                                    ? band(y, kGhostOrdersFirst, kMenuRowHeight, kGhostOrdersEnd)
+                                    : -1;
+                return row >= 0 ? choose(battle.ghostOrderRow, row) : 0;
+            }
+
+            if (battle.refineOptionsOpen == 1)
+            {
+                const int row = inside(x, kRefineOptionsLeft, kRefineOptionsRight)
+                                    ? band(y, kRefineOptionsFirst, kMenuRowHeight, kRefineOptionsEnd)
+                                    : -1;
+                return row >= 0 ? choose(battle.refineOptionRow, row) : 0;
+            }
+
+            if (battle.elementsOpen == 1)
+            {
+                const int cell = inside(y, kElementsHitTop, kElementsHitBottom)
+                                     ? band(x, kElementsHitFirst, kMenuRowHeight, kElementsHitEnd)
+                                     : -1;
+                return cell >= 0 ? choose(battle.elementRow, cell) : 0;
+            }
+
             const int left = battle.menuX;
             const int top = battle.menuY;
+
+            if (battle.chargingRole == battle.currentUnit)
+            {
+                const int cell = inside(y, top + kGatherHitTop, top + kGatherHitBottom)
+                                     ? band(
+                                           x,
+                                           left + kGatherHitFirst,
+                                           kMenuColumnWidth,
+                                           left + kGatherHitFirst + kGatheringCommands * kMenuColumnWidth
+                                       )
+                                     : -1;
+                return cell >= 0 ? choose(battle.menuCommand, cell) : 0;
+            }
 
             if (inside(x, left + kMenuHitLeft, left + kMenuHitRight) &&
                 inside(y, top + kMenuHitTop, top + kMenuHitBottom))
             {
                 const auto index = static_cast<int>(
-                    static_cast<u32>(y - top - kMenuHitTop) / kMenuRowHeight +
-                    kMenuColumns * (static_cast<u32>(x - left - kMenuHitLeft) / kMenuHitColumn)
+                    static_cast<u32>(x - left - kMenuHitLeft) / kMenuHitColumn +
+                    kMenuColumns * (static_cast<u32>(y - top - kMenuHitTop) / kMenuRowHeight)
                 );
 
                 if (index < battle.listedCommands + kMenuFixedCommands)
                 {
-                    BattleRole& role =
-                        this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
-
-                    if (battle.commandEnabled[static_cast<std::size_t>(index)] == 0 ||
-                        (index >= kMenuColumns &&
-                         (role.CanUseAccessory(battle.MenuKindWord(static_cast<std::size_t>(index))) == 0 ||
-                          battle.commandEnabled[static_cast<std::size_t>(index)] == 0)))
+                    if (battle.commandEnabled[static_cast<std::size_t>(index)] == 0)
                     {
                         return 0;
                     }
@@ -3940,7 +4001,6 @@ int Game::MouseHover()
                 }
             }
 
-            battle.unk53BFB8 = 0;
             battle.anyStateRole = kNoPanelRole;
             panelUnder(true);
             return 0;
@@ -4015,6 +4075,7 @@ int Game::MouseHover()
         }
 
         case kWaitState5:
+        case kWaitStateA:
         {
             if (!inside(x, kEscortHitLeft, kEscortHitRight))
             {
@@ -4068,7 +4129,12 @@ int Game::MouseHover()
             return 1;
         }
 
+        case kTurnState9:
+            return this->HoverGhostTarget();
+
         case kListState1B:
+        case kWaitState29:
+        case kWaitState50:
         {
             if (inside(x, kListHitLeft, kThrowListRight))
             {
@@ -4155,11 +4221,12 @@ int Game::HoverRefineCell()
     }
 }
 
-// The aim of MouseHover in battle state 3 (inline in the original): with an order on the party, the party roles
-// (through RoleCycle with four or more, else every role from the last) not forced nor guarding whose idle picture is
-// under the pointer (sampled every pixel of an 8 x 8 square; the current role only for menu commands 2 and 3), or
-// whose portrait is; otherwise the standing enemies from the last whose picture is under it (every second pixel; a
-// small machine clears turnPointer for menu command 6). The unit aimed at is marked.
+// The aim of MouseHover in battle state 3 (inline in the original; none with a whole side, unk53C4C0 or unk53BF2A).
+// With an order on the party: the party members from the last whose idle picture is under the pointer (sampled every
+// pixel of an 8 x 8 square; the current role only for menu commands 2 and 3, its other samples still taken), or
+// whose portrait is (PortraitX by place). Otherwise the standing enemies from the last whose picture is under it
+// (every second pixel; 煉妖 and 誘餌 clear turnPointer over an enemy that is not a small machine). Each sample off
+// the picture clears unk53BFB8; the unit aimed at is marked.
 int Game::HoverTarget()
 {
     BattleState& battle = this->battleState;
@@ -4172,34 +4239,36 @@ int Game::HoverTarget()
         return 0;
     }
 
-    // The picture of `unit` under the pointer, sampled from it by `step` over kHitSquare (inline in the original):
-    // kNoPicture without picture data.
-    auto under = [&services, x, y](BattleUnit& unit, int step)
+    // Samples the picture of `unit` under the pointer by `step` over kHitSquare (inline in the original): `onHit` for
+    // each sample on it (true stops: the unit is taken), unk53BFB8 cleared for each one off it. A missing picture is
+    // read through a null pointer in the original: every sample is off it here.
+    auto sample =
+        [&battle, x, y](BattleUnit& unit, const UnitRect& rect, const Picture* picture, int step, auto&& onHit)
     {
-        UnitRect rect;
-        unit.GetShadowRect(services, rect);
-        const Picture* picture = unit.StepIdleAction(services);
-
-        // A missing picture is read through a null pointer in the original (for the roles).
-        if (picture == nullptr || picture->data.empty())
-        {
-            return kNoPicture;
-        }
-
         for (int down = 0; down < kHitSquare; down += step)
         {
             for (int across = 0; across < kHitSquare; across += step)
             {
-                const int pointX = unit.Mirrored() == 1 ? picture->width + 2 * rect.x - x - across : across + x;
+                bool hit = false;
 
-                if (PictureHitTest(*picture, pointX, down + y, rect.x, rect.y) != 0)
+                if (picture != nullptr && !picture->data.empty())
                 {
-                    return kPictureHit;
+                    const int pointX = unit.Mirrored() == 1 ? picture->width + 2 * rect.x - x - across : across + x;
+                    hit = PictureHitTest(*picture, pointX, down + y, rect.x, rect.y) != 0;
+                }
+
+                if (!hit)
+                {
+                    battle.unk53BFB8 = 0;
+                }
+                else if (onHit())
+                {
+                    return true;
                 }
             }
         }
 
-        return kPictureMissed;
+        return false;
     };
 
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
@@ -4220,35 +4289,39 @@ int Game::HoverTarget()
                 continue;
             }
 
-            const int hit = under(enemy, kEnemyHitStep);
+            UnitRect rect;
+            enemy.GetShadowRect(services, rect);
+            const Picture* picture = enemy.StepIdleAction(services);
 
-            if (hit != kNoPicture)
+            // A missing picture is read through a null pointer in the original.
+            if (picture == nullptr || picture->data.empty())
             {
-                battle.turnPointer = 1;
-            }
-
-            if (hit != kPictureHit)
-            {
-                if (hit == kPictureMissed)
-                {
-                    battle.unk53BFB8 = 0;
-                }
-
                 continue;
             }
 
-            battle.aimTarget = index + 1;
-            battle.hoverUnit = index;
-            enemy.SetAC0(1);
+            battle.turnPointer = 1;
 
-            if (battle.menuCommand == kRefineMenuCommand && !enemy.IsSmallMachine())
+            auto aim = [&battle, &enemy, index]
             {
-                battle.turnPointer = 0;
-            }
+                battle.aimTarget = index + 1;
+                battle.hoverUnit = index;
+                enemy.SetAC0(1);
 
-            battle.unk53BFB8 = 1;
-            battle.unk53BFBC = 1;
-            return 1;
+                if ((battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50) &&
+                    !enemy.IsSmallMachine())
+                {
+                    battle.turnPointer = 0;
+                }
+
+                battle.unk53BFB8 = 1;
+                battle.unk53BFBC = 1;
+                return true;
+            };
+
+            if (sample(enemy, rect, picture, kEnemyHitStep, aim))
+            {
+                return 1;
+            }
         }
 
         return 0;
@@ -4261,126 +4334,138 @@ int Game::HoverTarget()
 
     this->battleRoles[static_cast<std::size_t>(battle.hoverUnit)].SetAC0(0);
     auto& portraits = this->battleHud.portraitHighlight;
-    const auto partyRoles = static_cast<i32>(battle.roleCount - battle.escortCount - battle.guestCount);
-
-    auto chooses = [&battle](i32 role)
-    {
-        return battle.currentUnit - BattleState::FirstRoleUnit != role || battle.menuCommand == kSpellCommand ||
-               battle.menuCommand == kItemCommand;
-    };
-
-    auto aim = [this, &battle](i32 role)
-    {
-        battle.aimTarget = role + 1;
-        battle.hoverUnit = role;
-        this->battleRoles[static_cast<std::size_t>(role)].SetAC0(1);
-        battle.unk53BFB8 = 1;
-        battle.unk53BFBC = 1;
-    };
-
-    // The pointer is compared unsigned (jb/ja in the original).
-    auto overPortraitRow = [y]
-    {
-        return static_cast<u32>(y) >= static_cast<u32>(kPortraitHitTop) &&
-               static_cast<u32>(y) <= static_cast<u32>(kPortraitHitBottom);
-    };
-
-    auto overPortraitAt = [x](int left)
-    {
-        return static_cast<u32>(x) >= static_cast<u32>(left) &&
-               static_cast<u32>(x) <= static_cast<u32>(left + kPortraitHitWidth);
-    };
-
-    auto overPortrait = [&overPortraitRow, &overPortraitAt](i32 role)
-    {
-        return overPortraitRow() && overPortraitAt(BattleState::PortraitX[static_cast<std::size_t>(role)]);
-    };
-
-    if (partyRoles >= static_cast<i32>(Party::Roles))
-    {
-        for (i32 place = partyRoles - 1; place >= 0; --place)
-        {
-            const i32 role = BattleState::RoleCycle[static_cast<std::size_t>(place + 1)];
-            BattleRole& checked = this->battleRoles[static_cast<std::size_t>(role)];
-
-            if (checked.autoControl == 1 || checked.guestControl == 1 || checked.IsGuarding())
-            {
-                continue;
-            }
-
-            if (under(checked, 1) == kPictureHit)
-            {
-                if (chooses(role))
-                {
-                    aim(role);
-                    return 1;
-                }
-            }
-
-            portraits[static_cast<std::size_t>(battle.hoverUnit)] = 0;
-
-            if (overPortrait(role))
-            {
-                portraits[static_cast<std::size_t>(role)] = 1;
-                battle.aimTarget = role + 1;
-                battle.hoverUnit = role;
-                battle.unk53BFB8 = 1;
-                battle.unk53BFBC = 1;
-                return 1;
-            }
-
-            battle.unk53BFB8 = 0;
-        }
-
-        return 0;
-    }
 
     for (i32 role = static_cast<i32>(battle.roleCount) - 1; role >= 0; --role)
     {
         BattleRole& checked = this->battleRoles[static_cast<std::size_t>(role)];
 
-        if (checked.autoControl == 1 || checked.guestControl == 1 || checked.IsGuarding())
+        if (checked.PartyMember() == 0)
         {
             continue;
         }
 
-        if (under(checked, 1) == kPictureHit && chooses(role))
+        auto aim = [&battle, &checked, &portraits, role]
         {
-            aim(role);
+            if (battle.currentUnit - BattleState::FirstRoleUnit == role && battle.menuCommand != kSpellCommand &&
+                battle.menuCommand != kItemCommand)
+            {
+                return false;
+            }
+
+            battle.aimTarget = role + 1;
+            battle.hoverUnit = role;
+            checked.SetAC0(1);
+            battle.unk53BFB8 = 1;
+            battle.unk53BFBC = 1;
             std::fill_n(portraits.begin(), Party::Roles, u8{0});
+            return true;
+        };
+
+        UnitRect rect;
+        checked.GetShadowRect(services, rect);
+        const Picture* picture = checked.StepIdleAction(services);
+
+        if (sample(checked, rect, picture, 1, aim))
+        {
             return 1;
         }
     }
 
     portraits[static_cast<std::size_t>(battle.hoverUnit)] = 0;
 
-    if (!overPortraitRow())
+    // The pointer is compared unsigned (jb/ja in the original).
+    if (static_cast<u32>(y) < static_cast<u32>(kPortraitRowTop) ||
+        static_cast<u32>(y) > static_cast<u32>(Display::Height))
     {
         battle.unk53BFB8 = 0;
         return 0;
     }
 
-    for (u32 index = 0; index < battle.roleCount; ++index)
+    for (u32 place = 0; place < battle.roleCount; ++place)
     {
-        BattleRole& checked = this->battleRoles[index];
-
-        if (checked.autoControl == 1 || checked.guestControl == 1 || checked.IsGuarding())
+        // Places past the portraits read the table after PortraitX in the original; only party members (the first
+        // places) reach it.
+        if (this->battleRoles[place].PartyMember() == 0 || place >= BattleState::PortraitX.size())
         {
             continue;
         }
 
-        if (overPortraitAt(BattleState::PortraitX[static_cast<std::size_t>(battle.partyRoles[index])]))
+        const int left = BattleState::PortraitX[place];
+
+        if (static_cast<u32>(x) < static_cast<u32>(left - kPortraitHitMargin) ||
+            static_cast<u32>(x) > static_cast<u32>(left + kPortraitHitRight))
         {
-            battle.hoverUnit = battle.partyRoles[index];
-            portraits[static_cast<std::size_t>(battle.hoverUnit)] = 1;
-            battle.unk53BFB8 = 1;
-            battle.unk53BFBC = 1;
-            battle.aimTarget = static_cast<i32>(index) + 1;
-            return 1;
+            continue;
         }
+
+        battle.aimTarget = static_cast<i32>(place) + 1;
+        battle.hoverUnit = battle.partyRoles[place];
+        portraits[static_cast<std::size_t>(battle.hoverUnit)] = 1;
+        battle.unk53BFB8 = 1;
+        battle.unk53BFBC = 1;
+        return 1;
     }
 
     battle.unk53BFB8 = 0;
+    return 0;
+}
+
+// The aim of MouseHover in battle state 9 (swd3e, inline in the original): the ghost's target, as HoverTarget over
+// the standing enemies, kept as aiTarget too.
+int Game::HoverGhostTarget()
+{
+    BattleState& battle = this->battleState;
+    BattleServices& services = this->battleServices;
+    const int x = this->state.pointerX;
+    const int y = this->state.pointerY;
+
+    for (u32 index = 0; index < battle.enemyCount; ++index)
+    {
+        this->battleEnemies[index].SetAC0(0);
+    }
+
+    for (i32 index = static_cast<i32>(battle.enemyCount) - 1; index >= 0; --index)
+    {
+        BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(index)];
+
+        if (enemy.IsDefeated())
+        {
+            continue;
+        }
+
+        UnitRect rect;
+        enemy.GetShadowRect(services, rect);
+        const Picture* picture = enemy.StepIdleAction(services);
+
+        // A missing picture is read through a null pointer in the original.
+        if (picture == nullptr || picture->data.empty())
+        {
+            continue;
+        }
+
+        for (int down = 0; down < kHitSquare; down += kEnemyHitStep)
+        {
+            for (int across = 0; across < kHitSquare; across += kEnemyHitStep)
+            {
+                const int pointX = enemy.Mirrored() == 1 ? picture->width + 2 * rect.x - x - across : across + x;
+
+                if (PictureHitTest(*picture, pointX, down + y, rect.x, rect.y) == 0)
+                {
+                    battle.unk53BFB8 = 0;
+                    continue;
+                }
+
+                battle.aimTarget = index + 1;
+                battle.aiTarget = index + 1;
+                battle.hoverUnit = index;
+                enemy.SetAC0(1);
+                battle.unk53BFB8 = 1;
+                battle.unk53BFBC = 1;
+                return 1;
+            }
+        }
+    }
+
     return 0;
 }
 

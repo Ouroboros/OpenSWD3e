@@ -1522,22 +1522,22 @@ TEST_CASE("battle role: choosing an object in battle")
     CHECK_EQ(role.commandFlags & swd3e::BattleUnit::UnkCommandFlag2000, 0);
 }
 
-TEST_CASE("battle state: the menu kind words after the command kinds")
+TEST_CASE("battle state: the menu kinds around the listed commands")
 {
-    constexpr swd3e::u16 kAfter = 0x1234;
-    constexpr swd3e::i32 kFirst = 0x00070006;
-    constexpr swd3e::i32 kSecond = 0x00090008;
-    constexpr std::size_t kGuard = 4;
-    constexpr std::size_t kSecondAccessory = 6;
-    constexpr std::size_t kThirdAccessory = 7;
-    constexpr swd3e::i32 kLowWord = 0xFFFF;
-    constexpr int kHighShift = 16;
+    constexpr swd3e::u16 kColour = 0x1234;
+    constexpr swd3e::u16 kRefineKind = 6;
+    constexpr swd3e::u16 kFuseKind = 0x29;
+    constexpr int kColourCommand = 4;
+    constexpr int kHighWordCommand = 5;
+    constexpr int kFirstListed = 6;
+    constexpr int kLastListed = 9;
     swd3e::BattleState state;
-    state.unk4FE5D2 = kAfter;
-    state.unk4FE5D4[0] = kFirst;
-    state.unk4FE5D4[1] = kSecond;
-    CHECK_EQ(state.MenuKindWord(kGuard), kAfter);
-    CHECK_EQ(state.MenuKindWord(kGuard + 1), kFirst & kLowWord);
-    CHECK_EQ(state.MenuKindWord(kSecondAccessory), kFirst >> kHighShift);
-    CHECK_EQ(state.MenuKindWord(kThirdAccessory), kSecond & kLowWord);
+    state.unk50D86C = kColour;
+    state.commandKinds = {kRefineKind, 0, 0, kFuseKind};
+    CHECK_EQ(state.MenuKind(kColourCommand), kColour);
+    CHECK_EQ(state.MenuKind(kHighWordCommand), 0);
+    CHECK_EQ(state.MenuKind(kFirstListed), kRefineKind);
+    CHECK_EQ(state.MenuKind(kFirstListed + 1), 0);
+    CHECK_EQ(state.MenuKind(kLastListed), kFuseKind);
+    CHECK_EQ(state.MenuKind(kLastListed + 1), 0);
 }

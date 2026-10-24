@@ -186,7 +186,6 @@ public:
     void SetReturnedItem(int index, u16 id);
     void TakeSlotRecordAt(std::size_t at, BattleSlotRecord& taken);
     void ClearActing();
-    u16 MenuKindWord(std::size_t index) const;
     u16 MenuKind(int command) const;
 
     i32 listBCount = 0;         // 0x0050BF18 the rows of the list shown from listB, at most 13
@@ -531,8 +530,8 @@ public:
     i32 frameMilliseconds = 1;  // swd32 0x004A75E8 the milliseconds of a frame (the debug overlay shows 1000 / it)
     // The pointer over the battle (Game::MouseHover).
     ClickRegion* hoverRegion = nullptr;  // 0x005379FC the click region under the pointer
-    i32 menuX = 0;                       // swd32 0x0053BD24 the place of the command menu
-    i32 menuY = 0;                       // swd32 0x0053BD28
+    i32 menuX = 0;                       // 0x00576FF8 the place of the command menu
+    i32 menuY = 0;                       // 0x00576FFC
     i32 hoverPageTab = -1;               // 0x004BF10C the page tab under the pointer (list of state 2)
     i32 hoverRoleTab = -1;               // 0x004BF110 the role tab under the pointer (list of state 4)
     i32 unk53BD6C = 0;
@@ -540,7 +539,6 @@ public:
     i32 unk53BFF8 = 0;
     i32 hoverUnit = 0;  // 0x00577988 the unit aimed at under the pointer
     u16 unk53BF2A = 0;
-    u16 unk4FE5D2 = 0;  // the word after commandKinds (read as an accessory kind by MouseHover)
     // The confirm key of the menu (Game::MenuConfirm).
     i32 unk53BDA4 = 0;
     i32 unk53BCDC = 0;

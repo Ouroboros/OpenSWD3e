@@ -442,6 +442,7 @@ private:
     int MouseHover();
     int HoverRefineCell();
     int HoverTarget();
+    int HoverGhostTarget();
     void MenuConfirm();
     bool PrepareOrder();
     void AimAtParty();
