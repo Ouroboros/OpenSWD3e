@@ -185,10 +185,10 @@ TEST_CASE("game init: the object descriptions of maps.dat")
 {
     using swd3e::GameDatabases;
     using swd3e::u16;
+    // swd3e's maps.dat holds a placeholder for every object (the descriptions shown come from mon.dat).
     constexpr u16 kStaminaSkill = 0x31;
-    constexpr u16 kTalismanPaper = 0x300;
-    constexpr std::u8string_view kStaminaCost = u8"消費：300點體力";
-    constexpr std::u8string_view kPaperStart = u8"練符法寶專用的符紙";
+    constexpr u16 kCoin = 0x5FD;
+    constexpr std::string_view kPlaceholder = "Nullitm6  ";
     constexpr std::u8string_view kNone = u8"無";
     constexpr u16 kEmpty = 0xFFDC;
     std::vector<u8> maps = swd3etest::ReadGameFile("maps.dat");
@@ -200,7 +200,7 @@ TEST_CASE("game init: the object descriptions of maps.dat")
     }
 
     maps.erase(maps.begin(), maps.begin() + GameDatabases::MapsHeader);
-    CHECK(swd3e::ObjectDescription(maps, kStaminaSkill) == swd3e::Big5(kStaminaCost));
-    CHECK(swd3e::ObjectDescription(maps, kTalismanPaper).starts_with(swd3e::Big5(kPaperStart)));
+    CHECK(swd3e::ObjectDescription(maps, kStaminaSkill) == kPlaceholder);
+    CHECK(swd3e::ObjectDescription(maps, kCoin) == kPlaceholder);
     CHECK(swd3e::ObjectDescription(maps, kEmpty) == swd3e::Big5(kNone));
 }

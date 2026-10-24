@@ -189,10 +189,10 @@ TEST_CASE("input: SDL scancodes map to DirectInput codes")
     CHECK_EQ(swd3e::ScanCodeOf(kUnknownScancode), 0);
 }
 
-TEST_CASE("controls: the click sequence matches swd32.exe")
+TEST_CASE("controls: the click sequence matches swd3e.exe")
 {
-    constexpr swd3e::u32 kClickSequenceAt = 0x0049940C;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kClickSequenceAt = 0x004AA3D8;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {

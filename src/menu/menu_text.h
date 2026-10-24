@@ -258,7 +258,7 @@ constexpr std::array<std::u8string_view, 0xDE> kKeyNames = {
     u8"AppMenu",
 };
 
-// The rows of the key setup (swd32.exe 0x004A7230, 0xC bytes each).
+// The rows of the key setup (0x004BED60, 0xC bytes each).
 constexpr std::array<std::u8string_view, 16> kKeyRows = {
     u8"上",
     u8"下",

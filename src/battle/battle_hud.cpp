@@ -25,6 +25,7 @@ namespace swd3e
 
 namespace
 {
+constexpr u32 kColorWord = 0xFFFF;  // FillColor: the pixel the colour argument starts with
 constexpr int kRouletteFlags = BattleMessage::BlackBar | BattleMessage::Centered;
 
 }  // namespace
@@ -173,9 +174,16 @@ int BattleHud::DrawSlotAnimation(int id, int slot, int x, int y)
     return result;
 }
 
-// swd3e.exe 0x004580C0: the colour argument itself is the source picture: its first pixel blended in by the raw mode 8
+// swd3e.exe 0x004580C0: the colour argument itself is the source picture: its first pixel blended in by the raw mode 8.
+// A colour whose low word is the RLE magic makes the original decode its stack argument as an RLE picture with the
+// alpha map of a null argument (deviations.md): nothing is drawn.
 int BattleHud::FillColor(int x, int y, int width, int height, u32 color)
 {
+    if ((color & kColorWord) == this->painter.Rle().magic)
+    {
+        return 0;
+    }
+
     u32 slot = color;
     this->painter.SetSource(&slot);
     const int result = this->painter.DrawPicture(x, y, width, height, Painter::RawGradient);

@@ -628,7 +628,7 @@ public:
     void GhostShiftTriangle(i32 balance, i32 attack, i32 defense);
 
     // The system tab (role page 0xF).
-    // The key slot of each row of the key setup (swd32.exe 0x004A7210).
+    // The key slot of each row of the key setup (0x004BED40).
     static constexpr std::array<u16, 16> KeyRowSlots = {4, 6, 3, 5, 0xC, 1, 9, 0, 0xA, 2, 0x13, 7, 8, 0x10, 0x11, 0x12};
     void OptionsEnter();
     void CountNotes();

@@ -99,8 +99,9 @@ SaveBlocks FindSaveBlocks(const std::vector<u8>& save)
 {
     constexpr std::size_t kFlagsAt = 0x962C;  // after the header, the thumbnail and the place name
     constexpr std::size_t kAfterTableBytes = 7 * sizeof(swd3e::u32);
-    constexpr std::size_t kAfterDataBytes =
-        0x40 + sizeof(swd3e::u32) + 0x40 + 0x180;  // the names, the play time, two blocks
+    // swd3e (reverse/analysis/save-format.md): the three-part names of four roles, the play time, the return point and
+    // the battle blocks.
+    constexpr std::size_t kAfterDataBytes = 0x80 + sizeof(swd3e::u32) + 0x40 + 0x180;
 
     auto after = [&save](std::size_t block)
     {

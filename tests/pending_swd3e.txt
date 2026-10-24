@@ -12,22 +12,16 @@ battle hud: matches the golden results of the legacy helpers
 # database_test.cpp
 database: mon.dat objects and skills, level.dat entries match the legacy readers
 # fame_test.cpp
-fame: the fame block of original saves is saved again unchanged
 # field_test.cpp
 # fight_talk_test.cpp
 # font_test.cpp
 text font: matches the golden results of the legacy renderer
 # game_init_test.cpp
-game init: the object descriptions of maps.dat
 # game_state_test.cpp
 # input_test.cpp
-controls: the click sequence matches swd32.exe
 # launcher_test.cpp
 # lzo_test.cpp
-lzo encoder: recompressing the blocks of original saves gives the same bytes
 # menu_test.cpp
-menu: texts, names and tabs match swd32.exe
-menu: the preview of a saved game
 # painter_golden_test.cpp
 painter: matches the golden hashes of the legacy drawing kernel
 # painter_test.cpp

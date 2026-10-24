@@ -21,23 +21,23 @@ using swd3e::u8;
 namespace
 {
 
-// Where swd32.exe keeps the texts and tables.
+// Where swd3e.exe keeps the texts and tables.
 constexpr std::array<std::pair<swd3e::u32, std::u8string_view>, 6> kTexts = {{
-    {0x004A70EC, swd3e::menu_text::kSoundVolume},
-    {0x004A70A4, swd3e::menu_text::kCacheLine},
-    {0x004A7054, swd3e::menu_text::kSample},
-    {0x004A7068, swd3e::menu_text::kSpeedSlow},
-    {0x004A7088, swd3e::menu_text::kSpeedFastest},
-    {0x0049FA9C, swd3e::SaveSlots::Hours},
+    {0x004BED28, swd3e::menu_text::kSoundVolume},
+    {0x004BECEC, swd3e::menu_text::kCacheLine},
+    {0x004BEC9C, swd3e::menu_text::kSample},
+    {0x004BECB0, swd3e::menu_text::kSpeedSlow},
+    {0x004BECD0, swd3e::menu_text::kSpeedFastest},
+    {0x004AF6E0, swd3e::SaveSlots::Hours},
 }};
 
-constexpr swd3e::u32 kDateTemplateAt = 0x0049FAA4;
-constexpr swd3e::u32 kInitialTabsAt = 0x004A6A38;
-constexpr swd3e::u32 kKeyNamesAt = 0x0049E470;
+constexpr swd3e::u32 kDateTemplateAt = 0x004AF6E8;
+constexpr swd3e::u32 kInitialTabsAt = 0x004BE5D4;
+constexpr swd3e::u32 kKeyNamesAt = 0x004AFA8C;
 constexpr swd3e::u32 kKeyNameBytes = 0x10;
-constexpr swd3e::u32 kKeyRowsAt = 0x004A7230;
+constexpr swd3e::u32 kKeyRowsAt = 0x004BED60;
 constexpr swd3e::u32 kKeyRowBytes = 0xC;
-constexpr swd3e::u32 kKeyRowSlotsAt = 0x004A7210;
+constexpr swd3e::u32 kKeyRowSlotsAt = 0x004BED40;
 
 // The texts 0x00429790 copies: the default names, then the names of the talk texts, three parts a role.
 constexpr std::array<std::array<swd3e::u32, 3>, swd3e::Party::Roles> kDefaultNamesAt = {{
@@ -59,13 +59,13 @@ constexpr swd3e::u16 kAbsentRole = 0xFFFF;
 
 }  // namespace
 
-TEST_CASE("menu: texts, names and tabs match swd32.exe")
+TEST_CASE("menu: texts, names and tabs match swd3e.exe")
 {
-    const std::vector<u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    const std::vector<u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
@@ -148,6 +148,7 @@ TEST_CASE("menu: the preview of a saved game")
     CHECK(preview.names[0] != 0);
     CHECK(!preview.playTime.empty());
     swd3e::SavePreview missing;
-    swd3e::SaveSlots::LoadPreview(missing, swd3e::SaveGames::LastSlot - 1, directory, painter);
+    // A directory without saves (the slots of the game's own Save directory may all be taken).
+    swd3e::SaveSlots::LoadPreview(missing, 0, directory + u8"NoSaves/", painter);
     CHECK_EQ(missing.state, swd3e::SavePreview::Missing);
 }

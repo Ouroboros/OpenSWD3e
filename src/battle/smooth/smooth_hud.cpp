@@ -843,10 +843,16 @@ int HudFrame::DrawTimingBarAdvance(int x, int y, Scene& scene)
     painter.DrawPicture(x, y, back->width, back->height, 0);
     hud.timingHit = 0;
 
+    // A frame that does not load leaves no last picture: the original reads its height through a null pointer.
+    auto lastHeight = [&hud]
+    {
+        return hud.lastPicture != nullptr ? static_cast<int>(hud.lastPicture->height) : 0;
+    };
+
     for (int mark = 0; mark < static_cast<int>(BattleHud::TimingMarks.size()); ++mark)
     {
         const u16 position = BattleHud::TimingMarks[static_cast<std::size_t>(mark)];
-        painter.SetClipClamped(x + position, y, x + position + kLineWidth, y + hud.lastPicture->height);
+        painter.SetClipClamped(x + position, y, x + position + kLineWidth, y + lastHeight());
         const Picture* line = hud.Select(static_cast<int>(kTimingPicture), 1);
         this->DrawAdvance(line, x, y, line != nullptr ? line->width : 0, line != nullptr ? line->height : 0, 0, scene);
         const int needle = (LowWord(hud.timingCounter) >> kNeedleShift) + 1;
@@ -867,7 +873,7 @@ int HudFrame::DrawTimingBarAdvance(int x, int y, Scene& scene)
     }
 
     const int needle = LowWord(hud.timingCounter) >> kNeedleShift;
-    painter.SetClipClamped(needle + x + 1, y, needle + x + 1 + kLineWidth, y + hud.lastPicture->height);
+    painter.SetClipClamped(needle + x + 1, y, needle + x + 1 + kLineWidth, y + lastHeight());
     const Picture* line = hud.Select(static_cast<int>(kTimingPicture), 1);
     this->DrawAdvance(line, x, y, line != nullptr ? line->width : 0, line != nullptr ? line->height : 0, 0, scene);
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
