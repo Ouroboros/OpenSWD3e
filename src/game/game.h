@@ -692,7 +692,7 @@ private:
     i32 slotPrompt = 0;                   // 0x004C27A4 browsing, the overwrite answer or the slot chosen
     i32 slotMouseBlock = 0;               // 0x004C1610 frames a key or click keeps the pointer from choosing a slot
     u32 systemFlags = 0;                  // 0x004D1404 SystemFlag bits
-    i32 counterAlpha = 0;                 // swd32 0x004C9A24
+    i32 counterAlpha = 0;                 // 0x004E582C the alpha the counters (gold, digits) draw with
     i32 unk4A9484 = 0;
     static constexpr u32 ScriptedBattle = 0x80000000;  // in `battleRequest`: started by a talk command
     i32 battleRequest = 0;                             // 0x004C2B84 a battle to start (its number in the low word)
