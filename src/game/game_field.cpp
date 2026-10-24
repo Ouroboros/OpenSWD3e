@@ -118,13 +118,13 @@ void Game::ShowLoading(int percent)
     if (percent == kLoadingStart)
     {
         this->loadingPercent = 0;
-        this->loadingUnk4CC2C0 = 0;
+        this->loadingUnusedA = 0;
         shown = 0;
         this->loadingRunner = static_cast<i32>(this->random.Below(kRunners)) + 1;
         this->loadingRed = kBarRed;
         this->loadingGreen = kBarGreen;
         this->loadingBlue = kBarBlue;
-        this->loadingUnk4CC2C4 = 0;
+        this->loadingUnusedB = 0;
         ResetPlayback(view.loadingPicture);
         ResetPlayback(this->loadingAct);
     }
@@ -637,10 +637,9 @@ void Game::FollowLeader(int index)
     ++view.followerCount;
 }
 
-// swd32.exe 0x004118B0 (unmatched in swd3e) (the CD check of the minimal installation, the videos and the map movies)
-// and 0x00412050 (the
-// file probe it used): removed; the rebuild never looks for a CD and reads everything from the installation (see
-// deviations.md)
+// swd3e.exe 0x004121C0 (the wait for the disc of the minimal installation, the videos and the map movies) and
+// 0x00411FD0 (the probe of the volume label "SWD3E_1" it uses): removed; the rebuild never looks for a disc and reads
+// everything from the installation (see deviations.md)
 
 // swd3e.exe 0x0040C570: enters map `map` with the leader at (x, y) tiles in act `act`, action and direction. The map's
 // settings (table 3: its unit of HUGE.lmf, its kind, the story flags of its effects, its speeds and tints), the music,

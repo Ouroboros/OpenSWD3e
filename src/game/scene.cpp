@@ -28,7 +28,7 @@ void Scene::FreeSpritesB()
     this->spritesB.reset();
 }
 
-// swd3e.exe 0x0040F8E0: the talk windows freed; only bit 15 of the word at 0x004A9920 kept
+// swd3e.exe 0x0040F8E0: the talk windows freed; only HoldLocked of playerHold (0x004C2FF8) kept
 void Scene::FreeNodes()
 {
     this->talkWindows.reset();
@@ -60,14 +60,15 @@ void Scene::ResetLeaves()
     }
 }
 
-// swd3e.exe 0x0040F9E0: each object is destroyed (0x00430CF0) and freed
+// swd3e.exe 0x0040F9E0: each object is destroyed (0x00435BF0) and freed
 void Scene::FreeObjects()
 {
     this->objects.reset();
 }
 
 // swd3e.exe 0x00411C80: the effects of the scene ended before a game is loaded: the lists freed, the fade stopped (its
-// steps 0), the quake cleared and the heat shimmer reset (the original clears 0x100 bytes from 0x004AC9BC)
+// steps 0), the quake cleared and the heat shimmer reset (the original clears 0x100 bytes from 0x004C6154: past
+// heatOffsets only bytes no code reads)
 void Scene::ResetEffects()
 {
     this->FreeEffects();

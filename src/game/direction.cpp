@@ -25,7 +25,7 @@ constexpr int kSectors = 16;
 // quadrant in the sine table (the last of equally close entries wins); 0 when the points coincide
 int AngleBetween(int fromX, int fromY, int toX, int toY, i32& distance)
 {
-    // 0x00411E34..0x00411E42: the differences and the sum of their squares wrap in 32 bits (sub, imul, add).
+    // 0x00411DB4..0x00411DC2: the differences and the sum of their squares wrap in 32 bits (sub, imul, add).
     const auto dx = static_cast<int>(static_cast<u32>(fromX) - static_cast<u32>(toX));
     const auto dy = static_cast<int>(static_cast<u32>(fromY) - static_cast<u32>(toY));
     const auto squares =

@@ -15,6 +15,7 @@ namespace
 
 constexpr u32 kWhitePair = 0xFFFFFFFF;  // the silhouette colour of DrawBordered (two white pixels)
 constexpr u32 kTranslucent = Painter::Translucent;
+constexpr u32 kKeptModeBits = Painter::RleSource | Painter::Mirror | Painter::Flip;  // of the script's mode
 constexpr u32 kDecimal = 10;
 constexpr int kLabelLeft = 0x18;
 
@@ -41,7 +42,7 @@ void ActDrawer::Draw(ActState& state, int x, int y)
             state.id,
             state.action,
             state.direction
-        );
+        );  // 0x004B1108, 0x004B0D58
         return;
     }
 
@@ -121,7 +122,7 @@ void ActDrawer::DrawGhost(ActState& state, int x, int y, int alpha, double alpha
         y - state.y,
         picture->width,
         picture->height,
-        (state.flags & 0x80000003u) | kTranslucent
+        (state.flags & kKeptModeBits) | kTranslucent
     );
 }
 
@@ -168,7 +169,7 @@ void ActDrawer::DrawWithMode(ActState& state, int x, int y, u32 mode)
             state.id,
             state.action,
             state.direction
-        );
+        );  // 0x004B1108, 0x004B0D58
         return;
     }
 
@@ -182,7 +183,7 @@ void ActDrawer::DrawWithMode(ActState& state, int x, int y, u32 mode)
     this->painter.SetSource(picture->data.data());
     this->painter.Options().alpha = state.signal;
     this->painter
-        .DrawPicture(x - state.x, y - state.y, picture->width, picture->height, mode | (state.flags & 0x80000003u));
+        .DrawPicture(x - state.x, y - state.y, picture->width, picture->height, mode | (state.flags & kKeptModeBits));
 }
 
 // swd3e.exe 0x0040EFF0: picture `picture` of `file` at (x, y), opaque

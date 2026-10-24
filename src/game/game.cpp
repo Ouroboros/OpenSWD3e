@@ -925,7 +925,8 @@ void Game::SetupFont(TextFont& font, int size)
     font.SetShadow(0);
 }
 
-// swd3e.exe 0x00411D10: the free space of the current drive in megabytes
+// swd3e.exe 0x00411D10: the free space of the current drive in megabytes (the bytes available to the caller / 2^20,
+// in 32 bits); 0 when it cannot be read
 u32 Game::DiskFreeMegabytes()
 {
     std::error_code error;
@@ -933,7 +934,7 @@ u32 Game::DiskFreeMegabytes()
 
     if (error)
     {
-        return std::numeric_limits<u32>::max();
+        return 0;  // a failed GetDiskFreeSpaceExA leaves the zeroed buffers: 0 megabytes
     }
 
     const u64 megabytes = space.available >> kMegabyteShift;
@@ -1046,7 +1047,7 @@ void Game::NewGame()
         ErrorBox(
             this->errors,
             title,
-            u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+            u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",  // 0x004AF244
             role.id,
             role.act.id,
             role.act.action,
@@ -1056,17 +1057,18 @@ void Game::NewGame()
 
     if (!setPointer(scene.pointerRole, Scene::PointerAct, 0))
     {
-        logPointer(u8"Act Err(Misc:Init:Mouse:Norm)", scene.pointerRole);
+        logPointer(u8"Act Err(Misc:Init:Mouse:Norm)", scene.pointerRole);  // 0x004B10E4
     }
 
     if (!setPointer(scene.pointerButtonRole, Scene::PointerAct, Scene::ButtonPointer))
     {
-        logPointer(u8"Act Err(Misc:Init:Mouse:Btn)", scene.pointerButtonRole);
+        logPointer(u8"Act Err(Misc:Init:Mouse:Btn)", scene.pointerButtonRole);  // 0x004B10C4
     }
 
     // The original reports the page pointer with the values of the button pointer.
     if (!setPointer(scene.pointerPageRole, Scene::PageAct, 0))
     {
+        // one literal in the original (0x004B10A4), split for the style check
         logPointer(
             u8"Act Err(Misc:Init:Mouse:n"
             u8"Page)",
@@ -1304,7 +1306,7 @@ void Game::StepPointer()
         ErrorBox(
             this->errors,
             u8"Act Err(RefrashCursor)",
-            u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",
+            u8"設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]",  // 0x004AF244
             static_cast<u32>(pointer.id),
             pointer.act.id,
             pointer.act.action,

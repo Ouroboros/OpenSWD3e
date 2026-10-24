@@ -744,14 +744,14 @@ private:
     i32 frameWallTime = 0;       // 0x004C30D8 time(0) at each MainFrame (0x0040A7B0); no code reads it
     i32 frameUnkCleared = 0;     // 0x004E581C cleared by MainFrame (0x0040A7B0); no code reads it
     i32 counterWait = 0;  // swd32 0x004CAD24 frames the controlled role stood still (the counter fades in after 0x64)
-    i32 loadingPercent = 0;  // swd32 0x004CC2B8
-    i32 loadingUnk4CC2C0 = 0;
-    i32 loadingRunner = 0;  // swd32 0x004CC2D0 the act running along the bar (1 or 2)
-    i32 loadingRed = 0;     // swd32 0x004CC2BC
-    i32 loadingGreen = 0;   // swd32 0x004CC2B4
-    i32 loadingBlue = 0;    // swd32 0x004CC2CC
-    i32 loadingUnk4CC2C4 = 0;
-    ActState loadingAct;  // swd32 0x004B7408
+    i32 loadingPercent = 0;  // 0x004E6D14
+    i32 loadingUnusedA = 0;  // 0x004E6D1C cleared when the loading screen starts; no code reads it
+    i32 loadingRunner = 0;   // 0x004E6D2C the act running along the bar (1 or 2)
+    i32 loadingRed = 0;      // 0x004E6D18
+    i32 loadingGreen = 0;    // 0x004E6D10
+    i32 loadingBlue = 0;     // 0x004E6D28
+    i32 loadingUnusedB = 0;  // 0x004E6D20 cleared when the loading screen starts; no code reads it
+    ActState loadingAct;     // 0x004D0D60
     ExeResources resources;
     SystemSound systemSound;
     std::unique_ptr<Surface> offscreen;   // 0x004C6344 the frame drawn by the game

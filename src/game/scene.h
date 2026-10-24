@@ -326,19 +326,19 @@ struct Scene
     i32 unk4C97E8 = 0;
     i32 unk4C97EC = 0;
     i32 secondTimerFrames = 0;            // 0x004C2FF0 the frames left on the second timer (-1: stopped)
-    i32 returnColumn = 0;                 // swd32 0x004A9930 its tile
-    i32 returnRow = 0;                    // swd32 0x004A9938
+    i32 returnColumn = 0;                 // 0x004C3008 its tile
+    i32 returnRow = 0;                    // 0x004C3010
     ActState timerDigits;                 // 0x004C31B0 the digits of the timers
     std::array<ActState, 4> captionActs;  // 0x004C27B8 the name plates of the talk windows
-    ActState loadingPicture;              // swd32 0x004A93E8 the picture of the loading screen
+    ActState loadingPicture;              // 0x004C2AB0 the picture of the loading screen
     u32 unk4A94B0 = 0;                    // 0x004C2B88
     i32 unk4D0B84 = 0;        // 0x004D0B84 cleared by NewGame; its other reader is the save screen (0x00406EC0)
     ActState effectAct;       // 0x004C6290 the act of the weather particles
-    i32 viewWidth = 0;        // swd32 0x004ACBC0
-    i32 viewHeight = 0;       // swd32 0x004ACBC4
+    i32 viewWidth = 0;        // 0x004C6360
+    i32 viewHeight = 0;       // 0x004C6364
     i32 menuButtonSlide = 0;  // 0x004C6368 how far the system button lies out of the top right (0 to -0x20)
     i32 menuButtonWait = 0;   // 0x004C636C frames before it slides in
-    Role pointerRole;         // swd32 0x004ACCD8 the mouse pointer (act 0x2329, action 0)
+    Role pointerRole;         // 0x004C6478 the mouse pointer (act 0x2329, action 0)
     i32 unk4ACDB8 = 0;        // 0x004C6564
     u32 musicCue = 0;         // 0x004C6568 MusicCue bits and the tune playing
     u32 rolesTable = 0;       // 0x004C65F0 the roles of maps.dat (its table 1)
@@ -353,29 +353,29 @@ struct Scene
     i32 panStepX = 0;                         // 0x004C2B54 the step of the pan across
     i32 panStepY = 0;                         // 0x004C2AA0 and down
     std::unique_ptr<TalkWindow> talkWindows;  // 0x004C66F8
-    std::array<ActState, 4> leafActs;         // swd32 0x004AD0D8
+    std::array<ActState, 4> leafActs;         // 0x004C6888
     ActState spotlightAct;                    // 0x004C6BD8
     // Set by the talk's file names (flags 0x4D and 0x4E), up to 0x33 bytes: the message when the town or the exit
     // warp cannot be used here.
-    std::optional<std::string> noExitWarpText;    // swd32 0x004B74F4
-    std::optional<std::string> noTownWarpText;    // swd32 0x004B751C
-    std::array<i32, MusicSlots> musicTunes = {};  // swd32 0x004B7C74 by MusicSlot
+    std::optional<std::string> noExitWarpText;    // 0x004D0E5C
+    std::optional<std::string> noTownWarpText;    // 0x004D0E84
+    std::array<i32, MusicSlots> musicTunes = {};  // 0x004D15F8 by MusicSlot
     // 0x004D34C0 stepped every map frame; a talk command may attach one to a role (swd3e: 12 of them, swd32 8)
     std::array<ActState, 12> screenActs;
     ActState menuButtonAct;  // 0x004E4B78 the system button at the top right
-    // swd32 0x004C8BE0 the leader's act kept by the home warp, given back after the pot
+    // 0x004E4DC0 the leader's act kept by the home warp, given back after the pot
     i32 warpLeaderAct = 0;
-    u16 rolesTableBytes = 0;                  // swd32 0x004C8BD4 the bytes of maps.dat's table 1
-    Role pointerButtonRole;                   // swd32 0x004C96C8 (action 0xC)
+    u16 rolesTableBytes = 0;                  // 0x004E4DB4 the bytes of maps.dat's table 1
+    Role pointerButtonRole;                   // 0x004E5468 (action 0xC)
     std::array<MapParticle, 4> weather = {};  // 0x004E5550 the weather particles (filled with 0x0F bytes)
     u32 recipesTable = 0;                     // 0x004E5594 the altar's matrix and recipes in maps.dat (table 0x18)
     std::array<ActState, 4> dialogFrameActs;  // 0x004E6880 the frames of the talk windows
     i32 timerFrames = 0;                      // 0x004E6B50 the frames left on the first timer (-1: stopped)
     Role pointerPageRole;                     // 0x004E6BD8 (act PageAct, action 0)
-    // swd32 0x004CAE78 the battle groups, records of 8 words from maps.dat's table 0x12,
+    // 0x004E6CBC the battle groups, records of 8 words from maps.dat's table 0x12,
     std::vector<u16> encounterGroups;
     // their count first
-    i32 returnMap = 0;  // swd32 0x004CAE88 the map to go back to from Field::DemonRefiningPot (0: none)
+    i32 returnMap = 0;  // 0x004E6CCC the map to go back to from Field::DemonRefiningPot (0: none)
 
     // Set by LoadCity (0x0040C130).
     i32 layerFrames = 0;       // swd32 0x0049E0BC frames each tile layer shows (debug keys Tab and +/- change it)
@@ -431,7 +431,7 @@ struct Scene
     i32 encounterSteps = 0;         // swd32 0x004C9A20 steps on the map since the last battle (bit 31 aside)
     i32 spotlightTargetY = 0;       // 0x004E6CC4
     i32 layerTick = 0;              // swd32 0x004CC2DC frames the layer has shown
-    i32 playerHold = 0;             // swd32 0x004A9920 HoldLocked (kept across maps) and the blocking talk windows open
+    i32 playerHold = 0;             // 0x004C2FF8 HoldLocked (kept across maps) and the blocking talk windows open
     MapTrigger triggers;            // swd32 0x004A9A18 (the list from +0x14)
     std::array<RoleMark, 4> marks;  // 0x004E6B10
     std::unique_ptr<ScriptEffect> effects;         // 0x004D3FBC

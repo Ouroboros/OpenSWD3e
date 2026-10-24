@@ -90,3 +90,24 @@
 ## 0x0040E3A0 GameState::DirectionToPlayer、0x0040E3F0 ShrinkScreenQuarter — exact
 
 - 主角 (x+宽×8, y+高×8) 到 (x, y) 的角度（0x00411DA0）转方向（0x00411E80）。ShrinkScreenQuarter 120 行 × 160 列，每 4 像素取 1、每 4 行取 1，就地写入连续的 160 像素行。
+
+## 0x0040F0D0 Game::ShowLoading — exact（成员改名与注释）
+
+- −1：0x004E6D14、0x004E6D1C 清 0，显示值 0，跑者 Below(2)+1，颜色 (0x1F,0x73,0xFF)，0x004E6D20 清 0，载入画面动作与跑者动作 ResetPlayback。旗标 0x46 未置时：锁定离屏面取像素指针（0x004EDA44）后解锁，清 0x96000 字节；长度 = 显示值×0x174/100（有符号截断）；长度 ≥0 时第 0..长度列：三色 = 起始 + 累计/0x400（有符号截断；红 +0x268、绿 +0xE7、蓝 −0x2BD 每列），MakeColor(红>>3, 绿>>3, 蓝>>3) 写 30 行（第 0x1BD 行起、x+0x7B，步进取 0x004B1E8C 的行宽）；载入百分比写回；DrawPicture(0x23AF, 0, 0x78, 0x1BA)；跑者 act、动作 0x10、方向 3，Draw 于 (长度+0x6B, 0x1CC)；呈现。参数为 100 时清旗标 0x46。
+- 0x004E6D1C、0x004E6D20 只在此处写入、无代码读取：成员改名 loadingUnusedA/B 并注明；其余载入成员注释改为 swd3e 地址。
+
+## 0x0040F310 Game::MapName — exact
+
+- 表 0x14：首字 0xFFFF 时返回 0；代码不等于地图号时（代码本身不是 0x5125 才）逐字节前进到 0x5125，取其后一字为下一代码，0xFFFF 返回 0；命中后复制到 0x5125 为止的字节，补 0，返回 1。
+
+## 0x0040F5C0 Game::InitRole — exact
+
+- act +0x18 清 0；Run 失败报 "Act Err(Misc:newRoleInit)"（id、act、动作、方向）。旗标清 0x20F00000；格子指针 = 格子表 + ((y>>4)×宽 + (x>>4))×4（无符号；越界已登记）；旗标 0x100 时格子位 11 置 0x20000000，格子 &0xF000 非 0 时左移 8 位替换旗标 0x00F00000。act 非 0 且 (旗标 & 0x8400)==0x8000 时 MarkRoleCells。
+
+## 0x0040F6F0 GameState::ClearRoles — exact（越界补登）
+
+- 下标 0..roleCount（含）释放各角色 +0x38 缓冲；300 个角色共 0x10B30 字节清零，各 act ResetPlayback。roleCount 为 300 时释放表后一项：补登 deviations.md。
+
+## 0x0040FA20 Game::ReleaseRole — exact（偏差表来源更新）
+
+- 旗标 0x80000000 未置返回。72 个移动记录中本角色者：坐标不在格上时 ClearRoleCells，非主角时按当前步方向反复减步长到格上（方向越界与不能对齐时 Hang，deviations.md 第 251 行，来源改为 asm/0040FA20.asm）；每个匹配记录都清旗标 0x44000000、act 速度字 0。ResumeMove；index ≥ 300 报 "對話系統(TalkEnd)"（第三个 %d 取栈值，已登记显示 0）；旗标 0x800 时恢复 +0x20/+0x3C 保存的动作与方向（非 −1 时）；两项置 −1，Run 失败报 "Act Err(Talk:Talkend)"；两项再置 −1，清旗标 0x80000000，act +0x44 字 0。

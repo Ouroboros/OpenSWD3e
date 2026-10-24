@@ -54,9 +54,13 @@ constexpr u16 kFirstSkill = 0x1771;  // the skill tabs take ids 0x1771..0x1963 (
 constexpr u16 kSkillsEnd = 0x1964;
 constexpr int kLastVariable = 0x3F;
 constexpr int kLastAttribute = 0x10;
+// An id field that is not a number leaves the id in the slot of the message argument (0x00435AE0 writes nothing):
+// WM_COMMAND. The count keeps stack garbage and the value the button's window (lParam); 0 here (deviations.md).
+constexpr int kUnparsedId = WM_COMMAND;
 
 // The columns of the list: the name, the count, the id, the value (three on the attributes and variables).
-constexpr std::array<std::u8string_view, 4> kColumns = {u8"物品", u8"數量", u8"號碼", u8"附加值"};  // 0x004A020C..
+constexpr std::array<std::u8string_view, 4> kColumns =
+    {u8"物品", u8"數量", u8"號碼", u8"附加值"};  // 0x004B1238, 0x004B128C, 0x004B1284, 0x004B127C
 constexpr std::array<int, 4> kColumnWidths = {0x78, 0x40, 0x40, 0x60};
 constexpr int kColumnTextSize = 4;
 constexpr std::u8string_view kItemsTab = u8"物品";          // 0x004B1238
@@ -445,7 +449,7 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
                 return FALSE;
             }
 
-            const int id = ParsedNumber(text, 0);
+            const int id = ParsedNumber(text, kUnparsedId);
             ItemLink* link = cheat->TabList();
             const bool skill = cheat->tab != CheatDialog::ItemsTab;
 
@@ -519,7 +523,7 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
                 return FALSE;
             }
 
-            const int id = ParsedNumber(text, 0);
+            const int id = ParsedNumber(text, kUnparsedId);
             // The original keeps stack garbage for a count or value field left empty; 0 here.
             int count = 0;
             int value = 0;

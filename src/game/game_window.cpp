@@ -16,7 +16,7 @@ namespace
 {
 
 // The pause banner.
-constexpr std::u8string_view kPaused = u8"遊戲暫停  按F8繼續遊戲";  // swd32.exe 0x004A0360 (unmatched in swd3e)
+constexpr std::u8string_view kPaused = u8"遊戲暫停  按F8繼續遊戲";  // 0x004B12E0
 constexpr int kBannerCenter = 0x140;
 constexpr int kBannerCharWidth = 0xB;
 constexpr int kBannerCharBox = 0x16;
