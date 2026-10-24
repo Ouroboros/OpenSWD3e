@@ -963,7 +963,12 @@ void Menu::AltarCancel()
     switch (altar.stage)
     {
         case kChoosing:
-            if (static_cast<i16>(--this->code) <= 0)
+        {
+            // The code is a dword in the original, compared signed after the decrement.
+            const i32 code = static_cast<i32>(this->code) - 1;
+            this->code = static_cast<u16>(code);
+
+            if (code <= 0)
             {
                 owner.menuState = Game::NoMenu;
             }
@@ -971,6 +976,7 @@ void Menu::AltarCancel()
             this->SetPage(this->code);
             this->AltarLeave();
             return;
+        }
 
         case kOffered:
             altar.stage = kChoosing;
@@ -1330,7 +1336,7 @@ void Menu::AltarDrawList(Pixel color)
         }
     }
 
-    const int average = static_cast<u16>(altar.slotA.record.data.level + altar.slotB.record.data.level) / 2;
+    const int average = (static_cast<i32>(altar.slotA.record.data.level) + altar.slotB.record.data.level) / 2;
 
     for (int side = 0; side < 2; ++side)
     {
@@ -1450,8 +1456,8 @@ void Menu::AltarDrawResult(const ItemNode& result, int x, int y, u32 flags)
         ObjectName(result.record),
         WinFormat(kResultLevelFormat, {static_cast<i32>(data.level)}),
         WinFormat(kHitPointsFormat, {data.hitPoints}),
-        WinFormat(kSpiritFormat, {static_cast<i32>(static_cast<u16>(altar.vitals[side]))}),
-        WinFormat(kStaminaFormat, {static_cast<i32>(static_cast<u16>(altar.vitals[side + 1]))}),
+        WinFormat(kSpiritFormat, {static_cast<i32>(altar.vitals[side])}),
+        WinFormat(kStaminaFormat, {static_cast<i32>(altar.vitals[side + 1])}),
         WinFormat(kAttackFormat, {static_cast<i32>(data.attack)}),
         WinFormat(kDefenseFormat, {static_cast<i32>(data.defense)}),
         WinFormat(kAgilityFormat, {static_cast<i32>(data.agility)}),
@@ -1562,13 +1568,12 @@ void Menu::AltarMorph()
     const i32 counter = altar.counter;
     const int pitch = owner.painter.ScreenPitch();
 
-    // The first offsets of each pair are cut to 16 bits before the division, the second ones are not.
-    auto settle = [](std::vector<i16>& values, bool cutFirst)
+    // Nine tenths of each offset, computed in 32 bits (0x00445270) and stored back as a word.
+    auto settle = [](std::vector<i16>& values)
     {
         for (i16& value : values)
         {
-            const int scaled = cutFirst ? static_cast<i16>(kSettle * value) : kSettle * value;
-            value = static_cast<i16>(scaled / kTenths);
+            value = static_cast<i16>(kSettle * value / kTenths);
         }
     };
 
@@ -1576,10 +1581,10 @@ void Menu::AltarMorph()
     {
         if (counter >= kSettleStart)
         {
-            settle(altar.columnsA, true);
-            settle(altar.columnsB, false);
-            settle(altar.rowsA, true);
-            settle(altar.rowsB, false);
+            settle(altar.columnsA);
+            settle(altar.columnsB);
+            settle(altar.rowsA);
+            settle(altar.rowsB);
         }
         else
         {

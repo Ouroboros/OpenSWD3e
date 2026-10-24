@@ -21,3 +21,35 @@
 - 0x00441200 ObjectDescription：空节点时缓冲清空（调用方返回空串），0xFFDC 为 "無"（0x004AF630），否则 maps.dat 第 0x13 表的条目复制到 "%Q" 为止。
 - 0x004417F0 Warp：清画面并翻页，ChangeMap(地图, x, y, 控制角色动作号, 0, 1, 1)，震动表 0x80 字节填 0xCF，领队事件 = 参数、偏移与游标清零、id 1、旗标与坐标取控制角色。
 - 0x00441910 ListPartyRoles：四项置 −1、计数清零，旗标 0x1E+r 依次记入，返回计数。0x00441960 VisibleRole：0..2 以外 −1。0x00441980 VisibleCount。
+
+## 图鉴（第 611–630 行中的 13 个）— exact
+
+- 核对方法：外传与正传汇编规范化后逐行比对，源码与 swd3-rebuild 已验证版本比对；差异须由外传的数据布局或常量解释，并在源码中有对应。
+- 0x00441990 BestiaryEnter：与正传只差物品节点 0xB4 字节（0x2D 双字）、类别字节 +0x62、文字指针 +0xB0，背景动作 0x32（kBestiaryBackground）。分类表 0x0050B524（−1）、击败数 0x0050B528（FindCounterValue(名声表 0x004D3458, id)）、已知 0x0050B3DC、16 行与 64 个名字清空、ids 0x0050B3C8，五个计数清零，BestiaryList(0)，BestiaryChoose(ids[top+row])，箭头清零。
+- 0x00441BB0 BestiaryLeave（无正传配对）：释放所选怪物的文字与节点、分类与击败表、已知表、16 行、64 名字、ids，背景动作 0x43。重建只清空所选怪物、行与名字（其余数组在下次进入时重填，不可见）。
+- 0x00441EC0 BestiaryPageDown：ListPageDown(计数, top, row, shown, 15)，ShowFrom(top)、CountShown、Choose(ids[top+row])，箭头 |= 0x30，音效 0x2E（BestiaryMoved）。
+- 0x00441FA0 BestiaryLeft：页签 −1（不低于 0），BestiaryList、ShowFrom、CountShown、Choose、音效。0x00442020 BestiaryRight：+1 不超过 0xA（外传 11 个页签，正传 0xB）。0x004420A0 BestiaryShift：Right 后再放一次音效。0x004420C0 BestiaryCancel：code 0x1F4 时改 2 并 Leave。
+- 0x004420E0 BestiaryDraw：与正传只差寄存器分配与图片动作 0x3B（kPictureAction，正传 0x44）。
+- 0x00442280 BestiaryList：栈上类别值表 {0..8, 0xA, 0x12, 0,0,0,0}（kCategoryValues 前 11 项），分类等于该值的怪物依次列入（名字、已知清空），结尾写 0；击败过的怪物经 LoadObject 取名（失败时以 "怪物集合"／"物品資料無法讀取(%d)" 0x004BE818／0x004BE824 报）与击败数；64 项循环后的另一报错因 `jl` 后接 `jle` 永不执行；top、row 清零、firstShown 指向表头、CountShown。偏差第 0x00442280 行改为汇编出处并注明页签号表的界。
+- 0x004424E0 DrawBestiaryRow：只差文字指针偏移。0x004427B0 BestiaryChoose：只差物品记录的字段偏移（源码按字段访问）与外传错误框（"讀取道具(book)"／"沒有定義物品號碼(%d)"，0x004BE860／0x004BE870）。
+- 0x00442920 BestiaryLines：类别名表 0x004AF94C 每项 10 字节（正传 8）、生命值为 +0x68 的 dword（ObjectData 已以 static_assert 锁定，正传为 i16），其余为字段偏移。
+- 0x00442D50 DrawBestiaryTabs：裁剪 (0xA,1,0xCE,0x4E)，页签号 −2..+2（0..0xA 且非当前）以 0x2346 图画在 x 6 起每 0x28、y 0x3D，当前页签 0x2362 图画在 (0x56,0x3A)，裁剪 (0,1,0x280,0x1DE)。新增菜单图片空指针偏差行。
+
+## 炼妖（第 631–655 行中的 22 个）— exact
+
+- 0x00442E10 AltarEnter：四张 0xD48 项表（0x0050B570 类别 u16、0x0050B558 等级 u16、0x0050B538 种类 dword、0x0050B578 祭坛 i8）填 −1 后按 id 0..0xD47（跳过 0x1F5..0xBB8）LoadObject 填入；结果节点清零；背包每项 +6 = +8 与 +0xA 之和；背景 0x232A/0x3B、面板 0x233B/0；top/row/slot/tab 清零、阶段 1；AltarFillTab、firstShown、CountItems、CountShown(16)；两槽 0xFFDC；音效 0x2BF；四块 0xF0 与四块 0x1B8 缓冲（其中 0x0050B550、0x0050B648、0x0050B568、0x0050B56C 只被清零与释放、没有读者，重建不设）；波形表 0x0050B53C：行表（字节偏移）/2 写到 0x80+i、取负写到 0x80−i（i 0..126，中心取负值，0、1、0xFF 三项不设）；0x0050B574、0x0050B54C 清零、code 2。重建行表存像素偏移，换算一致。
+- 0x00443150 AltarLeave：背景 0x37、脸 0x232A/3、ReturnObjects、两槽文字释放与清零、结果文字释放、列表释放、各表释放、code 1。
+- 0x004432E0 AltarFrame：阶段 1 时左键在页签区（y 0x33..0x48、x 9..0x73）tab = (x−8)/36+1 后 AltarLeft；列表区（y 0x51..0x1CF、x 3..0xBB）行 (y−0x50)/24 < shown 时 row = 行+1 后 AltarUp；两个槽区设 slot 1／0 后（阶段 1）slot+1（>1 归 0）与音效 0x2E；其后运行钮区设 hover，左键 AltarSelect；数量 > 16 且鼠标左键重复（0x004418D0(0xF)）且 x 0xC7..0xD5 时按 y 分别 Up／Down／PageUp／PageDown（滚动条四个界 0x0050AEA0..AC，有符号），否则右键 AltarCancel。阶段 2：左键（未 tooHigh 位 1）Select 否则 Cancel，右键 Cancel；3、4：任意键 Select；5：任意键 Cancel。
+- 0x00443520／0x004435C0／0x00443660／0x00443700 Down／Up／PageDown／PageUp：阶段 3 时计数 0xC8（AltarSkipMorph），阶段 1 时 List*（16）、SkipItems、CountShown、AltarPick、AltarCombine、箭头 |= 0x30／3、音效 0x2E。
+- 0x004437A0／0x00443840 Left／Right：页签 −1（<0 为 2）／+1（>2 为 0），FillTab、三计数复位、FitMenuList、Pick、Combine、音效。0x004438F0 Shift：slot 切换、音效 0x107。
+- 0x00443990 AltarSelect：阶段 1：0x49 旗标未设时 Cancel；Combine 失败阶段 5；否则 ResultVitals、阶段 2、背景 0x39、结果等级 − 第一个角色等级 > 6（有符号）时 tooHigh = 3、音效 0x2E。2：tooHigh 时音效 0x8C，否则阶段 3、计数 −0x28、PrepareMorph、音效 0x2BD。3：FinishMorph，计数 < −0x23 时改 0x23 并背景 0x46，音效。4（AltarFinish）：tint 0；两槽按 TabTakes 加回列表或背包（AddItem(…, −1, Pending)）并释放、置空；名声 +1（0x0048A490）；结果按 TabTakes 加入（AddItem(…, 1, PendingOnly)，+6 加 1）；重算列表、FitMenuList；计数与 0x0050B534 清零、阶段 1、背景 0x3B。5、0xA：阶段 1。
+- 0x00443CB0 AltarCancel：阶段 1：code（原为 dword）−1，≤ 0（有符号）时关菜单，SetPage、AltarLeave；2：阶段 1、背景 0x3B；3、4：Select；5：阶段 1。差异已修正：实现原以 i16 判断 code−1 ≤ 0，在 code ≥ 0x8001 时与原程序不同，改为按 32 位有符号。
+- 0x00443D40 AltarDraw（含 AltarDrawList／AltarDrawOffer）：0x49 未设时 "目前無法使用"（0x004BE994，框 (0x118, 0xDC, 11×长度, 0x16, 2)）；hover 时运行钮动作 0x232C/0xF 在 (0x198,0x150) 裁剪画；阶段 1／5：页签动作 tab+0x14 在 (31×tab+8, 0x34)，slot ≤ 1 时标记 0x235B（bob = (bob+1)%10，位置 0xD2×slot+0x134、bob/2+0x38），数量 > 16 时箭头倒计与 DrawScrollBar(0xC5, 0x5C, 0x168, …, top/count, (top+shown)/count)（双精度除后转 float），每行 "%-12s%3d"（名字、+6）在 (0x10, y+1)，所选行渐变框 (4, y, 0xBE, 0x18, 0x14, 0xD, 0)；两槽：图片（动作 +0x60 非 0 时，0xD4×i+0x108、0x5E）、框 (0xEC×i+0xF8, 0x164, 0x7E, 0x24, 4)、"%-8s  %2d級"（类别名 0x004AF94C，10 字节一项）与 "%-12s"（0x176）、箭头（i 为 1，或 i 为 0 且旗标 0x1BA9；结果非空；结果等级 ≥ 两槽等级平均（32 位）时 0x235E 否则 0x235F，(0x1C5, 0x1A9)）。阶段 2／0xA：DrawResult(结果, 0xAF, 0x28, 1)、描述框 (0x7E,0x138,0x184,0x9D) 模式 4、窗框 0x82..0x1FA × 0x140..0x1CD（边宽 0x80000008）、DrawWrappedText(描述, 0x82, 0x140, 5, 0x168)、tooHigh 位 1 时 "無法練化" 框与文字。阶段 3：计数 ≤ −0x23 时 DrawResult、tint = 6×(−0x28−计数)、−0x23 时背景 0x46、计数+1；否则背景 0x46、tint（计数 ≤ −0x1E 时 2×(3×计数+0x5A)）、AltarMorph、计数+1，> 0x8C 时 0xC8 并 FinishMorph，≥ 0xC8 时 FinishMorph。阶段 4：结果图片在 (0x104, 0xB4)。阶段 5："請將兩個欄位選擇物品" 居中（宽 12×长度）。差异已修正：两槽等级平均原被截成 u16 后再除。
+- 0x004444D0 ReturnObjects、0x004445B0 SortObjects：与正传只差物品节点大小与偏移，源码与正传已验证版本相同。
+- 0x00444630 AltarCombine：结果清零后为 0xFFDC；任一槽空或 +6 为 0 返回 0；结果 0x12A、计数清零、+6 为 1；配方表（maps.dat 表 0x18 自 +0x200 起每 3 字，0xFFFF 结束）两向匹配时取第 3 字并 LoadObject 返回 1；否则类别矩阵 table[16×第一类别+第二类别]（0x15 视为 0xF），目标等级 = 等级和/2+3，原类别和/2 为奇数时取不高于目标者、否则不低于；id 0x65..0xD47（跳过 0x1F5..0xBB8）中类别相同者取最接近的第一个，0x65..0x1F4 须种类含 0x800，祭坛为 1 者排除；结果 0x12A 或找到者，LoadObject，返回 1。
+- 0x00444950 AltarTabTakes：种类 &= 0x0FFF7FFF；类别 > 0xE 且 ≠ 0x15 为否；页签 0：0x101F，1：0x700，2：0x800。
+- 0x00444A70 AltarPut（唯一调用者 AltarPick 传 0x0050B590）：TabTakes(槽)、原 id；所选节点 +6 > 0 时整节点复制到槽（文字另复制一份），计数清零、+6 为 1，节点 +6 −1；否则槽置空；原 id 非空时按 TabTakes 在列表或背包找回并 +6 +1。
+- 0x00444BA0 AltarDrawResult：第 2 参数（0x004BE978）不读；颜色 MakeColor(0x15,0xF,8)、模式 2，未选或位 0x1000 时 MakeColor(0xA,7,4)、模式 4；框 (x, y, 0x118, 0xFA)；图片 (x+0xC, y+0x10)；九行（类别名、名字、"%d 級"、" 生命  %4d"（dword）、" 靈力  %4d"／" 體力  %4d"（vitals，x ≤ 0x140 取前一对否则后一对，movsx）、攻击、防御、敏捷）在 (x+0x92, y+0xA+25×行)；暗时 FillBox(x+0x10, y+0x18, 0x78, 0xDC, 模式 2)，位 0x1000 时 "等級不足 無法訂契約"（MakeColor(0x18,0xA,0xB)，(x+0x40, y+0x112)）。差异已修正：精神与体力原被当作 u16 零扩展，汇编为有符号扩展。
+- 0x00444EC0 AltarPrepareMorph：清列与行偏移（及四块无读者的缓冲），结果与两槽的动作 0x3B 第一帧图片解为原始像素（失败时以 "Act Err(Botl::GetOriginal2／3／4)" 报并返回）。
+- 0x004450E0 AltarMorph：计数 0..0x8C：< 0x78 时 0x32..0x6D 每帧 8×计数−0x190 次取 Below(0x3354) 把结果的两个像素复制到两张槽图，0x6E 时音效 0x208 并整张复制；每列、每行各取 Below(步长)−步长/2（步长 {3,5,7}[计数/40]）加到 A、减到 B；≥ 0x78 时四组偏移都 ×9/10（32 位，向零取整）。0xB4−计数 ≥ 0x28 时画：左图基点 180 行 + clamp(计数,0,0x78) + 0x8C，右图 180 行 − 位移 + 0x17C，每格 = 基点 + 列 + rowsA[行] − 波形[0x80+columnsA[列]]（两张图都用 A 组偏移，原有 BUG），只查下界；phase +1 mod 0x78（另一份相位副本不参与寻址）。差异已修正：实现原把 A 组的 9×值先截成 16 位，汇编两组都是 32 位。
+- 0x004454E0 AltarResultVitals：vitals 四字清零；精神 = 等级 ×（itemA 2、itemB 3、itemC 5、healItemA 2、healItemB 4 中非 0 者之和）、体力 = 等级 ×（skillA 3、skillB 5），16 位运算。
