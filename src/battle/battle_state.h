@@ -528,7 +528,10 @@ public:
     u16 unk53BF4A = 0;  // a unit's place read for the debug gauge and the menu
     u16 unk53BF4E = 0;
     i32 hoverScrollPart = 0;    // 0x0057707C the part of the scroll bar under the pointer (1..4)
-    i32 frameMilliseconds = 1;  // swd32 0x004A75E8 the milliseconds of a frame (the debug overlay shows 1000 / it)
+    i32 frameMilliseconds = 1;  // 0x004BF18C the milliseconds of a frame (the debug overlay shows 1000 / it)
+    i32 frameNow = 0;           // 0x005770A0 (swd3e) the time of this frame (milliseconds)
+    i32 frameLast = 0;          // 0x0057709C (swd3e) the time of the frame before
+    u8 coinTossing = 0;         // 0x00577254 (swd3e) 1 while the coin toss runs (BattleFrame)
     // The pointer over the battle (Game::MouseHover).
     ClickRegion* hoverRegion = nullptr;  // 0x005379FC the click region under the pointer
     i32 menuX = 0;                       // 0x00576FF8 the place of the command menu

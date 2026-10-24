@@ -12,6 +12,7 @@
 #include "game/screenshot.h"
 #include "platform/display.h"
 #include "platform/surface.h"
+#include "platform/system_info.h"
 #include "ui/ui_draw.h"
 
 namespace swd3e
@@ -20,21 +21,16 @@ namespace swd3e
 namespace
 {
 
-constexpr int kQuitFlag = 0x11;  // BattleFrame: game flag 0x11 leaves the battle
-constexpr int kQuitBattle = 3;
-constexpr u16 kSlotRecordWait = 0x10;  // frames between the slot records taken
-constexpr u16 kBottomBar = 0x234D;
+constexpr u16 kBottomBar = 0x2375;  // swd3e
 constexpr int kBottomBarY = 0x180;
-constexpr i32 kCurrentPanelAct = 0x233B;  // the frame of the current role's panel
-constexpr int kCurrentPanelTop = 0x18D;
-constexpr int kCurrentPanelWidth = 0x74;
-constexpr int kCurrentPanelBottom = 0x1D3;
-constexpr int kCurrentPanelBorder = static_cast<int>(0x80000008u);
 constexpr int kPanelCursor = 0x2391;
-constexpr int kTimerX = 0x190;
+constexpr int kTimerX = 0xA;  // swd3e: one timer
+constexpr int kBattleTimer = 1;
+constexpr u16 kGrayBandCloses = 2;            // grayBandState once the coin toss is over
+constexpr int kCurrentPanelPicture = 0x239F;  // the current role's panel, at its highlight
+// 0x004BF15C by place (BattleFrame reads it at 0x004BF10C + 4 * the current unit)
+constexpr std::array<int, 4> kCurrentPanelX = {0xEF, 0x4F, 0x18F, 0x18F};
 constexpr int kTimerY = 8;
-constexpr int kSecondTimerX = 0xA;
-constexpr int kFadeLight = 0x18;
 constexpr int kFadeFrames = 8;
 constexpr int kQuakePanel = 0x100;
 constexpr std::size_t kClearedTurnUnits = 8;  // EndBattle: 0x0053AF30..0x0053AF57
@@ -119,19 +115,23 @@ void Game::UpdateUnits()
     }
 }
 
-// swd3e.exe 0x0045B5C0: one frame of the battle; it returns frameResult (1, or the end CheckBattleEnd set), 3 when game
-// flag 0x11 leaves it, or the debug keys' 0 (the frame not drawn). The battle music starts again when it stopped; the
-// pointer, the keys and the auto battle are handled and the units measured and sorted. Unless paused: an idle battle
-// takes the next slot record every kSlotRecordWait frames as the acting unit (enemyGaugeBoost lets the gauges run while
-// none acts and no panel is open), the background, the units (the acting ones sorted around it), the hits, the bottom
-// bar, the current role's panel frame and cursor, the role panels, the menu, the end frame, the messages, the field's
-// lines and heads, the talk, the resistance panel and the timers are drawn; the end is checked, a finished fade of
-// the stone sides lights the field again, the frame is shown (shaken while quaking) and saved when asked.
+// swd3e.exe 0x0045B5C0: one frame of the battle; it returns frameResult (1, or the end CheckBattleEnd set), or the
+// debug keys' 0 (the frame not drawn, the audio served). The frame's milliseconds are kept; the pointer, the keys and
+// the auto battle are handled and the units measured and sorted. The next slot record becomes the acting unit when
+// none acts, the battle runs, no menu is open and no undarkening waits (enemyGaugeBoost lets the gauges run while none
+// acts and no panel is open); the units slide (never enabled), the background, the units (the acting ones sorted
+// around it), the coin toss, the hits, the bottom bar, the current role's panel and cursor, the role panels, the menu,
+// the end frame, the messages, the field's lines and heads, the talk, the resistance panel and the timer are drawn;
+// the end is checked, a finished field fade fades back from its levels, the frame is shown (shaken while quaking), the
+// audio served and the frame saved when asked.
 int Game::BattleFrame()
 {
     BattleState& battle = this->battleState;
     BattleHud& hud = this->battleHud;
     battle.frameResult = 1;
+    battle.frameNow = static_cast<i32>(SystemUptime());
+    battle.frameMilliseconds = battle.frameNow - battle.frameLast;
+    battle.frameLast = battle.frameNow;
 
     // The rebuild (deviations.md): a press is a role's own; when another role (or the same one's next turn) is to be
     // given a command, what is held from before counts only once let go and pressed again.
@@ -151,69 +151,53 @@ int Game::BattleFrame()
     this->AutoBattleTurn();
     this->MeasureUnits();
     battle.SortDrawOrder();
-    const int keys = this->BattleDebugKeys();
 
-    if (keys == 0)
+    if (this->BattleDebugKeys() == 0)
     {
-        return keys;
+        this->AudioPump();
+        return 0;
     }
 
     this->drawSurface = this->painter.LockSurface(*this->offscreen);
     this->painter.SetTarget(this->drawSurface);
     this->painter.UnlockSurface(*this->offscreen);
 
-    if (battle.paused == 1)
-    {
-        return battle.frameResult;
-    }
-
-    if (battle.unk53BFC0 == 1 && battle.actingUnit == -1)
-    {
-        battle.unk53BFC0 = 0;
-    }
-
     if (battle.slotRecords[0].unit != -1 && battle.unk53BF74 == 0 && this->fightTalk.battleRuns == 1 &&
-        battle.unk53BFC0 == 0)
+        battle.result == 0 && battle.unk5772C8 == 0)
     {
-        if (battle.slotRecordFrames < kSlotRecordWait)
-        {
-            ++battle.slotRecordFrames;
-        }
-        else
-        {
-            BattleSlotRecord acting{
-                battle.actingUnit,
-                battle.sweepTotal,
-                battle.unk53AE78,
-                static_cast<u16>(battle.slideBackPicture),
-                battle.unk53AE7C,
-                battle.unk53AE80,
-                battle.unk53AE84,
-                battle.wholeSide
-            };
+        BattleSlotRecord acting{
+            battle.actingUnit,
+            battle.sweepTotal,
+            battle.unk53AE78,
+            static_cast<u16>(battle.slideBackPicture),
+            battle.unk53AE7C,
+            battle.unk53AE80,
+            battle.unk53AE84,
+            battle.wholeSide
+        };
 
-            this->TakeSlotRecord(acting);
-            battle.actingUnit = acting.unit;
-            battle.sweepTotal = acting.targetCount;
-            battle.unk53AE78 = acting.kind;
-            battle.slideBackPicture = static_cast<i16>(acting.unk0A);
-            battle.unk53AE7C = acting.unk0C;
-            battle.unk53AE80 = acting.unk10;
-            battle.unk53AE84 = acting.unk14;
-            battle.wholeSide = acting.unk18;
+        this->TakeSlotRecord(acting);
+        battle.actingUnit = acting.unit;
+        battle.sweepTotal = acting.targetCount;
+        battle.unk53AE78 = acting.kind;
+        battle.slideBackPicture = static_cast<i16>(acting.unk0A);
+        battle.unk53AE7C = acting.unk0C;
+        battle.unk53AE80 = acting.unk10;
+        battle.unk53AE84 = acting.unk14;
+        battle.wholeSide = acting.unk18;
 
-            if (battle.actingUnit != -1)
-            {
-                battle.slotRecordFrames = 0;
-                battle.unk53BF74 = 1;
-                this->fightTalk.battleActingUnit = battle.actingUnit;
-            }
+        if (battle.actingUnit != -1)
+        {
+            battle.slotRecordFrames = 0;
+            battle.unk53BF74 = 1;
+            this->fightTalk.battleActingUnit = battle.actingUnit;
         }
     }
 
     battle.enemyGaugeBoost = battle.actingUnit == -1 && battle.currentUnit == 0 ? 1 : 0;
     smooth::Scene frameScene;
     this->battleServices.frame = this->smoothMotion || this->battleDeferred ? &frameScene : nullptr;
+    this->SlideUnits(this->battleEnemies[static_cast<std::size_t>(battle.slideUnit)], battle.slideX);
     this->DrawBattleBackground(battle.shake);
 
     if (battle.unk53BF64 == 1 || battle.hitsAllRoles == 1)
@@ -222,6 +206,13 @@ int Game::BattleFrame()
     }
 
     this->UpdateUnits();
+
+    if (battle.coinTossing == 1 && hud.DrawCoinToss() == 1)
+    {
+        battle.coinTossing = 0;
+        battle.grayBandState = kGrayBandCloses;
+    }
+
     this->CheckStoneSides();
     this->ApplyHits();
 
@@ -234,27 +225,8 @@ int Game::BattleFrame()
 
     if (battle.currentUnit != 0)
     {
-        ActState& panel = this->battleMessages.panelAct;
-        panel = ActState{};
-        panel.id = kCurrentPanelAct;
-        panel.action = 0;
-        this->acts.Run(panel);
         const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
-        const int x = BattleState::PortraitX[static_cast<std::size_t>(battle.partyRoles[unit])];
-        smooth::Scene scene;
-        smooth::WindowFrame(
-            this->painter,
-            this->archive,
-            panel.frame,
-            x,
-            kCurrentPanelTop,
-            x + kCurrentPanelWidth,
-            kCurrentPanelBottom,
-            0,
-            kCurrentPanelBorder,
-            scene
-        );
-        scene.Show(this->battleServices);
+        hud.DrawPicturePalette(kCurrentPanelPicture, kCurrentPanelX[unit], kBottomBarY);
 
         if (battle.grayBandShown == 0 && this->battleRoles[unit].Flag26B8() == 0)
         {
@@ -276,14 +248,7 @@ int Game::BattleFrame()
     this->fieldView.DrawRoleHeads();
     this->talk.Draw();
     this->battleMessages.DrawResistancePanel();
-    this->fieldView.DrawTimer(kTimerX, kTimerY, 0);
-    this->fieldView.DrawTimer(kSecondTimerX, kTimerY, 1);
-
-    if (this->state.GameFlag(kQuitFlag))
-    {
-        this->battleServices.frame = nullptr;
-        return kQuitBattle;
-    }
+    this->fieldView.DrawTimer(kTimerX, kTimerY, kBattleTimer);
 
     if (this->config.debugMode == 1)
     {
@@ -293,9 +258,18 @@ int Game::BattleFrame()
     this->CheckBattleEnd();
     this->DrawBattlePrompt();
 
-    if (battle.fieldFade.frames <= 0 && battle.fadingField == 1)
+    if (battle.fadingField == 1 && battle.fieldFade.frames <= 0)
     {
-        battle.StartFieldFade(kFadeLight, kFadeLight, kFadeLight, 0, 0, 0, kFadeFrames);
+        const ColorFade& fade = battle.fieldFade;
+        battle.StartFieldFade(
+            static_cast<int>(fade.startRed),
+            static_cast<int>(fade.startGreen),
+            static_cast<int>(fade.startBlue),
+            0,
+            0,
+            0,
+            kFadeFrames
+        );
         battle.fadingField = 0;
     }
 
@@ -326,6 +300,8 @@ int Game::BattleFrame()
     {
         this->ShowFrame();
     }
+
+    this->AudioPump();
 
     // The original saves the snapshot as c:\snap\<1000 + n>.bmp (0x004BF2FC); the rebuild saves it with the screenshots
     // of the map, under their first free name (deviations.md).
