@@ -500,7 +500,7 @@ public:
     i32 actingEnemy = 0;  // 0x00576FB4 the enemy taking the turn
     i32 orderStep = 1;    // 0x004BF0E0 1-based step through enemyOrder or RoleCycle
     i32 unk53BFB8 = 0;
-    i32 damageShown = 0;  // swd32 0x0053BFD8 set when a unit's damage numbers are done (ApplyHits)
+    i32 damageShown = 0;  // 0x005772D8 set when a unit's damage numbers are done (ApplyHits)
     i32 unk53BD9C = 0;
     i32 pageListRow = 1;  // 0x004BF0E8 the row marked in the list of state 2 (1-based)
     // 0x004BF0EC the row marked in the lists of states 4 and 0x1B (1-based)
@@ -633,7 +633,7 @@ public:
     i32 unk53BDD8 = 0;
     SkillScript accessoryEffect;  // swd32 0x004FF140 the buff or ailment of an accessory command
     // The frame of a role (Game::RoleFrame).
-    i32 aiTarget = 1;  // swd32 0x004A7554 the enemy (1-based) an AI role aims at
+    i32 aiTarget = 1;  // 0x004BF0E4 the enemy (1-based) an AI role aims at
     u16 unk5240C4 = 0;
     // The frame of the battle (Game::BattleFrame).
     u16 slotRecordFrames = 0;  // swd32 0x0053BF1A frames since the last slot record was taken
