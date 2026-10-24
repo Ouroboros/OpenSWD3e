@@ -901,7 +901,7 @@ TEST_CASE("battle state: the initial turn and push values match swd32.exe")
     CHECK(swd3etest::SameTable(exe, kTurnStepAt, std::array<swd3e::i32, 1>{state.orderStep}));
     CHECK(swd3etest::SameTable(exe, kListMarksAt, std::array<swd3e::i32, 2>{state.pageListRow, state.roleListRow}));
     CHECK(swd3etest::SameTable(exe, kListRoleAt, std::array<swd3e::i32, 1>{state.listRole}));
-    CHECK(swd3etest::SameTable(exe, kRoleCycleAt, swd3e::BattleState::RoleCycle));
+    CHECK(swd3etest::SameTable(exe, kRoleCycleAt, swd3e::BattleState::InitialRoleCycle));
     CHECK(swd3etest::SameTable(exe, kAutoEnemyAt, std::array<swd3e::i32, 1>{state.autoTarget}));
     CHECK(swd3etest::SameTable(exe, kMenuCommandAt, std::array<swd3e::i32, 1>{state.menuCommand}));
     CHECK(swd3etest::SameTable(exe, kMasteryRoleAt, std::array<swd3e::u8, 1>{state.levelUpRole}));

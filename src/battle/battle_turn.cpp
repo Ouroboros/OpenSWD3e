@@ -1483,13 +1483,13 @@ void Game::NextRoleTurn()
             at = 1;
         }
 
-        if (++steps > static_cast<int>(BattleState::RoleCycle.size()) ||
-            at >= static_cast<i32>(BattleState::RoleCycle.size()))
+        if (++steps > static_cast<int>(battle.roleCycle.size()) ||
+            at >= static_cast<i32>(battle.roleCycle.size()))
         {
             Hang();
         }
 
-        role = BattleState::RoleCycle[static_cast<std::size_t>(at)];
+        role = battle.roleCycle[static_cast<std::size_t>(at)];
     } while (role != battle.currentUnit - BattleState::FirstRoleUnit);
 
     battle.orderStep = at;
@@ -3530,7 +3530,7 @@ void Game::AimStep(int step)
         {
             StepWrapped(battle.orderStep, step, cycle);
             const auto at = static_cast<std::size_t>(battle.orderStep);
-            battle.actingEnemy = at < BattleState::RoleCycle.size() ? BattleState::RoleCycle[at] : -1;
+            battle.actingEnemy = at < battle.roleCycle.size() ? battle.roleCycle[at] : -1;
             spin();
         } while (!aimable(battle.actingEnemy));
 

@@ -102,8 +102,8 @@ public:
     static constexpr i16 MaxDarkLevel = 2;
     static constexpr i32 DarkLevelFrames = 1;  // darkFrames past it step to the next level
     static constexpr std::array<u8, 10> QuakeSteps = {4, 3, 4, 3, 4, 3, 2, 3, 2, 3};  // 0x004BF190 by quakePhase
-    static constexpr std::array<i32, 5> RoleCycle = {11, 2, 1, 0, 3};  // 0x004BF578 the party roles by turn, from 1
-    static constexpr std::array<i32, 4> PanelUnits = {10, 9, 8, 11};   // 0x004BF56C the role units by panel
+    static constexpr std::array<i32, 5> InitialRoleCycle = {11, 2, 1, 0, 3};          // 0x004BF578 (exe)
+    static constexpr std::array<i32, 4> PanelUnits = {10, 9, 8, 11};             // 0x004BF56C the role units by panel
     static constexpr std::array<int, 4> PortraitX = {0xFD, 0x5D, 0x19D, 0x19D};  // 0x004BF13C by place (swd3e)
     // 0x004BF0C4: the five commands of the menu (pointers in the original, kinds 0x2A..0x2E of the accessory names)
     static constexpr std::array<std::u8string_view, 5> FixedCommandNames =
@@ -250,6 +250,19 @@ public:
     std::array<std::array<char, sizeof(RoleName)>, Party::Roles> roleNames = {};
     // swd32 0x00521398 the four roles are in the party (story flags 0x1E..)
     std::array<u8, Party::Roles> inParty = {};
+    // 0x004BF578 the party roles by turn, from 1 (swd3e: a party of three rewrites [1..4], StartBattle)
+    std::array<i32, 5> roleCycle = InitialRoleCycle;
+    u16 partyMask = 0;                  // 0x005770D2 (swd3e) bit per party role in the battle (StartBattle; not read)
+    i32 unk577224 = 0;                  // 0x00577224 (swd3e) cleared by StartBattle, not read
+    u16 unk577228 = 0;                  // 0x00577228 (swd3e) cleared by StartBattle, not read
+    u8 unk5774E8 = 0;                   // 0x005774E8 (swd3e) cleared by StartBattle, used by EnemyFrame
+    i32 unk576FC4 = 0;                  // 0x00576FC4 (swd3e) cleared by StartBattle, used by EnemyFrame
+    i32 unk576FC8 = 0;                  // 0x00576FC8 (swd3e)
+    i32 unk576FD0 = 0;                  // 0x00576FD0 (swd3e)
+    i32 unk576FCC = 0;                  // 0x00576FCC (swd3e) cleared by StartBattle, used by EnemyFrame
+    std::array<i32, 5> unk50D878 = {};  // 0x0050D878 (swd3e) cleared by StartBattle, used by EnemyFrame
+    u16 unk51359C = 0;                  // 0x0051359C (swd3e) cleared by StartBattle, not read
+    u16 unk51359E = 0;
     std::array<u8, Guests> guestUsed = {};  // swd32 0x004FDF80
     // 0x005376A4 (swd3e) per enemy: the party's hits on it (MenuConfirm; cleared when it falls); the roles acting by
     // themselves aim at the most hit (MostHitEnemy)
@@ -300,7 +313,7 @@ public:
     std::array<i32, 0xA> unk4FE5D4 = {};
     std::array<std::u8string_view, 4> commandNames;  // 0x0050EBF0 the listed commands of the menu (pointers)
     std::array<u16, 4> commandKinds = {};            // 0x0050D870 their kinds (swd3e: four)
-    std::array<i32, RoleUnits> unk524268 = {};       // 0x005376B8 per role (swd3e: ten)
+    std::array<i32, Units> unk524268 = {};           // 0x005376B8 per unit (swd3e: 0x78 bytes)
     // 0x005378EC the five commands of the menu and the four listed ones (swd3e; the ninth byte is the low byte of
     // hitDamage in the original, kept apart here: deviations.md)
     std::array<u8, 9> commandEnabled = {};
