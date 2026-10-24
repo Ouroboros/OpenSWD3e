@@ -127,7 +127,7 @@ public:
     void Regenerate(BattleServices& services);
     void UseAccessorySkill(BattleServices& services, u16 kind);
     int RollCritical(BattleServices& services);
-    void PrepareCommand(BattleServices& services, Database& database);
+    int PrepareCommand(BattleServices& services, Database& database);
     void FinishCommand();
     int BeatsLevel(BattleServices& services, u16 level) const;
     int StepBack(BattleServices& services, int mode);

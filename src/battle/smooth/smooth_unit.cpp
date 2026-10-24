@@ -2553,6 +2553,7 @@ int UnitFrame::RunAwayAdvance(BattleServices& services, Scene& scene)
 
     if (unit.fadeLevel <= kRunEnd)
     {
+        unit.defeated = 1;
         run = ActState{};
         return 1;
     }

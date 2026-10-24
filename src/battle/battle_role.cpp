@@ -246,8 +246,13 @@ constexpr int kSpiritShare = 5;          // Unk23: a fifth of the proficiency
 // RollCritical and PrepareCommand.
 constexpr u32 kCriticalAttacks = 8;  // a critical may be rolled after 8 attacks, is sure after roleCount more
 constexpr u32 kCriticalRoll = 10;
-constexpr u16 kCriticalChance = 5;  // a roll above it is critical
-constexpr u16 kWalkCommand = 0xC8;  // command A of a walking attack (its command in command B)
+constexpr u16 kCriticalChance = 5;           // a roll above it is critical
+constexpr u16 kWalkCommand = 0xC8;           // command A of a walking attack (its command in command B)
+constexpr u16 kTwoCommand = 2;               // PrepareCommand (swd3e): the skill name is kept for command B 2
+constexpr u16 kStillSkill = 0xA6;            // the skill a MarkBit4 role takes in place of its weapon's
+constexpr u32 kStandAsideFlag = 0x10000000;  // unk26B8: under StatusBit5 the role stands aside
+constexpr i16 kStandAsideX = 0x154;
+constexpr i16 kStandAsideY = 0x140;
 
 // BeatsLevel: chances out of kLevelRoll.
 constexpr u32 kLevelRoll = 100;
@@ -1163,7 +1168,8 @@ int BattleRole::DirectAttack(BattleServices& services, BattleUnit& target)
 
 // swd3e.exe 0x00483B70: one frame of the role's cast pose (kCastPose in the stand act, its hold left as it is) at its
 // place over its shadow, mirrored by the facing; once the act strikes or follows up (the bits stay set) the spell act
-// `spell` (slot act 0) is drawn on the target each frame, and 1 (both acts cleared) tells that it waits.
+// `spell` (slot act 0, its sound played once) is drawn on the target each frame, and 1 (both acts cleared) tells that
+// it waits; without a spell 1 at once.
 int BattleRole::CastAt(BattleServices& services, const BattleUnit& target, i32 spell)
 {
     smooth::Scene scene;
@@ -1714,17 +1720,27 @@ int BattleRole::RollCritical(BattleServices& services)
     return 1;
 }
 
-// swd3e.exe 0x004808D0: the role's chosen command prepared. A UnkCommandFlag200 command takes command unk2F18 (a
-// walking one, UnkFlag8 / UnkFlag20, goes to command B with command A kWalkCommand). Otherwise the skill name is
-// cleared, the attack set from the battle record (not for Unk1B), the accessory command applied, the critical rolled,
-// the command loaded from skill 0 (a LifeDrain equipment drains life) and then from the weapon's skill: a walking
-// attack (command 1, Steal or Unk1A, not forced) goes to command B with command A kWalkCommand.
-void BattleRole::PrepareCommand(BattleServices& services, Database& database)
+// swd3e.exe 0x004808D0: the role's chosen command prepared (the start of the skill name cleared unless command B is 2;
+// 1 at once without a command). A UnkCommandFlag200 command takes command unk2F18; a walking one (UnkFlag8 /
+// UnkFlag20) goes to command B with command A kWalkCommand (1), otherwise 0. Else the attack is set from the battle
+// record (not for Unk1B), the accessory command applied, the critical rolled and the command loaded from skill 0 (a
+// LifeDrain equipment drains life); without a weapon skill a walking attack (command 1, Steal or Unk1A of a party
+// member) walks and it is 0. With one the command is loaded anew from the weapon's skill (0xA6 under MarkBit4): under
+// StatusBit5 a walking attack of command 1 walks (1), or with unk26B8 bit 28 and UnkFlag4 the role turns and stands at
+// (0x154, 0x140) (1); otherwise a walking attack, or Steal, walks as without a skill. 1.
+int BattleRole::PrepareCommand(BattleServices& services, Database& database)
 {
+    if (this->commandB != kTwoCommand)
+    {
+        std::fill_n(this->skillName.begin(), kCancelledNameBytes, '\0');
+    }
+
     if (this->commandA == 0)
     {
-        return;
+        return 1;
     }
+
+    const u16 walking = UnitCommand::UnkFlag8 | UnitCommand::UnkFlag20;
 
     auto walk = [this]
     {
@@ -1732,15 +1748,13 @@ void BattleRole::PrepareCommand(BattleServices& services, Database& database)
         this->commandA = kWalkCommand;
     };
 
-    auto walksForward = [this]
+    auto walkingAttack = [this]
     {
         const u16 kind = this->commandA;
-        const bool attack = kind == 1 || kind == static_cast<u16>(AccessoryKind::Steal) ||
-                            kind == static_cast<u16>(AccessoryKind::Unk1A);
-        return attack && this->autoControl == 0 && this->guestControl == 0;
+        return (kind == 1 || kind == static_cast<u16>(AccessoryKind::Steal) ||
+                kind == static_cast<u16>(AccessoryKind::Unk1A)) &&
+               this->partyMember == 1;
     };
-
-    const u16 walking = UnitCommand::UnkFlag8 | UnitCommand::UnkFlag20;
 
     if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
     {
@@ -1754,12 +1768,12 @@ void BattleRole::PrepareCommand(BattleServices& services, Database& database)
         if ((this->command.flags & walking) != 0)
         {
             walk();
+            return 1;
         }
 
-        return;
+        return 0;
     }
 
-    std::fill_n(this->skillName.begin(), kCancelledNameBytes, '\0');
     const u16 kind = this->commandA;
 
     if (kind != static_cast<u16>(AccessoryKind::Unk1B))
@@ -1779,27 +1793,59 @@ void BattleRole::PrepareCommand(BattleServices& services, Database& database)
 
     const u16 skill = this->weapon.data.skillScript;
 
-    if (skill != 0)
+    if (skill == 0)
     {
-        this->LoadCommand(database, skill);
-
-        if ((this->command.flags & walking) == 0 && this->commandA != static_cast<u16>(AccessoryKind::Steal))
-        {
-            return;
-        }
-
-        if (walksForward())
+        if ((this->command.flags & walking) != 0 && walkingAttack())
         {
             walk();
         }
 
-        return;
+        return 0;
     }
 
-    if ((this->command.flags & walking) != 0 && walksForward())
+    this->command = UnitCommand{};
+    this->LoadCommand(database, this->MarkBit4() == 1 ? kStillSkill : skill);
+
+    if ((this->equipmentFlags & BattleUnit::LifeDrain) != 0)
+    {
+        this->command.actionFlags |= UnitCommand::DrainsLife;
+    }
+
+    if (this->StatusBit5() == 1)
+    {
+        if (this->commandA != 1)
+        {
+            return 1;
+        }
+
+        if ((this->unk26B8 & kStandAsideFlag) != 0)
+        {
+            if ((this->command.flags & UnitCommand::UnkFlag4) != 0)
+            {
+                this->SetFacing(1);
+                this->placement.x = kStandAsideX;
+                this->placement.y = kStandAsideY;
+            }
+
+            return 1;
+        }
+
+        if ((this->command.flags & walking) != 0)
+        {
+            this->commandB = 1;
+            this->commandA = kWalkCommand;
+        }
+
+        return 1;
+    }
+
+    if (((this->command.flags & walking) != 0 || this->commandA == static_cast<u16>(AccessoryKind::Steal)) &&
+        walkingAttack())
     {
         walk();
     }
+
+    return 1;
 }
 
 // swd3e.exe 0x00481200: the cost of the role's command paid: with UnkCommandFlag8000 the selected item is used up, or

@@ -479,6 +479,11 @@ int RoleFrame::CastAtAdvance(BattleServices& services, const BattleUnit& target,
         return 0;
     }
 
+    if (spell <= 0)
+    {
+        return 1;
+    }
+
     ActState& effect = role.slotActs[0];
     effect.id = spell;
     effect.action = 0;
@@ -488,6 +493,8 @@ int RoleFrame::CastAtAdvance(BattleServices& services, const BattleUnit& target,
         return 0;
     }
 
+    services.audio.PlaySound(effect.view, services.config.soundVolume);
+    effect.view = 0;
     role.picture = services.archive.GetPicture(effect.frame, effect.picture);
 
     if (role.picture == nullptr)

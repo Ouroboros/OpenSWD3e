@@ -180,6 +180,7 @@ struct UnitCommand
     {
         TargetsUnit = 1,  // a target command (ClearMoveAxes)
         UnkFlag2 = 2,
+        UnkFlag4 = 4,      // swd3e: under StatusBit5 with unk26B8 bit 28 the role stands aside (PrepareCommand)
         UnkFlag8 = 8,      // with UnkFlag20: a party role walks home after it acts (ReturnHome)
         UnkFlag10 = 0x10,  // an enemy walks home after it acts
         UnkFlag20 = 0x20,  // the walks wait for the act to follow up, then cover 1/16 (there) or 1/12 (home) a frame

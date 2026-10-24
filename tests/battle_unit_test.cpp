@@ -375,9 +375,10 @@ TEST_CASE("battle unit: ailments, buffs, expiry and damage")
     unit.goldGuard = 1;
     swd3e::i32& gold = all.party.variables[swd3e::Party::Gold];
     gold = kGold;
+    // swd3e: the gold pays what it holds, the rest of the hit comes off the hit points.
     CHECK_EQ(unit.Damage(all.services, kGoldHit, 0, 0), 0);
-    CHECK_EQ(gold, kGold - kGoldHit);
-    CHECK_EQ(role.hitPoints, kHitPointsLeft - kHit);
+    CHECK_EQ(gold, 0);
+    CHECK_EQ(role.hitPoints, kHitPointsLeft - kHit - (kGoldHit - kGold));
     unit.goldGuard = 0;
     CHECK_EQ(unit.Damage(all.services, kHitPointsLeft, 0, 0), 1);
     CHECK_EQ(role.hitPoints, 0);

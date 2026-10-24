@@ -110,6 +110,13 @@ constexpr u16 kUnkAccessory28 = 0x28;    // the accessory kind UnkEquipment100 t
 constexpr u32 kHealRoll = 0xA;           // ChooseHeal: a roll of 0..4 picks the first way, 5..9 the second
 constexpr u8 kDefeatPoses = 10;          // a defeated unit takes a pose of 1..kDefeatPoses
 constexpr u8 kFallbackDefeatPose = 6;    // or this one when none was taken
+constexpr u16 kWhiteFrame = 0xFFFF;      // Damage (swd3e): a transferred hit whitens the frame (0xFF bytes)
+constexpr u32 kMeterArmed = 0x100;       // equipmentFlags: Unk28 armed, the hits go to the meter
+constexpr int kMeterHealShare = -80;     // a heal takes the proficiency percent of -80 percent of unk2EB4
+constexpr int kMeterBaseShare = 20;      // a hit gives a fifth
+constexpr int kMeterHitShare = 80;       // and the proficiency percent of four fifths
+constexpr int kMeterLimitScale = 0x5F;   // the meter's top: 95 times the proficiency
+constexpr int kMeterLimitBase = 0x1F4;   // plus 500
 constexpr int kResetClearsGuard = 8;     // ResetTurn: the command flag that ends the guard
 constexpr u32 kFlag26B8Bit18 = 0x40000;  // cleared by ResetTurn
 
@@ -1693,17 +1700,19 @@ void BattleUnit::DrawEffectIcons(BattleServices& services, int x, int y)
     scene.Show(services);
 }
 
-// swd3e.exe 0x00495330: applies hit point damage and spirit and stamina changes; 1 when the unit falls. A party role
-// with the gold guard pays the damage from the gold while it is not zero (the gold can go below zero); an enemy with an
-// override loses that first.
+// swd3e.exe 0x00495330: applies hit point damage and spirit and stamina changes; 1 when the unit falls (none for a
+// positive hit under UnkMark8000 or ResistAll, nor for a defeated unit). An enemy loses its override first, else its
+// (32-bit) hit points, checking enrage cause 0 while it stands. A party role under DamageTransfer takes a positive hit
+// only with enrage counter 0x2FD6 or damage pending, else the frame whitens and nothing happens; with Unk28 armed the
+// meter (topped at 95 times the proficiency plus 500) takes a share of the hit (a fifth plus the proficiency percent of
+// four fifths, the whole at 100; a heal takes the proficiency percent of minus 80 percent of unk2EB4) into unk2EB4,
+// emptied when the meter spills over; the gold guard pays from the gold while there is some (unsigned), the rest from
+// the hit points.
 int BattleUnit::Damage(BattleServices& services, int hitPoints, i16 spirit, i16 stamina)
 {
-    if (hitPoints > 0 && ((this->marks & BattleUnit::UnkMark8000) != 0 || (this->status & BattleUnit::ResistAll) != 0))
-    {
-        return 0;
-    }
-
-    if (this->defeated == 1 || this->EffectFlag3() == 1)
+    if ((hitPoints > 0 &&
+         ((this->marks & BattleUnit::UnkMark8000) != 0 || (this->status & BattleUnit::ResistAll) != 0)) ||
+        this->defeated == 1)
     {
         return 0;
     }
@@ -1732,21 +1741,22 @@ int BattleUnit::Damage(BattleServices& services, int hitPoints, i16 spirit, i16 
         }
         else
         {
-            const i16 life = block.hitPoints;
-            block.hitPoints = static_cast<i16>(hitPoints < life ? life - hitPoints : 0);
+            const i32 life = block.hitPoints;
+            block.hitPoints = hitPoints < life ? life - hitPoints : 0;
 
             if (block.hitPoints < 0)
             {
-                block.hitPoints = static_cast<i16>(block.maxHitPoints);
+                block.hitPoints = block.maxHitPoints;
             }
 
             if (block.hitPoints > block.maxHitPoints)
             {
-                block.hitPoints = static_cast<i16>(block.maxHitPoints);
+                block.hitPoints = block.maxHitPoints;
             }
 
             if (block.hitPoints > 0)
             {
+                this->EnrageCheck(services, 0, 0);
                 return 0;
             }
 
@@ -1765,20 +1775,82 @@ int BattleUnit::Damage(BattleServices& services, int hitPoints, i16 spirit, i16 
         return 1;
     }
 
+    if ((this->status & BattleUnit::DamageTransfer) != 0)
+    {
+        if (hitPoints > 0 && this->enrageCounter2FD6 == 0 && this->pendingDamage == 0)
+        {
+            std::fill_n(services.screen, static_cast<std::size_t>(Display::Width) * Display::Height, kWhiteFrame);
+            return 0;
+        }
+
+        this->enrageCounter2FD6 = 0;
+    }
+
+    if ((this->equipmentFlags & kMeterArmed) != 0)
+    {
+        const int proficiency = this->proficiency;
+        int share = 0;
+
+        if (hitPoints <= 0)
+        {
+            share = proficiency * (kMeterHealShare * this->unk2EB4 / kPercent) / kPercent;
+        }
+        else
+        {
+            share = kMeterBaseShare * hitPoints / kPercent +
+                    proficiency * (kMeterHitShare * hitPoints / kPercent) / kPercent;
+
+            if (proficiency == kPercent)
+            {
+                share = hitPoints;
+            }
+        }
+
+        services.hud.SetMeterLimit(static_cast<i16>(kMeterLimitScale * proficiency + kMeterLimitBase));
+
+        if (services.hud.AddToMeter(static_cast<i16>(share)) == 0)
+        {
+            this->unk2EB4 = 0;
+        }
+        else
+        {
+            this->unk2EB4 = static_cast<i16>(this->unk2EB4 + share);
+
+            if (this->unk2EB4 < 0)
+            {
+                this->unk2EB4 = 0;
+            }
+        }
+    }
+
     RoleRecord& record = *this->roleRecord;
     i32& gold = services.party.variables[Party::Gold];
 
-    if (this->goldGuard == 1 && gold != 0)
+    auto loseHitPoints = [&record](int amount)
     {
-        gold -= hitPoints;
-    }
-    else
-    {
-        record.hitPoints = static_cast<i16>(record.hitPoints - hitPoints);
+        record.hitPoints = static_cast<i16>(record.hitPoints - amount);
 
         if (record.hitPoints > record.maxHitPoints)
         {
             record.hitPoints = record.maxHitPoints;
+        }
+    };
+
+    if (this->goldGuard != 1 || gold == 0)
+    {
+        loseHitPoints(hitPoints);
+    }
+    else if (hitPoints > 0)
+    {
+        if (static_cast<u32>(gold) < static_cast<u32>(hitPoints))
+        {
+            const int rest = hitPoints - static_cast<u16>(gold);
+            gold = 0;
+            loseHitPoints(rest);
+        }
+        else
+        {
+            gold -= hitPoints;
         }
     }
 
@@ -6103,8 +6175,9 @@ bool BattleUnit::FanGuards(BattleServices& services, u16 ailment)
 }
 
 // swd3e.exe 0x00488F50: one frame of the unit running off the field, counting fadeLevel down; 1 once it is down to
-// kRunEnd (the recoil act cleared) or the act ends. The recoil act runs the shadow action turned away from the
-// facing, stepping kRunStep a frame; its first picture plays a step sound, fadeLevel kRunSoundAt the run sound.
+// kRunEnd (the unit counted defeated, the recoil act cleared) or the act ends. The recoil act runs the shadow action
+// turned away from the facing, stepping kRunStep a frame; its first picture plays a step sound, fadeLevel kRunSoundAt
+// the run sound.
 int BattleUnit::RunAway(BattleServices& services)
 {
     smooth::Scene scene;
