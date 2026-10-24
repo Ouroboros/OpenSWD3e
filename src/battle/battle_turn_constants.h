@@ -8,7 +8,8 @@
 namespace swd3e
 {
 
-constexpr i32 kMenuColumn = 4;  // commands per column
+constexpr i32 kMenuColumns = 3;     // swd3e: the menu is a grid of three commands a row
+constexpr i32 kGhostMenuEntry = 7;  // swd3e: the menu entry of 符鬼 (kept while the ghost's orders show)
 constexpr i32 kListPages = 3;
 constexpr std::size_t kFixedCommands = 5;     // the commands of the menu before the accessory ones
 constexpr u16 kFirstAccessoryCommand = 0x15;  // the accessory kinds that add a command

@@ -104,15 +104,32 @@ public:
     static constexpr std::array<i32, 5> RoleCycle = {11, 2, 1, 0, 3};  // 0x004BF578 the party roles by turn, from 1
     static constexpr std::array<i32, 4> PanelUnits = {10, 9, 8, 11};   // 0x004BF56C the role units by panel
     static constexpr std::array<int, 4> PortraitX = {0x14A, 0xB8, 0x26, 0x1DC};  // 0x004BF13C by party role
-    // 0x004A7534: the five commands of the menu (pointers in the original)
+    // 0x004BF0C4: the five commands of the menu (pointers in the original, kinds 0x2A..0x2E of the accessory names)
     static constexpr std::array<std::u8string_view, 5> FixedCommandNames =
-        {u8"攻擊", u8"奇術", u8"物品", u8"絕招", u8"防禦"};
-    static constexpr std::u8string_view SpiritPactName = u8"靈契";  // swd32 0x004A79A0 the command of battle role 0
-    // 0x004A74A0 [0x15..0x29]: the names of the accessory commands by kind (pointers in the original)
+        {u8"攻擊", u8"奇術", u8"物品", u8"絕技", u8"防禦"};
+    static constexpr std::u8string_view RefineCommandName = u8"煉妖";   // 0x004BF614 battle role 0's first command
+    static constexpr std::u8string_view GhostCommandName = u8"符鬼";    // 0x004B12B4 its second (game flag 0x5A)
+    static constexpr std::u8string_view ReleaseCommandName = u8"釋放";  // 0x004BF60C kind 0x28 while the meter shows
+    // 0x004BF01C [0x15..0x29]: the names of the accessory commands by kind (pointers in the original)
     static constexpr std::array<std::u8string_view, 21> AccessoryCommandNames = {
-        u8"連擊", u8"陰陽", u8"偷竊", u8"群攻", u8"控制", u8"命中", u8"投擲", u8"隱形", u8"斷玉", u8"煉符", u8"鼠槌",
-        u8"護罩", u8"分解", u8"氣合", u8"冥想", u8"運功", u8"攻擊", u8"奇術", u8"物品", u8"絕招", u8"防禦",
+        u8"連擊", u8"天雷", u8"偷竊", u8"群攻", u8"控制", u8"命中", u8"投擲", u8"隱形", u8"斷玉", u8"煉符", u8"鼠槌",
+        u8"護罩", u8"分解", u8"氣合", u8"回氣", u8"運功", u8"龍颿", u8"改變", u8"蓄勁", u8"逆攻", u8"融合",
     };
+
+    // 0x004BF630: the orders of the talisman ghost the 符鬼 command offers (ghostOrdersOpen)
+    static constexpr std::array<std::u8string_view, 8> GhostOrderNames = {
+        u8"自由攻擊",
+        u8"保存靈力",
+        u8"靈力攻擊",
+        u8"保護主人",
+        u8"攻擊弱者",
+        u8"攻擊強者",
+        u8"援助夥伴",
+        u8"鎖定目標",
+    };
+
+    // 0x004BF650: the choices of the 煉妖 command (refineOptionsOpen)
+    static constexpr std::array<std::u8string_view, 2> RefineOptionNames = {u8"收化", u8"誘餌"};
 
     // BattleState::mode bits.
     enum Mode : i32
@@ -168,6 +185,7 @@ public:
     void TakeSlotRecordAt(std::size_t at, BattleSlotRecord& taken);
     void ClearActing();
     u16 MenuKindWord(std::size_t index) const;
+    u16 MenuKind(int command) const;
 
     i32 listBCount = 0;         // 0x0050BF18 the rows of the list shown from listB, at most 13
     ItemNode* listB = nullptr;  // 0x0050C034 the first item shown (itemsHead itself until the list is made)
@@ -280,11 +298,22 @@ public:
     std::array<i32, 0x14> unk4FF168 = {};
     std::array<i32, 0x3C> unk524324 = {};
     std::array<i32, 0xA> unk4FE5D4 = {};
-    std::array<std::u8string_view, 3> commandNames;  // 0x0050EBF0 the accessory commands of the menu (pointers)
-    std::array<u16, 3> commandKinds = {};            // 0x0050D870 their accessory kinds
+    std::array<std::u8string_view, 4> commandNames;  // 0x0050EBF0 the listed commands of the menu (pointers)
+    std::array<u16, 4> commandKinds = {};            // 0x0050D870 their kinds (swd3e: four)
     std::array<i32, 8> unk524268 = {};
-    // 0x005378EC the five commands of the menu and the three accessory ones
-    std::array<u8, 8> commandEnabled = {};
+    // 0x005378EC the five commands of the menu and the four listed ones (swd3e)
+    std::array<u8, 9> commandEnabled = {};
+    // 0x0050D86C (swd3e) a colour (0x19, 0x19, 0x1D) set by StartBattle and not drawn: the steps of MenuRight and
+    // MenuLeft past an empty listed command read it as the kind of command 4 (MenuKind)
+    u16 unk50D86C = 0;
+    i32 chargingRole = -1;     // 0x004BF58C (swd3e) the role unit that took 蓄勁 (kind 0x27): its menu offers 1 and 2
+    i32 meterRole = -1;        // 0x004BF590 (swd3e) the role unit that started the meter (逆攻, kind 0x28)
+    u8 ghostOrdersOpen = 0;    // 0x00577999 (swd3e) 1: the 符鬼 command shows the ghost's orders
+    u8 refineOptionsOpen = 0;  // 0x0057799A (swd3e) 1: the 煉妖 command shows its choices (0x80 once one is taken)
+    u8 elementsOpen = 0;       // 0x0057799B (swd3e) 1: the 改變 command shows the five elements
+    i32 ghostOrderRow = 1;     // 0x004BF0F8 (swd3e) the order under the cursor (1-based)
+    i32 refineOptionRow = 0;   // 0x00577990 (swd3e) the choice under the cursor (1-based)
+    i32 elementRow = 0;        // 0x0057798C (swd3e) the element under the cursor (1-based)
     std::array<i32, Party::Roles> roleListScrolls =  // 0x0052544C by role: its roleListScroll
         {};  // 0x005394B4..0x00525458 per party role: the scroll of its list (ScrollListBack)
     std::array<PendingOrder, RoleUnits> pendingOrders = {};  // 0x005369C8

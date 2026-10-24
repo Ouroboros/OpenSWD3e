@@ -35,6 +35,21 @@ constexpr i32 kFieldFadeEnd = -0x20;
 constexpr i32 kFuryFullBlock = 0x30;  // roleBlock[0] of a full fury gauge (swd3e: 0x30)
 constexpr u16 kHighlightBackground = 0xF000;
 constexpr int kMenuColumnWidth = 0x30;
+constexpr u16 kTwoListedRows = 2;  // with two listed commands or more the cover is taller
+constexpr int kCoverLeft = 4;
+constexpr int kCoverTop = 6;
+constexpr int kCoverWidth = 0x94;
+constexpr int kCoverHeight = 0x38;
+constexpr int kCoverHeightTall = 0x54;
+constexpr int kGhostOrdersX = 0x154;
+constexpr int kGhostOrdersY = 0x6E;
+constexpr int kGhostOrdersTop = 0x71;
+constexpr int kRefineOptionsX = 0x17C;
+constexpr int kRefineOptionsY = 0xC8;
+constexpr int kRefineOptionsTop = 0xCB;
+constexpr int kElementsY = 0x10E;
+constexpr int kElementsLeft = 0x103;
+constexpr int kElementsTop = 0x111;
 constexpr int kTabsDrop = 0x20;
 constexpr int kOpenTabFrame = 4;
 constexpr i32 kListPanelFrames = 0xA;
@@ -485,53 +500,110 @@ void TurnFrame::DrawCommandMenuAdvance(int x, int y, int cursor, Scene& scene)
 
     game.BuildCommandMenu();
 
-    auto highlight = [&game, &font, &battle](int left, int top, std::u8string_view name)
+    auto highlight = [&game, &font](int left, int top, std::u8string_view name, u16 color)
     {
         font.SetBackground(kHighlightBackground);
-        font.DrawText(game.drawSurface, left, top, name, battle.lightColor, TextFont::BoldOutline);
+        font.DrawText(game.drawSurface, left, top, name, color, TextFont::BoldOutline);
         font.SetBackground(TextFont::NoBackground);
+    };
+
+    auto entry = [&game, &battle, &font, &highlight, x, y, cursor](std::size_t at, std::u8string_view name)
+    {
+        const u16 color = battle.commandEnabled[at] == 1 ? battle.lightColor : battle.darkColor;
+        const int left = x + kMenuColumnWidth * static_cast<int>(at % static_cast<std::size_t>(kMenuColumns));
+        const int top = y + kMenuRowHeight * static_cast<int>(at / static_cast<std::size_t>(kMenuColumns));
+        font.DrawText(game.drawSurface, left, top, name, color, TextFont::BoldShadow);
+
+        if (static_cast<int>(at) + 1 == cursor)
+        {
+            highlight(left - 1, top - 1, name, color);
+        }
     };
 
     for (std::size_t command = 0; command < BattleState::FixedCommandNames.size(); ++command)
     {
-        const std::u8string_view name = BattleState::FixedCommandNames[command];
-        const u16 color = battle.commandEnabled[command] == 1 ? battle.lightColor : battle.darkColor;
-        const auto row = static_cast<int>(command % static_cast<std::size_t>(kMenuColumn));
-        const auto column = static_cast<int>(command / static_cast<std::size_t>(kMenuColumn));
-        const int top = y + kMenuRowHeight * row;
-        font.DrawText(game.drawSurface, x + kMenuColumnWidth * column, top, name, color, TextFont::BoldShadow);
-
-        if (static_cast<int>(command) + 1 == cursor)
-        {
-            highlight(kMenuColumnWidth * column + x - 1, top - 1, name);
-        }
+        entry(command, BattleState::FixedCommandNames[command]);
     }
 
-    for (std::size_t extra = 0; extra < battle.commandNames.size(); ++extra)
+    for (std::size_t listed = 0; listed < battle.commandNames.size(); ++listed)
     {
-        const std::u8string_view name = battle.commandNames[extra];
-        const int top = y + kMenuRowHeight * (static_cast<int>(extra) + 1);
+        const std::u8string_view name = battle.commandNames[listed];
 
         if (name.empty())
         {
             continue;
         }
 
-        u8& enabled = battle.commandEnabled[kFixedCommands + extra];
+        u8& enabled = battle.commandEnabled[kFixedCommands + listed];
 
-        if (role.CanUseAccessory(battle.commandKinds[extra]) == 1 && enabled == 1)
-        {
-            font.DrawText(game.drawSurface, x + kMenuColumnWidth, top, name, battle.lightColor, TextFont::BoldShadow);
-        }
-        else
+        if (role.CanUseAccessory(battle.commandKinds[listed]) != 1 || enabled != 1)
         {
             enabled = 0;
-            font.DrawText(game.drawSurface, x + kMenuColumnWidth, top, name, battle.darkColor, TextFont::BoldShadow);
         }
 
-        if (static_cast<int>(kFixedCommands + extra) + 1 == cursor)
+        entry(kFixedCommands + listed, name);
+    }
+
+    // A choice of a listed command covers the menu.
+    auto cover = [&game, &battle, &scene, x, y]
+    {
+        const int height = battle.listedCommands >= kTwoListedRows ? kCoverHeightTall : kCoverHeight;
+        Box(game.painter, x - kCoverLeft, y - kCoverTop, kCoverWidth, height, 1, 1, 1, FillMode::Blend, scene);
+    };
+
+    auto column = [&game, &battle, &font, &highlight](auto names, int left, int top, i32 row)
+    {
+        for (std::size_t at = 0; at < names.size(); ++at)
         {
-            highlight(x + kMenuColumnWidth - 1, top - 1, name);
+            const int rowTop = top + kMenuRowHeight * static_cast<int>(at);
+            font.DrawText(game.drawSurface, left + 4, rowTop + 1, names[at], battle.lightColor, TextFont::BoldShadow);
+
+            if (static_cast<i32>(at) + 1 == row)
+            {
+                highlight(left + 3, rowTop, names[at], battle.lightColor);
+            }
+        }
+    };
+
+    if (battle.ghostOrdersOpen == 1)
+    {
+        battle.menuCommand = kGhostMenuEntry;
+        cover();
+        const int left = game.battleMessages.DrawTallPanel(kGhostOrdersX, kGhostOrdersY, scene);
+        column(std::span(BattleState::GhostOrderNames), left, kGhostOrdersTop, battle.ghostOrderRow);
+    }
+
+    if (battle.refineOptionsOpen == 1)
+    {
+        cover();
+        const int left = game.battleMessages.DrawSmallPanel(kRefineOptionsX, kRefineOptionsY, scene);
+        column(std::span(BattleState::RefineOptionNames), left, kRefineOptionsTop, battle.refineOptionRow);
+    }
+
+    if (battle.elementsOpen == 1)
+    {
+        cover();
+
+        if (game.battleMessages.DrawWidePanel(x, kElementsY, scene))
+        {
+            for (std::size_t at = 0; at < BattleMessages::ElementNames.size(); ++at)
+            {
+                const int left = kElementsLeft + kMenuRowHeight * static_cast<int>(at);
+                const std::u8string_view name = BattleMessages::ElementNames[at];
+                font.DrawText(
+                    game.drawSurface,
+                    left + 1,
+                    kElementsTop + 1,
+                    name,
+                    battle.lightColor,
+                    TextFont::BoldShadow
+                );
+
+                if (static_cast<i32>(at) + 1 == battle.elementRow)
+                {
+                    highlight(left, kElementsTop, name, battle.lightColor);
+                }
+            }
         }
     }
 

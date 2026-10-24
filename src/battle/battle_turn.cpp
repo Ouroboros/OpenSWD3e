@@ -81,15 +81,22 @@ constexpr i32 kMenuFixedCommands = 5;  // before the accessory commands
 
 constexpr i32 kMenuStep = 5;
 constexpr i32 kMenuStepMost = 10;
+constexpr i32 kElements = 5;           // the elements of 改變
+constexpr u16 kGhostListed = 2;        // 煉妖 and 符鬼 only: the menu keeps 符鬼
+constexpr i32 kGatheringCommands = 2;  // the role that took 蓄勁 has commands 1 and 2
 
 constexpr std::size_t kAccessorySlots = 2;
 constexpr std::size_t kFirstAccessorySlot = 7;  // the equipment slots of the accessories
 constexpr std::size_t kClearedNameStart = 4;    // AnnounceMastery: the name bytes of an emptied accessory cleared
 constexpr std::u8string_view kEmptySlotName = u8"無";  // 0x004AF630 the name of an emptied accessory
 
-constexpr u16 kLastAccessoryCommand = 0x31;
-constexpr u16 kSpiritPact = 6;
-constexpr i32 kGuardedCommand = 2;
+constexpr u16 kLastAccessoryCommand = 0x31;  // swd3e: past the names, kinds 0x2F..0x31 still pass
+constexpr u16 kGhostMenuCommand = 7;         // 符鬼, its second with game flag 0x5A (swd3e)
+constexpr u16 kGatherCommand = 0x27;         // 蓄勁: below kGatherLeast percent the command is off
+constexpr u16 kStrikeBackCommand = 0x28;     // 逆攻 (釋放 while the meter shows)
+constexpr u16 kFuseCommand = 0x29;           // 融合: off without escorts
+constexpr u16 kGatherLeast = 10;
+constexpr u16 kFullProficiency = 100;
 
 constexpr i32 kTargetState = 3;  // battle states of the menu
 constexpr i32 kTalkState = 7;
@@ -306,13 +313,19 @@ constexpr i16 kStatsPose = 4;
 constexpr u8 kCraftFailed = 2;
 constexpr i32 kRefineOrder = 0xE;
 
-// The name of accessory command `kind`: kinds past the table read the variables after it in the original; no name
-// here.
-std::u8string_view AccessoryCommandName(u16 kind)
+// The name of listed command `kind` (0x004BF01C by kind): the accessory names, then the five commands (0x2A..0x2E);
+// kinds past the table read the menu variables after it as pointers in the original (deviations.md): no name here.
+std::u8string_view CommandKindName(u16 kind)
 {
     const auto at = static_cast<std::size_t>(kind - kFirstAccessoryCommand);
-    return at < BattleState::AccessoryCommandNames.size() ? BattleState::AccessoryCommandNames[at]
-                                                          : std::u8string_view{};
+
+    if (at < BattleState::AccessoryCommandNames.size())
+    {
+        return BattleState::AccessoryCommandNames[at];
+    }
+
+    const std::size_t fixed = at - BattleState::AccessoryCommandNames.size();
+    return fixed < BattleState::FixedCommandNames.size() ? BattleState::FixedCommandNames[fixed] : std::u8string_view{};
 }
 
 }  // namespace
@@ -1697,10 +1710,11 @@ void Game::SelectNextRole()
     this->SelectRoleUnit(this->PreviousSelectableRole(unit == kLastPanelUnit ? kFirstPanelUnit : unit + 1));
 }
 
-// swd3e.exe 0x0046F590: the right key in the command menu (kBackSound): state 1 moves the command (menuCommand,
-// 1-based) a column on within listedCommands + 5 entries, back when that one is not enabled; state 2 turns the page of
-// the list (listPage, 0..2) to its top; state 4 goes to the next party role's list (listRole, its kept mark and
-// scroll); state 0x1E raises roleListRow by 5 up to 10.
+// swd3e.exe 0x0046F590: the right key of the battle menu. State 1: the 符鬼 and 煉妖 choices take no key; the elements
+// of 改變 step on (wrapping, without a sound); otherwise (unless on 符鬼 with two listed commands) the role that took
+// 蓄勁 steps between commands 1 and 2, the others step a command on in its row (wrapping), past empty listed commands
+// (MenuKind), with kBackSound. State 2 turns the page of the list (listPage, 0..2) to its top; state 4 goes to the
+// next party role's list (listRole, its kept mark and scroll); state 0x1E raises roleListRow by 5 up to 10.
 void Game::MenuRight()
 {
     BattleState& battle = this->battleState;
@@ -1708,20 +1722,58 @@ void Game::MenuRight()
 
     if (battle.result == kMenuState)
     {
-        i32 command = battle.menuCommand;
-
-        if (command + kMenuColumn <= battle.listedCommands + kMenuFixedCommands)
+        if (battle.ghostOrdersOpen == 1 || battle.refineOptionsOpen == 1)
         {
-            command += kMenuColumn;
+            return;
+        }
+
+        if (battle.elementsOpen == 1)
+        {
+            if (++battle.elementRow > kElements)
+            {
+                battle.elementRow = 1;
+            }
+
+            return;
+        }
+
+        if (battle.menuCommand == kGhostMenuEntry && battle.listedCommands == kGhostListed)
+        {
+            return;
+        }
+
+        if (battle.chargingRole == battle.currentUnit)
+        {
+            if (++battle.menuCommand > kGatheringCommands)
+            {
+                battle.menuCommand = 1;
+            }
+        }
+        else
+        {
+            i32 command = battle.menuCommand + 1;
+
+            if (command % kMenuColumns == 1)
+            {
+                command -= kMenuColumns;
+            }
+
+            if (command > kMenuFixedCommands)
+            {
+                while (battle.MenuKind(command) == 0)
+                {
+                    if (++command % kMenuColumns == 1)
+                    {
+                        command -= kMenuColumns;
+                    }
+                }
+            }
+
             battle.menuCommand = command;
         }
 
-        if (battle.commandEnabled[static_cast<std::size_t>(command - 1)] == 0)
-        {
-            battle.menuCommand = command - kMenuColumn;
-        }
-
         this->audio.PlaySound(kBackSound, this->config.soundVolume);
+        return;
     }
 
     if (battle.result == kListState2)
@@ -1756,9 +1808,10 @@ void Game::MenuRight()
     }
 }
 
-// swd3e.exe 0x0046F760: the left key in the command menu: state 1 moves the command a column back down to 1 (on again
-// when that one is not enabled); state 2 turns the page back (wrapping to 2, the scroll kept); state 4 goes to the
-// previous party role's list; state 0x1E lowers roleListRow by 5 down to 1.
+// swd3e.exe 0x0046F760: the left key of the battle menu, as MenuRight the other way: state 1 steps the elements back
+// (wrapping to 5), the role that took 蓄勁 between commands 2 and 1, the others a command back in its row; state 2
+// turns the page back (wrapping to 2, the scroll kept); state 4 goes to the previous party role's list; state 0x1E
+// lowers roleListRow by 5 down to 1.
 void Game::MenuLeft()
 {
     BattleState& battle = this->battleState;
@@ -1766,20 +1819,58 @@ void Game::MenuLeft()
 
     if (battle.result == kMenuState)
     {
-        i32 command = battle.menuCommand;
-
-        if (command - kMenuColumn >= 1)
+        if (battle.ghostOrdersOpen == 1 || battle.refineOptionsOpen == 1)
         {
-            command -= kMenuColumn;
+            return;
+        }
+
+        if (battle.elementsOpen == 1)
+        {
+            if (--battle.elementRow < 1)
+            {
+                battle.elementRow = kElements;
+            }
+
+            return;
+        }
+
+        if (battle.menuCommand == kGhostMenuEntry && battle.listedCommands == kGhostListed)
+        {
+            return;
+        }
+
+        if (battle.chargingRole == battle.currentUnit)
+        {
+            if (--battle.menuCommand < 1)
+            {
+                battle.menuCommand = kGatheringCommands;
+            }
+        }
+        else
+        {
+            i32 command = battle.menuCommand - 1;
+
+            if (command % kMenuColumns == 0)
+            {
+                command += kMenuColumns;
+            }
+
+            if (command > kMenuFixedCommands)
+            {
+                while (battle.MenuKind(command) == 0)
+                {
+                    if (--command % kMenuColumns == 0)
+                    {
+                        command += kMenuColumns;
+                    }
+                }
+            }
+
             battle.menuCommand = command;
         }
 
-        if (battle.commandEnabled[static_cast<std::size_t>(command - 1)] == 0)
-        {
-            battle.menuCommand = command + kMenuColumn;
-        }
-
         this->audio.PlaySound(kBackSound, this->config.soundVolume);
+        return;
     }
 
     if (battle.result == kListState2)
@@ -1813,53 +1904,86 @@ void Game::MenuLeft()
     }
 }
 
-// swd32.exe 0x00464E90 (unmatched in swd3e): the command menu of the current role: the four commands and guard enabled;
-// then the accessory
-// commands (kinds kFirstAccessoryCommand..kLastAccessoryCommand of the two accessory slots, named by
-// AccessoryCommandNames) after them, for battle role 0 in the party first the spirit pact (kSpiritPact, with
-// UnkPanel2) of the first party role's slots, otherwise of its own party role's. A role without MarkBit8Clear loses
-// command 2, one without HasBlock30 command 4; a MarkBit1 role keeps command 2 and guard only (the cursor on 2 unless
-// its command is enabled).
+// swd3e.exe 0x00472D50: the command menu of the current role: the five commands enabled; then the listed commands
+// after them: for battle role 0 in the party first 煉妖 (kind kRefineMenuCommand) and, with game flag 0x5A, 符鬼
+// (kGhostMenuCommand), and the accessory commands (kinds kFirstAccessoryCommand..kLastAccessoryCommand of the two
+// accessory slots, named by kind) of the first party role; otherwise those of its own party role. A 逆攻 accessory
+// reads 釋放 while the meter shows, a 融合 one is off without escorts and a 蓄勁 one below 10 percent. 奇術 is off for
+// the role that started the meter until its 逆攻 is fully grown, and without MarkBit8Clear; 絕技 without HasBlock30;
+// the listed commands CanUseAccessory refuses are off. A MarkBit4 role keeps 攻擊 and 防禦 only.
 void Game::BuildCommandMenu()
 {
     BattleState& battle = this->battleState;
-    battle.commandEnabled = {1, 1, 1, 1, 1, 0, 0, 0};
+    battle.commandEnabled = {1, 1, 1, 1, 1, 0, 0, 0, 0};
     battle.commandNames = {};
+    battle.commandKinds = {};
     battle.listedCommands = 0;
     const int index = battle.currentUnit - BattleState::FirstRoleUnit;
-    std::size_t listed = 0;
+    BattleRole& role = this->battleRoles[static_cast<std::size_t>(index)];
 
-    auto add = [&battle, &listed](u16 kind, std::u8string_view name)
+    auto add = [&battle](u16 kind, std::u8string_view name) -> u8&
     {
-        battle.commandEnabled[kFixedCommands + listed] = 1;
-        battle.commandKinds[listed] = kind;
+        const std::size_t listed = battle.listedCommands;
+        u8& enabled = battle.commandEnabled[kFixedCommands + listed];
+        enabled = 1;
         battle.commandNames[listed] = name;
-        ++listed;
-        battle.listedCommands = static_cast<u16>(listed);
+        battle.commandKinds[listed] = kind;
+        return enabled;
     };
 
-    auto addAccessories = [this, &add](std::size_t role)
+    auto addAccessories = [this, &battle, &role, &add](std::size_t partyRole)
     {
         for (std::size_t slot = 0; slot < kAccessorySlots; ++slot)
         {
             const std::unique_ptr<ItemNode>& node =
-                this->party.equipment[role * Party::SlotsPerRole + kFirstAccessorySlot + slot];
+                this->party.equipment[partyRole * Party::SlotsPerRole + kFirstAccessorySlot + slot];
 
             // An empty slot holds the empty entry; a missing one is read through a null pointer in the original.
             const u16 kind = node != nullptr ? node->record.data.unk48 : u16{0};
 
-            if (kind >= kFirstAccessoryCommand && kind <= kLastAccessoryCommand)
+            if (kind < kFirstAccessoryCommand || kind > kLastAccessoryCommand)
             {
-                add(kind, AccessoryCommandName(kind));
+                continue;
             }
+
+            const std::size_t listed = battle.listedCommands;
+            u8& enabled = add(kind, CommandKindName(kind));
+
+            if (kind == kStrikeBackCommand)
+            {
+                if (this->battleHud.meterShown == 1)
+                {
+                    battle.commandNames[listed] = BattleState::ReleaseCommandName;
+                }
+            }
+            else if (kind == kFuseCommand)
+            {
+                if (battle.escortCount == 0)
+                {
+                    enabled = 0;
+                }
+            }
+            else if (
+                kind == kGatherCommand &&
+                static_cast<u16>(role.AccessoryProficiency(kGatherCommand, this->ProficiencyList())) < kGatherLeast
+            )
+            {
+                enabled = 0;
+            }
+
+            ++battle.listedCommands;
         }
     };
 
     if (battle.currentUnit == BattleState::FirstRoleUnit && battle.inParty[0] == 1)
     {
-        if ((battle.panelFlags & BattleState::UnkPanel2) != 0)
+        add(static_cast<u16>(kRefineMenuCommand), BattleState::RefineCommandName);
+        battle.listedCommands = 1;
+
+        if (this->state.GameFlag(GameState::Unk5A))
         {
-            add(kSpiritPact, BattleState::SpiritPactName);
+            add(kGhostMenuCommand, BattleState::GhostCommandName);
+            ++battle.listedCommands;
         }
 
         addAccessories(0);
@@ -1869,34 +1993,42 @@ void Game::BuildCommandMenu()
         addAccessories(static_cast<std::size_t>(battle.partyRoles[static_cast<std::size_t>(index)]));
     }
 
-    BattleRole& role = this->battleRoles[static_cast<std::size_t>(index)];
+    if (this->battleHud.meterShown == 1 && battle.meterRole == battle.currentUnit &&
+        static_cast<u16>(role.AccessoryProficiency(kStrikeBackCommand, this->ProficiencyList())) != kFullProficiency)
+    {
+        battle.commandEnabled[1] = 0;
+    }
 
     if (!role.MarkBit8Clear())
     {
         battle.commandEnabled[1] = 0;
     }
 
-    if (role.HasBlock30() == 0)
+    if (!role.HasBlock30())
     {
         battle.commandEnabled[3] = 0;
     }
 
-    if (role.MarkBit1() == 1)
+    for (std::size_t listed = 0; listed < battle.listedCommands; ++listed)
     {
-        battle.commandEnabled = {0, 1, 0, 0, 1, 0, 0, 0};
-
-        if (!this->CommandEnabled(battle.menuCommand))
+        if (role.CanUseAccessory(battle.commandKinds[listed]) == 0)
         {
-            battle.menuCommand = kGuardedCommand;
+            battle.commandEnabled[kFixedCommands + listed] = 0;
         }
+    }
+
+    if (role.MarkBit4() == 1)
+    {
+        battle.commandEnabled = {1, 0, 0, 0, 1, 0, 0, 0, 0};
     }
 }
 
-// swd32.exe 0x004651D0 (unmatched in swd3e): the command menu of the current role at (x, y): the five commands
-// (FixedCommandNames) in
-// columns of four, light when enabled and dark otherwise, then the accessory commands in the second column below the
-// first (dark, and disabled, when CanUseAccessory refuses); the entry `cursor` (1-based) is drawn again over a dark
-// box. The original first enables command 4 for a role whose fury is full (BuildCommandMenu then sets it anew).
+// swd3e.exe 0x004732D0: the command menu of the current role at (x, y), a grid of three a row: the five commands
+// (FixedCommandNames), then the listed ones (dark, and disabled, when CanUseAccessory refuses), light when enabled
+// and dark otherwise; the entry `cursor` (1-based) is drawn again over a dark box. The original first enables 絕技
+// for a role whose fury is full (BuildCommandMenu then sets it anew). An open choice covers the menu: the ghost's
+// orders (marking 符鬼) in a tall panel, the 煉妖 choices in a small one, the elements of 改變 in a wide one once
+// its slide is over, each with its row marked.
 void Game::DrawCommandMenu(int x, int y, int cursor)
 {
     smooth::Scene scene;
@@ -3554,7 +3686,7 @@ int Game::MouseHover()
             {
                 const auto index = static_cast<int>(
                     static_cast<u32>(y - top - kMenuHitTop) / kMenuRowHeight +
-                    kMenuColumn * (static_cast<u32>(x - left - kMenuHitLeft) / kMenuHitColumn)
+                    kMenuColumns * (static_cast<u32>(x - left - kMenuHitLeft) / kMenuHitColumn)
                 );
 
                 if (index < battle.listedCommands + kMenuFixedCommands)
@@ -3563,7 +3695,7 @@ int Game::MouseHover()
                         this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
 
                     if (battle.commandEnabled[static_cast<std::size_t>(index)] == 0 ||
-                        (index >= kMenuColumn &&
+                        (index >= kMenuColumns &&
                          (role.CanUseAccessory(battle.MenuKindWord(static_cast<std::size_t>(index))) == 0 ||
                           battle.commandEnabled[static_cast<std::size_t>(index)] == 0)))
                     {

@@ -149,19 +149,27 @@ void BattleMessages::DrawMessageBox(int x, int y, int width, int height, int tex
 
 // swd3e.exe 0x00478880: a small framed box (0x34 square) shaded a quarter dark at x less the menu slide (halved first
 // while it lasts); its x
-int BattleMessages::DrawSmallPanel(int x, int y)
+int BattleMessages::DrawSmallPanel(int x, int y, smooth::Scene& scene)
 {
-    return this->DrawSlidPanel(x, y, kSmallPanelSide, kSmallPanelSide, kSmallFrameRight, kSmallFrameBottom);
+    return this->DrawSlidPanel(x, y, kSmallPanelSide, kSmallPanelSide, kSmallFrameRight, kSmallFrameBottom, scene);
 }
 
 // swd3e.exe 0x004787F0: the same 0x64 wide and 0xC8 high
-int BattleMessages::DrawTallPanel(int x, int y)
+int BattleMessages::DrawTallPanel(int x, int y, smooth::Scene& scene)
 {
-    return this->DrawSlidPanel(x, y, kTallPanelWidth, kTallPanelHeight, kTallFrameRight, kTallFrameBottom);
+    return this->DrawSlidPanel(x, y, kTallPanelWidth, kTallPanelHeight, kTallFrameRight, kTallFrameBottom, scene);
 }
 
 // The box of DrawSmallPanel and DrawTallPanel (inline in each): the panel act stepped, the box at x less the slide.
-int BattleMessages::DrawSlidPanel(int x, int y, int width, int height, int frameRight, int frameBottom)
+int BattleMessages::DrawSlidPanel(
+    int x,
+    int y,
+    int width,
+    int height,
+    int frameRight,
+    int frameBottom,
+    smooth::Scene& scene
+)
 {
     BattleState& battle = this->services->state;
     this->panelAct.id = BattleMessages::PanelAct;
@@ -174,7 +182,6 @@ int BattleMessages::DrawSlidPanel(int x, int y, int width, int height, int frame
     }
 
     const int left = x - battle.menuSlide;
-    smooth::Scene scene;
     smooth::Box(this->painter, left, y, width, height, kShadeRed, kShadeGreen, kShadeBlue, FillMode::Quarter, scene);
     smooth::WindowFrame(
         this->painter,
@@ -188,13 +195,12 @@ int BattleMessages::DrawSlidPanel(int x, int y, int width, int height, int frame
         kFrameBorder,
         scene
     );
-    scene.Show(*this->services);
     return left;
 }
 
 // swd3e.exe 0x00478900: a framed box 0x82 wide and 0x1E high shaded a quarter dark at y less the menu slide (halved
 // first while it lasts); true once the slide is over
-bool BattleMessages::DrawWidePanel(int x, int y)
+bool BattleMessages::DrawWidePanel(int x, int y, smooth::Scene& scene)
 {
     BattleState& battle = this->services->state;
     this->panelAct.id = BattleMessages::PanelAct;
@@ -207,7 +213,6 @@ bool BattleMessages::DrawWidePanel(int x, int y)
     }
 
     const int top = y - battle.menuSlide;
-    smooth::Scene scene;
     smooth::Box(
         this->painter,
         x,
@@ -232,7 +237,6 @@ bool BattleMessages::DrawWidePanel(int x, int y)
         kFrameBorder,
         scene
     );
-    scene.Show(*this->services);
     return battle.menuSlide <= 0;
 }
 

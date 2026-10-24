@@ -14,6 +14,8 @@ namespace
 {
 
 constexpr std::size_t kAfterKindsWord = 4;  // MenuKindWord: the menu command whose word follows commandKinds
+constexpr int kColourCommand = 4;           // MenuKind: the menu command whose word is unk50D86C
+constexpr int kFirstListedCommand = 6;      // the menu command of the first listed one
 constexpr int kSecondKind = 2;
 constexpr u16 kAllOnes16 = 0xFFFF;  // a free record has every byte 0xFF
 
@@ -534,5 +536,19 @@ u16 BattleState::MenuKindWord(std::size_t index) const
         default:
             return LowWord(static_cast<u32>(this->unk4FE5D4[1]));
     }
+}
+
+// swd3e: the word at 0x0050D864 + 2 * `command` that MenuRight, MenuLeft and MenuConfirm read as the kind of menu
+// command `command`: the kinds of the listed commands for 6..9, before them unk50D86C for 4 and its high word, never
+// written, for 5. The words past the kinds (later commands) are other battle data in the original (deviations.md).
+u16 BattleState::MenuKind(int command) const
+{
+    if (command == kColourCommand)
+    {
+        return this->unk50D86C;
+    }
+
+    const auto listed = static_cast<std::size_t>(command - kFirstListedCommand);
+    return command >= kFirstListedCommand && listed < this->commandKinds.size() ? this->commandKinds[listed] : u16{0};
 }
 }  // namespace swd3e

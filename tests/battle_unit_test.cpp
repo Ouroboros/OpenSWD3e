@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -1132,36 +1133,40 @@ TEST_CASE("battle state: the panel units match swd32.exe")
     CHECK(swd3etest::SameTable(exe, kPanelRoleAt, std::array<swd3e::u16, 1>{state.anyStateRole}));
 }
 
-TEST_CASE("battle state: the names of the accessory commands match swd32.exe")
+TEST_CASE("battle state: the names of the menu commands match swd3e.exe")
 {
-    constexpr swd3e::u32 kNamesAt = 0x004A74A0;
+    constexpr swd3e::u32 kNamesAt = 0x004BF01C;  // by kind
     constexpr swd3e::u32 kFirstKind = 0x15;
-    constexpr swd3e::u32 kSpiritPactAt = 0x004A79A0;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kFixedNamesAt = 0x004BF0C4;
+    constexpr swd3e::u32 kGhostOrdersAt = 0x004BF630;
+    constexpr swd3e::u32 kRefineOptionsAt = 0x004BF650;
+    constexpr swd3e::u32 kElementsAt = 0x004BF658;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
-    for (std::size_t at = 0; at < swd3e::BattleState::AccessoryCommandNames.size(); ++at)
+    auto sameTable = [&exe](swd3e::u32 at, std::span<const std::u8string_view> names)
     {
-        const auto kind = kFirstKind + static_cast<swd3e::u32>(at);
-        const swd3e::u32 address = swd3etest::ExeDword(exe, kNamesAt + kind * sizeof(swd3e::u32));
-        CHECK(swd3etest::SameText(exe, address, swd3e::BattleState::AccessoryCommandNames[at]));
-    }
+        for (std::size_t entry = 0; entry < names.size(); ++entry)
+        {
+            const swd3e::u32 address =
+                swd3etest::ExeDword(exe, at + static_cast<swd3e::u32>(entry * sizeof(swd3e::u32)));
+            CHECK(swd3etest::SameText(exe, address, names[entry]));
+        }
+    };
 
-    CHECK(swd3etest::SameText(exe, kSpiritPactAt, swd3e::BattleState::SpiritPactName));
-
-    constexpr swd3e::u32 kFixedNamesAt = 0x004A7534;
-
-    for (std::size_t at = 0; at < swd3e::BattleState::FixedCommandNames.size(); ++at)
-    {
-        const swd3e::u32 address =
-            swd3etest::ExeDword(exe, kFixedNamesAt + static_cast<swd3e::u32>(at * sizeof(swd3e::u32)));
-        CHECK(swd3etest::SameText(exe, address, swd3e::BattleState::FixedCommandNames[at]));
-    }
+    sameTable(kNamesAt + kFirstKind * sizeof(swd3e::u32), swd3e::BattleState::AccessoryCommandNames);
+    sameTable(kFixedNamesAt, swd3e::BattleState::FixedCommandNames);
+    sameTable(kGhostOrdersAt, swd3e::BattleState::GhostOrderNames);
+    sameTable(kRefineOptionsAt, swd3e::BattleState::RefineOptionNames);
+    sameTable(kElementsAt, swd3e::BattleMessages::ElementNames);
+    CHECK(swd3etest::SameText(exe, 0x004BF614, swd3e::BattleState::RefineCommandName));
+    CHECK(swd3etest::SameText(exe, 0x004B12B4, swd3e::BattleState::GhostCommandName));
+    CHECK(swd3etest::SameText(exe, 0x004BF60C, swd3e::BattleState::ReleaseCommandName));
 }
 
 TEST_CASE("battle unit: drops and finished proficiencies")

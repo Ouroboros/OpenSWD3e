@@ -38,6 +38,9 @@ constexpr int kLightBlue = 0x17;
 constexpr int kDarkRed = 0xF;
 constexpr int kDarkGreen = 0xE;
 constexpr int kDarkBlue = 0xB;
+constexpr int kGreyRed = 0x19;  // swd3e: unk50D86C
+constexpr int kGreyGreen = 0x19;
+constexpr int kGreyBlue = 0x1D;
 constexpr int kPointerX = Display::Width / 2;  // the pointer starts in the middle of the screen
 constexpr int kPointerY = Display::Height / 2;
 constexpr int kBarLength = 56;    // the pixels of a full gauge of the role panels
@@ -241,6 +244,7 @@ void Game::StartBattle(u16 number)
     this->mediumFont.SetAdvance(kMediumAdvance);
     battle.lightColor = static_cast<u16>(this->painter.MakeColor(kLightRed, kLightGreen, kLightBlue));
     battle.darkColor = static_cast<u16>(this->painter.MakeColor(kDarkRed, kDarkGreen, kDarkBlue));
+    battle.unk50D86C = static_cast<u16>(this->painter.MakeColor(kGreyRed, kGreyGreen, kGreyBlue));
     battle.projector.Init(this->graphics);
     state.pointerX = kPointerX;
     battle.pointerX = kPointerX;

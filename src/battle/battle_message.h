@@ -15,7 +15,8 @@ namespace swd3e
 namespace smooth
 {
 class MessagesFrame;
-}
+class Scene;
+}  // namespace smooth
 
 class ActArchive;
 class BattleHud;
@@ -201,10 +202,10 @@ public:
     void DrawCraftResultPanel();
     void DrawMessageBox(int x, int y, int width, int height, int textX, int textY, std::string_view text);
     void DrawMessageBox(int x, int y, int width, int height, int textX, int textY, std::u8string_view text);
-    int DrawSmallPanel(int x, int y);
-    int DrawTallPanel(int x, int y);
-    int DrawSlidPanel(int x, int y, int width, int height, int frameRight, int frameBottom);
-    bool DrawWidePanel(int x, int y);
+    int DrawSmallPanel(int x, int y, smooth::Scene& scene);
+    int DrawTallPanel(int x, int y, smooth::Scene& scene);
+    int DrawSlidPanel(int x, int y, int width, int height, int frameRight, int frameBottom, smooth::Scene& scene);
+    bool DrawWidePanel(int x, int y, smooth::Scene& scene);
     int GrowPanel(int top, int bottom, int divisor);
     void DrawResistancePanel();
     void DrawMastery();
