@@ -13,8 +13,8 @@ namespace swd3e
 namespace
 {
 
-constexpr int kColourCommand = 4;           // MenuKind: the menu command whose word is unk50D86C
-constexpr int kFirstListedCommand = 6;      // the menu command of the first listed one
+constexpr int kColourCommand = 4;       // MenuKind: the menu command whose word is unk50D86C
+constexpr int kFirstListedCommand = 6;  // the menu command of the first listed one
 constexpr int kSecondKind = 2;
 constexpr u16 kAllOnes16 = 0xFFFF;  // a free record has every byte 0xFF
 
@@ -24,31 +24,6 @@ constexpr u16 kAllOnes16 = 0xFFFF;  // a free record has every byte 0xFF
 BattleState::BattleState() = default;
 
 BattleState::~BattleState() = default;
-
-// swd32.exe 0x004694E0 (unmatched in swd3e): takes the first non-zero entry of the 4 x 10 queue unless one is pending
-void BattleState::TakePendingAction()
-{
-    if (this->pendingAction != 0)
-    {
-        return;
-    }
-
-    for (int row = 0; row < BattleState::QueueRows; ++row)
-    {
-        for (int column = 0; column < BattleState::QueueColumns; ++column)
-        {
-            i16& entry = this->actionQueue[static_cast<std::size_t>(row * BattleState::QueueColumns + column)];
-
-            if (entry != 0)
-            {
-                this->pendingActionRow = static_cast<i16>(row);
-                this->pendingAction = entry;
-                entry = 0;
-                return;
-            }
-        }
-    }
-}
 
 // swd3e.exe 0x00465660: the units from the top down: each pass takes the first unit with a y not yet taken, then the
 // lowest y among the enemies after it and the roles (a role at the same y as an enemy comes after it); a unit with y 0

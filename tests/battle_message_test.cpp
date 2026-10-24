@@ -95,12 +95,6 @@ constexpr swd3e::i32 kRiseStart = -0x20;  // a rising message starts this far be
 constexpr int kPanelTop = 0xD4;
 constexpr int kPanelBottom = 0xF4;
 constexpr int kGrowDivisor = 3;
-constexpr std::size_t kEarlierRow = 1;  // two queued actions; the one in the earlier row is taken
-constexpr std::size_t kEarlierColumn = 3;
-constexpr std::size_t kLaterRow = 2;
-constexpr std::size_t kLaterColumn = 5;
-constexpr swd3e::i16 kEarlierAction = 7;
-constexpr swd3e::i16 kLaterAction = 9;
 
 }  // namespace
 
@@ -128,7 +122,7 @@ TEST_CASE("battle message: texts match swd32.exe")
     }
 }
 
-TEST_CASE("battle message: list, panel growth and the action queue")
+TEST_CASE("battle message: list and panel growth")
 {
     Messages all;
     all.messages.Add(kFirstX, kFirstY, 0, kFirstText, BattleMessage::BlackBar);
@@ -171,17 +165,6 @@ TEST_CASE("battle message: list, panel growth and the action queue")
 
     CHECK_EQ(all.messages.panelHeight, kPanelBottom - kPanelTop - (kGrowDivisor - 1));  // a step of 0 ends it
     CHECK(calls > 1);
-
-    constexpr std::size_t kEarlier = kEarlierRow * swd3e::BattleState::QueueColumns + kEarlierColumn;
-    constexpr std::size_t kLater = kLaterRow * swd3e::BattleState::QueueColumns + kLaterColumn;
-    all.state.actionQueue[kEarlier] = kEarlierAction;
-    all.state.actionQueue[kLater] = kLaterAction;
-    all.state.TakePendingAction();
-    CHECK_EQ(all.state.pendingAction, kEarlierAction);
-    CHECK_EQ(all.state.pendingActionRow, kEarlierRow);
-    CHECK_EQ(all.state.actionQueue[kEarlier], 0);
-    all.state.TakePendingAction();
-    CHECK_EQ(all.state.pendingAction, kEarlierAction);  // kept until it is used
 }
 
 TEST_CASE("battle message: the element tints match swd3e.exe")

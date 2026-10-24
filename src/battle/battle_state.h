@@ -165,7 +165,6 @@ public:
     BattleState(const BattleState&) = delete;
     BattleState& operator=(const BattleState&) = delete;
 
-    void TakePendingAction();
     void SortDrawOrder();
     void ListEnemyOrder();
     void AddSlotRecord(int kind, i32 unit);
@@ -223,7 +222,7 @@ public:
     // MenuConfirm); from the third use an object costs a third more (ListObject, SelectObject)
     std::array<u8, ItemUseIds> itemUses = {};
     std::array<std::unique_ptr<Surface>, 2> surfaces;  // 0x005379F4 screen sized off-screen surfaces
-    // 0x0053477C 4 rows of 10, taken by TakePendingAction
+    // swd32 0x0053477C 4 rows of 10 (the queued refines of the roles)
     std::array<i16, QueueRows * QueueColumns> actionQueue = {};
     i32 panelFlags = 0;        // 0x00576D3C bit 5: the resistance panel
     i16 pendingActionRow = 0;  // 0x00577206

@@ -345,9 +345,6 @@ constexpr i32 kEndCheck = 0x63;
 constexpr i32 kEndPanelFrames = 0x96;
 constexpr i32 kEndQuietFrames = 0x1E;
 constexpr i16 kLevelUpPose = 2;
-constexpr i16 kStatsPose = 4;
-constexpr u8 kCraftFailed = 2;
-constexpr i32 kRefineOrder = 0xE;
 
 // The name of listed command `kind` (0x004BF01C by kind): the accessory names, then the five commands (0x2A..0x2E);
 // kinds past the table read the menu variables after it as pointers in the original (deviations.md): no name here.
@@ -7058,11 +7055,10 @@ void Game::DrawAimPointers()
 
 // swd3e.exe 0x00475CB0: the frame of the battle end states (not while a talk window or a battle message shows):
 // 0x60 back to state 0; 0x61 the glow of the unit after the roles (a level-up role 1 once over); 0x62 the 煉符 result;
-// 0x63 the end checked (every enemy down, unless the talk or unk53C048 ended it): a waiting refine (pendingAction)
-// refines its enemy into a talisman (state 0x62 when its role is down or nothing came), otherwise 0x64; 0x64 the
-// victory panel; 0x65 the level-ups one role at a time (0x70 once none is left); 0x66 the loot; 0x67 the defeat;
-// 0x68 a pause; 0x6E the level-up stats; 0x6F the new spell; 0x70 the new special skills (0x71 after); 0x71 the
-// masteries (0x66 after). The panels confirm themselves after kEndPanelFrames.
+// 0x63 the end checked (every enemy down, unless the talk or unk53C048 ended it), then 0x64; 0x64 the victory panel
+// (without it the fade after kEndMessageFrames frames); 0x65 the level-ups one role at a time (0x70 once none is left);
+// 0x66 the loot; 0x67 the defeat; 0x68 a pause; 0x6E the level-up stats; 0x6F the new spell; 0x70 the new special
+// skills (0x71 after); 0x71 the masteries (0x66 after). The panels confirm themselves after kEndPanelFrames.
 void Game::BattleEndFrame()
 {
     BattleState& battle = this->battleState;
@@ -7121,7 +7117,12 @@ void Game::BattleEndFrame()
         case kEndVictory:
             if (battle.victoryWithoutPanel == 1)
             {
-                battle.endFade = 1;
+                if (++battle.endFrames >= kEndMessageFrames)
+                {
+                    battle.endFrames = 0;
+                    battle.endFade = 1;
+                }
+
                 return;
             }
 
@@ -7229,16 +7230,7 @@ void Game::BattleEndFrame()
             return;
 
         case kEndStats:
-            if (battle.levelUpPending == 0 && !levelRole().IsDefeated())
-            {
-                battle.levelUpPending = levelRole().RestartMainAct(kStatsPose, 0) ? 1 : 0;
-            }
-
-            if (battle.levelUpPending != 0)
-            {
-                this->DrawLevelUpStats();
-            }
-
+            this->DrawLevelUpStats();
             return;
 
         case kEndNewSpell:
@@ -7311,14 +7303,12 @@ void Game::BattleEndFrame()
     }
 }
 
-// Battle state 0x63 of BattleEndFrame (inline in the original); see there. The refine: every role's turn reset, its
-// command dropped and its effects cleared, the slot records and the acting unit cleared, the role of pendingActionRow
-// set on command 0xE at the enemy pendingAction (1-based), and the talisman it refines added to the inventory as the
-// first loot.
+// Battle state 0x63 of BattleEndFrame (inline in the original); see there. Unless the talk or unk53C048 ended the
+// battle, every enemy is unmarked and one still standing goes back to state 0; otherwise every role is unmarked and
+// its effects expire (1), and the victory follows (0x64).
 void Game::EndCheckFrame()
 {
     BattleState& battle = this->battleState;
-    BattleMessages& messages = this->battleMessages;
     battle.unk53BF1C = 0;
     battle.autoBattle = 0;
     battle.unk53C4C0 = 1;
@@ -7347,80 +7337,11 @@ void Game::EndCheckFrame()
 
     for (u32 index = 0; index < battle.roleCount; ++index)
     {
-        this->battleRoles[index].SetAC0(0);
+        BattleRole& role = this->battleRoles[index];
+        role.SetAC0(0);
+        role.ExpireEffects(this->battleServices, 1);
     }
 
-    battle.TakePendingAction();
-
-    if (battle.pendingActionRow == 0 && battle.pendingAction == 0)
-    {
-        messages.craftSucceeded = 0;
-        battle.result = kEndVictory;
-        return;
-    }
-
-    if (messages.craftSucceeded != 0)
-    {
-        return;
-    }
-
-    const auto row = static_cast<std::size_t>(static_cast<u16>(battle.pendingActionRow));
-    BattleRole& role = this->battleRoles[row];
-
-    if (role.IsDefeated())
-    {
-        battle.result = kEndCraft;
-        messages.craftSucceeded = kCraftFailed;
-        return;
-    }
-
-    for (u32 index = 0; index < battle.roleCount; ++index)
-    {
-        BattleRole& each = this->battleRoles[index];
-        each.ResetTurn(this->battleServices);
-        each.CancelCommand();
-        each.ExpireEffects(this->battleServices, 1);
-    }
-
-    battle.slotRecords.fill(BattleSlotRecord{});
-    battle.ClearActing();
-    battle.turnCommand = kRefineOrder;
-    battle.actingUnit = -1;
-    battle.turnTaken[row + static_cast<std::size_t>(BattleState::FirstRoleUnit)] = kRefineOrder;
-    role.Retarget(0);
-    role.SetCommand(battle.turnCommand);
-    battle.unk53BFD0 = 1;
-    battle.unk53BF60 = 0;
-    battle.unk53BF5C = 0;
-    battle.unk53BF74 = 0;
-    battle.actingUnit = static_cast<i32>(row) + BattleState::FirstRoleUnit;
-    battle.turnUnit = static_cast<i32>(row) + BattleState::FirstRoleUnit;
-    battle.pendingOrders[row].unk00 = 1;
-    battle.unk53BFB8 = 0;
-    battle.aimTarget = static_cast<u16>(battle.pendingAction);
-    battle.unk53BFC4 = 0;
-    battle.unk53BFC0 = 0;
-    battle.currentUnit = 0;
-    const u16 proficiency = role.Unk1EProficiency(this->battleServices);
-    const u8 level = this->party.roles[static_cast<std::size_t>(battle.partyRoles[row])].level;
-    const auto aimed = static_cast<std::size_t>(static_cast<u16>(battle.pendingAction)) - 1;
-
-    // An enemy 0 is read before the first enemy by the original: taken as refining nothing.
-    const u16 talisman =
-        aimed < this->battleEnemies.size()
-            ? this->battleEnemies[aimed].RefineTalisman(this->battleServices, this->database, proficiency, level)
-            : 0;
-
-    if (talisman == 0)
-    {
-        messages.craftSucceeded = kCraftFailed;
-        return;
-    }
-
-    ObjectRecord* record = AddOneItem(this->party.inventory, talisman, 1, this->database);
-    messages.lootNames[0] =
-        record != nullptr ? std::string_view(record->data.name.data(), ObjectName(*record).size()) : std::string_view();
-    messages.craftSucceeded = 1;
-    --battle.unk53C4B0;
+    battle.result = kEndVictory;
 }
 }  // namespace swd3e
