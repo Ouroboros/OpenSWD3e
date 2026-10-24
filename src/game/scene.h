@@ -101,7 +101,7 @@ struct RoleMarkNode
     i16 life = 0;                        // +0x0C
 };
 
-// The bubbles of a role (0x10 bytes, four at 0x004CACE0).
+// The bubbles of a role (0x10 bytes, four at 0x004E6B10).
 struct RoleMark
 {
     static constexpr u16 Emitting = 1;  // in `flags`
@@ -403,13 +403,13 @@ struct Scene
     std::array<i32, 0x20> trailDirection = {};         // swd32 0x004C8C00
     std::array<i32, 0x20> trailX = {};                 // swd32 0x004B7A18
     i32 layerTiles = 0;                                // swd32 0x004B7A98 the tiles of a layer
-    std::array<i32, 8> followers = {};                 // swd32 0x004B7C8C the roles following the leader
+    std::array<i32, 8> followers = {};                 // 0x004D1610 the roles following the leader
     std::array<MapParticle, 4> leaves = {};            // 0x004D1C40 (x MapParticle::Unplaced: to be placed)
     i32 layerOffset = 0;                               // 0x004D1C84 the first tile of the layer shown
     i32 mapStory = 0;        // swd32 0x004B88C0 bit 15: the leader takes the story act; below it the followers' story
     i16 lightningShown = 0;  // 0x004D1E04
     i32 encounterGroup = 0;  // swd32 0x004B896C the battle group of the map (0: none)
-    std::array<MoveRecord, 8> followerMoves;    // swd32 0x004B8E18
+    std::array<MoveRecord, 8> followerMoves;    // 0x004D2370
     i32 spotlightX = 0;                         // 0x004D3450 the centre of the spotlight (screen pixels)
     i32 spotlightY = 0;                         // 0x004D3454
     std::array<i16, 0x100> soundRise = {};      // swd32 0x004BA430 by role: how far below the controlled role

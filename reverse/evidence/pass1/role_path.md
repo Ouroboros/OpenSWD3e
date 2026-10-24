@@ -55,3 +55,7 @@
 - 坐标未对齐返回。在随行表（0x004D1610，序号从 1）找自己，找不到报 "CompanyWalk"/"夥伴紀錄中找不到角色(%d)"。
 - 随行移动记录（0x004D2370 起）为空、blockedTries 非 0 或当前方向为 0xFF 时：清空记录，目标取轨迹 trailX[2·序号]（0x004D1380）、trailY（0x004D1300）；旗标 0x4F 时寻路掩码 0；寻路失败记 "CmpyWalk PathFind fail ..." 错误日志；成功则写记录（类别 Path、step 0、x、y、blockedTries 0）、清格，按相机范围（上下左 −0x50 截到 0，右 +0x50，下 +0xA0）把屏幕外的步数直接走完（每步 4×步长），到屏幕内时按 Facing（0x004AA448）转向；step|=0x8000，重算格子，MarkRoleCells，RemoveRole(id, 旗标&3, 0, 0)。
 - 然后：掩码 0x40000000（旗标 0x4F 时 0），ProbeCells，step|=0x8000，步进清零；方向 0xFF：action=0、朝向取主角朝向；被挡：action=0；否则 step&=0x7FFF、blockedTries+1、action=8、步进为步长表×2。
+
+## 0x00405220 RolePath::RunScript — 第一遍复核 exact（TileStart 修改后）
+
+- FollowLeader 验证时修改了共用的 RolePath::TileStart（余数不能被步长整除时 Hang，原循环 0x004057E6／0x00405806 同样永不结束），RunScript 指令 0x18 的对齐调用受影响，恢复为待复核后重新核对：0x00405796..0x00405830 先判低 4 位、ClearRoleCells、取方向字节、按 0x004AA408／0x004AA428（与 StepX/StepY 相同）逐次减到格上、RemoveRole，与实现一致；函数其余部分源码未改动，结论维持。

@@ -54,8 +54,9 @@ public:
 
     // The place of a role between tiles brought back against its step `step` (a value of StepX or StepY) to the start
     // of the tile it set out from, as the original's loops reach it by taking the step off until the place is on a
-    // tile (StartPath, the event holds, the party joins and leaves): a place on a tile stays; without a step a place
-    // between tiles hangs, as those loops do. Moving on with the step instead, pass it negated.
+    // tile (StartPath, the event holds, the party joins and leaves): a place on a tile stays; without a step, or a
+    // fraction the step does not divide, a place between tiles hangs, as those loops do. Moving on with the step
+    // instead, pass it negated.
     static i32 TileStart(i32 place, i32 step);
 
     explicit RolePath(Game& game);

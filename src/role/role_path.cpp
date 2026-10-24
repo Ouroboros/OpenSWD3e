@@ -83,7 +83,9 @@ i32 RolePath::TileStart(i32 place, i32 step)
         return place;
     }
 
-    if (step == 0)
+    // The loops take the step off until the low four bits are clear, so they only end when the fraction is a multiple
+    // of the step; a place left between tiles by a slower walk (or a missing step) hangs them.
+    if (step == 0 || fraction % step != 0)
     {
         Hang();
     }

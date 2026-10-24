@@ -1211,8 +1211,9 @@ u32 Game::RollEncounter(int steps, int force)
         return 0;
     }
 
-    const i32 column = player.x >> MapHeader::TileShift;  // arithmetic shifts (sar) in the original
-    const i32 row = player.y >> MapHeader::TileShift;
+    // logical shifts (shr) of the place, compared signed with the areas
+    const auto column = static_cast<i32>(static_cast<u32>(player.x) >> MapHeader::TileShift);
+    const auto row = static_cast<i32>(static_cast<u32>(player.y) >> MapHeader::TileShift);
     const MapTrigger* area = view.triggers.next.get();
 
     while (area != nullptr && (column < area->left || column > area->right || row < area->top || row > area->bottom))

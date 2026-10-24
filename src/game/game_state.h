@@ -120,7 +120,7 @@ struct MoveRecord
     }
 };
 
-// A clickable rectangle (0x10 bytes in the original list at 0x004C8BEC).
+// A clickable rectangle (0x10 bytes in the original list at 0x004E4DCC).
 struct ClickRegion
 {
     i32 unk00 = 0;   // +0x00
@@ -130,7 +130,7 @@ struct ClickRegion
     u16 bottom = 0;  // +0x0E
 };
 
-// The clickable rectangles of the current screen and their state (0x004C8BE8..0x004C8BF8).
+// The clickable rectangles of the current screen and their state (0x004E4DC8..0x004E4DD8).
 class ClickRegions
 {
 public:
