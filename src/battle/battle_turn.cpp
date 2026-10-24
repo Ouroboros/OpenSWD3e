@@ -43,6 +43,7 @@ constexpr i32 kWaitState1B = 0x1B;
 constexpr i32 kWaitState1E = 0x1E;
 constexpr i32 kWaitState29 = 0x29;     // swd3e
 constexpr i32 kWaitState50 = 0x50;     // swd3e
+constexpr i32 kWaitStateA = 0xA;       // swd3e: 融合 places its escort (the keys as state 5)
 constexpr i32 kMenuSlideStart = 0x50;  // BattleState::menuSlide when a list of state 0x29 or 0x50 scrolls (swd3e)
 constexpr i32 kTurnState9 = 9;         // swd3e: prompts as kTurnState
 constexpr int kNoUnitPointer = 0x238C;
@@ -118,7 +119,9 @@ constexpr u32 kSpecialMark = 0x80000000u;
 constexpr u32 kSpecialIdMask = 0x7FFFFFFF;
 constexpr u16 kSpecialType = 0x14;  // the skill type LearnSpecials reads (swd3e; swd32 0x1F)
 
-constexpr i32 kLastMenuCommand = 8;  // the up key
+constexpr i32 kLastMenuCommand = 9;    // swd3e: the last command of the grid (the up key from below 0, the down key)
+constexpr i32 kFewAimRoles = 3;        // AimStep: fewer roles step through the roles, more through RoleCycle
+constexpr i32 kListSlideStart = 0x50;  // the lists of states 0x29 and 0x50 slide in again from this
 constexpr i32 kEscortRows = 2;
 constexpr int kHangTries = 2;      // full cycles after which a search of the original would never end
 constexpr u32 kDebugPause = 0xC8;  // the debug keys
@@ -2732,12 +2735,28 @@ void Game::DrawLevelUpStats()
     scene.Show(this->battleServices);
 }
 
-// swd3e.exe 0x0046D180: the up key of the battle menu, by battle state: 1 moves the command up (skipping disabled
-// ones, wrapping to the last accessory command; past 8 it restarts at 1); 2 and 0x1B move the list cursor up, then
-// scroll; 4 too, keeping the list for role listRole; 5 cycles 2..1; 7 and 8 cycle their entries; 0x1E cycles 10..1.
-// 3 (choosing a target, unless unk53BF88) moves the aim: an order on the party goes back through RoleCycle (four
-// party roles or more) or the 1-based roles (fewer), skipping forced and guarding roles; otherwise back through the
-// standing enemies. The aimed unit is marked, the others unmarked.
+// A 1-based place moved by `step`, wrapping at the end it moves towards only (0x00460C40: below 1 to `count`;
+// 0x00461240: past `count` to 1). A place left past the other end by another count stays there.
+void Game::StepWrapped(i32& place, int step, i32 count)
+{
+    place += step;
+
+    if (step < 0 && place < 1)
+    {
+        place = count;
+    }
+    else if (step > 0 && place > count)
+    {
+        place = 1;
+    }
+}
+
+// swd3e.exe 0x0046D180: the up key of the battle menu (kBackSound), by battle state. 1 steps the ghost's orders
+// (wrapping to 8) or the 煉妖 choices (to 2), none with the elements of 改變; otherwise a command a row up (from the
+// first row to the last one listed: the third row, else the second), none for the role that took 蓄勁 (a command below
+// 0 goes to 9). 2, 4, 0x1B, 0x29 and 0x50 move the list cursor up, then scroll (4 keeps the list for role listRole,
+// 0x29 and 0x50 restart the menu slide at 0x50); 5 and 0xA cycle 2..1; 7 and 8 cycle their entries; 0x1E cycles 10..1.
+// 3 (unless unk53BF88) moves the aim (AimStep), 9 the ghost's target through the standing enemies.
 void Game::MenuUp()
 {
     BattleState& battle = this->battleState;
@@ -2748,36 +2767,92 @@ void Game::MenuUp()
         this->audio.PlaySound(kBackSound, this->config.soundVolume);
     };
 
+    // The list cursor of states 2, 0x1B, 0x29 and 0x50 (inline in the original): false when it stopped at the top.
+    auto listUp = [](i32& cursor, i32& scroll, i32 entries)
+    {
+        if (--cursor >= 1)
+        {
+            return true;
+        }
+
+        cursor = entries != 0 ? 1 : 0;
+
+        if (--scroll < 0)
+        {
+            scroll = 0;
+        }
+
+        return false;
+    };
+
     switch (battle.result)
     {
         case kMenuState:
         {
-            if (battle.menuCommand > kLastMenuCommand)
-            {
-                battle.menuCommand = 1;
-                return;
-            }
-
             tick();
-            i32 command = battle.menuCommand - 1;
-            battle.menuCommand = command;
 
-            if (this->CommandEnabled(command))
+            if (battle.ghostOrdersOpen == 1)
             {
-                battle.unk53BFB8 = 1;
+                if (--battle.ghostOrderRow <= 0)
+                {
+                    battle.ghostOrderRow = static_cast<i32>(BattleState::GhostOrderNames.size());
+                }
+
                 return;
             }
 
-            do
+            if (battle.refineOptionsOpen == 1)
             {
-                if (--command < 1)
+                if (--battle.refineOptionRow <= 0)
                 {
-                    command = battle.listedCommands + kMenuFixedCommands;
+                    battle.refineOptionRow = static_cast<i32>(BattleState::RefineOptionNames.size());
                 }
-            } while (!this->CommandEnabled(command));
+
+                return;
+            }
+
+            if (battle.elementsOpen == 1)
+            {
+                return;
+            }
+
+            i32 command = battle.menuCommand;
+
+            if (command < 0)
+            {
+                battle.menuCommand = kLastMenuCommand;
+                return;
+            }
+
+            if (battle.chargingRole == battle.currentUnit)
+            {
+                return;
+            }
+
+            if (command <= kMenuColumns)
+            {
+                const i32 last = battle.listedCommands + kMenuFixedCommands;
+                command += 2 * kMenuColumns;
+                battle.menuCommand = command;
+
+                if (command <= last)
+                {
+                    battle.unk53BFB8 = 1;
+                    return;
+                }
+
+                command -= kMenuColumns;
+                battle.menuCommand = command;
+
+                if (command <= last)
+                {
+                    battle.unk53BFB8 = 1;
+                    return;
+                }
+            }
 
             battle.unk53BFB8 = 1;
-            battle.menuCommand = command;
+            battle.menuCommand = command - kMenuColumns;
             return;
         }
 
@@ -2833,6 +2908,7 @@ void Game::MenuUp()
             return;
 
         case kWaitState5:
+        case kWaitStateA:
             tick();
 
             if (--battle.guardCursor < 1)
@@ -2869,22 +2945,18 @@ void Game::MenuUp()
             battle.unk53BFB8 = 1;
             return;
 
+        case kTurnState9:
+            tick();
+            this->AimGhostStep(-1);
+            return;
+
         case kListState1B:
-            if (--battle.roleListRow >= 1)
+            if (listUp(battle.roleListRow, battle.roleListScroll, battle.roleListEntries))
             {
                 tick();
-                battle.unk53BFB8 = 1;
-                return;
             }
 
-            battle.roleListRow = battle.roleListEntries != 0 ? 1 : 0;
             battle.unk53BFB8 = 1;
-
-            if (--battle.roleListScroll < 0)
-            {
-                battle.roleListScroll = 0;
-            }
-
             return;
 
         case kWaitState1E:
@@ -2897,151 +2969,27 @@ void Game::MenuUp()
             battle.unk53BFB8 = 1;
             return;
 
+        case kWaitState29:
+        case kWaitState50:
+            if (listUp(battle.roleListRow, battle.roleListScroll, battle.roleListEntries))
+            {
+                tick();
+            }
+
+            battle.unk53BFB8 = 1;
+            battle.menuSlide = kListSlideStart;
+            return;
+
         default:
             return;
     }
 }
 
-// The command `command` (1-based) of the menu is enabled; command 0 reads the byte before the table in the original
-// (taken as disabled here).
-bool Game::CommandEnabled(i32 command) const
-{
-    const auto at = static_cast<std::size_t>(command - 1);
-    return command >= 1 && at < this->battleState.commandEnabled.size() && this->battleState.commandEnabled[at] != 0;
-}
-
-// A 1-based place moved by `step`, wrapping at the end it moves towards only (0x00460C40: below 1 to `count`;
-// 0x00461240: past `count` to 1). A place left past the other end by another count stays there.
-void Game::StepWrapped(i32& place, int step, i32 count)
-{
-    place += step;
-
-    if (step < 0 && place < 1)
-    {
-        place = count;
-    }
-    else if (step > 0 && place > count)
-    {
-        place = 1;
-    }
-}
-
-// The aim of MenuUp (`step` -1) and MenuDown (1) in battle state 3 (inline in each); see MenuUp.
-void Game::AimStep(int step)
-{
-    BattleState& battle = this->battleState;
-    BattleServices& services = this->battleServices;
-    UnitRect rect;
-    const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
-
-    auto markRole = [this, &battle]
-    {
-        for (std::size_t panel = 0; panel < static_cast<std::size_t>(Party::Roles); ++panel)
-        {
-            this->battleRoles[panel].SetAC0(0);
-            this->battleHud.portraitHighlight[panel] = 0;
-        }
-
-        this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(1);
-        battle.unk53BFB8 = 1;
-        battle.unk53C49C = 1;
-    };
-
-    // The original checks role `role` - 1 (role 0: the memory before the roles; here neither forced nor guarding).
-    auto selectable = [this](i32 role)
-    {
-        if (role < 1)
-        {
-            return true;
-        }
-
-        const BattleRole& checked = this->battleRoles[static_cast<std::size_t>(role - 1)];
-        return checked.autoControl != 1 && checked.guestControl != 1 && !checked.IsGuarding();
-    };
-
-    if (battle.pendingOrders[unit].unk00 != 0)
-    {
-        const auto partyRoles = static_cast<i32>(battle.roleCount - battle.escortCount - battle.guestCount);
-
-        if (partyRoles >= static_cast<i32>(Party::Roles))
-        {
-            int tries = 0;
-
-            while (true)
-            {
-                StepWrapped(battle.orderStep, step, partyRoles);
-
-                if (++tries > static_cast<int>(BattleState::RoleCycle.size()) * kHangTries ||
-                    battle.orderStep >= static_cast<i32>(BattleState::RoleCycle.size()))
-                {
-                    Hang();
-                }
-
-                battle.actingEnemy = BattleState::RoleCycle[static_cast<std::size_t>(battle.orderStep)];
-
-                if (selectable(battle.actingEnemy))
-                {
-                    break;
-                }
-            }
-
-            this->battleRoles[static_cast<std::size_t>(battle.actingEnemy)].GetShadowRect(services, rect);
-            battle.aimTarget = battle.actingEnemy + 1;
-            battle.actingEnemy = 0;
-            markRole();
-            return;
-        }
-
-        int tries = 0;
-
-        do
-        {
-            StepWrapped(battle.aimTarget, step, static_cast<i32>(battle.roleCount));
-
-            if (++tries > static_cast<int>(BattleState::RoleUnits) * kHangTries)
-            {
-                Hang();
-            }
-        } while (!selectable(battle.aimTarget));
-
-        this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].GetShadowRect(services, rect);
-        markRole();
-        return;
-    }
-
-    StepWrapped(battle.orderStep, step, static_cast<i32>(battle.enemyCount));
-    int tries = 0;
-
-    for (battle.actingEnemy = battle.enemyOrder[static_cast<std::size_t>(battle.orderStep - 1)];
-         this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].IsDefeated();
-         battle.actingEnemy = battle.enemyOrder[static_cast<std::size_t>(battle.orderStep - 1)])
-    {
-        StepWrapped(battle.orderStep, step, static_cast<i32>(battle.enemyCount));
-
-        // The original loops for ever when every enemy is down.
-        if (++tries > BattleState::Enemies)
-        {
-            Hang();
-        }
-    }
-
-    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].GetShadowRect(services, rect);
-
-    for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
-    {
-        this->battleEnemies[enemy].SetAC0(0);
-    }
-
-    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].SetAC0(1);
-    battle.unk53BFB8 = 1;
-    battle.unk53C49C = 1;
-    battle.aimTarget = battle.actingEnemy + 1;
-}
-
-// swd3e.exe 0x0046DB70: the down key of the battle menu, as MenuUp the other way: 1 moves the command down (past the
-// last accessory command to 1); 2, 4 and 0x1B move the list cursor down to the seventh row, then scroll, stopping at
-// the end of the list (state 4 keeps the list for role listRole); 5 cycles 1..2; 7, 8 and 0x1E cycle forward;
-// 3 moves the aim forward.
+// swd3e.exe 0x0046DB70: the down key of the battle menu, as MenuUp the other way: 1 steps the ghost's orders (wrapping
+// to 1) or the 煉妖 choices; otherwise a command a row down (wrapping to the first row, past empty listed commands; a
+// command past 9 goes to 1), none for the role that took 蓄勁; 2, 4, 0x1B, 0x29 and 0x50 move the list cursor down to
+// the seventh row, then scroll, stopping at the end of the list; 5 and 0xA cycle 1..2; 7, 8 and 0x1E cycle forward;
+// 3 and 9 move the aim forward.
 void Game::MenuDown()
 {
     BattleState& battle = this->battleState;
@@ -3052,7 +3000,7 @@ void Game::MenuDown()
         this->audio.PlaySound(kBackSound, this->config.soundVolume);
     };
 
-    // The list cursor of states 2, 4 and 0x1B (inline in the original): false when it stopped at the end.
+    // The list cursor of states 2, 4, 0x1B, 0x29 and 0x50 (inline in the original): false when it stopped at the end.
     auto listDown = [](i32& cursor, i32& scroll, i32 entries)
     {
         if (++cursor <= kListRowsShown)
@@ -3082,29 +3030,50 @@ void Game::MenuDown()
     {
         case kMenuState:
         {
-            if (battle.menuCommand > kLastMenuCommand)
+            tick();
+
+            if (battle.ghostOrdersOpen == 1)
+            {
+                if (++battle.ghostOrderRow > static_cast<i32>(BattleState::GhostOrderNames.size()))
+                {
+                    battle.ghostOrderRow = 1;
+                }
+
+                return;
+            }
+
+            if (battle.refineOptionsOpen == 1)
+            {
+                if (++battle.refineOptionRow > static_cast<i32>(BattleState::RefineOptionNames.size()))
+                {
+                    battle.refineOptionRow = 1;
+                }
+
+                return;
+            }
+
+            if (battle.elementsOpen == 1 || battle.chargingRole == battle.currentUnit)
+            {
+                return;
+            }
+
+            i32 command = battle.menuCommand;
+
+            if (command > kLastMenuCommand)
             {
                 battle.menuCommand = 1;
                 return;
             }
 
-            tick();
-            i32 command = battle.menuCommand + 1;
-            battle.menuCommand = command;
-
-            if (this->CommandEnabled(command))
-            {
-                battle.unk53BFB8 = 1;
-                return;
-            }
-
             do
             {
-                if (++command > battle.listedCommands + kMenuFixedCommands)
+                command += kMenuColumns;
+
+                if (command > kLastMenuCommand)
                 {
-                    command = 1;
+                    command -= kLastMenuCommand;
                 }
-            } while (!this->CommandEnabled(command));
+            } while (command > kMenuFixedCommands && battle.MenuKind(command) == 0);
 
             battle.unk53BFB8 = 1;
             battle.menuCommand = command;
@@ -3142,6 +3111,7 @@ void Game::MenuDown()
             return;
 
         case kWaitState5:
+        case kWaitStateA:
             tick();
 
             if (++battle.guardCursor > kEscortRows)
@@ -3178,6 +3148,11 @@ void Game::MenuDown()
             battle.unk53BFB8 = 1;
             return;
 
+        case kTurnState9:
+            tick();
+            this->AimGhostStep(1);
+            return;
+
         case kListState1B:
             if (listDown(battle.roleListRow, battle.roleListScroll, battle.roleListEntries))
             {
@@ -3197,9 +3172,181 @@ void Game::MenuDown()
             battle.unk53BFB8 = 1;
             return;
 
+        case kWaitState29:
+        case kWaitState50:
+            battle.menuSlide = kListSlideStart;
+
+            if (listDown(battle.roleListRow, battle.roleListScroll, battle.roleListEntries))
+            {
+                tick();
+            }
+
+            battle.unk53BFB8 = 1;
+            return;
+
         default:
             return;
     }
+}
+
+// The aim of MenuUp (`step` -1) and MenuDown (1) in battle state 3 (inline in each). An order on the party: 融合 aims
+// at a standing escort (down: the first from the role after the aim; up: the last from the role before the last one,
+// as in the original); with fewer than three roles beside the left-out, guest and escort ones the aim steps through
+// the 1-based roles, otherwise through RoleCycle, skipping auto-controlled, guest, guarding and ghost roles. The four
+// party roles are unmarked (and their portraits) and the aimed one marked. Otherwise the aim steps through the
+// standing enemies (AimEnemyStep).
+void Game::AimStep(int step)
+{
+    BattleState& battle = this->battleState;
+    BattleServices& services = this->battleServices;
+    const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
+
+    if (battle.pendingOrders[unit].unk00 == 0)
+    {
+        UnitRect rect;
+        this->AimEnemyStep(step, rect);
+        return;
+    }
+
+    // Roles past the array (RoleCycle read past its end, the role after the last one) are not taken (deviations.md).
+    auto role = [this](i32 index) -> BattleRole*
+    {
+        return index >= 0 && index < static_cast<i32>(BattleState::RoleUnits)
+                   ? &this->battleRoles[static_cast<std::size_t>(index)]
+                   : nullptr;
+    };
+
+    auto aimable = [&role](i32 index)
+    {
+        const BattleRole* checked = role(index);
+        return checked != nullptr && checked->AutoControl() != 1 && checked->GuestControl() != 1 &&
+               !checked->IsGuarding() && checked->Ghost() != 1;
+    };
+
+    auto escort = [&role](i32 index)
+    {
+        const BattleRole* checked = role(index);
+        return checked != nullptr && !checked->IsDefeated() && checked->AutoControl() == 1;
+    };
+
+    const auto roles = static_cast<i32>(battle.roleCount);
+    const i32 others = roles - battle.unk5770D4 - battle.guestCount - battle.escortCount;
+    UnitRect rect;
+    int tries = 0;
+
+    auto spin = [&tries]
+    {
+        // The original searches for ever when no role can be taken.
+        if (++tries > static_cast<int>(BattleState::RoleUnits) * kHangTries)
+        {
+            Hang();
+        }
+    };
+
+    if (battle.menuCommand == kFuseCommand)
+    {
+        i32 index = step > 0 ? battle.aimTarget : roles - 2;
+
+        if (step > 0 ? index < roles : index > 0)
+        {
+            while (!escort(index))
+            {
+                index += step;
+
+                if (step > 0 ? index > roles : index < 0)
+                {
+                    index = -1;
+                    break;
+                }
+            }
+
+            if (index >= 0)
+            {
+                battle.aimTarget = index + 1;
+            }
+        }
+    }
+    else if (others < kFewAimRoles)
+    {
+        do
+        {
+            StepWrapped(battle.aimTarget, step, roles);
+            spin();
+        } while (!aimable(battle.aimTarget - 1));
+
+        this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].GetShadowRect(services, rect);
+    }
+    else
+    {
+        const i32 cycle = roles - battle.guestCount - battle.escortCount;
+
+        do
+        {
+            StepWrapped(battle.orderStep, step, cycle);
+            const auto at = static_cast<std::size_t>(battle.orderStep);
+            battle.actingEnemy = at < BattleState::RoleCycle.size() ? BattleState::RoleCycle[at] : -1;
+            spin();
+        } while (!aimable(battle.actingEnemy));
+
+        this->battleRoles[static_cast<std::size_t>(battle.actingEnemy)].GetShadowRect(services, rect);
+        battle.aimTarget = battle.actingEnemy + 1;
+        battle.actingEnemy = 0;
+    }
+
+    for (std::size_t panel = 0; panel < static_cast<std::size_t>(Party::Roles); ++panel)
+    {
+        this->battleRoles[panel].SetAC0(0);
+        this->battleHud.portraitHighlight[panel] = 0;
+    }
+
+    this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(1);
+    battle.unk53BFB8 = 1;
+    battle.unk53C49C = 1;
+}
+
+// The aim through the standing enemies by `step` (inline in MenuUp and MenuDown): enemyOrder stepped (wrapping) past
+// the defeated, the shadow of the aimed enemy into `rect`, the enemies unmarked and the aimed one marked.
+void Game::AimEnemyStep(int step, UnitRect& rect)
+{
+    BattleState& battle = this->battleState;
+    StepWrapped(battle.orderStep, step, static_cast<i32>(battle.enemyCount));
+    int tries = 0;
+
+    for (battle.actingEnemy = battle.enemyOrder[static_cast<std::size_t>(battle.orderStep - 1)];
+         this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].IsDefeated();
+         battle.actingEnemy = battle.enemyOrder[static_cast<std::size_t>(battle.orderStep - 1)])
+    {
+        StepWrapped(battle.orderStep, step, static_cast<i32>(battle.enemyCount));
+
+        // The original loops for ever when every enemy is down.
+        if (++tries > BattleState::Enemies)
+        {
+            Hang();
+        }
+    }
+
+    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].GetShadowRect(this->battleServices, rect);
+
+    for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
+    {
+        this->battleEnemies[enemy].SetAC0(0);
+    }
+
+    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].SetAC0(1);
+    battle.unk53BFB8 = 1;
+    battle.unk53C49C = 1;
+    battle.aimTarget = battle.actingEnemy + 1;
+}
+
+// Battle state 9 of MenuUp and MenuDown (swd3e, inline in each): the talisman ghost's target (鎖定目標) steps through
+// the standing enemies as the aim does, and the pointer goes to the middle of its shadow.
+void Game::AimGhostStep(int step)
+{
+    BattleState& battle = this->battleState;
+    UnitRect rect;
+    this->AimEnemyStep(step, rect);
+    battle.aiTarget = battle.aimTarget;
+    this->input.SetMousePosition(rect.x + (rect.width >> 1), rect.y + (rect.height >> 1));
 }
 
 // swd3e.exe 0x00468480: the debug keys of the battle (with the debug mode). With a Ctrl key: F3 stops the music, F4

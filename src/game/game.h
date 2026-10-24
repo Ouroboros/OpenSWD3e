@@ -432,9 +432,10 @@ private:
     void LearnSpecials();
     void DrawLevelUpStats();
     void MenuUp();
-    bool CommandEnabled(i32 command) const;
     static void StepWrapped(i32& place, int step, i32 count);
     void AimStep(int step);
+    void AimEnemyStep(int step, UnitRect& rect);
+    void AimGhostStep(int step);
     void MenuDown();
     int BattleDebugKeys();
     void DrawBattleDebug();
