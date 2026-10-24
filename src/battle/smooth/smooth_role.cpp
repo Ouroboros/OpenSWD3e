@@ -1432,7 +1432,7 @@ int RoleFrame::ChargeOnTargetAdvance(BattleServices& services, BattleUnit& targe
 
     ActState& follow = role.slotActs[1];
     follow.action = 0;
-    follow.id = kDirectFollowAct;
+    follow.id = role.command.castAct;
 
     if (charge.effectA != 0)
     {
@@ -1710,7 +1710,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
 
     ActState& follow = role.slotActs[0];
     follow.action = 0;
-    follow.id = kDirectFollowAct;
+    follow.id = role.command.castAct;
     role.AimAction(services, target, follow, static_cast<i16>(magic.anchorX), static_cast<i16>(magic.anchorY));
 
     if ((follow.target & ActState::Strikes) != 0)

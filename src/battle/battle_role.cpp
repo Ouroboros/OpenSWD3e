@@ -1221,16 +1221,6 @@ int BattleRole::ChargeAttackFrame(BattleServices& services, BattleUnit& target, 
     return result;
 }
 
-// The charge part of ChargeAttackFrame (inline in the original): the charge act on the target with trail 1, and its
-// follow-up mirrored twice beside it; 0 when an act ends the frame.
-int BattleRole::ChargeOnTarget(BattleServices& services, BattleUnit& target)
-{
-    smooth::Scene scene;
-    const auto result = smooth::RoleFrame(*this).ChargeOnTargetAdvance(services, target, scene);
-    scene.Show(services);
-    return result;
-}
-
 // swd3e.exe 0x00485B10: one frame of the role's swarm spell (magic act in slot act 8); 1 once it is over. The magic
 // act's target bits play the effect in the recoil act; once it strikes or follows up, every third frame (glowLevel
 // counting) one more act (the cast act, action unk2F0C; at most 8 queued) flies from a point around the role

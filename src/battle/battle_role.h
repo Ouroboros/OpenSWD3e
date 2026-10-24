@@ -98,7 +98,6 @@ public:
     int MagicFrame(BattleServices& services, BattleUnit& target);
     int BeamSpellFrame(BattleServices& services, BattleUnit& target);
     int ChargeAttackFrame(BattleServices& services, BattleUnit& target, int slot);
-    int ChargeOnTarget(BattleServices& services, BattleUnit& target);
     int SwarmSpellFrame(BattleServices& services, BattleUnit& target);
     int BoomerangFrame(BattleServices& services, BattleUnit& target, i32 act);
     int LeapSpellFrame(BattleServices& services, BattleUnit& target);
