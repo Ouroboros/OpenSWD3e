@@ -199,13 +199,15 @@ int Game::MagicAttackFrame(BattleRole& role, BattleUnit& target)
     return result;
 }
 
-// swd32.exe 0x004758A0 (unmatched in swd3e): one frame of `enemy`'s attack on `target`; 1 once it is over (its gauge
-// then gains 10..129).
-// An UnkFlag8 command fades the enemy out and in at the target first. The attack act (by unk2A8C or `action`) is
-// drawn; its target bits play the effect in the recoil act, raise flag 26B8 of the target, fade the field, start the
-// follow-up (the cast act), quake or strike; the act's colour darkens the field. The follow-up flies to the target
-// (TargetsUnit) or is placed on it and may strike; once it waits it darkens by 4 a frame (the original takes the
-// palette from the stand picture) before the acts, the trails and the targets are cleared.
+// swd3e.exe 0x00487FE0 (a method of the unit in the original): one frame of `enemy`'s attack on `target`; 1 once it
+// is over (its gauge then gains 10..129). An UnkFlag8 command fades the enemy out and in at the target first (turning
+// first with unk26B8 bit 28). The attack act (by unk2A8C) is drawn, an error box when it cannot run; under unk26B8
+// bit 16 the enemy then darkens away and falls. Its target bits play the effect in the recoil act, fade the field,
+// start the follow-up (queued at once when it flies to the unit), quake, slide the units to it or back, raise flag
+// 26B8 of the target or strike; the act's colour darkens the field. The follow-up flies (TargetsUnit, mirrored once
+// under unk26B8 bit 24) or is placed on the target, may add a hit picture and strike; once it waits and the hit
+// pictures are done it darkens by 4 a frame (the original takes the palette from the shadow picture) before the acts,
+// the trails and the targets are cleared.
 int Game::EnemyAttackFrame(BattleUnit& enemy, BattleUnit& target)
 {
     smooth::Scene scene;
@@ -214,79 +216,4 @@ int Game::EnemyAttackFrame(BattleUnit& enemy, BattleUnit& target)
     return result;
 }
 
-// A strike of EnemyAttackFrame (inline twice in the original): unless the enemy has struck this turn the target may
-// evade by `chance`; the Strikes bit raises its flag 26B8; a hit's damage (at most kSpellMaxDamage) is counted and
-// shown on the target, or counted and shown on the enemy when the target reflects it (`attackFirst`: the attack act's
-// strike marks the enemy before it pushes the number). A hit that does not drain counts on the target. `chance` keeps
-// the drain kind of the attack act's strike (as in the original).
-void Game::EnemyStrike(BattleUnit& enemy, BattleUnit& target, u16 bits, u16& chance, bool attackFirst)
-{
-    BattleState& battle = this->battleState;
-    BattleServices& services = this->battleServices;
-    battle.lastDamage = 0;
-    int evaded = 0;
-
-    if (enemy.evadeRolled == 0)
-    {
-        evaded = target.RollEvade(services, chance);
-    }
-
-    if ((bits & ActState::Strikes) != 0)
-    {
-        target.RaiseFlag26B8(this->battleState);
-    }
-
-    if (evaded != 0)
-    {
-        return;
-    }
-
-    i16 damage = enemy.EnemyHitDamage(services, target);
-    battle.lastDamage = damage;
-
-    if (damage >= kSpellMaxDamage)
-    {
-        damage = static_cast<i16>(kSpellMaxDamage);
-        battle.lastDamage = kSpellMaxDamage;
-    }
-
-    battle.hitDamage += damage;
-
-    if (target.EffectFlag3() == 1)
-    {
-        if (attackFirst)
-        {
-            enemy.RaiseFlag26B8(this->battleState);
-            enemy.PushTarget(BattleUnit::DamageTarget);
-        }
-        else
-        {
-            enemy.PushTarget(BattleUnit::DamageTarget);
-            enemy.RaiseFlag26B8(this->battleState);
-        }
-
-        enemy.SetDamageDigits(services, battle.lastDamage);
-        // 0x00475C03 / 0x00475E41: the reflected hit counts on the enemy (ecx = esi)
-        enemy.StepTargetCount(services, 1);
-        return;
-    }
-
-    if (battle.lastDamage == -1)
-    {
-        return;
-    }
-
-    target.SetDamageDigits(services, battle.lastDamage);
-    const u16 kind = enemy.DrainKind();
-
-    if (attackFirst)
-    {
-        chance = kind;
-    }
-
-    if (kind <= BattleUnit::DrainedHitPoints)
-    {
-        target.StepTargetCount(services, 1);
-    }
-}
 }  // namespace swd3e

@@ -465,6 +465,7 @@ public:
     // The debug keys (Game::BattleDebugKeys) and the acting unit.
     i32 unk5244E0 = 0;
     i32 slowFrames = 0;  // 0x005777F8 (swd3e) the debug keys' F5: the frames are slowed to 100 ms
+    i32 unk577360 = 0;   // 0x00577360 (swd3e) set when an enemy's step-in attack fells it (0x00487FE0); 0x0045EE20
     u8 itemStolen = 0;   // 0x00577255 (swd3e) 1 once an enemy stole (EnemyHitDamage, command flag 0x100000); 0x0045EE20
     i32 unk5772F8 = 0;  // 0x005772F8 (swd3e) set by 0x0045BEA0: the victory gives no loot, proficiency or battle counts
     i32 showRoleBlocks = 0;  // 0x00577808 (swd3e) the debug keys toggle it: the overlay shows the party battle blocks

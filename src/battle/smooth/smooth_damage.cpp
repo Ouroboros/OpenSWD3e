@@ -4,6 +4,7 @@
 
 #include "battle/battle_damage_constants.h"
 #include "battle/smooth/smooth_unit.h"
+#include "core/error_box.h"
 #include "game/game.h"
 
 namespace swd3e::smooth
@@ -31,6 +32,17 @@ constexpr i16 kEnemyFadeEnd = -0x20;
 constexpr i16 kEnemyFadeStep = 4;
 constexpr u32 kGaugeRestRoll = 0x78;  // the gauge gains 10..129 once the attack is over
 constexpr u16 kGaugeRestBase = 10;
+constexpr u32 kStandsAsideFlag = 0x10000000;  // unk26B8: the enemy turns before it fades in at the target (swd3e)
+constexpr u32 kStepsAway = 0x10000;           // unk26B8: the attack fells the enemy (swd3e)
+constexpr i16 kStepAwayTintFrom = 0xF;
+constexpr i16 kStepAwayFrames = 0x1F;
+constexpr u8 kStepAwayPose = 2;
+constexpr u16 kSlidesTo = 0x800;           // ActState::target: the units slide to the unit (swd3e)
+constexpr u16 kSlidesBack = 0x40;          // and back
+constexpr u32 kEvadeStatus = 0x80;         // status bit 7: the target evades with kStatusEvade
+constexpr i16 kEvadedEnrageCause = 0x1B;   // an evaded strike checks this enrage cause
+constexpr u32 kFliesMirrored = 0x1000000;  // unk26B8: the follow-up flies mirrored once
+constexpr u16 kAddsHitPicture = 0x20;      // ActState::target: the follow-up adds a hit picture
 }  // namespace
 
 DamageFrame::DamageFrame(Game& game)
@@ -442,7 +454,8 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     BattleState& battle = game.battleState;
     BattleServices& services = game.battleServices;
     ScenePainter painter(game.battleServices, scene);
-    u16 evadeChance = 0;
+    // The evade chance of the strikes (the drain kind of the first strike carries into the second, as in the original).
+    u16 chance = 0;
 
     if (enemy.unk2A74 != 0)
     {
@@ -450,6 +463,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     }
 
     ActState& attack = enemy.standAct;
+    ActState& follow = enemy.castAct;
     enemy.unk2AAC = 1;
     attack.hold = 0;
 
@@ -470,13 +484,17 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
             return 0;
         }
 
-        const int result = UnitFrame(enemy).DrawFadeInAdvance(services, target, scene);
-
-        if (result == 0)
+        if ((enemy.unk26B8 & kStandsAsideFlag) != 0)
         {
-            enemy.fadedIn = 1;
-            return result;
+            enemy.SetFacing(1);
         }
+
+        if (UnitFrame(enemy).DrawFadeInAdvance(services, target, scene) != 1)
+        {
+            return 0;
+        }
+
+        enemy.fadedIn = 1;
     }
 
     attack.id = enemy.actId;
@@ -487,12 +505,78 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         attack.action = enemy.unk2A8C == kSecondEnemyAttack ? kEnemyAttackAction2 : kEnemyAttackAction1;
     }
 
-    if (enemy.action != 0)
+    if (UnitFrame(enemy).Action(services, target, attack, scene) == 0)
     {
-        attack.action = enemy.action;
+        const std::string_view name(enemy.displayName.data(), enemy.displayName.size());
+        ErrorBox(
+            services.errors,
+            u8"Attack Act",
+            u8"[%s]QQ:%d號錯誤!!",
+            name.substr(0, name.find('\0')),
+            attack.action
+        );
+        return 0;
     }
 
-    UnitFrame(enemy).Action(services, target, attack, scene);
+    auto clearAttack = [&enemy, &services]
+    {
+        enemy.standAct = ActState{};
+        enemy.castAct = ActState{};
+        enemy.recoilAct = ActState{};
+        enemy.attackAct = ActState{};
+        enemy.slotActs[kEnemyFlightAct] = ActState{};
+        enemy.trails = {};
+        enemy.targets.fill(BattleUnit::NoTarget);
+        enemy.stage = 0;
+        enemy.unk2AB0 = 0;
+        enemy.fadedIn = 0;
+        enemy.nudge = 0;
+        enemy.gauge = static_cast<u16>(enemy.gauge + services.random.Below(kGaugeRestRoll) + kGaugeRestBase);
+    };
+
+    // swd3e: unk26B8 bit 16: the act shows once, then the enemy darkens away under itself and falls.
+    if ((enemy.unk26B8 & kStepsAway) != 0)
+    {
+        attack = ActState{};
+
+        // A missing picture is read through a null pointer in the original.
+        if (enemy.picture != nullptr)
+        {
+            painter.SetSource(enemy.picture->data.data());
+            enemy.shadowMode = enemy.drawFlags & (Painter::RleSource | Painter::Mirror | Painter::Flip);
+            DrawOptions& options = painter.Options();
+            options.tintBlue = enemy.glowLevel;
+
+            if (enemy.glowLevel >= kStepAwayTintFrom)
+            {
+                options.tintGreen = enemy.glowLevel - kStepAwayTintFrom;
+                options.tintRed = enemy.glowLevel - kStepAwayTintFrom;
+            }
+
+            painter.DrawPicture(
+                static_cast<i16>(enemy.actX),
+                static_cast<i16>(enemy.actY),
+                enemy.picture->width,
+                enemy.picture->height,
+                enemy.shadowMode | Painter::TintUnder
+            );
+        }
+
+        if (++enemy.glowLevel <= kStepAwayFrames)
+        {
+            return 0;
+        }
+
+        target.GetDrawPosition(enemy.aimX, enemy.aimY);
+        enemy.SetPosition(static_cast<i16>(enemy.aimX), static_cast<i16>(enemy.aimY));
+        enemy.glowLevel = 0;
+        enemy.dying = 1;
+        enemy.fixedPose = kStepAwayPose;
+        enemy.data->data.hitPoints = 0;
+        battle.unk577360 = 1;
+        clearAttack();
+        return 1;
+    }
 
     if ((attack.target & ActState::Recoils) != 0)
     {
@@ -522,8 +606,6 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         enemy.stage &= ~BattleUnit::Recoiling;
     }
 
-    ActState& follow = enemy.castAct;
-
     if ((attack.target & ActState::FollowsUp) != 0)
     {
         if ((attack.target & ActState::FadesField) != 0)
@@ -543,6 +625,25 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
 
         attack.target = static_cast<u16>(attack.target & ~ActState::FollowsUp);
         enemy.stage |= BattleUnit::FollowingUp;
+
+        // swd3e: a follow-up flying to the unit is queued at once.
+        if ((enemy.command.flags & UnitCommand::TargetsUnit) != 0)
+        {
+            target.GetDrawPosition(enemy.aimX, enemy.aimY);
+            enemy.AddQueuedAction(
+                enemy.command.castAct,
+                0,
+                static_cast<i16>(enemy.placement.x + enemy.actAnchorX - enemy.actOffsetX),
+                static_cast<i16>(attack.anchorY + enemy.placement.y - attack.y),
+                static_cast<i16>(enemy.aimX),
+                static_cast<i16>(enemy.aimY),
+                static_cast<i16>(enemy.command.target),
+                enemy.command.unk28,
+                0,
+                1
+            );
+        }
+
         follow = ActState{};
     }
 
@@ -552,22 +653,93 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         battle.quakePhase = 0;
     }
 
+    if ((attack.target & kSlidesTo) != 0)
+    {
+        game.StartSlideTo(0);
+        attack.target = static_cast<u16>(attack.target & ~kSlidesTo);
+        enemy.stage &= ~BattleUnit::FollowingUp;
+    }
+
+    if ((attack.target & kSlidesBack) != 0)
+    {
+        game.StartSlideBack(0);
+        attack.target = static_cast<u16>(attack.target & ~kSlidesBack);
+        enemy.stage &= ~BattleUnit::FollowingUp;
+    }
+
     if ((attack.target & ActState::UnkTarget4) != 0)
     {
         enemy.stage |= BattleUnit::FollowingUp;
         attack.target = 0;
-        target.RaiseFlag26B8(this->game.battleState);
+        target.RaiseFlag26B8(battle);
     }
+
+    // A strike of the act or its follow-up (inline twice in the original): the evasion roll unless already rolled,
+    // the Strikes bit raising the target's flag 26B8; an evaded strike checks the enemy's enrage cause 0x1B, a hit
+    // counts its damage (at most 9999) and shows it, a hit that drains at most hit points counting on the target. True
+    // once the hit was shown with such a drain.
+    auto strike = [&](u16 bits)
+    {
+        battle.lastDamage = 0;
+        int evaded = 0;
+
+        if ((enemy.status & kEvadeStatus) != 0)
+        {
+            chance = kStatusEvade;
+        }
+
+        if (enemy.evadeRolled == 0)
+        {
+            evaded = target.RollEvade(services, chance);
+        }
+
+        if ((bits & ActState::Strikes) != 0)
+        {
+            target.RaiseFlag26B8(battle);
+        }
+
+        if (evaded != 0)
+        {
+            enemy.EnrageCheck(services, kEvadedEnrageCause, 0);
+            return false;
+        }
+
+        i32 damage = enemy.EnemyHitDamage(services, target);
+        battle.lastDamage = damage;
+
+        if (static_cast<i16>(damage) >= kSpellMaxDamage)
+        {
+            damage = kSpellMaxDamage;
+            battle.lastDamage = damage;
+        }
+
+        battle.hitDamage += damage;
+
+        if (damage == -1)
+        {
+            return false;
+        }
+
+        target.SetDamageDigits(services, damage);
+        chance = enemy.DrainKind();
+
+        if (chance > BattleUnit::DrainedHitPoints)
+        {
+            return false;
+        }
+
+        target.StepTargetCount(services, 1);
+        return true;
+    };
 
     if ((attack.target & kEnemyStrikeBits) != 0)
     {
-        enemy.slotTint = 0;
         enemy.stage |= BattleUnit::FollowingUp;
+        enemy.slotTint = 0;
         follow = ActState{};
-        evadeChance = (enemy.status & BattleUnit::UnkStatus80) != 0 ? kStatusEvade : 0;
-        game.EnemyStrike(enemy, target, attack.target, evadeChance, true);
-        attack.target = 0;
+        strike(attack.target);
         enemy.evadeRolled = 1;
+        attack.target = 0;
     }
 
     battle.darkRed = static_cast<i16>(attack.red);
@@ -585,115 +757,41 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         return 0;
     }
 
-    follow.action = 0;
-    follow.id = enemy.command.castAct;
-
-    if (attack.effectA != 0)
+    if (follow.waiting == 1 && battle.HitPicturesDone())
     {
-        follow.id = attack.effectA;
-    }
-
-    if (follow.id != 0)
-    {
-        if ((enemy.command.flags & UnitCommand::TargetsUnit) != 0)
+        if (follow.id == 0 || (enemy.command.flags & UnitCommand::TargetsUnit) != 0 || enemy.slotTint <= kEnemyFadeEnd)
         {
-            const int fromX =
-                enemy.placement.x + static_cast<i16>(enemy.actAnchorX) - static_cast<i16>(enemy.actOffsetX);
-            const int fromY = static_cast<i16>(attack.anchorY) + enemy.placement.y - attack.y;
-
-            if (UnitFrame(enemy).Fly(
-                    services,
-                    target,
-                    enemy.slotActs[kEnemyFlightAct],
-                    0,
-                    follow.id,
-                    fromX,
-                    fromY,
-                    static_cast<i16>(enemy.command.target),
-                    static_cast<i16>(enemy.command.unk28),
-                    0,
-                    scene
-                ) != 1)
+            if (attack.waiting == 1 && enemy.images.Empty())
             {
-                return 0;
+                clearAttack();
+                return 1;
             }
 
-            follow.target |= ActState::Strikes;
-            attack.waiting = 1;
-            follow.waiting = 1;
-        }
-        else
-        {
-            enemy.AimAction(
-                services,
-                target,
-                follow,
-                static_cast<i16>(attack.anchorX),
-                static_cast<i16>(attack.anchorY)
-            );
+            return 0;
         }
 
-        if ((follow.target & kEnemyStrikeBits) != 0)
+        // A missing picture is read through a null pointer in the original.
+        if (enemy.picture != nullptr && enemy.shadowPicture != nullptr)
         {
-            enemy.slotTint = 0;
-            u16 chance = (enemy.status & BattleUnit::UnkStatus80) != 0 ? kStatusEvade : evadeChance;
-            game.EnemyStrike(enemy, target, follow.target, chance, false);
-            enemy.evadeRolled = 1;
-            follow.target = 0;
-        }
-    }
-    else
-    {
-        follow.waiting = 1;
-    }
+            painter.SetSource(enemy.picture->data.data());
+            DrawOptions& options = painter.Options();
+            options.tintBlue = enemy.slotTint;
+            options.tintGreen = enemy.slotTint;
+            options.tintRed = enemy.slotTint;
 
-    // A missing picture is read through a null pointer in the original; it is not drawn here.
-    const Picture* picture = enemy.picture;
+            if ((enemy.shadowMode & ActState::NoBlend) != 0)
+            {
+                options.tintBlue = 0;
+                options.tintGreen = 0;
+                options.tintRed = 0;
+                enemy.slotTint = kEnemyFadeEnd;
+            }
 
-    if (picture != nullptr)
-    {
-        painter.SetSource(picture->data.data());
-    }
-
-    if (follow.waiting != 1)
-    {
-        if (picture != nullptr)
-        {
             painter.DrawPicture(
                 static_cast<i16>(enemy.aimX),
                 static_cast<i16>(enemy.aimY),
-                picture->width,
-                picture->height,
-                enemy.shadowMode,
-                PaletteArgument(*picture)
-            );
-        }
-
-        return 0;
-    }
-
-    if (follow.id != 0 && (enemy.command.flags & UnitCommand::TargetsUnit) == 0 && enemy.slotTint > kEnemyFadeEnd)
-    {
-        DrawOptions& options = painter.Options();
-        options.tintRed = enemy.slotTint;
-        options.tintGreen = enemy.slotTint;
-        options.tintBlue = enemy.slotTint;
-
-        if ((enemy.shadowMode & ActState::NoBlend) != 0)
-        {
-            options.tintRed = 0;
-            options.tintGreen = 0;
-            options.tintBlue = 0;
-            enemy.slotTint = kEnemyFadeEnd;
-        }
-
-        if (picture != nullptr && enemy.shadowPicture != nullptr)
-        {
-            painter.DrawPicture(
-                static_cast<i16>(enemy.aimX),
-                static_cast<i16>(enemy.aimY),
-                picture->width,
-                picture->height,
+                enemy.picture->width,
+                enemy.picture->height,
                 enemy.shadowMode,
                 PaletteArgument(*enemy.shadowPicture)
             );
@@ -709,24 +807,90 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         return 0;
     }
 
-    if (attack.waiting != 1)
+    follow.action = 0;
+    follow.id = enemy.command.castAct;
+
+    if (attack.effectA != 0)
+    {
+        follow.id = attack.effectA;
+    }
+
+    if (follow.id == 0)
+    {
+        follow.waiting = 1;
+        return 0;
+    }
+
+    if ((enemy.command.flags & UnitCommand::TargetsUnit) != 0)
+    {
+        if ((enemy.unk26B8 & kFliesMirrored) != 0)
+        {
+            enemy.facing = 1;
+            const int flown = UnitFrame(enemy).Queued(services, target, 0, scene);
+            enemy.facing = 0;
+
+            if (flown != 1)
+            {
+                return 0;
+            }
+
+            follow.waiting = 1;
+            enemy.unk26B8 &= ~kFliesMirrored;
+        }
+        else
+        {
+            if (UnitFrame(enemy).Queued(services, target, 0, scene) != 1)
+            {
+                return 0;
+            }
+
+            follow.waiting = 1;
+        }
+    }
+    else
+    {
+        enemy.AimAction(services, target, follow, static_cast<i16>(attack.anchorX), static_cast<i16>(attack.anchorY));
+    }
+
+    // A missing picture is read through a null pointer in the original.
+    if (enemy.picture != nullptr)
+    {
+        painter.SetSource(enemy.picture->data.data());
+        painter.DrawPicture(
+            static_cast<i16>(enemy.aimX),
+            static_cast<i16>(enemy.aimY),
+            enemy.picture->width,
+            enemy.picture->height,
+            enemy.shadowMode,
+            PaletteArgument(*enemy.picture)
+        );
+    }
+
+    if ((follow.target & kAddsHitPicture) != 0)
+    {
+        follow.target = static_cast<u16>(follow.target & ~kAddsHitPicture);
+        game.AddHitPicture(
+            follow.effectA,
+            follow.effectQ,
+            static_cast<i16>(enemy.aimX + follow.anchorX),
+            static_cast<i16>(enemy.aimY + follow.anchorY),
+            0
+        );
+    }
+
+    game.DrawHitPictures();
+    follow.target = static_cast<u16>(follow.target | battle.HitBits());
+
+    if ((follow.target & kEnemyStrikeBits) == 0)
     {
         return 0;
     }
 
-    enemy.standAct = ActState{};
-    follow = ActState{};
-    enemy.recoilAct = ActState{};
-    enemy.attackAct = ActState{};
-    enemy.slotActs[kEnemyFlightAct] = ActState{};
-    enemy.trails = {};
-    enemy.targets.fill(BattleUnit::NoTarget);
-    enemy.stage = 0;
-    enemy.unk2AB0 = 0;
-    enemy.fadedIn = 0;
-    enemy.nudge = 0;
-    enemy.gauge = static_cast<u16>(enemy.gauge + services.random.Below(kGaugeRestRoll) + kGaugeRestBase);
-    return 1;
+    enemy.slotTint = 0;
+    strike(follow.target);
+    enemy.evadeRolled = 1;
+    follow.target = 0;
+    return 0;
 }
 
 }  // namespace swd3e::smooth

@@ -377,7 +377,6 @@ private:
     int DrainSpellFrame(BattleRole& role, BattleUnit& target);
     int MagicAttackFrame(BattleRole& role, BattleUnit& target);
     int EnemyAttackFrame(BattleUnit& enemy, BattleUnit& target);
-    void EnemyStrike(BattleUnit& enemy, BattleUnit& target, u16 bits, u16& chance, bool attackFirst);
     void StartRoleTurn(int unit);
     void RetargetRoles(int role, int enemy);
     int RemoveDefeated(int index, int role);
