@@ -1,0 +1,71 @@
+00446F30 vs swd32 00442050: lengths 52 / 38
+00446FD0 vs swd32 004420F0: same (18 instructions)
+00447010 vs swd32 00442130: lengths 357 / 346
+004474D0 vs swd32 004425C0: lengths 258 / 255
+00447880 vs swd32 00442960: same (23 instructions)
+004478D0 vs swd32 004429B0: lengths 45 / 40
+00447970 vs swd32 00442A40: lengths 31 / 29
+004479D0 vs swd32 00442AA0: lengths 33 / 31
+00447A40 vs swd32 00442B10: lengths 57 / 55
+00447AF0 vs swd32 00442BC0: same (53 instructions)
+00447BD0 vs swd32 00442CA0: lengths 64 / 59
+00449780 vs swd32 004858D0: lengths 15 / 13
+0044BAC0 vs swd32 00442F40: lengths 312 / 367
+0044C090 vs swd32 00443450: lengths 76 / 74
+0044C1B0 vs swd32 00443670: lengths 120 / 96
+0044C350 vs swd32 00443570: lengths 84 / 67
+0044C4A0 vs swd32 004438E0: lengths 65 / 56
+0044C590 vs swd32 004439A0: lengths 67 / 55
+0044C680 vs swd32 00443A60: lengths 48 / 71
+0044C750 vs swd32 00443B70: lengths 19 / 25
+0044C7A0 vs swd32 00443BD0: lengths 428 / 433
+0044CDC0 vs swd32 004441A0: lengths 50 / 47
+0044CED0 vs swd32 004442B0: lengths 769 / 781
+0044D940 vs swd32 00444DB0: lengths 58 / 62
+0044D9D0 vs swd32 00444E50: same (13 instructions)
+0044DC10 vs swd32 00444F60: same (18 instructions)
+0044DF20 vs swd32 0044A250: differs at 0: [mov eax, G] / [call G]
+0044E080 vs swd32 004455A0: same (13 instructions)
+0044E0C0 vs swd32 004455E0: lengths 482 / 493
+0044E760 vs swd32 00445C90: lengths 100 / 106
+0044E950 vs swd32 00445E90: lengths 95 / 102
+0044EB30 vs swd32 00446090: lengths 89 / 95
+0044ECE0 vs swd32 00446260: lengths 85 / 94
+0044EE90 vs swd32 00446420: differs at 0: [mov eax, G] / [mov ax, G]
+0044EFC0 vs swd32 00446550: differs at 0: [mov eax, G] / [mov ax, G]
+0044F100 vs swd32 00446680: differs at 1: [jl short L11] / [jb short L10]
+0044F130 vs swd32 004466A0: differs at 0: [mov eax, G] / [mov ax, G]
+0044F190 vs swd32 00446700: lengths 610 / 616
+0044FA60 vs swd32 00446FE0: lengths 65 / 66
+0044FB70 vs swd32 00447100: lengths 1091 / 1042
+00450B10 vs swd32 00448020: differs at 12: [push 0B4h] / [push 0B0h]
+00450D20 vs swd32 00448230: lengths 70 / 45
+00450DD0 vs swd32 004482E0: differs at 9: [mov ecx, [esi+0B0h]] / [mov ecx, [esi+0ACh]]
+00450E50 vs swd32 00448360: lengths 214 / 198
+004510F0 vs swd32 004485F0: lengths 18 / 13
+00451160 vs swd32 00448650: lengths 37 / 36
+mapping (24 symbols):
+  0040DFC0 -> 0040DC50
+  00417A60 -> 004170E0
+  00436720 -> 004315D0
+  0043DAB0 -> 004885A0
+  00450DD0 -> 004482E0
+  004C3018 -> 004A9940
+  004D3F98 -> 004BAB74
+  004ED9BC -> 004CD730
+  0050B3AC -> 004FC900
+  0050B80C -> 004FCD4C
+  0050B820 -> 004FCD60
+  0050B830 -> 004FCD70
+  0050BAEC -> 004FCFA0
+  0050BAF8 -> 004FCFAC
+  0050BAFC -> 004FCFB0
+  0050BB0C -> 004FCFBC
+  0050BBE4 -> 004FD08C
+  0050BBEC -> 004FD094
+  0050BBF0 -> 004FD098
+  0050BCB4 -> 004FD150
+  0050BCC4 -> 004FD160
+  0050BCC8 -> 004FD164
+  0050BD50 -> 004FD1E8
+  0050BD58 -> 004FD1F0

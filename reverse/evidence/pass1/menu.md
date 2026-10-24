@@ -65,3 +65,17 @@
 - 0x004465D0 EquipCancel：阶段 0：code（dword）−1 ≤ 0 时关菜单，0x0050B2C8 位 0 时菜单状态 0x20000002，SetPage、EquipReturn、EquipLeave；1：阶段−1、所选格描述、ComputeStats；5：同上关闭描述；0xF：Select。差异已修正：实现原以 `--code == 0` 判断（u16），改为 32 位有符号 ≤ 0。
 - 0x004466C0 EquipDraw：阶段 0／1 且 F1 按下时打开描述（阶段 1 取 firstShown 后第 row 个、阶段 0 取所选格，非空才开：0x0050B014 0x100、阶段 5、保存 beforeFrame）；打开帧时 slide 0x190、listX/Y、0x0050B7F0 清零、0x0050B81C = 阶段；slide >>= 1；面板动作；三张脸（0x232A 动作 0x2D..0x2F，(0xC8, 0x3E−s)、(0x140, …)、(s+0x1B8, …)）；说明框 FillBox(0xD0,0x1BA,0x190,0x24,0,0,0x48,模式 2) 与窗框；统计框；格子框与窗框；EquipDrawSlots(0xD0, 0x68, s, 0xFC, slot)；列表框 (listX+s−0x24, listY−0x10, 0x96, 0xD2)；gauge 0；列表空时 "沒有物品"，否则每行：背景 0xFFFE、行色（阶段 ≠ 1 时调暗 −4），阶段 1／5 的所选行：（阶段 1 或描述从列表打开时重取行色）非空项时图片动作、说明钮动作 0x20 画在 (按下偏移+0x21C, +0x1D4)；"%-12s %2d"（名字、count+pending）或 "%-12s"（"無"）在 (listX+s−0x1E, listY+偏移−0xE)，所选行渐变框；数量 > shown 时滚动条（listX+s+0x7A, listY−4, 0xBA）；EquipDrawStats(slot, roleTab)；数量 > 10 时第二条滚动条（listX+s+0xC4, listY+9, 0xCA，界值写入 0x0050A408 等四个只写的全局）；所示物品非空时说明文字（裁剪 (0xD4,0x1C2,0x188,0x19)，(0xDA,0x1C4)）；描述打开时 DrawDescriptionBox；0xF 时 "無法空手戰鬥" 框与文字。
 - 0x00446E40 EquipTake：目标表头清空；源表中种类 & 格表 0x004AF920[slot]（去位 15）等于格表、且可用角色 & 0x004AACCC[VisibleRole(roleTab)] 非 0 者移出，按 id 插入目标（插在第一个 id ≥ 它且前一项 < 它之处，表头 id 视为 0）。两张表与 exe 字节相符。
+
+## 装备辅助（第 671–684 行）与另三个相同函数 — exact
+
+- 与正传代码相同（menu_identity2.txt）且源码与正传已验证版本一致：0x00446FD0 EquipReturn、0x00447880 EquipDrawPicture、0x00447AF0 EquipStatsOf、0x0044D9D0 SkillsCountShown、0x0044DC10 SkillsCountTabs、0x0044E080 ItemsLeave。
+- 0x00446F30 EquipFillList：EquipTake(背包, 列表, slot)；所选格非空或列表为空时在末尾接一个新空项（0x00454C70）；CountItems、top 与 row 清零、firstShown 为表头；shown = 从表头起至多 10 项（同函数的分块 0x00446F00）。
+- 0x00447010 EquipDrawStats：角色 = VisibleRole(tab)（正传直接用 tab）；当前与所试统计（0x0050BA70，每组 0x60 字节，所试为第 4 组）；攻击（[6]+[15]）、防御（[7]+[16]）、敏捷（[9]）各以 "%-6s%5d"（标签 0x004BEB14／0x004BEAFC／0x004BEAF4）画在 (s+0x1C8, 0x152／0x166／0x17A)，并以大字体 "%d"（颜色 0x004AF738）画在脸上方 (0xFA／0x172／s+0x1EA, 0x3E−s)；所试值不同时箭头（当前大于所试为 0x235F 否则 0x235E）在 (s+0x22E, y) 与 "%-5d" 新值在 (s+0x23E, y)；武器格所试 [17] ≠ −1 时 "%-6s%5d%% +%d"（熟練，[17]、[20] 的低字）；魔法格 [18] ≠ −1 时 "%-6s%5d/%-5d"（成長，低字／高字）；护符格 [19] ≠ −1 时 "%-6s%5d%%"（辨識，5×值），都在 (s+0x1C8, 0x18E)。实现去掉了正传重建的两处增强，与外传汇编一致。
+- 0x004474D0 EquipDrawSlots：与正传只差经 VisibleRole 取角色、八张格子图依次为 0..7（正传 3,0,1,6,7,5,2 的顺序）与图片动作 0x3B；八个 y 偏移 {6,0x22,0x3E,0x5A,0x76,0x92,0xCA,0x102}。
+- 0x004478D0 EquipComputeStats：四个角色 EquipRoleStats(r, 第 r 组)，EquipTried，EquipTryStats(VisibleRole(roleTab), slot, 第 4 组, 所试)，EquipExtraStats(所试, 第 4 组)，外传另调 EquipSumBonuses（0x00447DF0）与 EquipResistances（0x00447E40）。
+- 0x00447970 EquipTried：阶段 0 所选格节点，阶段 1 列表第 top+row 项，否则空。
+- 0x004479D0 EquipRoleStats：基础记录取 VisibleRole(roleTab) 角色（不是参数 r，原有 BUG），加上角色 r 的 16 格装备（ApplyObject），StatsOf。0x00447A40 EquipTryStats：同上取 roleTab 角色的记录并把 +0x26、+0x28 清零，统计组清零，16 格中所选格换成所试（为空则不加），StatsOf。
+- 0x00447BD0 EquipExtraStats：[17]、[18]、[19] 置 −1；所试为空返回；武器格：空项返回，否则 FindCounterShare(0x004C6348, id, &[17], &[20]) 只写两个低字；魔法格且非空：GetProficiency(0x004D1F58, id, 上限, 值)（总是写出两个字），[18] = 上限<<16 | 值；护符格且非空：[19] = FindCounterValue(0x004D3458, id) & 0xFFFF。
+- 0x00447CA0 EquipSwapVitals：临时记录清零，换下物非空时 ApplyObject，roleTab 角色的生命／精神／体力上限（+0xA/+0xC/+0xE）减去；再清零，换上物为空指针时返回，非空项时 ApplyObject 后加上。
+- 0x00447DF0 EquipSumBonuses：bonuses 清零后加上 roleTab 角色 16 格装备。
+- 0x00447E40 EquipResistances：四个角色各把记录 +0x2D 的五项抗性复制到 0x0050B99C+5×r；元素 = +0x37（有符号）；前 9 格中魔法格（7、8）取 FindCounterPercent(0x004D1F58, 动作号) 的低字，物品对该元素抗性非 0 时加 80×熟练/100 并不超过 100，其余格直接加物品抗性；最后为负时归 0。元素不在 0..4 的越界写已登记。
