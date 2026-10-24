@@ -1,4 +1,4 @@
-"""Lists or extracts the resources of swd32.exe.
+"""Lists or extracts the resources of the game executable (swd3e.exe).
 Usage: python3 scripts/dump_resources.py <exe>                     (list type/name/language, offset and size)
        python3 scripts/dump_resources.py <exe> <type> <name> <out> (write one resource; type and name as listed)"""
 

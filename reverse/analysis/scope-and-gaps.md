@@ -50,7 +50,7 @@
 
 脚本要点：`func_parent_iterator_t` 存活时锁住所遍历的尾块，`remove_fchunk` 随之失败，收集父函数后须释放迭代器；尾块属主最后拆除。其余以 `&loc_` 引用的代码地址（`0x41EF80` 的跳转表标签、CRT 内部标签）位于函数内部，不是独立入口。
 
-## 无引用函数（保留，待还原时确认）
+## 无引用函数（保留，已还原）
 
 | 地址 | 说明 |
 | --- | --- |
@@ -66,21 +66,26 @@
 - `0x4A5255`：`VC20XC00` 字符串（EH魔数）。
 - `0x4A3965`、`0x4A6357`：`lea esp,[esp+0]`/`mov edi,edi` 对齐填充。
 
-## 间接调用与计算跳转缺口（未闭合）
+## 间接调用与计算跳转（已闭合）
 
-- 间接分支898处：switch 134；非 switch 764（寄存器/内存间接调用731，间接 `jmp` 33）。目标集合依赖对象 vtable、函数指针表与运行时数据，尚未逐个解析；还原各调用者时补录目标并核对是否落在已登记函数入口。
-- `jmp ebx` 计算跳转22处，位于 `0x418310`、`0x418880`、`0x419F30`、`0x41AD70`、`0x41C3B0`、`0x41DD00`、`0x41EF80`；目标由函数内 `mov ebx, offset loc_*` 装入，IDA已纳入函数体，还原时需核对每个目标均在函数范围内。
-- `0x44DF50` `jmp dword_50A8B0[eax*4]`：`.data` 中运行时跳转表，表内容与目标待核。
-- CRT `0x4A16B0`、`0x4A4F20` 中 `jmp ds:loc_*[reg*4]`：代码内嵌跳转表（memcpy/memmove 形态）被部分识别为代码标签，表边界待核。
-- 数据段中7个指向函数内部非指令头的 dword（`0x41656C`、`0x41656E`、`0x416D61`、`0x417478`、`0x41786F`、`0x46A462`、`0x480020`）：可能为巧合数值，待查引用处的数据类型。
+依据：`reverse/analysis/scripts/ida_scope_check.py`（在 tmp/ 的数据库副本上只读运行）收集映像内全部“取址值”——非 `.text` 段及 `.text` 数据项中每个对齐 dword、以及每条指令中除直接近调用/跳转目标外的立即数与地址操作数——凡落在 `.text` 的值按目标分类；`scope_summary.py` 与函数表对照。结果见 `reverse/evidence/scope/scope-check-summary.txt`。
 
-## 资源与数据范围（未闭合）
+- 数据库函数1710个，与 `reverse/functions.tsv` 完全一致（双向无差）。
+- 取址值落在函数入口的232个，全部已登记；落在任何函数之外的代码：0。
+- 落在函数内部指令头或内部字节的值，按来源逐一核对：
+  - 本函数的 switch 跳转表（函数体后的 `.text` 数据）、`jmp ebx` 的 `mov/lea ebx, offset loc_*` 标签（`0x418310` 等7个函数）、CRT `0x4A16B0`/`0x4A4F20` 的内嵌跳转表：目标都在来源所属函数内。
+  - `.rdata` `0x4AD034..0x4AD66C` 的 EH 展开表与 `0x4ACA20..0x4AD00C` 的 CRT SEH 作用域表：目标是所属函数的 EH funclet 或过滤/处理标签（funclet 作为尾块挂在父函数下，实现中以父函数的展开与 `unique_ptr` 析构表达）。
+  - 巧合数值：`0x4A0452..0x4A1054` 的 DirectInput 数据格式（`c_dfDIKeyboard`）字段；`.rdata` 导入名字串（`0x4ADD14`、`0x4AE91C`、`0x4AE6D4`、`0x4ADCD0`、`0x4ADE40`、`0x4ADD54`、`0x4ADF70`、`0x4B12D0` 处为 “…A\0”+hint）；`.data` Big5 字串（`0x4BECF8`、`0x4B1034`）与字表（`0x4BF9B8`、`0x4C0918`）；`0x4325B4` 为 switch 索引表后的对齐填充 `8D 49 00`。
+- `0x44DF50` 的 `jmp dword_50A8B0[eax*4]`：菜单绘制表，静态内容全为 `0xFFFFFFFF`，运行时由菜单页切换写入处理函数（menu-rewrite.md）；写入的值来自取址的函数入口，均已登记。
+- 间接分支1551处（432个函数）：目标只能来自上述取址值（已全部落在登记函数或本函数标签内）或导入表；映像中无运行时生成的代码。由此函数全集在静态取址意义下闭合。
 
-- `.rsrc`（VA `0x57C000`，`0x61000`字节）未加载入数据库；对话框 `SetupDialog`、`CheatDialog`、图标、光标等资源属于范围，需要另行提取并核对。
-- 外部数据文件清单见 `structure-overview.md`；格式、读写函数与使用关系在还原对应函数时逐一核对，证据归档至 `reverse/evidence/`。
+## 资源与数据范围
+
+- `.rsrc`：19项资源（WAVE 119～121，CURSOR 1，BITMAP 113～118，ICON 2～5，DIALOG 106、107、112，GROUP_CURSOR 103，GROUP_ICON 125），清单见 `reverse/evidence/scope/rsrc-list.txt`。以 `scripts/make_resources.py` 从 swd3e.exe 重新提取的14个文件与 `third_party/asset/launcher/` 逐字节一致（`reverse/evidence/scope/rsrc-sha256.txt`）。
+- 外部数据文件清单见 `structure-overview.md`；格式、读写函数与使用关系在逐函数验证时核对，证据归档至 `reverse/evidence/`。
 
 ## 范围结论
 
-- 已识别函数：1700（`reverse/functions.tsv`）。
-- 函数外代码头：0。
-- 函数全集：待确定，取决于上述间接调用目标、运行时跳转表和资源核对结果。
+- 已识别函数：1710（`reverse/functions.tsv`，含菜单处理表引用的10个尾块入口）。
+- 函数外代码头：0；取址目标在函数之外：0。
+- 函数全集：1710（静态取址闭合；第4阶段逐函数验证中如发现遗漏，先补表再还原）。

@@ -22,23 +22,22 @@
 
 ## 整体进度
 
-- 当前阶段：第3阶段（还原）收尾：已识别函数全部实现，待闭合范围缺口与待外传化测试；第4阶段（验证）未开始。
+- 当前阶段：第3阶段（还原）收尾：函数全部实现、范围缺口已闭合，待外传化测试；第4阶段（验证）未开始。
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
-- 函数总数：待确定（间接调用目标、运行时跳转表未闭合；`.rsrc`资源已提取至third_party/asset/launcher）。
-- 已实现／总数：1710／待确定（已识别1710）。
-- 已验证／总数：0／待确定（已识别1710）。
-- 待实现／待验证：0／1710（以已识别函数计）。
+- 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
+- 已实现／总数：1710／1710。
+- 已验证／总数：0／1710。
+- 待实现／待验证：0／1710。
 
 ## 当前工作
 
-已识别的1710个函数均已按swd3e汇编实现（implemented_pending_review，验证0次）；Linux与Windows构建通过，Linux测试139项通过，另有35项仍列为待外传化（tests/pending_swd3e.txt）。停点：战斗对话帧（0x00479860）已逐条按外传改写，第3阶段剩余为范围缺口（reverse/analysis/scope-and-gaps.md）与待外传化测试。
+已识别的1710个函数均已按swd3e汇编实现（implemented_pending_review，验证0次）；Linux与Windows构建通过，Linux测试139项通过，另有35项仍列为待外传化（tests/pending_swd3e.txt）。停点：范围缺口已闭合（函数全集1710，见reverse/analysis/scope-and-gaps.md），第3阶段剩余为待外传化测试。
 
 ## 下一步
 
-1. 闭合范围缺口：核对间接调用目标、运行时跳转表与未识别代码，发现遗漏函数时补表并还原。
-2. 把tests/pending_swd3e.txt中的35项测试改为对照swd3e.exe或外传语义，清空待外传化清单。
-3. 进入第4阶段：从函数表第一行开始第一遍逐函数汇编验证，结论记入reverse/evidence/，用scripts/mark_verified.py登记。
-4. 产出Windows可游玩构建，提供试玩命令交用户运行。
+1. 把tests/pending_swd3e.txt中的35项测试改为对照swd3e.exe或外传语义，清空待外传化清单。
+2. 进入第4阶段：从函数表第一行开始第一遍逐函数汇编验证，结论记入reverse/evidence/，用scripts/mark_verified.py登记。
+3. 产出Windows可游玩构建，提供试玩命令交用户运行。
 
 ## GOAL完成条件
 
