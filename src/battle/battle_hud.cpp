@@ -443,14 +443,13 @@ int BattleHud::ResetMeter()
 // shown level, which moves a pixel a frame towards the meter's share of its top (in pixels of the fill; tinted while it
 // moves); the value
 // below it
-void BattleHud::DrawMeter(int x, int y)
+void BattleHud::DrawMeter(int x, int y, smooth::Scene& scene)
 {
     if (this->meterShown == 0)
     {
         return;
     }
 
-    smooth::Scene scene;
     smooth::ScenePainter painter(*this->services, scene);
     const Picture* frame = this->archive.GetPicture(kMeterPicture, 0);
     this->lastPicture = frame;
@@ -500,8 +499,8 @@ void BattleHud::DrawMeter(int x, int y)
     }
 
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
-    scene.Show(*this->services);
-    this->DrawNumber(kMeterNumbers, this->meterValue, x + (fill->width >> 1), y + fill->height);
+    smooth::HudFrame(*this)
+        .DrawNumberAdvance(kMeterNumbers, this->meterValue, x + (fill->width >> 1), y + fill->height, scene);
 }
 
 // swd3e.exe 0x00458DC0: the roulette widened a step: the first two digits rise to 9, then a third digit (to 9), then
@@ -736,16 +735,22 @@ u16 BattleHud::RouletteBonus()
 
 // swd3e.exe 0x004593C0: one frame of picture `id` growing from its middle in slot `slot` (0..2), added to the screen
 // with no tint: its zoom widens by 0x3C and heightens by 0x50 a frame; 1 (the slot cleared) once it is 0x4B0 wider
-int BattleHud::DrawGrowing(int slot, int id, int x, int y)
+int BattleHud::DrawGrowing(int slot, int id, int x, int y, smooth::Scene& scene)
 {
     const auto at = static_cast<std::size_t>(slot);
+
+    // Slots past the three write the zooms after them in the original (deviations.md): over at once here.
+    if (at >= this->growWidth.size())
+    {
+        return 1;
+    }
+
     const Picture* picture = this->archive.GetPicture(static_cast<u32>(id), 0);
     this->lastPicture = picture;
 
     // A missing picture is read through a null pointer in the original.
     if (picture != nullptr)
     {
-        smooth::Scene scene;
         smooth::ScenePainter painter(*this->services, scene);
         painter.SetSource(picture->data.data());
         painter.SetZoom(
@@ -759,7 +764,6 @@ int BattleHud::DrawGrowing(int slot, int id, int x, int y)
         options.tintGreen = 0;
         options.tintBlue = 0;
         painter.DrawPicture(x, y, picture->width, picture->height, Painter::ZoomAddTinted);
-        scene.Show(*this->services);
     }
 
     this->growHeight[at] += kGrowHeightStep;

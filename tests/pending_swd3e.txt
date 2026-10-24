@@ -13,7 +13,6 @@ battle role: the swarm offsets match swd32.exe
 battle state: the initial turn and push values match swd32.exe
 battle state: the quake steps match swd32.exe
 battle unit: the damage digit hops match swd32.exe
-battle state: the panel units match swd32.exe
 battle role: the cost refusals match swd32.exe
 # cheat_dialog_test.cpp
 cheat dialog: the attribute names match swd32.exe

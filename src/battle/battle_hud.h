@@ -10,6 +10,7 @@ namespace swd3e::smooth
 {
 
 class HudFrame;
+class Scene;
 
 }  // namespace swd3e::smooth
 
@@ -91,13 +92,13 @@ public:
     i16 SetMeterLimit(i16 limit);
     int AddToMeter(i16 amount);
     int ResetMeter();
-    void DrawMeter(int x, int y);
+    void DrawMeter(int x, int y, smooth::Scene& scene);
     void RaiseRoulette();
     void SetupRoulette(i16 steps);
     void ResetRoulette();
     int DrawRoulette(int x, int y, i32& value, int stop);
     u16 RouletteBonus();
-    int DrawGrowing(int slot, int id, int x, int y);
+    int DrawGrowing(int slot, int id, int x, int y, smooth::Scene& scene);
     int DrawPicturePalette(int id, int x, int y);
     void DrawTileBox(int id, int x, int y, int columns, int rows, i8 fill);
     int DrawEffectAt(int id, int action, int x, int y, int mirror);

@@ -104,7 +104,7 @@ public:
     static constexpr std::array<u8, 10> QuakeSteps = {4, 3, 4, 3, 4, 3, 2, 3, 2, 3};  // 0x004BF190 by quakePhase
     static constexpr std::array<i32, 5> RoleCycle = {11, 2, 1, 0, 3};  // 0x004BF578 the party roles by turn, from 1
     static constexpr std::array<i32, 4> PanelUnits = {10, 9, 8, 11};   // 0x004BF56C the role units by panel
-    static constexpr std::array<int, 4> PortraitX = {0x14A, 0xB8, 0x26, 0x1DC};  // 0x004BF13C by party role
+    static constexpr std::array<int, 4> PortraitX = {0xFD, 0x5D, 0x19D, 0x19D};  // 0x004BF13C by place (swd3e)
     // 0x004BF0C4: the five commands of the menu (pointers in the original, kinds 0x2A..0x2E of the accessory names)
     static constexpr std::array<std::u8string_view, 5> FixedCommandNames =
         {u8"攻擊", u8"奇術", u8"物品", u8"絕技", u8"防禦"};
@@ -395,10 +395,12 @@ public:
     i32 unk53BD0C = 0;
 
     // The role panels (0x00459D10): the gauges move a step a frame towards their values and the numbers roll.
-    i32 currentUnit = 0;                               // 0x00577024 the unit whose panel is highlighted
-    i32 glowFrames = 0;                                // 0x00577034 frames to the next step of panelGlow
-    i8 listGlow = 0;                                   // swd32 0x0053BDF1 the glow of the last listed unit; bit 7: on
-    std::array<i32, RoleUnits> nameFlashes = {};       // 0x00536A90
+    i32 currentUnit = 0;                          // 0x00577024 the unit whose panel is highlighted
+    i32 glowFrames = 0;                           // 0x00577034 frames to the next step of panelGlow
+    i8 listGlow = 0;                              // swd32 0x0053BDF1 the glow of the last listed unit; bit 7: on
+    std::array<i32, RoleUnits> nameFlashes = {};  // 0x00536A90
+    std::array<u8, RoleUnits> panelGrown =
+        {};  // 0x0050F410 (swd3e) per role: 1 once its name gauge grew in (DrawGrowing)
     std::array<i32, RoleUnits> hitPointsRolling = {};  // 0x0050EDB8 the change still rolling in the shown number
     std::array<i32, RoleUnits> hitPointSteps = {};     // 0x00536924
     std::array<i32, RoleUnits> spiritRolling = {};     // 0x00536B64
@@ -504,7 +506,7 @@ public:
     // 0x005770CE the frames of the level-up stats (the high word of 0x0053BDE8)
     u16 levelUpFrames = 0;
     // The debug keys (Game::BattleDebugKeys) and the acting unit.
-    i32 unk5244E0 = 0;
+    i32 unk5244E0 = 0;   // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' second gauges
     i32 slowFrames = 0;  // 0x005777F8 (swd3e) the debug keys' F5: the frames are slowed to 100 ms
     i32 unk577360 = 0;   // 0x00577360 (swd3e) set when an enemy's step-in attack fells it (0x00487FE0); 0x0045EE20
     u8 itemStolen = 0;   // 0x00577255 (swd3e) 1 once an enemy stole (EnemyHitDamage, command flag 0x100000); 0x0045EE20

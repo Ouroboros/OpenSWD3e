@@ -24,38 +24,24 @@ namespace swd3e::smooth
 namespace
 {
 
-// swd32.exe 0x004A7598 (unmatched in swd3e)
-constexpr std::array<int, Party::Roles> kGaugeX = {0x188, 0xF6, 0x64, 0x21A};
-// swd32.exe 0x004A75B8 (unmatched in swd3e)
-constexpr std::array<int, Party::Roles> kNameX = {0x17E, 0xEC, 0x5A, 0x210};
-constexpr int kListX = 0x1C2;
-constexpr int kMirroredListX = 0xA;
-constexpr int kListTop = 0xA;
-constexpr int kListStep = 0x1C;
-constexpr int kListWidth = 0xAA;
-constexpr int kListHeight = 0x14;
-constexpr int kListTextX = 5;
-constexpr int kListTextY = 2;
-constexpr int kListBarX = 0x64;
-constexpr int kListBarY = 8;
-constexpr int kListGaugeY = 0xC;
-constexpr int kListGaugeHeight = 3;
-constexpr int kListGaugeBlue = 0x18;
-constexpr int kListGlowUp = 4;
-constexpr int kListGlowHeight = 0x1C;
-constexpr i8 kListGlowStep = 3;
-constexpr int kListGlowTop = 0x1C;
-constexpr double kBarPixels = 56.0;  // swd32.exe 0x00499CF4 (unmatched in swd3e): the pixels of a full panel gauge
+// swd3e: the panels by place (the three roles of the party; the last two share theirs).
+constexpr std::array<int, Party::Roles> kGaugeX = {0x14C, 0xAC, 0x1EC, 0x1EC};     // 0x004BF12C
+constexpr std::array<int, Party::Roles> kNameX = {0x13C, 0x9C, 0x1DC, 0x1DC};      // 0x004BF14C
+constexpr std::array<int, Party::Roles> kHighlightX = {0xEF, 0x4F, 0x18F, 0x18F};  // 0x004BF15C
+constexpr double kBarPixels = 48.0;  // 0x004AADE0 (a float): the pixels of a full panel gauge
 constexpr int kHighlightLeft = 4;
-constexpr int kHighlightTop = 0x18A;
-constexpr int kHighlightWidth = 0x7C;
-constexpr int kHighlightHeight = 0x4C;
+constexpr int kHighlightTop = 0x184;
+constexpr int kHighlightWidth = 0x9C;
+constexpr int kHighlightHeight = 0x5C;
 constexpr int kGlowFrames = 3;
 constexpr i8 kGlowTop = 8;
 constexpr u8 kGlowFalling = 0x80;
 constexpr u8 kGlowMask = 0x7F;
-constexpr int kNameY = 0x18A;
-constexpr int kNameGauge = 0x234F;
+constexpr int kSecondGaugeY = 0x177;  // the second gauge of the debug overlay
+constexpr int kSecondGaugeGreen = 0x18;
+constexpr int kGaugeHeight = 3;
+constexpr int kNameY = 0x18B;
+constexpr int kNameGauge = 0x2380;
 constexpr int kNameStyle = 0x10;
 constexpr Pixel kNameColor = 0xFFFF;
 constexpr Pixel kDefeatedColor = 0xF000;
@@ -63,33 +49,45 @@ constexpr Pixel kFlashColor = 0xF3F0;
 constexpr int kFlashPeriod = 4;
 constexpr int kPortraitY = 0x1CC;
 constexpr int kIconsY = 0x1CE;
-constexpr int kBlockGauge = 0x2352;
-constexpr int kBlockY = 0x1D2;
-constexpr i32 kArrowBlock = 0x38;  // the block value under which the arrow is shown
-constexpr int kFrameLeft = 8;
-constexpr int kFrameIndex = 3;
+constexpr int kBlockGauge = 0x2385;
+constexpr int kBlockY = 0x1D0;
+constexpr i32 kArrowBlock = 0x30;   // the block value of a full fury: the arrow is shown
+constexpr int kStatFrame = 0x239E;  // the frames of the three gauges (0..2)
+constexpr int kFrameLeft = 0x12;
 constexpr int kNumberX = 0x26;
-constexpr int kHitPointPicture = 0x2350;
-constexpr int kHitPointFrameY = 0x1A3;
-constexpr int kHitPointGaugeY = 0x1A6;
-constexpr int kHitPointNumberY = 0x19C;
-constexpr int kSpiritPicture = 0x235F;
-constexpr int kSpiritFrameY = 0x1B4;
-constexpr int kSpiritGaugeY = 0x1B7;
-constexpr int kSpiritNumberY = 0x1AD;
-constexpr int kStaminaPicture = 0x241F;
-constexpr int kStaminaFrameY = 0x1C5;
-constexpr int kStaminaGaugeY = 0x1C8;
-constexpr int kStaminaNumberY = 0x1BE;
-constexpr int kNormalDigits = 0x2354;
-constexpr int kLowDigits = 0x2355;       // the hit points at most a third of the maximum
-constexpr int kCriticalDigits = 0x2356;  // at most kCriticalHitPoints
+constexpr int kHitPointPicture = 0x236D;
+constexpr int kHitPointFrameY = 0x19F;
+constexpr int kHitPointGaugeY = 0x1A7;
+constexpr int kHitPointNumberY = 0x19A;
+constexpr int kSpiritPicture = 0x236E;
+constexpr int kSpiritFrameY = 0x1B0;
+constexpr int kSpiritGaugeY = 0x1B8;
+constexpr int kSpiritNumberY = 0x1AB;
+constexpr int kStaminaPicture = 0x236F;
+constexpr int kStaminaFrameY = 0x1C1;
+constexpr int kStaminaGaugeY = 0x1C9;
+constexpr int kStaminaNumberY = 0x1BC;
+constexpr int kNormalDigits = 0x2377;
+constexpr int kLowDigits = 0x2378;       // the hit points at most a third of the maximum
+constexpr int kCriticalDigits = 0x2379;  // at most kCriticalHitPoints
 constexpr i32 kCriticalHitPoints = 0xA;
 constexpr i32 kLowShare = 3;
 constexpr i32 kGaugeDownNear = 1;
 constexpr i32 kGaugeDownFar = 3;
 constexpr i32 kBlockDownNear = 2;
 constexpr i32 kBlockDownFar = 5;
+// The talisman ghost's panel (swd3e).
+constexpr int kGhostPortraitShift = 3;  // its portrait follows the party's by its kind
+constexpr int kGhostPortraitX = 0x258;
+constexpr int kGhostPortraitY = 0x1AE;
+constexpr int kGhostGaugeX = 0x23F;
+constexpr int kGhostNumberX = 0x265;
+constexpr int kGhostTurnGaugeY = 0x1BB;
+constexpr int kGhostTurnBlue = 0x18;
+constexpr int kGhostOrderX = 0x238;
+constexpr int kGhostOrderY = 0x1C2;
+constexpr int kMeterX = 0x14;  // DrawMeter
+constexpr int kMeterY = 0x186;
 constexpr std::u8string_view kAutoBattle = u8"自動攻擊";  // 0x004BF3B8
 constexpr int kAutoTargetX = 0x44;
 constexpr int kAutoSlide = 3;
@@ -422,84 +420,58 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
     // slides in.
     std::optional<Scene::Still> still(std::in_place, scene);
     SceneFont font(game.mediumFont, scene);
+    HudFrame hud(game.battleHud);
     font.SetShadow(0);
     font.SetBackground(TextFont::NoBackground);
-    int listY = kListTop;
-
-    for (int index = 0; index < static_cast<int>(battle.roleCount); ++index)
-    {
-        BattleRole& unit = game.battleRoles[static_cast<std::size_t>(index)];
-        const int x = battle.mirrored == 1 ? kMirroredListX : kListX;
-
-        if (unit.autoControl != 1)
-        {
-            continue;
-        }
-
-        const std::string_view name = NameOf(unit.Data()->data.name);
-        MessagesFrame(game.battleMessages)
-            .DrawMessageBoxAdvance(x, listY, kListWidth, kListHeight, x + kListTextX, listY + kListTextY, name, scene);
-        i32 hitPoints = 0;
-        i32 maximum = 0;
-        unit.GetHitPoints(hitPoints, maximum);
-        const auto bar =
-            static_cast<int>(crt::Ftol(static_cast<double>(hitPoints) / static_cast<double>(maximum) * kBarPixels));
-        HudFrame(game.battleHud).DrawBarAdvance(kHitPointPicture, 1, x + kListBarX, listY + kListBarY, bar, scene);
-        const auto gauge = static_cast<u16>(unit.GaugeLength(game.battleServices));
-
-        if (gauge != 0)
-        {
-            const u32 color = game.painter.MakeColor(0, 0, kListGaugeBlue);
-            HudFrame(game.battleHud)
-                .FillColor(x + kListBarX, listY + kListGaugeY, gauge, kListGaugeHeight, color, scene);
-        }
-
-        if (index == static_cast<int>(battle.roleCount) - 1 && (static_cast<u8>(battle.listGlow) & kGlowFalling) != 0)
-        {
-            battle.listGlow = static_cast<i8>(battle.listGlow + kListGlowStep);
-
-            if ((static_cast<u8>(battle.listGlow) & kGlowMask) > kListGlowTop)
-            {
-                battle.listGlow = 0;
-            }
-
-            const int level = static_cast<u8>(battle.listGlow) & kGlowMask;
-            Box(game.painter,
-                x,
-                listY - kListGlowUp,
-                kListWidth,
-                kListGlowHeight,
-                level,
-                0,
-                0,
-                FillMode::Gradient,
-                scene);
-        }
-
-        listY += kListStep;
-    }
 
     for (int index = 0; index < static_cast<int>(battle.roleCount); ++index)
     {
         const auto slot = static_cast<std::size_t>(index);
         BattleRole& unit = game.battleRoles[slot];
 
-        if (unit.autoControl == 1 || unit.guestControl == 1 || unit.IsGuarding())
+        if (unit.AutoControl() == 1 || unit.GuestControl() == 1 || unit.IsGuarding())
         {
             continue;
         }
 
-        const auto partyRole = static_cast<std::size_t>(battle.partyRoles[slot]);
-        const int gaugeX = kGaugeX[partyRole];
-        const int portraitX = BattleState::PortraitX[partyRole];
+        if (unit.Ghost() == 1)
+        {
+            const i32 kind = game.party.variables[Party::GhostVariable];
+            hud.DrawPortraitAdvance(
+                static_cast<u16>(kind + kGhostPortraitShift),
+                kGhostPortraitX,
+                kGhostPortraitY,
+                0,
+                scene
+            );
+            u16 maximum = 0;
+            u16 value = 0;
+            unit.GetSpirit(maximum, value);
+            const auto spirit = static_cast<i16>(value);
+            const auto bar =
+                static_cast<int>(crt::Ftol(static_cast<double>(spirit) / static_cast<double>(maximum) * kBarPixels));
+            hud.DrawGaugeAdvance(kSpiritPicture, kGhostGaugeX, kSpiritGaugeY, bar, scene);
+            hud.DrawSmallNumberAdvance(kNormalDigits, spirit, kGhostNumberX, kSpiritNumberY, scene);
+            const u32 color = game.painter.MakeColor(0, 0, kGhostTurnBlue);
+            const auto gauge = static_cast<u16>(unit.GaugeLength(game.battleServices));
+            hud.FillColor(kGhostGaugeX, kGhostTurnGaugeY, gauge + 1, kGaugeHeight, color, scene);
+            const std::string order(
+                Big5(BattleState::GhostOrderNames[static_cast<std::size_t>(battle.ghostOrderRow - 1)])
+            );
+            font.DrawText(game.drawSurface, kGhostOrderX, kGhostOrderY, order, battle.lightColor, kNameStyle);
+            continue;
+        }
+
+        const int gaugeX = kGaugeX[slot];
+        const int portraitX = BattleState::PortraitX[slot];
+        const int nameX = kNameX[slot];
         const bool current = battle.currentUnit - BattleState::FirstRoleUnit == index;
 
-        if (current)
+        if (current && battle.panelGrown[slot] == 1)
         {
             const int level = battle.panelGlow & kGlowMask;
             Box(game.painter,
-                BattleState::PortraitX[static_cast<std::size_t>(battle.partyRoles[static_cast<std::size_t>(index)])] -
-                    kHighlightLeft,
+                kHighlightX[slot] + kHighlightLeft,
                 kHighlightTop,
                 kHighlightWidth,
                 kHighlightHeight,
@@ -538,7 +510,18 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             }
         }
 
-        const int nameX = kNameX[partyRole];
+        if (battle.unk5244E0 == 1)
+        {
+            const auto second = static_cast<u16>(unit.SecondGaugeLength());
+
+            if (second != 0)
+            {
+                const u32 color = game.painter.MakeColor(0, kSecondGaugeGreen, 0);
+                hud.FillColor(nameX, kSecondGaugeY, second, kGaugeHeight, color, scene);
+            }
+        }
+
+        const auto partyRole = static_cast<std::size_t>(battle.partyRoles[slot]);
         const std::string_view name = NameOf(battle.roleNames[partyRole]);
 
         if (!unit.IsDefeated())
@@ -547,7 +530,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
 
             if (unit.unk2AB0 == 0)
             {
-                HudFrame(game.battleHud).DrawGaugeWideAdvance(kNameGauge, nameX, kNameY, gauge, scene);
+                hud.DrawGaugeWideAdvance(kNameGauge, nameX, kNameY, gauge, scene);
             }
         }
 
@@ -556,7 +539,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             font.DrawText(game.drawSurface, nameX, kNameY, name, kDefeatedColor, kNameStyle);
         }
 
-        if (unit.unk2AB0 == 1)
+        if (unit.unk2AB0 == 1 && battle.panelGrown[slot] == 1)
         {
             if (current)
             {
@@ -571,8 +554,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             }
         }
 
-        HudFrame(game.battleHud)
-            .DrawPortraitAdvance(static_cast<u16>(partyRole), portraitX, kPortraitY, unit.IsDefeated() ? 1 : 0, scene);
+        hud.DrawPortraitAdvance(static_cast<u16>(partyRole), portraitX, kPortraitY, unit.IsDefeated() ? 1 : 0, scene);
         UnitFrame(unit).DrawEffectIconsAdvance(game.battleServices, gaugeX, kIconsY, scene);
         this->StepPanelGaugeAdvance(
             battle.blockValuesShown[slot],
@@ -589,18 +571,12 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             scene
         );
 
-        if (*unit.roleBlock == kArrowBlock && !unit.IsDefeated())
-        {
-            HudFrame(game.battleHud).DrawArrowAdvance(portraitX, kBlockY, index, scene);
-        }
-
         i32 hitPoints = 0;
         i32 maximum = 0;
         unit.GetHitPoints(hitPoints, maximum);
         float ratio = static_cast<float>(static_cast<double>(hitPoints) / static_cast<double>(maximum) * kBarPixels);
         RollNumber(hitPoints, battle.hitPoints[slot], battle.hitPointsRolling[slot], battle.hitPointSteps[slot], 0);
-        HudFrame(game.battleHud)
-            .DrawPictureFrameAdvance(kHitPointPicture, kFrameIndex, gaugeX - kFrameLeft, kHitPointFrameY, scene);
+        hud.DrawPictureFrameAdvance(kStatFrame, 0, gaugeX - kFrameLeft, kHitPointFrameY, scene);
         this->StepPanelGaugeAdvance(
             battle.hitPointBarsShown[slot],
             battle.hitPointBars[slot],
@@ -618,14 +594,13 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
         const int digits = hitPoints > kCriticalHitPoints
                                ? (hitPoints > maximum / kLowShare ? kNormalDigits : kLowDigits)
                                : kCriticalDigits;
-        HudFrame(game.battleHud)
-            .DrawSmallNumberAdvance(
-                digits,
-                battle.hitPointsRolling[slot] + hitPoints,
-                gaugeX + kNumberX,
-                kHitPointNumberY,
-                scene
-            );
+        hud.DrawSmallNumberAdvance(
+            digits,
+            battle.hitPointsRolling[slot] + hitPoints,
+            gaugeX + kNumberX,
+            kHitPointNumberY,
+            scene
+        );
 
         u16 spiritMaximum = 0;
         u16 spiritValue = 0;
@@ -635,8 +610,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             static_cast<double>(spirit) / static_cast<double>(static_cast<i16>(spiritMaximum)) * kBarPixels
         );
         RollNumber(spirit, battle.spirit[slot], battle.spiritRolling[slot], battle.spiritSteps[slot], 0);
-        HudFrame(game.battleHud)
-            .DrawPictureFrameAdvance(kSpiritPicture, kFrameIndex, gaugeX - kFrameLeft, kSpiritFrameY, scene);
+        hud.DrawPictureFrameAdvance(kStatFrame, 1, gaugeX - kFrameLeft, kSpiritFrameY, scene);
         this->StepPanelGaugeAdvance(
             battle.spiritBarsShown[slot],
             battle.spiritBars[slot],
@@ -651,14 +625,13 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             kGaugeDownFar,
             scene
         );
-        HudFrame(game.battleHud)
-            .DrawSmallNumberAdvance(
-                kNormalDigits,
-                battle.spiritRolling[slot] + spirit,
-                gaugeX + kNumberX,
-                kSpiritNumberY,
-                scene
-            );
+        hud.DrawSmallNumberAdvance(
+            kNormalDigits,
+            battle.spiritRolling[slot] + spirit,
+            gaugeX + kNumberX,
+            kSpiritNumberY,
+            scene
+        );
 
         u16 staminaMaximum = 0;
         u16 staminaValue = 0;
@@ -668,8 +641,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             static_cast<double>(stamina) / static_cast<double>(static_cast<i16>(staminaMaximum)) * kBarPixels
         );
         RollNumber(stamina, battle.stamina[slot], battle.staminaRolling[slot], battle.staminaSteps[slot], 1);
-        HudFrame(game.battleHud)
-            .DrawPictureFrameAdvance(kStaminaPicture, kFrameIndex, gaugeX - kFrameLeft, kStaminaFrameY, scene);
+        hud.DrawPictureFrameAdvance(kStatFrame, 2, gaugeX - kFrameLeft, kStaminaFrameY, scene);
         this->StepPanelGaugeAdvance(
             battle.staminaBarsShown[slot],
             battle.staminaBars[slot],
@@ -684,16 +656,27 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             kGaugeDownFar,
             scene
         );
-        HudFrame(game.battleHud)
-            .DrawSmallNumberAdvance(
-                kNormalDigits,
-                battle.staminaRolling[slot] + stamina,
-                gaugeX + kNumberX,
-                kStaminaNumberY,
-                scene
-            );
+        hud.DrawSmallNumberAdvance(
+            kNormalDigits,
+            battle.staminaRolling[slot] + stamina,
+            gaugeX + kNumberX,
+            kStaminaNumberY,
+            scene
+        );
+
+        if (unit.unk2AB0 == 1 && unit.PartyMember() == 1 && battle.panelGrown[slot] == 0)
+        {
+            battle.panelGrown[slot] =
+                static_cast<u8>(game.battleHud.DrawGrowing(index, kNameGauge, nameX, kNameY, scene));
+        }
+
+        if (*unit.roleBlock == kArrowBlock && !unit.IsDefeated())
+        {
+            hud.DrawArrowAdvance(portraitX, kBlockY, index, scene);
+        }
     }
 
+    game.battleHud.DrawMeter(kMeterX, kMeterY, scene);
     still.reset();
 
     if (battle.autoBattle == 1)

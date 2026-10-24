@@ -1116,21 +1116,23 @@ TEST_CASE("battle unit: the names of an enemy's objects and skills")
     CHECK_EQ(enemy.SkillName(database, kSecond, name), 1);
 }
 
-TEST_CASE("battle state: the panel units match swd32.exe")
+TEST_CASE("battle state: the panel units and places match swd3e.exe")
 {
-    constexpr swd3e::u32 kPanelUnitsAt = 0x004A7960;
-    constexpr swd3e::u32 kPanelRoleAt = 0x004A7644;
-    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd32.exe");
+    constexpr swd3e::u32 kPanelUnitsAt = 0x004BF56C;
+    constexpr swd3e::u32 kPanelRoleAt = 0x004BF1EC;
+    constexpr swd3e::u32 kPortraitXAt = 0x004BF13C;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
     {
-        std::printf("  (swd32.exe not found, skipped)\n");
+        std::printf("  (swd3e.exe not found, skipped)\n");
         return;
     }
 
     const swd3e::BattleState state;
     CHECK(swd3etest::SameTable(exe, kPanelUnitsAt, swd3e::BattleState::PanelUnits));
     CHECK(swd3etest::SameTable(exe, kPanelRoleAt, std::array<swd3e::u16, 1>{state.anyStateRole}));
+    CHECK(swd3etest::SameTable(exe, kPortraitXAt, swd3e::BattleState::PortraitX));
 }
 
 TEST_CASE("battle state: the names of the menu commands match swd3e.exe")
