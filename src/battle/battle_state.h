@@ -78,6 +78,7 @@ class BattleState
 public:
     static constexpr i32 InitialGaugeFull = 900;
     static constexpr std::size_t ItemUseIds = 0xFF;  // itemUses entries
+    static constexpr u8 StartPoseDone = 0x80;        // startPoseRole: the start pose is over
     static constexpr u8 CostlyUses = 2;  // past this many uses (itemUses + 1 >= 3) an object costs a third more
     static constexpr int QueueRows = 4;
     static constexpr int QueueColumns = 10;
@@ -302,7 +303,8 @@ public:
     std::array<std::u8string_view, 4> commandNames;  // 0x0050EBF0 the listed commands of the menu (pointers)
     std::array<u16, 4> commandKinds = {};            // 0x0050D870 their kinds (swd3e: four)
     std::array<i32, 8> unk524268 = {};
-    // 0x005378EC the five commands of the menu and the four listed ones (swd3e)
+    // 0x005378EC the five commands of the menu and the four listed ones (swd3e; the ninth byte is the low byte of
+    // hitDamage in the original, kept apart here: deviations.md)
     std::array<u8, 9> commandEnabled = {};
     // 0x0050D86C (swd3e) a colour (0x19, 0x19, 0x1D) set by StartBattle and not drawn: the steps of MenuRight and
     // MenuLeft past an empty listed command read it as the kind of command 4 (MenuKind)
@@ -325,6 +327,9 @@ public:
     // 0x0057735C (swd3e) 1: the skill chosen (ActFlag17) is turned on the role itself once its enemy is aimed at, the
     // enemy kept in the role's unk34C0 (MenuConfirm states 2 and 3)
     i32 unk57735C = 0;
+    // 0x0057722A (swd3e) the role whose start pose (Pose36Frame) plays at the battle start, StartPoseDone once over
+    // (StartBattle, RoleFrame); the auto battle key waits for it
+    u8 startPoseRole = 0;
     i32 ghostLockTarget = 0;  // 0x00576FBC (swd3e) the enemy (1-based) the ghost's 鎖定目標 aims at; 0: none
     i16 unk53BF46 = 0;        // cleared when a stagger ends (HurtFrame)
     i16 unk53BF48 = 0;

@@ -296,8 +296,10 @@ constexpr i32 kTalkFixedAnswers = 2;  // 攻擊 and 釋放
 constexpr i32 kRepeatDelay = 0xF;     // the keys of the battle: held keys repeat from this frame
 constexpr i32 kRepeatStep = 3;
 constexpr i32 kConfirmRepeatStep = 6;
-constexpr int kDigitCommands = 8;
-constexpr int kDigitKey1 = 2;  // the scan code of 1
+// swd3e: the keypad keys of commands 1..9 (7 8 9 / 4 5 6 / 1 2 3 as the menu grid)
+constexpr std::array<int, 9> kCommandKeys = {0x47, 0x48, 0x49, 0x4B, 0x4C, 0x4D, 0x4F, 0x50, 0x51};
+constexpr i32 kUnk53BDACBit30 = 0x40000000;  // with bit 31: the confirm key sets bit 0
+constexpr int kDigitKey1 = 2;                // the scan code of 1
 constexpr i32 kSpaceMark = 1;
 constexpr u16 kRetreatMark = 0x4000;
 constexpr u32 kRefusedPause = 0x14;
@@ -6030,12 +6032,14 @@ bool Game::KeyRepeats(const ButtonState& button)
     return button.heldFrames == 1 || (button.heldFrames >= kRepeatDelay && button.heldFrames % kRepeatStep == 1);
 }
 
-// swd3e.exe 0x0046B3D0: the keys of the battle (not while paused). In the menu (battle state 0 or 1, no talk window)
-// the digit keys 1..8 take that command (guard at once); right Shift moves the panel to the previous role, G
-// retreats (無法撤退!! when the role is marked or the party cannot), A starts the auto battle. The right mouse button
-// and right Ctrl press Escape; the left button takes the role under the pointer or the scroll part under it and
-// presses Space; Enter presses Space; Space confirms (every sixth frame when held). The arrow keys move the menu, the
-// panel and the talk choice, Page Up and Page Down scroll the lists, Escape cancels.
+// swd3e.exe 0x0046B3D0: the keys of the battle. In the menu (battle state 0 or 1 with a current unit, no talk window,
+// no open choice, not the role that took 蓄勁) the digit keys 1..9 and the keypad (7 8 9 / 4 5 6 / 1 2 3, as the grid)
+// take that command when enabled (5 guards at once), and G retreats (無法撤退!! when the role is marked or the party
+// cannot; not while aiming). Then: right Shift moves the panel to the previous role, A starts the auto battle (once
+// the start pose is over); the right mouse button and right Ctrl press Escape; the left button takes the role under
+// the pointer or the scroll part under it and presses Space; Enter presses Space; Space confirms (every sixth frame
+// when held). The arrow keys move the menu, the panel and the talk choice, Page Up and Page Down scroll the lists,
+// Escape cancels.
 void Game::BattleKeys()
 {
     BattleState& battle = this->battleState;
@@ -6057,17 +6061,44 @@ void Game::BattleKeys()
         battle.menuByMouse = true;
     }
 
-    if (battle.paused == 1)
-    {
-        return;
-    }
-
     i32 unit = battle.currentUnit;
 
-    if (battle.result <= kMenuState && battle.currentUnit != 0 && this->scene.talkWindows == nullptr)
+    if (battle.result <= kMenuState && battle.currentUnit != 0 && this->scene.talkWindows == nullptr &&
+        battle.ghostOrdersOpen == 0 && battle.refineOptionsOpen == 0 && battle.elementsOpen == 0 &&
+        battle.chargingRole != battle.currentUnit)
     {
-        auto takeCommand = [this, &battle](i32 command)
+        for (std::size_t at = 0; at < kCommandKeys.size(); ++at)
         {
+            const auto command = static_cast<i32>(at) + 1;
+
+            if (this->input.IsKeyDown(kDigitKey1 + static_cast<int>(at)) == 0 &&
+                this->input.IsKeyDown(kCommandKeys[at]) == 0)
+            {
+                continue;
+            }
+
+            if (command == kGuardCommand)
+            {
+                if (battle.menuCommand != kGuardCommand)
+                {
+                    if (battle.result == 0)
+                    {
+                        battle.result = kMenuState;
+                    }
+
+                    battle.menuGrow = kMenuOpened;
+                    battle.unk53BFB8 = 1;
+                    battle.unk53BFBC = 0;
+                    battle.menuCommand = kGuardCommand;
+                    this->ConfirmKey();
+                }
+
+                battle.result = 0;
+                battle.unk53BFB8 = 0;
+                battle.menuCommand = 1;
+                return;
+            }
+
             if (battle.result == 0)
             {
                 battle.result = kMenuState;
@@ -6075,48 +6106,66 @@ void Game::BattleKeys()
 
             this->BuildCommandMenu();
 
-            if (battle.commandEnabled[static_cast<std::size_t>(command - 1)] == 1)
+            if (battle.commandEnabled[at] == 1)
             {
                 battle.menuGrow = kMenuOpened;
                 battle.unk53BFB8 = 1;
+                battle.unk53BFBC = 0;
                 battle.menuCommand = command;
                 this->ConfirmKey();
             }
-        };
 
-        for (int command = 1; command <= kDigitCommands; ++command)
-        {
-            if (this->input.IsKeyDown(kDigitKey1 + command - 1) == 0)
-            {
-                continue;
-            }
-
-            if (command != kGuardCommand)
-            {
-                takeCommand(command);
-                return;
-            }
-
-            if (battle.menuCommand != kGuardCommand)
-            {
-                if (battle.result == 0)
-                {
-                    battle.result = kMenuState;
-                }
-
-                battle.menuGrow = kMenuOpened;
-                battle.unk53BFB8 = 1;
-                battle.menuCommand = kGuardCommand;
-                this->ConfirmKey();
-            }
-
-            battle.result = 0;
-            battle.unk53BFB8 = 0;
-            battle.menuCommand = 1;
             return;
         }
 
-        unit = battle.currentUnit;
+        if (controls.At(Button::KeyG).press != 0 && Game::KeyRepeats(controls.At(Button::KeyG)))
+        {
+            if (battle.unk53BF1C != 0 || battle.hitsAllRoles == 1 || battle.unk53BF64 == 1 ||
+                battle.result == kTalkOrder || battle.result == kEndVictory || battle.result == kTargetState ||
+                this->scene.talkWindows != nullptr)
+            {
+                return;
+            }
+
+            BattleRole& role =
+                this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
+
+            if (role.IsHeld() == 1 ||
+                (static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1 && battle.unk4A7626 != kNoTalkRole))
+            {
+                return;
+            }
+
+            if (!role.MarkBit11Clear() || (battle.panelFlags & BattleState::NoRetreat) != 0)
+            {
+                SleepMilliseconds(kRefusedPause);
+                this->battleMessages.Add(
+                    kRefusalMessageX,
+                    kRefusalMessageY,
+                    kRetreatMessageFrames,
+                    kNoRetreatText,
+                    kRefusalMessageFlags
+                );
+                this->audio.PlaySound(kRefusedSound, this->config.soundVolume);
+                return;
+            }
+
+            SleepMilliseconds(kRetreatPause);
+            battle.unk53BF60 = 1;
+            battle.turnUnit = battle.currentUnit;
+            battle.result = 0;
+            battle.sweptUnits = 0;
+            battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
+            unit = 0;
+            battle.unk53BF1C |= kRetreatMark;
+            battle.currentUnit = 0;
+            battle.unk53BFB8 = 0;
+            battle.unk53BFC0 = 1;
+            battle.unk53BFC4 = 1;
+            battle.listPanelFrames = 0;
+            battle.menuGrow = 0;
+            battle.listRows = kOpenListRows;
+        }
     }
 
     const ButtonState& space = controls.At(Button::Space);
@@ -6158,68 +6207,10 @@ void Game::BattleKeys()
         return;
     }
 
-    if (controls.At(Button::KeyG).press != 0 && Game::KeyRepeats(controls.At(Button::KeyG)))
-    {
-        if (battle.unk53BF1C != 0 || battle.hitsAllRoles == 1 || battle.unk53BF64 == 1 || battle.result == kTalkOrder ||
-            battle.result == kEndVictory || this->scene.talkWindows != nullptr)
-        {
-            return;
-        }
-
-        // Without a current unit the original reads the role 8 before the first: taken as not held.
-        const bool held = unit >= BattleState::FirstRoleUnit &&
-                          this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeld() == 1;
-
-        if (held || (static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1 && battle.unk4A7626 != kNoTalkRole))
-        {
-            return;
-        }
-
-        unit = battle.currentUnit;
-
-        if (battle.currentUnit != 0)
-        {
-            BattleRole& role =
-                this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
-
-            if (!role.MarkBit11Clear() || (battle.panelFlags & BattleState::NoRetreat) != 0)
-            {
-                SleepMilliseconds(kRefusedPause);
-                this->battleMessages.Add(
-                    kRefusalMessageX,
-                    kRefusalMessageY,
-                    kRetreatMessageFrames,
-                    kNoRetreatText,
-                    kRefusalMessageFlags
-                );
-                this->audio.PlaySound(kRefusedSound, this->config.soundVolume);
-                return;
-            }
-
-            SleepMilliseconds(kRetreatPause);
-            battle.turnCommand = kLeaveCommand;
-            battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = kLeaveCommand;
-            role.SetTarget(1);
-            battle.unk53BF60 = 1;
-            battle.turnUnit = battle.currentUnit;
-            battle.result = 0;
-            battle.sweptUnits = 0;
-            battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
-            unit = 0;
-            battle.unk53BF1C |= kRetreatMark;
-            battle.currentUnit = 0;
-            battle.unk53BFB8 = 0;
-            battle.unk53BFC0 = 1;
-            battle.unk53BFC4 = 1;
-            battle.listPanelFrames = 0;
-            battle.menuGrow = 0;
-            battle.listRows = kOpenListRows;
-        }
-    }
-
     if (controls.At(Button::KeyA).press != 0 && Game::KeyRepeats(controls.At(Button::KeyA)))
     {
-        if (battle.result <= kMenuState && battle.roleCount != 0 && this->scene.talkWindows == nullptr)
+        if (battle.result == kMenuState && this->scene.talkWindows == nullptr &&
+            (battle.startPoseRole & BattleState::StartPoseDone) != 0)
         {
             battle.unk53BFBC = 0;
             battle.autoBattle = 1;
@@ -6306,7 +6297,6 @@ void Game::BattleKeys()
 
     if (enter.press != 0 && enter.heldFrames % kRepeatStep == 1)
     {
-        battle.unk53BFBC = 0;
         controls.At(Button::Space).press = 1;
         controls.At(Button::Space).heldFrames = enter.heldFrames;
     }
@@ -6324,6 +6314,19 @@ void Game::BattleKeys()
             battle.unk53BDAC |= 1;
         }
 
+        if ((battle.unk53BDAC & kUnk53BDACBit30) != 0)
+        {
+            battle.unk53BDAC |= 1;
+        }
+
+        if (battle.hitsAllRoles == 1)
+        {
+            const auto hit = static_cast<std::size_t>(
+                this->battleEnemies[static_cast<std::size_t>(battle.actingUnit)].GetWord29A2()
+            );
+            this->battleRoles[hit].CancelHitNumber(this->battleServices);
+        }
+
         if ((battle.unk53BFBC == 1 && battle.hoverRegion != nullptr) ||
             (battle.unk53BFBC != 1 && !this->state.clickRegions.regions.empty()))
         {
@@ -6332,9 +6335,24 @@ void Game::BattleKeys()
 
         if (mouseLeft.press == 0)
         {
-            battle.unk53BFBC = 0;
-            battle.promptFrames = kConfirmIdle;
-            battle.unk53BFB8 = 1;
+            if (battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50)
+            {
+                if (battle.unk53BFBC == 0)
+                {
+                    battle.unk53BFB8 = 1;
+                    battle.promptFrames = kConfirmIdle;
+                }
+                else
+                {
+                    battle.unk53BFBC = 0;
+                }
+            }
+            else
+            {
+                battle.unk53BFB8 = 1;
+                battle.unk53BFBC = 0;
+            }
+
             battle.hoverScrollPart = 0;
         }
 
