@@ -41,11 +41,24 @@ namespace swd3e::smooth
 namespace
 {
 
-constexpr i32 kRoleHomeAction = 0x32;
+constexpr i32 kRoleHomeAction = 0x2F;     // swd3e (swd32: 0x32)
+constexpr u32 kStandsAside = 0x10000000;  // unk26B8: under StatusBit5 the unit stands aside and does not walk home
+constexpr int kFixedOriginX = 0xF0;       // HasFixedOrigin: the walk starts from here
+constexpr int kFixedOriginY = 0x12C;
+constexpr int kHomeSteps = 0x1C;  // ReturnHome: line steps per frame and frame followed up
+constexpr int kGhostHomeSteps = 0x18;
 constexpr i32 kHomePose = 0x28;
-constexpr i32 kHomePose1 = 0x30;  // an enemy with unk2A8C 1
-constexpr i32 kHomePose2 = 0x31;  // and with kSecondHomePose
-constexpr i32 kRoleWalkAction = 0x2A;
+constexpr i32 kHomePose1 = 0x30;           // an enemy with unk2A8C 1
+constexpr i32 kHomePose2 = 0x31;           // and with kSecondHomePose
+constexpr i32 kRoleWalkAction = 0x2E;      // swd3e (swd32: 0x2A)
+constexpr u32 kWalkBlocked = 0x80000000u;  // unk26B8: the unit does not walk (WalkToTarget, swd3e)
+constexpr u32 kVanishWalk = 0x2000000;     // unk26B8: the act shows at the target until it ends (swd3e)
+constexpr i32 kVanishAction = 0x39;
+constexpr u16 kVanishingAct = 1;  // a unit of act 1 sets kVanishWalk when it arrives
+constexpr int kWalkSteps = 0x18;  // WalkToTarget: line steps per frame walked
+constexpr int kGhostWalkSteps = 0x10;
+constexpr int kWalkShare = 16;   // with UnkFlag20 a sixteenth of the distance once the act follows up
+constexpr u16 kArrivedMark = 6;  // unk2EDC when the walk arrives
 
 constexpr int kNumberAbove = 0x1E;
 constexpr int kDigitWidth = 0x10;  // swd3e (swd32: 0xC)
@@ -217,7 +230,8 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
         return 1;
     }
 
-    if (unit.autoControl == 1 || unit.guestControl == 1)
+    if (unit.autoControl == 1 || unit.guestControl == 1 ||
+        (unit.StatusBit5() == 1 && (unit.unk26B8 & kStandsAside) != 0) || unit.MarkBit4() == 1)
     {
         return 1;
     }
@@ -225,19 +239,13 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
     unit.unk2AAC = 1;
     ActState& act = unit.attackAct;
     ActState& pose = unit.recoilAct;
-    act.hold = 0;
-
-    if (unit.held == 1)
-    {
-        act.hold = 1;
-    }
-
+    act.hold = unit.held == 1 ? 1 : 0;
     act.id = unit.actId;
     act.action = unit.kind != 0 ? kRoleHomeAction : kEnemyHomeAction;
 
     if (id != -1)
     {
-        act.id = id;
+        act.id = static_cast<u32>(id);
     }
 
     if (action != 0)
@@ -251,14 +259,6 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
     }
 
     unit.picture = services.archive.GetPicture(act.frame, act.picture);
-
-    // A missing picture is read through a null pointer in the original.
-    if (unit.picture == nullptr)
-    {
-        return 0;
-    }
-
-    services.painter.SetSource(unit.picture->data.data());
     pose.id = unit.actId;
     pose.action = kHomePose;
 
@@ -280,29 +280,110 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
         return 0;
     }
 
+    // A missing picture is read through a null pointer in the original.
+    if (unit.picture == nullptr)
+    {
+        return 0;
+    }
+
+    const Picture& picture = *unit.picture;
     services.audio.PlaySound(act.view, services.config.soundVolume);
     act.view = 0;
-    const BattleUnit::Stride stride = unit.HomeStride(services, target, act, pose, unit.throwSteps + 1);
-    unit.actOffsetX = stride.offsetX;
-    unit.frameFlags = stride.flags;
-    unit.homePoseX = stride.poseX;
+    unit.actOffsetX = static_cast<u16>(act.x);
+    unit.frameFlags = act.flags;
+    unit.actAnchorX = act.anchorX;
+    unit.homePoseX = pose.x;
+
+    if (unit.facing == 1 || unit.ghost == 1)
+    {
+        unit.frameFlags ^= Painter::Mirror;
+        unit.actOffsetX = static_cast<u16>(picture.width - static_cast<u16>(act.x));
+        unit.homePoseX = picture.width - pose.x;
+
+        if (act.anchorX != 0)
+        {
+            unit.actAnchorX = static_cast<u16>(picture.width - act.anchorX);
+        }
+    }
+
+    u16 targetX = 0;
+    u16 targetY = 0;
+    target.GetDrawPosition(targetX, targetY);
+
+    if (unit.HasFixedOrigin() == 1)
+    {
+        targetX = kFixedOriginX;
+        targetY = kFixedOriginY;
+    }
+
     LineWalker& line = unit.flight;
-    line = stride.line;
-    unit.throwSteps = stride.steps;
+    line = LineWalker{};
+    line.fromX = static_cast<i16>(unit.actAnchorX) + static_cast<i16>(targetX) - static_cast<i16>(unit.actOffsetX);
+    line.fromY = static_cast<i16>(targetY) + static_cast<i16>(act.anchorY) - act.y;
+    line.toX = unit.savedPlacement.x;
+    line.toY = unit.savedPlacement.y;
+
+    if (unit.ghost == 1)
+    {
+        line.toX = unit.placement.x;
+        line.toY = unit.placement.y;
+    }
+
+    if ((act.target & ActState::FollowsUp) != 0)
+    {
+        unit.stage |= BattleUnit::FollowingUp;
+    }
+
+    if ((unit.stage & BattleUnit::FollowingUp) != 0)
+    {
+        ++unit.throwSteps;
+    }
+
+    const int stepsPerFrame = unit.ghost == 1 ? kGhostHomeSteps : kHomeSteps;
+    int outcome = 0;
+
+    if (stepsPerFrame * unit.throwSteps > 0)
+    {
+        while (true)
+        {
+            LineStep(line);
+
+            if (line.fromX + line.x == line.toX)
+            {
+                outcome = -1;
+                break;
+            }
+
+            if (++outcome >= stepsPerFrame * unit.throwSteps)
+            {
+                break;
+            }
+        }
+    }
 
     services.audio.PlaySound(act.view, services.config.soundVolume);
     act.view = 0;
+
+    if (unit.ghost == 0)
+    {
+        unit.placement.x = static_cast<i16>(line.fromX + line.x);
+        unit.placement.y = static_cast<i16>(line.fromY + line.y);
+    }
+
     const bool invisible = (unit.status & BattleUnit::Invisible) != 0;
     view.picture = {act.frame, act.picture, true};
-    view.flags = invisible ? unit.frameFlags | Painter::SmearUnder : unit.frameFlags;
+    view.who = &unit;
 
-    if (stride.arrived)
+    if (outcome == -1)
     {
-        view.x = line.toX;
-        view.y = line.toY;
-        view.place = {view.x + static_cast<i16>(unit.actOffsetX), view.y + act.y};
-        view.who = &unit;
+        view.x = line.toX - static_cast<i16>(unit.actAnchorX);
+        view.y = line.toY - static_cast<i16>(act.anchorY);
+        view.place = {line.toX, line.toY};
+        view.flags = invisible ? unit.frameFlags | Painter::SmearUnder : unit.frameFlags;
+        unit.actAnchorX = 0;
         unit.throwSteps = 0;
+        unit.stage = 0;
+        unit.placement = unit.savedPlacement;
         line = LineWalker{};
         pose = ActState{};
         act = ActState{};
@@ -310,19 +391,10 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
         return 1;
     }
 
-    view.x = line.fromX + line.x;
-    view.y = line.fromY + line.y;
-    view.place = {view.x + static_cast<i16>(unit.actOffsetX), view.y + act.y};
-    view.who = &unit;
-
-    if (!invisible)
-    {
-        view.shadow = true;
-        view.shadowY = view.y + act.y;
-        view.shadowTint = unit.autoControl == 1 ? kInvisibleShadowTint : kShadowTint;
-        unit.shadowMode = (unit.frameFlags & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::Shadow;
-    }
-
+    const int pointX = line.fromX + line.x;
+    const int pointY = line.fromY + line.y;
+    view.x = pointX;
+    view.y = pointY;
     this->ChooseOverlay(
         services,
         act.rotation,
@@ -331,57 +403,81 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
         static_cast<i16>(act.offsetY),
         view
     );
+    view.x = pointX - static_cast<i16>(unit.actAnchorX);
+    view.y = pointY - static_cast<i16>(act.anchorY);
+    view.place = {pointX, pointY};
+
+    if (invisible)
+    {
+        view.flags = unit.frameFlags | Painter::SmearUnder;
+        return 0;
+    }
+
+    view.flags = unit.frameFlags;
+    view.shadow = true;
+    view.shadowY = pointY;
+    view.shadowTint = unit.autoControl == 1 ? kInvisibleShadowTint : kShadowTint;
+    unit.shadowMode = (unit.frameFlags & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::Shadow;
     return 0;
 }
 
-// What WalkToTarget decides of the frame: the acts stepped, the line walked, the sound, the arrival; false when it
-// draws nothing.
-bool UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, WalkView& view)
+// What WalkToTarget decides of the frame: the acts stepped, the line walked, the sound, the arrival; the view keeps
+// no picture when it draws nothing.
+int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, WalkView& view)
 {
     BattleUnit& unit = this->unit;
 
     if (unit.unk2AD8 == 1)
     {
-        return false;
+        return 0;
     }
 
-    if (unit.autoControl == 1 && (unit.command.flags & UnitCommand::FadesIn) != 0)
+    if (unit.MarkBit4() == 1 || (unit.autoControl == 1 && (unit.command.flags & UnitCommand::FadesIn) != 0))
     {
         unit.commandA = unit.commandB;
-        return false;
+        return 1;
     }
 
     if ((unit.status & BattleUnit::Invisible) != 0 && unit.FadeInvisible(services, 0) == 1)
     {
-        return false;
+        return 1;
+    }
+
+    if ((unit.unk26B8 & kWalkBlocked) != 0)
+    {
+        return 0;
     }
 
     unit.unk2AAC = 1;
     ActState& act = unit.attackAct;
     ActState& pose = unit.recoilAct;
+    const bool vanishing = (unit.unk26B8 & kVanishWalk) != 0;
     act.id = unit.actId;
-    act.action = unit.kind != 0 ? kRoleWalkAction : kEnemyHomeAction;
-    act.hold = 0;
+    act.action = vanishing ? kVanishAction : kRoleWalkAction;
 
-    if (unit.held == 1)
+    if (unit.kind == 0)
     {
-        act.hold = 1;
+        act.action = kEnemyHomeAction;
     }
+
+    act.hold = unit.held == 1 ? 1 : 0;
 
     if (services.acts.Run(act) == 0)
     {
-        return false;
+        return 0;
     }
 
     unit.picture = services.archive.GetPicture(act.frame, act.picture);
+    u16 targetX = 0;
+    u16 targetY = 0;
+    target.GetDrawPosition(targetX, targetY);
 
-    // A missing picture is read through a null pointer in the original.
-    if (unit.picture == nullptr)
+    if (unit.HasFixedOrigin() == 1)
     {
-        return false;
+        targetX = kFixedOriginX;
+        targetY = kFixedOriginY;
     }
 
-    services.painter.SetSource(unit.picture->data.data());
     pose.id = unit.actId;
     pose.action = kHomePose;
 
@@ -400,66 +496,171 @@ bool UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, 
 
     if (services.acts.Run(pose) == 0)
     {
-        return false;
+        return 0;
     }
 
-    const BattleUnit::Stride stride = unit.WalkStride(services, target, act, pose, unit.throwSteps + 1);
-    unit.actOffsetX = stride.offsetX;
-    unit.frameFlags = stride.flags;
-    unit.homePoseX = stride.poseX;
+    // A missing picture is read through a null pointer in the original.
+    if (unit.picture == nullptr)
+    {
+        return 0;
+    }
 
-    if (unit.kind == 1 && unit.unk2A8E != act.picture)
+    const Picture& picture = *unit.picture;
+    unit.actOffsetX = static_cast<u16>(act.x);
+    unit.frameFlags = act.flags;
+    unit.actAnchorX = act.anchorX;
+    unit.homePoseX = pose.x;
+
+    if (unit.facing == 1)
+    {
+        unit.frameFlags ^= Painter::Mirror;
+        unit.actOffsetX = static_cast<u16>(picture.width - static_cast<u16>(act.x));
+        unit.homePoseX = picture.width - pose.x;
+
+        if (act.anchorX != 0)
+        {
+            unit.actAnchorX = static_cast<u16>(picture.width - act.anchorX);
+        }
+    }
+
+    const auto toX = static_cast<i16>(targetX);
+    const auto toY = static_cast<i16>(targetY);
+    view.picture = {act.frame, act.picture, true};
+    view.who = &unit;
+
+    // swd3e: unk26B8 bit 25 shows the act at the target until it ends, then takes the command.
+    if (vanishing)
+    {
+        view.x = toX - static_cast<i16>(unit.actOffsetX);
+        view.y = toY - act.y;
+        view.place = {toX, toY};
+        view.flags = unit.frameFlags;
+
+        if (act.waiting != 1)
+        {
+            return 0;
+        }
+
+        unit.unk26B8 &= ~kVanishWalk;
+        unit.flight = LineWalker{};
+        pose = ActState{};
+        act = ActState{};
+        unit.commandA = unit.commandB;
+        return 1;
+    }
+
+    if (unit.unk2A8E != act.picture && unit.kind == 1)
     {
         unit.unk2A8E = act.picture;
     }
 
-    unit.throwSteps = stride.steps;
+    ++unit.throwSteps;
     LineWalker& line = unit.flight;
-    line = stride.line;
+    line = LineWalker{};
+    line.fromX = unit.savedPlacement.x;
+    line.fromY = unit.savedPlacement.y;
+
+    if (unit.ghost == 1)
+    {
+        line.fromX = unit.placement.x;
+        line.fromY = unit.placement.y;
+    }
+
+    line.toX = static_cast<i16>(unit.actAnchorX) - static_cast<i16>(unit.actOffsetX) + toX;
+    line.toY = toY + static_cast<i16>(act.anchorY) - act.y;
+    int stepsPerFrame = unit.ghost == 1 ? kGhostWalkSteps : kWalkSteps;
+
+    if ((unit.command.flags & UnitCommand::UnkFlag20) != 0)
+    {
+        stepsPerFrame = 0;
+
+        if ((act.target & ActState::FollowsUp) != 0)
+        {
+            stepsPerFrame = std::abs(line.toX - line.fromX) / kWalkShare;
+        }
+        else
+        {
+            --unit.throwSteps;
+        }
+    }
+
+    int outcome = 0;
+
+    if (stepsPerFrame * unit.throwSteps > 0)
+    {
+        while (true)
+        {
+            LineStep(line);
+
+            if (line.x + line.fromX == line.toX)
+            {
+                outcome = -1;
+                break;
+            }
+
+            if (++outcome >= stepsPerFrame * unit.throwSteps)
+            {
+                break;
+            }
+        }
+    }
 
     services.audio.PlaySound(act.view, services.config.soundVolume);
     act.view = 0;
-    const bool invisible = (unit.status & BattleUnit::Invisible) != 0;
-    view.picture = {act.frame, act.picture, true};
-    view.flags = unit.frameFlags;
 
-    if (stride.arrived)
+    if (unit.ghost == 0)
     {
-        view.x = invisible ? line.toX - static_cast<i16>(unit.actOffsetX) : line.toX;
-        view.y = line.toY;
-        view.place = {view.x + static_cast<i16>(unit.actOffsetX), view.y + act.y};
-        view.who = &unit;
+        unit.placement.x = static_cast<i16>(line.fromX + line.x);
+        unit.placement.y = static_cast<i16>(line.fromY + line.y);
+    }
 
-        if (invisible)
-        {
-            view.flags |= Painter::SmearUnder;
-        }
+    const bool invisible = (unit.status & BattleUnit::Invisible) != 0;
 
+    if (outcome == -1)
+    {
+        view.x = line.toX - static_cast<i16>(unit.actAnchorX);
+        view.y = line.toY - static_cast<i16>(act.anchorY);
+        view.place = {line.toX, line.toY};
+        view.flags = invisible ? unit.frameFlags | Painter::SmearUnder : unit.frameFlags;
+        unit.actAnchorX = 0;
         unit.throwSteps = 0;
         unit.unk2A8E = 0;
+        unit.unk2EDE = 0;
+        unit.unk2EDC = kArrivedMark;
         line = LineWalker{};
         pose = ActState{};
         act = ActState{};
-        unit.commandA = unit.commandB;
-        return true;
+
+        if (unit.actId == kVanishingAct)
+        {
+            unit.unk26B8 |= kVanishWalk;
+        }
+        else
+        {
+            unit.commandA = unit.commandB;
+        }
+
+        return 1;
     }
 
-    view.x = line.fromX + line.x;
-    view.y = line.fromY + line.y;
-    view.place = {view.x + static_cast<i16>(unit.actOffsetX), view.y + act.y};
-    view.who = &unit;
+    const int pointX = line.x + line.fromX;
+    const int pointY = line.fromY + line.y;
+    view.x = pointX - static_cast<i16>(unit.actAnchorX);
+    view.y = pointY - static_cast<i16>(act.anchorY);
+    view.place = {pointX, pointY};
 
     if (invisible)
     {
-        view.flags |= Painter::SmearUnder;
-        return true;
+        view.flags = unit.frameFlags | Painter::SmearUnder;
+        return 0;
     }
 
+    view.flags = unit.frameFlags;
     view.shadow = true;
-    view.shadowY = view.y + act.y;
+    view.shadowY = pointY;
     view.shadowTint = unit.autoControl == 1 ? kInvisibleShadowTint : kShadowTint;
     unit.shadowMode = (unit.frameFlags & (Painter::RleSource | Painter::Mirror | Painter::Flip)) | Painter::Shadow;
-    return true;
+    return 0;
 }
 
 // A walk as WalkAdvance or HomeAdvance decided it: the shadow under the picture, the picture, the overlay.
@@ -1862,22 +2063,23 @@ int UnitFrame::Home(BattleServices& services, const BattleUnit& target, i32 id, 
     return result;
 }
 
-void UnitFrame::Walk(BattleServices& services, const BattleUnit& target, Scene& scene)
+int UnitFrame::Walk(BattleServices& services, const BattleUnit& target, Scene& scene)
 {
     const Scene::Owner owner(scene, &this->unit);
     WalkView view;
+    const int result = this->WalkAdvance(services, target, view);
 
-    if (!this->WalkAdvance(services, target, view))
+    if (view.picture.shown)
     {
-        return;
+        scene.Add(
+            [view](BattleServices& drawing)
+            {
+                UnitFrame::DrawWalk(drawing, view);
+            }
+        );
     }
 
-    scene.Add(
-        [view](BattleServices& drawing)
-        {
-            UnitFrame::DrawWalk(drawing, view);
-        }
-    );
+    return result;
 }
 
 int UnitFrame::Numbers(BattleServices& services, Scene& scene)

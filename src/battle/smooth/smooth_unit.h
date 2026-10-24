@@ -110,7 +110,7 @@ public:
     explicit UnitFrame(BattleUnit& unit);
 
     // WalkToTarget: false when it draws nothing.
-    bool WalkAdvance(BattleServices& services, const BattleUnit& target, WalkView& view);
+    int WalkAdvance(BattleServices& services, const BattleUnit& target, WalkView& view);
     // ReturnHome: its result; the view keeps no picture when it draws nothing.
     int HomeAdvance(BattleServices& services, const BattleUnit& target, i32 id, i32 action, WalkView& view);
     static void DrawWalk(BattleServices& services, const WalkView& view);
@@ -167,7 +167,7 @@ public:
     int Queued(BattleServices& services, BattleUnit& target, i32 action, Scene& scene);
     int Home(BattleServices& services, const BattleUnit& target, i32 id, i32 action, Scene& scene);
     // WalkToTarget, DrawDamageNumbers and DrawGuardText into a scene.
-    void Walk(BattleServices& services, const BattleUnit& target, Scene& scene);
+    int Walk(BattleServices& services, const BattleUnit& target, Scene& scene);
     int Numbers(BattleServices& services, Scene& scene);
     void Guard(Scene& scene);
     // DrawAction: false when it draws nothing.

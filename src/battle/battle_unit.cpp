@@ -1342,14 +1342,6 @@ constexpr u8 kStrongPose = 1;
 // RunQueuedActions and TrailLastQueuedAction.
 constexpr i8 kQueuedTrailImages = 3;
 
-// ReturnHome.
-constexpr int kHomeSteps = 0x23;
-constexpr int kHomeShare = 12;  // 0x00482AC0: imul by 0x2AAAAAAB, sar 1
-
-// WalkToTarget.
-constexpr int kWalkSteps = 0x20;
-constexpr int kWalkShare = 16;
-
 // TickEffects, CanUseAccessory, the drain effects and CatchRoll.
 constexpr u16 kAccessory19 = 0x19;
 constexpr u32 kAccessory19Bit = 0x10;
@@ -3309,10 +3301,12 @@ void BattleUnit::DrawActionAt(BattleServices& services, i16 x, i16 y, ActState& 
 
 // swd3e.exe 0x00499760: one frame of the unit walking back from the target to its place (the attack act, or `id` /
 // `action` when given; the stand pose in the recoil act gives its x); 1 when there is no walk (a party role without
-// kWalksHome or UnkFlag8 / UnkFlag20, an enemy without UnkFlag10, a forced unit) or it arrived (the acts and the line
-// cleared, kWalksHome cleared). The walk takes 0x23 line steps a frame more each frame; with UnkFlag20 none until the
-// act follows up, then a twelfth of the distance a frame more. Drawn over its shadow (an invisible unit smears) with
-// the act's overlay. The rebuild's continuous motion splits it into HomeAdvance and the draw (DrawWalk).
+// kWalksHome or UnkFlag8 / UnkFlag20, an enemy without UnkFlag10, a forced unit, one standing aside under StatusBit5
+// or under MarkBit4) or it arrived (the unit back at its saved place, the acts and the line cleared, kWalksHome
+// cleared). Once the act follows up the walk takes 0x1C (a ghost 0x18) line steps a frame more each frame, from the
+// target (or the fixed origin) to the saved place (a ghost's own place), the unit's place following it (not a
+// ghost's). Drawn over its shadow (an invisible unit smears) with the act's overlay. The rebuild's continuous motion
+// splits it into HomeAdvance and the draw (DrawWalk).
 int BattleUnit::ReturnHome(BattleServices& services, const BattleUnit& target, i32 id, i32 action)
 {
     smooth::Scene scene;
@@ -4194,148 +4188,6 @@ void BattleUnit::DrawWobble(BattleServices& services, const Picture& picture, sm
     }
 }
 
-// The place of WalkToTarget (part of 0x00482310): the act's offset and the stand pose's mirrored by the facing, the
-// line from the unit's place to the target's, kWalkSteps line steps a frame more each frame (with UnkFlag20 none until
-// the act follows up, then a sixteenth of the distance a frame more), arrived once its x is reached.
-BattleUnit::Stride BattleUnit::WalkStride(
-    BattleServices& services,
-    const BattleUnit& target,
-    const ActState& act,
-    const ActState& pose,
-    i32 steps
-) const
-{
-    Stride stride;
-    stride.picture = services.archive.GetPicture(act.frame, act.picture);
-    stride.steps = steps;
-
-    if (stride.picture == nullptr)
-    {
-        return stride;
-    }
-
-    u16 targetX = 0;
-    u16 targetY = 0;
-    target.GetDrawPosition(targetX, targetY);
-    stride.offsetX = static_cast<u16>(act.x);
-    stride.flags = act.flags;
-    stride.poseX = pose.x;
-
-    if (this->facing == 1)
-    {
-        stride.flags ^= Painter::Mirror;
-        stride.offsetX = static_cast<u16>(stride.picture->width - static_cast<u16>(act.x));
-        stride.poseX = stride.picture->width - pose.x;
-    }
-
-    LineWalker& line = stride.line;
-    line.fromX = this->placement.x - static_cast<i16>(stride.offsetX);
-    line.fromY = this->placement.y - act.y;
-    line.toX = targetX - stride.poseX;
-    line.toY = targetY - act.y;
-    int perFrame = kWalkSteps;
-
-    if ((this->command.flags & UnitCommand::UnkFlag20) != 0)
-    {
-        perFrame = 0;
-
-        if ((act.target & ActState::FollowsUp) != 0)
-        {
-            perFrame = (line.toX >= line.fromX ? line.toX - line.fromX : line.fromX - line.toX) / kWalkShare;
-        }
-        else
-        {
-            --stride.steps;
-        }
-    }
-
-    for (int taken = 0; taken < perFrame * stride.steps; ++taken)
-    {
-        LineStep(line);
-
-        if (line.fromX + line.x == line.toX)
-        {
-            stride.arrived = true;
-            break;
-        }
-    }
-
-    stride.x = stride.arrived ? line.toX : line.fromX + line.x;
-    stride.y = stride.arrived ? line.toY : line.fromY + line.y;
-    return stride;
-}
-
-// The place of ReturnHome (part of 0x00482840): the stand pose's offset (the act's when mirrored) and the pose's, the
-// line from the target back to the unit's place, kHomeSteps line steps a frame more each frame (with UnkFlag20 none
-// until the act follows up, then a twelfth of the distance a frame more), arrived once its x is reached.
-BattleUnit::Stride BattleUnit::HomeStride(
-    BattleServices& services,
-    const BattleUnit& target,
-    const ActState& act,
-    const ActState& pose,
-    i32 steps
-) const
-{
-    Stride stride;
-    stride.picture = services.archive.GetPicture(act.frame, act.picture);
-    stride.steps = steps;
-
-    if (stride.picture == nullptr)
-    {
-        return stride;
-    }
-
-    stride.offsetX = static_cast<u16>(pose.x);
-    stride.flags = act.flags;
-    stride.poseX = pose.x;
-
-    if (this->facing == 1)
-    {
-        stride.flags ^= Painter::Mirror;
-        stride.offsetX = static_cast<u16>(stride.picture->width - static_cast<u16>(act.x));
-        stride.poseX = stride.picture->width - pose.x;
-    }
-
-    u16 targetX = 0;
-    u16 targetY = 0;
-    target.GetDrawPosition(targetX, targetY);
-    LineWalker& line = stride.line;
-    line.fromX = static_cast<i16>(targetX) - stride.poseX;
-    line.fromY = static_cast<i16>(targetY) - act.y;
-    line.toX = this->placement.x - static_cast<i16>(this->originX);
-    line.toY = this->placement.y - act.y;
-    int perFrame = kHomeSteps;
-
-    if ((this->command.flags & UnitCommand::UnkFlag20) != 0)
-    {
-        perFrame = 0;
-
-        if ((act.target & ActState::FollowsUp) != 0)
-        {
-            perFrame = (line.toX >= line.fromX ? line.toX - line.fromX : line.fromX - line.toX) / kHomeShare;
-        }
-        else
-        {
-            --stride.steps;
-        }
-    }
-
-    for (int taken = 0; taken < stride.steps * perFrame; ++taken)
-    {
-        LineStep(line);
-
-        if (line.fromX + line.x == line.toX)
-        {
-            stride.arrived = true;
-            break;
-        }
-    }
-
-    stride.x = stride.arrived ? line.toX : line.fromX + line.x;
-    stride.y = stride.arrived ? line.toY : line.fromY + line.y;
-    return stride;
-}
-
 // The place of a queued act (part of 0x0047FC40): its line less the act's offset (mirrored by the facing; a line end
 // at y 0 stays at 0); while it shakes its y comes from ShakeOffsets and the shake frames count down, then it flies
 // (one step more a frame, doubling while speeding) and arrives at the line's end. A shaking act keeps `taken`.
@@ -4429,17 +4281,20 @@ BattleUnit::Stride BattleUnit::FlightStride(
     return stride;
 }
 
-// swd3e.exe 0x00499060: one frame of the unit walking from its place to the target (the attack act's walk action, the
-// stand pose in the recoil act giving its x): kWalkSteps line steps a frame more each frame; with UnkFlag20 none
-// until the act follows up, then a sixteenth of the distance a frame more. A forced fading command (FadesIn) takes its
-// command B at once; an invisible unit first fades out. Drawn over its shadow (an invisible unit smears; at the end it
-// is drawn actOffsetX further left, as in the original). At the target the acts and the line are cleared and command A
-// becomes command B. The rebuild's continuous motion splits it into WalkAdvance and the draw (DrawWalk).
-void BattleUnit::WalkToTarget(BattleServices& services, const BattleUnit& target)
+// swd3e.exe 0x00499060: one frame of the unit walking from its saved place (a ghost: its place) to the target (or the
+// fixed origin), the attack act's walk action (0x39 under unk26B8 bit 25), the stand pose in the recoil act giving its
+// x: 0x18 (a ghost 0x10) line steps a frame more each frame; with UnkFlag20 none until the act follows up, then a
+// sixteenth of the distance a frame more; the unit's place follows the walk (not a ghost's). Under MarkBit4, or a
+// forced fading command (FadesIn), command B is taken at once (1); an invisible unit first fades out (1); unk26B8 bit
+// 31 stops it (0). At the target the acts and the line are cleared and command A becomes command B (1), a unit of act
+// 1 setting unk26B8 bit 25 instead, which then shows the act at the target until it ends. Drawn over its shadow (an
+// invisible unit smears). The rebuild's continuous motion splits it into WalkAdvance and the draw (DrawWalk).
+int BattleUnit::WalkToTarget(BattleServices& services, const BattleUnit& target)
 {
     smooth::Scene scene;
-    smooth::UnitFrame(*this).Walk(services, target, scene);
+    const int result = smooth::UnitFrame(*this).Walk(services, target, scene);
     scene.Show(services);
+    return result;
 }
 
 // swd3e.exe 0x0049A000: whether the accessory command of `kind` can be taken: not when it costs more stamina than the

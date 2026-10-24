@@ -640,7 +640,7 @@ public:
     int DefeatFlight(BattleServices& services, const Picture& picture);
     int DefeatBoss(BattleServices& services, const Picture& picture);
     void DrawWobble(BattleServices& services, const Picture& picture, smooth::Scene& scene);
-    void WalkToTarget(BattleServices& services, const BattleUnit& target);
+    int WalkToTarget(BattleServices& services, const BattleUnit& target);
     void TickEffects(BattleServices& services);
     int CanUseAccessory(u16 kind);
     void StartDrainEffect(BattleServices& services, int slot, BattleUnit& source);
@@ -758,20 +758,6 @@ private:
         const Picture* picture = nullptr;
     };
 
-    Stride WalkStride(
-        BattleServices& services,
-        const BattleUnit& target,
-        const ActState& act,
-        const ActState& pose,
-        i32 steps
-    ) const;
-    Stride HomeStride(
-        BattleServices& services,
-        const BattleUnit& target,
-        const ActState& act,
-        const ActState& pose,
-        i32 steps
-    ) const;
     Stride FlightStride(BattleServices& services, const QueuedAction& node, const ActState& act, int taken) const;
 
 public:
@@ -903,6 +889,7 @@ public:
     u16 flightDelay = 0;  // +0x2FBE (swd3e) the frames FlyAct waited before its steps grow
     i16 unk2EB4 = 0;      // +0x2EB4 (swd3e) a sum kept by Damage (0x00495330)
     u16 unk2EDE = 0;      // +0x2EDE (swd3e) cleared when a flight arrives (FlyAct, WalkToTarget)
+    u16 unk2EDC = 0;      // +0x2EDC (swd3e) set to 6 when a walk arrives (WalkToTarget), not read
     u8 evadeCounter = 0;  // +0x2FD4 (swd3e) the evasion rolls of an enemy of skill 4 or more since its last success
     u8 rippleFrames = 0;  // +0x2FDB (swd3e) the frames of the unit's ripple (StartRipple, DrawEffects ends it past 30)
     // swd3e: 1 once an enemy chose its objects or its skills (read by OutOfChoices with the counts left)
