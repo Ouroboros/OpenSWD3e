@@ -82,24 +82,24 @@ struct AfterimageTrail
 
     struct Image
     {
-        u32 mode = 0;     // swd32 +0x0 the draw mode
-        u16 picture = 0;  // swd32 +0x4 NoPicture: none
-        i16 level = 0;    // swd32 +0x6 the blend level, falling by fadeStep
-        i16 x = 0;        // swd32 +0x8
-        i16 y = 0;        // swd32 +0xA
+        u32 mode = 0;     // +0x0 the draw mode
+        u16 picture = 0;  // +0x4 NoPicture: none
+        i16 level = 0;    // +0x6 the blend level, falling by fadeStep
+        i16 x = 0;        // +0x8
+        i16 y = 0;        // +0xA
         i32 unk0C = 0;
     };
 
-    std::array<Image, Images> images = {};  // swd32 +0x0 the newest first
-    i32 tintRed = 0;                        // swd32 +0x80 the tint of the images under the translucent ones
+    std::array<Image, Images> images = {};  // +0x0 the newest first
+    i32 tintRed = 0;                        // +0x80 the tint of the images under the translucent ones
     i32 tintGreen = 0;
     i32 tintBlue = 0;
     i32 unk8C = 0;
-    u16 direction = 0;  // swd32 +0x90 0: the images trail to the right, Left, InPlace
-    u16 started = 0;    // swd32 +0x92
-    i8 count = 0;       // swd32 +0x94 the images drawn
-    i8 fadeStep = 0;    // swd32 +0x95
-    u8 delay = 0;       // swd32 +0x96 frames until the next image is pushed
+    u16 direction = 0;  // +0x90 0: the images trail to the right, Left, InPlace
+    u16 started = 0;    // +0x92
+    i8 count = 0;       // +0x94 the images drawn
+    i8 fadeStep = 0;    // +0x95
+    u8 delay = 0;       // +0x96 frames until the next image is pushed
 };
 
 // An act flying along a line, queued on a unit (0x1DC bytes; AddQueuedAction appends one, RunQueuedActions runs them).

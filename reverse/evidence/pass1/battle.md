@@ -514,3 +514,55 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 ## BattleRole::DirectAttack（第 1086 行）— exact
 
 - 0x004834A0（源码 RoleFrame::DirectAttackAdvance）：standAct id = actId、+0x2FEC = 1、动作 0x2A、hold 按 held；Run 失败返回 0；取图；frameFlags、actOffsetX、actAnchorX 及 facing 镜像同 AttackPose；影 y = 目标绘制 y − act.y（字）；影高 图高/3、斜切 图高>>2、色调 −6（autoControl 时 −1）；出音、声像 x（位置 x − actOffsetX）≥ 0x140 时 0x30 否则 −0x30；shadowMode = (frameFlags & 0x8000000F) | 0xC；view 清零；影画于 (x, 影 y − 影高 + act.y)，本体 (x, 位置 y − act.y)；target 有 1 或 8 时：清零、stage = 0x8000、目标 RaiseFlag26B8，伤害 = (i16)HitDamage，0x00575F34 = 伤害（≥ 0x270F 截之），0x005378F4 += 伤害，目标 SetDamageDigits、StepTargetCount(1)；stage ≠ 0x8000 返回 0；slotActs[0] id 0x1C9A、动作 0，AimAction(0, 0)，画图于 aim（无空判）；standAct 等待时 stage 清零、slotActs[0] 与 standAct 清零返回 1，否则返回 0。
+
+## BattleRole::DrainShare（第 1087 行）— exact
+
+- 0x00483830：equipmentFlags 无 0x10 返回 0；AccessoryProficiency(0x37)、StepAccessoryCounters(0x004D1F58, 0x37, 0xC)；熟练度 >>= 1（字）；量 = 量×熟练度/100 + 1（有符号），返回 1。
+
+## BattleRole::Pose36Frame（第 1088 行）— exact
+
+- 0x004838A0：roleRecord 生命 ≤ 上限/4（有符号）返回 1；standAct id = actId、动作 0x36（不设 hold）；Run 失败返回 0；取图（无空判）；overlayX（+0x2EC0）= +0x62、actAnchorX = anchorX、原点 x = act.x；facing 为 1 时 flags ^= 1、原点 x = 图宽 − act.x、anchorX 非 0 时 actAnchorX = 图宽 − anchorX；出音、声像 左端 ≥ 0x140 时 0x30 否则 −0x30、view 清零；影高 图高/3、色调 −6、斜切 图高>>2，shadowMode = (flags & 0x8000000F) | 0xC，影画于 (左端, 位置 y − 影高)、本体 (左端, 位置 y − act.y)；rotation（+0x4E）与 actionCode（+0x50）都非 0 时取图 (rotation, actionCode−1)（+0x2A4C，无空判）画于 (位置 x + overlayX − 原点 x, 位置 y − act.y + offsetY)、flags | 4，等待时四个字段清零；等待时清 standAct 返回 1，否则返回 0。
+
+## BattleRole::CastAt（第 1089 行）— exact
+
+- 0x00483B70（源码 RoleFrame::CastAtAdvance）：+0x2FEC = 1、standAct id = actId、动作 0x34（不设 hold）；Run 失败返回 0；取图；actAnchorX、flags、原点 x 与 facing 镜像同 Pose36Frame；影色调 −6（autoControl 时 −1）、出音、声像 x ≥ 0x140 时 0x30、shadowMode、view 清零、影与本体两次绘制；target 无 1／8 返回 0；法术 ≤ 0（有符号）返回 1；slotActs[0] id = 法术、动作 0，Run 失败返回 0；出音其 view 并清零；取其图（无空判）；actAnchorX = 其 anchorX、旗标、原点 x 按 facing 镜像；画于 目标绘制位置 − (原点 x, 其 y)（字，movsx）；其等待时清 slotActs[0] 与 standAct 返回 1，否则返回 0。
+- 修正：施法姿势动作原程序为 0x34（0x00483B9A），源码 kCastPose 原沿用正传的 0x2D，改为 0x34（只有 CastAt 使用）。结论改为 exact（修正后）。
+
+## BattleRole::MagicFrame（第 1090 行）— exact
+
+- 0x00483ED0（源码 RoleFrame::MagicFrameAdvance）：slotActs[8]（+0xBAC）动作 = magicAction（+0x2FB4）、+0x2FEC = 1、id = actId；Action；target 有 2：effectA 非 0 时 stage |= 0x4000、recoilAct id／动作 = effectA／effectQ，有 0x200 时 hold 1，清 2 与 effectA／Q；stage 有 0x4000 且 Recoil(anchorY) 为 1 时清该位、target 与 hold 清零、recoilAct 清零；target 有 8：有 0x400 时 0x00577334 = 1、StartFieldFade（六个 float + 帧数）并清 0x400，spellStage（0x00577378）无 0x8000 时置之；spellStage 有 1 时 stage 清零、slotActs[8] 清零返回 1，否则返回 0。
+
+## Game::DrainSpellFrame（第 1091 行）— exact
+
+- 0x004840A0（角色的成员函数，源码 Game::DrainSpellFrame(role, target)／DamageFrame::DrainSpellFrameAdvance）：slotActs[8] id = actId、动作 = magicAction、+0x2FEC = 1；Run 失败返回 0；取图（无空判）；actOffsetX、flags、actAnchorX 与 facing 镜像；影高 /3、斜切 >>2、色调 −6（autoControl −1）；出音、声像 x ≥ 0x140 时 0x30、view 清零；shadowMode；影画于 (x − 5, 位置 y − 影高)、本体 (x, 位置 y − act.y)；暗色 0x0057722C／2E／30 = act +0x68／+0x6A／+0x6C，DarkenByTint（0x004655A0，参数不读），三者任一非 0 时 0x00577290 = 1；target 无 1／8 返回 0；目标绘制位置（不用）；absorbFrames 加一；Fly(slotActs[0], 0, castAct, anchorX − actOffsetX + 位置 x, anchorY + 位置 y − act.y, 命令目标, unk28, 1) 不为 1 返回 0；目标 RaiseFlag26B8；伤害 = (i16)HitDamage，0x00575F34 截到 0x270F，0x005378F4 += 伤害，目标 SetDamageDigits、StepTargetCount(1)；0x00575F34 取负；角色 PushTarget(0x237D)、SetDamageDigits(该值)、PushTargetAlt(0)、StepTargetCount(1)、PushTarget(0x237F)、SetDamageDigits(0x005378F4)、PushTargetAlt(8)、StepTargetCount(1)；角色 Damage(0x00575F34, 0, (字)0x005378F4)；absorbFrames 清零，slotActs[0] 与 [8] 清零，返回 1。
+
+## BattleRole::BeamSpellFrame（第 1092 行）— exact
+
+- 0x004844B0（源码 RoleFrame::BeamSpellFrameAdvance）：+0x2FEC = 1、slotActs[8] id = actId、动作 = magicAction；Run 失败返回 0；取图；原点 x、flags、actAnchorX 与 facing 镜像；target 有 8 时 slotTint（+0x2E60）= −0x1F、stage |= 3、target 与 glowLevel 清零；stage 为 0：出音、声像、view 清零，影（/3、色调 −6、>>2）画于 (x − 5, 位置 y − 影高)、本体 (x, 位置 y − act.y)；stage 位 1：glowLevel（有符号）> −0x1E 时色调 = glowLevel、叠加画本体、glowLevel 减一，否则清位 1；位 2：slotActs[9] id 0x17FE、动作 0，Run 失败返回 0，取图，aimOffsetX（+0x2EC8）、aimAnchorX（+0x2EBE）、flags 取其值并按 facing 镜像，出音其 view、声像（按法术姿势的 x）、清 view；slotTint > 0 时 stage = 4、glowLevel 与 slotTint 清零，否则色调 = slotTint、叠加画于 (anchorX − aimAnchorX − 原点 x + 位置 x, 位置 y − 其 anchorY + 法术 anchorY − 法术 y)、slotTint 加一；stage 为 4：Fly(slotActs[0], 0, 0x17FE, 位置 x − 原点 x + anchorX, 位置 y + 法术 anchorY − 法术 y, −1, unk28, 0) 为 1 时目标 RaiseFlag26B8、伤害记账同 DirectAttack、stage = 0x4000、glowLevel = −0x1F；位 0x4000：slotActs[1] id 0x1F88、动作 0，DrawAimed 为 1 时 stage = 0x2000；位 0x2000：glowLevel > 0 时清零 glowLevel、stage 与 slotActs[8]、[9]、[0]、[1] 返回 1，否则色调 = glowLevel、以当前图与旗标叠加画于 (x, 位置 y − 法术 y)、glowLevel += 2；返回 0。
+
+## BattleRole::ChargeAttackFrame（第 1093 行）— exact
+
+- 0x00484B20（源码 RoleFrame::ChargeAttackFrameAdvance 与 ChargeOnTargetAdvance，后者在原程序内联）：+0x2F90 非 0 或 +0x3018 为 1 返回 0；+0x2FEC = 1；slotActs[8+槽] id = actId、动作 = magicAction，Action；target 有 8 且有 0x100：trails[0]（+0x1314）未开始时清零、started 1、八个图号 0xFFFF、tintBlue 0xC、fadeLevel 0；法术 hold 1；attackAct id = actId、动作 = magicAction + 0x28，图号 < 2 时反复 Run（失败返回 0）；滑行两笔（alpha 8，(actX − fadeLevel, actY)，frameFlags | 0x14 与 tintBlue 10 的 | 0x10）；fadeLevel ±10（facing 0 加）；attackAct hold 1；其 target 位 1 时目标 RaiseFlag26B8 并清零；fadeLevel % 150 ≠ 0 返回 0；否则 endDash（法术 target、glowLevel、+0x2B80 清零、+0x2FB8 = 0xFFFF、两 hold 清零）、charging（+0x3004）1。charging 为 1：attackAct 已等待则反向滑行、fadeLevel 回到 0 时 endDash 与 charging 清零；未等待则内联段：attackAct 同 id／动作 Run（失败返回 0）、取图、出音并清 view、shadowMode = flags、actOffsetX = x、记 anchorX，facing 镜像；冲刺点 = 目标绘制位置 − (actOffsetX, y)；trails[1] 未开始时同样初始化；direction 2、count 3、fadeStep 1，Trail；再取图画于冲刺点；其 target 有 8 时 stage |= 0x800、清 target 与 slotActs[1]；有 0x800 时 slotActs[1] id = castAct（effectA 非 0 取之）、动作 0，未等待时 Run（失败返回 0）、取图、shadowMode／aimOffsetX 与 facing 镜像、出音、声像 facing 1 时 0x30 否则 −0x30、清 view，再整体镜像一次（shadowMode ^= 1、aimOffsetX = 宽 − aimOffsetX、anchorX 非 0 时取 宽 − anchorX），两边 anchor 都有值时画于 (冲刺 x − 后续 anchorX + 冲刺 anchorX, 冲刺 anchorY − 后续 anchorY + 冲刺 y)，否则 (0, 0)，其 target 位 1 时 slotTint 清零、清 target、Strike(0)。之后：法术 target 有 8 时 stage |= 0x8000 并清零；有 1 时 Strike(0)、清零、stage |= 0x8000、slotTint 与 0x005373B4 清零、清 slotActs[0]；stage 无 0x8000 返回 0；slotActs[0] 动作 0、id = castAct，AimAction(法术 anchorX, anchorY)，其 target 位 1 时 slotTint 清零、清 target、Strike(0)；其等待时清两 effectA，法术未等待或仍 charging 返回 0，否则清法术、attackAct、recoilAct、slotActs[0]、[1]、全部 trails（0x4C0 字节）、targets −1、slotTint、+0x2FF0、stage、+0x2BDE 清零、0x00578470 加一、0x00578474 清零、charging 清零，返回 1；未等待且 stage 无 0x4000 时以 shadowPicture 调色板画图于 aim；返回 0。AfterimageTrail 注释的正传偏移改为外传偏移（同值）。
+
+## Game::MagicAttackFrame、RollChance（第 1094–1095 行）— exact
+
+- 0x004854B0（角色成员函数，源码 Game::MagicAttackFrame／DamageFrame::MagicAttackFrameAdvance）：+0x2F90 非 0 或 +0x3018 为 1 返回 0；+0x2FEC = 1；slotActs[8] hold 按 target 0x200；id、动作，Action；target 2：回弹（effectA 非 0 时 stage |= 0x4000 与 recoilAct），0x200 时 hold 1，清 2 与 effectA／Q；stage 0x4000 且 Recoil(anchorY) 为 1 时 target、hold 清零、清位；0x8000 地震；4：清 target、stage |= 0x8000、目标 RaiseFlag26B8；8：0x400 时淡入场（StartFieldFade）并清之，清 8、stage |= 0x8000、slotTint 清零、target 清零、清 slotActs[0]；1：stage |= 0x8000、slotTint 清零、target 清零、Strike(0)、清 slotActs[0]；暗色三字与 0x00577290；stage 无 0x8000 返回 0；slotActs[0] 动作 0、id = castAct（effectA 非 0 时 id／动作 = effectA／Q）；id 为 0 时置等待；命令位 1 时 Fly(…, anchorX − actOffsetX + 位置 x, 位置 y + standAct.anchorY − standAct.y, 命令目标, unk28, 0)，非 1 返回 0，否则 target |= 1、standAct 与后续等待、slotTint 清零；否则 AimAction(法术 anchorX, anchorY)；后续 target：0x8000 地震、4 目标 RaiseFlag26B8 并清零、1 时 slotTint 与 0x005373B4 清零、清零、Strike(0)；后续未等待：stage 无 0x4000 时以 shadowPicture 调色板画于 aim，返回 0；已等待：stage 有 0x4000 返回 0；清两 effectA；id 非 0 且非命令位 1：slotTint > −0x20 时三色调 = slotTint、以本图调色板画于 aim、slotTint −= 8（held 时加回）返回 0，否则 slotTint 清零；法术未等待、ImageList 非空或 slotTint 非 0 返回 0；否则清法术、attackAct、recoilAct、后续、全部 trails、targets −1、slotTint、+0x2FF0、stage、+0x2BDE、0x00578474，0x00578470 加一，返回 1。
+- 0x00485AD0 RollChance：r = Random(100)；返回 (u16)(百分比×70/100 + 10) ≥ (u16)r。
+
+## BattleRole::SwarmSpellFrame（第 1096 行）— exact
+
+- 0x00485B10（源码 RoleFrame::SwarmSpellFrameAdvance）：slotActs[8] 动作、+0x2FEC、id，Action；回弹与 Recoil 处理同 MagicFrame（Recoil 成功时 target、hold 清零、清位）；target 有 1 或 8：stage |= 0x8000、target 清零、取目标绘制位置（命令 actionFlags 位 2 时取 (0,0)）、ClearMoveAxes，unk2F0C（+0x349C）= unk2F24（+0x34B4），unk2F24 加一；stage 无 0x8000 返回 0；glowLevel 加一，(i16)glowLevel % 3 == 1 且队列数（+0x2F9C，无符号）< 8 时重新取目标位置，AddQueuedAction(castAct, unk2F0C, 位置 x + 0x004BF9B0[队列数 & 7], 位置 y + 0x004BF9C0[…], 目标 x, 目标 y − 0x28, 1, 0x34, 0, 0)、TrailLastQueuedAction(0, 0, 0xC)、出音 0x3E；Queued(unk2F0C) 不为 1 返回 0；stage 清零，法术未等待返回 0，否则 glowLevel、unk2F0C、unk2F24 清零，清 slotActs[0] 与 [8]，返回 1。两张偏移表与 exe 字节一致。
+
+## BattleRole::LeapSpellFrame（第 1097 行）— exact
+
+- 0x00485DD0（源码 RoleFrame::LeapSpellFrameAdvance）：slotActs[8] id、+0x2FEC、动作；stage 0 时 Action；stage 1 时动作加一，目标绘制位置（字读取）DrawActionAt；stage 2 时命令旗标 |= 8、动作 += 2，Home(id, 动作) 为 1 时 stage 3；法术等待时清零、stage 加一；target 有 8 时 spellStage 补 0x8000、target 清零；spellStage 有 1 且 stage ≥ 3（有符号）时 stage 清零、清法术，返回 1，否则返回 0。
+
+## BattleRole::Strike、CancelCommand、Release（第 1098–1100 行）— exact
+
+- 0x00485F30 Strike：slotTint 与 0x005373B4 清零；非鬼时 0x005373B4 = StepCounterProgress(0x004C6348, weaponId, weapon counterMax（+0x100）, weapon +0x42（+0xFE）)；status 0x80 时闪避值 8；evadable 为 1、evadeRolled（+0x305C）为 0 且目标 RollEvade(闪避值) 非 0 时 evadeRolled 1 返回；0x00575F34 清零后 = (i16)HitDamage，非 0 时加 (i16)0x005373B4，≥ 0x270F 截之；0x005378F4 += 伤害；伤害 ≠ −1 时目标 SetDamageDigits、StepTargetCount(1)；目标 RaiseFlag26B8；evadeRolled 1。
+- 0x00486030 CancelCommand：commandFlags 清零、命令（0x2C）清零、skillName 前 16 字节、unk2F10、staminaCost、magicAction、unk2F16、unk2F18、三项回复、unk29A4、usedItem 清零；selectedItem 非空时光标节点 workCount（无符号）> 0 减一，selectedItem 清空。光标在表头时把表头当节点（deviations 该行改引汇编地址）。
+- 0x004860D0 Release：+0x3118（unk2B24 的描述指针）非空时释放并清零；+0x00（battleRecord）非空时释放并清零。
+
+## BattleRole::BoomerangFrame（第 1101 行）— exact
+
+- 0x00486110（源码 RoleFrame::BoomerangFrameAdvance）：standAct 动作 0x2A 的姿势绘制同 DirectAttack（不设 hold）；target 无 1／8 返回 0；slotActs[0] 动作 0、id = 参数；目标绘制位置；stage 0：+0x349C 为 0 时 AddQueuedAction(id, 0, 位置, 目标, 0x1C, 0, −1, 4)、TrailLastQueuedAction(0,0,0xC)、+0x349C = 1；Queued(0) 为 1 时 +0x349C 清零、stage 1、目标 RaiseFlag26B8；stage 1：同样以 (目标→位置, 0x20, 7, −1, 4) 排队，Queued 为 1 时清 +0x349C、stage 2、出音 0x114；stage 2 时清零 stage、slotActs[0] 与 standAct，返回 1，否则返回 0。
