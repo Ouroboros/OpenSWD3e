@@ -18,8 +18,6 @@ namespace
 constexpr std::size_t kBattleNameBytes = 10;    // the bytes of a RoleName a battle name is gathered from
 constexpr std::size_t kCommandClearBytes = 8;   // the original clears commandEnabled as two dwords (not the ninth)
 constexpr std::size_t kClearedStolenLists = 8;  // 0x200 bytes: the stolen items of the first eight enemies
-// swd3e.exe 0x004BF17C: the battle act of each party role, dwords read as words.
-constexpr std::array<u16, Party::Roles> kRoleActs = {1, 2, 3, 4};
 constexpr i16 kPanelMirror = 0x270;
 constexpr int kMediumAdvance = 0x10;
 constexpr int kLightRed = 0x1F;  // the light and dark colours of the battle panels
@@ -339,7 +337,7 @@ void Game::StartBattle(u16 number)
     for (u32 role = 0; role < battle.roleCount; ++role)
     {
         UnitPlacement& place = battle.rolePlaces[role];
-        place.actId = kRoleActs[static_cast<std::size_t>(battle.partyRoles[role])];
+        place.actId = BattleState::RoleActs[static_cast<std::size_t>(battle.partyRoles[role])];
         place.kind = BattleUnit::PartyRole;
     }
 

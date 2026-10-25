@@ -26,7 +26,6 @@ namespace
 
 // swd3e: the panels by place (the three roles of the party; the last two share theirs).
 constexpr std::array<int, Party::Roles> kGaugeX = {0x14C, 0xAC, 0x1EC, 0x1EC};     // 0x004BF12C
-constexpr std::array<int, Party::Roles> kNameX = {0x13C, 0x9C, 0x1DC, 0x1DC};      // 0x004BF14C
 constexpr std::array<int, Party::Roles> kHighlightX = {0xEF, 0x4F, 0x18F, 0x18F};  // 0x004BF15C
 constexpr double kBarPixels = 48.0;  // 0x004AADE0 (a float): the pixels of a full panel gauge
 constexpr int kHighlightLeft = 4;
@@ -466,7 +465,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
 
         const int gaugeX = kGaugeX[slot];
         const int portraitX = BattleState::PortraitX[slot];
-        const int nameX = kNameX[slot];
+        const int nameX = BattleState::NameX[slot];
         const bool current = battle.currentUnit - BattleState::FirstRoleUnit == index;
 
         if (current && battle.panelGrown[slot] == 1)

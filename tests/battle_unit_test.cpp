@@ -1167,6 +1167,33 @@ TEST_CASE("battle state: the panel units and places match swd3e.exe")
     CHECK(swd3etest::SameTable(exe, kPanelUnitsAt, swd3e::BattleState::PanelUnits));
     CHECK(swd3etest::SameTable(exe, kPanelRoleAt, std::array<swd3e::u16, 1>{state.anyStateRole}));
     CHECK(swd3etest::SameTable(exe, kPortraitXAt, swd3e::BattleState::PortraitX));
+
+    // NameX follows PortraitX; partyRoles and RoleActs (dwords) follow kHighlightX.
+    constexpr swd3e::u32 kNameXAt = 0x004BF14C;
+    constexpr swd3e::u32 kPartyRolesAt = 0x004BF16C;
+    constexpr swd3e::u32 kRoleActsAt = 0x004BF17C;
+    CHECK(swd3etest::SameTable(exe, kNameXAt, swd3e::BattleState::NameX));
+    CHECK(swd3etest::SameTable(exe, kPartyRolesAt, state.partyRoles));
+    std::array<swd3e::i32, swd3e::BattleState::RoleActs.size()> roleActs = {};
+    std::copy(swd3e::BattleState::RoleActs.begin(), swd3e::BattleState::RoleActs.end(), roleActs.begin());
+    CHECK(swd3etest::SameTable(exe, kRoleActsAt, roleActs));
+}
+
+TEST_CASE("battle state: the roles after the party read on past partyRoles and PortraitX")
+{
+    constexpr swd3e::u32 kGhostSlot = 4;
+    constexpr swd3e::u32 kFrameSlot = 8;
+    constexpr swd3e::u32 kPastSlot = 9;
+    constexpr swd3e::i32 kFrameMilliseconds = 0x23;
+    swd3e::BattleState state;
+    state.frameMilliseconds = kFrameMilliseconds;
+    CHECK(state.PartyRoleRead(0) == state.partyRoles[0]);
+    CHECK(state.PartyRoleRead(kGhostSlot) == swd3e::BattleState::RoleActs[0]);
+    CHECK(state.PartyRoleRead(kFrameSlot) == kFrameMilliseconds);
+    CHECK(!state.PartyRoleRead(kPastSlot).has_value());
+    CHECK(swd3e::BattleState::PortraitXRead(1) == swd3e::BattleState::PortraitX[1]);
+    CHECK(swd3e::BattleState::PortraitXRead(swd3e::BattleState::RoleActs.back()) == swd3e::BattleState::NameX[0]);
+    CHECK(!swd3e::BattleState::PortraitXRead(kFrameMilliseconds).has_value());
 }
 
 TEST_CASE("battle state: the names of the menu commands match swd3e.exe")

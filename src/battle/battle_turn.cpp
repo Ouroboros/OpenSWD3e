@@ -3956,9 +3956,12 @@ int Game::MouseHover()
 
         for (u32 index = 0; index < battle.roleCount; ++index)
         {
-            const int left = BattleState::PortraitX[static_cast<std::size_t>(battle.partyRoles[index])];
+            // The roles after the party read on past partyRoles and PortraitX (the ghost takes the panel of party
+            // role 1, at 0x5D), as the original does.
+            const std::optional<i32> role = battle.PartyRoleRead(index);
+            const std::optional<int> left = role ? BattleState::PortraitXRead(*role) : std::nullopt;
 
-            if (inside(x, left - kPanelLeftMargin, left + kPanelWidth))
+            if (left && inside(x, *left - kPanelLeftMargin, *left + kPanelWidth))
             {
                 battle.anyStateRole = static_cast<u16>(index + BattleState::FirstRoleUnit);
                 found = true;
@@ -6634,7 +6637,8 @@ void Game::BattleKeys()
         {
             ++this->talk.choice;
 
-            if (this->talk.choice > regions.Count() - 1)
+            // An unsigned compare (0x0046BEEC).
+            if (static_cast<u32>(this->talk.choice) > static_cast<u32>(regions.Count() - 1))
             {
                 this->talk.choice = 0;
             }

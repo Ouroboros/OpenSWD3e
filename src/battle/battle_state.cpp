@@ -520,4 +520,54 @@ u16 BattleState::MenuKind(int command) const
     const auto listed = static_cast<std::size_t>(command - kFirstListedCommand);
     return command >= kFirstListedCommand && listed < this->commandKinds.size() ? this->commandKinds[listed] : u16{0};
 }
+
+// The dword at 0x004BF16C + 4 * slot as the original reads it by battle role: partyRoles, then RoleActs (0x004BF17C)
+// for the roles after the party (the ghost and the escorts) and frameMilliseconds (0x004BF18C). None past it (the
+// QuakeSteps bytes and on; deviations.md).
+std::optional<i32> BattleState::PartyRoleRead(u32 slot) const
+{
+    const std::size_t roles = this->partyRoles.size();
+
+    if (slot < roles)
+    {
+        return this->partyRoles[slot];
+    }
+
+    if (slot < roles + BattleState::RoleActs.size())
+    {
+        return BattleState::RoleActs[slot - roles];
+    }
+
+    if (slot == roles + BattleState::RoleActs.size())
+    {
+        return this->frameMilliseconds;
+    }
+
+    return std::nullopt;
+}
+
+// PortraitX read at 0x004BF13C + 4 * place as the original does: NameX (0x004BF14C) follows it. None for other
+// places (deviations.md).
+std::optional<int> BattleState::PortraitXRead(i32 place)
+{
+    if (place < 0)
+    {
+        return std::nullopt;
+    }
+
+    const auto at = static_cast<std::size_t>(place);
+
+    if (at < BattleState::PortraitX.size())
+    {
+        return BattleState::PortraitX[at];
+    }
+
+    if (at < BattleState::PortraitX.size() + BattleState::NameX.size())
+    {
+        return BattleState::NameX[at - BattleState::PortraitX.size()];
+    }
+
+    return std::nullopt;
+}
+
 }  // namespace swd3e

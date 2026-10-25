@@ -2,6 +2,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -106,6 +107,9 @@ public:
     static constexpr std::array<i32, 5> InitialRoleCycle = {11, 2, 1, 0, 3};          // 0x004BF578 (exe)
     static constexpr std::array<i32, 4> PanelUnits = {10, 9, 8, 11};             // 0x004BF56C the role units by panel
     static constexpr std::array<int, 4> PortraitX = {0xFD, 0x5D, 0x19D, 0x19D};  // 0x004BF13C by place (swd3e)
+    static constexpr std::array<int, 4> NameX = {0x13C, 0x9C, 0x1DC, 0x1DC};     // 0x004BF14C by place, after PortraitX
+    // 0x004BF17C: the battle act of each party role (dwords read as words), after partyRoles
+    static constexpr std::array<u16, 4> RoleActs = {1, 2, 3, 4};
     // 0x004BF0C4: the five commands of the menu (pointers in the original, kinds 0x2A..0x2E of the accessory names)
     static constexpr std::array<std::u8string_view, 5> FixedCommandNames =
         {u8"攻擊", u8"奇術", u8"物品", u8"絕技", u8"防禦"};
@@ -188,6 +192,8 @@ public:
     void TakeSlotRecordAt(std::size_t at, BattleSlotRecord& taken);
     void ClearActing();
     u16 MenuKind(int command) const;
+    std::optional<i32> PartyRoleRead(u32 slot) const;
+    static std::optional<int> PortraitXRead(i32 place);
 
     i32 listBCount = 0;         // 0x0050BF18 the rows of the list shown from listB, at most 13
     ItemNode* listB = nullptr;  // 0x0050C034 the first item shown (itemsHead itself until the list is made)
@@ -246,7 +252,7 @@ public:
     u32 roleCount = 0;                                        // 0x00576FA4 the party and the guests in battle
     u32 animationCount = 0;                                   // 0x005770B8 the formation's animationCount
     u16 scene = 0;                                            // 0x005771F8 1..4 at random
-    std::array<i32, Party::Roles> partyRoles = {0, 1, 2, 3};  // swd32 0x004A75C8 the party role of each battle role
+    std::array<i32, Party::Roles> partyRoles = {0, 1, 2, 3};  // 0x004BF16C the party role of each battle role
     // 0x0050ECB4 (swd3e) the names the battle shows for the party roles: the nonzero bytes of the first ten of each
     // RoleName (the surname and given name), set by StartBattle
     std::array<std::array<char, sizeof(RoleName)>, Party::Roles> roleNames = {};
