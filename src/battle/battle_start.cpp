@@ -277,7 +277,7 @@ void Game::StartBattle(u16 number)
         }
     }
 
-    battle.timingWindow = BattleState::DefaultTimingWindow;
+    battle.levelCap = BattleState::DefaultLevelCap;
     this->mediumFont.SetAdvance(kMediumAdvance);
     battle.lightColor = static_cast<u16>(this->painter.MakeColor(kLightRed, kLightGreen, kLightBlue));
     battle.darkColor = static_cast<u16>(this->painter.MakeColor(kDarkRed, kDarkGreen, kDarkBlue));

@@ -438,9 +438,9 @@ void Game::EndBattle()
     battle.unk520FC4 = 0;
     battle.unk53BD9C = 0;
     battle.hoverScrollPart = 0;
-    battle.unk53BF12 = 0;
-    battle.unk53BF14 = 0;
-    battle.unk53BF16 = 0;
+    battle.battleGold = 0;
+    battle.battleExperience = 0;
+    battle.battleProficiency = 0;
     battle.unk53BF1C = 0;
     battle.unk53BDAC = 0;
     battle.pendingActionRow = 0;

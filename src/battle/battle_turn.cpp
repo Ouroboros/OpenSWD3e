@@ -24,7 +24,7 @@ constexpr i32 kBattleLost = 0x67;
 constexpr i32 kTurnsRunning = 1;           // BattleState::result while no side has lost
 constexpr u32 kGhostRescueAct = 0x17B7;    // ApplyHits: the act of the ghost healing its master (swd3e)
 constexpr int kGhostRescuePercent = 0x50;  // of the master's hit points
-constexpr u16 kBossReward = 0x14;          // unk53BF16 gained by an enemy of ObjectData::UnkKind20
+constexpr u16 kBossReward = 0x14;          // battleProficiency gained by an enemy of ObjectData::UnkKind20
 constexpr u16 kEnemyReward = 3;
 constexpr i16 kDefeatCount = 1;         // the bestiary count of a defeated enemy
 constexpr u16 kItemsBackSound = 0x117;  // RemoveDefeated (swd3e): the stolen items back
@@ -518,13 +518,13 @@ void Game::RetargetRoles(int role, int enemy)
 }
 
 // swd3e.exe 0x00464ED0: one frame of the defeat of unit `index` (a role when `role` is 1, else an enemy); 1 once it is
-// over. An enemy (none counted once the battle is won) adds its rewards (unk53BF14, unk53BF12 unless unk5772F8,
-// unk53BF16), halved past the battle talk's repeat limit; one that ran away gives none and no bestiary count; its
-// stolen items come back (unless absorbSucceeded) with their notice. All down wins the battle, a last one standing is
-// enraged, and a lone standing first enemy of a unk53BF28 battle ends the others. A role counts as defeated (an escort
-// clears its place and returned object: once all are down their places go and the units are measured again), drops
-// 蓄勁, its command, slot record, order and its panel; a role with a special act left is not counted. Battle role 0
-// with the ghost takes the ghost out; with no role left standing the battle is lost, else the enemies are enraged.
+// over. An enemy (none counted once the battle is won) adds its rewards (battleExperience, battleGold unless unk5772F8,
+// battleProficiency), halved past the battle talk's repeat limit; one that ran away gives none and no bestiary count;
+// its stolen items come back (unless absorbSucceeded) with their notice. All down wins the battle, a last one standing
+// is enraged, and a lone standing first enemy of a unk53BF28 battle ends the others. A role counts as defeated (an
+// escort clears its place and returned object: once all are down their places go and the units are measured again),
+// drops 蓄勁, its command, slot record, order and its panel; a role with a special act left is not counted. Battle role
+// 0 with the ghost takes the ghost out; with no role left standing the battle is lost, else the enemies are enraged.
 int Game::RemoveDefeated(int index, int role)
 {
     BattleState& battle = this->battleState;
@@ -614,14 +614,14 @@ int Game::RemoveDefeated(int index, int role)
             second = static_cast<u16>(second >> 1);
         }
 
-        battle.unk53BF14 = static_cast<u16>(battle.unk53BF14 + first);
+        battle.battleExperience = static_cast<u16>(battle.battleExperience + first);
 
         if (battle.unk5772F8 == 0)
         {
-            battle.unk53BF12 = static_cast<u16>(battle.unk53BF12 + second);
+            battle.battleGold = static_cast<u16>(battle.battleGold + second);
         }
 
-        battle.unk53BF16 = static_cast<u16>(battle.unk53BF16 + third);
+        battle.battleProficiency = static_cast<u16>(battle.battleProficiency + third);
         this->CureHeldBy(index);
         battle.enemyHits[static_cast<std::size_t>(index)] = 0;
         battle.RemoveSlotRecord(index);
@@ -2724,14 +2724,15 @@ void Game::DrawTitledItemList(int x, int y, int cursor, int top, int category, s
     scene.Show(this->battleServices);
 }
 
-// swd3e.exe 0x00476200: the 戰鬥勝利 panel. The first time (the gold not yet given, bit 15 of unk53BF12): the meter is
+// swd3e.exe 0x00476200: the 戰鬥勝利 panel. The first time (the gold not yet given, bit 15 of battleGold): the meter is
 // reset, the music and the sounds stop, kVictorySound plays; unless unk5772F8 each enemy's drop is added to the
 // inventory as pending and to the loot list (a new object at the end, at most LootSlots of them); the roulette's
 // experienceBonus raises the experience and moneyTimes multiplies the gold; each party role (not auto, guest, ghost or
-// defeated) below the level cap (timingWindow) and not turned to stone gains unk53BF14 experience, and unless
-// unk5772F8 every worn accessory unk53BF16 proficiency (accessoryGained when one counts) and, with a next special, its
-// battle count 1 (2 against three enemies or more); its main act restarts and its effects end; then the gold is given
-// and the bonuses cleared. Once the panel has grown, the experience, the gold and the proficiency are shown.
+// defeated) below the level cap (levelCap) and not turned to stone gains battleExperience experience, and unless
+// unk5772F8 every worn accessory battleProficiency proficiency (accessoryGained when one counts) and, with a next
+// special, its battle count 1 (2 against three enemies or more); its main act restarts and its effects end; then the
+// gold is given and the bonuses cleared. Once the panel has grown, the experience, the gold and the proficiency are
+// shown.
 void Game::DrawVictoryPanel()
 {
     smooth::Scene scene;
@@ -2771,7 +2772,7 @@ void Game::CheckLevelUps()
         const int next = record.level + 1;
         u32 needed = 0;
 
-        if (record.level >= battle.timingWindow ||
+        if (record.level >= battle.levelCap ||
             (this->database.LoadLevelEntry(role + 1, next, needed), record.totalExperience < static_cast<i32>(needed)))
         {
             battle.levelUpRole = kNoLevelUp;
@@ -2836,7 +2837,7 @@ void Game::RaiseLevel(u16 role, u16 level)
     RoleRecord& record = this->party.roles[role];
     i32 learned = 0;
 
-    for (u32 at = record.level; at < level && at < battle.timingWindow; ++at)
+    for (u32 at = record.level; at < level && at < battle.levelCap; ++at)
     {
         RoleRecord before;
         RoleRecord after;

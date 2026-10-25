@@ -93,7 +93,7 @@ public:
     static constexpr int Guests = 8;
     static constexpr std::size_t LootSlots = 10;  // as BattleMessages::LootSlots
     static constexpr std::size_t TextBytes = 64;
-    static constexpr u16 DefaultTimingWindow = 0x3C;
+    static constexpr u16 DefaultLevelCap = 0x3C;
     static constexpr int FieldHeight = 0x180;  // the rows of the battle field above the panels
     static constexpr int BandRow = 0xC0;       // the grey band opens from this row
     static constexpr u16 BandFull = 0xC0;
@@ -287,15 +287,15 @@ public:
     u16 unk5770D4 = 0;
     i16 ghostSlot = 0;     // 0x005770D6 (swd3e) the role slot of the talisman ghost (StartBattle sets it to roleCount)
     i32 ghostRescued = 0;  // 0x00577358 (swd3e) 1 once the ghost healed its master this turn (ApplyHits; 0x0045FA80)
-    i32 musicBeforeBattle = 0;               // 0x005770C8 the music queue's mode when the battle started (StartBattle)
-    u8 defeatedRoles = 0;                    // 0x005771E7 the party roles entering defeated
-    i32 result = 0;                          // 0x00576FAC 0x67: the battle is lost before it starts
-    i32 mirrored = 0;                        // 0x00577304 the sides are swapped
-    u16 timingWindow = DefaultTimingWindow;  // swd32 0x004A762A
-    u16 lightColor = 0;                      // swd32 0x004FF104
-    u16 darkColor = 0;                       // swd32 0x005240BC
-    i32 pointerX = 0;                        // 0x00513428
-    i32 pointerY = 0;                        // 0x0051342C
+    i32 musicBeforeBattle = 0;       // 0x005770C8 the music queue's mode when the battle started (StartBattle)
+    u8 defeatedRoles = 0;            // 0x005771E7 the party roles entering defeated
+    i32 result = 0;                  // 0x00576FAC 0x67: the battle is lost before it starts
+    i32 mirrored = 0;                // 0x00577304 the sides are swapped
+    u16 levelCap = DefaultLevelCap;  // 0x004BF1CE the level the party roles gain experience below (StartBattle sets it)
+    u16 lightColor = 0;              // swd32 0x004FF104
+    u16 darkColor = 0;               // swd32 0x005240BC
+    i32 pointerX = 0;                // 0x00513428
+    i32 pointerY = 0;                // 0x0051342C
     std::array<UnitPlacement, Enemies> enemyPlaces;      // swd32 0x005213A0
     std::array<UnitPlacement, RoleUnits> rolePlaces;     // 0x00576088
     std::array<i32, 2 * Party::Roles> panelPlaces = {};  // 0x0050F3B8 the x and y of the four role panels
@@ -474,9 +474,9 @@ public:
     i32 aimTarget = 1;                          // 0x004BF0DC the enemy a role turn aims at, 1-based
     u16 unk4A7626 = 0xFFFF;
     // The rewards of the defeated enemies (RemoveDefeated).
-    u16 unk53BF12 = 0;
-    u16 unk53BF14 = 0;
-    u16 unk53BF16 = 0;
+    u16 battleGold = 0;         // 0x005771FA the battle's gold (bit 15: given out by DrawVictoryPanel)
+    u16 battleExperience = 0;   // 0x005771FC the experience each standing party role gains
+    u16 battleProficiency = 0;  // 0x005771FE the proficiency the worn accessories gain
     const ObjectRecord* lastDefeatedObject = nullptr;  // 0x005135A0 the object of the last defeated enemy
     // The hit acts of the units (0x004582B0, 0x00458DE0, PlayHitAct, FadeHitAct).
     std::array<ActState, Units> hitActs;     // 0x005347F8 the hit act of each unit
@@ -522,7 +522,7 @@ public:
     u8 specialCount = 0;                      // 0x005770DD the skills of the 絕招 list
     i32 guardCursor = 0;                      // 0x00576FB8 the row under the cursor of the 佈置護駕 panel
     std::array<u16, LootSlots> lootIds = {};  // 0x0050EFD0 the objects of the loot list
-    i32 accessoryGained = 0;                  // swd32 0x0053C4C4 set when an accessory gains proficiency at the victory
+    i32 accessoryGained = 0;                  // 0x00577A6C set when an accessory gains proficiency at the victory
     i32 endFrames = 0;                        // 0x00576FF4 frames the end messages have waited
     RoleRecord levelUpBefore;                 // swd32 0x004FF108 the record of the role before its level-up
     i32 unk53C4C8 = 0;

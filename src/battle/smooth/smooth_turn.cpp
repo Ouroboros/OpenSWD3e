@@ -223,7 +223,7 @@ constexpr int kItemBarWidth = 0xCE;
 constexpr int kVictoryShadeExtra = 0x28;  // the 戰鬥勝利 panel
 constexpr int kVictoryTitleX = 0xF8;
 constexpr std::u8string_view kVictoryTitle = u8"戰鬥勝利";  // 0x004BF7A8
-constexpr u16 kGoldGiven = 0x8000;                          // BattleState::unk53BF12: the gold of the battle is given
+constexpr u16 kGoldGiven = 0x8000;                          // BattleState::battleGold: the gold of the battle is given
 constexpr u16 kGoldMask = 0x7FFF;
 constexpr u32 kManyEnemies = 3;
 constexpr int kVictoryPercent = 100;            // DrawVictoryPanel (swd3e): experienceBonus is in percent
@@ -2232,7 +2232,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
         scene
     );
 
-    if ((battle.unk53BF12 & kGoldGiven) == 0)
+    if ((battle.battleGold & kGoldGiven) == 0)
     {
         game.battleHud.ResetMeter();
         game.audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
@@ -2277,13 +2277,14 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
         // swd3e: the roulette's bonus on the experience and its times on the gold.
         if (battle.experienceBonus != 0)
         {
-            battle.unk53BF14 =
-                static_cast<u16>(battle.unk53BF14 + battle.experienceBonus * battle.unk53BF14 / kVictoryPercent);
+            battle.battleExperience = static_cast<u16>(
+                battle.battleExperience + battle.experienceBonus * battle.battleExperience / kVictoryPercent
+            );
         }
 
         if (battle.moneyTimes != 0)
         {
-            battle.unk53BF12 = static_cast<u16>(battle.unk53BF12 * battle.moneyTimes);
+            battle.battleGold = static_cast<u16>(battle.battleGold * battle.moneyTimes);
         }
 
         for (u32 index = 0; index < battle.roleCount; ++index)
@@ -2298,9 +2299,9 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
             const auto partyRole = static_cast<std::size_t>(battle.partyRoles[index]);
             RoleRecord& record = game.party.roles[partyRole];
 
-            if (record.level < battle.timingWindow && role.HasEffectBits(BattleUnit::UnkStatus4) == 0)
+            if (record.level < battle.levelCap && role.HasEffectBits(BattleUnit::UnkStatus4) == 0)
             {
-                record.totalExperience += battle.unk53BF14;
+                record.totalExperience += battle.battleExperience;
             }
 
             if (battle.unk5772F8 == 0)
@@ -2308,7 +2309,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
                 if (role.StepWornCounters(
                         game.battleServices,
                         game.party.fame.lists[Fame::ProficiencyList],
-                        battle.unk53BF16
+                        battle.battleProficiency
                     ) == 1)
                 {
                     battle.accessoryGained = 1;
@@ -2333,9 +2334,9 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
         }
 
         battle.endFrames = 0;
-        battle.unk53BF12 = static_cast<u16>(battle.unk53BF12 | kGoldGiven);
+        battle.battleGold = static_cast<u16>(battle.battleGold | kGoldGiven);
         battle.experienceBonus = 0;
-        game.party.variables[kGoldVariable] += battle.unk53BF12 & kGoldMask;
+        game.party.variables[kGoldVariable] += battle.battleGold & kGoldMask;
         battle.moneyTimes = 0;
     }
 
@@ -2348,7 +2349,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
         game.drawSurface,
         kVictoryTextX,
         kVictoryExperienceY,
-        WinFormat(kExperienceLine, {static_cast<i32>(battle.unk53BF14)}),
+        WinFormat(kExperienceLine, {static_cast<i32>(battle.battleExperience)}),
         kTitleColor,
         TextFont::BoldOutline
     );
@@ -2356,7 +2357,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
         game.drawSurface,
         kVictoryTextX,
         kVictoryGoldY,
-        WinFormat(kGoldLine, {static_cast<i32>(battle.unk53BF12 & kGoldMask)}),
+        WinFormat(kGoldLine, {static_cast<i32>(battle.battleGold & kGoldMask)}),
         kTitleColor,
         TextFont::BoldOutline
     );
@@ -2364,7 +2365,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
         game.drawSurface,
         kVictoryTextX,
         kVictoryProficiencyY,
-        WinFormat(kProficiencyLine, {static_cast<i32>(battle.unk53BF16)}),
+        WinFormat(kProficiencyLine, {static_cast<i32>(battle.battleProficiency)}),
         kTitleColor,
         TextFont::BoldOutline
     );

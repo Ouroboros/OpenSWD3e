@@ -918,7 +918,7 @@ TEST_CASE("battle state: the initial turn and push values match swd3e.exe")
                 state.lastRoleDefeated,
                 state.unk4A7626,
                 state.unk4A7628,
-                state.timingWindow
+                state.levelCap
             }
         )
     );
