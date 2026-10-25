@@ -510,7 +510,13 @@ int BattleUnit::Flag26B8() const
 int BattleUnit::PushTarget(u16 value)
 {
     const u16 count = this->targetCount;
-    this->pushedTargets[count] = value;
+
+    // A count stepped below zero (0x00490FF0) writes outside the table in the original.
+    if (count < this->pushedTargets.size())
+    {
+        this->pushedTargets[count] = value;
+    }
+
     return count;
 }
 
@@ -951,7 +957,8 @@ int BattleUnit::StepTargetCount(BattleServices& services, int increase)
 
     u16 count = this->targetCount;
 
-    if (this->pushedTargets[count] == BattleUnit::DamageTarget)
+    // A count stepped below zero reads outside the table in the original; that read matches nothing here.
+    if (count < this->pushedTargets.size() && this->pushedTargets[count] == BattleUnit::DamageTarget)
     {
         if ((this->status & BattleUnit::DamageTransfer) != 0 && this->enrageCounter2FD6 == 0 &&
             this->pendingDamage == 0)
@@ -987,7 +994,13 @@ int BattleUnit::StepTargetCount(BattleServices& services, int increase)
 int BattleUnit::PushTargetAlt(u16 value)
 {
     const u16 count = this->targetCount;
-    this->damageDelays[count] = value;
+
+    // A count stepped below zero writes outside the table in the original.
+    if (count < this->damageDelays.size())
+    {
+        this->damageDelays[count] = value;
+    }
+
     return count;
 }
 

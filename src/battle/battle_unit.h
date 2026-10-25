@@ -817,7 +817,7 @@ public:
     u16 nudge = 0;                                  // swd32 +0x26D6
     u16 drawAtSaved = 0;                            // swd32 +0x26D8
     u16 proficiency = 0;                            // +0x2BE6 the proficiency of the accessory used
-    std::array<u16, MaxTargets> damageDelays = {};  // swd32 +0x26DE
+    std::array<u16, MaxTargets> damageDelays = {};  // +0x2BEA (PushTargetAlt 0x004910AE)
     std::array<std::array<i16, DamageDigits>, MaxTargets> damageDigits = {};  // +0x2C30 the four digits per target slot
     std::array<std::array<i16, DamageDigits>, MaxTargets> unk283C = {};       // swd32 +0x283C
     std::array<i16, GuardLetters> guardPhases = {};  // +0x2D90 the pop phases of the four letters of the guard text

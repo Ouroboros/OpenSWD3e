@@ -746,7 +746,14 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
     const int x = unit.savedPlacement.x;  // swd3e: the saved place (swd32: the place)
     const int y = unit.savedPlacement.y - kNumberAbove;
 
-    for (u16 slot = unit.damageSlot; slot < unit.targetCount; ++slot)
+    // A target count stepped below zero (0x00490FF0) runs the original's slots past the tables; here they end with
+    // the tables.
+    auto slotEnd = [&unit]
+    {
+        return std::min<u16>(unit.targetCount, BattleUnit::MaxTargets);
+    };
+
+    for (u16 slot = unit.damageSlot; slot < slotEnd(); ++slot)
     {
         std::array<i16, BattleUnit::DamageDigits>& digits = unit.damageDigits[slot];
         std::array<i16, BattleUnit::DamageDigits>& hops = unit.unk283C[slot];
@@ -874,7 +881,7 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
         clearMode();
     }
 
-    if (unit.damageSlot < unit.targetCount)
+    if (unit.damageSlot < slotEnd())
     {
         return 0;
     }

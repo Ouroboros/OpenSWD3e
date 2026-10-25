@@ -350,9 +350,9 @@ public:
     // (StartBattle, RoleFrame); the auto battle key waits for it
     u8 startPoseRole = 0;
     i32 ghostLockTarget = 0;  // 0x00576FBC (swd3e) the enemy (1-based) the ghost's 鎖定目標 aims at; 0: none
-    i16 unk53BF46 = 0;        // cleared when a stagger ends (HurtFrame)
-    i16 unk53BF48 = 0;
-    u16 unk53BF28 = 0;  // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
+    i16 unk53BF46 = 0;        // 0x0057723C only ever cleared (HurtFrame 0x0048FAAB and three others), never read
+    i16 unk53BF48 = 0;        // 0x0057723E likewise
+    u16 unk53BF28 = 0;        // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
     std::array<i32, Units> unk4FF0BC = {};  // 0x0050EBFC (swd3e: 30 slots, 0x78 bytes)
     i32 unk502944 = 0;
     i32 unk502948 = 0;
@@ -500,9 +500,9 @@ public:
     u16 pushFrames = 0;        // 0x005770CC frames since the push was halved
     i16 slideBackPicture = 0;  // 0x00575F22 the hit act picture after which the units slide back
     i32 quakeStepFrames = 0;   // 0x00577038 frames of a quake step
-    i32 unk53AEDC = 0;         // the digits of the extra damage number (BattleUnit::DrawDamageNumbers)
-    i32 unk53AEE0 = 0;
-    i32 unk53AEE4 = 0;
+    i32 unk53AEDC = 0;         // 0x00575FC4 the digits of the extra damage number (BattleUnit::DrawDamageNumbers)
+    i32 unk53AEE0 = 0;         // 0x00575FC8
+    i32 unk53AEE4 = 0;         // 0x00575FCC
     // The turns of the units and the lists (NextEnemyTurn, NextRoleTurn, ScrollListBack).
     i32 actingEnemy = 0;  // 0x00576FB4 the enemy taking the turn
     i32 orderStep = 1;    // 0x004BF0E0 1-based step through enemyOrder or RoleCycle
