@@ -473,7 +473,6 @@ TEST_CASE("battle unit: the stagger tables match swd3e.exe")
     constexpr swd3e::u32 kStaggerShakeAt = 0x004BFBD4;
     constexpr swd3e::u32 kStaggerSlideAt = 0x004BFBE4;
     constexpr swd3e::u32 kStaggerLiftAt = 0x004BFBFC;
-    constexpr swd3e::u32 kShakeOffsetsAt = 0x004BFC2C;
     const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
 
     if (exe.empty())
@@ -486,7 +485,6 @@ TEST_CASE("battle unit: the stagger tables match swd3e.exe")
     CHECK(swd3etest::SameTable(exe, kStaggerShakeAt, swd3e::BattleUnit::StaggerShake));
     CHECK(swd3etest::SameTable(exe, kStaggerSlideAt, swd3e::BattleUnit::StaggerSlide));
     CHECK(swd3etest::SameTable(exe, kStaggerLiftAt, swd3e::BattleUnit::StaggerLift));
-    CHECK(swd3etest::SameTable(exe, kShakeOffsetsAt, swd3e::BattleUnit::ShakeOffsets));
 }
 
 namespace

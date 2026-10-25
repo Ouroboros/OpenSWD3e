@@ -818,3 +818,86 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 
 - 0x004946E0 DrawEffectIcons：效果链空返回；从链头本身起，图标（+0xB8）非 0 时取图 0x23B6 帧 图标 − 1，画于 (x + 宽×计数, y)（旗标与调色板 0），计数加 1。图标图片空指针补登记偏差行 0x004946E0。
 - 0x00494770 CureEffects：参数为 0x8000 且 kind 1 且 defeated 1 时 roleRecord condition &= 0x7FFF、ResetTurn、defeated 0、0x005771E7 字节减 1、EnrageEnemies(0x18)（0x00469FB0），返回 1；否则链为空返回 0；逐节点，位相交时回合、计时清零，参数 &= ~位，ExpireEffects(0)，参数为 0 则停，否则从链头 next 重走；返回 1。
+
+## BattleUnit::ExpireEffects（第 1288 行）— exact
+
+- 0x00494840：效果链空返回；以链格游标（初为 &头.next）逐个：回合非 0 且参数非 1 时跳过；否则按位分派（比较链加 32 项跳转表逐项对照）：1 清 status 1，status & 0xE 为 0 时 marks &= ~0x40，EnrageCheck(0x15, 0)，held 清零；2 marks &= ~2、清 status 2、status & 0xD 为 0 时清 0x40；4 清 status 4、& 0xB 为 0 时清 0x40、held 清零；8 清 status 8、& 7 为 0 时清 0x40、held 清零后 EnrageCheck(0x14, 0)；0x10 清 status 0x10 与 marks 0x100；0x20／0x40／0x80／0x100 清对应 status；0x200 marks &= ~0x10、清 status 0x200、+0x3070 清零，kind 1 时 battleRecord 攻防敏智从 +0x2FA8.. 复原、facing 0；0x400 清 status 0x400、0x005761C8 dword 与 0x005761CC 字清零（ailment400From 三字）；0x1000 清 status 0x1000、+0x2BC0 &= ~0x20000000、+0x2FA0 清零。辅助（guardPose 为 0 时以 0x41000002 提示，木、金攻击提升结束用 0x81000002）：0x4000 土攻（0x004C038C）；0x20000 伤害转移（0x004C0374，+0x2ED8 清零、清 status 0x20000）；0x40000 强攻（0x004C0328，+0x2ED8 清零、清 0x40000）；0x80000 防降（0x004C0340，+0x2ED8、清 0x100000）；0x100000 速降（0x004C035C，+0x2EDA、清 0x8000000）；0x200000／0x400000／0x800000／0x1000000 五行攻升（0x004C030C／0x004C02D4／0x004C02F0／0x004C02B8）；0x2000000 结界（0x004C0274，清 0x4000000）；0x8000000 攻降（0x004C0288，清 0x1000000、+0x2BD4 &= ~0x100、+0x2ED6）；0x10000000 隐身（marks |= 0x400、清 status 位 31、glowLevel 清零，非 kind 0 时 0x004C02A4）；0x20000000 防升（0x004C0258）；0x40000000 速升（0x004C0224）；0x80000000 攻升（0x004C023C），各清对应 shift 与 status。元素（+0xB6）1..5：提示 0x004C020C..0x004C01AC，kind 1 时 roleRecord 抗性、否则物件抗性减 50（字节）。
+- 摘链：next 非空时释放节点、链格 = next，然后看新节点的 next：为空返回，否则游标移到新节点（新接上的节点本轮不检查，原有 BUG 保留）；next 为空时释放、链格清空、返回。未到期节点：其 next 为空返回，否则游标后移。
+- 偏差行 76 补引本函数汇编（0x00494AC5）。
+
+## BattleUnit::Damage、SetDefeatPose（第 1289–1290 行）— exact
+
+- 0x00495330 Damage：生命量 > 0 且（marks 0x8000 或 status 0x2000000）、或 defeated 1 时返回 0。敌人：+0x2BBC 非 0 时 量 ≥ 之 则清零否则减，> 物件 +0x50 时置之，> 0 返回 0（不做 EnrageCheck），否则 +0x68、+0x2BBC 清零；否则 +0x68 同法减（< 0 时置上限，> 上限置上限），> 0 时 EnrageCheck(0, 0) 返回 0，否则清零；然后 dying 1、glowLevel 0、defeatPose 为 0 时 Random(10) + 1，返回 1。队伍：status 0x20000 时量 > 0、+0x2FD6 为 0、pendingDamage 为 0 则整个离屏面（0x25800 dword）填 −1 返回 0，否则 +0x2FD6 清零；equipmentFlags 0x100 时分享 = 量 > 0 ? 20×量/100 + 熟练度×(80×量/100)/100（熟练度为 100 时 = 量）: 熟练度×(−80×+0x2EB4/100)/100，SetMeterLimit(95×熟练度 + 500)，AddToMeter(分享) 为 0 时 +0x2EB4 清零，否则加分享、负则清零；goldGuard 1 且金钱（0x004C6370）非 0：量 > 0 时金钱 < 量（无符号）则生命 −= 量 − 金钱、金钱清零、封顶，否则金钱 −= 量；量 ≤ 0 时什么都不做（护体时回复无效，原有 BUG 保留）；否则生命 −= 量（字）、封顶；灵力、体力加参数（字）并封顶，≤ 0 时清零；生命 > 0 返回 0，否则清零、dying 1、auto 时 defeatPose 6，返回 1。
+- 0x00495670 SetDefeatPose：defeatPose = 参数，fixedPose 非 0 时用之。
+
+## SetDefeatPoseFixed、FadeMainOut、FadeMainIn、FadeInvisible、SetFacing、ActId、IsHeld（第 1291–1297 行）— exact
+
+- 0x00495690：fixedPose 与 defeatPose = 参数。
+- 0x004956B0 FadeMainOut（smooth FadeMainOutAdvance／DrawMainFadedAdvance）：主动作 hold 依 held；picture = GetPicture(+0x2FE, +0x300)；三色 = glowLevel，| 4 画于 (位置 x − originX, 位置 y − 主动作 y)；主动作 +0x302、+0x304 非 0 时三色同、overlayPicture = GetPicture(+0x302, +0x304 − 1)，| 4 画于 (偏移 x + 位置 x − originX, 偏移 y − 主动作 y + 位置 y)；held 0 时 glow −= 2；≤ −0x20 时置 −0x20、清 recoilAct、返回 1，否则 0（参数 0x34 不读）。0x00495870 FadeMainIn：同法以 brightLevel 为色调，held 0 时加 1，≥ 0 时 marks &= ~0x200、brightLevel 1、返回 1。偏差行 185 改为这两个 swd3e 地址并引用汇编。
+- 0x00495A00 FadeInvisible：hold 依 held，picture = 主动作图，glow 加 1，> 0x18 时置 0x18：参数 1 则 marks &= ~0x480、glow 清零，参数 0 则 status |= 0x80000000 后 marks &= ~0x480，返回 0；否则以本图数据、影图宽高画影（高/3、斜切 >>2、色调 −1）于 (位置 x − originX − 5, 位置 y − 影高/3)，参数 0 时 alpha = 0xF − glow/2、参数 1 时 glow/2，(drawFlags & 0x80000003) | 0x14 画本体，返回 1。偏差行 183 引用汇编。
+- 0x00495BF0／0x00495C00／0x00495C10：facing = 参数；actId；marks 位 6。
+
+## BattleUnit::FlyAct（第 1298 行）— exact（smooth_unit.cpp Fly）
+
+- 0x00495C20：act id = 参数、动作 0、hold 依 held；Run 失败返回 0；取图（无空判，偏差行 153 引用汇编）；偏移 x = act.x（写回参数槽低字，高字残留只影响不用的高位）、锚移 = (i16)锚点 x、旗标 = act 旗标；(auto 或 guest) 且 facing 1：旗标 ^1，act.x 非 0 时偏移 = 宽 − act.x，锚点非 0 时锚移 = 宽 − 锚点；facing 1 且非 auto、非 guest：旗标 ^1，偏移 = 宽 − act.x（无条件），锚点非 0 时锚移同上。目标绘制位置；直线（+0x106C 清零）自 (起 x − 锚移, 起 y − (i16)锚点 y) 到 ((i16)(目标 x − 偏移), (i16)(目标 y − act.y))，反向参数 1 时对调，起 y 为 0 时两 y 清零。flightDelay（+0x2FBE）≠ 参数（字）时加 1；否则步参为 0 或 −1 时步 = 1，计数 flightSteps[槽]（+0x2B48 + 槽×4）为 0 时置 1，≤ 0x20 时翻倍否则 +0x30；其它步参时计数加 1。计数×步 > 0 时逐步 LineStep，到达 x 时记 −1 停，否则累加到 计数×步。出音 view、清零。actionFlags 0x10000 时 SetZoomSheared((i16)偏移, act.y, 0x400 − 10×计数, 同, 0) 后 | 0x80 画于直线点，否则直接画。到达时 +0x2EDE、flightDelay、计数清零、直线清零，返回 1，否则 0。
+
+## BattleUnit::RunQueuedActions（第 1299 行）— exact（修正后）
+
+- 0x00495FF0（smooth_unit.cpp QueuedAdvance）：队列（+0x2794）为空时 +0x2F9C 清零返回 1；逐节点：参数非 0 时 act 动作 = 参数；Run 失败返回 0；取图（无空判）；facing 1 时旗标 ^1、偏移 = 宽 − act.x；直线清零，起 = (i16)(+0x1E8) − 偏移、(i16)(+0x1EA) − act.y，止 = (+0x1E4) − 偏移、(+0x1E6) − act.y；锚点 x／y 非 0 时起点改用之；起 y、止 y 为 0 时清零。shakeFrames（+0x1EC）非 0 时减 1（到达变量不赋值）；否则 steps（+0x1EE）> 0 时 flown 加 1、每帧步 = steps，否则 flown 为 0 置 1，flown（有符号）> 0x20 时 +0x30 否则翻倍、每帧步 1；到达变量清零后逐步 LineStep，x 与 y 都到时记 −1、+0x1F6 |= 2，否则累加到 步×flown。出音 view、清零；+0x1F5 为 1 时 trail（+0x14C）fadeStep = 旗标 4 ? 3 : 1，DrawTrail；+0x1F6 无 2 时画于直线点。到达时：冲击 act（+0xA8）id > 0：Run 失败返回 0，取图、facing 时旗标 ^1，出音、声像依止 x ≥ 0x140 为 ±0x30，画，未等待则下一节点；随后 +0x1F4 = 1、+0x2F9E 加 1、直线清零，+0x1F6 有 4 时下一节点；否则 status 0x80 时几率 8，evadeRolled 为 0 且 RollEvade 成功时不伤；否则目标 RaiseFlag26B8，kind 0 时 EnemyHitDamage 否则 HitDamage，movsx 后 ≥ 9999 截断，累加 hitDamage，目标 SetDamageDigits、StepTargetCount(1)。循环后摘除 +0x1F4 为 1 的节点，返回 0。
+- 修正：flown 与 0x20 的比较原先按无符号，改为有符号（0x0049617B `jg`）。
+- 清理：BattleUnit::ShakeOffsets（0x004BFC2C）在 swd3e 中无任何代码读取，连同其测试删除；偏差行 175 去掉正传的“抖动相位读表前”说明并引用汇编，补登记未初始化的到达变量。steps 成员注释改为 swd3e 偏移。
+
+## AddQueuedAction、TrailLastQueuedAction（第 1300–1301 行）— exact
+
+- 0x00496510 AddQueuedAction：走到队尾，分配 0x1F8 字节清零节点；act id（+4）、动作（+0xC）、冲击 id（+0xA8）、起 x／y（+0x1E8／+0x1EA）、止 x／y（+0x1E4／+0x1E6）、shakeFrames（+0x1EC）、steps（+0x1EE）、done（+0x1F4）0、旗标（+0x1F6）按参数次序写入；+0x2F9C 加 1。
+- 0x004965D0 TrailLastQueuedAction：走到最后节点（队列为空时原程序把队列头当节点，偏差行 0x004965D0 已有，补引汇编），+0x1F5 = 1；trail.started（+0x1DE）为 0 时置 1，八个残影图号（+0x150 起步长 0x10）置 0xFFFF，三色（+0x1CC..+0x1D4）= 参数，direction（+0x1DC）2，count（+0x1E0）3。
+
+## BattleUnit::ChooseCommand（第 1302 行）— exact（修正后）
+
+- 0x00496650：commandFlags 有 0x8000 返回 1；命令 0xB dword、skillName 16 字节清零；选择初值 0xFFFF：healChoice（+0x2FCE）非 0 → 2；否则 +0x2BC0 0x200000（狂暴）时按 enrageEffect（+0x96，有符号字）< 0x3E9 → 1、≥ 0x1771 → 0、其间 Random(2)；否则 +0x2FDD 为 2 → 0、为 1 → 1、为 0 时 choicePhase（+0x2FCC）为 1 → 1 并置 2，否则 0 并置 1。StatusBit5 为 1 → 4。itemWait／skillWait（+0x2FCA／+0x2FCB）任一 ≥ 1、选择非 2、非狂暴、idleTurns（+0x2FC9）为 0 → 1。种类 0x20 且生命 ≤ 上限/2 时低血加成 3。
+- 2 回复：marks 0x100 或 healChoice 非 1／2 时 ChooseAttack；否则 LoadObject(+0x14, +0x80／+0x84)、FreeDescription、出参 act、LoadCommand(技能脚本)、+0x2EB6 = 物件 +0x34、healChoice 清零、+0x82／+0x86 减 1、commandFlags |= 0x8000、SetCommand(2)、+0x2FD8 加 1，返回 1。
+- 1 技能：+0x99 为 0 时 ChooseAttack；roll = Random(10) ≤ 6 → 0、7..10 → 1；skillWait ≥ 5 时 skillB 与次数非 0 → 1、skillWait 清零；enrageEffect 非 0 → 0；技能 id 或次数为 0、或 Random(10) ≥ idle + 几率 + 低血加成 时 ChooseAttack；+0x2FDA = 1、itemWait／skillWait 加 1、LoadCommand，技能 1 时 skillWait 清零；种类 0x20 且命令 unk08 非 0：unk08 0x10000 且 AnyRoleBuffed（0x0046A9A0）为 0、HasEffectBits(unk08)、+0x2BC0 0x1000 任一则 ChooseAttack；auto 时 unk08 0x10000000 或 CommandSupports（0x0049C3A0）为 1 则 ChooseAttack；actionFlags 0x1000 且 0x00577210 非 0 则 ChooseAttack；unk29A4 = 命令值、次数减 1；actionFlags 0x1000 → flags |= 0x8000、SetCommand(0xF) 返回 1；命令旗标 2 → 出参 castAct、flags |= 0x8000、SetCommand(2)、readyAction 0x30／0x31 返回 1；否则 +0x2FB6 = 技能 + 1、SetCommand(1)、MarkDelayedAttack（旗标 0x10 且 commandA 1 时 commandB 1、commandA 0xC8），返回 0。
+- 0 物品：marks 0x100 或 +0x98 为 0 时 ChooseAttack；狂暴且 enrageEffect ≥ 0x1771 且 Random(10) ≥ 2 → 3，否则 Random(10) ≤ 4 → 0、5..7 → 1、8..10 → 2；itemWait ≥ 7 时 itemC 与次数非 0 → 2、itemWait 清零；+0x14 物件 0x2A dword 清零；0／1／2：物品 id 与次数非 0 且 Random(10) < idle + 几率 + 加成 时 LoadObject、LoadCommand，种类 0x20 且 unk08 非 0 时 +0x2BC0 0x1000、0x10000 且 AnyRoleBuffed 为 0、unk08 & 0x8180000 且 AllRolesHaveEffect（0x0046A930）为 1、HasEffectBits 任一则不选；auto 与 0x1000 检查同技能；选中则出参 act、次数减 1、readyAction 0x2C／0x2E／0x2F（物品 2 另清 itemWait）；3：LoadObject(enrageEffect)、LoadCommand，auto 时 unk08 0x10000000 或 0x1000 检查不过则不选，否则选中、readyAction 0x2C。然后 FreeDescription、skillName 清零；未选中 ChooseAttack；选中时 lstrcpyA 名字、unk29A4 += 命令值、flags |= 0x8000，物件 +0x60 ≥ 0x32 时命令 +0x18 += 原值×(+0x60 − 0x32)/100，SetCommand(actionFlags 0x1000 ? 0xF : 2)，+0x2FD9 = 1、idleTurns 清零、itemWait／skillWait 加 1，返回 1。
+- ChooseAttack（内联于 0x00497264）：命令清零、LoadCommand(+0x64)、SetCommand(1)，idle／itemWait／skillWait／+0x2FD3 各加 1，kind 0 时 unk29A4 += 物件 +0x5A 否则 += battleRecord +0x26，MarkDelayedAttack，+0x2BC0 0x10000 时命令旗标 = 8，返回 0。
+- 修正：狂暴选择的 enrageEffect 原先按无符号比较，改为有符号字。偏差行 0x00496650（技能名写入步数）引用汇编。
+
+## PlayIdleEffect、PlayIdleFollowUp（第 1303–1304 行）— exact（smooth_unit.cpp IdleEffectAdvance／FollowUpAdvance）
+
+- 0x00497350：主动作 target 有 2 时 effectA（+0x2D8）非 0 则 stage |= 0x4000，命令 followAct 非 0 则 stage |= 0x8000，target 0x200 时 hold 1，target &= ~2，清 castAct；stage 无 0x4000 返回；effectA 为 0 时清位与 castAct 返回；castAct 动作 = effectQ、id = effectA，Run 失败返回；出音 view，非 0 时声像依位置 x ≥ 0x140 为 ±0x30，清零；取图，facing 1 时旗标 ^1、x 非 0 时 宽 − x；画于 (actAnchorX + 位置 x − originX − 偏移, 主动作锚点 y + 位置 y − castAct.y − 主动作 y)；等待时 target &= ~0x200、stage &= ~0x4000、slotTint／actAnchorX／+0x300C／hold／effectA 清零、清 castAct。返回值（多为 1、Run 失败为 0）调用处 IdleFrame 不用。
+- 0x004975E0：stage 有 0x8000 时 attackAct id = followAct、动作 0，Run 失败返回；出音与声像同上；取图，facing 1 时旗标 ^1、偏移 = 宽 − x；画于 (位置 x − 偏移, 位置 y − act.y)；等待时 stage、slotTint、主动作 target、actAnchorX、+0x300C、hold、effectA 清零，清 attackAct。
+- 补登记两者的图片空指针偏差行。
+
+## BattleUnit::Defense（第 1305 行）— exact
+
+- 0x00497790：kind 1：基数 = battleRecord +0x28（零扩展）；status 0x40000000 时 升 = (i16)defenseShift × 基数 / 100，0x100000 时 降 同法；0x4000000 时 结界 = 70×基数/100；防御 = (u16)(基数 − 降)（字减）+ 结界 + 升；+0x2EB2 > 0（有符号）时 = (i16)防御 × +0x2EB2 × 10 / 100；低字为负返回 0，否则返回之。其余 kind：基数 = 物件 +0x5C，升降同法，返回 基数 − 降 + 升。注：原程序在 kind 1 路径以 eax 的低字参与字减，eax 高位取自前一步的中间值；只有升 ≥ 0x10000（加成 > 32767 且 shift 200）时高位非零，现有数据不会出现，调用处（0x0046A808 用 ax，0x00497A4C／0x004985F4 见 HitDamage）按结果使用。
+
+## BattleUnit::HitDamage（第 1306 行）— exact（修正后）
+
+- 0x00497900：攻击 = unk29A4（字）、值 = 命令 +0xE；两出参清零；PushTarget(0x2389)；actionFlags 无 0x80 且目标 HasEffectBits(4) 时返回 0；目标 AddBuff(命令) 为 1 且三项回复皆 0 返回 −1；actionFlags 0x4000 返回 −1。
+- 目标为队伍：记录 = SelectEntry(0)，防御 = +0x28（只写参数槽低字），抗性取 +0x2D 五字节，Random(10) > +0x1C 时 AddAilment，SetDefeatPose(命令 +0x1E 低字节)。目标为敌人：物件 = Data（0x0049D3B0），防御 = Defense()，抗性 +0x9C；命令异常非 0 时：值非 0、commandA 非 2／0x16／3、无 0x200、元素 1..9、Unk26B8Bit23（0x0049C340）为 0 且 ApplyElement(值) 为 1 → 抵抗；物件几率（+0x62）非 0 且 (u16)智慧 − (u16)+0x60 > 0 时加成 = 差/20；Random(10) < 加成 + 几率：种类 0x20 时异常 0x24／0x200 → RollEvade(10)，否则 AddAilment 成功则 RaiseFlag26B8；非 0x20 时未抵抗则 AddAilment 成功 → RaiseFlag26B8，异常 0x8000 时 GetHitPoints、Damage(9999, 0, 0) 并返回原生命，失败 → 值或 unk29A4 非 0 则 RaiseFlag26B8 否则 RollEvade(10)；各路之后值与 unk29A4 皆 0 返回 −1。掷失败时 auto 且 commandA 非 2 且 +0x2FB6 为 0 → RaiseFlag26B8，否则同“失败”处理并检查返回 −1。然后 SetDefeatPose、EnrageCheck(0, 元素)。
+- 命令异常非 8、三项回复皆 0、目标 HasStatus(8)（0x0049C420）时 CureEffects(8)。回复量：+0x2FD0 为 1 时（有记录才算）上限×(i16)回复/100，否则直接取三项回复。actionFlags 0x80：CureEffects(命令异常)，两出参 = 灵力／体力回复，生命回复（字）为 0 返回 −1，否则 PushTarget(0x237D) 返回 −生命回复。
+- commandA 1／0x1A／0x18：CountEnrageEvent(0)（0x0049BAB0）；+0x2BD4 & 9 时攻击 = battleRecord 攻击加成；auto／guest／符鬼时值为 0 则攻击低字 = 攻击加成，+0x2BDA 位 1 时攻击 = 70×加成/100；+0x2EB2 > 0 时攻击 ×= +0x2EB2 + 1 并清零；攻击 += Random(等级/3 + 3) + 1；HasEffectKind(元素) 时 升 = 30×(i16)攻击/100；status 0x10000000 时 升 += (i16)shift×(i16)攻击/100；0x1000000 且 +0x2BD4 无 0x100 时 降 同法；攻击 += 升 − 降；暴击（0x00578474）时 CountEnrageEvent(1)，partyMember 1 时按放置 actId：1 → SetDefeatPose(7)；2 → 攻击者 +0x2BC0 位 28 为 0 且目标物件种类无 0x20 时 GetHitPoints，生命 + (u16)防御 ≥ (i16)攻击 则攻击 = 防御 + 生命，SetVitals(0,0,0)、SetDefeatPose(2)、SetDefeatPose(8)；3 → 85%、SetDefeatPose(0xD)；4 → 200%、SetDefeatPose(1)。(i16)攻击 > (u16)防御 时减去防御否则 1；+0x2BD4 & 9 时 分享 = (u16)(40×(i16)攻击/100)，攻击 = 60×(i16)攻击/100 + 熟练度×分享/100；equipmentFlags 4 时攻击 = ftol((i16)攻击 × 2.5)；元素 1..9：值非 0 时 auto 0 且 Bit23 为 0 → ApplyElement(值)、攻击 += 值；值为 0 时 Bit23 为 0 → ApplyElement(攻击) 为 1 则抵抗；目标 HasEffectBits(2) 时攻击翻倍。
+- commandA 0x28：攻击 = +0x2EB4、清零、AddToMeter(−1)；0x1B：攻击 ×= (u16)力量 / (15 − 熟练度/20)；0x1F：目标 marks 0x8000 时 0，否则返回攻击。法术（commandA 2／0x16／3 或 0x200）：0x200 时 CountEnrageEvent(3)；攻击 = 值；HasEffectKind 时 += 30%；commandFlags 无 0x4000 时：符鬼 = ftol(((u16)智慧×0.005f + 1.0f) × (i16)攻击) − 攻击，0x200 时 半 = (i16)武器 +0x24 / 2、加 Random(半) + 半，否则 除数 = Random(5) + 5、Random((等级 + 智慧)/除数) + 1，Bit23 为 1 时攻击 /= 2；攻击 > 0 时加之；两出参 = 灵力／体力回复；元素 1..9 且 Bit23 为 0 → ApplyElement(攻击) 为 1 则抵抗。
+- 收尾：生命回复（字）非 0 或 commandA 0x22 → PushTarget(0x237D)、攻击 = −回复；0x23 → 灵力出参、PushTarget(0x237E)，灵力为 0 → −1；0x24 → 体力出参、PushTarget(0x237F)；（灵力或体力回复非 0）且生命回复为 0 → −1；抵抗 → PushTarget(0x237D)；目标 GetGuard 为 1、生命回复为 0、元素非 0 → 攻击 −= 攻击/3（0x55555555）；目标为队伍且记录 condition 0x8000 时出参与攻击清零并按回复补 PushTarget；目标 marks 0x8000 时返回 0，否则 (i16)攻击。攻击、值两个局部变量的高 16 位可能残留调用前寄存器值，只影响不用的高位，返回值只取低字。
+- 修正：①吸取暴击检查的是攻击者自身的 +0x2BC0 位 28（0x00497F9C `[esi+2BC0h]`），源码原先查目标；常量改名 kNoDrainStrike。②狂暴分享量的乘积原先截成 i16 再除，改为 32 位（0x00498090）。偏差行 151 改为 swd3e 的实际情况并引用汇编。
+- 截位乘积清单收尾：battle_effects.cpp 两处（TickEffects）、battle_unit.cpp 一处（HitDamage）均已按汇编改为 32 位乘积；battle_role.cpp 两处所在的 SetupGuest 已删除。全工程 `static_cast<i16|i8>(…*…) / ` 写法已无剩余。
+
+## BattleUnit::EnemyHitDamage（第 1307 行）— exact（修正后）
+
+- 0x00498560：值 = 命令 +0xE（保存副本），伤害 = (u16)unk29A4；PushTarget(0x2389)；目标 HasEffectBits(4) 返回 0；目标 AddBuff 为 1 返回 −1。
+- 目标为队伍：SelectEntry(1)、防御 = Defense()、抗性 +0x2D；命令异常非 0 时扇子判定（0x0049A000(0x39) 为 1 时 StepAccessoryCounters(0x004D1F58, 0x39, 5)、熟练度/20：0..4 依 0x1088／0x10C9／0x31E9／0x31FF／0x37FF 与异常相交则免疫，5 全免，> 5 不免）；不免疫时：异常 0x40 或 0x100 且命令值为 0 → 命令值 = unk29A4；AddAilment 成功 → RaiseFlag26B8，异常 0x8000 时 GetHitPoints、Damage(9999, 0, 0)、返回原生命；失败 →（+0x2FB6 非 0 或 commandA 为 2）且值副本与 unk29A4 皆 0 时 RollEvade(10)，否则 RaiseFlag26B8；异常非 0 且值副本与 unk29A4 皆 0 返回 −1。目标为敌人：防御 = 物件 +0x5C（写参数槽低字），抗性 +0x9C，SetDefeatPose。
+- 异常非 8、生命回复为 0、目标 HasStatus(8) 时 CureEffects(8)。actionFlags 0x80000 且目标 PartyMember（0x0049B990）且金钱非 0：出音 0x117，金钱 < (i16)命令值（无符号比较）时命令值 = 金钱、金钱清零，否则减去；物件 +0x90 += 命令值，+0x9B = 8，+0x2BC0 |= 0x4000，wsprintfA "$1%s$0偷走了%d銀兩"（0x004C03A8）、Messages.Add(0x118, 0xA, 0x32, 0x40000002)，返回 −1。actionFlags 0x100000 且 PartyMember：0x00577255 清零，Random(10) < 命令 +0x24 时出音 0x117、+0x9B = 8、0x00577255 = 1、+0x2BC0 |= 0x4000，否则出音 0x116、提示 "偷竊失敗"（0x004BF398）；返回 −1。
+- commandA 1：攻击 = 伤害 + Random(等级/3 + 3) + 1；攻升／攻降按 (i16)攻击 × shift / 100；加升减降；(i16)结果 > (u16)防御 时伤害 = 结果 − 防御；否则 裸 = (结果 & 0xFFFF0000) | unk29A4，升降按 (i16)裸 重算（未置位者为 0），伤害 = 裸 + 升 − 防御 − 降，低字为负时 1，+0x2FB6 为 0 时再加 Random((u16)等级/3 + 3) + 1；元素 1..9 时 ApplyElement(伤害) 为 1 则抵抗。其它：除数 Random(5) + 5，(i16)伤害 > 0 时加 Random((+0x60 + 等级)/除数) + 1；commandA 2 时 CountEnrageEvent(2)、DamageTransferred（0x0049C390）为 1 时 (i16)伤害/2，元素同上。
+- 收尾：生命回复非 0 → PushTarget(0x237D)、伤害 = −回复；抵抗 → PushTarget(0x237D)；目标 GetGuard 为 1 → 伤害 += (i16)伤害 × (Random(30) + 10) / −100；目标为队伍且 (i16)伤害 > 0 → AddFury（0x00499DC0）；返回 (i16)伤害。
+- 修正：①偷金钱的比较改为无符号（0x00498846 `jb`）。②第二次等级掷骰的等级改为零扩展（0x00498ADC）。偏差行 76 补齐全部五处的汇编依据。
+
+## MarkBit8Clear、MarkBit1、MarkBit4、ClearMoveAxes、RestartMainAct、SetNudge（第 1308–1313 行）— exact
+
+- 0x00498CB0：marks 位 8 取反。0x00498CC0／0x00498CD0：marks 位 1／位 4。
+- 0x00498CE0 ClearMoveAxes：actionFlags 0x10 时 x 出参 = 0，命令旗标 1 时（kind 1 且 facing 1）或 kind 0 则 x = 0x280；actionFlags 0x20 时 y 出参 = 0。
+- 0x00498D40 RestartMainAct：参数 1 时 +0x2FBA 清零、status &= ~0x2000000；主动作未等待且强制参数非 1 时返回 0；否则清主动作、guardPose = 参数、castAct 等待 = 1，返回 1。
+- 0x00498DB0 SetNudge：nudge（+0x2BE0）、drawAtSaved（+0x2BE2）= 参数；后者为 1 时 nudged（+0x3058）= 1、两者清零。
+
+## BattleUnit::DrawTrail（第 1314 行）— exact（smooth_unit.cpp TrailAdvance）
+
+- 0x00498DF0：间距 = direction（+0x90）为 1 时 −0x1E 否则 0x1E；delay（+0x96）为 0 时把残影从 count−1 到 1 依次后移（16 字节），首项 level 0xC（模式有 4 时 0x18）、图号、模式、x、y 写入，delay = 1；否则 delay 减 1。逐项（count 为有符号字节）：图号非 0xFFFF 时偏移 = 0xC − x，direction 1 时 = y − 0xC，direction 2 时偏移与间距为 0；unk2550（+0x2A48）= GetPicture(帧, 图号)；level > 0 时减 fadeStep（有符号字节），≤ 0 时图号 0xFFFF、level 0；模式有 4 时红绿 = level − 0x1F、蓝 −0x10 画于 (x + 间距×序号 + 偏移, y)，否则 alpha = level、| 0x14 画，level > 1 时以 trail 三色 | 0x10 再画。偏差行 171 引用汇编。

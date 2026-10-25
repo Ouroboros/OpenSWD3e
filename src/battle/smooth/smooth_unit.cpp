@@ -86,7 +86,7 @@ constexpr i16 kRecoilFadeEnd = -0x20;  // DrawRecoil: the tint at which a waitin
 constexpr i8 kAdditiveTrailFade = 3;   // an additive act's images fade by 3 a frame, the others by 1
 constexpr i16 kAdditiveTrailLevel = 0x18;
 constexpr i32 kQueuedMaxDamage = 0x270F;
-constexpr u16 kSpeedingTop = 0x20;  // RunQueuedActions (swd3e): a speeding flight doubles up to it, then adds 0x30
+constexpr i16 kSpeedingTop = 0x20;  // RunQueuedActions (swd3e): a speeding flight doubles up to it, then adds 0x30
 constexpr i16 kSpeedingStep = 0x30;
 constexpr u32 kEvadeChanceStatus = 0x80;  // status bit 7: the target evades with a chance of kStatusEvadeChance
 constexpr u16 kStatusEvadeChance = 8;
@@ -1951,9 +1951,8 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
                     node->flown = 1;
                 }
 
-                node->flown = static_cast<i16>(
-                    static_cast<u16>(node->flown) > kSpeedingTop ? node->flown + kSpeedingStep : 2 * node->flown
-                );
+                node->flown =
+                    static_cast<i16>(node->flown > kSpeedingTop ? node->flown + kSpeedingStep : 2 * node->flown);
             }
 
             outcome = 0;

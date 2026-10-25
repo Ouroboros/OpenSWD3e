@@ -1326,10 +1326,10 @@ constexpr u16 kUnlandedAilments = 0x24;         // a UnkKind20 enemy takes no ai
 constexpr u16 kAilment200 = 0x200;
 constexpr u16 kFellingAilment = 0x8000;  // the ailment fells the target outright
 constexpr int kFellingDamage = 0x270F;
-constexpr u16 kAilment8 = 8;                    // cured by any hit that restores nothing
-constexpr int kGuardingGhostPercent = 70;       // a guarding ghost attacks with 70 percent of its bonus
-constexpr u32 kTargetStandsAside = 0x10000000;  // unk26B8: no drain on such a target
-constexpr int kChargeScaleTop = 15;             // command 0x1B: strength / (15 - proficiency / 20)
+constexpr u16 kAilment8 = 8;                // cured by any hit that restores nothing
+constexpr int kGuardingGhostPercent = 70;   // a guarding ghost attacks with 70 percent of its bonus
+constexpr u32 kNoDrainStrike = 0x10000000;  // unk26B8 of the attacker: its critical drain strike does nothing
+constexpr int kChargeScaleTop = 15;         // command 0x1B: strength / (15 - proficiency / 20)
 constexpr int kChargeScaleShare = 20;
 constexpr int kSpellEnrageEvent = 3;     // UnkCommandFlag200: the target counts enrage event 3
 constexpr i64 kWisdomFactor = 10737418;  // 0.005f as 10737418 / 2^31 (a ghost's spells)
@@ -2982,7 +2982,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
                     case kDrainAct:
                     {
                         // A party role as the target has no object: the original reads a null pointer here.
-                        if ((target.unk26B8 & kTargetStandsAside) != 0 || targetData == nullptr ||
+                        if ((this->unk26B8 & kNoDrainStrike) != 0 || targetData == nullptr ||
                             (targetData->data.kind & ObjectData::UnkKind20) != 0)
                         {
                             break;
@@ -3030,7 +3030,8 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
 
         if ((this->unk26CC & kAttackFromBonus) != 0)
         {
-            const auto share = static_cast<u16>(static_cast<i16>(kEnragedSharePercent * attack) / kPercent);
+            // 0x00498090: 40 times the attack word in 32 bits, divided, then kept to 16 bits.
+            const auto share = static_cast<u16>(kEnragedSharePercent * static_cast<i16>(attack) / kPercent);
             attack = kEnragedPercent * static_cast<i16>(attack) / kPercent + this->proficiency * share / kPercent;
         }
 
@@ -5617,7 +5618,8 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
     }
     else if ((this->unk26B8 & kEnragedFlag) != 0)
     {
-        const u16 effect = data.enrageEffect;
+        // Compared as a signed word (0x004966F4).
+        const auto effect = static_cast<i16>(data.enrageEffect);
 
         if (effect < kEnrageSkillTop)
         {
@@ -6096,7 +6098,8 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
         services.audio.PlaySound(kStealSound, services.config.soundVolume);
         const i32 wanted = this->command.value;
 
-        if (gold < wanted)
+        // An unsigned compare (0x00498846).
+        if (static_cast<u32>(gold) < static_cast<u32>(wanted))
         {
             this->command.value = static_cast<i16>(gold);
             gold = 0;
@@ -6230,10 +6233,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
             if (this->unk2A8C == 0)
             {
                 damage +=
-                    static_cast<i32>(random.Below(
-                        static_cast<u16>(static_cast<i16>(data.level) / static_cast<int>(kLevelShare) + kLevelRollBase)
-                    )) +
-                    1;
+                    static_cast<i32>(random.Below(static_cast<u16>(data.level / kLevelShare + kLevelRollBase))) + 1;
             }
         }
 

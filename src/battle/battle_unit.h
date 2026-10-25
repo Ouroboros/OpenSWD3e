@@ -121,7 +121,7 @@ struct QueuedAction
     i16 fromX = 0;                       // +0x1E8
     i16 fromY = 0;                       // +0x1EA 0: the line stays level
     u16 shakeFrames = 0;                 // +0x1EC frames the act shakes before it flies
-    i16 steps = 0;                       // swd32 +0x1D6 line steps per frame flown (1: a speeding flight)
+    i16 steps = 0;                       // +0x1EE line steps per frame flown (0 or less: a speeding flight)
     i16 flown = 0;                       // +0x1F2 the frames flown
     u8 done = 0;                         // +0x1F4 removed at the end of RunQueuedActions
     u8 trailed = 0;                      // +0x1F5
@@ -376,9 +376,9 @@ public:
     static constexpr std::size_t Trails = 8;
     static constexpr std::size_t Drains = 4;
     static constexpr std::array<i32, 10> DigitHops = {0, 12, 18, 12, 8, 4, 0, 2, 0, 0};  // 0x004BFB40 by hop step
-    // HurtFrame: the offsets of the stagger by its step. The four tables lie one after another up to the shake
-    // offsets (0x004BFC2C) and are read past their ends by the later steps: each runs on through the data after it,
-    // up to 0x004BFC3C.
+    // HurtFrame: the offsets of the stagger by its step. The four tables lie one after another up to 0x004BFC2C (eight
+    // words no code of swd3e reads) and are read past their ends by the later steps: each runs on through the data
+    // after it, up to 0x004BFC3C.
     // 0x004BFBA4 (12 entries): the red flash of a unit of unk3070 shakes this far each way
     static constexpr std::array<i32, 38> StaggerFlash = {
         14,      14,      -24,       10,        10,        -8,        -8,       6,        6,        -4,
@@ -409,8 +409,6 @@ public:
         50, -10, 10,  -10, 10,  -10, 10,  -10, -1,  -3,  -3,  -6,  -6,  -3,  -3,  0,
     };
 
-    // RunQueuedActions: the y offsets of a shaking queued act by its frames left (0x004BFC2C).
-    static constexpr std::array<i16, 8> ShakeOffsets = {-1, -3, -3, -6, -6, -3, -3, 0};
     // DefeatHop: the heights of the hop by frame (0x004BFB68).
     static constexpr std::array<i32, 15> HopHeights = {0, 4, 12, 24, 32, 24, 16, 8, 4, 0, -4, -12, -16, -20, -32};
     static constexpr int UnkSlot8 = 8;
