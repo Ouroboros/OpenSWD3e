@@ -538,7 +538,7 @@ public:
     std::u8string battleMusic;  // 0x005774EC the path of the battle music
     i32 unk53AF30 = 0;
     i32 unk53AF34 = 0;
-    i32 sweepTotal = 0;  // swd32 0x0053AE74 the units a sweep is to hit
+    i32 sweepTotal = 0;  // 0x00575F1C the units a sweep is to hit
     u16 unk53AE78 = 0;
     i32 hitsAtOnce = 0;  // 0x00575F30 1: a sweep of the whole side hits it at once (HitFrame)
     i32 wholeSide = 0;   // 0x00575F2C 1: the hit or effect falls on a whole side (the effect messages name the side)
@@ -610,7 +610,7 @@ public:
     i32 slideUnit = 0;      // 0x00577800 (swd3e) the enemy attacking last: SlideUnits slides by it (never enabled)
     i16 slideX = 0x140;     // 0x004BF1E0 (swd3e) the x the units slide to
     i32 sweepTargets = 0;   // 0x0057704C the units an enemy's sweep hits
-    i32 sweepDefeated = 0;  // swd32 0x0053BD84 the units an enemy's sweep defeated
+    i32 sweepDefeated = 0;  // 0x00577060 the units an enemy's sweep defeated
     i32 enemyFaded = 0;     // 0x005772E0 1 once an enemy faded or left (Game::EnemyActionFrame)
     // The turn of an enemy (Game::EnemyFrame).
     std::array<u16, Enemies> enemyOrders = {};  // swd32 0x005028AC the order of the fight talk for each enemy

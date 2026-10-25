@@ -367,7 +367,7 @@ private:
     void RaiseLevel(u16 role, u16 level);
     void ApplyDrain(i32& amount, BattleUnit& attacker, BattleUnit& target);
     void ApplyDrainSums(BattleUnit& unit);
-    int SlideUnits(const BattleUnit& unit, i16 x);
+    int SlideUnits(int unit, i16 x, i16 target);
     void CureHeldBy(int enemy);
     void TryRetreat(int role);
     int DrainSpellFrame(BattleRole& role, BattleUnit& target);

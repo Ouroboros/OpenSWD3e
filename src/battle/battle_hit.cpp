@@ -146,7 +146,7 @@ int Game::WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, u32 s
     if (grows && delay != 0)
     {
         ++waited;
-        grows = waited >= delay;
+        grows = static_cast<i16>(waited) >= delay;  // a signed word as in the original (0x004680F9)
     }
 
     if (grows)
@@ -209,8 +209,10 @@ int Game::WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, u32 s
     if ((mode & kWalkModeMask) == 0)
     {
         outcome = 0;
+        // A signed 32-bit product as in the original (0x00468212): speed -1 while the delay runs walks no step.
+        const auto limit = static_cast<i32>(steps * static_cast<u32>(factor));
 
-        if (steps * factor > 0)
+        if (limit > 0)
         {
             while (true)
             {
@@ -223,7 +225,7 @@ int Game::WalkLine(i32& x, i32& y, int fromX, int fromY, int toX, int toY, u32 s
                     break;
                 }
 
-                if (static_cast<u32>(++outcome) >= steps * factor)
+                if (++outcome >= limit)
                 {
                     break;
                 }
@@ -262,9 +264,10 @@ i16 BattleState::StartSlideBack(i16 x)
 }
 
 // swd3e.exe 0x004682B0: one step of the slide (only while slideEnabled, which nothing sets): mode 1 moves the field
-// (fieldX) an eighth of the way from `unit`'s x to `x` (a pixel when less), mode 2 a quarter of the way from the
-// field back to the middle, ending there (mode 0); every unit moves with the step (shake). 0 without a slide.
-int Game::SlideUnits(const BattleUnit& unit, i16 x)
+// (fieldX) an eighth of the way from the x of unit `unit` (a battle role when `target` is non-zero, else an enemy) to
+// `x` (a pixel when less), mode 2 a quarter of the way from the field back to the middle, ending there (mode 0); every
+// unit moves with the step (shake). 0 without a slide.
+int Game::SlideUnits(int unit, i16 x, i16 target)
 {
     BattleState& battle = this->battleState;
 
@@ -277,7 +280,10 @@ int Game::SlideUnits(const BattleUnit& unit, i16 x)
 
     if (battle.slideMode == BattleState::SlideToUnit)
     {
-        unit.GetPosition(battle.unk53BF4A, battle.unk53BF4E);
+        const auto at = static_cast<std::size_t>(unit);
+        const BattleUnit& moving = target != 0 ? static_cast<const BattleUnit&>(this->battleRoles[at])
+                                               : static_cast<const BattleUnit&>(this->battleEnemies[at]);
+        moving.GetPosition(battle.unk53BF4A, battle.unk53BF4E);
         const auto from = static_cast<i16>(battle.unk53BF4A);
         step = (x - from) / kSlideToShare;
         battle.shake = step;
@@ -298,7 +304,7 @@ int Game::SlideUnits(const BattleUnit& unit, i16 x)
 
         if (step == 0)
         {
-            if (static_cast<int>(battle.fieldX) == x)
+            if (static_cast<i16>(battle.fieldX) == x)
             {
                 battle.slideMode = 0;
                 battle.shake = 0;

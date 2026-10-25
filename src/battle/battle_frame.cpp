@@ -187,7 +187,7 @@ int Game::BattleFrame()
     battle.enemyGaugeBoost = battle.actingUnit == -1 && battle.currentUnit == 0 ? 1 : 0;
     smooth::Scene frameScene;
     this->battleServices.frame = this->smoothMotion || this->battleDeferred ? &frameScene : nullptr;
-    this->SlideUnits(this->battleEnemies[static_cast<std::size_t>(battle.slideUnit)], battle.slideX);
+    this->SlideUnits(battle.slideUnit, battle.slideX, battle.slideTarget);
     this->DrawBattleBackground(battle.shake);
 
     if (battle.unk53BF64 == 1 || battle.hitsAllRoles == 1)
