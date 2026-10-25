@@ -206,9 +206,7 @@ constexpr int kRefineArrowX = 0x16;
 constexpr std::u8string_view kRefineAttack = u8"攻";   // 0x004BEFF0
 constexpr std::u8string_view kRefineDefense = u8"防";  // 0x004BEFDC
 constexpr std::u8string_view kRefineAgility = u8"敏";  // 0x004BEFD8
-constexpr u32 kWordBits = 16;
-constexpr u32 kHighWord = 0xFFFF0000u;
-constexpr int kChargeWidth = 0x6E;  // DrawChargePanel (swd3e)
+constexpr int kChargeWidth = 0x6E;                     // DrawChargePanel (swd3e)
 constexpr int kChargeHeight = 0x44;
 constexpr int kChargeFrameRight = 0x6A;
 constexpr int kChargeFrameBottom = 0x40;
@@ -1747,18 +1745,17 @@ void TurnFrame::DrawRefineStatsAdvance(int x, int y, Scene& scene)
     Database::FreeDescription(battle.lastObject);
     const ObjectData& second = battle.lastObject.data;
 
-    // The sums are of dwords in the original: each word with the next one after it (the second object's next field,
-    // the high word of the panel's x or y for the first) carried into the high word.
-    auto sum = [](u32 firstHigh, u16 firstValue, u16 secondValue, u16 secondNext)
+    // The original adds dwords but formats only the sign-extended low word of each sum (0x00478DCC, 0x00478E79,
+    // 0x00478F24), so the carry into the high word never shows.
+    auto sum = [](u16 firstValue, u16 secondValue)
     {
-        return static_cast<i32>((firstHigh | firstValue) + ((static_cast<u32>(secondNext) << kWordBits) | secondValue));
+        return static_cast<i32>(static_cast<i16>(static_cast<u16>(firstValue + secondValue)));
     };
 
     const std::array<std::pair<std::u8string_view, i32>, 3> rows = {{
-        {kRefineAttack, sum(static_cast<u32>(x) & kHighWord, first.attack, second.attack, second.defense)},
-        {kRefineDefense,
-         sum(static_cast<u32>(first.agility) << kWordBits, first.defense, second.defense, second.agility)},
-        {kRefineAgility, sum(static_cast<u32>(y) & kHighWord, first.agility, second.agility, second.unk60)},
+        {kRefineAttack, sum(first.attack, second.attack)},
+        {kRefineDefense, sum(first.defense, second.defense)},
+        {kRefineAgility, sum(first.agility, second.agility)},
     }};
 
     const auto green = static_cast<u16>(game.painter.MakeColor(0, kObjectStatsValueGreen, 0));
@@ -1825,8 +1822,13 @@ int TurnFrame::DrawChargePanelAdvance(int x, int y, int cursor, Scene& scene)
     );
     const auto roleIndex = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     BattleRole& role = game.battleRoles[roleIndex];
-    HudFrame(game.battleHud)
-        .DrawRoleIconAdvance(battle.partyRoles[roleIndex], x + kChargeIconOffset, y + kChargeIconOffset, scene);
+
+    // A role after the party reads on past partyRoles, as the original does (0x00479045).
+    if (const std::optional<i32> partyRole = battle.PartyRoleRead(static_cast<u32>(roleIndex)))
+    {
+        HudFrame(game.battleHud).DrawRoleIconAdvance(*partyRole, x + kChargeIconOffset, y + kChargeIconOffset, scene);
+    }
+
     const std::string count = WinFormat(kChargeCount, {role.Unk2EB2Shown()});
     font.DrawText(
         game.drawSurface,

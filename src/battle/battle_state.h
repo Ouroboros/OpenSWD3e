@@ -292,8 +292,8 @@ public:
     i32 result = 0;                  // 0x00576FAC 0x67: the battle is lost before it starts
     i32 mirrored = 0;                // 0x00577304 the sides are swapped
     u16 levelCap = DefaultLevelCap;  // 0x004BF1CE the level the party roles gain experience below (StartBattle sets it)
-    u16 lightColor = 0;              // swd32 0x004FF104
-    u16 darkColor = 0;               // swd32 0x005240BC
+    u16 lightColor = 0;              // 0x0050EC74
+    u16 darkColor = 0;               // 0x00537424
     i32 pointerX = 0;                // 0x00513428
     i32 pointerY = 0;                // 0x0051342C
     std::array<UnitPlacement, Enemies> enemyPlaces;      // swd32 0x005213A0

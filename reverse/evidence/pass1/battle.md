@@ -297,3 +297,29 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 - 0x004785C0 DrawResistancePanel：panelFlags 位 0x20 时：panelAct id、Run；Box(0xEC,0x56,0xB8,panelHeight+0x28, 0,4,4, 模式 0)；框 (0xF0,0x5A,0x1A0,0x6A)、单位名（0x00577A44 指向）于 (0x130,0x5A)、正文框 (0xF0,0x7A,0x1A0,panelHeight+0x7A)；GrowPanel(0x7A,0xDE,3) 为 1 时 5 个元素（名表 0x004BF61C，y 0x82 起每 0x14）：抗性（i8，单位 +0x9C）为 0 时颜色 RGB(0x10,0x10,0x10)、长度 2.0；> 0 时先画底条 FillColor(0x11C,y,0x78,3,RGB(0x1C,0x1C,0x1C))，颜色 RGB(0x1C,2,2)、长度 = (float)(抗性×0.01f×120.0f)（0x004AAE0C／0x004AAE08）；负值不改颜色与长度（沿用上一元素）；元素名于 (0xFC, y−8) 白 RGB(0x1F,0x1F,0x1F)；FillColor(0x11C, y, Ftol(长度), 3, 颜色)。"--"／"%2d%%" 格式化结果从不画出。
 - 0x004787F0 DrawTallPanel／0x00478880 DrawSmallPanel：panelAct id、Run；menuSlide（0x00577A4C）> 0 时折半（有符号）；left = x − menuSlide；Box(left, y, 0x64／0x34, 0xC8／0x34, 0,4,4, 模式 2)；WindowFrame(left+4, y+4, left+0x60／0x30, y+0xC4／0x32)；返回 left。
 - 0x00478900 DrawWidePanel：同样折半 menuSlide，top = y − menuSlide；Box(x, top, 0x82, 0x1E)、WindowFrame(x+4, top+4, x+0x7A, top+0x18)；返回 menuSlide ≤ 0。
+
+## Game::DrawObjectStats（第 1020 行）— exact
+
+- 0x00478990：panelAct id、Run；menuSlide（0x00577A4C）清 0；当前角色（currentUnit−0x14，0x005136E0 起每 0x34D4）SelectedItemId（0x00487600）；LoadObject 到 0x00576D40、FreeDescription；在抗性 5 字节（0x00576DDC）中找第一个非 0，找到元素号 = 序号+1，找不到取参数 x（越界，已登记 deviations 0x00478990，源码不画元素色框）；名望 = FindCounterValue(0x004D3458, id)（u16）；Box(x,y,0x40,0x42, 0,4,4, 模式 2)；名望（无符号）≥ 10 时 Box(x,y,0x40,0x42, 元素色表 0x004BF674[元素号], 模式 5)；WindowFrame(x+4,y+4,x+0x3C,y+0x3A)；三行「攻:」「防:」「敏:」（0x004BF8F0／EC／E8）于 (x+8, y+8+0x10×i) 色 lightColor（0x0050EC74）样式 0x10，"%3d"（u16 攻 +0x5A、防 +0x5C、敏 +0x5E）于 (x+0x22, …) 色 RGB(0,0x18,0)；小字体 0x004C3658；返回 x。色表 6 项与 exe 字节一致。
+- 改注释：lightColor 由正传地址改为 0x0050EC74。
+
+## Game::DrawRefineStats（第 1021 行）— exact（修正后）
+
+- 0x00478C50：panelAct id、Run；menuSlide 清 0；Box(x,y,0x44,0x40, 0,4,4, 模式 2)、WindowFrame(x+4,y+4,x+0x3C,y+0x3A)；当前角色 SelectedItemId 载入 0x00576D40、FreeDescription，记下攻、防（与敏合成双字）、敏；记录清 0xA8 字节（整条记录）后载入 givenBack[guardCursor]（0x0050EFCA、0x00576FB8）、FreeDescription；三行各：标签「攻」「防」「敏」（0x004BEFF0／DC／D8，wsprintf 无参数）于 (x+8, y+8+0x10×i) 色 lightColor 样式 0x10；"%3d" 于 (x+0x22, …) 色 RGB(0,0x18,0)；箭头图 0x23B6 帧 0x13 于 (x+0x16, …)；返回 x。
+- 修正：原程序双字相加后只取和的低 16 位做 movsx 再格式化（0x00478DCC、0x00478E79、0x00478F24），源码原按整个双字（含进位到高字的 x、y 高字与下一字段）格式化，高字非 0 时打印值不同；改为两字相加取 i16。
+
+## Game::DrawChargePanel（第 1022 行）— exact（修正后）
+
+- 0x00478FA0：panelAct id、Run；Box(x,y,0x6E,0x44, 0,4,4, 模式 2)；WindowFrame(x+6,y+8,x+0x6A,y+0x18) 与 (x+6,y+0x28,x+0x6A,y+0x40)；DrawRoleIcon(partyRoles[currentUnit−0x14]，即 0x004BF11C[currentUnit]，x+0x14, y+0x14)；"X%2d"（(i16)Unk2EB2Shown 0x0049C2C0）于 (x+0x32, y+8) 大字体 0x004C5130 色 lightColor 样式 4；两项（0x004BF66C：「繼續」0x004BF6C4、「放勁」0x004BF6BC）left = x+0x30×i：名字于 (left+8, y+0x2C) lightColor；第 0 项且 Unk2EB2BelowProficiency（0x0049C2D0）为 0 时以 darkColor（0x00537424）重画于 (x+8, y+0x2C)；i+1 等于 cursor 时背景 0xF000，于 (left+7, y+0x2B) 重画同样两笔，背景 0xFFFE；返回 2。
+- 修正：partyRoles 下标（待核项）——蓄劲角色序号是否限于 0..3 未能由调用者确认（0x00471E80 只判 chargingRole），改用 PartyRoleRead 按原布局读相邻全局，并登记 deviations 0x00478FA0。
+- 改注释：darkColor 由正传地址改为 0x00537424。
+
+## BattleMessages::Add（第 1023 行）— exact
+
+- 0x00479220：exclusive（0x00577A80）> 0（有符号）返回；分配 0x28 字节清零；x、y、frames（字）、文字指针（+0x24）、length = lstrlen；flags |= 参数；参数含 0x40 时 y = 1、slideY = −0x20；合并后 flags 含 0x1000000 时 y += stacked（0x00577A7C）×32；合并后含 2 时 stacked 加一；参数含 0x2000000 时 exclusive 加一；文字前 0xFF 字节内（遇 NUL 止）每个 '$' 置 colored（+0x20）= 1、length −= 2；四色 0x00577A74..7A = RGB(0x1F,0x1F,0x1F)、(0x1F,0x1D,0x17)、(0x1F,0x11,0)、(0x1F,0,0)；接到链表（0x00537388）末尾。源码 Add 与共用的 Append 逐项一致。
+
+## BattleMessages::Draw、Clear（第 1024–1025 行）
+
+- 0x00479360 Draw — exact（修正后）：链表空返回；颜色变量置 0xFFFF（每次调用一次）；字宽 0x16（不复原）。逐条：y = y+6、x = x+0x10；flags 最高位：panelAct、FillBox(0xA,0xA,0x26C,0x20, −8,−8,0xA, 模式 1)、WindowFrame(0xE,0xE,0x272,0x26, 0, 0x80000008)；0x40000000：FillColor(0xA, y, 0x26C, 0x20, 0xFF)；1：x = 0x12；2：x = 0x13B − ((20×(len>>1))>>1)；frames（i16）≤ 0 跳到下一条；0x10：y 0x10，半宽 = (22×(8−(len>>1)))>>1，slideX 为 0 时 0x280，slideX = (slideX+半宽+0xE3)>>1，盒 (slideX−半宽, 0xA, 0xB0, 0x20)；0x20：同样无初值；0x40：x = 半宽+0xE3、y = slideY = (slideY+0x20)/2（向零），盒 (0xE3, y−6)；colored：'$' 后 atoi 取颜色（无界，已登记），跳一字节，复制到 '$' 或 NUL 为止，画于 (x,y) 样式 0x10，x += 11×段长，至 NUL；否则以 0xFFFF、样式 0x10 画整段；frames 减一。第二轮：frames > 0 保留；0x20 slideX += 0x50、盒与原文字于 (slideX, 0x10)，< 0x280 保留；0x10 slideX −= 0x50，> 0 保留；0x40 slideY −= y、y ×= 2、盒 (slideX−半宽, slideY−6)、文字 (slideX, slideY)，> −0x20 保留；否则摘除，Exclusive 时 exclusive 减一，stacked > 0 时减一。
+- 修正：颜色变量（var_84）在 0x0047938B 每次 Draw 只初始化一次，后一条不以 '$' 开头的彩色消息沿用前一条最后的颜色；源码原每条消息重置为 0xFFFF，改为跨消息保留。deviations 0x00479360 补记以 '$' 结尾时越过结尾 0 的读取。
+- 0x00479820 Clear — exact：链表非空时逐个释放，清 exclusive、stacked；空链表不清计数。

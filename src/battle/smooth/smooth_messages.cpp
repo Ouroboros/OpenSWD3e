@@ -171,6 +171,9 @@ void MessagesFrame::Advance(MessagesView& view)
     };
 
     owner.messageFont.SetAdvance(kMessageAdvance);
+    // Set once per draw (0x0047938B): a coloured message not starting with a code keeps the colour the one before it
+    // left.
+    Pixel color = kMessageTextColor;
 
     for (BattleMessage* message = owner.messages.get(); message != nullptr; message = message->next.get())
     {
@@ -246,7 +249,6 @@ void MessagesFrame::Advance(MessagesView& view)
             // end, the rebuild draws the piece only (deviations.md). A text not starting with a code loses its first
             // byte, as in the original.
             const std::string_view text = message->Text();
-            Pixel color = kMessageTextColor;
             std::size_t at = 0;
 
             do
