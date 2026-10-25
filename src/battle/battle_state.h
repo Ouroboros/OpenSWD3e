@@ -474,7 +474,7 @@ public:
     // The hit acts of the units (0x004582B0, 0x00458DE0, PlayHitAct, FadeHitAct).
     std::array<ActState, Units> hitActs;     // 0x005347F8 the hit act of each unit
     std::array<ActState, Units> followActs;  // swd32 0x004FE600 the follow act of each unit
-    std::array<ActState, Units> fadeActs;    // the fading act of each unit (ending at 0x00538158)
+    std::array<ActState, Units> fadeActs;    // 0x00538160 the fading act of each unit
     // 0x00538158 (swd3e) the step of the battle music volume: Config::musicVolume from BattleIntro, faded to 2 by
     // defeat pose 0x65
     i32 musicLevel = 0;  // 0x00538158 (swd3e) the battle music's volume while a boss sinks or an enemy casts (0..11)
@@ -594,7 +594,6 @@ public:
     u16 lastRoleDefeated = 0xFFFF;  // 0x004BF1C8 the last role defeated by a hit
     i32 enemySweeps = 0;            // 0x00577280 1: an enemy's hit sweeps (only written in swd3e)
     i32 enemyHitsAll = 0;           // 0x005772F4 1: an enemy's hit falls on the party at once (only written in swd3e)
-    i32 enemyHitAct = 0;            // swd32 0x0053BD40 the hit act of the acting enemy
     // 0x005135A4 (swd3e) per enemy: the hit act of its command (EnemyFrame); its spell runs it once to time the hits
     std::array<i32, Enemies> enemyHitActs = {};
     std::array<u8, 20> enemyCommandTurns = {};  // 0x00537690 (swd3e) per role: the turns of the casting enemy's command
@@ -639,9 +638,9 @@ public:
     u16 slotRecordFrames = 0;  // swd32 0x0053BF1A frames since the last slot record was taken
     u16 snapNumber = 0;        // 0x005777EE the number of the last snapshot
     // Cleared by Game::EndBattle (no other use found).
-    std::array<i32, 8> unk524200 = {};
+    std::array<i32, Enemies> unk524200 = {};  // 0x005375C8 (swd3e: 0x50 bytes) cleared by EndBattle only
     std::array<i32, 8> unk52100C = {};
-    std::array<i32, 0x90> unk4FF318 = {};
+    std::array<i32, 0xF0> unk4FF318 = {};  // 0x0050EFF8 (swd3e: 0x3C0 bytes) cleared by EndBattle only
     std::array<i32, 0xA> unk4FF588 = {};
     i32 unk53AED8 = 0;
     i32 unk4A7580 = 0x60;  // the opening places of unk4A7580..unk4A7594 (exe data)

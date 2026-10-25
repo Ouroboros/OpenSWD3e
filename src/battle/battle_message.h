@@ -146,7 +146,7 @@ public:
     i32 stacked = 0;    // 0x00577A7C (swd3e) the Centered messages shown, which Stacked ones are placed below
     i32 exclusive = 0;  // 0x00577A80 (swd3e) the Exclusive messages shown
     std::array<u16, 4> colors = {};     // 0x00577A74 (swd3e) the colours of the $0..$3 codes, made by Add
-    std::array<i32, 8> unk5214FC = {};  // cleared with messages by Game::EndBattle
+    std::array<i32, 9> unk5214FC = {};  // 0x0053738C (swd3e: 0x24 bytes) cleared with messages by Game::EndBattle
     ActState panelAct;                  // 0x0050AF70 act 0x233B: the frame picture of the panels
     i32 panelHeight = 0;                // 0x00577A48 grown by GrowPanel
     u16 lootCount = 0;                  // 0x005777EC

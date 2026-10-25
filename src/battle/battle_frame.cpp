@@ -383,7 +383,6 @@ void Game::EndBattle()
     battle.spiritRolling.fill(0);
     battle.spirit.fill(0);
     battle.enemyHitActs.fill(0);
-    battle.enemyHitAct = 0;
     battle.unk53AEE4 = 0;
     battle.roleListRows.fill(1);
     battle.controlRows = kAnswersStart;
