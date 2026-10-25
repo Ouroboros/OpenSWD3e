@@ -1063,7 +1063,7 @@ int BattleUnit::GetGuard() const
 // swd3e.exe 0x00491BD0: mark 0x200 also darkens the unit (brightLevel -32)
 int BattleUnit::SetStatus(int bits)
 {
-    if (static_cast<u16>(bits) == BattleUnit::StatsScaled)
+    if (static_cast<u16>(bits) == BattleUnit::UnkMark200)
     {
         this->brightLevel = BattleUnit::DelayedFadeIn;
     }
@@ -1077,7 +1077,7 @@ int BattleUnit::ClearStatus(int bits)
 {
     this->marks = static_cast<u16>(this->marks & static_cast<u16>(~bits));
 
-    if ((bits & BattleUnit::Poisoned) != 0)
+    if ((bits & BattleUnit::GuardingMark) != 0)
     {
         this->guarding = 0;
     }
@@ -1627,9 +1627,11 @@ void BattleUnit::SetDamageDigits(BattleServices& services, int amount)
     }
 
     const u16 slot = this->targetCount;
+    // A count stepped below zero (0x00490FF0) reads and writes outside the tables in the original.
+    const bool inTable = slot < this->pushedTargets.size();
 
-    if (this->pushedTargets[slot] == BattleUnit::DamageTarget && (this->status & BattleUnit::ResistAll) != 0 &&
-        (amount & BattleUnit::Healing) == 0)
+    if (inTable && this->pushedTargets[slot] == BattleUnit::DamageTarget &&
+        (this->status & BattleUnit::ResistAll) != 0 && (amount & BattleUnit::Healing) == 0)
     {
         if (--this->barrierTurns != 0)
         {
@@ -1644,6 +1646,11 @@ void BattleUnit::SetDamageDigits(BattleServices& services, int amount)
     if ((amount & BattleUnit::Healing) != 0)
     {
         amount = -amount;
+    }
+
+    if (!inTable)
+    {
+        return;
     }
 
     auto& digits = this->damageDigits[slot];

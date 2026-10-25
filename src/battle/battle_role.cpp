@@ -112,12 +112,10 @@ constexpr u32 kGhostGrownDays = 0x18;
 constexpr int kGhostDayPercent = 30;
 constexpr u16 kGhostGuardOrder = 4;
 constexpr u16 kGhostLastOrder = 8;
-constexpr u32 kNoGuestActLine = 0x14E;
 constexpr u32 kNoWeaponActLine = 0x23C;                                     // 0x0047F036
 constexpr std::u8string_view kNoAct = u8"戰鬥角色actNumber為0!!";           // 0x004BF9D8
 constexpr std::u8string_view kNoEscortAct = u8"護駕actNumber為0!!";         // 0x004BFA0C
 constexpr std::u8string_view kNoGhostAct = u8"符鬼actNumber為0!!";          // 0x004BFA20
-constexpr std::u8string_view kNoGuestAct = u8"Npc角色actNumber為0!!";       // swd32.exe 0x004A7C7C (unmatched in swd3e)
 constexpr std::u8string_view kNoWeaponAct = u8"武器%d號的強攻擊act沒設!!";  // 0x004BFA34
 constexpr i16 kStatLimit = 0x270F;
 
@@ -281,15 +279,8 @@ constexpr int kBelowChanceStep = 10;  // more per level below
 
 constexpr int kOrbPercent = 0x50;   // ApplyAccessory: an orb adds 80% of its proficiency to the resistance
 constexpr i8 kMaxResistance = 100;  // ApplyEquipment keeps the element resistance to 0..100
-constexpr int kTenths = 10;
 constexpr int kPercent = 100;
 constexpr u32 kAttackRingPercent = 10;  // an attack ring adds 10% of the attack bonus besides its proficiency share
-
-// The value grown by a tenth per point of `scale` (the product kept to 16 bits as the original does).
-i16 Grown(i16 value, i16 scale)
-{
-    return static_cast<i16>(value + static_cast<i16>(scale * value) / kTenths);
-}
 
 // The byte `at` of an object's resistances read as the original does: past the five, the altar, unkA2 and unkA3 after
 // them; further on the description pointer of the record, read as 0 (deviations.md).
@@ -554,48 +545,6 @@ void BattleRole::SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, Battl
         this->ghostOrder = 1;
     }
 
-    this->roleRecord = this->battleRecord;
-}
-
-// swd32.exe 0x0046E9C0 (unmatched in swd3e): a guest fighting with the party: its mon.dat object (by the act of its
-// placement, asserted
-// non-zero) scales the hit points, the bonuses, +0x14, the level and the agility of `base` by tenths, gives its level
-// byte and resistances, and fills the hit points; the record serves as both party and battle record
-void BattleRole::SetupGuest(
-    const UnitPlacement& at,
-    const RoleRecord& base,
-    Database& database,
-    ErrorReporter& reporter
-)
-{
-    this->ownedData = std::make_unique<ObjectRecord>();
-    this->data = this->ownedData.get();
-    database.LoadObject(*this->data, at.actId);
-    Database::FreeDescription(*this->data);
-    this->placement = at;
-    this->savedPlacement = at;
-    this->kind = at.kind;
-    this->actId = at.actId;
-
-    if (this->actId == 0)
-    {
-        MaintenanceAssert(reporter, kNoGuestAct, 0, kManroleFile, kNoGuestActLine);
-    }
-
-    RoleRecord& record = *this->battleRecord;
-    const ObjectData& object = this->data->data;
-    const auto scale = static_cast<i16>(object.attackBonusUp);
-    record.maxHitPoints = Grown(base.maxHitPoints, scale);
-    record.attackBonus = static_cast<u16>(Grown(static_cast<i16>(base.attackBonus), scale));
-    record.defenseBonus = static_cast<u16>(Grown(static_cast<i16>(base.defenseBonus), scale));
-    record.wisdom = Grown(base.wisdom, scale);
-    record.level = static_cast<u8>(base.level + static_cast<i8>(scale * base.level) / kTenths);
-    record.evasion = object.battleLevel;
-    record.agility = static_cast<i16>(base.agility + static_cast<i16>(base.agility * object.agilityUp) / kTenths);
-    std::copy_n(object.resistances.begin(), record.resistances.size(), record.resistances.begin());
-    this->evadeSkill = static_cast<u8>(record.evasion);
-    record.hitPoints = record.maxHitPoints;
-    this->weapon.data.skillScript = object.skill;
     this->roleRecord = this->battleRecord;
 }
 

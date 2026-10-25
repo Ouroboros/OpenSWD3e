@@ -130,7 +130,6 @@ public:
     void FinishCommand();
     int BeatsLevel(BattleServices& services, u16 level) const;
     int StepBack(BattleServices& services, int mode);
-    void SetupGuest(const UnitPlacement& at, const RoleRecord& base, Database& database, ErrorReporter& reporter);
     void ApplyEquipment(
         std::span<const std::unique_ptr<ItemNode>> slots,
         CounterList& proficiency,

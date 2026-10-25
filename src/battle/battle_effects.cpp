@@ -602,15 +602,20 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
             this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark2 | BattleUnit::Held);
             this->overlayWipe = static_cast<u16>(this->overlayWipe | kOverlayWiping);
             this->status |= BattleUnit::UnkStatus2;
-            // The earth resistance shortens it, the metal one lengthens it (in percent, read unsigned).
-            const u8 earth = this->kind == BattleUnit::PartyRole ? this->battleRecord->resistances[kEarthResistance]
-                                                                 : this->data->data.resistances[kEarthResistance];
-            const u8 metal = this->kind == BattleUnit::PartyRole ? this->battleRecord->resistances[kMetalResistance]
-                                                                 : this->data->data.resistances[kMetalResistance];
+            // The earth resistance shortens it, the metal one lengthens it (in percent, signed: 0x00492710, the
+            // compare 0x0049272D signed too).
+            const auto earth = static_cast<i8>(
+                this->kind == BattleUnit::PartyRole ? this->battleRecord->resistances[kEarthResistance]
+                                                    : this->data->data.resistances[kEarthResistance]
+            );
+            const auto metal = static_cast<i8>(
+                this->kind == BattleUnit::PartyRole ? this->battleRecord->resistances[kMetalResistance]
+                                                    : this->data->data.resistances[kMetalResistance]
+            );
 
             if (earth != 0)
             {
-                const u16 cut = static_cast<u16>(node.turns * earth / kPercent);
+                const int cut = node.turns * earth / kPercent;
                 node.turns = node.turns >= cut ? static_cast<u16>(node.turns - cut) : u16{0};
             }
 
@@ -1187,12 +1192,10 @@ void BattleUnit::TickEffects(BattleServices& services)
         {
             const u16 cut = static_cast<u16>(services.random.Below(kStatsCutRoll) + kStatsCutLeast);
             RoleRecord& record = *this->battleRecord;
-            record.attackBonus =
-                static_cast<u16>(record.attackBonus - static_cast<i16>(cut * record.attackBonus) / kPercent);
-            record.defenseBonus =
-                static_cast<u16>(record.defenseBonus - static_cast<i16>(cut * record.defenseBonus) / kPercent);
-            record.agility =
-                static_cast<i16>(record.agility - static_cast<i16>(cut * static_cast<u16>(record.agility)) / kPercent);
+            // 0x004920E0: each product is taken in 32 bits before the division.
+            record.attackBonus = static_cast<u16>(record.attackBonus - cut * record.attackBonus / kPercent);
+            record.defenseBonus = static_cast<u16>(record.defenseBonus - cut * record.defenseBonus / kPercent);
+            record.agility = static_cast<i16>(record.agility - cut * static_cast<u16>(record.agility) / kPercent);
             record.wisdom = static_cast<i16>(record.wisdom - cut * static_cast<u16>(record.wisdom) / kPercent);
             node->level = static_cast<float>(static_cast<double>(cut) + static_cast<double>(node->level));
         }
@@ -1328,9 +1331,12 @@ int BattleUnit::HasAnyBuff() const
 // (0 without one)
 double BattleUnit::EffectShare(u32 bits) const
 {
+    // The argument is a word in the original (0x00493DD4).
+    const u16 wanted = static_cast<u16>(bits);
+
     for (const EffectNode* node = this->effects.next.get(); node != nullptr; node = node->next.get())
     {
-        if (node->bits == bits)
+        if (node->bits == wanted)
         {
             return static_cast<double>(node->turns) / static_cast<double>(node->turnsMax);
         }
