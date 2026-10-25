@@ -259,7 +259,7 @@
 | 0x00479860 | 越界 | 指令 0x49 第三个字为 0 时整数除零崩溃 | Fault() 报告后结束 | asm/00479860.asm（0x0047C872） |
 | 0x00479860 | 越界 | 指令 0x24 位置超出屏幕时先释放新建的效果块，再从已释放的块读出坐标与宽高报错（释放后读取） | 以释放前的值报错 | asm/00479860.asm（0x0047C26F） |
 | 0x004A1B81 | 平台替换 | floor 以 FPU 舍入模式取整，无穷大与 NaN 经数学错误处理链（设 errno、查 0x004A85E0 函数名表、调用 _matherr）原样返回 | std::floor（结果相同，不设 errno） | 架构 v3；待核（继承自 swd3-rebuild） |
-| swd32 0x00489D90 | 平台替换（用户要求） | vsprintf 的 %f 经 _cftof／_fltout2／_fptostr：取 17 位有效数字后中点进位（2.25 取一位为 2.3） | std::snprintf，舍入按当前 CRT；只影响 F1 调试显示 0x004302F0 | 架构 v3；待核（继承自 swd3-rebuild） |
+| 0x004A19E5、0x004A2461 | 平台替换（用户要求） | vsprintf 的 %f 经 _cftof／_fltout2／_fptostr：取 17 位有效数字后中点进位（2.25 取一位为 2.3） | std::snprintf，舍入按当前 CRT；只影响 F1 调试显示 0x004302F0 | asm/004A19E5.asm、asm/004A2461.asm（_fltout2 → $I10_OUTPUT 17 位） |
 | 0x004A14E2、0x004A14EC | 平台替换（用户要求） | srand／rand 为 MSVC LCG（状态 0x004A833C，乘 0x343FD 加 0x269EC3，取 16..30 位） | std::srand／std::rand（取低 15 位，即 Windows 的 RAND_MAX）：Windows UCRT 为同一 LCG；Linux glibc 序列不同。使用者：爆炸与粒子（Projector 0x00438FA0 等）、水花 ScriptObject::Splash、RolePath 0x00406770 的一次消耗 | 架构 v3；待核（继承自 swd3-rebuild） |
 | 0x004A150A | 平台替换（用户要求） | difftime 为 32 位相减 | std::difftime；仅相隔 68 年以上时不同 | 架构 v3；待核（继承自 swd3-rebuild） |
 | 0x004411C0 | 越界 | 跳过的项数超过链表长度时经空节点读下一项 | 到链表尾即停（结果为空） | 架构 v3；待核（继承自 swd3-rebuild） |

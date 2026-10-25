@@ -40,7 +40,7 @@ auto PrintfArgument(const T& value)
 
 }  // namespace detail
 
-// swd32.exe 0x00489D90 (unmatched in swd3e) vsprintf into the game's 256-byte buffers (std::string arguments as %s);
+// swd3e.exe 0x004A19E5 vsprintf into the game's 256-byte buffers (std::string arguments as %s);
 // the original writes
 // past them for longer texts, here the text is cut.
 template <typename... Args>
@@ -56,7 +56,7 @@ std::string Sprintf(std::string_view format, const Args&... args)
     return std::string(buffer.data());
 }
 
-// swd3e.exe 0x004A14E2 srand and 0x00489B20 rand.
+// swd3e.exe 0x004A14E2 srand and 0x004A14EC rand.
 class Random
 {
 public:

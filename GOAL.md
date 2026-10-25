@@ -22,21 +22,21 @@
 
 ## 整体进度
 
-- 当前阶段：第4阶段（验证）第一遍进行中。
+- 当前阶段：第4阶段（验证）第一遍已完成，收尾偏差表与数据核对；之后进入第5阶段（交付）。
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
 - 已实现／总数：1710／1710。
-- 已验证／总数：1466／1710。
-- 待实现／待验证：0／244。
+- 已验证／总数：1710／1710（第一遍）。
+- 待实现／待验证：0／0。
 
 ## 当前工作
 
-函数全集1710个均已实现，范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试172项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。第4阶段第一遍逐函数验证进行中，证据按模块记入reverse/evidence/pass1/。停点：函数表第1467行 AscentGame::Start（0x0049EFF0）。
+函数全集1710个均已实现并通过第一遍汇编对照（证据按模块记入reverse/evidence/pass1/），范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试172项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。当前收尾：reverse/analysis/deviations.md 中仍标“待核（继承自 swd3-rebuild）”的行逐条按 swd3e 汇编核实、改地址或删除；scope-and-gaps 中待核对的 DirectInput 键盘数据格式闭合。
 
 ## 下一步
 
-1. 第4阶段：从函数表第一行开始第一遍逐函数汇编验证，结论记入reverse/evidence/，用scripts/mark_verified.py登记。
-2. 产出Windows可游玩构建，提供试玩命令交用户运行。
+1. 完成偏差表与数据核对收尾（修订使已验证函数失效时，恢复为待复核并在第一遍内重验）。
+2. 第5阶段：Windows x64 构建（0 警告），提供试玩命令交用户运行，按回传结果修正。
 
 ## GOAL完成条件
 
