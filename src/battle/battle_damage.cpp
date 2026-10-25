@@ -160,7 +160,7 @@ void Game::TryRetreat(int role)
         return;
     }
 
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
     battle.unk53BFC4 = 1;
     battle.unk53BF5C = 0;
     battle.undarkening = 0;

@@ -378,7 +378,7 @@ public:
     i32 shake = 0;       // 0x0057702C the shift of the background this frame, cleared once drawn
     i32 quaking = 0;     // 0x0057730C 1: the screen quakes (read by 0x00453200, shaken by 0x0045E7D0)
     i32 quakePhase = 0;  // 0x00577030 the step of the quake in its offset table (0x004A75EC)
-    i32 unk53BF94 = 0;   // 0x00577290 with unk53BF98 (0x00577294): the field is darkened
+    i32 unk577290 = 0;   // 0x00577290 with unk53BF98 (0x00577294): the field is darkened
     i32 unk53BF98 = 0;
     i16 darkenUnit = -1;  // 0x004BF1D4 the unit darkening the field
     u16 unk53BF2C = 0;
@@ -453,7 +453,7 @@ public:
     i16 proficiencyBonus = 0;  // 0x005373B4 the weapon proficiency step of the last strike
 
     // The state of the turns (0x0045BEA0, 0x00456680 and the commands).
-    i32 unk53BFC0 = 0;  // 0x005772BC
+    i32 unk5772BC = 0;  // 0x005772BC (StartRipple sets it with 0x005772C8)
     i32 unk53BFC4 = 0;
     i32 unk53BF5C = 0;
     i32 turnUnit = 0;    // 0x00577020 the role unit taking the turn
@@ -466,7 +466,7 @@ public:
     i32 turnCommand = 0;  // 0x00576FA8 the order of the turn under way
     i32 unk53BF60 = 0;
     i32 unk53BF64 = 0;
-    i32 unk53BF74 = 0;  // 0x00577270 set by talk command 0x4E
+    i32 unk577270 = 0;  // 0x00577270 set by talk command 0x4E
     // 0x00577314 set when a role turns to another enemy (RetargetRoles)
     i32 retargeted = 0;
     std::array<i32, Units> turnTaken = {};      // 0x00576024 per unit, set when it takes the turn

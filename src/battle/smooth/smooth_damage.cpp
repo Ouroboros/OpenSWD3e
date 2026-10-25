@@ -117,7 +117,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {
-        battle.unk53BF94 = 1;
+        battle.unk577290 = 1;
     }
 
     if ((act.target & (ActState::Strikes | ActState::FollowsUp)) == 0)
@@ -288,7 +288,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {
-        battle.unk53BF94 = 1;
+        battle.unk577290 = 1;
     }
 
     if ((role.stage & BattleUnit::FollowingUp) == 0)

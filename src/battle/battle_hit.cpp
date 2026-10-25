@@ -1658,7 +1658,7 @@ int Game::EnemyActionFrame(int enemy, int target)
                 battle.darkRed = kDrainDark;
                 battle.darkGreen = kDrainDark;
                 battle.darkBlue = kDrainDark;
-                battle.unk53BF94 = 1;
+                battle.unk577290 = 1;
                 this->DarkenByTint();
                 battle.pushFrames = 1;
                 battle.sweptUnits = 1;
@@ -1671,7 +1671,7 @@ int Game::EnemyActionFrame(int enemy, int target)
 
             battle.sweptUnits = 1;
             battle.pushFrames = 0;
-            battle.unk53BF94 = 0;
+            battle.unk577290 = 0;
             battle.darkenUnit = -1;
             battle.undarkening = 1;
             return 1;
@@ -1703,7 +1703,7 @@ int Game::EnemyActionFrame(int enemy, int target)
             if (battle.actingUnit == removed)
             {
                 battle.actingUnit = -1;
-                battle.unk53BF74 = 0;
+                battle.unk577270 = 0;
             }
 
             return 1;
@@ -1865,7 +1865,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
         }
 
         battle.hitLanded = 1;
-        battle.unk53BFC0 = 0;
+        battle.unk5772BC = 0;
         battle.lastRoleHit = static_cast<u16>(target);
         this->ApplyDrain(battle.hitDamage, unit, role);
 
@@ -1907,7 +1907,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
 
     battle.hitLanded = 1;
     battle.lastRoleHit = static_cast<u16>(target);
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
 
     if (battle.unk53AF68 == 0 && aimed.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
@@ -2110,7 +2110,7 @@ int Game::EnemyFrame(int enemy)
 
     if (this->fightTalk.battleRuns == 1)
     {
-        if (battle.actingUnit == -1 && !unit.IsDefeated() && battle.unk53BFC0 == 0 && battle.unk53BFC4 == 0)
+        if (battle.actingUnit == -1 && !unit.IsDefeated() && battle.unk5772BC == 0 && battle.unk53BFC4 == 0)
         {
             unit.TickEffects(services);
 
@@ -2118,7 +2118,7 @@ int Game::EnemyFrame(int enemy)
             {
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
                 battle.unk53BFC4 = 1;
-                battle.unk53BFC0 = 1;
+                battle.unk5772BC = 1;
             }
         }
 
@@ -2130,9 +2130,9 @@ int Game::EnemyFrame(int enemy)
                 {
                     const bool held = unit.IsHeld() == 1;
                     battle.unk53BF5C = 0;
-                    battle.unk53BF74 = 0;
+                    battle.unk577270 = 0;
                     battle.hitsAllRoles = 0;
-                    battle.unk53BFC0 = 0;
+                    battle.unk5772BC = 0;
                     battle.actingUnit = -1;
 
                     if (held)
@@ -2170,7 +2170,7 @@ int Game::EnemyFrame(int enemy)
             if (battle.unk50CE6C[at] == 1 && battle.actingUnit == -1 && battle.result == 0 &&
                 this->fightTalk.battleRuns == 1 && unit.DrainSecondGauge() == 1)
             {
-                battle.unk53BFC0 = 1;
+                battle.unk5772BC = 1;
                 battle.unk53BFC4 = 1;
                 battle.unk50CE6C[at] = 0;
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
@@ -2184,7 +2184,7 @@ int Game::EnemyFrame(int enemy)
     }
 
     const bool holding =
-        (unit.GetWord2A74() != 0 && (battle.unk53BF94 == 1 || battle.unk53BF98 == 1)) || battle.enraging == 1;
+        (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk53BF98 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
     if (battle.unk53AE90[at] != -1 && this->PlayHitAct(unit, static_cast<u32>(battle.enemiesHitAct), enemy) == 1)
@@ -2233,7 +2233,7 @@ void Game::EnemyAimSide(BattleEnemy& unit)
 
     unit.Retarget(0);
     battle.enemySweeps = 1;
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
 }
 
 // A role an enemy may aim at in EnemyPickTarget (inline in the original): standing, not stepped away (unk3038), not the
@@ -2499,9 +2499,9 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     {
         battle.actingUnit = -1;
         battle.unk50CE6C[at] = 1;
-        battle.unk53BF74 = 0;
+        battle.unk577270 = 0;
         battle.unk53BFC4 = 0;
-        battle.unk53BFC0 = 0;
+        battle.unk5772BC = 0;
         unit.FillSecondGauge();
     };
 
@@ -2710,7 +2710,7 @@ void Game::EnemyActFrame(BattleEnemy& unit, int enemy)
     BattleState& battle = this->battleState;
     const auto at = static_cast<std::size_t>(enemy);
     battle.hitsAllRoles = 1;
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
     unit.MarkAC8();
     battle.darkenUnit = static_cast<i16>(enemy);
 
@@ -2784,7 +2784,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         ghost.Retarget(static_cast<i16>(battle.actingUnit));
         ghost.GhostAttackCommand(this->database);
         battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
-        battle.unk53BFC0 = 1;
+        battle.unk5772BC = 1;
         battle.unk53BFC4 = 1;
     }
 
@@ -2845,8 +2845,8 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
 
     if (battle.unk5772C8 == 0)
     {
-        battle.unk53BF74 = 0;
-        battle.unk53BFC0 = 0;
+        battle.unk577270 = 0;
+        battle.unk5772BC = 0;
 
         if (battle.unk53BF98 == 1)
         {

@@ -390,7 +390,7 @@ void Game::RandomRoleAct(int unit)
         battle.turnTaken[static_cast<std::size_t>(unit)] = command;
         role.SetTarget(1);
         battle.unk53BFC4 = 1;
-        battle.unk53BFC0 = 1;
+        battle.unk5772BC = 1;
     };
 
     if (choice == kRandomGuard)
@@ -637,7 +637,7 @@ int Game::RemoveDefeated(int index, int role)
             battle.result = kBattleWon;
             battle.autoBattle = 0;
             battle.unk53BFC4 = 1;
-            battle.unk53BFC0 = 1;
+            battle.unk5772BC = 1;
         }
 
         if (count + battle.unk53BF02 - battle.enemiesGone == 1)
@@ -740,14 +740,14 @@ int Game::RemoveDefeated(int index, int role)
         battle.aimTarget = 1;
         battle.result = kTurnsRunning;
         battle.unk53BFC4 = 0;
-        battle.unk53BFC0 = 0;
-        battle.unk53BF74 = 0;
+        battle.unk5772BC = 0;
+        battle.unk577270 = 0;
     }
 
     if (battle.actingUnit == unitId)
     {
         battle.actingUnit = -1;
-        battle.unk53BF74 = 0;
+        battle.unk577270 = 0;
     }
 
     for (std::size_t at = 0; static_cast<i32>(at) < static_cast<i32>(battle.roleCount); ++at)
@@ -1414,7 +1414,7 @@ void Game::ApplyHits()
         battle.pendingOrders[ghostAt].unk00 = 1;
         ghost.Retarget(0);
         battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
-        battle.unk53BFC0 = 1;
+        battle.unk5772BC = 1;
         battle.unk53BFC4 = 1;
         battle.ghostRescued = 1;
     }
@@ -2347,7 +2347,7 @@ void Game::MenuCancel()
         battle.unk53BFB8 = 0;
         battle.unk53BF5C = 1;
         battle.unk53BFC4 = 0;
-        battle.unk53BFC0 = 0;
+        battle.unk5772BC = 0;
         battle.autoBattle = 0;
         battle.result = 0;
         battle.autoTarget = -1;
@@ -2358,7 +2358,7 @@ void Game::MenuCancel()
         {
             battle.result = kMenuState;
             battle.unk53BFC4 = 1;
-            battle.unk53BFC0 = 1;
+            battle.unk5772BC = 1;
         }
 
         return;
@@ -2432,7 +2432,7 @@ void Game::MenuCancel()
             switch (battle.menuCommand)
             {
                 case kSpellCommand:
-                    battle.unk53BF94 = 0;
+                    battle.unk577290 = 0;
                     list = kListState2;
                     break;
 
@@ -3745,9 +3745,9 @@ int Game::BattleDebugKeys()
             if (pressed(Input::C))
             {
                 battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellOver);
-                battle.unk53BF74 = 0;
+                battle.unk577270 = 0;
                 battle.ClearActing();
-                battle.unk53BFC0 = 0;
+                battle.unk5772BC = 0;
                 battle.unk53BFC4 = 0;
                 battle.actingUnit = -1;
 
@@ -3823,7 +3823,7 @@ int Game::BattleDebugKeys()
                 battle.unk53BF80 = 1;
                 battle.unk53BD80 = 0;
                 battle.unk53BF64 = 0;
-                battle.unk53BFC0 = 1;
+                battle.unk5772BC = 1;
                 battle.unk53BFC4 = 1;
                 battle.unk53BF5C = 0;
                 battle.turnUnit = 0;
@@ -5356,7 +5356,7 @@ void Game::ConfirmTarget()
 
     if (battle.menuCommand == kSpellCommand)
     {
-        battle.unk53BFC0 = 0;
+        battle.unk5772BC = 0;
         battle.unk53BFC4 = 0;
 
         if (role != nullptr)
@@ -5370,7 +5370,7 @@ void Game::ConfirmTarget()
 
     if (battle.autoBattle == 1)
     {
-        battle.unk53BFC0 = 0;
+        battle.unk5772BC = 0;
         battle.unk53BFC4 = 0;
         battle.autoTarget = battle.aimTarget;
     }
@@ -6136,7 +6136,7 @@ void Game::ConfirmEnd()
 
             battle.listPanelFrames = 0;
             battle.menuGrow = 0;
-            battle.unk53BFC0 = 0;
+            battle.unk5772BC = 0;
             battle.unk53BFC4 = 0;
             battle.unk53BF5C = 0;
             this->controls.PressConfirm();
@@ -6383,7 +6383,7 @@ void Game::BattleKeys()
             battle.unk53BF1C |= kRetreatMark;
             battle.currentUnit = 0;
             battle.unk53BFB8 = 0;
-            battle.unk53BFC0 = 1;
+            battle.unk5772BC = 1;
             battle.unk53BFC4 = 1;
             battle.listPanelFrames = 0;
             battle.menuGrow = 0;
@@ -6707,7 +6707,7 @@ void Game::DrawBattleMenu()
     auto listDrawn = [&battle]
     {
         battle.unk53BFC4 = 1;
-        battle.unk53BFC0 = 1;
+        battle.unk5772BC = 1;
     };
 
     auto scrollBar = [&battle, &hud](i32 count, i32 first, int x)
@@ -6779,7 +6779,7 @@ void Game::DrawBattleMenu()
                 battle.unk53BF1C |= kRetreatMark;
                 battle.result = 0;
                 battle.currentUnit = 0;
-                battle.unk53BFC0 = 1;
+                battle.unk5772BC = 1;
                 battle.unk53BFC4 = 1;
             }
 
@@ -6854,7 +6854,7 @@ void Game::DrawBattleMenu()
 void Game::DrawGhostAimPointer()
 {
     BattleState& battle = this->battleState;
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
     battle.unk53BFC4 = 1;
     this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
     battle.actingEnemy = 0;
@@ -6907,7 +6907,7 @@ void Game::DrawAimPointers()
     BattleState& battle = this->battleState;
     BattleHud& hud = this->battleHud;
     battle.unk53BFC4 = 1;
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
     this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
 
     // Without a current unit (the auto battle) the original reads the order before the first: taken as aiming at
@@ -7108,7 +7108,7 @@ void Game::BattleEndFrame()
         }
 
         case kEndCraft:
-            battle.unk53BFC0 = 1;
+            battle.unk5772BC = 1;
             messages.DrawCraftResultPanel();
             return;
 
@@ -7130,9 +7130,9 @@ void Game::BattleEndFrame()
 
             this->DrawVictoryPanel();
             battle.unk53BF64 = 0;
-            battle.unk53BFC0 = 1;
+            battle.unk5772BC = 1;
             battle.unk53BFC4 = 1;
-            battle.unk53BF74 = 1;
+            battle.unk577270 = 1;
             battle.currentUnit = 0;
 
             if (++battle.endFrames >= kEndPanelFrames)
@@ -7197,7 +7197,7 @@ void Game::BattleEndFrame()
             return;
 
         case kBattleLost:
-            battle.unk53BFC0 = 1;
+            battle.unk5772BC = 1;
             battle.unk53BFC4 = 1;
 
             if ((battle.panelFlags & BattleState::UnkPanel8) != 0)
@@ -7221,7 +7221,7 @@ void Game::BattleEndFrame()
             return;
 
         case kLostQuietly:
-            battle.unk53BFC0 = 1;
+            battle.unk5772BC = 1;
             battle.unk53BFC4 = 1;
 
             if (++battle.endFrames > kEndMessageFrames)

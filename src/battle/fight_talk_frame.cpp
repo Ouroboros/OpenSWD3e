@@ -434,7 +434,7 @@ int Game::FightTalkWindow()
         talk.window->fromX = x;
         talk.window->fromY = y;
         setHigh(static_cast<u16>(high() | kWindowShown));
-        battle.unk53BFC0 = 1;
+        battle.unk5772BC = 1;
         battle.result = 0;
     }
 
@@ -474,7 +474,7 @@ int Game::FightTalkWindow()
     talk.cursor = talk.textAt;
     talk.speaker = {};
     talk.battleRuns = 1;
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
     talk.unk53CE78 = 0;
     setHigh(0);
     return 1;
@@ -654,7 +654,7 @@ int Game::FightTalkOrder()
         }
     }
 
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
     talk.battleRuns = 1;
     this->BattleFrame();
 
@@ -666,7 +666,7 @@ int Game::FightTalkOrder()
     this->SetTalkCommandUnit(0);
     talk.unk53CCE8 = 0;
     battle.enemyFaded = 0;
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
     talk.cursor += 3 * sizeof(u16);
     return 1;
 }
@@ -744,7 +744,7 @@ int Game::FightTalkDefeat()
     this->BattleFrame();
     talk.cursor += 2 * sizeof(u16);
     this->SetTalkCommandUnit(0);
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
     talk.battleRuns = 1;
     return 1;
 }
@@ -773,7 +773,7 @@ int Game::FightTalkCommand(int command)
 
         talk.cursor += 3 * sizeof(u16);
         this->SetTalkCommandUnit(0);
-        battle.unk53BFC0 = 0;
+        battle.unk5772BC = 0;
 
         if (command == kAimSelfCommand)
         {
@@ -818,7 +818,7 @@ int Game::FightTalkCommand(int command)
     {
         if (unit <= kLastEnemy)
         {
-            battle.unk53BFC0 = 1;
+            battle.unk5772BC = 1;
         }
         else
         {
@@ -1191,7 +1191,7 @@ int Game::FightTalkSkill()
         battle.enemyFaded = 0;
     }
 
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
     talk.battleRuns = 1;
     this->BattleFrame();
 
@@ -1205,7 +1205,7 @@ int Game::FightTalkSkill()
     talk.unk53CCEC = 0;
     talk.unk53CCF0 = 0;
     battle.enemyFaded = 0;
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
     talk.cursor += 4 * sizeof(u16);
     return 1;
 }
@@ -1920,7 +1920,7 @@ void Game::SkipTalkText()
     talk.textAt += static_cast<std::size_t>(length) + 2;
     talk.cursor = talk.textAt;
     talk.battleRuns = 1;
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
     talk.speaker = {};
     talk.unk53CE78 = 0;
     this->SetTalkCommandUnit(0);
@@ -2027,7 +2027,7 @@ int Game::FightTalkEnemyCommand()
         battle.enemyFaded = 0;
     }
 
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
     talk.battleRuns = 1;
     this->BattleFrame();
 
@@ -2041,7 +2041,7 @@ int Game::FightTalkEnemyCommand()
     talk.unk53CCEC = 0;
     talk.unk53CCF0 = 0;
     battle.enemyFaded = 0;
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
     talk.cursor += 4 * sizeof(u16);
     return 1;
 }
@@ -2112,7 +2112,7 @@ int Game::FightTalkLineWindow()
         talk.window->fromX = x;
         talk.window->fromY = y;
         this->SetTalkCommandUnit(static_cast<u16>(this->TalkCommandUnit() | kWindowShown));
-        battle.unk53BFC0 = 1;
+        battle.unk5772BC = 1;
         battle.result = 0;
     }
 
@@ -2296,8 +2296,8 @@ int Game::FightTalkCatch()
         battle.roleOrder.fill(0);
         battle.slotRecords.fill(BattleSlotRecord{});
         battle.turnTaken[unit] = kCatchCommand;
-        battle.unk53BF74 = 1;
-        battle.unk53BFC0 = 1;
+        battle.unk577270 = 1;
+        battle.unk5772BC = 1;
         battle.retargeted = 1;
         battle.hitsAllRoles = 0;
         battle.actingUnit = unit;

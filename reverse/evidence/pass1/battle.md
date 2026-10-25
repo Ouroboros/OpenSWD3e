@@ -901,3 +901,94 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 ## BattleUnit::DrawTrail（第 1314 行）— exact（smooth_unit.cpp TrailAdvance）
 
 - 0x00498DF0：间距 = direction（+0x90）为 1 时 −0x1E 否则 0x1E；delay（+0x96）为 0 时把残影从 count−1 到 1 依次后移（16 字节），首项 level 0xC（模式有 4 时 0x18）、图号、模式、x、y 写入，delay = 1；否则 delay 减 1。逐项（count 为有符号字节）：图号非 0xFFFF 时偏移 = 0xC − x，direction 1 时 = y − 0xC，direction 2 时偏移与间距为 0；unk2550（+0x2A48）= GetPicture(帧, 图号)；level > 0 时减 fadeStep（有符号字节），≤ 0 时图号 0xFFFF、level 0；模式有 4 时红绿 = level − 0x1F、蓝 −0x10 画于 (x + 间距×序号 + 偏移, y)，否则 alpha = level、| 0x14 画，level > 1 时以 trail 三色 | 0x10 再画。偏差行 171 引用汇编。
+
+## BattleUnit::WalkToTarget（第 1315 行）— exact（smooth_unit.cpp WalkAdvance、DrawWalk）
+
+- 0x00499060：+0x3018 为 1 返回 0；MarkBit4 为 1，或 autoControl（+0x3044）为 1 且命令旗标 & 0x18 → commandA = commandB 返回 1；status 0x80000000 且 FadeInvisible(0) 为 1 返回 1；+0x2BC0 位 31 返回 0。+0x2FEC = 1；attackAct（+0x544）id = actId、action 0x2E（+0x2BC0 0x2000000 时 0x39，kind 0 时 0x24）、hold = (+0x3010 == 1)；Run 为 0 返回 0。unk2A44 = GetPicture，立即读调色板（空指针见偏差表）；目标 GetDrawPosition；HasFixedOrigin 时 (0xF0, 0x12C)。recoilAct（+0x4A0）action 0x28，kind 0 时 +0x2FB6 为 1／2 → 0x30／0x31；Run 为 0 返回 0。actOffsetX = act.x（字）、frameFlags = act.flags、actAnchorX = act.anchorX、homePoseX = pose.x；facing 1 时 flags 位 0 取反、三者以图宽镜像（anchorX 为 0 时不变）。
+- 消失行走（0x2000000）：画于 (toX − actOffsetX, toY − act.y)；act 等待为 1 时清旗标、flight、两动作，commandA = commandB 返回 1，否则返回 0。
+- 其余：kind 1 且 +0x2FB8 ≠ 图号时记录图号；throwSteps 加 1；flight 清零，起点 savedPlacement（ghost 时 placement），终点 x = toX + anchorX − actOffsetX、y = toY + act.anchorY − act.y；每帧步数 0x18（ghost 0x10），命令旗标 0x20 时为 0，act.target & 8 时 = |toX − fromX|/16 否则 throwSteps 减 1；循环 LineStep 直到到达（−1）或步数 ≥ 步数×throwSteps；出音 act.view 后清零；非 ghost 时 placement = 当前点。到达：flags（隐身 | 0x30）画于终点 − 锚点，清 actAnchorX、throwSteps、+0x2FB8、+0x2EDE，+0x2EDC = 6，清 flight 与两动作；actId 1 时置 0x2000000，否则 commandA = commandB；返回 1。未到：隐身时 flags | 0x30 画于当前点 − 锚点；否则影子（高/3 缩放、高>>2 斜切、三色 −6，autoControl 时 −1，模式 (flags & 0x8000000F) | 0xC，y = 当前 y − 高/3）后画本体；返回 0。源码阴影掩码 0x80000003 再或 0xC，结果相同。偏差行 189 引用汇编。
+
+## BattleUnit::ReturnHome（第 1316 行）— exact（smooth_unit.cpp HomeAdvance、DrawWalk、ChooseOverlay）
+
+- 0x00499760：kind 0 时命令旗标无 0x10 返回 1；其余 kind 时 unk26CC（+0x2BD4）无 4 且命令旗标无 0x28 返回 1。autoControl、guestControl（+0x3048）为 1，或 StatusBit5 为 1 且 +0x2BC0 位 28，或 MarkBit4 为 1 → 返回 1。+0x2FEC = 1；attackAct hold、id = actId、action 0x2F（kind 0 时 0x24），参数 id ≠ −1、action ≠ 0 时覆盖；Run 为 0 返回 0；GetPicture 后立即读调色板（空指针见偏差表）；recoilAct 0x28／0x30／0x31 同 WalkToTarget；Run 为 0 返回 0。出音 act.view 后清零；偏移与旗标同 WalkToTarget，facing 1 或 ghost 时镜像。GetDrawPosition、HasFixedOrigin (0xF0, 0x12C)；flight 起点 = 目标 + anchorX − actOffsetX、目标 y + anchorY − act.y，终点 savedPlacement（ghost 时 placement）；act.target & 8 时 stage |= 0x8000，stage 有 0x8000 时 throwSteps 加 1；步数 0x1C（ghost 0x18），循环同 WalkToTarget；再出音并清零；非 ghost 时 placement = 当前点。到达：画于终点 − 锚点（隐身 | 0x30），清 actAnchorX、throwSteps、stage，placement = savedPlacement（0xFE4 → 0xFC4，32 字节），清 flight 与两动作，unk26CC &= ~4，返回 1。未到：隐身 | 0x30 或影子加本体（同 WalkToTarget）；随后 DrawOverlay(act.rotation, act.actionCode, 当前点, (i16)offsetX, (i16)offsetY)；返回 0。ActState 偏移 +0x4E／+0x50／+0x58／+0x5A／+0x62／+0x64／+0x7A／+0x7C 与源码字段一致。偏差行 181 引用汇编。
+
+## AddFury、HasBlock30、DrainKind、ShowsPicture、AccessoryProficiency、AccessoryValue、CanUseAccessory、StepAccessoryCounters（第 1317–1324 行）— exact（后三项修正后）
+
+- 0x00499DC0 BattleRole::AddFury：autoControl、guestControl、ghost 任一为 1 返回；参数 −1 时 fury（roleBlock[0]）= 0x30，0 时清零；原值 ≥ 0x30 或参数 ≤ 0 返回；参数 ≥ (i16)最大生命 时 0x30；否则 carry（+0x2BB8）> 0 时参数加之，份额 = fild 参数 / 最大生命 × 41.0f（0x004AAE50），fury = 原值 + ftol(份额)，份额 == 0.0f（0x004AA5F0）时 carry += 参数（已含 carry），否则 carry = 0；结果 ≥ 0x30 时钳到 0x30 并出音 0x2FD。
+- 0x00499EB0 HasBlock30：roleBlock[0] == 0x30。0x00499EC0 DrainKind：actionFlags 0x100 → equipmentFlags 0x20 时 8 否则 1；0x200 → 2；0x400 → 4；否则 0。0x00499EF0 ShowsPicture：action（+0x2F2A）为 0 → 0；参数 −1 → mainAct 等待（+0x34C）为 1；否则 (u16)mainAct 图号（+0x300）== (i16)参数 − 1。源码注释里的正传地址改为 0x00499F1C。
+- 0x00499F40 AccessoryProficiency：两个配件（+0x164 起、0xA8 一项）中 (i16)unk48 == 参数者，proficiency（+0x2BE6）= FindCounterPercent(0x004D1F58, act)；无则返回原 proficiency。0x00499FA0 AccessoryValue：找到后 unk48 为 0x28 且 equipmentFlags 0x100 → 0，否则 costBits & 0x3FFF；无则 0。0x0049A000 CanUseAccessory：(u16)值 > (i16)体力 → 0；种类 0x19：unk26CC |= 0x10；0x1C：隐身 → 0；0x1D：unk26CC 0x100 → 0；0x20：status 0x4000000 → 0；0x39：equipmentFlags 0x40 → 1 否则 0；其它 1。
+- 0x0049A0E0 StepAccessoryCounters：表头 id 非 0 时从 next 开始；每个 act 非 0 且 (i16)unk48 == 参数的配件：结果 1；沿链找 id，找到且 done 为 0 时 value += 量（u16），≥ counterMax 时钳住，percent = ftol(value / counterMax × 100.0f)；找不到则在链尾新建（0x14 字节清零），id、value、percent，counterMax 为 0 时 value 0、percent 100、done 1，表头计数加 1。counterMax 为 0 的旧节点：0/0 得 NaN，_ftol 与 Ftol 都得 0x80000000，percent 低字 0，结果相同。
+- 修正：三个配件函数的种类比较改为 unk48 有符号扩展对零扩展参数（0x00499F50、0x00499FAE、0x0049A112 `movsx`），原先按 u16 或 i16 比较，unk48 ≥ 0x8000 时与原程序不同。
+
+## BattleUnit::DrawAction（第 1325 行）— exact（smooth_unit.cpp ActionAdvance、DrawActionView）
+
+- 0x0049A220：Run(动作) 为 0 返回 0；unk2A44 = GetPicture；frameFlags、actOffsetX（字）、actAnchorX、overlayX（+0x2EC0）= act.offsetX。autoControl 或 guestControl 为 1：facing 1 时镜像（位 0 取反、宽减 x，anchorX 非 0 时宽减之），autoControl 为 1 且 flags 无 0x2C 时 | 4；两者皆 0 且 facing 1 时镜像。act.target & 0x1000 → 目标 SetNudge(0x28, 0)，清该位。目标 GetDrawPosition；命令旗标 & 0x38：HasFixedOrigin 时 (0xF0, 0x12C)，kind 0 时 (0x1A4, 0x118)，actX／actY = 目标 − actOffsetX／act.y；否则 = placement − 同上，outline（+0x3000）为 1 时 colorPair = 0x7E007E0、DrawOutline(actX, actY, 宽, 高, flags & 0x80000003, &colorPair)、再写 0x7E007E0。出音 act.view，(i16)actOffsetX + (i16)actX ≥ 0x140 时声相 0x30 否则 −0x30，view 清零。target 有 8 且有 0x100：autoControl 0 时 +0x2BC0 |= 0x40000，target = 0。+0x2BC0 0x40000：act 等待为 0 时 images.Add（x、y、mode、帧、图、计数高字节、旗标 1、蓝 0xA、level 0xE、step 1），然后 images.Draw。影子：高/3、高>>2、三色 −6（隐身 −1），模式 (flags & 0x8000000F) | 0xC 写 shadowMode，画于 (actX, actY + act.y − 高/3)；flags & 0x14 时 alpha = act.signal（+0x92），mainAct.wait（+0x344）非 0 时置波纹；画本体后波纹清零。rotation 与 actionCode 皆非 0：unk2A4C = GetPicture(rotation, actionCode − 1)，镜像条件同上且 offsetX 非 0 时 overlayX = 宽 − offsetX − 叠加宽；画于 (actX + overlayX, actY + (i16)offsetY)，flags | 4；act 等待为 1 时清 rotation、actionCode、offsetX、offsetY。返回 1。
+- 阴影掩码 0x80000003 再或 0xC 与原程序 0x8000000F 再或 0xC 相同。描边前原程序不设图源，见偏差表新增行；第 154 行改为 swd3e 的空指针位置。
+
+## BattleUnit::DrawOverlay（第 1326 行）— exact（smooth_unit.cpp ChooseOverlay、DrawWalk）
+
+- 0x0049A830：帧或图号为 0 时返回 1；overlayX = (u16)offsetX，unk2A4C = GetPicture(帧, 图号 − 1)，读调色板；autoControl 或 guestControl 为 1 且 facing 1 且 offsetX 非 0，或两者皆 0 且 facing 1 且 offsetX 非 0 时 overlayX = 单位图宽 − offsetX − 叠加宽（字）；画于 (x + (i16)overlayX, y + offsetY)，flags | 4；返回 1（调用处不用）。偏差行 179 引用汇编。
+
+## StatusBit5、CommandTarget、FollowAct（第 1327–1329 行）— exact
+
+- 0x0049A950：status 位 5。0x0049A970：命令旗标位 0 时两出参 = 命令 +0x26、+0x28，返回 1，否则 0。0x0049A9B0：命令 +0x12（零扩展）。
+
+## GetStamina、GetSpirit、RoleAgility、RoleAttackBonus（第 1330–1333 行）— exact
+
+- 0x0049A9C0／0x0049A9F0：kind 1 时两出参 = 记录 +0xE／+0x8、+0xC／+0x6，否则不写。0x0049AA20／0x0049AA40：kind 1 时记录 +0x16／+0x26，否则 0。
+
+## BattleUnit::AimAction（第 1334 行）— exact
+
+- 0x0049AA60：hold（+0x9C）= held 为 1；Run 为 0 返回；unk2A44 = GetPicture，读调色板（空指针见偏差表 0x0049AA60 行，已引用汇编）；shadowMode（+0x2BAC）= act.flags，aimOffsetX（+0x2EC8）= act.x，aimAnchorX（+0x2EBE）= act.anchorX；镜像条件同 DrawAction（act.x 非 0 时宽减 x，anchorX 非 0 时宽减之）；目标 GetDrawPosition，aimX／aimY（+0x2ECE／+0x2ED0）= 目标 − aimOffsetX／act.y；（anchorX 或 anchorY 非 0）且（shiftX 或 shiftY 非 0）时 aimX = actX + actAnchorX − aimAnchorX，aimY = actY − anchorY + shiftY；ClearMoveAxes(aimX, aimY)；出音，(i16)目标 x ≥ 0x140 时声相 0x30 否则 −0x30，view 清零；target 0x8000 → quaking（0x0057730C）= 1、quakePhase（0x00577030）= 0；target 4 → target 清零、目标 RaiseFlag26B8。原程序返回 act 等待 == 1，五处调用（0x0047FFD0、0x004834A0、0x00484B20、0x004854B0、0x00487FE0）都不读 eax，源码为 void。
+
+## BattleUnit::DrawRecoil（第 1335 行）— exact（smooth_unit.cpp RecoilAdvance）
+
+- 0x0049ACC0：Run 为 0 返回 0；unk2A44 = GetPicture；出音 act.view，(i16)actX ≥ 0x140 时声相 0x30 否则 −0x30，view 清零；shadowMode = act.flags，aimOffsetX = act.x，镜像同 AimAction（只调 aimOffsetX）；读调色板。act 等待为 1：recoilTint（+0x2E62）> −0x20 时三色 = recoilTint，画于 (actAnchorX − aimOffsetX + actX, actY − act.y + y)，recoilTint −= 2，held 为 1 时再 += 2，返回 0；否则 recoilTint 清零返回 1。未等待：flags & 0x14 时 alpha = act.signal，同位置画，alpha 清零，返回 0。偏差行 157 引用汇编。
+
+## BattleUnit::DrawAimed（第 1336 行）— exact（smooth_unit.cpp DrawAimedAdvance）
+
+- 0x0049AF40：与 AimAction 同（hold、Run、GetPicture、shadowMode／aimOffsetX／aimAnchorX），镜像只看 facing 1，且 aimOffsetX 无条件 = 宽 − act.x；目标位置、shift 调整、ClearMoveAxes、出音与声相、quake、RaiseFlag26B8 同 AimAction；读调色板后以 unk2A40 图片 +4 为参数画于 (aimX, aimY)，模式 shadowMode；返回 act 等待 == 1。偏差行 170 引用汇编。
+
+## SetValueAAC、SetDisplayName、SetFacingIfAble、StartDrainEffect、DrainEffectFrame（第 1337–1341 行）— exact
+
+- 0x0049B160：+0x2FEC = 参数。0x0049B170：displayName（+0x2A58）= 参数。0x0049B180：kind 1 且 defeated（+0x2FF8）为 1 时返回 1 不写，否则 facingTurnsBack（+0x3068）与 facing = 参数并返回之。
+- 0x0049B1B0 StartDrainEffect：absorbSource（+0x2A54）= 来源 StepIdleAction（0x0048B520），来源 GetOrigin；槽（+0x10E4 + 槽×0x58）清零；像素 = Decode(图片数据)，宽、高，x = (i16)来源 x − 1、y = (i16)来源 y；targetLeft = (i16)actAnchorX − (i16)originX（+0x2EC2）+ placement.x − 0x32，targetTop = placement.y − mainAct.y + 0x28，宽高 1；lifeBase 0x14、speed 0x28、bursts = 高 >> 1、divisor 0x3C、三色 5、旗标 0x56（WithinRange | Mixed），来源 Mirrored 为 1 时 | 1；commandFlags |= 0x800；SetScreen(屏幕宽高)。偏差行 192、193 引用汇编。
+- 0x0049B330 DrainEffectFrame：三色 5，absorbing（+0x303C）= 1；DrawExplosion(画面, 槽) 为 1 时释放像素、槽清零、返回 1，否则 0。
+
+## DrawActionAt、GetHitPoints、HitPointShare（第 1342–1344 行）— exact
+
+- 0x0049B3B0 DrawActionAt：Run 为 0 返回；GetPicture；frameFlags、actOffsetX、actAnchorX；autoControl 或 guestControl 为 1 时 facing 1 镜像，autoControl 为 1 时 | 4（无 NoBlend 判断）；两者皆 0 且 facing 1 时镜像；actX／actY = 参数 − actOffsetX／act.y；出音、声相（actOffsetX + actX ≥ 0x140）、view 清零；影子：高/3、高>>2、三色 −6（隐身 −1），shadowMode = (flags & 0x8000000F) | 0xC，画于 (actX, actY + act.y − 高/3)；隐身时 flags | 0x30 画本体，否则 (flags & 0x14) == 0x14 时 alpha = mainAct.signal（+0x346）后画本体。偏差行 181 引用汇编。
+- 0x0049B680 GetHitPoints：kind 1 时 最大 = (i16)记录 +0xA、当前 = (i16)+0x4；否则 当前 = 物件 +0x68，hitPointsOverride（+0x2BBC）非 0 时取之，最大 = 物件 +0x50。0x0049B6D0 HitPointShare：ftol((i16)生命 / (i16)最大 × 参数)（fild／fidiv／fimul）。
+
+## CancelHitNumber、ClearUnk2FD1、PoisonLasted、PoisonBase、CountPoisonTurn、RaiseUnk26B8Bit28、PartyMember、AutoControl、GuestControl、Ghost（第 1345–1355 行，AddPoison 除外）— exact（CancelHitNumber 修正后）
+
+- 0x0049B700 CancelHitNumber：panelFlags（0x00576D3C）0x800 或 (i8)unk2FD1 < 0 → 0；unk306C 为 1 → 1；equipmentFlags 无 8 → 0；unk306C = 0；unk2FD1 ≤ 0 → 置 −1 返回 0；否则 槽 = 计数 − 1（基址 +0x2C28 = 数字表 +0x2C30 − 8），hitDamage −= d3 + 10×(d2 + 10×(d1 + 10×d0))（movsx），槽清零，unk2FD1 = −2，unk306C = 1，返回 1。
+- 修正：计数为 0 时原程序读的是伤害延迟表最后四个字（damageDelays[31..34]），源码原先跳过不扣；现照原样读取扣除，清零不复现；计数超过 0x23 时原先会越界访问 std::array，现不扣不清。偏差表新增 0x0049B700 行（源码注释原先写“见偏差表”但表中无此行）。
+- 0x0049B7D0：unk2FD1 = 0。0x0049B7E0 PoisonLasted：+0x2BC0 0x20000000 且 (u16)+0x2FA0 > 3。0x0049B800：+0x2FA2。0x0049B960：0x20000000 时 +0x2FA0 加 1。0x0049B980：+0x2BC0 |= 0x10000000。0x0049B990／9A0／9B0／9C0：+0x3040／+0x3044／+0x3048／+0x304C。
+
+## BattleUnit::AddPoison（第 1349 行）— exact
+
+- 0x0049B810：+0x2BC0 0x20000000 时返回 0；原程序先沿效果链走到尾（结果不用），再在表头插入 0xBC 字节清零节点；poisonLevel（+0x2FD2）= 参数级 + 1，poisonBase（+0x2FA2）= 参数；turns 0xFFFF、bits 0x1000、level 50.0f、value = 基值 − (u8)级 × (20×基值/100)（低字）、timer = gaugeFull − 1；级 > 4（无符号字节）时 value = 基值 − 4×(20×基值/100)；kind 0 且物件种类 0x20 时 turns 10；+0x2BC0 |= 0x20000000，status |= 0x1000，icon 7；返回 1。
+
+## StartRipple、CountEnrageEvent（第 1356–1357 行）— exact
+
+- 0x0049B9D0 StartRipple：0x005772C8 = 0x005772BC = 1；+0x2BC0 |= 0x100000；ripple（0x00536880）= new ScriptObject(0x280, 0x1E0, 0, 0, 0xC8, 0xC8)（原程序不释放旧对象，源码以 unique_ptr 替换，无行为差异）；Splash(0x64, 0x32, 0x20, 0xC8)；MoveTo(placement.x − 0x50, placement.y − 0x78)；slotActs[10].id（+0xCF4）= 0x17E7；rippleFrames（+0x2FDB）= 0。BattleState 成员 unk53BFC0（正传地址命名）改名 unk5772BC。
+- 0x0049BAB0 CountEnrageEvent：kind 1 时事件 2 → +0x2FD6 = 1，返回 1；否则按事件 0..3：物件 enrageCondition（+0x94）为 4 → +0x2FD5 加 1；5 → +0x2FD5 = −1；6 → +0x2FD6 加 1；7 → +0x2FD6 = −1。原程序事件 0、2 的路径返回值是物件指针，各调用处（0x0045BEA0、0x00497900、0x00498560）都不读返回值，源码返回事件号。
+
+## BattleUnit::EnrageCheck（第 1358 行）— exact
+
+- 0x0049BB50：+0x2BC0 0x200000、kind 1、marks 0x40、物件 enrageCondition 为 0、dying（+0x2FFC）或 defeated 为 1 → 返回 0。按 (i16)条件 − 1 跳表 30 项：1 生命 < 最大/3（i32 有符号）；3 (u8)+0x2FD3 ≥ 5；4 (i8)+0x2FD5 ≥ 15；5 +0x2FD5 == −1；6 (i8)+0x2FD6 ≥ 5；7 +0x2FD6 == −1；10..14 (i16)元素 == 1..5；16／17／18 status 0x20／0x10／0x80；28 (i8)+0x2FD8 ≥ 2；2、8、9、15、19..27、29、30 (i16)cause == 条件（`66 83 7C 24 10` 字比较）；满足时 +0x2BC0 |= 0x200000；其余（含 > 30 与负值）不满足。之后一律 Enrage()，返回 1。dying 注释改为 swd3e 偏移。
+
+## BattleUnit::Enrage（第 1359 行）— exact（修正后）
+
+- 0x0049BE20：+0x2BC0 无 0x200000 返回 0。效果 = (i16)物件 +0x96，1001..6000 时按效果 − 1001 跳表 18 项：1001／1002／1003 攻击（+0x5A）／防御（+0x5C）／敏捷（+0x5E）+= 70×(u16)值/100（32 位）；1004 攻×2、防减半（值 − 值>>1）；1005 攻×2、敏减半；1006 防×2、攻减半；1007 防×2、敏减半；1008 敏×2、攻减半；1009 敏×2、防减半；1010 +0x2BC0 |= 0x800000；1011 无；1012 enrageDamage（0x005770C4）= ftol(fild 最大生命 × 1.4（0x004AAE58）)、+0x2BC0 |= 0x10000；1013..1018 enrageElement（+0x2FDC）= 1..6。之后 (i16)效果 < 1001（有符号）时 skillA（+0x78）= 效果、skillACount（+0x7A）= 10000、skillChance（+0x99）= 8。暗色三色（0x0057722C/E/30）= −12，DarkenByTint（0x004655A0，只写 0x005777F4 = 1，源码内联），undarkening（0x005772EC）= 0，0x00577290、0x00577270、0x005772BC、0x005772C8、enraging（0x00577310）= 1，slotActs[10].id = 0x1C98，返回 0。
+- 修正：skillA 的判断原先按 u16 比较，改为有符号（0x0049C00F `jge`）。BattleState 成员 unk53BF94、unk53BF74（正传地址命名）改名 unk577290、unk577270。
+
+## BattleUnit::EnrageFrame（第 1360 行）— exact
+
+- 0x0049C0D0：+0x2BC0 无 0x200000 或 +0x2FEC 为 1 → 0；有 0x400000 → 1；slotActs[10].id 为 0 → 0。defeated 为 1：0x005772BC、0x005772C8、0x00577270 清零，undarkening = 1，enraging = 0，清 0x200000，动作清零，返回 1。Run 为 0 → 0；出音、声相 −0x30、view 清零；GetPicture、读调色板，画于 (placement − act.x／act.y)，act.flags；等待为 1：效果 == 0x3F3 时以清零的 SkillScript（+0x8 = 0x10000000，+0x2A 字节 = 0xFF）AddBuff；同上释放，|= 0x400000，动作清零；返回 1。
+
+## EnrageElement、SlideHook、CommandTurns、Unk2EB2Shown、Unk2EB2BelowProficiency、SetUnk26B8Bit19、Unk26B8Bit23、RaiseUnk26B8、ClearUnk26B8、DamageTransferred、CommandSupports、CommandRefreshOnly、HasStatus（第 1361–1373 行）— exact（Unk2EB2Shown 修正后）
+
+- 0x0049C290：+0x2FDC 字节。0x0049C2A0：空函数（retn 4）。0x0049C2B0：命令 +0x2A 字节。0x0049C2C0：ax = +0x2EB2，inc eax（高字为残留），唯一调用处 0x00478FA0 以 `movsx ecx, ax` 取低字；修正：源码原先按 u16 加 1 后返回 32 位，值 0xFFFF 时得 0x10000，改为 i16 运算。0x0049C2D0：AccessoryProficiency(0x27) 后 (i16)+0x2EB2 < (u16)proficiency/10。
+- 0x0049C310：参数 1 时 +0x2BC0 |= 0x80000 否则清。0x0049C340：+0x2BC0 位 23。0x0049C350／0x0049C370：|= 参数返回参数；&= ~参数返回 ~参数。0x0049C390：status 位 17。0x0049C3A0：命令 +0x8 有 0x10000000／0x80000000／0x40000000／0x20000000／0x2000000 任一，或 actionFlags 0x1000 → 1；否则物件种类（+0x34 字节）位 2。0x0049C410：命令异常位 15。0x0049C420：(参数 & status) != 0。

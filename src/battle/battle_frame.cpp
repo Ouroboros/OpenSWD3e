@@ -152,7 +152,7 @@ int Game::BattleFrame()
     this->painter.SetTarget(this->drawSurface);
     this->painter.UnlockSurface(*this->offscreen);
 
-    if (battle.slotRecords[0].unit != -1 && battle.unk53BF74 == 0 && this->fightTalk.battleRuns == 1 &&
+    if (battle.slotRecords[0].unit != -1 && battle.unk577270 == 0 && this->fightTalk.battleRuns == 1 &&
         battle.result == 0 && battle.unk5772C8 == 0)
     {
         BattleSlotRecord acting{
@@ -179,7 +179,7 @@ int Game::BattleFrame()
         if (battle.actingUnit != -1)
         {
             battle.slotRecordFrames = 0;
-            battle.unk53BF74 = 1;
+            battle.unk577270 = 1;
             this->fightTalk.battleActingUnit = battle.actingUnit;
         }
     }
@@ -501,14 +501,14 @@ void Game::EndBattle()
     battle.hitsAllRoles = 0;
     battle.unk53BF6C = 0;
     battle.unk53BF70 = 0;
-    battle.unk53BF74 = 0;
+    battle.unk577270 = 0;
     battle.unk53BF78 = 0;
     battle.sweepHit = 0;
     battle.unk53BF80 = 0;
     battle.unk53BF88 = 0;
     battle.gatheringSweep = 0;
     battle.unk53BF90 = 0;
-    battle.unk53BF94 = 0;
+    battle.unk577290 = 0;
     battle.unk53BF98 = 0;
     battle.unk53BF9C = 0;
     battle.unk53BFA0 = 0;
@@ -519,7 +519,7 @@ void Game::EndBattle()
     battle.unk53BFB4 = 0;
     battle.unk53BFB8 = 0;
     battle.unk53BFBC = 0;
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
     battle.unk53BFC4 = 0;
     battle.flashing = 0;
     battle.unk53BFD0 = 0;
@@ -616,7 +616,7 @@ void Game::BattleIntro(u16 style)
     DrawOptions& options = painter.Options();
     int swing = 0;
     this->audio.PlaySound(kIntroSound, this->config.soundVolume);
-    battle.unk53BFC0 = 1;
+    battle.unk5772BC = 1;
     Surface* primary = this->graphics.GetSurface(Graphics::SurfaceId::Primary);
     Surface& field = *battle.surfaces[0];
     Surface& shown = *battle.surfaces[1];
@@ -745,7 +745,7 @@ void Game::BattleIntro(u16 style)
         }
     }
 
-    battle.unk53BFC0 = 0;
+    battle.unk5772BC = 0;
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     this->StartBattleMusic();
     battle.musicLevel = this->config.musicVolume;

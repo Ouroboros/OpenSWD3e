@@ -132,11 +132,11 @@ struct QueuedAction
 struct UnitPlacement
 {
     std::array<u8, 0x14> unk00 = {};
-    u16 actId = 0;  // swd32 +0x14 the act of the unit
-    i16 x = 0;      // swd32 +0x16
-    i16 y = 0;      // swd32 +0x18
+    u16 actId = 0;  // +0x14 the act of the unit
+    i16 x = 0;      // +0x16
+    i16 y = 0;      // +0x18
     u16 unk1A = 0;
-    i32 kind = 0;  // swd32 +0x1C 1: a party role
+    i32 kind = 0;  // +0x1C 1: a party role
 };
 
 // The command block of a unit (0x28 bytes, cleared whole).
@@ -937,7 +937,7 @@ public:
     i32 unk2AB0 = 0;
     i32 unk2AB4 = 0;
     i32 defeated = 0;  // +0x2FF8
-    i32 dying = 0;     // swd32 +0x2ABC 1 while the defeat runs (DefeatFrame)
+    i32 dying = 0;     // +0x2FFC 1 while the defeat runs (DefeatFrame)
     i32 outline = 0;   // +0x3000
     i32 charging = 0;  // +0x3004 1: ChargeAttackFrame is in its charge (also set when a stagger ends)
     i32 unk2AC8 = 0;

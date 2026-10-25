@@ -2304,11 +2304,11 @@ int BattleUnit::MarkBit4() const
     return (this->marks & BattleUnit::UnkMark10) != 0 ? 1 : 0;
 }
 
-// swd3e.exe 0x0049C2C0: unk2EB2 plus one (the original adds to the zero-extended word: its caller's eax has a clear
-// high word)
+// swd3e.exe 0x0049C2C0: unk2EB2 plus one in the low word (the high word is left over); its only caller (0x00478FA0)
+// sign-extends the word
 i32 BattleUnit::Unk2EB2Shown() const
 {
-    return static_cast<i32>(static_cast<u16>(this->unk2EB2)) + 1;
+    return static_cast<i16>(this->unk2EB2 + 1);
 }
 
 // swd3e.exe 0x0049C2D0: the proficiency of accessory kind kUnk2EB2Accessory taken, whether unk2EB2 is below a tenth of
@@ -2472,7 +2472,7 @@ u16 BattleUnit::AccessoryValue(u16 kind) const
 {
     for (const ObjectRecord& accessory : this->accessories)
     {
-        if (accessory.data.unk48 == kind)
+        if (static_cast<i32>(static_cast<i16>(accessory.data.unk48)) == static_cast<i32>(kind))
         {
             if (accessory.data.unk48 == kUnkAccessory28 && (this->equipmentFlags & BattleUnit::UnkEquipment100) != 0)
             {
@@ -2492,7 +2492,7 @@ i16 BattleUnit::AccessoryProficiency(u16 kind, CounterList& proficiency)
 {
     for (const ObjectRecord& accessory : this->accessories)
     {
-        if (accessory.data.unk48 == kind)
+        if (static_cast<i32>(static_cast<i16>(accessory.data.unk48)) == static_cast<i32>(kind))
         {
             this->proficiency = static_cast<u16>(FindCounterPercent(proficiency, static_cast<i16>(accessory.data.act)));
             return static_cast<i16>(this->proficiency);
@@ -2569,7 +2569,7 @@ bool BattleUnit::ShowsPicture(i16 picture) const
 
     if (picture != -1)
     {
-        // 0x00482EF4: the zero-extended picture against the sign-extended picture - 1
+        // 0x00499F1C: the zero-extended picture against the sign-extended picture - 1
         return static_cast<int>(this->mainAct.picture) == picture - 1;
     }
 
@@ -3555,7 +3555,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
         const ObjectData& data = accessory.data;
         const auto id = static_cast<i16>(data.act);
 
-        if (id == 0 || static_cast<i16>(data.unk48) != static_cast<i16>(kind))
+        if (id == 0 || static_cast<i32>(static_cast<i16>(data.unk48)) != static_cast<i32>(kind))
         {
             continue;
         }
@@ -3581,7 +3581,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
                 at->value = data.counterMax;
             }
 
-            // A counterMax of 0 divides by zero in the original (an infinite or undefined percentage).
+            // A counterMax of 0 leaves the value 0: 0/0 is a NaN, and _ftol and Ftol both give 0x80000000 (percent 0).
             at->percent = static_cast<u16>(
                 crt::Ftol(static_cast<double>(at->value) / static_cast<double>(data.counterMax) * kCounterPercent)
             );
@@ -4220,14 +4220,14 @@ int BattleUnit::DefeatFlight(BattleServices& services, const Picture& picture)
 // Pose 0x65 (swd3e): a boss. It first wobbles brighter and dimmer like kParticlePose (sound 0x31 when done), then
 // sinks into the ground, shaking, under act 0x1CB6 (sound 0x229 every 30 frames, a field flash with sound 0x233 every
 // 35 and 45), while the battle music fades down a step a frame to 2; once sunk the music returns to its volume. An
-// UnkKind20 object sets unk53BFC0 meanwhile.
+// UnkKind20 object sets unk5772BC meanwhile.
 int BattleUnit::DefeatBoss(BattleServices& services, const Picture& picture)
 {
     BattleState& battle = services.state;
 
     if (this->glowLevel == kDefeatedAtOnce)
     {
-        battle.unk53BFC0 = 0;
+        battle.unk5772BC = 0;
         battle.musicLevel = services.config.musicVolume;
         services.audio.Queue().SetVolume(MusicQueue::MaxVolume * services.config.musicVolume / Config::MaxVolume);
         this->glowLevel = 0;
@@ -4244,7 +4244,7 @@ int BattleUnit::DefeatBoss(BattleServices& services, const Picture& picture)
 
     if ((this->data->data.kind & ObjectData::UnkKind20) != 0)
     {
-        battle.unk53BFC0 = 1;
+        battle.unk5772BC = 1;
     }
 
     if (this->glowLevel == 0)
@@ -6586,11 +6586,29 @@ int BattleUnit::CancelHitNumber(BattleServices& services)
         return 0;
     }
 
-    // The slot before targetCount; at 0 the original reads the four words before the digits (deviations.md).
-    if (this->targetCount != 0)
+    auto number = [](i16 thousands, i16 hundreds, i16 tens, i16 ones)
+    {
+        return ones + kTens * (tens + kTens * (hundreds + kTens * thousands));
+    };
+
+    // The slot before targetCount (0x0049B759). At 0 the original reads the last four damage delays as the digits
+    // and clears them: the read is kept, the clearing is not. A wrapped count past the table takes nothing
+    // (deviations.md).
+    if (this->targetCount == 0)
+    {
+        constexpr std::size_t kBefore = BattleUnit::MaxTargets - BattleUnit::DamageDigits;
+        const auto& delays = this->damageDelays;
+        services.state.hitDamage -= number(
+            static_cast<i16>(delays[kBefore]),
+            static_cast<i16>(delays[kBefore + 1]),
+            static_cast<i16>(delays[kBefore + 2]),
+            static_cast<i16>(delays[kBefore + 3])
+        );
+    }
+    else if (this->targetCount <= BattleUnit::MaxTargets)
     {
         auto& digits = this->damageDigits[static_cast<std::size_t>(this->targetCount - 1)];
-        services.state.hitDamage -= digits[3] + kTens * (digits[2] + kTens * (digits[1] + kTens * digits[0]));
+        services.state.hitDamage -= number(digits[0], digits[1], digits[2], digits[3]);
         digits = {};
     }
 
@@ -6661,7 +6679,7 @@ i32 BattleUnit::Ghost() const
 void BattleUnit::StartRipple(BattleServices& services)
 {
     services.state.unk5772C8 = 1;
-    services.state.unk53BFC0 = 1;
+    services.state.unk5772BC = 1;
     this->unk26B8 |= kFlag26B8Ripple;
     services.state.ripple =
         std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
@@ -6702,8 +6720,8 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
             battle.ripple.reset();
             this->rippleFrames = 0;
             battle.unk5772C8 = 0;
-            battle.unk53BF74 = 0;
-            battle.unk53BFC0 = 0;
+            battle.unk577270 = 0;
+            battle.unk5772BC = 0;
             this->unk26B8 &= ~kFlag26B8Ripple;
             this->slotActs[kRippleSlot] = ActState{};
         }
@@ -7446,7 +7464,7 @@ namespace swd3e
 {
 
 // swd3e.exe 0x004873C0: one frame of an entrance at the draw position of `anchor`: the field darkens by tint (darkRed,
-// darkGreen and darkBlue -12, unk53BF94 set, darkenByTint as by Game::DarkenByTint), then while `stage` is 0 action
+// darkGreen and darkBlue -12, unk577290 set, darkenByTint as by Game::DarkenByTint), then while `stage` is 0 action
 // 0x24 of act `act` grows in mirrored, zoomed from 0xC18 down by glowLevel (0x28 more a frame) about its origin, until
 // glowLevel reaches 0x800 (stage 1, the act cleared); from stage 1 act 0x1C98 plays at the anchor's place, 1 once it
 // ends (glowLevel and stage 0, the act cleared). 0 otherwise, or when an act cannot run.
@@ -7456,7 +7474,7 @@ int BattleUnit::ZoomEntranceFrame(BattleServices& services, BattleUnit& anchor, 
     battle.darkRed = kEntranceDark;
     battle.darkGreen = kEntranceDark;
     battle.darkBlue = kEntranceDark;
-    battle.unk53BF94 = 1;
+    battle.unk577290 = 1;
     battle.darkenByTint = 1;
     ActState& state = this->standAct;
     state.action = kEntranceAction;

@@ -1805,7 +1805,8 @@ int BattleUnit::Enrage(BattleServices& services)
             break;
     }
 
-    if (data.enrageEffect < FirstSkill)
+    // A signed compare (0x0049C00F): an effect of 0x8000 or more is taken up as a skill too.
+    if (static_cast<i16>(data.enrageEffect) < FirstSkill)
     {
         data.skillA = data.enrageEffect;
         data.skillACount = kEnrageSkillCount;
@@ -1818,9 +1819,9 @@ int BattleUnit::Enrage(BattleServices& services)
     battle.darkBlue = kEnrageDark;
     battle.darkenByTint = 1;
     battle.undarkening = 0;
-    battle.unk53BF94 = 1;
-    battle.unk53BF74 = 1;
-    battle.unk53BFC0 = 1;
+    battle.unk577290 = 1;
+    battle.unk577270 = 1;
+    battle.unk5772BC = 1;
     battle.unk5772C8 = 1;
     battle.enraging = 1;
     this->slotActs[kEffectSlot].id = kEnrageAct;
@@ -1854,9 +1855,9 @@ int BattleUnit::EnrageFrame(BattleServices& services)
 
     auto release = [&battle]
     {
-        battle.unk53BFC0 = 0;
+        battle.unk5772BC = 0;
         battle.unk5772C8 = 0;
-        battle.unk53BF74 = 0;
+        battle.unk577270 = 0;
         battle.undarkening = 1;
         battle.enraging = 0;
     };

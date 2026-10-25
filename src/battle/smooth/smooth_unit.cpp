@@ -1115,7 +1115,8 @@ int UnitFrame::ActionAdvance(BattleServices& services, BattleUnit& target, ActSt
         unit.actX = static_cast<u16>(unit.placement.x - unit.actOffsetX);
         unit.actY = static_cast<u16>(unit.placement.y - static_cast<u16>(act.y));
 
-        // The outline is drawn at once, before the afterimages (as in the original).
+        // The outline is drawn at once, before the afterimages (as in the original). The original sets no source
+        // first and reads the last drawn picture's pixels by this picture's size; this draws its own pixels.
         if (unit.outline == 1)
         {
             unit.colorPair = BattleUnit::OutlineColorPair;
