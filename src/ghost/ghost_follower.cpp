@@ -51,7 +51,7 @@ void GhostFollower::Remove()
 
 // swd3e.exe 0x0049E6A0: a step of length one towards (x, y) (none of a definite length on the point itself, where the
 // original divides by zero and the position becomes NaN as here); the phase goes on up to 0x40. The original keeps
-// the differences in x87 registers; here they are doubles.
+// the differences in x87 registers at its 53-bit precision, the doubles here.
 void GhostFollower::Follow(float x, float y)
 {
     Body* ghost = this->body.get();

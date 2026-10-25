@@ -63,7 +63,8 @@ int SetFadeStep(SequenceNode& node, int steps)
     return step;
 }
 
-// swd32.exe 0x00486580 (unmatched in swd3e)
+// swd3e.exe 0x0049E090 (a chunk shared by the MIDI player's 0x0049C8F0 and the stream player's constructor): no
+// driver, closed and disabled, unknown4 0x1E, both lists empty
 SequencePlayer::SequencePlayer(AudioDevice& device)
     : device(device)
 {
@@ -130,34 +131,11 @@ MidiPlayer::MidiPlayer(AudioDevice& device)
 {
 }
 
+// swd3e.exe 0x0049C910: the exit callback 0x0049C900 registers, the destructor of 0x00578628
 // swd3e.exe 0x0049C920
 MidiPlayer::~MidiPlayer()
 {
     this->Close();
-}
-
-// swd32.exe 0x00484DD0 (unmatched in swd3e): the MIDI mapper, then device 0; one sequence handle
-bool MidiPlayer::Open(int)
-{
-    if (!this->device.OpenMidi())
-    {
-        this->error = this->device.LastError();
-
-        if (!this->device.OpenMidi())
-        {
-            this->error += " //";
-            this->error += this->device.LastError();
-            this->enabled = false;
-            return false;
-        }
-    }
-
-    this->opened = true;
-    this->enabled = true;
-    auto node = std::make_unique<SequenceNode>();
-    node->voice = this->device.CreateVoice();
-    this->free.push_back(std::move(node));
-    return true;
 }
 
 // swd3e.exe 0x0049C930
@@ -318,7 +296,8 @@ StreamPlayer::StreamPlayer(AudioDevice& device)
 {
 }
 
-// swd3e.exe 0x0049E0B0
+// swd3e.exe 0x0049E080: the exit callback 0x0049E070 registers, the destructor of 0x005795C0
+// swd3e.exe 0x0049E0B0: a jump to Close
 StreamPlayer::~StreamPlayer()
 {
     this->Close();

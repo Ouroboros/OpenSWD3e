@@ -16,7 +16,7 @@ constexpr int kFullRate = 0xAC44;
 constexpr u32 kIndexStart = 0x1C;
 constexpr u32 kIndexRecordBytes = 0x2C;
 constexpr u32 kSizeMask = 0x3FFFFFF;
-constexpr std::string_view kRiffTemplate = "RIFF....WAVEfmt ....0123456789012345data..";
+constexpr std::string_view kRiffTemplate = "RIFF....WAVEfmt ....0123456789012345data..";  // 0x004C03FC
 constexpr std::string_view kRiffTag = "RIFF";
 
 // The RIFF header of a sound: its size, the fmt chunk size and data, the data tag and size.
@@ -27,6 +27,7 @@ constexpr u32 kFmtBytes = 0x10;
 constexpr std::size_t kMovedFmtBytes = 0x12;
 constexpr std::size_t kDataTagEnd = 0x26;  // the last two letters of "data", patched
 constexpr std::size_t kDataSizeAt = 0x28;
+constexpr std::size_t kRiffHeaderBytes = kDataSizeAt + sizeof(u32);  // the header with the data size
 constexpr u32 kBareFmtPad = 0x18;  // a kind 0 sound is its fmt record, put after the template
 constexpr u32 kBareFmtKind = 0;
 constexpr u32 kWholeRiffKind = 1;  // a whole RIFF image, left as it is
@@ -479,8 +480,8 @@ bool SoundEffects::FreeIndex()
 
 // swd3e.exe 0x0049DF60: sound `id` as a RIFF image. Kind 0 sounds are a fmt record without the RIFF header, which is
 // rebuilt in front of it; every kind but 1 gets the header fields patched (kinds 2 and 3 over their own data). The
-// original writes its 44-byte header template past the end of sounds shorter than that; the image is at least that
-// long here. Ids beyond the index find no sound.
+// original copies its header template (43 bytes with the NUL) and patches the data size up to byte 0x2C, past the end
+// of an image shorter than that; the image is at least 0x2C bytes here. Ids beyond the index find no sound.
 std::shared_ptr<std::vector<u8>> SoundEffects::LoadSound(int id)
 {
     if (id < 1 || id > SoundEffects::Sounds || this->table.empty())
@@ -499,7 +500,7 @@ std::shared_ptr<std::vector<u8>> SoundEffects::LoadSound(int id)
     u32 size = entry.sizeFlags & kSizeMask;
     const u32 kind = entry.sizeFlags >> kKindShift;
     const u32 pad = kind == kBareFmtKind ? kBareFmtPad : 0;
-    auto image = std::make_shared<std::vector<u8>>(std::max<std::size_t>(size + pad, kRiffTemplate.size() + 1), 0);
+    auto image = std::make_shared<std::vector<u8>>(std::max<std::size_t>(size + pad, kRiffHeaderBytes), 0);
     std::memcpy(image->data(), kRiffTemplate.data(), kRiffTemplate.size() + 1);
     this->file.Read(image->data() + pad, size);
 

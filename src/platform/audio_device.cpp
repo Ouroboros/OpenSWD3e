@@ -282,12 +282,6 @@ void AudioDevice::Position(const VoiceHandle& voice, int& totalMilliseconds, int
     currentMilliseconds = static_cast<int>(voice->frame * kMillisecondsPerSecond / kMixRate);
 }
 
-bool AudioDevice::OpenMidi()
-{
-    this->lastError = "No MIDI output device";
-    return false;
-}
-
 void AudioDevice::Attach(const VoiceHandle& voice)
 {
     if (std::find(this->playing.begin(), this->playing.end(), voice) == this->playing.end())

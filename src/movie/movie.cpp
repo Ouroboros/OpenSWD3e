@@ -62,7 +62,8 @@ bool Movie::IsOpen() const
     return this->decoder.IsOpen();
 }
 
-// swd3e.exe 0x0049C890: the current frame, negated past the end; -1 without a movie
+// swd3e.exe 0x0049C5C0 (a chunk of 0x0049C890, Game::VideoPosition): the current frame, negated past the end; -1
+// without a handle
 int Movie::Position() const
 {
     if (!this->decoder.IsOpen())

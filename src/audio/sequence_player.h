@@ -59,14 +59,14 @@ protected:
     std::vector<std::unique_ptr<SequenceNode>> free;  // the last one is the head of the original's free list
 };
 
-// MIDI music through the MIDI mapper (the platform has no MIDI output, so opening fails as on a system without one).
+// MIDI music through Miles' XMIDI sequences. swd3e has no code that opens the player (the music queue only asks it),
+// so it stays closed and no MIDI plays.
 class MidiPlayer : public SequencePlayer
 {
 public:
     explicit MidiPlayer(AudioDevice& device);
     ~MidiPlayer() override;
 
-    bool Open(int unused);
     int Close();
     int SetMasterVolume(int volume);
     int Play(const std::u8string& fileName, int id, int volume, int loops);

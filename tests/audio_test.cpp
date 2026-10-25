@@ -144,12 +144,12 @@ TEST_CASE("audio: the music queue plays a list, fades it out on a switch and goe
     CHECK_EQ(queue.Mode(), MusicQueue::NoList);
 }
 
-TEST_CASE("audio: no MIDI device")
+TEST_CASE("audio: the MIDI player stays closed")
 {
     swd3e::AudioDevice device;
     swd3e::MidiPlayer midi(device);
-    CHECK(!midi.Open(0));
-    CHECK(midi.Error() == "No MIDI output device //No MIDI output device");
+    CHECK(!midi.IsOpen());
+    CHECK_EQ(midi.SetMasterVolume(kMidiVolume), 0);
     CHECK_EQ(midi.Play(u8"x.mid", 1, kMidiVolume, 1), 0);
     CHECK(midi.IsStopped(0));
 }

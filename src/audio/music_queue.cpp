@@ -22,7 +22,8 @@ MusicQueue::MusicQueue(StreamPlayer& streams, MidiPlayer& midi)
 {
 }
 
-// swd3e.exe 0x0049CDC0 (the global destructor of 0x00578A70; the slots' names are freed with them)
+// swd3e.exe 0x0049CE80: the exit callback 0x0049CE70 registers, the destructor of 0x00578A70 (chunk 0x0049CF00:
+// ClearSlots of lists 3, 2 and 1; the slots' names are freed with them)
 MusicQueue::~MusicQueue() = default;
 
 // swd3e.exe 0x0049D310: Stream for a name holding "wav" or "mp3", Midi for one holding "xmi", 0 otherwise (anywhere in

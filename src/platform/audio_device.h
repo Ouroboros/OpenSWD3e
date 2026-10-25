@@ -70,7 +70,6 @@ public:
     void SetPan(const VoiceHandle& voice, int pan);
     void SetLoops(const VoiceHandle& voice, int loops);
     void Position(const VoiceHandle& voice, int& totalMilliseconds, int& currentMilliseconds);
-    bool OpenMidi();
 
     // Mixes `frames` frames of the playing voices (the audio thread; public for tests).
     void Mix(std::vector<i16>& out, int frames);
