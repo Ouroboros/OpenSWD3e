@@ -291,7 +291,7 @@ h1 {
   color: var(--text);
   background: var(--panel);
   border: 2px solid var(--gold);
-  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
+  box-shadow: 0 0 0 2px #000, inset 0 0 0 1px #000;
   outline: none;
 }
 
@@ -329,7 +329,7 @@ h1 {
   box-shadow:
     inset 0 0 0 1px #000,
     0 0 0 1px #000,
-    0 0 0 3px rgba(160, 136, 72, 0.55);
+    0 0 0 3px #000;
   position: relative;
 }
 
@@ -338,7 +338,7 @@ h1 {
   grid-row: 1 / span 4;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
   padding-top: 10px;
   margin-right: -11px;
   overflow-y: auto;
@@ -355,7 +355,7 @@ h1 {
   border: 2px solid #b89838;
   border-right: none;
   border-radius: 10px 0 0 10px;
-  box-shadow: -1px 0 0 #3a2a08, 0 -1px 0 #3a2a08, 0 1px 0 #3a2a08;
+  box-shadow: -2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000;
   cursor: pointer;
   user-select: none;
   text-align: center;
@@ -373,7 +373,7 @@ h1 {
   color: #20280c;
   background: linear-gradient(90deg, #7c9444, #a8bc68);
   border-color: #d0b040;
-  box-shadow: -1px 0 0 #3a2a08, 0 -1px 0 #3a2a08, 0 1px 0 #3a2a08, inset 4px 0 0 #e0c048;
+  box-shadow: -2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000, inset 4px 0 0 #e0c048;
 }
 
 .list {
@@ -457,7 +457,7 @@ h1 {
   padding: 10px;
   background: linear-gradient(135deg, #6a6020, #3c3410);
   border: 3px solid #a89048;
-  box-shadow: inset 0 0 0 2px #1c1806, 0 0 0 1px #000;
+  box-shadow: inset 0 0 0 2px #1c1806, 0 0 0 2px #000;
 }
 
 .portrait img {
