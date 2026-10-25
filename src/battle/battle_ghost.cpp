@@ -59,9 +59,9 @@ constexpr std::size_t kClearedName = 0x10;
 constexpr u16 kGhostHeal = 0x237E;  // the spirit gain number
 constexpr int kAttackCommand = 1;
 constexpr int kSkillCommand = 2;
-constexpr u16 kHealCommandFlags = 0x18;  // UnitCommand::flags of a ghost attack that heals the target instead
-constexpr u16 kHealCommand = 0xC8;
-constexpr int kSpendShare = 40;              // SpendGhostSpirit: below 40 percent of the cost the ghost does nothing
+constexpr u16 kWalkingFlags = 0x18;  // UnitCommand::flags (UnkFlag8 | 0x10): the ghost walks to the target to attack
+constexpr u16 kWalkCommand = 0xC8;   // the walk command (as BattleRole::PrepareCommand)
+constexpr int kSpendShare = 40;      // SpendGhostSpirit: below 40 percent of the cost the ghost does nothing
 constexpr int kElementAccessory = 0x26;      // SetElement: the accessory kind whose proficiency scales the resistance
 constexpr std::size_t kBattleElementAt = 9;  // SetElement: the battle record keeps its element in resistance 9
 // (+0x36), the party record in resistance 10 (+0x37, RoleRecord::ElementAt); the resistance taken is unk38[0] (+0x38)
@@ -514,10 +514,10 @@ void BattleRole::GhostAttackCommand(Database& database)
     this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::WeakStand);
     this->unk29A4 = static_cast<u16>(this->unk29A4 + this->battleRecord->attackBonus);
 
-    if ((flags & kHealCommandFlags) != 0 && this->commandA == 1)
+    if ((flags & kWalkingFlags) != 0 && this->commandA == 1)
     {
         this->commandB = 1;
-        this->commandA = kHealCommand;
+        this->commandA = kWalkCommand;
     }
 }
 
@@ -740,7 +740,7 @@ void BattleRole::SpecialActFrame(BattleServices& services)
         services.party.fame.lists[Fame::ProficiencyList]
     );
     RoleRecord& record = *this->roleRecord;
-    record.hitPoints = static_cast<i16>(static_cast<i16>(kSpecialBaseShare * record.maxHitPoints) / kPercent);
+    record.hitPoints = static_cast<i16>(kSpecialBaseShare * record.maxHitPoints / kPercent);  // 0x00487326: 32 bits
     record.hitPoints = static_cast<i16>(
         record.hitPoints + this->proficiency * (kSpecialProficiencyShare * record.maxHitPoints / kPercent) / kPercent
     );

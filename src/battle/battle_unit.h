@@ -201,8 +201,8 @@ struct UnitCommand
     u16 ailment = 0;      // +0x1A
     u16 element = 0;      // +0x1C
     u16 pose = 0;         // +0x1E the pose of a defeat (its low byte)
-    i16 unk1E = 0;        // +0x20
-    u16 unk20 = 0;        // +0x22
+    i16 unk20 = 0;        // +0x20
+    u16 unk22 = 0;        // +0x22
     u16 unk24 = 0;        // +0x24 (swd3e)
     u16 target = 0;       // +0x26 the first value of CommandTarget
     u16 unk28 = 0;        // +0x28 (swd3e) the second value of CommandTarget
@@ -782,9 +782,10 @@ public:
     std::span<const char> displayName;      // +0x2A58 the name shown in the messages (read up to its NUL when used)
     EffectNode effects;                     // +0x2A7C (the head is a node: +0x2588 its act, +0x2620 its bits)
     std::array<char, 0x30> skillName = {};  // +0x2B38 the name of the skill used
-    std::array<i32, 8> flightSteps = {};    // swd32 +0x2640 the steps per frame of FlyAct by its slot (callers use 0)
-    i32 unk2660 = 0;
-    i32 unk2664 = 0;
+    std::array<i32, 8> flightSteps =
+        {};                  // +0x2B48 the steps per frame of FlyAct by its slot (0x00495E39; callers use 0)
+    i32 unk2B68 = 0;         // +0x2B68 (only cleared, by 0x004917DE)
+    i32 unk2B6C = 0;         // +0x2B6C
     i32 fadeLevel = Opaque;  // +0x2B70 (also the dash offset of ChargeAttackFrame)
     i32 brightLevel = 1;     // +0x2B74
     i32 homePoseX = 0;       // swd32 +0x2670 the x offset of the stand pose while walking home (ReturnHome)

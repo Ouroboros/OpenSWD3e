@@ -46,7 +46,7 @@ struct ObjectData
     u16 unk4A = 0;                     // +0x4A tag 2 (swd3e)
     u16 unk4C = 0;                     // +0x4C tag 3 (swd3e)
     u16 unk4E = 0;                     // +0x4E
-    i32 maxHitPoints = 0;              // +0x50 an enemy's maximum (set in battle; swd32 +0x4C)
+    i32 maxHitPoints = 0;              // +0x50 an enemy's maximum (set in battle, 0x00487DBD)
     // +0x54..+0xA2: the 0x4F-byte block of tag 1; tags 0xE, 0x7D0, 0x18, 0x1C and 0x1D set parts of it. Against
     // swd32 the fields from act on are 4 bytes later, those from itemA on 6 (hitPoints grew to a dword).
     u16 act = 0;            // +0x54 tag 0xE its act (an accessory copy keeps its item id there)

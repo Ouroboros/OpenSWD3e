@@ -1101,7 +1101,7 @@ int BattleUnit::ActFlag11() const
 // swd3e.exe 0x00491C70: the speed of the command when its bit 15 is set
 i16 BattleUnit::ActSpeed() const
 {
-    const i16 speed = this->command.unk1E;
+    const i16 speed = this->command.unk20;
     return speed >= 0 ? i16{0} : static_cast<i16>(speed & kSpeedMask);
 }
 
@@ -1977,8 +1977,8 @@ void BattleUnit::Reset(BattleServices& services)
     this->flashPhase = BattleUnit::FlashStart;
     this->flashFall = BattleUnit::FlashPeak;
     this->slotTint = 0;
-    this->unk2660 = 0;
-    this->unk2664 = 0;
+    this->unk2B68 = 0;
+    this->unk2B6C = 0;
     this->marks = 0;
     this->status = 0;
     this->guardPose = 0;
@@ -2192,8 +2192,8 @@ SkillScript BattleUnit::CommandSkill() const
     skill.ailment = this->command.ailment;
     skill.element = this->command.element;
     skill.unk1E = this->command.pose;
-    skill.unk20 = static_cast<u16>(this->command.unk1E);
-    skill.unk22 = this->command.unk20;
+    skill.unk20 = static_cast<u16>(this->command.unk20);
+    skill.unk22 = this->command.unk22;
     skill.unk24 = this->command.unk24;
     skill.unk26 = this->command.target;
     skill.unk28 = this->command.unk28;
@@ -2220,8 +2220,8 @@ void BattleUnit::LoadCommand(Database& database, u16 id)
     this->command.ailment = skill.ailment;
     this->command.element = skill.element;
     this->command.pose = skill.unk1E;
-    this->command.unk1E = static_cast<i16>(skill.unk20);
-    this->command.unk20 = skill.unk22;
+    this->command.unk20 = static_cast<i16>(skill.unk20);
+    this->command.unk22 = skill.unk22;
     this->command.unk24 = skill.unk24;
     this->command.target = skill.unk26;
     this->command.unk28 = skill.unk28;
@@ -2412,7 +2412,7 @@ int BattleUnit::CommandStatusBit() const
 // swd3e.exe 0x00489300
 void BattleUnit::CommandValues(u16& value, u16& turns) const
 {
-    value = this->command.unk20;
+    value = this->command.unk22;
     turns = this->command.turns;
 }
 

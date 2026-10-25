@@ -2142,7 +2142,8 @@ u16 BattleRole::TakeRandomItem(BattleServices& services)
         return 0;
     }
 
-    int roll = static_cast<int>(services.random.Below(objects)) + 1;
+    // 0x00487AD5: the count is passed as its low word and the step compared as words (0x00487B1B).
+    auto roll = static_cast<u16>(services.random.Below(static_cast<u16>(objects)) + 1);
     this->ShowAllItems();
     u16 step = 0;
     ItemNode* node = nullptr;
@@ -2154,7 +2155,7 @@ u16 BattleRole::TakeRandomItem(BattleServices& services)
         if (node == nullptr)
         {
             step = 0;
-            roll = static_cast<int>(services.random.Below(objects)) + 1;
+            roll = static_cast<u16>(services.random.Below(static_cast<u16>(objects)) + 1);
             this->ShowAllItems();
             continue;
         }

@@ -566,3 +566,123 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 ## BattleRole::BoomerangFrame（第 1101 行）— exact
 
 - 0x00486110（源码 RoleFrame::BoomerangFrameAdvance）：standAct 动作 0x2A 的姿势绘制同 DirectAttack（不设 hold）；target 无 1／8 返回 0；slotActs[0] 动作 0、id = 参数；目标绘制位置；stage 0：+0x349C 为 0 时 AddQueuedAction(id, 0, 位置, 目标, 0x1C, 0, −1, 4)、TrailLastQueuedAction(0,0,0xC)、+0x349C = 1；Queued(0) 为 1 时 +0x349C 清零、stage 1、目标 RaiseFlag26B8；stage 1：同样以 (目标→位置, 0x20, 7, −1, 4) 排队，Queued 为 1 时清 +0x349C、stage 2、出音 0x114；stage 2 时清零 stage、slotActs[0] 与 standAct，返回 1，否则返回 0。
+
+## 符鬼命令小函数（第 1102–1110 行）— exact
+
+- 0x004864C0 SetGhostOrder：+0x2BDA &= ~2；ghostOrder（+0x34B6）= 参数（字）；参数（双字）为 4 时 +0x2BDA |= 2（调用者 0x0046F9A3／0x0047186F 传菜单值 0x004BF0F8，取值为小整数）。
+- 0x004864F0 GhostOrder：零扩展返回 ghostOrder。0x00486500 RollHalf：(i16)Random(100) ≥ 50。
+- 0x00486520／0x00486530 GhostOrderIs5／Is6：ghostOrder 等于 5／6。
+- 0x00486540 TakeSkillUsed：+0x2BDA 位 4 时清之并返回 鬼 +0x104（有符号）≥ 0x33，否则 0；0x00486570 TakeAttackUsed：位 8 时清之，ghostOrder 为 1 或 3 且 +0x104 ≥ 0x51 返回 1；0x004865B0 TakeHealUsed：位 0x10 时清之并返回 +0x104 ≥ 0x51；0x004865E0 TakeOrder7：位 0x20 时清之返回 1，否则 0。
+
+## BattleRole::GhostObeys、RestoreGhostSpirit、HasCommandEffect、SetGhostActs（第 1111–1114 行）— exact
+
+- 0x00486600 GhostObeys：+0x2BDA 无位 2 返回 0；(i16)(Random(100)+1) > 鬼 +0x104（有符号）时 +0x2BDA |= 1 返回 0；否则返回 1。
+- 0x00486640 RestoreGhostSpirit：+0x2BDA 无位 0x80 返回 0；量 = (i16)(Random(10)+5) × 记录灵力上限（+0xC，movsx）/ 100；PushTarget(0x237E)、SetDamageDigits((i16)量)、StepTargetCount(1)、Damage(0, 量, 0)，返回 1。
+- 0x004866C0 HasCommandEffect：目标 HasEffectBits(命令 ailment（+0x1A，零扩展)) 为 1 返回 1，否则 HasEffectBits(命令 +0x08) 为 1 返回 1，否则 0。
+- 0x00486700 SetGhostActs：ghostActs（+0x34CC）= 参数，返回参数。
+
+## BattleRole::ChooseGhostSkill（第 1115 行）— exact
+
+- 0x00486710：ghostActs 非 1 返回 1；ghostSkill（+0x34B8）= Random(3)；鬼技能（+0x118 起双字）为 0 时 ghostActs 清零返回 1；载入该物件到 +0x3074、FreeDescription；unk2F10 = cost 位 & 0x7FFF；记录灵力（有符号）< unk2F10 返回 1；清命令、LoadCommand(技能脚本)；种类 8／4／0x1000 时 +0x2BDA |= 8／0x10／4；返回 1。
+
+## BattleRole::ChooseGhostSkillOf（第 1116 行）— exact
+
+- 0x004867F0：模式 1：鬼技能[2]（+0x120）为 0 则无；载入（不先清空）、FreeDescription、unk2F10 = cost & 0x7FFF，灵力 < 它则无；清命令、LoadCommand、+0x2BDA |= 4、ghostSkill = 2，返回 1。模式 2／3：前两个技能非 0 者清空 +0x3074 后载入，种类有 4（模式 2）／0x18（模式 3）者记合格；两个都合格时 ghostSkill = Random(2) | 0x8000，否则取第一个合格者 | 0x8000，都不合格时 ghostSkill 保持原值；ghostSkill 无 0x8000 时清零并无；否则按其低 15 位载入技能（不先清空），灵力不足则无；清命令、LoadCommand、+0x2BDA |= 0x10／8、ghostSkill = 序号，返回 1。其余模式与「无」：unk2F10 清零、命令清零，返回 0。
+
+## BattleRole::TakeGhostOrder（第 1117 行）— exact
+
+- 0x00486B60：按 ghostOrder − 1 走 8 项跳转表：1 ghostActs = RollHalf，为 1 时 ChooseGhostSkill；2 +0x2BDA |= 0x80、ghostActs 0、RestoreGhostSpirit；3 ghostActs 1、ChooseGhostSkillOf(3)；4 +0x2BDA |= 2；5／6／8 ghostActs = RollHalf，为 1 时 ChooseGhostSkillOf(3)；7 +0x2BDA |= 0x20；其余不动。
+
+## BattleRole::GhostSkillCommand、GhostAttackCommand（第 1118–1119 行）— exact
+
+- 0x00486C40 GhostSkillCommand：skillName 前 16 字节清零；+0x2BDA 有 0x40 时清之返回 0；ghostActs 非 1、技能[ghostSkill] 为 0 或载入后灵力 < cost & 0x7FFF 时 GhostAttackCommand 并返回 0；否则清命令、LoadCommand(+0x3E)，act = +0x54，skillName 前 16 字节清零后 lstrcpy 名字，unk29A4 += 命令值（+0xE），SetCommand(2)，commandFlags |= 0x8000，kind 出参 = 种类有 0x1000 或 4 时 1 否则 0；useKind 为 0 时三项回复，healPercent 清零，useKind 0x200 时置 1 并取回复；返回 1。
+- 0x00486E10 GhostAttackCommand：skillName 前 16 字节、命令清零；LoadCommand(weapon 技能脚本 +0xFA)；SetCommand(1)；+0x2BDA &= ~1；unk29A4 += 攻；命令旗标有 0x18 且 commandA 为 1 时 commandB = 1、commandA = 0xC8。常量 kHealCommandFlags／kHealCommand 按其意义（走路位、走路命令 0xC8，与 PrepareCommand 同）改名 kWalkingFlags／kWalkCommand。
+
+## BattleRole::SpendGhostSpirit、LevelGapRoll（第 1120–1121 行）— exact
+
+- 0x00486E90 SpendGhostSpirit：费用 = 基数×百分比/100 − 减量，存 +0x2EB6（字）；记录灵力（有符号）< 费用时：< 费用×40/100 则 +0x2EB6 清零返回 0，否则 +0x2EB6 = 灵力；灵力 −= +0x2EB6；SetCommand(2)、commandFlags |= 0x8000、+0x2BDA = (+0x2BDA & ~1) | 0x40，返回 1。
+- 0x00486F40 LevelGapRoll：skillName 前 16 字节清零；差 = (u16)等级参数 − 记录等级（字节）：≥ 0x14 时 (u16)Random(100) < 0x55 返回 1；≥ 0xF 且目标数据五个计数（+0x6E／+0x72／+0x76／+0x7A／+0x7E）都为 0 时 Random < 0x32 返回 1；生命 < 上限/3（有符号）且差 ≥ 0xA 时 Random < 0x28 返回 1；字差 1..8 返回 0，9..15 时 Random < 0xA 返回 1，16..19 时 Random < 0x14 返回 1，否则 0。
+
+## BattleRole::LowHitPoints、SetElement、SetUnk34C0、Unk34C0、LowSpirit、LowStamina、StartSpecialAct（第 1122–1128 行）— exact
+
+- 0x00487090 LowHitPoints：参数 0 时 roleRecord 生命 < 上限/2（有符号），参数 1 时 < 上限/3，否则 0。
+- 0x004870F0 SetElement：AccessoryProficiency(0x26)；at = (i8)元素 − 1；at 等于战斗记录 +0x36（抗性[9]）时战斗记录抗性[at] = +0x38 字节，否则 = (i8)+0x38 × (u16)熟练度/100 的低字节；战斗记录抗性[(i8)队伍记录 +0x37] = 0；队伍记录 +0x37 = 元素 − 1。下标无界（deviations 0x004870F0 已登记）。
+- 0x00487160 SetUnk34C0：+0x34C0 = 参数（返回值调用者 0x00470586 不用）；0x00487170 Unk34C0：movsx 返回。
+- 0x00487180 LowSpirit／0x004871A0 LowStamina：roleRecord 灵力／体力 < 上限/4（有符号）。
+- 0x004871C0 StartSpecialAct：equipmentFlags 无 0x80 返回 0；slotActs[10]（+0xCF4）id 0x17BF、动作 0；0x005772BC = 1、+0x34D0 = 1，返回 1。
+
+## BattleRole::SpecialActFrame（第 1129 行）— exact（修正后）
+
+- 0x00487200：equipmentFlags 无 0x80 或 +0x34D0 非 1 返回；0x005772BC = 1；slotActs[10] Run 失败返回；出音其 view、声像 0x30，清的是 standAct.view（+0x3B0，原有 BUG 保留）；取图（无空判）画于 (位置 x − act.x, 位置 y − act.y)；未等待返回；+0x34D0、0x005772BC 清零，ResetTurn（0x0048B7A0）、ExpireEffects(1)（0x00494840），equipmentFlags &= ~0x80，defeated 清零，AccessoryProficiency(0x3A)；roleRecord 生命 = 上限×40/100，再加 (u16)熟练度 × (上限×90/100) / 100（字加）；condition &= 0x7FFF；PushTarget(0x237D)、SetDamageDigits(生命)、StepTargetCount(1)；slotActs[10] 清零。
+- 修正：原程序以 32 位算 40×上限再除以 100（0x00487326–0x00487341），源码原先把 40×上限截成 i16 再除，上限 > 819 时生命不同。
+- 待核（截位乘积）：本批已四次发现源码把乘积先截成 i16／i8 再除而原程序以 32 位计算（SetupGhost、ApplyAccessory、UseAccessorySkill、SpecialActFrame）。同类写法尚有 battle_effects.cpp（cut×攻／防）、battle_unit.cpp（kEnragedSharePercent×attack）、battle_role.cpp Grown 与 SetupGuest 的等级、敏捷；验证到这些函数时逐一按汇编确认乘积宽度。
+
+## BattleUnit::ZoomEntranceFrame（第 1130 行）— exact
+
+- 0x004873C0：暗色三字 −12、0x00577290 = 1、DarkenByTint（0x004655A0 即置 0x005777F4 = 1，源码直接置位）；standAct 动作 0x24、id = 参数；stage 0：Run 失败返回 0，取图，锚单位绘制位置，SetZoom(act.x, act.y, 0xC18 − glowLevel, 同)，画于 (x − 宽 + act.x, y − act.y)、旗标 | 0x81（无空判）；glowLevel += 0x28，≥ 0x800（有符号）时清零、stage 1、清 standAct；返回 0。stage 1：id 0x1C98、动作 0，Run 失败返回 0，取图，画于 (x − act.x, y − act.y)；等待时 glowLevel、stage 清零、清 standAct 返回 1，否则返回 0。
+
+## RaiseFlag26B8Bit17、Flag26B8Bit17、SelectedItemId、LevelInReach、HitPointsAtMost（第 1131–1134、1136 行）— exact
+
+- 0x004875E0／0x004875F0：+0x2BC0 |= 0x20000；返回其位 17。0x00487600 SelectedItemId：selectedItem（+0x3460）的 id 字（无空判）。
+- 0x00487610 LevelInReach：+0x3074 清零后载入物件 id、FreeDescription；高 = 物件等级（+0x58，零扩展）− 记录等级（字节），低 = 其反；范围（u16）≤ 0x14：高 1..5 或低恰为 5 返回 1；0x15..0x28：高或低 1..10；0x29..0x3C：1..20；0x3D..0x50：1..35；0x51..0x64：1..50，命中返回 1；否则 0。
+- 0x00487A70 HitPointsAtMost：roleRecord 生命 ≤ 上限 / 参数（有符号整除）。
+
+## BattleUnit::CastPoseFrame（第 1135 行）— exact
+
+- 0x004877A0：standAct id = actId、+0x2FEC = 1、动作 0x34；Run 失败返回 0；取图（无空判）；anchorX、原点 x 与 facing 镜像；影高 /3、斜切 >>2、色调 −6（autoControl 时 −1）；出音、声像 位置 x（字，有符号）≥ 0x140 时 0x30 否则 −0x30；shadowMode、view 清零；影与本体绘制；target 无 1／8 返回 0；参数 ≤ 0 返回 1；slotActs[0] 动作 0、id = 参数，Run 失败返回 0；出音其 view、取图、view 清零，画于 (0, 0)；其等待时清 slotActs[0] 与 standAct 返回 1，否则返回 0。
+
+## BattleRole::TakeRandomItem（第 1137 行）— exact（修正后）
+
+- 0x00487A90：ShowAllItems 后逐项计数，种类（+0x62）0xB..0xE 时置标志；无则返回 0；roll = Random((u16)计数) + 1（0x00487AD5 `and ebx, 0FFFFh`）；重新遍历，步数（字）≥ roll（0x00487B1B 字比较）且种类合格时选中，走到尽头时步数清零、重掷、重新遍历；数量非 0 减数量，否则待入非 0 减待入；两者皆 0 时 UnlinkItem(inventoryHead, id)；返回节点 id（释放后读取，deviations 0x00487A90 已登记）。
+- 修正：源码原先以 u32 计数调用随机数、以 int 保存 roll；改为与原程序相同的低字。
+
+## BattleEnemy 构造／析构、AdvanceGauge、Setup、Reload、Unk62And8A（第 1138–1143 行）— exact
+
+- 0x00487B90：BattleUnit 构造（0x0048B040）后分配 0xA8 字节清零的物件记录存 +0xC；0x00487BF0：Release（0x00489410）后 BattleUnit 析构（0x0048B100）。
+- 0x00487C40 AdvanceGauge：marks 有 0x40 或 0x4000、或 +0x2BC0 位 31 时返回 0；gauge（+0x2F2E，零扩展）≥ 0x004BEFF8（有符号）时 +0x2FF0 = 1、+0x302C = 0，+0x3068 为 1 则清之并 facing = 0，返回 1；否则 step = (加速量 + 敏捷（+0x5E 零扩展）− 减速量)/4（有符号），参数 1 时 step += step/4 + 1；隐身时 loss = (u16)熟练度×step/100/2 + 4；+0x2FF0 = 0、gauge = gauge − loss + step（字），返回 0。
+- 0x00487D60 Setup：placement 8 dword 复制到 +0xFC4 与 +0xFE4，+0x2BBC = 0，LoadObject，SetDisplayName（0x0049B170），kind = 放置 +0x1C，+0x50 = +0x68（dword），evadeSkill = +0x9A，actId = +0x54，为 0 时用放置 +0x14；+0x2B8C = 0；LoadCommand(+0x64)、FreeDescription；探测：+0x3070 = 0，attackAct（+0x544）id = actId、动作 0x26，Run 失败 +0x3070 = 1，清 attackAct；+0x2FDD = 0，三个物品计数皆 0 时 1，两个技能计数皆 0 时 2。
+- 0x00487E90 Reload：LoadObject、+0x50 = +0x68、evadeSkill、LoadCommand、FreeDescription，actId = +0x54，为 0 时用参数 id；同上探测。
+- 0x00487F80 Unk62And8A：出参一 = +0x66，出参二 = +0x90；+0x2BC0 有 0x200000 时出参一 += (u16)+0x66×30/100（字加）。
+- object_record.h 的 maxHitPoints 注释改为 swd3e 地址。
+
+## Game::EnemyAttackFrame（第 1144 行）— exact（smooth/smooth_damage.cpp EnemyAttackFrameAdvance）
+
+- 0x00487FE0 全部分支逐条对照：+0x2F90 非 0 返回 0；+0x2FEC = 1，hold 由 held／target 0x200 置；命令 0x8 且未淡入时 DrawFadeOut（0x004903B0）、+0x2BC0 位 28 时 SetFacing(1)、DrawFadeIn（0x004906F0）、fadedIn = 1；动作 0x28，+0x2FB6 非 0 时 0x30、为 2 时 0x31；Action（0x0049A220）失败报 "Attack Act" "[%s]QQ:%d號錯誤!!"（0x004BFA5C，CP950 核对）。
+- +0x2BC0 位 16：清 standAct，shadowMode = drawFlags & 0x80000003，红 = glowLevel，≥ 15 时绿蓝 = glow − 15（其余沿用全局残值，painter 选项共享同样保留），画 (actX, actY)、| 0x10；++glow ≤ 0x1F 返回 0；否则目标绘制位置、SetPosition，glow 清零、dying = 1、fixedPose = 2、hp（+0x68 dword）= 0、0x00577360 = 1，清 standAct／castAct／recoilAct／attackAct／slotActs[1]／trails（0x130 dword）／targets（−1×4 dword）、stage／+0x2FF0／fadedIn／nudge，gauge += Random(0x78) + 10，返回 1。
+- Recoils、Recoil 完成、FollowsUp（FadesField 以六个 float 加一个 int 调 0x00467C40；TargetsUnit 时 AddQueuedAction 十个参数顺序核对）、Quakes（0x0057730C = 1、0x00577030 = 0）、SlidesTo／SlidesBack（0x00468440／0x00468460）、UnkTarget4 与两处打击（0x11 位；status 0x80 时 chance 8；未掷时 RollEvade；位 1 时 RaiseFlag26B8；闪避 EnrageCheck(0x1B, 0)；伤害 movsx，≥ 9999 截 9999，累加 hitDamage，−1 跳过，否则 SetDamageDigits，DrainKind ≤ 1 时 StepTargetCount(1)；第二处不回写 chance，此后亦不再读，等价）。
+- 暗色三字取 act +0x3C0..+0x3C4，DarkenByTint，非零时 0x00577294 = 1；stage 无 0x8000 返回 0；castAct 等待且 HitPicturesDone：id 0、TargetsUnit 或 slotTint ≤ −32 时 attackAct 等待且 images 空则清理返回 1，否则 0；否则三色 = slotTint，shadowMode & 0x2C 时三色 0、slotTint = −32，以影图调色板画于 aim，slotTint −= 4，held 时加回。其余：castAct id = 命令 +0x1018 或 effectA，0 时置等待；TargetsUnit 时 Queued（位 24 时 facing 暂置 1，完成后清位 24），否则 AimAction；以本图调色板画；AddsPicture 时 AddHitPicture(effectA, effectQ, aim + anchor, 0)；DrawHitPictures、HitBits 并入，打击。
+- 三色全局对应：0x004ED9A4 红、0x004EC180 绿、0x004EC178 蓝（FieldView::DrawRole 0x0041419D 与 cellTint 三全局的对应）。
+
+## CanHeal、IsWeakEnemy、ChooseHeal、LoadSkillAction、PrepareCommand、LoadEnemyCommand（第 1145–1150 行）— exact
+
+- 0x00488AB0 CanHeal：+0x2BC0 有 0x200000 返回 0；+0x82 或 +0x86 非 0。
+- 0x00488AF0 IsWeakEnemy：开头 `and eax, 200000h; cmp eax, 1` 永不成立（原有死检查，源码省略等价）；生命 = +0x2BBC 非 0 时用之否则 +0x68，< +0x50/3（有符号）。
+- 0x00488B30 ChooseHeal：marks 0x100 或 +0x98 为 0 返回 0；roll = (u16)Random(10)：≤ 4 时 +0x82 非 0 则 healChoice = 1 返回 1；5..9 时 +0x86 非 0 则 2 返回 1；其余返回 0（> 9 的分支不可达）。
+- 0x00488BB0 LoadSkillAction：LoadObject(+0x14)，出参 = (u16)其 act，lstrcpyA(skillName, 其名)，LoadCommand(+0x52 即技能脚本)，unk29A4 += 命令值，SetCommand(2)，commandFlags |= 0x8000。偏差行 0x00488BB0 改为 swd3e 偏移：技能名 16 字节（+0x2B38），其后 +0x2B48 是 FlyAct 步数（0x00495E39 起），+0x2B68／+0x2B6C 仅由 0x004917DE 清零；battle_unit.h 注释与 unk2660／unk2664 名称同步为 swd3e 偏移（unk2B68／unk2B6C）。
+- 0x00488C20 PrepareCommand：+0x2FB6 非 0 时命令旗标无 2 返回 0，有则 commandFlags |= 0x8000、SetCommand(2)、返回 castAct；否则 unk29A4 = 0、命令 0xB dword 清零、LoadCommand(+0x64)、unk29A4 += +0x5A、SetCommand(1)，返回 0。
+- 0x00488CA0 LoadEnemyCommand：命令清零、unk29A4 = 0，LoadCommand(选择 1 时 +0x78 否则 +0x7C)，unk29A4 = 命令值；旗标有 2 时出参 = castAct、commandFlags |= 0x8000、SetCommand(2) 返回 0；否则 +0x2FB6 = 选择、SetCommand(1) 返回 1。
+
+## RollDrop、CatchRoll（第 1151–1152 行）— exact
+
+- 0x00488D40 RollDrop：+0x88 为 0 或 (u16)Random(20) ≥ +0x8A 返回 0，否则 +0x88。
+- 0x00488D80 CatchRoll：marks 0x800 返回 −1；Random(12) 结果不用；+0x9B 为 0 返回 −1；StatusBit5（0x0049A950）为 1：Random(2) 为 0 返回 −1，Random(10) < 3 返回 1，否则显示名字（wsprintfA "%s" ObjectName 到 +0xF84，Messages.Add(0x118, 0xA, 0x28, 0x40000002)）返回 0；+0x2BC0 有 0x4000：Random(10) < 8 清位返回 1，否则 −1；差 = (u8)等级 − 等级（+0x58 零扩展）：> 10 时 Random(100) < 0x50、> 5 时 < 0x32 返回 1，失败 EnrageCheck(0x13, 0) 后 StatusBit5 为 1 显示名字返回 0，否则 −1；< 5 返回 −1；= 5 时 roll = Random(10)，StatusBit5 为 1 显示名字返回 0，roll < +0x9B 返回 1，否则 EnrageCheck(0x13, 0) 返回 −1。
+
+## RunAway、ItemName、SkillName、IsSmallMachine、CommandValues、SetResistances、SetWords66（第 1153–1159 行）— exact
+
+- 0x00488F50 RunAway（smooth_unit.cpp RunAwayAdvance）：fadeLevel（+0x2B70）≤ 6 时 defeated = 1、清 recoilAct 返回 1；recoilAct 图号为 1 时出音 0x10F；id = actId、+0x2FEC = 1、动作 0x24、hold 依 held；Run 失败返回 1；取图，frameFlags = act 旗标，actOffsetX = act.x；fadeLevel 为 0xF 时出音 0x2F、声像依 facing ±0x30、view 清零；frameFlags ^= 1，facing 为 1 时再翻转且 act.x 非 0 时 actOffsetX = 宽 − act.x；位置 x ±0x19（facing 1 加）；以本图调色板画于 (位置 x − actOffsetX, 位置 y − act.y)；fadeLevel 减 1 返回 0。
+- 0x00489180 ItemName：选择 0／1／2 取 +0x6C／+0x70／+0x74，为 0 或选择越界返回 0；LoadObject(+0x14)，出参 id 一律取 +0x6C（原有 BUG 保留），lstrcpyA 名字，返回 1。0x00489260 SkillName：选择 0／1 取 +0x78／+0x7C，同上（无 id 出参）。
+- 0x004892D0 IsSmallMachine：种类（+0x20）有 0x20 返回 0；无 0x800 返回 0；+0x56 ≤ 10 返回 1。
+- 0x00489300 CommandValues：出参一 = 命令 +0x22（+0x1026），出参二 = 命令 +0x2A 字节零扩展。UnitCommand 的 unk1E（+0x20）、unk20（+0x22）按 swd3e 偏移改名 unk20、unk22。
+- 0x00489320 SetResistances：五个字参数的低字节写 +0x9C..+0xA0。0x00489350 SetWords66：六个字参数非 0 时分别写 +0x6C..+0x76。
+
+## SetWords72、BattleEnemy::Release、HitPointsAndAttack、OutOfChoices、Game::EnemySkillFrame（第 1160–1164 行）— exact
+
+- 0x004893C0 SetWords72：四个字参数非 0 时写 +0x78／+0x7A／+0x7C，第四个也写 +0x7A（原有 BUG 保留）。
+- 0x00489410 Release：+0xC 非空时释放并清空。0x00489430 HitPointsAndAttack：+0x68（dword）+ (u16)+0x5A。
+- 0x00489440 OutOfChoices：+0x2FD9 为 1 且 +0x6E／+0x72／+0x76 皆 0 返回 1；+0x2FDA 为 1 且 +0x7A／+0x7E 皆 0 返回 1；否则 0。
+- 0x00489490 EnemySkillFrame（smooth_damage.cpp EnemySkillFrameAdvance）：+0x2FEC = 1；命令 0x8 且未淡入时淡出、位 28 SetFacing(1)、淡入、fadedIn = 1；standAct 动作 = +0x2B98、id = actId，Action（结果不用）；Recoils（effectA 非 0 时 recoilAct id／动作、stage |= 0x4000；Holds 时 hold = 1；清位与 effectA／Q）；Recoil 完成时 target、hold 清零、stage &= ~0x4000、清 recoilAct；FollowsUp 时 FadesField 调 0x00467C40（六 float 一 int）并清位，spellStage 无 0x8000 时置位；spellStage 有 1 时 stage 清零、清 standAct 返回 1，否则 0。
+
+## ObjectUnkA2、FirstResistance、Named、ClearTurnCommand（第 1165–1168 行）— exact
+
+- 0x004896C0：+0xA2 字节。0x004896D0：+0x9C 起五字节中第一个非 0 的序号 + 1，皆 0 返回 0。0x004896F0：种类（+0x20）低字节位 5。
+- 0x00489710 ClearTurnCommand：命令 +0x18（+0x101C）、+0x2BE8 字清零，+0x2B98、+0x2FF4、+0x3024 dword 清零，skillName 前 16 字节清零。
