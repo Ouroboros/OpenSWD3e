@@ -448,8 +448,10 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             u16 value = 0;
             unit.GetSpirit(maximum, value);
             const auto spirit = static_cast<i16>(value);
-            const auto bar =
-                static_cast<int>(crt::Ftol(static_cast<double>(spirit) / static_cast<double>(maximum) * kBarPixels));
+            // Both words are sign-extended before the division (0x00464302).
+            const auto bar = static_cast<int>(
+                crt::Ftol(static_cast<double>(spirit) / static_cast<double>(static_cast<i16>(maximum)) * kBarPixels)
+            );
             hud.DrawGaugeAdvance(kSpiritPicture, kGhostGaugeX, kSpiritGaugeY, bar, scene);
             hud.DrawSmallNumberAdvance(kNormalDigits, spirit, kGhostNumberX, kSpiritNumberY, scene);
             const u32 color = game.painter.MakeColor(0, 0, kGhostTurnBlue);

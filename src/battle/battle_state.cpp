@@ -82,7 +82,12 @@ void BattleState::ListEnemyOrder()
     {
         if (unit < BattleState::FirstRoleUnit)
         {
-            this->enemyOrder[listed] = unit;
+            // Past the 20 entries the original writes the table after it (deviations.md): not kept.
+            if (listed < this->enemyOrder.size())
+            {
+                this->enemyOrder[listed] = unit;
+            }
+
             ++listed;
 
             if (listed == this->enemyCount)
@@ -422,7 +427,7 @@ void BattleState::SortDrawOrderAround(i32 acting, i32 target)
 
         this->drawOrder[static_cast<std::size_t>(at)] = chosen;
 
-        // The original marks unit 18 past the table (over 0x00520DA4).
+        // The original marks unit 30 past the table (over the ripple pointer at 0x00536880).
         if (chosen < Units)
         {
             this->drawTaken[static_cast<std::size_t>(chosen)] = 1;

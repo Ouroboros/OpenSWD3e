@@ -776,8 +776,9 @@ int Game::RemoveDefeated(int index, int role)
         battle.RemoveSlotRecord(battle.ghostSlot + BattleState::FirstRoleUnit);
     }
 
-    if (battle.defeatedRoles <
-        static_cast<i32>(battle.roleCount) - battle.guestCount - battle.unk5770D4 - battle.escortCount)
+    // Unsigned as in the original (0x004651C7): more left out than in the battle wraps around and enrages.
+    if (static_cast<u32>(battle.defeatedRoles) <
+        battle.roleCount - battle.guestCount - battle.unk5770D4 - battle.escortCount)
     {
         EnrageEnemies(services, kRoleDownCause);
     }
