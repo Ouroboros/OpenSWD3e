@@ -339,7 +339,7 @@ h1 {
   flex-direction: column;
   gap: 6px;
   padding-top: 10px;
-  margin-right: -13px;
+  margin-right: -20px;
   overflow-y: auto;
   scrollbar-width: none;
   z-index: 1;
@@ -348,46 +348,38 @@ h1 {
 .tab {
   font-family: var(--kai);
   font-size: 19px;
-  padding: 5px 12px 5px 10px;
+  padding: 6px 19px 6px 12px;
   color: #2c3410;
   background: linear-gradient(90deg, #5c7034, #889c58);
-  border: 2px solid #b89838;
+  --edge: #b89838;
+  border: 1px solid #000;
   border-right: none;
   border-radius: 10px 0 0 10px;
-  position: relative;
+  box-shadow: inset 0 0 0 2px var(--edge);
   cursor: pointer;
   user-select: none;
   text-align: center;
   white-space: nowrap;
 }
 
-/* The black outline, round with the corners, open on the side that meets the list. */
-.tab::before {
-  content: "";
-  position: absolute;
-  inset: -3px 0 -3px -3px;
-  border-radius: 11px 0 0 11px;
-  background: #000;
-  z-index: -1;
-}
-
 .tab.chosen {
   color: #181800;
   background: linear-gradient(90deg, #b8d050, #eef488);
-  border-color: #b07818;
+  --edge: #b07818;
   font-weight: bold;
 }
 
 .tab.found {
   color: #20280c;
   background: linear-gradient(90deg, #7c9444, #a8bc68);
-  border-color: #d0b040;
-  box-shadow: inset 4px 0 0 #e0c048;
+  --edge: #d0b040;
+  box-shadow: inset 0 0 0 2px var(--edge), inset 6px 0 0 #e0c048;
 }
 
 .list {
   grid-column: 2;
   grid-row: 1 / span 4;
+  z-index: 2;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
