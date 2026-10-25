@@ -7277,7 +7277,7 @@ int BattleUnit::AddTreasureExperience(CounterList& list, u16 kind, u16 amount)
         const ObjectData& data = accessory.data;
         const auto id = static_cast<i16>(data.act);
 
-        if (id == 0 || static_cast<i16>(data.unk48) != static_cast<i16>(kind))
+        if (id == 0 || static_cast<i32>(static_cast<i16>(data.unk48)) != static_cast<i32>(kind))
         {
             continue;
         }

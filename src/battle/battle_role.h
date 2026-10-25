@@ -36,7 +36,7 @@ enum class AccessoryKind : u16
     Unk28 = 0x28,       // swd3e: armed by a first use (equipmentFlags 0x100), taken by the next (the command name 絕招)
     Unk29 = 0x29,       // swd3e: the proficiency steps only (the command name 防禦)
     Unk32 = 0x32,       // no item has it
-    ElementOrb = 0x33,  // 地炎玉, 水靈珠, 青龍水珠, ...: an element's resistance lowered by the proficiency
+    ElementOrb = 0x33,  // 地炎玉, 水靈珠, 青龍水珠, ...: the resistance to its element raised by 80% of its proficiency
     AttackRing = 0x34,  // 薩登荊環, 星君眼
     BladeReturn = 0x35,  // 返刃玉
     Unk36 = 0x36,        // no item has it

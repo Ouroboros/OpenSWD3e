@@ -748,8 +748,8 @@ public:
     TalismanGhost* ghostRecord = nullptr;     // +0x10 (swd3e) the talisman ghost's record (SetupGhost)
     std::unique_ptr<ObjectRecord> ownedData;  // a party role's block at +0x0C (freed by Reset)
     ObjectRecord object;                      // +0x14 (its description at +0xB8; ResetTurn clears it)
-    ObjectRecord weapon;                      // swd32 +0xB4 a party role's weapon (equipment slot 0)
-    std::array<ObjectRecord, 2> accessories;  // swd32 +0x158 equipment slots 7 and 8
+    ObjectRecord weapon;  // +0xBC (its skillScript at +0xFA, 0x0047EC6E) a party role's weapon (equipment slot 0)
+    std::array<ObjectRecord, 2> accessories;  // +0x164 equipment slots 7 and 8
 
     ActState mainAct;                           // +0x2B4
     ActState standAct;                          // +0x358

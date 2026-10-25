@@ -222,12 +222,12 @@ public:
     // 0x00578474 1: a role's critical attack is under way (not evaded)
     i32 criticalAttack = 0;  // 0x00578474 1: the next attack of a role is critical (battle talk command 0x43)
     // 0x00578470 (low byte) the attacks since the last critical one
-    u8 attacksSinceCritical = 0;
-    i32 lastCriticalRole = 0;   // 0x00578478 the act of the role with the last rolled critical attack
-    i32 fadingField = 0;        // 0x00577334 1: an act started the field fade (the background waits for it)
-    u8 evadeStreak = 0;         // 0x005785EC failed evasion rolls in a row of the party roles
-    u8 evadeJustSucceeded = 0;  // 0x005785ED
-    u8 enemyEvadeStreak = 0;    // 0x005785EE (swd3e) failed evasion rolls in a row of the weak enemies
+    u8 attacksSinceCritical = 0;  // 0x00578470 (a byte) the role attacks since the last critical one
+    i32 lastCriticalRole = 0;     // 0x00578478 the act of the role with the last rolled critical attack
+    i32 fadingField = 0;          // 0x00577334 1: an act started the field fade (the background waits for it)
+    u8 evadeStreak = 0;           // 0x005785EC failed evasion rolls in a row of the party roles
+    u8 evadeJustSucceeded = 0;    // 0x005785ED
+    u8 enemyEvadeStreak = 0;      // 0x005785EE (swd3e) failed evasion rolls in a row of the weak enemies
     // 0x005134A0 (swd3e) the uses of each object id in this battle (0xFF of them: cleared by StartBattle, raised by
     // MenuConfirm); from the third use an object costs a third more (ListObject, SelectObject)
     std::array<u8, ItemUseIds> itemUses = {};

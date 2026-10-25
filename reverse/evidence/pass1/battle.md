@@ -360,3 +360,91 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 ## BattleUnit::StepGauge（第 1033 行）— exact
 
 - 0x0047E720：marks 0x40／0x4000、defeated、+0x3038、+0x2FF0、+0x2BDA 位 2、+0x2BC0 最高位任一成立返回 0；gauge（+0x2F2E，u16）< gaugeFull（0x004BEFF8，有符号）时：速度 = (敏捷（记录 +0x16，u16）− 减速 + 加速)/4（有符号；加速／减速按 status 0x20000000／0x08000000 取 movsx +0x2EDA），boost 为 1 时 += 速度/4 + 1；status 最高位（隐身）时扣 (熟练度（u16）×速度/100)/2 + 4；+0x2FF0 清零，gauge = gauge + 速度 − 扣（字），返回 0。满时：鬼（0x0049B9C0）为 1 则 (i16)(Random(100)+1) 与 鬼记录 +0x104（双字，有符号）比较，大于时 +0x2BDA |= 1、gauge += gaugeFull / −3（截断）、返回 0；否则 TakeGhostOrder、+0x2BDA &= ~1。+0x2FF0 = 1、+0x302C = 0；+0x3068 为 1 时清零且 guestControl 为 0 时 facing 清零；+0x2D8、+0x2DC 清零、+0x494 = 1；+0x2BDA 位 0x80 时清该位、+0x2FF0 与 gauge 清零、返回 0，否则返回 1。
+
+## BattleRole::Setup、SetInventory、SetSkills、SetupEscort（第 1035–1038 行）— exact
+
+- 0x0047E9C0 Setup：ClearExtras；partyMember 1；placement（+0xFC4，0x20 字节）= 参数，savedPlacement（+0xFE4）= placement；kind（+0x2FE0）= 参数 +0x1C；battleRecord（0x3C 字节）复制自记录；roleRecord（+4）= 记录，roleBlock（+8）= 块；evadeSkill（+0x2FC5）= 战斗记录 +0x1E 字节；actId（+0x2F28）= 参数 +0x14，为 0 时「戰鬥角色actNumber為0!!」（0x004BF9D8）manrole.cpp 0x10B；战斗记录 +0x26／+0x28 = +0x10／+0x12；队伍记录 +0xA、+4、+0xC、+6、+0xE、+8 依次大于 0x270F（有符号）时截为 0x270F（战斗记录在截前复制）；defeated = 战斗记录 condition 0x8000 或队伍记录生命为 0。
+- 0x0047EAF0 SetInventory：+0x3458、+0x345C = 参数（源码 inventoryNode 为空即表示链表头，与之同义）。0x0047EB10 SetSkills：+0x3450、+0x3454 = 参数。
+- 0x0047EB30 SetupEscort：partyMember 0；分配 0xA8 清零作 +0xC，LoadObject(参数 actId)、FreeDescription；placement、savedPlacement、kind、actId（0 时「護駕actNumber為0!!」0x004BFA0C、0x15B）；战斗记录 +0x26／+0x28／+0x16／+0x14 = 物件 +0x5A／+0x5C／+0x5E／+0x60，+0x1E = 物件 +0x9A 字节，等级 +0x2C = +0x58 字节，+0x2D 起 5 字节抗性 = +0x9C；evadeSkill = +0x1E；生命 +4 = 物件 +0x68，+0xA = +4；+0xFA（weapon +0x3E 技能脚本）= 物件 +0x64；roleRecord = battleRecord；+0x3070 清零；attackAct（+0x544）id = actId、动作 0x26，Run 为 0 时 +0x3070 = 1；attackAct 清零（0x29 双字）。weapon 注释改为 +0xBC。
+
+## BattleRole::TakeObjectForm、SetupGhost（第 1039–1040 行）
+
+- 0x0047ECC0 TakeObjectForm — exact：LoadObject 到 +0x3074（unk2B24）、FreeDescription；战斗记录 +0x26／+0x28／+0x16／+0x14 依次加物件 +0x5A／+0x5C／+0x5E／+0x60（字加），+0x1E 加 +0x9A 字节（movzx），等级 +0x2C 加 +0x58 字节，+0x2D 起 5 字节抗性复制自 +0x9C；roleRecord = battleRecord；evadeSkill = +0x1E。
+- 0x0047ED60 SetupGhost — exact（修正后）：partyMember 0；placement、savedPlacement；ghostRecord（+0x10）；kind 1；actId = 鬼 +0x108 字，0 时「符鬼actNumber為0!!」（0x004BFA20）manrole.cpp 0x1E2；Random(5)（结果不用）；攻 +0x26 = 鬼 +0xF4、智 +0x14 = +0xFC、敏 +0x16 = +0x100、灵力上限 +0xC = +0xF0；天数 +0xC8（有符号）0..6：敏 >>= 1（无符号）、攻 −= 30×攻/100；7..10：敏 −= 30×(u16)敏/100、攻 >>= 1、智 += 30×(u16)智/100；11..24：敏 += 30×(u16)敏/100、攻 += 30×攻/100；灵力 = 上限；鬼 +0x104 = +0x10；ghost（+0x304C）1；+0x2FC0、+0x2FC2 清零；+0xFA = 鬼 +0x10C；ghostOrder（+0x34B6）为 0 时置 1；为 4 时 +0x2BDA |= 2；为 8 时置 1；roleRecord = battleRecord。
+- 修正：7..10 与 11..24 天的敏捷增减原程序以 (u16)敏捷×30 的 32 位积除以 100（0x0047EE7E、0x0047EEF4 and 0FFFFh），源码原先把 30×敏捷截成 i16 再除，敏捷 ≥ 1093 时结果不同。
+
+## BattleRole::ApplyEquipment（第 1041 行）— exact（修正后）
+
+- 0x0047EFE0：清 accessories（+0x164 起 0x54 双字，2×ObjectRecord）；十六格（数组指针非空时）：第 0 格复制记录到 weapon（+0xBC，0xA8 字节）、weaponId（+0x34AA）= 节点 id，weapon +0x48 为 0 时「武器%d號的強攻擊act沒設!!」（0x004BFA34，id）manrole.cpp 0x23C；每格：攻 +0x26 += +0x24、防 +0x28 += +0x26、敏 +0x16 += +0x2C、智 +0x14 += +0x2E、默契 +0x18 += +0x30、闪躲 +0x1E += +0x32；力量增量非 0 时力量 +0x10 与攻各加，耐力增量非 0 时耐力 +0x12 与防各加；第 7、8 格复制记录到 accessories[0/1]，id ≠ 0xFFDC 时其 act（+0x54）= id，ApplyAccessory；第 9、10 格到此为止；其余格：元素 = (i8)记录 +0x37，记录抗性[元素] 加物件抗性字节[元素]（字节加），> 100 截 100、< 0 截 0（有符号），+0x38 = 该值；格号 < 7 且 useKind（+0x3C）为 0 时 bonusA/B/C += +0x34／+0x36／+0x38。
+- 修正：断言行号原为 0x182，改为 0x23C（0x0047F036）；元素 5..7 读物件抗性之后的 altar／unkA2／unkA3（0x0047F11D），源码原取 0。deviations 补登空格的空指针行，并改写 0x0047EFE0 抗性读取的偏差说明。
+
+## BattleRole::Regenerate（第 1042 行）— exact
+
+- 0x0047F210：roleRecord condition 0x8000 时返回；bonusA／B／C 依次非 0 时：量 = (u16)加成 × (movsx)上限（+0xA／+0xC／+0xE）/ 100（有符号），低字为 0 时取 1，存 +0x2EB6／+0x2EB8／+0x2EBA（生命取负）；Damage(生命／灵力／体力位置)、PushTarget(0x237D／0x237E／0x237F)、SetDamageDigits(movsx 量)、PushTargetAlt(延迟)、StepTargetCount(1)，延迟依次 0、6、12（只在前项执行后加 6）；该字清零。
+
+## BattleRole::ApplyAccessory（第 1043 行）— exact（修正后）
+
+- 0x0047F3E0：按饰品 +0x48（movsx）− 0x32 走 10 项跳转表：0x32／0x35／0x36／0x37／0x38／0x39／0x3A 依次 equipmentFlags（+0x2BD0）|= 1／4／8／0x10／0x20／0x40／0x80；0x3B goldGuard（+0x3060）= 1；0x33 熟练度百分比 = FindCounterPercent(0x004D1F58, act +0x54)，抗性五字节中第一个非 0 的元素：记录抗性[元素] += 低字节((u16)百分比×80/100)，(i8) > 100 截 100，五个全 0 不改；0x34 半 = (u16)百分比 >> 1，非 0 时额外 = 攻×半/100，攻 = 攻 + 攻×10/100 + 额外（字）。熟练度表为全局（源码以参数传入，原函数只取一个参数）。
+- 修正：0x33 原程序在 32 位算出 80×(u16)百分比/100 再取低字节加上（0x0047F528–0x0047F54A），源码原先把 80×百分比截成 i8 后再除以 100，百分比 ≥ 2 时多数结果不同。注释「lowered」改为「raised by 80%」。
+
+## BattleRole::UseAccessorySkill（第 1044 行）— exact（修正后）
+
+- 0x0047F5C0：staminaCost（+0x34A2）为 0 时 = AccessoryValue(种类)；种类 − 0x15 走 21 项跳转表：0x15 unk26CC（+0x2BD4）|= 1、commandA（+0x2F88）1、AccessoryProficiency、StepAccessoryCounters(0x004D1F58, 种类, 5)、extraAttacks（+0x2FCD）1，返回；0x16／0x19 commandA 0、unk26CC |= 2／0x10、commandFlags |= 0x400、commandB（+0x2F8C）= 种类；0x17／0x1A／0x1D／0x1E commandA = 种类、|= 4／0x20／0x100／0x200；0x18／0x1B |= 8／0x40、commandA、AccessoryProficiency；0x1C、0x20、0x21 commandA、AccessoryProficiency；0x1F commandFlags |= 0x400、commandA 0、commandB、AccessoryProficiency、unk29A4（+0x2EB0）= (u16)熟练度×11/100 + 1（32 位）；0x22／0x24 AccessoryProficiency、熟练度 = (熟练度>>1) − (熟练度>>1)/5（等于 熟练度/10 截断），回复生命／体力 = 熟练度×上限生命（+0xA）／现体力（+8）/100 + 该值/10；0x23 熟练度 /= 5、回复灵力（+0xC 上限）同式；0x25 commandA = 种类，返回；0x26 及表外返回；0x27 unk2EB2 加一；0x28 equipmentFlags 位 0x100 已置时清除、commandA = 种类、unk26CC |= 0x400，否则 AccessoryProficiency 并置位；0x29 无动作；返回前 StepAccessoryCounters(…, 5)。
+- 修正：0x1F 原程序以 32 位算 11×熟练度（0x0047F77B），源码原截成 i16 再除。
+
+## BattleRole::StepWornCounters（第 1045 行）— exact
+
+- 0x0047FA00：两个饰品（+0x164 起每 0xA8）：act（+0x54）为 0 跳过；unk48（+0x48）为 0x25 时 AddTreasureExperience(表, 0x25, 量) 为 1 则 Add(0x118, 0xA, 0x28, 「龍颿法寶升級」0x004BF388, 0x40000002)；否则返回值置 1，从表头（含表头本身）按字找 id：找到且 done（+0xA）为 0 时 value（+6）+= 量，≥ counterMax（+0x44，无符号）截之，percent（+8）= Ftol(value / counterMax × 100.0f（0x004AAE10）)；找不到时链到末尾新节点（0x14 字节清零）：id、value = 量、percent 同式，counterMax 为 0 时 value 0、percent 100、done 1，表头 id（计数）加一。
+
+## BattleUnit::StepOrbCounters、AddTreasureExperience（第 1046–1047 行）
+
+- 0x0047FB90 StepOrbCounters — exact：两个饰品：act 非 0、unk48 为 0x33、命令 +0x10 元素在 1..5（无符号）、饰品抗性[元素−1] 非 0 时：返回值置 1，从表头找 id；找到且未满时 value += 12、截到 counterMax、percent = Ftol(value/counterMax×100.0f)；找不到时新节点 value 12、percent = Ftol(12.0f（0x004AAE14）/counterMax×100.0f)，counterMax 为 0 时 value 0、percent 100、done 1，表头计数加一。
+- 0x0047FD20 AddTreasureExperience — exact（修正后）：表头计数非 0 时从 next 起找（找的位置跨饰品保留）；饰品 act 非 0 且 (movsx)unk48 等于 (u16)种类：返回值清零；找不到且之前未找到过：新节点 value = min(量, counterMax)、toNext（+0xC）= 0x32 − 量、percent，表头计数加一；找到：标记已找到，done 为 0 时 value += 量并截到 counterMax；toNext（有符号）≥ 量时 toNext −= 量且量清零，否则 toNext 0；toNext ≤ 0 时等级（+0xE）加一，按等级 <4／<8／<16／≥16 取 0x32／0x78／0x12C／0x201，再减剩余量，返回值 1；percent 重算。
+- 修正：种类比较原程序为 movsx unk48 对零扩展的种类（0x0047FD58），源码原两边都按 i16。
+
+## BattleUnit::TreasureLevel、FinishProficiency（第 1048–1049 行）— exact
+
+- 0x0047FF00 TreasureLevel：两件饰品中第一个 unk48 为 0x25 的 act 作 id（没有时序号 2 读到 this+0x308，即 mainAct 动作脚本指针低字；源码取 0，新增 deviations 行）；从表头起按字找 id，返回其等级（+0xE），找不到返回 0。accessories 注释改为 +0x164。
+- 0x0047FF60 FinishProficiency：两件饰品：act 为 0 跳过；已有完成者时返回；否则从表头找 id 相同、done 为 0、value ≥ counterMax（无符号）的节点：value = counterMax、done 1、记下 act，跳出节点循环继续下一件；返回记下的 act（u16，初值 0）。
+
+## BattleRole::AttackFrame（第 1050 行）— exact
+
+- 0x0047FFD0（源码 RoleFrame::AttackAdvance）：+0x2F90 非 0 或 +0x3018 为 1 返回 0；autoControl 为 1 或 StatusBit5 为 1，且命令 +0x1010 有 0x38 位时：+0x2BC0 位 0x10000000 则 SetFacing(1)，fadedIn（+0x3064）为 0 且 DrawFadeIn 为 0 时 fadedIn 1、返回 0；guestControl 为 1 时位置 (0x140,0x136)；+0x2FEC = 1；standAct（+0x358）hold 按 held 与 target 0x200；暴击（+0x34CA 或 0x00578474）且非 MarkBit4：队员则 0x00578474 = 1、动作 0x29，非强制角色 castAct（+0x1018）= weapon +0x48，强制角色动作退回 0x28；否则 id = actId、动作 0x28，MarkBit4 时 id 0xFA，强制角色 +0x2FB6 非 0 时动作 0x30（为 2 时 0x31）；Action 失败时「Attack Act」「[%s]QQ:%d號錯誤!!」（0x004BFA50／0x004BFA5C），返回 1。target 位：2 回弹（effectA 非 0 时 recoilAct id／动作、stage |= 0x4000）、0x4000 回弹结束清 hold、0x8000 地震（0x0057730C 1、0x00577030 0）、0x800 StartSlideTo(0)、0x40 StartSlideBack(0)、8 后续（0x400 时 0x00577334 1 与 StartFieldFade(六个 float + 帧数)）并清 slotActs[slot]、4 目标 RaiseFlag26B8、1 打击（+0x2E60、0x005373B4 清零、清 slotActs[slot]、Strike(1)）；stage 无 0x8000 返回 0。后续未等待：id = castAct（effectA 非 0 时取之），为 0 时置等待返回；命令位 1 时 Fly(slotActs[1], …, 起点 x = anchorX−offsetX+位置 x、y = 位置 y+anchorY−standAct.y)，成功后 standAct 与后续等待、后续 target |= 1；否则 AimAction 后画 +0x2A44 图（无空判，源码判空）；0x20 时 AddHitPicture；DrawHitPictures；target |= HitBits；有 1 时清零并 Strike(1)。后续已等待：id 非 0、非命令位 1、+0x2E60 > −0x20 时三色调 = +0x2E60（混合模式 0x2C 时 0 且 +0x2E60 = −0x20），画图，+0x2E60 −= 4（held 时加回）；否则 standAct 等待、ImageList 空、HitPicturesDone 时清 standAct、recoilAct、后续、slotActs[1]、[2]，targets 全 −1，+0x2E60 0、+0x2E62 1、+0x2FF0、fadedIn、stage 清零；无暴击时 extraAttacks 为 0 则 unk26CC &= ~1，非 0 则减一返回 0；0x00578470 字节加一、+0x34CA 与 0x00578474 清零，返回 1。
+
+## BattleRole::RollCritical、ShowAllSkills（第 1051–1052 行）— exact
+
+- 0x004807B0 RollCritical：autoControl 或 guestControl 为 1、unk26CC 非 0、unk2EB2 > 0（有符号）、MarkBit4 为 1、0x00578478 等于 placement.actId 任一成立返回 0；equipmentFlags 位 1 或 status 0x40000 时 critical（+0x34CA）1 返回 1；0x00578470 字节 ≥ roleCount + 8（无符号）时 critical 1、计数清零、0x00578478 = actId、返回 1；计数 < 8 返回 0；否则 (u16)Random(10) ≤ 5 返回 0，> 5 同上置暴击返回 1。attacksSinceCritical 注释补地址。
+- 0x004808C0 ShowAllSkills：+0x3450 = +0x3454。
+
+## BattleRole::PrepareCommand（第 1053 行）— exact
+
+- 0x004808D0：commandB（+0x2F8C）≠ 2 时清 skillName（+0x2B38）前 16 字节；commandA（+0x2F88）为 0 返回 1；commandFlags 0x200 时 +0x3054 = 1、unk2F18（+0x34A8）非 0 则作 commandA，命令 +0x1010 有 0x28 时 commandB = commandA、commandA = 0xC8 返回 1，否则返回 0；commandA ≠ 0x1B 时 unk29A4（+0x2EB0）= 攻；UseAccessorySkill(commandA)、RollCritical；命令（+0x1004，0x2C 字节）清零后 LoadCommand(0)，equipmentFlags 0x20 时 actionFlags（+0x1008）|= 0x100；weapon 技能脚本（+0xFA）为 0：有 0x28 且 commandA ∈ {1, 0x17, 0x1A} 且 partyMember 1 时走路（commandB = commandA、commandA = 0xC8），返回 0；否则清命令、LoadCommand(MarkBit4 ? 0xA6 : 脚本)、同样补 0x100；StatusBit5 为 1：commandA ≠ 1 返回 1；unk26B8 位 0x10000000 时命令位 4 则 SetFacing(1)、位置 (0x154,0x140)，返回 1；否则有 0x28 时 commandB 1、commandA 0xC8，返回 1；其余：有 0x28 或 commandA 为 0x17，且上述三种之一且队员时走路，返回 1。
+
+## BattleRole::ListSkill、CountSkills（第 1054–1055 行）— exact
+
+- 0x00480B10 ListSkill：类别 0／1／2 取种类掩码 0x10／0xC／0x1001，其余按原值；类型 0／1 取 0x11／0x14，其余原值；ShowAllSkills 后逐个前进（+0x3450 = next），到空时 cost = 0xFFFF、返回 0xFFFF；节点种类（数据 +0x20）与掩码相交且可用者字节（+0x3A）有 5 位时，类型 0x11 计类别（+0x56）为 0x11 者、否则计类别 0x14 者；每个节点后计数等于序号即停（序号 0 时停在第一个）。类型非 0x11／0x14 时 cost = 0、返回栈上未写的字（deviations 已登记，源码取 0）；否则 LoadSkill 到 16 字节缓冲区（写满 0x2C，其后的局部即返回的元素字），名字 lstrcpy，cost 位（+0x40）：0x8000 时 = 低 15 位，0x4000 时 = 低 14 位 | 0x8000，0x800 时 = 1000，类型 0x14 时 = 1；都不满足时 cost 不改。
+- 0x00480C60 CountSkills：同样的掩码与类型；逐个前进，可用者字节无 5 位或种类不交跳过，按类型计数（字节加一）。
+
+## BattleRole::CanPaySkill（第 1056 行）— exact
+
+- 0x00480CF0：掩码同 ListSkill；序号 0 返回 0；逐个前进计可用（字节 5 位）、种类相交且类别 0x11 者，到空返回 0；cost 位 0x8000：selectedItem（+0x3460）清空、unk2F10（+0x34A0）= 低 15 位；0x4000：selectedItem 清空、staminaCost = 低 14 位；0x800：unk2F10 = 低 11 位，ShowAllItems 后逐个找 id 相等者：找到且 count 或 pending（有符号）> 0 时 selectedItem = 它、返回 1，否则或找不到时消息链为空才 Add(0x118,0xA,0x14,「物品不夠!!」0x004BFA90,0x40000002) 并出音 0x8C，返回 0；其余：ShowAllSkills，unk2F10 非 0 时灵力（+6，有符号）≥ 它返回 1，否则（消息链空时）「靈力值不夠!!」（0x004BFA80）＋音；staminaCost 非 0 时体力（+8）≥ 它返回 1，否则「體力值不夠!!」（0x004BFA70）＋音；返回 0。
+
+## BattleRole::SelectSkill（第 1057 行）— exact
+
+- 0x00480F30：掩码同上；序号 0 返回 0xFFFF；类型 0 时 commandFlags |= 0x8000、取 0x11，类型 1 时 |= 0x200、取 0x14；清命令（+0x1004，0x2C）、ShowAllSkills；逐个前进（到空返回 0xFFFF），按可用字节 5 位、种类相交、类别计数，计数等于序号时：act = 数据 +0x54；LoadCommand(技能脚本 +0x3E)；roleRecord 智慧（+0x14，无符号）≥ 0x32 时 unk18（+0x101C）+= unk18×(智慧−0x32)/100；skillName 前 16 字节清零后 lstrcpy 名字；commandFlags 有 0x200 时 magicAction（+0x2FB4）= +0x48、unk2F16 = act、unk2F18 = cost 位；useKind 为 0 时三项回复 = +0x34／+0x36／+0x38；healPercent（+0x2FD0）清零，useKind 有 0x200 时置 1 并取三项回复；返回：掩码与节点种类都有位 8 时 1，否则掩码位 4（0x10）。
+
+## BattleRole::LoadItemAction、FinishCommand（第 1058–1059 行）— exact
+
+- 0x00481170 LoadItemAction：栈上 0xA8 字节记录清零，LoadObject(id)、FreeDescription；act = +0x54（零扩展）；LoadCommand(+0x3E)；命令元素（+0x10）为 0 时命令值（+0xE）= +0x34；commandFlags |= 0x8000。
+- 0x00481200 FinishCommand：commandFlags 有 0x8000 时：selectedItem 为空则 roleRecord 灵力 −= unk2F10、< 0 时截 0；否则 UseSelectedItem(0, 0)（第二个参数被调用者弹出不读）、selectedItem 清空；unk2F10 清零；PayStamina（0x00481270）。
+
+## BattleRole::PayStamina、TakeCommand2F18、ShowAllItems（第 1060–1062 行）— exact
+
+- 0x00481270 PayStamina：staminaCost（+0x34A2）非 0 时 roleRecord 体力（+8）减之，< 0 截 0，staminaCost 清零。
+- 0x004812A0 TakeCommand2F18：commandFlags |= 0x200、+0x3054 = 1；unk2F18 非 0 时作 commandA；+0xBAC 起 0x52 双字（slotActs[8]、[9]）清零。
+- 0x004812E0 ShowAllItems：+0x3458 = +0x345C（源码 inventoryNode 置空同义）。
+
+## BattleRole::ListObject、CountObjects（第 1063–1064 行）— exact
+
+- 0x004812F0 ListObject：ShowAllItems、flags 清零；类别 0..3 取 0x10／0xC／0x1001／0x800，6 取 2，其余原值；逐个前进（到空 flags 0、返回 0）：种类相交时，掩码为 2 计剩余（pending − (u16)workCount + count，有符号）> 0 者，否则还要求可用字节 5 位；每个节点后计数等于序号即停；selectedItem = 节点；种类相交时名字 lstrcpy、count = 剩余（字）、flags |= 0x8000，cost 位 0x4000 时 cost = 低 14 位，itemUses[id] + 1 ≥ 3 时 cost += cost/3 且 flags |= 0x2000，(u16)cost > 体力（有符号）时 flags |= 0x4000；返回 1。
+- 0x00481460 CountObjects：类别 0..6 取 0x10／0xC／0x1001／0x800／0x2000／0x8000000／2；逐个：种类相交且掩码为 2 时剩余 > 0 计一并跳下一个；种类相交、可用字节 5 位、剩余 > 0 时计一；掩码 0x2000 且 cost 位 0x2000 时再计一。

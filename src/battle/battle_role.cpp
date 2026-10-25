@@ -113,7 +113,7 @@ constexpr int kGhostDayPercent = 30;
 constexpr u16 kGhostGuardOrder = 4;
 constexpr u16 kGhostLastOrder = 8;
 constexpr u32 kNoGuestActLine = 0x14E;
-constexpr u32 kNoWeaponActLine = 0x182;
+constexpr u32 kNoWeaponActLine = 0x23C;                                     // 0x0047F036
 constexpr std::u8string_view kNoAct = u8"戰鬥角色actNumber為0!!";           // 0x004BF9D8
 constexpr std::u8string_view kNoEscortAct = u8"護駕actNumber為0!!";         // 0x004BFA0C
 constexpr std::u8string_view kNoGhostAct = u8"符鬼actNumber為0!!";          // 0x004BFA20
@@ -238,7 +238,7 @@ constexpr u16 kFullPercent = 100;  // StepWornCounters: a counter with no top is
 constexpr std::size_t kClearedNameBytes = 0x10;
 constexpr u32 kSeparateKind = 0x800;     // ObjectData::kind: the object plays its own act (UnkCommandFlag1000)
 constexpr u32 kReusableKind = 0x80;      // an object not taken when used
-constexpr int kUnk1FScale = 0xB;         // Unk1F: unk29A4 is 11 percent of the proficiency (in 16 bits) and 1 (swd3e)
+constexpr int kUnk1FScale = 0xB;         // Unk1F: unk29A4 is 11 percent of the proficiency and 1 (swd3e)
 constexpr int kAccessoryBaseShare = 10;  // the heals add a tenth of their base
 constexpr int kTenthShare = 10;          // Unk22 / Unk24: the proficiency is halved, less a tenth of it (swd3e)
 constexpr int kSpiritShare = 5;          // Unk23: a fifth of the proficiency
@@ -289,6 +289,35 @@ constexpr u32 kAttackRingPercent = 10;  // an attack ring adds 10% of the attack
 i16 Grown(i16 value, i16 scale)
 {
     return static_cast<i16>(value + static_cast<i16>(scale * value) / kTenths);
+}
+
+// The byte `at` of an object's resistances read as the original does: past the five, the altar, unkA2 and unkA3 after
+// them; further on the description pointer of the record, read as 0 (deviations.md).
+u8 ResistanceByte(const ObjectData& stats, std::size_t at)
+{
+    constexpr std::size_t kAltarByte = 5;
+    constexpr std::size_t kUnkA2Byte = 6;
+    constexpr std::size_t kUnkA3Byte = 7;
+
+    if (at < stats.resistances.size())
+    {
+        return stats.resistances[at];
+    }
+
+    switch (at)
+    {
+        case kAltarByte:
+            return stats.altar;
+
+        case kUnkA2Byte:
+            return stats.unkA2;
+
+        case kUnkA3Byte:
+            return stats.unkA3;
+
+        default:
+            return 0;
+    }
 }
 
 }  // namespace
@@ -496,7 +525,7 @@ void BattleRole::SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, Battl
     if (day > kGhostYoungDays && day <= kGhostMiddleDays)
     {
         record.agility =
-            static_cast<i16>(record.agility - static_cast<i16>(kGhostDayPercent * record.agility) / kPercent);
+            static_cast<i16>(record.agility - kGhostDayPercent * static_cast<u16>(record.agility) / kPercent);
         record.attackBonus = static_cast<u16>(record.attackBonus >> 1);
         record.wisdom = static_cast<i16>(record.wisdom + kGhostDayPercent * static_cast<u16>(record.wisdom) / kPercent);
     }
@@ -504,7 +533,7 @@ void BattleRole::SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, Battl
     if (day > kGhostMiddleDays && day <= kGhostGrownDays)
     {
         record.agility =
-            static_cast<i16>(record.agility + static_cast<i16>(kGhostDayPercent * record.agility) / kPercent);
+            static_cast<i16>(record.agility + kGhostDayPercent * static_cast<u16>(record.agility) / kPercent);
         record.attackBonus = static_cast<u16>(record.attackBonus + kGhostDayPercent * record.attackBonus / kPercent);
     }
 
@@ -638,13 +667,13 @@ void BattleRole::ApplyEquipment(
         else if (slot != BattleRole::NoResistanceSlotA && slot != BattleRole::NoResistanceSlotB)
         {
             // swd3e: only the resistance to the role's element rises, kept to 0..100 and copied to unk38[0]; an
-            // element past the item's five resistances reads the bytes after them in the original, 0 here.
+            // element past the item's five resistances reads the bytes after them (0x0047F11D).
             const auto element = static_cast<i8>(record.resistances[RoleRecord::ElementAt]);
 
             if (element >= 0 && static_cast<std::size_t>(element) < record.resistances.size())
             {
                 const auto at = static_cast<std::size_t>(element);
-                const u8 gain = at < stats.resistances.size() ? stats.resistances[at] : u8{0};
+                const u8 gain = ResistanceByte(stats, at);
                 auto value = static_cast<i8>(record.resistances[at] + gain);
 
                 if (value > kMaxResistance)
@@ -699,8 +728,9 @@ void BattleRole::ApplyAccessory(const ObjectRecord& accessory, CounterList& prof
                 break;
             }
 
-            const auto share = static_cast<i8>(kOrbPercent * percent);
-            record.resistances[element] = static_cast<u8>(record.resistances[element] + share / kPercent);
+            // The share is worked out in 32 bits from the unsigned percent, its low byte added (0x0047F528).
+            const auto share = static_cast<u8>(kOrbPercent * static_cast<u16>(percent) / kPercent);
+            record.resistances[element] = static_cast<u8>(record.resistances[element] + share);
 
             if (static_cast<i8>(record.resistances[element]) > kMaxResistance)
             {
@@ -1618,7 +1648,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             this->commandA = 0;
             this->commandB = kind;
             this->AccessoryProficiency(kind, proficiency);
-            this->unk29A4 = static_cast<u16>(static_cast<i16>(kUnk1FScale * this->proficiency) / kPercent + 1);
+            this->unk29A4 = static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);  // 0x0047F77B: 32 bits
             break;
 
         case AccessoryKind::Unk20:
