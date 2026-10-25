@@ -59,7 +59,7 @@ struct BattleMessage
     std::string_view Text() const;
 };
 
-// The battle messages and the result panels of a battle (0x00469080..0x00469960).
+// The battle messages and the result panels of a battle (0x00477C40..0x00479360).
 class BattleMessages
 {
     friend class smooth::MessagesFrame;  // the rebuild's smooth battle: Draw split (smooth/smooth_messages.h)
