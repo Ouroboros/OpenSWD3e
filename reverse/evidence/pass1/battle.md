@@ -448,3 +448,69 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 
 - 0x004812F0 ListObject：ShowAllItems、flags 清零；类别 0..3 取 0x10／0xC／0x1001／0x800，6 取 2，其余原值；逐个前进（到空 flags 0、返回 0）：种类相交时，掩码为 2 计剩余（pending − (u16)workCount + count，有符号）> 0 者，否则还要求可用字节 5 位；每个节点后计数等于序号即停；selectedItem = 节点；种类相交时名字 lstrcpy、count = 剩余（字）、flags |= 0x8000，cost 位 0x4000 时 cost = 低 14 位，itemUses[id] + 1 ≥ 3 时 cost += cost/3 且 flags |= 0x2000，(u16)cost > 体力（有符号）时 flags |= 0x4000；返回 1。
 - 0x00481460 CountObjects：类别 0..6 取 0x10／0xC／0x1001／0x800／0x2000／0x8000000／2；逐个：种类相交且掩码为 2 时剩余 > 0 计一并跳下一个；种类相交、可用字节 5 位、剩余 > 0 时计一；掩码 0x2000 且 cost 位 0x2000 时再计一。
+
+## BattleRole::SelectObject（第 1065 行）— exact
+
+- 0x00481540：清命令（0x2C）、skillName 前 16 字节、usedItem（+0x34A4）；类别 0..6 掩码同 CountObjects；序号 0 返回 0；逐个前进（到空返回 0）计数同 CountObjects，每个节点后计数等于序号即停；commandFlags |= 0x4000、selectedItem = 节点、kind 出参 0；掩码 0x2000 且 cost 位 0x2000：LoadCommand(+0x3E)、unk29A4 = +0x24，返回 1；unk48（+0x48）非 0：掩码为 2 时直接往下，否则 LoadCommand(unk48)、cost 0x8000 时 unk2F10 = 低 15 位且 > 灵力（有符号）返回 0、0x4000 时 staminaCost = 低 14 位且 > 体力返回 0；unk48 为 0：LoadCommand(+0x3E)、同样的灵力检查，体力 cost 在 itemUses[id]+1 ≥ 3 时加倍（字），> 体力返回 0；useKind 为 0 时三项回复，healPercent 清零，useKind 0x200 时置 1 并取回复；act 出参 = castAct（+0x1018）；节点种类 0x800 时 commandFlags |= 0x1000、usedItem = act；kind 出参在掩码与种类都有 8 或掩码有 0x10 时为 1；(种类无 0x80 或有 0x8000000) 且掩码 ≠ 0x800 时 workCount 加一；返回 1。
+
+## BattleRole::UseSelectedItem（第 1066 行）— exact
+
+- 0x004818E0：ShowAllItems；selectedItem 为空返回 0；从表头起逐个前进并计位次，到空返回 0（光标留空），id 相等即停；光标 = 选中项、usedItem = id；useKind（+0x3C）有 0x400 且低字节次数非 0 时次数减一（高字节保留），剩余次数非 0 则不消耗；类别 6 时 commandFlags |= 0x800、absorbCategory／absorbChance = +0x4A／+0x4C；消耗（种类无 0x80 或有 0x8000000）：count 非 0 减一，否则 pending 非 0 减一，workCount（无符号）> 0 减一，selectedItem 清空；count 与 pending 都为 0 时摘除释放，ShowAllItems 后前进 位次−1 个，把该节点（位次为 1 时为表头本身）的 next 接到后面；光标所在节点 cost 位 0x2000 时返回 0，否则返回 usedItem。位次为 1 时把表头变量当节点读旗标（0x00481A87，读到 0x004C3018+0x4D），源码视为无旗标，deviations 该行改引汇编地址。
+
+## BattleRole::ListedObject、ThrowableObject、CountUsableObjects（第 1067–1069 行）— exact
+
+- 0x00481AB0 ListedObject：第一个参数不读；逐个前进计 cost 位 0x2000 者，到空返回 0，每个节点后计数等于序号即停；名字 lstrcpy、数量 = pending + count（字），返回 1。
+- 0x00481B20 ThrowableObject：throwable 为 0 时遇 id 0x300 即停（不写 selectedItem），否则种类有 0x8000000 且 id ≠ 0x300 者计数；每个节点后计数等于序号即停并写 selectedItem；到空返回 0；可用字节 5 位时写名字与数量；返回 1。
+- 0x00481BC0 CountUsableObjects：出参清零；种类有 0x8000000、id ≠ 0x300、可用字节 5 位者累加 pending + count（字）。
+
+## BattleRole::StartAbsorb（第 1070 行）— exact
+
+- 0x00481C10：absorbSource（+0x2A54）= 来源 StepIdleAction；来源 GetOrigin；粒子效果（+0x108C，0x58 字节）清零；像素 = RLE 解码来源图（无空判，deviations 已登记）；宽高 = 图 +0xC／+0xE；x = 原点 x − 1、y = 原点 y；lifeBase 0x14、speed 0x1E；targetLeft = anchorX − originX + 位置 x − 0x32，targetTop = 位置 y − mainAct.y + 0x28，目标宽高 1；bursts = 高 < 100（无符号）时 高 − 10，否则 高 >> 1；divisor 0x28；三色调 5；旗标 0x56，来源镜像时 |= 1；commandFlags |= 0x800；投影器 SetScreen(GetSystemMetrics(0), (1))（平台替换为 640×480，已登记）；throwSteps（+0x2B88）清零、flight（+0x106C，0x20 字节）、attackAct（+0x544）、extraActs（+0x311C）清零。deviations 两行改引汇编地址。
+
+## BattleRole::AbsorbFrame（第 1071 行）— exact
+
+- 0x00481DB0（源码 RoleFrame::AbsorbFrameAdvance）：absorbFrames（+0x34BE）加一；三色调 5；absorbing（+0x303C）1；Explosion（0x00439250）为 1 时：absorbFrames、absorbing 清零，释放像素，效果（0x58）、extraSteps（+0x3488，5 双字）、flight、attackAct 清零，返回 1；bursts 为 0 返回 0；五个火花：x = 效果 x + 宽>>2，y = 高 − bursts + 效果 y + 偏移（−5／−10／−15／0／+5），FlyExtraAct(0x1C2B／0x1C2C／0x1C2D／0x1C2B／0x1C2C, 0, 槽, x, y, 0xE／0xA／0xC／8／0x10)，后四个在 absorbFrames（有符号）≥ 10／20／30／40 时；返回 0。
+
+## BattleRole::BeatsLevel、StepBack（第 1072–1073 行）— exact
+
+- 0x00481FF0 BeatsLevel：等级参数为 0 返回 0；记录等级（字节）< 参数（无符号）时 Random(100) ≤ 35；差 = 等级 − 参数：0..7 时 Random(100) ≤ 70，8..12 时 ≤ 90，≥ 13 返回 1。
+- 0x00482080 StepBack（源码 RoleFrame::StepBackAdvance）：defeated 为 1 时 +0x2FEC 清零返回 1；glowLevel（+0x2E64）= 模式 0 ? 2 : 6；IsHeld 为 1 时 fadeLevel（+0x2B70，有符号）> glow 则减一返回 0，否则 0xF 返回 1；fadeLevel ≤ glow 时 recoilAct 清零、fadeLevel 0xF，模式 1 时 +0x2FEC 1 且 autoControl 为 1 时 defeated 1，返回 1；否则 +0x2FEC 1，recoilAct id = actId、动作 0x2F（actId 1 时 0x2E，autoControl 时 0x24），hold 按 held；Run 失败返回 1；取图（无空判，源码判空）、actOffsetX、frameFlags（actId 1 时异或 1）；fadeLevel 为 0xF 且模式 1 时 view 0x2F、出音 0x2F、声像 facing 为 1 时 −0x30 否则 0x30、view 清零；位置 x 在模式 1 时按 (facing ≠ 1 或 autoControl ≠ 0) 加 0x1E 否则减 0x1E；frameFlags 含 0x14 时 alpha = signal；画图于 (位置 x − actOffsetX, 位置 y − act.y)；fadeLevel 减一，返回 0。
+
+## BattleUnit::Word2A86Bit13、Word2A86Bit12、BattleRole::ThrowAct（第 1074–1076 行）— exact
+
+- 0x00482350／0x00482360：commandFlags（+0x2FB0）位 13／位 12。
+- 0x00482370 ThrowAct（源码 RoleFrame::ThrowActAdvance）：attackAct id 0x186B、动作 0、hold 按 held；Run 失败返回 0；取图（无空判）、actOffsetX = act.x、frameFlags；facing 为 1 时 frameFlags ^= 1、actOffsetX = 图宽 − act.x；目标 GetOffset：两字都非 0 时终点 = 原点 + 偏移 − (actOffsetX, act.y)，否则 = 绘制位置 − (actOffsetX, act.y)（字运算，取 movsx）；flight（+0x106C）清零，起点 x = anchorX − originX + 位置 x − actOffsetX、y = 位置 y + mainAct.anchorY − mainAct.y − act.y；最多 throwSteps×8 步 LineStep，x 到达终点 x 即停；throwSteps 加一；出音 act.view、view 清零；到达时画于终点、throwSteps 与 flight、attackAct 清零返回 1，否则画于当前点返回 0。
+
+## BattleRole::CatchAct（第 1077 行）— exact
+
+- 0x00482650（源码 RoleFrame::CatchActAdvance）：attackAct id 0x186B、动作 1、hold 按 held；Run 失败返回 0；取图（无空判）；目标 GetOffset 两字都非 0 时起点 = 原点 + 偏移 − (act.x, act.y)，否则 = 绘制位置 − (act.x, act.y)（字，取 movsx）；flight 清零；终点 x = 位置 x − originX + mainAct.anchorX − act.x，y = 位置 y + mainAct.anchorY − mainAct.y − act.y；LineStep 循环与到达判断、throwSteps、出音同 ThrowAct；到达画于终点（act.flags）并清 throwSteps、flight、attackAct 返回 1，否则画于当前点返回 0。
+
+## BattleRole::GlowAct（第 1078 行）— exact
+
+- 0x004828E0（源码 RoleFrame::GlowActAdvance）：attackAct id = usedItem、动作 0x24、hold 按 held；Run 失败返回 0；取图；出音 act.view，随后清的是 recoilAct.view（+0x4F8，原有 BUG 保留）；glowFlags（+0x2B90）= act.flags、glowOffsetX（+0x2B94）= act.x；facing 为 0 时 glowFlags ^= 1、glowOffsetX = 图宽 − act.x；glowPhase（+0x2F82）0：三色调 = glowLevel/2 − 0x1F（向零），glowLevel += 2，> 0x3E 时相位 1；相位 1：同样的色调，glowLevel −= 2、absorbFrames 加一，≤ 0 时相位 2；画于 (x − glowOffsetX, y − act.y)、旗标 |= 4；相位 2 时出音 0x6A，glowLevel、glowFlags、glowOffsetX、相位、absorbFrames、hurtStep（+0x2F94）清零，attackAct 与 extraActs 清零，返回 1；否则返回 0。
+
+## BattleRole::FlyExtraAct（第 1079 行）— exact
+
+- 0x00482B40（源码 RoleFrame::FlyExtraActAdvance，返回值只被 AbsorbFrame 调用且不用）：extraActs[槽]（+0x311C 起每 0xA4）id、动作、hold；Run 失败返回；取图；flight 清零，起点 = (x − act.x, y − act.y)（字，movsx），终点 x = 位置 x − originX + mainAct.anchorX − act.x、y = 位置 y + mainAct.anchorY − mainAct.y − act.y；LineStep extraSteps[槽]×步数 次；extraSteps 加一；出音 view 并清零；当前 x ≥ 终点 x − unk2674（+0x2B7C）时画于 (终点 x − unk2674, 终点 y)、extraSteps 与 flight 清零（返回 1），否则画于当前点（返回 0）。
+
+## BattleRole::PoseAtTarget（第 1080 行）— exact
+
+- 0x00482D70（源码 RoleFrame::PoseAtTargetAdvance）：standAct 动作 0x32、hold 按 held、id = actId；Run 失败返回 0；取图；waiting 非 0 时清 standAct 返回 1；facing 为 1 且 +0x374 为 0 时 flags ^= 1、+0x374 = flags | 0x8000、act.x = 图宽 − act.x；目标绘制位置减 (act.x, act.y)（字）；影高（0x004EDA10）= 图高/3，斜切（0x004ED9A0）= 图高>>2，三色调 −6（autoControl 为 1 时 −1）；出音 view、声像 x > 0x140 时 0x30 否则 −0x30；shadowMode（+0x2BAC）= (flags & 0x8000000F) | 0xC；view 清零；影画于 (x − 5, y − 影高 + act.y)，本体画于 (x, y)；返回 0。
+
+## BattleRole::Steal（第 1081 行）— exact
+
+- 0x00482FC0：目标物件数据（0x0049D3B0）stealItem（+0x8C）为 0 返回 25000；AccessoryProficiency(0x17)；熟练度（+0x2BE6）< 100（无符号）时：r = Random(10)，cut = 熟练度/25，cut > (u16)r 时值 0，否则 r − cut（字）；值 ≥ stealDifficulty（+0x8E，无符号）返回 0；返回 stealItem 并清零。
+
+## BattleRole::AttackPose（第 1082 行）— exact
+
+- 0x00483060（源码 RoleFrame::AttackPoseAdvance）：standAct id = actId、+0x2FEC = 1、动作 0x3C、hold 按 held；Run 失败返回 0；取图；actOffsetX = act.x、frameFlags = flags、actAnchorX = anchorX；facing 为 1 时 frameFlags ^= 1、actOffsetX = 图宽 − act.x，anchorX 非 0 时 actAnchorX = 图宽 − anchorX；影高 = 图高/3、三色调 −6、斜切 = 图高>>2；出音 view、声像 −0x30、view 清零；shadowMode = (flags & 0x8000000F) | 0xC；影画于 (位置 x − act.x, 位置 y − 影高)，本体画于 (位置 x − act.x, 位置 y − act.y)；target 有 1 或 8 时清零返回 0x9B78；未等待返回 0；否则 +0x2FEC 清零、standAct 清零返回 2。
+
+## BattleRole::CanTarget、CanAbsorb、BattleUnit::MarkBit11Clear（第 1083–1085 行）— exact
+
+- 0x004832A0 CanTarget：调用目标 Data()（结果不用），返回 1。
+- 0x004832C0 CanAbsorb：目标数据；GetHitPoints(生命, 上限)；种类有 0x20 或无 0x800 返回 0；absorbChance（+0x34BC）非 0 且 absorbCategory 等于目标类别（+0x56）时 Random(10) < absorbChance；类别 > 10（无符号）返回 0；高 = 目标等级（+0x58）− 角色等级：≥ 12 返回 0；低 = 角色等级 − 目标等级 ≥ 10 返回 1；高 7..11 时生命 ≤ 上限/4；低 5..9 时生命 ≤ 上限/3 返回 1，否则 Random(100) ≤ 80；高 1..6 时同样先比 上限/3，否则 Random(100) ≤ 20 − 5×高；低 ≥ 5 或 < 0 返回 0；低 0..4：先比 上限/3，否则 Random(100) ≤ 10×低 + 20。
+- 0x00483490 MarkBit11Clear：marks（+0x2BD8）位 0x800 为 0。
+
+## BattleRole::DirectAttack（第 1086 行）— exact
+
+- 0x004834A0（源码 RoleFrame::DirectAttackAdvance）：standAct id = actId、+0x2FEC = 1、动作 0x2A、hold 按 held；Run 失败返回 0；取图；frameFlags、actOffsetX、actAnchorX 及 facing 镜像同 AttackPose；影 y = 目标绘制 y − act.y（字）；影高 图高/3、斜切 图高>>2、色调 −6（autoControl 时 −1）；出音、声像 x（位置 x − actOffsetX）≥ 0x140 时 0x30 否则 −0x30；shadowMode = (frameFlags & 0x8000000F) | 0xC；view 清零；影画于 (x, 影 y − 影高 + act.y)，本体 (x, 位置 y − act.y)；target 有 1 或 8 时：清零、stage = 0x8000、目标 RaiseFlag26B8，伤害 = (i16)HitDamage，0x00575F34 = 伤害（≥ 0x270F 截之），0x005378F4 += 伤害，目标 SetDamageDigits、StepTargetCount(1)；stage ≠ 0x8000 返回 0；slotActs[0] id 0x1C9A、动作 0，AimAction(0, 0)，画图于 aim（无空判）；standAct 等待时 stage 清零、slotActs[0] 与 standAct 清零返回 1，否则返回 0。
