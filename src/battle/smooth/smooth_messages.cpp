@@ -777,8 +777,10 @@ void MessagesFrame::DrawMasteryAdvance(Scene& scene)
         return;
     }
 
+    // The original draws its shared buffer here: after the parts of an evolution it holds only the evolved name
+    // (0x00477E41), which then covers the start of the line.
     messages.panelFont.SetAdvance(kMasteryCharWidth);
-    this->DrawPanelTextAdvance(kMasteryTextX, kMasteryTextY, text, scene);
+    this->DrawPanelTextAdvance(kMasteryTextX, kMasteryTextY, evolved ? state.evolvedName : text, scene);
     messages.panelFont.SetAdvance(kPanelAdvance);
 }
 

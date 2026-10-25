@@ -526,7 +526,7 @@ public:
     i32 endFrames = 0;                        // 0x00576FF4 frames the end messages have waited
     RoleRecord levelUpBefore;                 // swd32 0x004FF108 the record of the role before its level-up
     i32 unk53C4C8 = 0;
-    std::array<i16, 9> statRolls = {};  // swd32 0x005214A4..0x00525466 the rises of a level-up still to count
+    std::array<i16, 9> statRolls = {};  // 0x005372F4 [0..2], 0x005394C4 [3..8]: the level-up rises to count
     // 0x005770CE the frames of the level-up stats (the high word of 0x0053BDE8)
     u16 levelUpFrames = 0;
     // The debug keys (Game::BattleDebugKeys) and the acting unit.

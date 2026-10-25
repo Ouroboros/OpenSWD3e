@@ -26,12 +26,12 @@
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
 - 已实现／总数：1710／1710。
-- 已验证／总数：1011／1710。
-- 待实现／待验证：0／699。
+- 已验证／总数：1026／1710。
+- 待实现／待验证：0／684。
 
 ## 当前工作
 
-函数全集1710个均已实现，范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试172项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。第4阶段第一遍逐函数验证进行中，证据按模块记入reverse/evidence/pass1/。停点：函数表第1005行 Game::DrawLevelUpStats（0x00476CB0）。
+函数全集1710个均已实现，范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试172项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。第4阶段第一遍逐函数验证进行中，证据按模块记入reverse/evidence/pass1/。停点：函数表第1020行 Game::DrawObjectStats（0x00478990）。
 
 ## 下一步
 

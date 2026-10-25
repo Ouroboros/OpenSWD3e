@@ -261,3 +261,39 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 - 0x00476650 DrawLevelUpPanel：levelUpRole ≠ 0xFF 或 learnedPending（0x00577300）为 1 时画面板（Box 高 panelHeight+0x28、框、「升級」0x004BF7C0 于 (0x108,0xB4)、正文框）；GrowPanel(0xD4,0xF4,3) 为 1 且 levelUpRole ≠ 0xFF 时以「%s升第%d級」（0x004BF7B4，IDA 注释只显示 "%s"）写 partyRoles[(i8)levelUpRole] 的战斗名（0x0050ECB4+32×）与等级（0x004C4F44+60×）于 (0xD0,0xDC) 色 0xFFC0。
 - 0x004767D0 CheckLevelUps：逐个非自动、非客、非鬼角色：等级（u8→u16）≥ levelCap（0x004BF1CE，无符号）时 levelUpRole 0xFF 跳过；LoadLevelEntry(角色+1, 等级+1, &所需) 后总经验（有符号）< 所需同样跳过；否则清升级前／后记录（0x00513460／0x00536AB8，0x3C 字节，只此二函数使用且先清后填，源码用局部），levelUpBefore（0x0050EC78）= 记录，LevelUp(前, 角色+1, 等级, &learnedPending)、LevelUp(后, 角色+1, 等级+1, &learnedPending)；等级与经验标记取后者，生命／灵力／体力上限各加差并回满，8 项属性各加差（16 位），levelUpRole = 序号，StopSound(0x12C)、音 0x12B，结束。最后 0x00577A70 置 1。
 - 0x00476A90 RaiseLevel：从当前等级起，等级 < 目标且 < levelCap 时每级同样清前后记录、存 levelUpBefore、两次 LevelUp（学会旗标传原程序未初始化、只写不读的局部），等级与经验标记取后者，总经验加两级标记之差，上限加差回满、属性加差。
+
+## DrawLevelUpStats（第 1005 行）— exact
+
+- 0x00476CB0 DrawLevelUpStats：levelUpRole 0xFF 返回；panelAct id、Run；Box(0xC4,0x4C,0xD4, panelHeight+0x28)；框 (0xC8,0x50,0x190,0x60)、战斗名（partyRoles[(i8)levelUpRole]）于 (0x118,0x50)、正文框 (0xC8,0x70,0x190,panelHeight+0x70)；GrowPanel(0x70,0x10C,2) 为 1 时：7 行旧值（levelUpBefore 的上限三项有符号、属性四项无符号）以 0x004BF81C..0x004BF7D4 的格式画于 (0xD8, 0x78+0x14×行) 白色。levelUpFrames（0x005770CE）为 0x64 时 9 个计数（0x005372F4 三个字、0x005394C4 六个字）清零；为 0x1D 时取 9 项差值；< 0x1E 时加一，仍 < 0x1E 返回。上限三项现值（有符号）大于旧值时画「 ==> 」于 (0x136,y)、"%4d" 现值−(i16)计数 于 (0x158,y) 色 0xF000，前一项计数为 0（首项不限）且本项计数 > 0（有符号）时减一并出音 0x125；属性四项无符号比较、现值−(u16)计数，前一项为 0 且本项非 0 时减一出音。statRolls 注释改为外传两段地址。
+
+## DrawNewSpell、DrawNewSpecial（第 1006–1007 行）— exact
+
+- 0x004776B0 DrawNewSpell／0x00477850 DrawNewSpecial（源码共用 DrawLearnedBox）：learnedPending 为 1 时（绝技另在 panelHeight 为 0 时出音 0x160）以「%s學到新奇術」（0x004BF830）／「%s學到新絕技」（0x004BF840）写 partyRoles[(i8)levelUpRole] 的战斗名，半长 = 长度/2（向零取整）；panelAct id、Run；Box(0xF6, 0xB0, 20×半长+8, panelHeight+8, 0,4,4, 模式 0)；WindowFrame(0xFA, 0xB4, 20×半长+0xFA, panelHeight+0xB4)；GrowPanel(0xB4, 0xEC, 3) 为 1 时文字于 (0x104,0xBC) 白色，「[%s]」（0x004BF828）技能名（0x0057747C）于 x = ((半长×16)>>1) − (长度>>2)×16 + 0xFA、y 0xD2、色 0xF000。注释中的正传地址改为外传。
+
+## LearnSpecials（第 1008 行）— exact
+
+- 0x00477A00 LearnSpecials：逐个非自动、非客、非鬼、未倒下的角色，战斗块（0x004C6700+96×队伍角色）values[3] 为 −1 时跳过；遍历技能链（0x004C2B68[队伍角色] 的头之后），类别（node+0x62）为 0x14 且 values[3] 位 31 未置时载入该物件到 0x00576D40、FreeDescription，values[2] = (u16)counterMax、values[3] = (u16)unk42 | 0x80000000（另有只写不读的局部最大 id）；然后 values[1] < values[2]（有符号）或 values[3] & 0x7FFFFFFF 为 0 时跳过；否则载入 (u16)values[3]，接到链尾一个清零的 0xB4 字节新节点（id、记录），learnedPending 1、技能名复制到 0x0057747C、levelUpRole = 序号，values[1] 0、values[2] = 新的 counterMax、values[3] = 新的 unk42 | 0x80000000（unk42 为 0 时 −1），返回。
+
+## BattleMessages::DrawMastery（第 1009 行）— exact（修正后）
+
+- 0x00477C40 DrawMastery：learnedPending 为 1 时，进化名（0x00577A54）为空则文字 =「法寶%s已完全成長!!」（0x004BF870），否则「法寶[%s]轉化為[%s]!!」（0x004BF858），半长 = 长度/2，宽 = 17×半长+0x20；Box(0xC4, 0xD0, 宽+0xC, panelHeight+8, 0,4,4, 模式 0)、WindowFrame(0xC8, 0xD4, 宽+0xC8, panelHeight+0xD4)；进化时字宽 0x11，依次在 x 0xD8 起画「法寶」（0x004BEB60，0xFFC0）、技能名（0xF000）、「轉化為」（0x004BF850，0xFFC0）、进化名（0xF000），每段后 x 加 18×(段长/2)，y 0xDA，这四次都写进同一个缓冲；GrowPanel(0xD4,0xF4,3) 为 1 时字宽 0x11 画该缓冲于 (0xD8,0xDA) 色 0xFFC0，再恢复字宽 0x10。
+- 修正：进化时缓冲最后只剩进化名，原程序长满后画的是进化名（盖在句首），源码原画完整进化句，改为画进化名（原有 BUG 保留）。
+
+## AnnounceMastery（第 1010 行）— exact（修正后）
+
+- 0x00477EE0 AnnounceMastery：清进化名（0x00577A54，24 字节）；逐个非自动、非客、非鬼、未倒下的角色取 0x0047FF60(法宝熟练表)，为 0 跳过；否则载入该物件到 0x00576D40、FreeDescription、learnedPending 1、名字复制到 0x0057747C、levelUpRole = 序号；unk42 为 0 返回；否则在队伍角色的两个饰品槽（0x004E4CCC+64×队伍角色）里找 id（字比较）等于该物件的节点，找到则 id 0xFFDC、count 1、pending 0、workCount 0、记录名首 4 字节清零后写「無」（0x004AF630）、AddOneItem(unk42, 1)、载入 unk42、FreeDescription、进化名 = 其名字，返回；都不等则返回。
+- 修正：槽内 id 与物件 id 原程序以 16 位字比较（0x00477FC0），源码原把物件 id 转 i16 后与 u16 id 按 int 比较，id ≥ 0x8000 时结果不同，改为直接比较。
+
+## DrawLootPanel、DrawDefeatPanel、DrawCraftResultPanel、DrawMessageBox、GrowPanel（第 1011–1015 行）— exact
+
+- 0x00478070 DrawLootPanel：底 = lootCount×0x14+0xD4；字宽 0x12；panelAct id、Run；Box(0xC4,0xB0,0xB8,panelHeight+0x28, 0,4,4, 模式 0)；框 (0xC8,0xB4,0x178,0xC4)、「戰利品」（0x004BF890）于 (0x108,0xB4)、正文框 (0xC8,0xD4,0x178,panelHeight+0xD4)；GrowPanel(0xD4, 底, 3) 为 1 且 lootCount 非 0 时逐项 "%-12s X %2d"（名字指针 0x00537970、(u16)数量 0x0053949C）于 (0xD2, 0xD4+0x14×i) 色 0xFFC0；字宽 0x10。
+- 0x00478210 DrawDefeatPanel：同样的面板，「戰鬥失敗」（0x004BF8A4）于 (0x104,0xB4)；GrowPanel(0xD4,0xF4,3) 为 1 时字宽 0x11 写「隊伍全滅!!」（0x004BF898）于 (0xFE,0xD8)，字宽 0x10。
+- 0x00478330 DrawCraftResultPanel：同样的面板（无标题）；GrowPanel(0xD4,0xFC,3) 为 1 时按 0x00577998：1 写「煉符成功」（0x004BF8D8）于 (0x100,0xB4) 与「得到符咒:%s」（0x004BF8CC，lootNames[0]）于 (0xD0,0xDE)，否则「煉符失敗」（0x004BF8C0）与「沒有得到東西」（0x004BF8B0）。
+- 0x004784D0 DrawMessageBox：panelAct id、Run；Box(x,y,宽,高, 0,4,4, 模式 0)；WindowFrame(x+4, y+4, x+宽, y+高)；文字坐标参数都为 0 时画于 (x+2, y+4)，否则于给定坐标，色 0xFFC0、样式 0x10。
+- 0x00478590 GrowPanel：步 = (底 − panelHeight − 顶) / 除数（有符号），panelHeight 加步，步为 0 时返回 1。
+
+## DrawResistancePanel、DrawTallPanel、DrawSmallPanel、DrawWidePanel（第 1016–1019 行）— exact
+
+- 0x004785C0 DrawResistancePanel：panelFlags 位 0x20 时：panelAct id、Run；Box(0xEC,0x56,0xB8,panelHeight+0x28, 0,4,4, 模式 0)；框 (0xF0,0x5A,0x1A0,0x6A)、单位名（0x00577A44 指向）于 (0x130,0x5A)、正文框 (0xF0,0x7A,0x1A0,panelHeight+0x7A)；GrowPanel(0x7A,0xDE,3) 为 1 时 5 个元素（名表 0x004BF61C，y 0x82 起每 0x14）：抗性（i8，单位 +0x9C）为 0 时颜色 RGB(0x10,0x10,0x10)、长度 2.0；> 0 时先画底条 FillColor(0x11C,y,0x78,3,RGB(0x1C,0x1C,0x1C))，颜色 RGB(0x1C,2,2)、长度 = (float)(抗性×0.01f×120.0f)（0x004AAE0C／0x004AAE08）；负值不改颜色与长度（沿用上一元素）；元素名于 (0xFC, y−8) 白 RGB(0x1F,0x1F,0x1F)；FillColor(0x11C, y, Ftol(长度), 3, 颜色)。"--"／"%2d%%" 格式化结果从不画出。
+- 0x004787F0 DrawTallPanel／0x00478880 DrawSmallPanel：panelAct id、Run；menuSlide（0x00577A4C）> 0 时折半（有符号）；left = x − menuSlide；Box(left, y, 0x64／0x34, 0xC8／0x34, 0,4,4, 模式 2)；WindowFrame(left+4, y+4, left+0x60／0x30, y+0xC4／0x32)；返回 left。
+- 0x00478900 DrawWidePanel：同样折半 menuSlide，top = y − menuSlide；Box(x, top, 0x82, 0x1E)、WindowFrame(x+4, top+4, x+0x7A, top+0x18)；返回 menuSlide ≤ 0。

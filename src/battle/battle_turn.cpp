@@ -2281,7 +2281,8 @@ void Game::AnnounceMastery()
             const std::unique_ptr<ItemNode>& node = this->party.equipment[first + slot];
 
             // A missing slot is read through a null pointer in the original.
-            if (node == nullptr || static_cast<int>(node->id) != static_cast<int>(static_cast<i16>(finished)))
+            // A word compare (0x00477FC0).
+            if (node == nullptr || node->id != finished)
             {
                 continue;
             }
@@ -2894,7 +2895,7 @@ void Game::DrawNewSpecial()
     this->DrawLearnedBox(kNewSpecialLine, true);
 }
 
-// The box of 0x00468930 and 0x00468AD0 (inline in each): while a skill was learned (learnedPending), the line with the
+// The box of 0x004776B0 and 0x00477850 (inline in each): while a skill was learned (learnedPending), the line with the
 // role's name in a box as wide as it (20 pixels per two bytes), grown open; then the line in white and the skill's
 // name in brackets, centred below it on a dark background.
 void Game::DrawLearnedBox(std::u8string_view line, bool sound)
