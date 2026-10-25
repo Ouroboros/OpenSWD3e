@@ -10,7 +10,7 @@
 ## Windows（x64，WSL 中以 clang-cl／lld-link 交叉构建）
 
 - 入口：`cmake --preset windows`、`cmake --build --preset windows`（构建目录 build/windows/，工具链 cmake/toolchain-windows-x64-clang-cl.cmake，MSVC 14.44 与 Windows SDK 10.0.26100 的头文件和库）。
-- 产物：build/windows/swd3er.exe（游戏），build/windows/swd3e_tests.exe（单元测试），build/windows/swd3er.toml（data_dir = E:\Game\swd3e，save_dir = E:\Game\swd3e\save），build/windows/asset/。
+- 产物：build/windows/swd3er.exe（游戏），build/windows/swd3e_tests.exe（单元测试），build/windows/swd3er.toml（开发用配置，不入库：data_dir = E:\Game\swd3e，save_dir = E:\Game\swd3e\save，日志 logs/swd3er-<日期_时间>-<PID>.log），build/windows/asset/。
 - 结果（同上）：构建成功，0 个编译警告（`grep -c 'warning:' tmp/build_windows.log` 为 0）。
 - Windows 单元测试与试玩由用户运行，结果回传后记入本节。
 

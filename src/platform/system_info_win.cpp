@@ -312,7 +312,7 @@ void WriteDump(EXCEPTION_POINTERS* exception)
     std::swprintf(
         name.data(),
         name.size(),
-        L"%lsswd3r-crash-%04u-%02u-%02u_%02u-%02u-%02u-%u.dmp",
+        L"%lsswd3er-crash-%04u-%02u-%02u_%02u-%02u-%02u-%u.dmp",
         directory.c_str(),
         year,
         month,
