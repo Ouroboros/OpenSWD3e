@@ -1,4 +1,8 @@
-"""scripts/bestiary/build.py <monsters.jsonl> <portraits.raw> <out.html>: the swd3e bestiary as one HTML page.
+"""scripts/bestiary/build.py <dump dir> <docs dir>: the swd3e bestiary page (docs/bestiary.html) and the game's
+pictures it is drawn with (docs/ui).
+
+The dump dir holds the output of dump: monsters.jsonl (data), portraits.raw (portrait 59 1 500), bestiary_bg.raw
+(portrait 50 9002 9002), tabs.raw (pic 9030 0 10), tab.raw (pic 9058 0 10).
 
 The rules the page states come from the rebuild's verified code: Menu::BestiaryEnter/List/Choose/Lines
 (0x00441990..0x00442920), ApplyElement (the element rules of src/battle/battle_unit.cpp), BattleRole::Steal,
@@ -9,9 +13,19 @@ BattleUnit::RollDrop (0x00488D40), BattleUnit::CatchRoll (the enemy's flight), H
 import base64
 import io
 import json
+import os
 import sys
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
+
+# The game's pictures: frame 9002 of the interface's background actions, the bestiary's frames inside it.
+BACKGROUND_ID = 9002
+BOX_CROP = (230, 60, 502, 279)  # the frame of the bestiary's lines, cut out to draw the page's own boxes
+TAB_FONT = '/mnt/c/Windows/Fonts/msjhbd.ttc'
+TAB_TEXT = 12
+TAB_TEXT_CHOSEN = 13
+TAB_INK = (56, 64, 24, 255)
+TAB_INK_CHOSEN = (24, 24, 0, 255)
 
 # The tabs of the game's bestiary: the category values of 0x00442280 and their names at 0x004AF94C.
 CATEGORIES = [
@@ -122,8 +136,9 @@ def dedupe(names):
     return out
 
 
-def read_portraits(path):
-    portraits = {}
+def read_pictures(path):
+    """The pictures of a dump stream ("id width height" and RGBA rows) as PIL images by id."""
+    pictures = {}
 
     with open(path, 'rb') as raw:
         while True:
@@ -133,26 +148,80 @@ def read_portraits(path):
                 break
 
             ident, width, height = (int(part) for part in header.split())
-            pixels = raw.read(width * height * 3)
-            image = Image.frombytes('RGB', (width, height), pixels)
-            out = io.BytesIO()
-            image.save(out, 'PNG', optimize=True)
-            portraits[ident] = ('data:image/png;base64,' + base64.b64encode(out.getvalue()).decode('ascii'), (width, height))
+            pictures[ident] = Image.frombytes('RGBA', (width, height), raw.read(width * height * 4))
 
-    return portraits
+    return pictures
+
+
+def png(image):
+    out = io.BytesIO()
+    image.save(out, 'PNG', optimize=True)
+    return out.getvalue()
+
+
+def data_uri(image):
+    return 'data:image/png;base64,' + base64.b64encode(png(image)).decode('ascii')
+
+
+def other_tab(base, size):
+    """A tab of the rebuild's 「其他」 in the look of the game's: the tab of the last category with its letters
+    covered by the tab's own fill and the two new ones written over it."""
+    tab = base.copy()
+    width, height = tab.size
+    pixels = tab.load()
+    # The fill of the tab at each row, from a column left of the letters.
+    for y in range(height):
+        fill = pixels[5, y]
+
+        for x in range(6, width - 6):
+            if pixels[x, y][3] and pixels[x, y] != fill and abs(sum(pixels[x, y][:3]) - sum(fill[:3])) > 60:
+                pixels[x, y] = fill
+
+    draw = ImageDraw.Draw(tab)
+    font = ImageFont.truetype(TAB_FONT, size)
+    ink = TAB_INK_CHOSEN if size == TAB_TEXT_CHOSEN else TAB_INK
+    draw.fontmode = '1'
+    draw.text((width // 2, height // 2 + 1), OTHER_NAME, font=font, fill=ink, anchor='mm')
+    return tab
+
+
+def write_ui(ui_path, docs):
+    """The pictures of the game the pages are drawn with, into docs/ui: the bestiary's background with its frames,
+    one frame to draw boxes with, the tabs of the categories."""
+    out = os.path.join(docs, 'ui')
+    os.makedirs(out, exist_ok=True)
+    bestiary = read_pictures(os.path.join(ui_path, 'bestiary_bg.raw'))[BACKGROUND_ID]
+    tabs = read_pictures(os.path.join(ui_path, 'tabs.raw'))
+    chosen = read_pictures(os.path.join(ui_path, 'tab.raw'))
+    tabs[len(CATEGORIES)] = other_tab(tabs[len(CATEGORIES) - 1], TAB_TEXT)
+    chosen[len(CATEGORIES)] = other_tab(chosen[len(CATEGORIES) - 1], TAB_TEXT_CHOSEN)
+    files = {
+        'bestiary.png': bestiary.convert('RGB'),
+        'box.png': bestiary.crop(BOX_CROP).convert('RGB'),
+    }
+
+    for at in range(len(CATEGORIES) + 1):
+        files[f'tab{at}.png'] = tabs[at]
+        files[f'chosen{at}.png'] = chosen[at]
+
+    for name, image in files.items():
+        with open(os.path.join(out, name), 'wb') as file:
+            file.write(png(image))
 
 
 def main():
-    monsters_path, portraits_path, out_path = sys.argv[1:4]
-    portraits = read_portraits(portraits_path)
+    dump, docs = sys.argv[1:3]
+    portraits = read_pictures(os.path.join(dump, 'portraits.raw'))
+    write_ui(dump, docs)
     tabs = {value: at for at, (value, _) in enumerate(CATEGORIES)}
     monsters = []
 
-    with open(monsters_path, encoding='utf-8') as lines:
+    with open(os.path.join(dump, 'monsters.jsonl'), encoding='utf-8') as lines:
         records = [json.loads(line) for line in lines if line.strip()]
 
     for r in records:
-        picture, size = portraits.get(r['id'], ('', None))
+        picture = portraits.get(r['id'])
+        size = picture.size if picture else None
 
         if r['category'] in tabs:
             tab = tabs[r['category']]
@@ -176,7 +245,7 @@ def main():
             'agility': r['agility'],
             'items': items,
             'description': r['description'],
-            'portrait': picture,
+            'portrait': data_uri(picture) if picture else '',
             'hidden': {
                 'experience': r['experience'],
                 'gold': r['gold'],
@@ -203,344 +272,184 @@ def main():
     page = TEMPLATE.replace('/*DATA*/null', json.dumps(data, ensure_ascii=False, separators=(',', ':')))
     page = page.replace('/*ELEMENTS*/null', json.dumps(ELEMENTS, ensure_ascii=False))
 
-    with open(out_path, 'w', encoding='utf-8') as out:
+    with open(os.path.join(docs, 'bestiary.html'), 'w', encoding='utf-8') as out:
         out.write(page)
 
     print(f'{len(monsters)} monsters, {sum(1 for m in monsters if m["portrait"])} portraits, {len(page)} bytes')
 
 
+# The page: the game's bestiary screen (640×480, its background with the frames) at the coordinates of
+# Menu::BestiaryDraw and DrawBestiaryRow, all values shown, and beside it the values the game does not show, in boxes
+# drawn with the game's frame.
 TEMPLATE = r'''<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>神魔異事錄</title>
+<title>神魔異事錄 — 軒轅劍參外傳 天之痕</title>
 <style>
 :root {
-  --gold: #c9a24a;
-  --gold-dark: #7a5a1c;
-  --gold-light: #f2d27a;
-  --text: #e9dcb8;
-  --dim: #b9a67a;
-  --panel: rgba(14, 10, 4, 0.94);
-  --ink: #7a1f12;
-  --weak: #ff8a6a;
+  --text: rgb(200, 184, 136);
+  --shadow: rgb(48, 32, 24);
+  --dim: rgb(150, 136, 98);
+  --gold: rgb(240, 216, 120);
+  --weak: #ff9070;
   --resist: #8fb4ff;
   --absorb: #7fe0a0;
-  --kai: "BiauKai", "DFKai-SB", "標楷體", "KaiTi", "STKaiti", "Kaiti TC", serif;
-  --ming: "PMingLiU", "MingLiU", "新細明體", "Songti TC", "Noto Serif TC", "Noto Serif CJK TC", serif;
+  --ming: "MingLiU", "PMingLiU", "細明體", "新細明體", "SimSun", serif;
 }
 
 * { box-sizing: border-box; }
 
-html, body { margin: 0; height: 100%; overflow: hidden; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #1a0d04; }
 
 body {
   font-family: var(--ming);
   color: var(--text);
-  background:
-    radial-gradient(ellipse at 20% 10%, rgba(255, 250, 230, 0.55), transparent 55%),
-    radial-gradient(ellipse at 80% 85%, rgba(120, 90, 50, 0.35), transparent 60%),
-    radial-gradient(ellipse at 60% 40%, rgba(90, 70, 40, 0.25), transparent 50%),
-    repeating-linear-gradient(90deg, rgba(110, 60, 20, 0.08) 0 1px, transparent 1px 72px),
-    linear-gradient(160deg, #e8dcc0 0%, #d6c39c 45%, #c4ab7d 100%);
+  background: radial-gradient(ellipse at center, #3a2410 0%, #120802 75%);
 }
 
 .book {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1180px;
-  height: 870px;
-  padding: 12px 12px 8px;
-  display: flex;
-  flex-direction: column;
+  width: 960px;
+  height: 480px;
   transform-origin: 0 0;
 }
 
-.top {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  border-top: 2px solid rgba(122, 60, 20, 0.45);
-  background: repeating-linear-gradient(90deg, rgba(122, 60, 20, 0.35) 0 1px, transparent 1px 54px);
-  height: 64px;
-  flex: none;
-  padding: 0 12px 4px 6px;
+.screen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 640px;
+  height: 480px;
+  background: url(ui/bestiary.png);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+  image-rendering: pixelated;
 }
 
-h1 {
-  margin: 0;
-  font-family: var(--kai);
-  font-size: 44px;
-  letter-spacing: 6px;
-  color: var(--ink);
-  text-shadow: 2px 2px 0 rgba(255, 240, 210, 0.6), 0 0 6px rgba(122, 31, 18, 0.25);
-  font-weight: bold;
+.screen > *, .side > * { position: absolute; }
+
+.shadowed { text-shadow: 1px 1px 0 var(--shadow); }
+
+.tabs { left: 10px; top: 1px; width: 196px; height: 77px; overflow: hidden; }
+.tabs img { position: absolute; cursor: pointer; image-rendering: pixelated; }
+
+.list { left: 10px; top: 88px; width: 196px; height: 374px; overflow: hidden; }
+.row {
+  position: absolute;
+  left: 4px;
+  width: 189px;
+  height: 24px;
+  cursor: pointer;
+  white-space: nowrap;
 }
-
-.search {
-  width: 360px;
-  height: 34px;
-  margin: 0 0 6px 6px;
-  padding: 0 10px;
-  font: inherit;
-  font-size: 18px;
-  color: #3b2a12;
-  background: rgba(255, 248, 228, 0.8);
-  border: 1px solid rgba(122, 60, 20, 0.6);
-  border-radius: 3px;
-  outline: none;
-}
-
-.search:focus { border-color: var(--ink); background: #fffaf0; }
-
-.empty { font-family: var(--kai); font-size: 20px; color: var(--dim); padding: 8px 6px; }
-
-.layout {
-  display: grid;
-  grid-template-columns: 96px 280px 508px 230px;
-  grid-template-rows: 300px 64px 202px 1fr;
-  gap: 10px 14px;
-  margin-top: 8px;
-  flex: 1;
-  min-height: 0;
-}
-
-.frame {
-  background: var(--panel);
-  border: 3px double var(--gold);
-  box-shadow:
-    inset 0 0 0 1px var(--gold-dark),
-    0 0 0 1px #3a2a10,
-    2px 3px 8px rgba(40, 25, 5, 0.55);
-  position: relative;
-}
-
-.frame::before, .frame::after {
+.row .name { position: absolute; left: 4px; top: 2px; font-size: 20px; line-height: 20px; }
+.row .level { position: absolute; left: 154px; top: 11px; font-size: 12px; line-height: 12px; }
+.row.chosen::after {
   content: "";
   position: absolute;
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--gold-light);
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(160, 104, 0, 0) 0%, rgba(160, 104, 0, 0.9) 50%, rgba(160, 104, 0, 0) 100%);
+  mix-blend-mode: screen;
+  pointer-events: none;
 }
+.empty { position: absolute; left: 8px; top: 8px; font-size: 20px; }
 
-.frame::before { left: -4px; top: -4px; border-right: none; border-bottom: none; }
-.frame::after { right: -4px; bottom: -4px; border-left: none; border-top: none; }
-.list::before, .list::after, .loot::before, .loot::after, .description::before, .description::after { display: none; }
+.bar { left: 200px; top: 98px; width: 5px; height: 350px; }
+.bar div { position: absolute; left: 0; width: 5px; background: rgb(160, 136, 72); border: 1px solid rgb(64, 40, 16); }
 
-.tabs {
-  grid-column: 1;
-  grid-row: 1 / span 4;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding-top: 10px;
-  margin-right: -14px;
-  overflow-y: auto;
-  scrollbar-width: none;
-  z-index: 1;
-}
+.lines { left: 246px; top: 72px; width: 250px; font-size: 16px; line-height: 20px; white-space: pre; }
+.boss { font-size: 12px; color: var(--weak); border: 1px solid var(--weak); padding: 0 2px; margin-left: 6px; line-height: 14px; vertical-align: 2px; }
 
-.tab {
-  font-family: var(--kai);
-  font-size: 19px;
-  padding: 5px 12px 5px 10px;
-  color: #6d5a3c;
-  background: linear-gradient(90deg, #b8a27a, #d9c9a3);
-  border: 1px solid #8a6d3b;
-  border-right: none;
-  border-radius: 6px 0 0 6px;
-  cursor: pointer;
-  user-select: none;
-  text-align: center;
-  white-space: nowrap;
-}
+.portrait { left: 508px; top: 60px; image-rendering: pixelated; }
 
-.tab.chosen {
-  color: #1e1406;
-  background: linear-gradient(90deg, #d6b45e, #f6e3a6);
-  border-color: var(--gold-dark);
-  font-weight: bold;
-}
+.items { left: 246px; top: 294px; width: 376px; height: 18px; font-size: 16px; line-height: 16px; white-space: nowrap; }
+.items span { position: absolute; top: 0; }
 
-.tab.found {
-  color: #3a2a10;
-  background: linear-gradient(90deg, #cdb88a, #eadcb6);
-  border-color: var(--gold-dark);
-  box-shadow: inset 4px 0 0 var(--gold-dark);
-}
-
-.list {
-  grid-column: 2;
-  grid-row: 1 / span 4;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  padding: 12px 6px 12px 10px;
-  scrollbar-color: var(--gold-dark) #120e06;
-}
-
-.row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  font-family: var(--kai);
-  font-size: 25px;
-  line-height: 40px;
-  padding: 0 10px 0 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  text-shadow: 1px 1px 0 #000;
-}
-
-.row .level { font-family: var(--ming); font-size: 15px; color: var(--dim); }
-
-.row.chosen {
-  color: #fff6d6;
-  background: linear-gradient(90deg, rgba(232, 168, 56, 0.95), rgba(170, 110, 20, 0.75) 45%, rgba(90, 55, 5, 0.1));
-}
-
-.row.chosen .level { color: #fff0c0; }
-
-.stats {
-  grid-column: 3;
-  grid-row: 1;
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  column-gap: 32px;
-  padding: 12px 24px;
+.description {
+  left: 242px;
+  top: 336px;
+  width: 372px;
+  height: 125px;
   font-size: 20px;
-  line-height: 31px;
+  line-height: 25px;
   overflow: hidden;
 }
 
-.stats .kind { font-family: var(--kai); font-size: 24px; }
-.stats .main, .stats .side { min-width: 0; }
-.stats .name {
-  font-family: var(--kai);
-  color: #fff2c8;
-  font-size: 30px;
-  height: 40px;
-  line-height: 40px;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.stats .boss { vertical-align: middle; line-height: 18px; font-size: 15px; color: var(--weak); border: 1px solid var(--weak); padding: 0 4px; margin-left: 6px; }
+.side { position: absolute; left: 656px; top: 0; width: 304px; height: 480px; }
 
-.stats table { border-collapse: collapse; table-layout: fixed; }
-.stats td { padding: 0; white-space: nowrap; }
-.stats td.value { text-align: right; font-variant-numeric: tabular-nums; }
-.stats .main table { width: 140px; }
-.stats .main td:first-child { width: 60px; }
-.stats .side table { width: 210px; }
-.stats .side td:first-child { width: 130px; }
-.stats .side { padding-top: 70px; }
-.stats .side td:first-child { color: var(--dim); }
-
-.portrait {
-  grid-column: 4;
-  grid-row: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  background: linear-gradient(135deg, #8d7a3a, #5a4a1a);
-  border: 3px solid #cdb35a;
-  box-shadow: inset 0 0 0 2px #3b2f0e, 2px 3px 8px rgba(40, 25, 5, 0.55);
+.box {
+  border: 8px solid transparent;
+  border-image: url(ui/box.png) 8 fill / 8px stretch;
+  image-rendering: pixelated;
+  padding: 2px 8px;
 }
 
-.portrait img {
-  max-width: 100%;
-  max-height: 270px;
-  border: 2px solid #2c220a;
-  background: #f2e7c9;
+.search-box { left: 0; top: 14px; width: 304px; height: 36px; padding: 0 6px; }
+.search {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: 16px var(--ming);
+  color: var(--text);
 }
+.search::placeholder { color: var(--dim); }
 
-.resist {
-  grid-column: 3 / span 2;
-  grid-row: 2;
-  display: grid;
-  grid-template-columns: 104px repeat(5, minmax(0, 1fr));
-  align-items: center;
-  padding: 6px 24px;
-  font-size: 19px;
-  text-align: center;
-}
+.info { left: 0; top: 56px; width: 304px; height: 126px; font-size: 16px; line-height: 21px; }
+.info table, .loot table { border-collapse: collapse; width: 100%; }
+.info td { padding: 0; white-space: nowrap; }
+.info td.value { text-align: right; }
 
-.resist .label, .loot .label { font-family: var(--kai); color: var(--dim); text-align: left; padding-right: 14px; }
-.resist .element { font-family: var(--kai); font-size: 22px; }
-.resist > div { height: 50px; }
-.resist .label { line-height: 50px; }
-.resist .element { height: 28px; line-height: 28px; }
-.resist .value { height: 20px; line-height: 20px; white-space: nowrap; font-size: 15px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.resist { left: 0; top: 188px; width: 304px; height: 60px; display: grid; grid-template-columns: 52px repeat(5, 1fr);
+  align-items: center; text-align: center; font-size: 16px; }
+.resist .label { text-align: left; color: var(--dim); }
+.resist .value { font-size: 12px; line-height: 14px; color: var(--dim); }
 .resist .weak .value { color: var(--weak); }
 .resist .strong .value { color: var(--resist); }
 .resist .absorb .value { color: var(--absorb); }
 
-.loot {
-  grid-column: 3 / span 2;
-  grid-row: 3;
-  display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  align-content: start;
-  grid-auto-rows: 30px;
-  padding: 8px 24px;
-  font-size: 18px;
-  line-height: 28px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  scrollbar-color: var(--gold-dark) #120e06;
-}
+.loot { left: 0; top: 254px; width: 304px; height: 188px; font-size: 13px; line-height: 17px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: rgb(160, 136, 72) rgb(16, 16, 8); }
+.loot td { vertical-align: top; padding: 1px 0; }
+.loot td.label { width: 38px; color: var(--dim); white-space: nowrap; }
+.note { color: var(--dim); font-size: 12px; }
 
-.loot .note { color: var(--dim); font-size: 15px; }
-.loot > div { line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.description {
-  grid-column: 3 / span 2;
-  grid-row: 4;
-  padding: 12px 24px;
-  font-size: 23px;
-  line-height: 38px;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  letter-spacing: 1px;
-  scrollbar-color: var(--gold-dark) #120e06;
-}
-
-.hint { flex: none; margin-top: 6px; font-size: 13px; color: #5a4524; text-align: right; }
-
+.hint { left: 0; top: 448px; width: 304px; font-size: 11px; line-height: 13px; color: rgb(255, 236, 190);
+  text-shadow: 1px 1px 0 #000; }
 </style>
 </head>
 <body>
-<div class="book">
-  <div class="top">
-    <input class="search" id="search" type="search" placeholder="搜尋名稱、法術、物品、說明" autocomplete="off">
-    <h1>神魔異事錄</h1>
-  </div>
-  <div class="layout">
+<div class="book" id="book">
+  <div class="screen">
     <div class="tabs" id="tabs"></div>
-    <div class="frame list" id="list"></div>
-    <div class="frame stats" id="stats"></div>
-    <div class="portrait" id="portrait"></div>
-    <div class="frame resist" id="resist"></div>
-    <div class="frame loot" id="loot"></div>
-    <div class="frame description" id="description"></div>
+    <div class="list shadowed" id="list"></div>
+    <div class="bar" id="bar"></div>
+    <div class="lines shadowed" id="lines"></div>
+    <img class="portrait" id="portrait" alt="">
+    <div class="items shadowed" id="items"></div>
+    <div class="description shadowed" id="description"></div>
   </div>
-  <div class="hint">↑↓ 選擇　←→ 切換分類　PageUp / PageDown 翻頁　搜尋可空格分隔多個關鍵字，Esc 清除　「其他」為遊戲圖鑑未收錄的對手　中異常機率：施術者智慧每比怪物高 20 點加 10%</div>
+  <div class="side">
+    <div class="box search-box"><input class="search" id="search" type="search" placeholder="搜尋（空格分隔多個關鍵字）" autocomplete="off"></div>
+    <div class="box info shadowed" id="info"></div>
+    <div class="box resist shadowed" id="resist"></div>
+    <div class="box loot shadowed" id="loot"></div>
+    <div class="hint">↑↓ 選擇　←→ 分類　PgUp / PgDn 翻頁　Esc 清除搜尋<br>「其他」為遊戲圖鑑未收錄的對手</div>
+  </div>
 </div>
 <script>
 const DATA = /*DATA*/null;
 const ELEMENTS = /*ELEMENTS*/null;
+const ROWS = 15;
+const ROW_HEIGHT = 24;
 const tabName = m => DATA.categories[m.tab].name;
 let category = 0;
 let chosen = 0;
+let first = 0;
 let shown = [];
 
 const $ = id => document.getElementById(id);
@@ -566,9 +475,18 @@ function query() {
   return $('search').value.trim().toLowerCase().split(/\s+/).filter(word => word);
 }
 
-function drawTabs() {
-  $('tabs').innerHTML = DATA.categories.map((c, at) =>
-    `<div class="tab${at === category ? ' chosen' : ''}" data-at="${at}">${c.name}</div>`).join('');
+// DrawBestiaryTabs: the two tabs on each side of the chosen one, then the chosen one over them.
+function drawTabs(at) {
+  const html = [];
+
+  for (let tab = at - 2; tab <= at + 2; ++tab) {
+    if (tab >= 0 && tab < DATA.categories.length && tab !== at) {
+      html.push(`<img src="ui/tab${tab}.png" style="left:${6 + 40 * (tab - at + 2) - 10}px;top:60px" data-at="${tab}" alt="${DATA.categories[tab].name}">`);
+    }
+  }
+
+  html.push(`<img src="ui/chosen${at}.png" style="left:76px;top:57px" data-at="${at}" alt="${DATA.categories[at].name}">`);
+  $('tabs').innerHTML = html.join('');
 }
 
 function list() {
@@ -576,10 +494,30 @@ function list() {
   shown = words.length ? DATA.monsters.filter(m => words.every(word => m.text.includes(word))) :
     DATA.monsters.filter(m => m.tab === category);
   chosen = Math.min(chosen, Math.max(shown.length - 1, 0));
-  $('list').innerHTML = shown.length ? shown.map((m, at) =>
-    `<div class="row${at === chosen ? ' chosen' : ''}" data-at="${at}"><span>${escape(m.name)}</span>` +
-    `<span class="level">${m.level}級</span></div>`).join('') : '<div class="empty">找不到</div>';
   show();
+}
+
+function drawList() {
+  first = Math.max(0, Math.min(first, Math.max(shown.length - ROWS, 0)));
+
+  if (chosen < first) {
+    first = chosen;
+  } else if (chosen >= first + ROWS) {
+    first = chosen - ROWS + 1;
+  }
+
+  const rows = shown.slice(first, first + ROWS).map((m, row) =>
+    `<div class="row${first + row === chosen ? ' chosen' : ''}" style="top:${6 + ROW_HEIGHT * row}px" data-at="${first + row}">` +
+    `<span class="name">${escape(m.name)}</span><span class="level">${m.level}級</span></div>`);
+  $('list').innerHTML = rows.join('') || '<div class="empty">找不到</div>';
+
+  if (shown.length > ROWS) {
+    const height = Math.max(12, 350 * ROWS / shown.length);
+    const at = (350 - height) * first / (shown.length - ROWS);
+    $('bar').innerHTML = `<div style="top:${at}px;height:${height}px"></div>`;
+  } else {
+    $('bar').innerHTML = '';
+  }
 }
 
 // BattleUnit::CatchRoll: an enemy flees only from a party led by a role 5 levels above it or more.
@@ -594,65 +532,58 @@ function flee(chance) {
 // HitDamage: an ailment lands on a roll of 0..9 below the monster's chance plus a tenth for each 20 points of the
 // caster's wisdom above the monster's.
 function ailment(h) {
-  if (h.ailmentChance === 0) {
-    return '不會中異常';
-  }
-
-  return `${percent(h.ailmentChance, 10)}%`;
+  return h.ailmentChance === 0 ? '不會中異常' : `${percent(h.ailmentChance, 10)}%`;
 }
 
 function counted(name, count) {
-  return `${escape(name)}<span class="note"> ×${count}</span>`;
+  return `${escape(name)}<span class="note">×${count}</span>`;
 }
 
+const pad = value => String(value).padStart(4, ' ');
+
 function show() {
-  document.querySelectorAll('.row').forEach((row, at) => row.classList.toggle('chosen', at === chosen));
-  const row = document.querySelector('.row.chosen');
-
-  if (row) {
-    row.scrollIntoView({ block: 'nearest' });
-  }
-
+  drawList();
   const m = shown[chosen];
-  // While searching the tab of the monster chosen is marked (found), otherwise the category chosen.
-  const searching = query().length > 0;
-  document.querySelectorAll('.tab').forEach((tab, at) => {
-    tab.classList.toggle('chosen', !searching && at === category);
-    tab.classList.toggle('found', searching && m !== undefined && at === m.tab);
-  });
+  drawTabs(m && query().length ? m.tab : category);
 
   if (!m) {
-    ['stats', 'portrait', 'resist', 'loot', 'description'].forEach(id => { $(id).innerHTML = ''; });
+    ['lines', 'items', 'description', 'info', 'resist', 'loot'].forEach(id => { $(id).innerHTML = ''; });
+    $('portrait').removeAttribute('src');
     return;
   }
 
   const h = m.hidden;
+  // BestiaryLines: the category, the level, the name, then the six values as the game shows them once known.
   const values = [['生命', m.hp], ['靈力', m.spirit], ['體力', m.stamina], ['攻擊', m.attack], ['防禦', m.defense],
     ['敏捷', m.agility]];
-  const side = [['經驗值', h.experience], ['銀兩', h.gold], ['法寶經驗', h.boss ? 20 : 3],
-    ['智慧', h.wisdom], ['中異常機率', ailment(h)]];
-  const table = rows => `<table>${rows.map(([label, value]) =>
+  $('lines').innerHTML = [escape(tabName(m)), `${pad(m.level)}級`,
+    escape(m.name) + (h.boss ? '<span class="boss">BOSS</span>' : ''),
+    ...values.map(([label, value]) => `${label} 是 ${pad(value)}`)].join('\n');
+  $('portrait').src = m.portrait;
+  $('portrait').alt = m.name;
+  $('items').innerHTML = m.items.filter(item => item).map((item, at) =>
+    `<span style="left:${126 * at}px">${escape(item)}</span>`).join('');
+  $('description').textContent = m.description;
+
+  const side = [['經驗值', h.experience], ['銀兩', h.gold], ['法寶經驗', h.boss ? 20 : 3], ['智慧', h.wisdom],
+    ['<span title="施術者智慧每比怪物高 20 點加 10%">中異常機率</span>', ailment(h)]];
+  $('info').innerHTML = `<table>${side.map(([label, value]) =>
     `<tr><td>${label}</td><td class="value">${value}</td></tr>`).join('')}</table>`;
-  $('stats').innerHTML =
-    `<div class="main"><div class="kind">${tabName(m)}　${m.level}級</div>` +
-    `<div class="name">${escape(m.name)}${h.boss ? '<span class="boss">BOSS</span>' : ''}</div>${table(values)}</div>` +
-    `<div class="side">${table(side)}</div>`;
-  $('portrait').innerHTML = m.portrait ? `<img src="${m.portrait}" alt="${escape(m.name)}">` : '';
-  $('resist').innerHTML = '<div class="label">承受傷害</div>' + ELEMENTS.map((element, at) => {
+  $('resist').innerHTML = '<div class="label">承受<br>傷害</div>' + ELEMENTS.map((element, at) => {
     const [kind, text] = h.elements[at];
-    return `<div class="${kind}"><div class="element">${element}</div><div class="value">${text}</div></div>`;
+    return `<div class="${kind}"><div>${element}</div><div class="value">${text}</div></div>`;
   }).join('');
   const moves = m.items.map((item, at) => item ? counted(item, h.itemCounts[at]) : '').filter(item => item);
   const heals = h.heals.map((item, at) => item ? counted(item, h.healCounts[at]) : '').filter(item => item);
   const steal = h.steal ?
-    `${escape(h.steal)}<span class="note">　成功率 ${percent(h.stealDifficulty, 10)}%，偷竊饰品熟練度每 25 加 10%，滿 100 必成</span>` :
+    `${escape(h.steal)}<br><span class="note">成功率 ${percent(h.stealDifficulty, 10)}%，偷竊飾品熟練度每 25 加 10%，滿 100 必成</span>` :
     '無';
   const drop = h.drop ? `${escape(h.drop)}<span class="note">　${percent(h.dropChance, 20)}%</span>` : '無';
   const lines = [['法術', moves.join('　') || '無'], ['回復', heals.join('　') || '無'], ['偷竊', steal],
     ['掉落', drop], ['逃跑', `<span class="note">${flee(h.fleeChance)}</span>`],
     ['狂暴', h.enrage ? escape(h.enrage) : '無']];
-  $('loot').innerHTML = lines.map(([label, text]) => `<div class="label">${label}</div><div>${text}</div>`).join('');
-  $('description').textContent = m.description;
+  $('loot').innerHTML = `<table>${lines.map(([label, text]) =>
+    `<tr><td class="label">${label}</td><td>${text}</td></tr>`).join('')}</table>`;
 }
 
 function move(by) {
@@ -664,25 +595,26 @@ function move(by) {
   show();
 }
 
-function turn(by) {
-  category = (category + by + DATA.categories.length) % DATA.categories.length;
+function turn(to) {
+  category = (to + DATA.categories.length) % DATA.categories.length;
   chosen = 0;
+  first = 0;
   $('search').value = '';
-  drawTabs();
   list();
 }
 
 // While searching the list holds the monsters of every category that match all the words.
 $('search').addEventListener('input', () => {
   chosen = 0;
+  first = 0;
   list();
 });
 
 $('tabs').addEventListener('click', event => {
-  const tab = event.target.closest('.tab');
+  const tab = event.target.closest('img');
 
   if (tab) {
-    turn(Number(tab.dataset.at) - category);
+    turn(Number(tab.dataset.at));
   }
 });
 
@@ -694,6 +626,14 @@ $('list').addEventListener('click', event => {
     show();
   }
 });
+
+$('list').addEventListener('wheel', event => {
+  first += event.deltaY > 0 ? 3 : -3;
+  first = Math.max(0, Math.min(first, Math.max(shown.length - ROWS, 0)));
+  chosen = Math.max(first, Math.min(chosen, first + ROWS - 1));
+  show();
+  event.preventDefault();
+}, { passive: false });
 
 document.addEventListener('keydown', event => {
   const typing = event.target === $('search');
@@ -708,8 +648,8 @@ document.addEventListener('keydown', event => {
     return;
   }
 
-  const keys = { ArrowUp: () => move(-1), ArrowDown: () => move(1), PageUp: () => move(-15), PageDown: () => move(15),
-    ArrowLeft: () => turn(-1), ArrowRight: () => turn(1) };
+  const keys = { ArrowUp: () => move(-1), ArrowDown: () => move(1), PageUp: () => move(-ROWS),
+    PageDown: () => move(ROWS), ArrowLeft: () => turn(category - 1), ArrowRight: () => turn(category + 1) };
 
   if (keys[event.key]) {
     keys[event.key]();
@@ -719,16 +659,15 @@ document.addEventListener('keydown', event => {
 
 // The book keeps its size: scaled whole to fit the window, centred.
 function fit() {
-  const book = document.querySelector('.book');
-  const scale = Math.min(innerWidth / book.offsetWidth, innerHeight / book.offsetHeight);
+  const book = $('book');
+  const scale = Math.min(innerWidth / book.offsetWidth, innerHeight / book.offsetHeight) * 0.96;
   const left = (innerWidth - book.offsetWidth * scale) / 2;
-  const top = (innerHeight - book.offsetHeight * scale) / 2;
-  book.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
+  const y = (innerHeight - book.offsetHeight * scale) / 2;
+  book.style.transform = `translate(${left}px, ${y}px) scale(${scale})`;
 }
 
 addEventListener('resize', fit);
 fit();
-drawTabs();
 list();
 </script>
 </body>

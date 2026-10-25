@@ -32,4 +32,4 @@
 ## 网页的生成
 
 - `docs/index.html`：手写的主页。
-- `docs/bestiary.html`：由 `scripts/bestiary/` 生成。`dump.cpp` 链接 `swd3e_core`，从游戏目录读出 mon.dat 的怪物资料与图鉴立绘（动作 0x3B 的第一帧）；`build.py`（需要 Pillow）把它们做成单个 HTML 文件，图片内嵌。用法见两个文件开头的说明。
+- `docs/bestiary.html`：由 `scripts/bestiary/` 生成，界面照游戏的神魔異事錄画面。`dump.cpp` 链接 `swd3e_core`，从游戏目录读出 mon.dat 的怪物资料、图鉴立绘（动作 0x3B 的第一帧）、图鉴背景与分类页签；`build.py`（需要 Pillow）把它们做成 `docs/bestiary.html`（立绘内嵌）和 `docs/ui/` 下的界面图。用法见两个文件开头的说明。
