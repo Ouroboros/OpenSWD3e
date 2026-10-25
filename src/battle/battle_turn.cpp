@@ -1058,7 +1058,7 @@ int Game::CheckStoneSides()
 
 // swd3e.exe 0x00469D80: the lasting poisons of one side spread (the enemies with `enemies`, the party roles
 // otherwise): each unit counts its poison turn, and one poisoned more than three turns passes it (its base and level)
-// to a unit of its side picked at random (0..its count - 1), not itself, defeated or with unk2AF8, nor for the roles a
+// to a unit of its side picked at random (0..its count - 1), not itself, defeated or with unk3038, nor for the roles a
 // ghost, a StatusBit13 or an auto role. The enemies' pick is checked on the role of that index (as in the original;
 // past the ten roles the original reads after them, the poison does not spread here).
 void Game::SpreadPoison(int enemies)
@@ -1087,7 +1087,7 @@ void Game::SpreadPoison(int enemies)
 
             const BattleRole& checked = this->battleRoles[pick];
 
-            if (!checked.IsDefeated() && checked.unk2AF8 != 1 && pick != index)
+            if (!checked.IsDefeated() && checked.unk3038 != 1 && pick != index)
             {
                 const u8 level = enemy.poisonLevel;
                 this->battleEnemies[pick].AddPoison(services, enemy.PoisonBase(), level);
@@ -1110,7 +1110,7 @@ void Game::SpreadPoison(int enemies)
         const auto pick = static_cast<u16>(services.random.Below(battle.roleCount));
         BattleRole& target = this->battleRoles[pick];
 
-        if (!target.IsDefeated() && target.unk2AF8 != 1 && target.Ghost() != 1 && target.StatusBit13() != 1 &&
+        if (!target.IsDefeated() && target.unk3038 != 1 && target.Ghost() != 1 && target.StatusBit13() != 1 &&
             target.AutoControl() != 1 && pick != index)
         {
             const u8 level = role.poisonLevel;

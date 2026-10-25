@@ -2236,11 +2236,11 @@ void Game::EnemyAimSide(BattleEnemy& unit)
     battle.unk53BFC0 = 1;
 }
 
-// A role an enemy may aim at in EnemyPickTarget (inline in the original): standing, not stepped away (unk2AF8), not the
+// A role an enemy may aim at in EnemyPickTarget (inline in the original): standing, not stepped away (unk3038), not the
 // talisman ghost and not StatusBit13.
 bool Game::EnemyMayAim(const BattleRole& role) const
 {
-    return !role.IsDefeated() && role.unk2AF8 != 1 && role.Ghost() != 1 && role.StatusBit13() != 1;
+    return !role.IsDefeated() && role.unk3038 != 1 && role.Ghost() != 1 && role.StatusBit13() != 1;
 }
 
 // The target of an acting enemy in EnemyFrame (inline in the original); false when every role has fallen (the enemy
@@ -2422,7 +2422,7 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
 
         BattleRole& aimed = roleAt(target);
 
-        if (aimed.IsDefeated() || aimed.unk2AF8 == 1 || aimed.Ghost() == 1 || aimed.StatusBit13() == 1 ||
+        if (aimed.IsDefeated() || aimed.unk3038 == 1 || aimed.Ghost() == 1 || aimed.StatusBit13() == 1 ||
             aimed.HasEffectBits(kUnaimedEffect) == 1)
         {
             continue;

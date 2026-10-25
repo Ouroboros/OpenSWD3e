@@ -953,7 +953,7 @@ public:
     i32 unk2AEC = 0;
     i32 guarding = 0;  // +0x3030
     i32 unk2AF4 = 0;
-    i32 unk2AF8 = 0;
+    i32 unk3038 = 0;    // +0x3038 1: the gauge tick (0x0047E720) and the poison spread (0x00469D80) skip the unit
     i32 absorbing = 0;  // +0x303C 1 while an absorb runs (AbsorbFrame)
     // +0x3040 (swd3e) 1: a party role set up from its record (Setup), 0: the talisman ghost (0x0047ED60); read by
     // HitDamage, 0x0048BA60, HurtFrame and 0x004808D0

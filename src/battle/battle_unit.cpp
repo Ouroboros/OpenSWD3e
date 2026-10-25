@@ -535,7 +535,7 @@ int BattleUnit::StartDefeat(int defeat)
 
 // swd3e.exe 0x0048B7A0: clears the state of a turn: the acts, the first eight slot acts, the unit's own object and its
 // command; a party role gets a random gauge of 50..189 (unless unk306C held it); a unit of StatusBit5 turns to face
-// right. Guarding ends with command flag 8 (not when defeated or with unk2AF8) and with a delayed fade-in.
+// right. Guarding ends with command flag 8 (not when defeated or with unk3038) and with a delayed fade-in.
 int BattleUnit::ResetTurn(BattleServices& services)
 {
     this->gauge = 0;
@@ -575,7 +575,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->mainAct.anchorY = 0;
     this->unk26CC = 0;
 
-    if (wasDefeated == 0 && this->unk2AF8 == 0 && (this->command.flags & kResetClearsGuard) != 0)
+    if (wasDefeated == 0 && this->unk3038 == 0 && (this->command.flags & kResetClearsGuard) != 0)
     {
         this->guarding = 0;
     }
@@ -2049,7 +2049,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2AF4 = 0;
     this->dying = 0;
     this->unk2ACC = 0;
-    this->unk2AF8 = 0;
+    this->unk3038 = 0;
     this->absorbing = 0;
     this->partyMember = 0;
     this->autoControl = 0;
@@ -3588,7 +3588,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
     return counts;
 }
 
-// swd3e.exe 0x0047E720: one tick of the action gauge: nothing while held, stopped (Unk4000), defeated, with unk2AF8,
+// swd3e.exe 0x0047E720: one tick of the action gauge: nothing while held, stopped (Unk4000), defeated, with unk3038,
 // full (unk2AB0), kept by its master (GhostGuards) or staggering. Below gaugeFull it fills by a quarter of the agility
 // with speedShift added under SpeedUp and taken under SpeedDown (a quarter more and 1 with `boost`), less by half the
 // proficiency percent of it and 4 while Invisible (0). Full, the talisman ghost obeys on a roll of 1..100 up to its
@@ -3598,7 +3598,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
 int BattleUnit::StepGauge(BattleServices& services, int boost)
 {
     if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::Unk4000) != 0 || this->defeated == 1 ||
-        this->unk2AF8 == 1 || this->unk2AB0 == 1 || (this->unk2BDA & BattleUnit::GhostGuards) != 0 ||
+        this->unk3038 == 1 || this->unk2AB0 == 1 || (this->unk2BDA & BattleUnit::GhostGuards) != 0 ||
         (this->unk26B8 & kFlag26B8) != 0)
     {
         return 0;
@@ -3746,7 +3746,7 @@ int BattleUnit::Defense() const
 }
 
 // swd3e.exe 0x0048CA10: one frame of the unit's defeat while `dying` (none for the talisman ghost); 1 once it is over
-// (the cast act cleared, the turn reset, the unit defeated). A party role or a unit with unk2AF8 (not forced) ends at
+// (the cast act cleared, the turn reset, the unit defeated). A party role or a unit with unk3038 (not forced) ends at
 // once: a role is marked Defeated in its record, flags 26B8 and unk2EB2 are cleared and its effects expire. Others
 // play the defeat pose (the fixed pose, or kParticlePose for an UnkKind20 object; pose 0 ends at once) on the picture
 // of the cast act's action kDefeatAction (0x28 under flag 26B8 bit 16), glowLevel counting the frames.
@@ -3768,7 +3768,7 @@ int BattleUnit::DefeatFrame(BattleServices& services)
         act.action = kStrongDefeatAction;
     }
 
-    if ((this->kind == 1 || this->unk2AF8 == 1) && this->autoControl == 0 && this->guestControl == 0)
+    if ((this->kind == 1 || this->unk3038 == 1) && this->autoControl == 0 && this->guestControl == 0)
     {
         this->glowLevel = kDefeatedAtOnce;
         this->defeatPose = 0;
@@ -4900,7 +4900,7 @@ void BattleUnit::IdleFrame(BattleServices& services, int paused)
     }
 
     const bool shown = this->defeated != 1 || (this->kind != 0 && this->autoControl != 1 && this->guestControl != 1) ||
-                       this->unk2AF8 != 0;
+                       this->unk3038 != 0;
 
     if (!shown)
     {
@@ -7169,7 +7169,7 @@ bool BattleUnit::HasActionFlags(u32 flags) const
 // swd3e.exe 0x0048B790
 int BattleUnit::SetAF8(int value)
 {
-    this->unk2AF8 = value;
+    this->unk3038 = value;
     return value;
 }
 

@@ -2798,7 +2798,8 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             BattleEnemy& enemy = game.battleEnemies[index];
             enemy.GetPosition(battle.unk53BF4A, battle.unk53BF4E);
             const int row = Display::Width * static_cast<i16>(battle.unk53BF4E);
-            const int gauge = enemy.GaugeLength(services);
+            // The length is taken as an unsigned word (0x00468ECC).
+            const auto gauge = static_cast<u16>(enemy.GaugeLength(services));
 
             // The original writes the pixels wherever the place puts them.
             for (int pixel = 0; pixel < gauge; ++pixel)
