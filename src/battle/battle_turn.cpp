@@ -3512,7 +3512,7 @@ void Game::AimStep(int step)
             }
         }
     }
-    else if (others < kFewAimRoles)
+    else if (static_cast<u32>(others) < static_cast<u32>(kFewAimRoles))  // unsigned (0x0046D4D7)
     {
         do
         {

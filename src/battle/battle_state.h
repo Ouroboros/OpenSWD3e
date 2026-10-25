@@ -297,7 +297,7 @@ public:
     std::array<UnitPlacement, Enemies> enemyPlaces;      // swd32 0x005213A0
     std::array<UnitPlacement, RoleUnits> rolePlaces;     // 0x00576088
     std::array<i32, 2 * Party::Roles> panelPlaces = {};  // 0x0050F3B8 the x and y of the four role panels
-    std::array<i32, Party::Roles> roleListRows = {};     // swd32 0x004FF578 by role: its roleListRow
+    std::array<i32, Party::Roles> roleListRows = {};     // 0x0050F3D8 by role: its roleListRow
     std::array<i32, RoleUnits> hitPointBars = {};        // 0x00534750 and its copy 0x00502914
     std::array<i32, RoleUnits> hitPointBarsShown = {};
     std::array<i32, RoleUnits> hitPoints = {};   // 0x005347CC
@@ -335,8 +335,7 @@ public:
     i32 ghostOrderRow = 1;     // 0x004BF0F8 (swd3e) the order under the cursor (1-based)
     i32 refineOptionRow = 0;   // 0x00577990 (swd3e) the choice under the cursor (1-based)
     i32 elementRow = 0;        // 0x0057798C (swd3e) the element under the cursor (1-based)
-    std::array<i32, Party::Roles> roleListScrolls =  // 0x0052544C by role: its roleListScroll
-        {};  // 0x005394B4..0x00525458 per party role: the scroll of its list (ScrollListBack)
+    std::array<i32, Party::Roles> roleListScrolls = {};      // 0x005394B4 by role: the scroll of its list
     std::array<PendingOrder, RoleUnits> pendingOrders = {};  // 0x005369C8
     // 0x00536EE0 (swd3e) per enemy: its chosen order, taken into its slot record by AddSlotRecord (kind 2)
     std::array<PendingOrder, Enemies> enemyPendingOrders = {};
@@ -691,14 +690,14 @@ public:
     std::array<char, 0x14> listName = {};  // 0x005774D4 a name shown by the lists
     i32 unk53C49C = 0;
     i32 unk53BFC8 = 0;
-    u16 controlledEnemy = 0xFFFF;  // swd32 0x004A762C the enemy under control (0xFFFF: none)
+    u16 controlledEnemy = 0xFFFF;  // 0x004BF1D0 the enemy under control (0xFFFF: none)
     u16 talkRole = 0xFFFF;         // 0x004BF1D2 the role with a battle talk (0xFFFF: none)
     i32 orderedSkill = 0;          // 0x00577014 the skill a controlled enemy is ordered to use
     i32 unk53BD48 = 0;
     i32 unk53C02C = 0;
     i32 unk53BF88 = 0;
     i32 unk53BFF0 = 0;
-    i32 listReturnCommand = 0;  // swd32 0x0053BCF0 the menu command a list returns to
+    i32 listReturnCommand = 0;  // 0x00576FB0 the menu command a list returns to
     i32 specialRow = 1;         // 0x004BF0F0 the row of the 絕招 list (1-based)
     i32 controlRows = 2;        // 0x004BF0FC the rows of the 控制 menu
     i32 controlCursor = 1;      // 0x004BF100 its row under the cursor (1-based)
