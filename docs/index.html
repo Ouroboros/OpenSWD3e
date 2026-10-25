@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSWD3e — 軒轅劍參外傳 天之痕 重制执行程序</title>
+<style>
+:root {
+  --ink: #7a1f12;
+  --text: #2e2214;
+  --dim: #6d5a3c;
+  --line: rgba(122, 60, 20, 0.35);
+  --panel: rgba(255, 250, 236, 0.72);
+  --gold: #c9a24a;
+  --gold-dark: #7a5a1c;
+  --kai: "BiauKai", "DFKai-SB", "標楷體", "KaiTi", "STKaiti", "Kaiti TC", serif;
+  --body: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255, 250, 230, 0.55), transparent 55%),
+    radial-gradient(ellipse at 80% 85%, rgba(120, 90, 50, 0.35), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(110, 60, 20, 0.06) 0 1px, transparent 1px 72px),
+    linear-gradient(160deg, #e8dcc0 0%, #d6c39c 45%, #c4ab7d 100%);
+  background-attachment: fixed;
+}
+
+nav {
+  position: fixed;
+  top: 32px;
+  left: 20px;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+  background: linear-gradient(90deg, #b9a274 0%, #e9dcb4 18%, #f4ead0 50%, #e9dcb4 82%, #b9a274 100%);
+  border-left: 3px double #8a6a2a;
+  border-right: 3px double #8a6a2a;
+  box-shadow: inset 0 0 0 1px #d8bf7a, 0 0 0 1px #3a2a10, 2px 3px 8px rgba(40, 25, 5, 0.45);
+}
+
+nav::before, nav::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  height: 5px;
+  background: linear-gradient(#f2d27a, #a07a2a);
+  border: 1px solid #5a4012;
+  border-radius: 2px;
+}
+
+nav::before { top: -4px; }
+nav::after { bottom: -4px; }
+
+nav a {
+  font-family: var(--kai);
+  font-size: 21px;
+  letter-spacing: 3px;
+  line-height: 1.6;
+  padding: 4px 0;
+  text-align: center;
+  text-decoration: none;
+  color: #8a7350;
+  text-shadow: 1px 1px 0 rgba(255, 248, 228, 0.7);
+}
+
+nav a:hover { color: #4a3618; }
+
+nav a.chosen {
+  color: #120c04;
+  font-weight: bold;
+  background: linear-gradient(90deg, transparent, rgba(255, 252, 238, 0.95) 25%, rgba(255, 252, 238, 0.95) 75%, transparent);
+}
+
+.page { max-width: 1040px; margin: 0 auto; padding: 32px 20px 64px; }
+
+@media (max-width: 1480px) {
+  .page { margin-left: 200px; margin-right: 0; }
+}
+
+header {
+  border-top: 2px solid var(--line);
+  border-bottom: 2px solid var(--line);
+  background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 54px);
+  padding: 28px 24px 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--kai);
+  font-size: 56px;
+  line-height: 1.1;
+  letter-spacing: 6px;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 rgba(255, 240, 210, 0.6);
+}
+
+h1 small { display: block; margin-top: 8px; font-size: 22px; letter-spacing: 2px; color: var(--dim); }
+
+.button {
+  font-family: var(--kai);
+  font-size: 19px;
+  color: #1e1406;
+  text-decoration: none;
+  padding: 6px 16px;
+  border: 1px solid var(--gold-dark);
+  border-radius: 4px;
+  background: linear-gradient(#f6e3a6, #d6b45e);
+  box-shadow: 1px 2px 4px rgba(40, 25, 5, 0.3);
+  text-align: center;
+}
+
+.button:hover { background: linear-gradient(#fff0c0, #e2c06a); }
+
+.intro { margin: 28px 0 8px; font-size: 18px; }
+
+.intro p { margin: 0 0 10px; }
+
+.note { color: var(--dim); }
+
+section {
+  margin-top: 36px;
+  padding: 22px 26px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 1px 2px 8px rgba(40, 25, 5, 0.15);
+}
+
+h2 {
+  margin: 0 0 14px;
+  font-family: var(--kai);
+  font-size: 30px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+
+h3 { margin: 22px 0 8px; font-family: var(--kai); font-size: 22px; color: var(--ink); }
+
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 15px; }
+
+th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+
+th { font-family: var(--kai); font-size: 17px; color: var(--ink); background: rgba(201, 162, 74, 0.18); }
+
+td:first-child { white-space: nowrap; font-weight: bold; }
+
+code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.92em;
+  padding: 1px 5px;
+  background: rgba(122, 60, 20, 0.1);
+  border-radius: 3px;
+}
+
+pre {
+  margin: 10px 0;
+  padding: 12px 16px;
+  background: #1e1710;
+  color: #f2e7c9;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+pre code { padding: 0; background: none; color: inherit; }
+
+ol, ul { padding-left: 24px; }
+
+li { margin-bottom: 6px; }
+
+a { color: var(--ink); }
+
+.feature {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.feature p { margin: 0; flex: 1 1 520px; }
+
+footer { margin-top: 40px; text-align: center; font-size: 14px; color: var(--dim); }
+</style>
+</head>
+<body>
+<nav>
+  <a href="#top">OpenSWD3e</a>
+  <a href="#compare">和原版相比</a>
+  <a href="#install">安装与运行</a>
+  <a href="#settings">设置</a>
+  <a href="#secrets">隐藏功能</a>
+  <a href="bestiary.html">神魔異事錄</a>
+  <a href="https://github.com/Ouroboros/OpenSWD3e">GitHub</a>
+</nav>
+<div class="page" id="top">
+  <header>
+    <h1>OpenSWD3e<small>軒轅劍參外傳 天之痕 · 重制执行程序</small></h1>
+  </header>
+
+  <div class="intro">
+    <p>《軒轅劍參外傳 天之痕》的重制执行程序。它取代原版的 <code>swd3e.exe</code>，读取你已安装的原版游戏资料，在现在的 Windows 上直接运行。</p>
+    <p>剧情、战斗、数值与各种规则都和原版一样，连原版的小 BUG 也保留；会让游戏崩溃的问题则已修正。</p>
+    <p class="note">本项目不含任何游戏资料，需要你已有原版游戏。</p>
+  </div>
+
+  <section>
+    <div class="feature">
+      <p><strong>神魔異事錄</strong>：仿游戏图鉴的网页，列出全部怪物的数值、五行承受伤害、法术、可偷的物品、掉落物品、狂暴条件和说明，也收录了游戏图鉴里没有的剧情对手，可以搜索。</p>
+      <a class="button" href="bestiary.html">打开神魔異事錄</a>
+    </div>
+  </section>
+
+  <section id="compare">
+    <h2>和原版相比</h2>
+    <table>
+      <tr><th>方面</th><th>原版</th><th>重制版</th></tr>
+      <tr><td>游戏目录</td><td>由安装程序写入的目录</td><td>游戏资料和存档可以放在任意目录，目录名可以有中文</td></tr>
+      <tr><td>光盘</td><td>最小安装时进入地图、播放影片要放入光盘</td><td>不检查光盘，所有资料从游戏目录读取</td></tr>
+      <tr><td>字体</td><td>需要系统装有細明體</td><td>自带字体</td></tr>
+      <tr><td>窗口</td><td>640×480 独占全屏</td><td>窗口运行，任意缩放，<code>Alt+Enter</code> 切换全屏，记住窗口大小</td></tr>
+      <tr><td>切到其他程序</td><td>游戏暂停</td><td>继续运行，只有最小化时暂停</td></tr>
+      <tr><td>画面</td><td>每 35 毫秒画一帧，固定 640×480</td><td>可按显示器刷新率平滑显示，地图可填满宽屏（见「设置」）</td></tr>
+      <tr><td>启动画面</td><td>每次都显示</td><td>可以跳过，直接进入标题画面（见「设置」）</td></tr>
+      <tr><td>走路与跑步</td><td>每次启动都是走路；按 R 切换时整个游戏停顿 0.2 秒</td><td>按 R 即时切换，下次启动时保持上次的选择</td></tr>
+      <tr><td>设定</td><td>离开设定页才保存</td><td>改了立即保存</td></tr>
+      <tr><td>战斗截图</td><td>按 P 存到 <code>C:\snap</code>，文件夹不存在时不存</td><td>和地图截图一样存到游戏目录的 <code>ScrnShot</code> 文件夹</td></tr>
+    </table>
+  </section>
+
+  <section id="install">
+    <h2>安装与运行</h2>
+    <ol>
+      <li>准备好原版游戏目录，例如 <code>E:\Game\swd3e</code>。</li>
+      <li>解压后得到 <code>OpenSWD3e</code> 文件夹，里面有 <code>swd3er.exe</code>、<code>asset</code> 文件夹和设置文件 <code>swd3er.toml</code>。可以整个放在任意位置，也可以把里面的东西放进游戏目录。</li>
+      <li>如果没有放进游戏目录，用记事本打开 <code>swd3er.toml</code>，在 <code>[paths]</code> 里写上游戏目录：
+<pre><code>[paths]
+data_dir = 'E:\Game\swd3e'</code></pre>
+      </li>
+      <li>运行 <code>swd3er.exe</code>。</li>
+    </ol>
+    <p class="note">第一次启动时，原版保存在游戏目录 <code>Env.dat</code> 里的音量、按键等设定会自动导入一次。</p>
+  </section>
+
+  <section id="settings">
+    <h2>设置</h2>
+    <p>下面这些是重制版新增的设置。在标题画面的「環境設定」或游戏中按 Esc →「設定」里都能调整，改了立即生效并保存。画面相关的几项在「顯示設定」子页里。</p>
+    <table>
+      <tr><th>设置</th><th>默认</th><th>作用</th></tr>
+      <tr><td>啟動畫面</td><td>开</td><td>关闭后启动时跳过启动画面，直接进入标题画面</td></tr>
+      <tr><td>平滑畫面</td><td>开</td><td>按显示器刷新率画出移动、淡入淡出等动态，高刷新率显示器更流畅；关闭后和原版一样每 35 毫秒画一次</td></tr>
+      <tr><td>垂直同步</td><td>开</td><td>等显示器刷新再显示，消除画面撕裂</td></tr>
+      <tr><td>幀率上限</td><td>自動</td><td>每秒最多画几帧；只在平滑畫面开启时有效</td></tr>
+      <tr><td>繪製倍率</td><td>自動</td><td>平滑畫面按几倍精度绘制，倍数越高移动越细，也越耗 CPU；只在平滑畫面开启时有效</td></tr>
+      <tr><td>地圖填滿</td><td>开</td><td>地图填满宽屏窗口，能看到更大范围；菜单、战斗等画面仍是 640×480</td></tr>
+    </table>
+    <p>exe 旁边有两个设置文件：<code>swd3er.toml</code> 是你自己的设置，程序不会改动它；<code>swd3er.default.toml</code> 是游戏自动保存的设置。两个文件写了同一项时，以 <code>swd3er.toml</code> 为准。</p>
+  </section>
+
+  <section id="secrets">
+    <h2>隐藏功能</h2>
+    <p>以下都是原版就有的功能。</p>
+
+    <h3>随时可用的按键</h3>
+    <table>
+      <tr><th>按键</th><th>作用</th></tr>
+      <tr><td>F8</td><td>暂停／继续游戏</td></tr>
+      <tr><td>P</td><td>截图（地图上或战斗中），存到游戏目录的 <code>ScrnShot</code> 文件夹</td></tr>
+      <tr><td>Esc（播放影片时）</td><td>跳过影片</td></tr>
+    </table>
+
+    <h3>调试模式</h3>
+    <p>在 <code>swd3er.toml</code> 的 <code>[game]</code> 里写上 <code>debug = true</code>，进入游戏后在地图上同时按住右 Ctrl、右 Shift、Home、End，即可打开下面这些按键。</p>
+    <table>
+      <tr><th>按键</th><th>作用</th></tr>
+      <tr><td>F12 或 Ctrl+S</td><td>打开存档画面</td></tr>
+      <tr><td>Ctrl+L</td><td>打开读档画面</td></tr>
+      <tr><td>Ctrl+F</td><td>立即进入一场战斗（遇敌开启时）</td></tr>
+      <tr><td>Ctrl+F9</td><td>快速跳过剧情文字（再按一次关闭）</td></tr>
+      <tr><td>Ctrl+F1／Ctrl+F2</td><td>显示调试信息／地图格子</td></tr>
+      <tr><td>Ctrl+F3</td><td>穿墙（再按一次关闭）</td></tr>
+      <tr><td>Ctrl+Tab 加小键盘 <code>+</code> <code>-</code></td><td>调整地图动画速度</td></tr>
+      <tr><td>F4</td><td>打开秘技对话框</td></tr>
+      <tr><td>F6</td><td>大部分物品各得 10 个</td></tr>
+      <tr><td>F7</td><td>进入升天小游戏</td></tr>
+      <tr><td>Ctrl+Q</td><td>结束游戏</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    <a href="https://github.com/Ouroboros/OpenSWD3e">GitHub</a> ·
+    <a href="https://github.com/Ouroboros/OpenSWD3e/blob/master/docs/building.md">从源码编译</a> ·
+    <a href="https://github.com/Ouroboros/OpenSWD3e/blob/master/reverse/analysis/deviations.md">和原版的全部差异</a>
+  </footer>
+</div>
+<script>
+// The section on screen is chosen in the menu, as the game marks the page shown.
+const links = [...document.querySelectorAll('nav a[href^="#"]')];
+const targets = links.map(link => document.getElementById(link.getAttribute('href').slice(1)));
+
+function choose() {
+  let shown = 0;
+
+  targets.forEach((target, at) => {
+    if (target.getBoundingClientRect().top <= 120) {
+      shown = at;
+    }
+  });
+
+  if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) {
+    shown = targets.length - 1;
+  }
+
+  links.forEach((link, at) => link.classList.toggle('chosen', at === shown));
+}
+
+addEventListener('scroll', choose);
+addEventListener('resize', choose);
+choose();
+</script>
+</body>
+</html>
