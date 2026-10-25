@@ -1070,7 +1070,11 @@ bool Talk::RunRoleCommand(EventRun& run)
             const u16 id = operands.Word();
             state.FindRoleOrPlayer(id, run.found);
 
-            if (run.found < GameState::Roles && owner.rolePath.ResumeMove(static_cast<int>(run.found)))
+            // The original resumes the move of any index (0x0042C64F): a role not found (index -1) reads the dword
+            // before the move records, zero in practice, so ResumeMove returns 1 and the script goes on; it then
+            // clears two fields outside the records. Here an index past the roles counts as an all-zero record: the
+            // script goes on and nothing is written (deviations.md).
+            if (run.found >= GameState::Roles || owner.rolePath.ResumeMove(static_cast<int>(run.found)))
             {
                 this->Next(run);
             }
