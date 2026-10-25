@@ -686,3 +686,16 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 
 - 0x004896C0：+0xA2 字节。0x004896D0：+0x9C 起五字节中第一个非 0 的序号 + 1，皆 0 返回 0。0x004896F0：种类（+0x20）低字节位 5。
 - 0x00489710 ClearTurnCommand：命令 +0x18（+0x101C）、+0x2BE8 字清零，+0x2B98、+0x2FF4、+0x3024 dword 清零，skillName 前 16 字节清零。
+
+## BattleUnit 构造／析构与计量、位置函数（第 1189–1203 行）— exact
+
+- 0x0048B040 构造：targets（+0x2F72）四 dword −1，+0x2FBC 字 0，unk29A2（+0x2EAE）0xFFFF，fadeLevel 0xF，brightLevel 1，glowLevel 0，fadeStep（+0x2F26）4，flashPhase（+0x2F84）2，flashFall（+0x2F86）0x18，+0x2E60／+0x2E62／+0x2F82／+0x2F2A／+0x2F88 字与 +0x2FC6 字节清零，colorPair（+0x2BC4）0x062B062B，effects 头（+0x2A7C）0，skillName 前 16 字节与自身物件（+0x14，0xA8 字节）清零；与成员默认值逐项对照（其余成员在原程序中位于零初始化的全局单位表）。0x0048B100 析构：自身物件说明文字（+0xB8）非空时释放。
+- 0x0048B130 SetTarget：+0x3024 = 参数并返回。0x0048B140 GaugeLength：ftol((u16)gauge / 0x004BEFF8 × 62.0f)。0x0048B170 FillSecondGauge：命令 +0x18 非 0 时 +0x2BE8 = 0x960，否则 0。0x0048B190 SecondGaugeLength：ftol((i16)+0x2BE8 × 0.00041666668f × 62.0f)（两常量 od 核对；53 位精度下与 double 相同）。0x0048B1C0 ResetGauge：gauge = 0x004BEFF8 低字。0x0048B1D0 RandomizeGauge：gauge = 360/(Random(10) + 1) + 50；参数 1 时 kind 为 0 则 gauge = 满 − 1 并返回 kind（0），否则 gauge = 满 − 300 并返回之；参数非 1 返回参数。
+- 0x0048B230 GetDrawPosition：+0x2BE2 非 0 时取 savedPlacement 的 x／y（+0xFFA／+0xFFC），否则 placement（+0xFDA／+0xFDC）。0x0048B280 GetOffset：主动作锚点（+0x32E／+0x330），commandFlags 0x200 时 slotActs[8]（+0xC26／+0xC28）；facing 1 且主动作锚点 x 非 0 时 x = 阴影图宽 − 主动作锚点 x；kind 0 且 commandA（+0x2F88）为 4 时取 standAct 锚点。0x0048B310 GetOrigin：位置 − origin（+0x2EC2／+0x2EC4）；0x200 时 HasFixedOrigin（0x00491CE0）为 1 则 (0xF0, 0x12C) − slotActs[8] 的 x／y，否则 位置 − 其 x／y。0x0048B3A0 GetShadowRect：defeated 1 且 kind 0、或 actId 为 0 时返回；动作 0x24，主动作动作非 0 时用之，defeated 1 时 0x27；Run、取图，facing 1 时 x = 宽 − x；矩形 = (位置 x − x, 位置 y − y, 宽, 高)。0x0048B4A0 Move、0x0048B4C0 SetPosition（placement 8 dword 复制到 savedPlacement）、0x0048B500 GetPosition。
+- 空指针偏差：补登记 0x0048B280、0x0048B3A0，以及本批前面的 0x00487200、0x004873C0、0x004877A0、0x00487FE0；0x00488F50 行引用汇编。全工程扫描源码中的空指针注释，补登记已验证函数 0x00459200、0x004594B0、0x00477A00、0x00477EE0、0x004838A0、0x00458670、0x00458BB0；未验证的 0x0048CA10、0x00497350、0x004975E0、0x0049C0D0 在验证时登记。
+
+## StepIdleAction、SelectEntry、取值函数、ClearIdleAction、SetCommand、ClearFlag26B8（第 1204–1214 行）— exact
+
+- 0x0048B520 StepIdleAction：stepAct（+0xEE0）= mainAct（+0x2B4），Run 失败返回 0；否则 picture = GetPicture(+0xF2A, +0xF2C) 并返回。0x0048B570 SelectEntry：参数非 0 返回 +0x0（battleRecord），否则 +0x4（roleRecord）。
+- 0x0048B590／0x0048B5A0：+0x2FEC／+0x2FF4。0x0048B5B0／0x0048B5C0／0x0048B5D0／0x0048B5E0：commandA（+0x2F88）、commandB（+0x2F8C）、+0x2F90、+0x2EAE 字。0x0048B5F0 ClearIdleAction：mainAct 清零。0x0048B680 ClearFlag26B8：+0x2BC0 &= 0x7FFFFFFF。
+- 0x0048B610 SetCommand：2／0xD／3／0x29 时 commandB = 命令、commandA = 0；0xE／0xF 时 commandFlags |= 0x4000，6／0x50 时 |= 0x800，再同前；其余 commandA = 命令；都返回 1。
