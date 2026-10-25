@@ -1179,6 +1179,30 @@ TEST_CASE("battle state: the panel units and places match swd3e.exe")
     CHECK(swd3etest::SameTable(exe, kRoleActsAt, roleActs));
 }
 
+TEST_CASE("battle state: RoleCycle reads on into chargingRole, meterRole and the dword after them")
+{
+    constexpr swd3e::u32 kUnk4BF594At = 0x004BF594;
+    constexpr swd3e::i32 kChargingSlot = 5;
+    constexpr swd3e::i32 kMeterSlot = 6;
+    constexpr swd3e::i32 kAfterSlot = 7;
+    constexpr swd3e::i32 kPastSlot = 8;
+    constexpr swd3e::i32 kChargingUnit = 0x15;
+    const std::vector<swd3e::u8> exe = swd3etest::ReadGameFile("swd3e.exe");
+
+    if (!exe.empty())
+    {
+        CHECK(swd3etest::SameTable(exe, kUnk4BF594At, std::array<swd3e::i32, 1>{swd3e::BattleState::Unk4BF594}));
+    }
+
+    swd3e::BattleState state;
+    state.chargingRole = kChargingUnit;
+    CHECK(state.RoleCycleRead(0) == swd3e::BattleState::InitialRoleCycle[0]);
+    CHECK(state.RoleCycleRead(kChargingSlot) == kChargingUnit);
+    CHECK(state.RoleCycleRead(kMeterSlot) == state.meterRole);
+    CHECK(state.RoleCycleRead(kAfterSlot) == swd3e::BattleState::Unk4BF594);
+    CHECK(!state.RoleCycleRead(kPastSlot).has_value());
+}
+
 TEST_CASE("battle state: the roles after the party read on past partyRoles and PortraitX")
 {
     constexpr swd3e::u32 kGhostSlot = 4;

@@ -329,11 +329,11 @@ constexpr i32 kLastGridCommand = 9;  // a command past the grid goes back to 1
 constexpr int kRoleIconX = 0x1E;     // the role's icon over the menu
 constexpr int kRoleIconY = 0x21;
 constexpr int kMenuNameStep = 8;
-constexpr int kMenuNameCenter = 5;
+constexpr int kMenuNameCenter = 0xA;  // swd3e (0x00472081)
 constexpr int kMenuNameShift = 2;
 constexpr int kMenuNameY = 0xE;
 constexpr int kCommandMenuX = 0xE;
-constexpr int kCommandMenuY = 0x2A;
+constexpr int kCommandMenuY = 0x28;  // swd3e (0x004720C6)
 }  // namespace
 
 TurnFrame::TurnFrame(Game& game)

@@ -132,6 +132,7 @@ constexpr u16 kSpecialType = 0x14;  // the skill type LearnSpecials reads (swd3e
 
 constexpr i32 kLastMenuCommand = 9;      // swd3e: the last command of the grid (the up key from below 0, the down key)
 constexpr i32 kFewAimRoles = 3;          // AimStep: fewer roles step through the roles, more through RoleCycle
+constexpr i32 kPastRoleCycle = -1;       // AimStep: the string bytes past RoleCycleRead name no role
 constexpr i32 kListSlideStart = 0x50;    // the lists of states 0x29 and 0x50 slide in again from this
 constexpr u8 kRefineOptionTaken = 0x80;  // refineOptionsOpen once a 煉妖 choice was taken (MenuConfirm)
 constexpr i32 kControlRowsStart = 2;     // controlRows when the 控制 menu closes
@@ -301,7 +302,7 @@ constexpr i32 kCloseMenuState = 0xC8;
 constexpr i32 kEndMessageFrames = 0x14;
 constexpr i32 kEndLevelUpFrames = 0x1E;
 constexpr u16 kLevelUpPanelSound = 0x2C;
-constexpr i16 kLearnedPose = 8;
+constexpr i16 kLearnedPose = 4;  // the pose of a learned skill (0x00471B93, 0x00475FAC, 0x0047606C)
 constexpr u16 kOpenSound = 0x2D;
 constexpr i32 kTalkFixedAnswers = 2;  // 攻擊 and 釋放
 constexpr i32 kRepeatDelay = 0xF;     // the keys of the battle: held keys repeat from this frame
@@ -416,9 +417,10 @@ void Game::RandomRoleAct(int unit)
     }
 
     const u32 aimsAtRole = this->random.Below(2);
-    const auto roles = static_cast<i32>(battle.roleCount);
+    const u32 standing = battle.roleCount - battle.defeatedRoles - battle.unk5770D4 - battle.escortCount;
 
-    if (roles - battle.defeatedRoles - battle.unk5770D4 - battle.escortCount > 1 && aimsAtRole != 0)
+    // An unsigned compare (0x00472AEA).
+    if (standing > 1 && aimsAtRole != 0)
     {
         battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
         battle.aimTarget = static_cast<i32>(this->random.Below(battle.roleCount)) + 1;
@@ -1467,33 +1469,38 @@ void Game::NextEnemyTurn()
 }
 
 // swd3e.exe 0x00473270: the party role whose turn follows: orderStep steps (1-based, wrapping over the party roles)
-// through RoleCycle until it names the current unit's role, which aimTarget then aims at (1-based). The original
-// loops for ever when the cycle never names it.
+// through RoleCycle until it names the current unit's role, which aimTarget then aims at (1-based). With the ghost
+// the party roles reach past the cycle: the original reads on (RoleCycleRead). It loops for ever when the cycle never
+// names the role.
 void Game::NextRoleTurn()
 {
     BattleState& battle = this->battleState;
     const auto roles = static_cast<i32>(battle.roleCount - battle.escortCount - battle.guestCount);
+    const i32 wanted = battle.currentUnit - BattleState::FirstRoleUnit;
     i32 at = battle.orderStep;
-    i32 role = 0;
     int steps = 0;
 
-    do
+    while (true)
     {
         if (++at > roles)
         {
             at = 1;
         }
 
-        if (++steps > static_cast<int>(battle.roleCycle.size()) || at >= static_cast<i32>(battle.roleCycle.size()))
+        if (battle.RoleCycleRead(at) == wanted)
+        {
+            break;
+        }
+
+        // Every place read once without the role: the original never ends.
+        if (++steps > std::max(roles, 1))
         {
             Hang();
         }
-
-        role = battle.roleCycle[static_cast<std::size_t>(at)];
-    } while (role != battle.currentUnit - BattleState::FirstRoleUnit);
+    }
 
     battle.orderStep = at;
-    battle.aimTarget = role + 1;
+    battle.aimTarget = wanted + 1;
     battle.actingEnemy = 0;
     battle.unk53BFB8 = 1;
 }
@@ -3529,8 +3536,8 @@ void Game::AimStep(int step)
         do
         {
             StepWrapped(battle.orderStep, step, cycle);
-            const auto at = static_cast<std::size_t>(battle.orderStep);
-            battle.actingEnemy = at < battle.roleCycle.size() ? battle.roleCycle[at] : -1;
+            // Past RoleCycle the original reads on (RoleCycleRead); the string bytes beyond are no role.
+            battle.actingEnemy = battle.RoleCycleRead(battle.orderStep).value_or(kPastRoleCycle);
             spin();
         } while (!aimable(battle.actingEnemy));
 
@@ -4702,8 +4709,8 @@ void Game::MenuConfirm()
     }
 }
 
-// The order of the current role as its command sets it (inline in 0x00462740): the speed of its act, the act's flag 1
-// (unk53BFF0 and the order's unk08); 1 when the act's flag 0 is set (the command aims at the party).
+// The order of the current role as its command sets it (inline in MenuConfirm, 0x0046F920): the speed of its act, the
+// act's flag 1 (unk53BFF0 and the order's unk08); 1 when the act's flag 0 is set (the command aims at the party).
 bool Game::PrepareOrder()
 {
     BattleState& battle = this->battleState;
@@ -4724,14 +4731,16 @@ bool Game::PrepareOrder()
     return role.ActFlag0() == 1;
 }
 
-// The aim at the party of a chosen command (inline in 0x00462740): fewer than four party roles aim at the role
-// itself (marked, unless the pointer aims), otherwise the next role in RoleCycle.
+// The aim at the party of a chosen command (inline in states 2 and 4 of MenuConfirm, 0x0046F920): fewer than
+// four party roles (an unsigned count) aim at the role itself (marked, unless the pointer aims), otherwise the next
+// role in RoleCycle.
 void Game::AimAtParty()
 {
     BattleState& battle = this->battleState;
-    const auto partyRoles = static_cast<i32>(battle.roleCount - battle.escortCount - battle.guestCount);
+    const u32 partyRoles = battle.roleCount - battle.escortCount - battle.guestCount;
 
-    if (partyRoles >= static_cast<i32>(Party::Roles))
+    // An unsigned compare (0x00470461, 0x00470D0E).
+    if (partyRoles >= static_cast<u32>(Party::Roles))
     {
         this->NextRoleTurn();
         return;
@@ -4749,7 +4758,7 @@ void Game::AimAtParty()
     }
 }
 
-// Battle state 3 opened from a list (inline in 0x00462740): the panels closed and the confirm held.
+// Battle state 3 opened from a list (inline in MenuConfirm, 0x0046F920): the panels closed and the confirm held.
 void Game::OpenTargets()
 {
     BattleState& battle = this->battleState;
@@ -4760,7 +4769,8 @@ void Game::OpenTargets()
     this->controls.PressConfirm();
 }
 
-// The end of a role's choice (inline in 0x00462740): the choosing role becomes turnUnit and the menu closes.
+// The end of a role's choice (inline in MenuConfirm, 0x0046F920): the choosing role becomes turnUnit and the menu
+// closes.
 void Game::EndChoice()
 {
     BattleState& battle = this->battleState;
@@ -5462,25 +5472,7 @@ void Game::ConfirmItem()
 
         if (order.unk00 == 1)
         {
-            const auto partyRoles = static_cast<i32>(battle.roleCount - battle.escortCount - battle.guestCount);
-
-            if (partyRoles >= static_cast<i32>(Party::Roles))
-            {
-                this->NextRoleTurn();
-            }
-            else
-            {
-                battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
-
-                if (battle.unk53BFBC == 0)
-                {
-                    role.SetAC0(1);
-                    UnitRect rect;
-                    role.GetShadowRect(this->battleServices, rect);
-                    battle.unk53BFB8 = 1;
-                }
-            }
-
+            this->AimAtParty();
             battle.result = kTargetState;
             this->controls.PressConfirm();
             return;
@@ -5979,8 +5971,8 @@ void Game::ConfirmBait()
 }
 
 // The end states of MenuConfirm (0x62..0x71, 0xC8): the messages of the end wait out endFrames frames (0x64 not for a
-// victory without its panel), the level-up
-// steps (0x65: a level-up shows 0x6E, a learned skill 0x6F; none ends), 0xC8 closes the menu and unmarks every unit.
+// victory without its panel; a defeat, 0x67 once waited and 0x68 at once, stops the music), the level-up steps (0x65:
+// a level-up shows 0x6E, a learned skill 0x6F; none ends), 0xC8 closes the menu and unmarks every unit.
 void Game::ConfirmEnd()
 {
     BattleState& battle = this->battleState;
@@ -6053,6 +6045,7 @@ void Game::ConfirmEnd()
         case kBattleLost:
             if (battle.endFrames >= kEndMessageFrames)
             {
+                this->audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
                 battle.endFade = 1;
                 messages.panelHeight = 0;
                 battle.result = 0;
@@ -6062,6 +6055,7 @@ void Game::ConfirmEnd()
             return;
 
         case kLostQuietly:
+            this->audio.Queue().Switch(MusicQueue::Silence, MusicQueue::RepeatList, 0);
             battle.endFade = 1;
             messages.panelHeight = 0;
             return;
@@ -6910,6 +6904,8 @@ void Game::DrawAimPointers()
 {
     BattleState& battle = this->battleState;
     BattleHud& hud = this->battleHud;
+    battle.unk53BFC4 = 1;
+    battle.unk53BFC0 = 1;
     this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
 
     // Without a current unit (the auto battle) the original reads the order before the first: taken as aiming at

@@ -105,6 +105,7 @@ public:
     static constexpr i32 DarkLevelFrames = 1;  // darkFrames past it step to the next level
     static constexpr std::array<u8, 10> QuakeSteps = {4, 3, 4, 3, 4, 3, 2, 3, 2, 3};  // 0x004BF190 by quakePhase
     static constexpr std::array<i32, 5> InitialRoleCycle = {11, 2, 1, 0, 3};          // 0x004BF578 (exe)
+    static constexpr i32 Unk4BF594 = 1;  // 0x004BF594 an unreferenced dword after meterRole (RoleCycleRead)
     static constexpr std::array<i32, 4> PanelUnits = {10, 9, 8, 11};             // 0x004BF56C the role units by panel
     static constexpr std::array<int, 4> PortraitX = {0xFD, 0x5D, 0x19D, 0x19D};  // 0x004BF13C by place (swd3e)
     static constexpr std::array<int, 4> NameX = {0x13C, 0x9C, 0x1DC, 0x1DC};     // 0x004BF14C by place, after PortraitX
@@ -194,6 +195,7 @@ public:
     u16 MenuKind(int command) const;
     std::optional<i32> PartyRoleRead(u32 slot) const;
     static std::optional<int> PortraitXRead(i32 place);
+    std::optional<i32> RoleCycleRead(i32 at) const;
 
     i32 listBCount = 0;         // 0x0050BF18 the rows of the list shown from listB, at most 13
     ItemNode* listB = nullptr;  // 0x0050C034 the first item shown (itemsHead itself until the list is made)
@@ -574,7 +576,7 @@ public:
     i32 levelUpPending = 0;                    // 0x0057733C a level-up to show at the end
     u16 unk53BF1C = 0;
     i32 unk53C024 = 0;
-    i32 victoryWithoutPanel = 0;  // swd32 0x0053C004 1: the victory ends without its panel (BattleEndFrame; inferred)
+    i32 victoryWithoutPanel = 0;  // 0x00577308 1: the victory ends without its panel (BattleEndFrame; inferred)
     // The hit act of a slot (Game::HitTargetFrame).
     i32 rippleHits = 0;                        // 0x00577340 1: hits run the ripple instead of their pictures
     std::array<i32, Units> rippleFrames = {};  // 0x00575FD4 per slot: the frames of the ripple

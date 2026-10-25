@@ -546,6 +546,33 @@ std::optional<i32> BattleState::PartyRoleRead(u32 slot) const
     return std::nullopt;
 }
 
+// RoleCycle read at 0x004BF578 + 4 * at as the original does: chargingRole (0x004BF58C), meterRole (0x004BF590) and
+// Unk4BF594 follow it. None past them (string bytes that never name a role; deviations.md).
+std::optional<i32> BattleState::RoleCycleRead(i32 at) const
+{
+    if (at < 0)
+    {
+        return std::nullopt;
+    }
+
+    const auto place = static_cast<std::size_t>(at);
+    const std::size_t cycle = this->roleCycle.size();
+
+    if (place < cycle)
+    {
+        return this->roleCycle[place];
+    }
+
+    const std::array<i32, 3> after = {this->chargingRole, this->meterRole, BattleState::Unk4BF594};
+
+    if (place - cycle < after.size())
+    {
+        return after[place - cycle];
+    }
+
+    return std::nullopt;
+}
+
 // PortraitX read at 0x004BF13C + 4 * place as the original does: NameX (0x004BF14C) follows it. None for other
 // places (deviations.md).
 std::optional<int> BattleState::PortraitXRead(i32 place)
