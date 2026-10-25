@@ -291,7 +291,7 @@ h1 {
   color: var(--text);
   background: var(--panel);
   border: 2px solid var(--gold);
-  box-shadow: 0 0 0 2px #000, inset 0 0 0 1px #000;
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
   outline: none;
 }
 
@@ -328,8 +328,7 @@ h1 {
   border: 2px solid var(--gold);
   box-shadow:
     inset 0 0 0 1px #000,
-    0 0 0 1px #000,
-    0 0 0 3px #000;
+    0 0 0 1px #000;
   position: relative;
 }
 
@@ -340,7 +339,7 @@ h1 {
   flex-direction: column;
   gap: 6px;
   padding-top: 10px;
-  margin-right: -11px;
+  margin-right: -13px;
   overflow-y: auto;
   scrollbar-width: none;
   z-index: 1;
@@ -355,11 +354,21 @@ h1 {
   border: 2px solid #b89838;
   border-right: none;
   border-radius: 10px 0 0 10px;
-  box-shadow: -2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000;
+  position: relative;
   cursor: pointer;
   user-select: none;
   text-align: center;
   white-space: nowrap;
+}
+
+/* The black outline, round with the corners, open on the side that meets the list. */
+.tab::before {
+  content: "";
+  position: absolute;
+  inset: -3px 0 -3px -3px;
+  border-radius: 11px 0 0 11px;
+  background: #000;
+  z-index: -1;
 }
 
 .tab.chosen {
@@ -373,7 +382,7 @@ h1 {
   color: #20280c;
   background: linear-gradient(90deg, #7c9444, #a8bc68);
   border-color: #d0b040;
-  box-shadow: -2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000, inset 4px 0 0 #e0c048;
+  box-shadow: inset 4px 0 0 #e0c048;
 }
 
 .list {
@@ -457,7 +466,7 @@ h1 {
   padding: 10px;
   background: linear-gradient(135deg, #6a6020, #3c3410);
   border: 3px solid #a89048;
-  box-shadow: inset 0 0 0 2px #1c1806, 0 0 0 2px #000;
+  box-shadow: inset 0 0 0 2px #1c1806, 0 0 0 1px #000;
 }
 
 .portrait img {
