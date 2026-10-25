@@ -22,7 +22,7 @@
 
 ## 整体进度
 
-- 当前阶段：第4阶段（验证）第一遍已完成，收尾偏差表与数据核对；之后进入第5阶段（交付）。
+- 当前阶段：第5阶段（交付）；第4阶段第一遍、偏差表核实与数据核对已完成。
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
 - 已实现／总数：1710／1710。
@@ -31,12 +31,12 @@
 
 ## 当前工作
 
-函数全集1710个均已实现并通过第一遍汇编对照（证据按模块记入reverse/evidence/pass1/），范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试172项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。当前收尾：reverse/analysis/deviations.md 中仍标“待核（继承自 swd3-rebuild）”的行逐条按 swd3e 汇编核实、改地址或删除；scope-and-gaps 中待核对的 DirectInput 键盘数据格式闭合。
+函数全集1710个均已实现并通过第一遍汇编对照（证据按模块记入reverse/evidence/pass1/），范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试172项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。偏差表全部按 swd3e 汇编核实（reverse/analysis/deviations.md），待核对数据已闭合（reverse/evidence/scope/）。Windows x64 构建通过、0 警告，构建与测试记录见 reverse/evidence/tests/build-results.md。当前等待用户运行 Windows 单元测试与试玩并回传结果。
 
 ## 下一步
 
-1. 完成偏差表与数据核对收尾（修订使已验证函数失效时，恢复为待复核并在第一遍内重验）。
-2. 第5阶段：Windows x64 构建（0 警告），提供试玩命令交用户运行，按回传结果修正。
+1. 用户运行 build/windows/swd3e_tests.exe 与 swd3er.exe，回传测试输出与试玩问题。
+2. 按回传结果修正（修订使已验证函数失效时，恢复为待复核并重验），直至可正常游玩。
 
 ## GOAL完成条件
 

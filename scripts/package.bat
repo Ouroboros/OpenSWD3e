@@ -1,6 +1,6 @@
 @echo off
 rem Builds the Windows program natively and packs what a player needs into build\OpenSWD3e-<date>-<commit>.zip:
-rem swd3er.exe, the asset folder (the font and the resources extracted from swd32.exe) and the settings template
+rem swd3er.exe, the asset folder (the font and the resources extracted from swd3e.exe) and the settings template
 rem swd3er.toml, all in one OpenSWD3e folder.
 rem Needs LLVM (clang-cl, lld-link, llvm-lib, llvm-rc, llvm-mt; SWD3_LLVM, by default D:\Dev\Compiler\LLVM\x64\bin),
 rem Visual Studio 2022 with the C++ tools and its CMake and Ninja (the Windows SDK and the MSVC libraries), the
