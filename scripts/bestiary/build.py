@@ -365,7 +365,7 @@ h1 {
 .tab.chosen {
   color: #181800;
   background: linear-gradient(90deg, #b8d050, #eef488);
-  border-color: #e0c048;
+  border-color: #b07818;
   font-weight: bold;
 }
 
