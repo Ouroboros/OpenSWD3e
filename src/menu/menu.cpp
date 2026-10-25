@@ -420,7 +420,7 @@ void Menu::BuildTabs([[maybe_unused]] int selected)
         tab.stateCopy = 0;
     }
 
-    this->unk4A6AA8 = Menu::NoRole;
+    this->unk4BE644 = Menu::NoRole;
 
     for (MenuTab& tab : this->tabs)
     {

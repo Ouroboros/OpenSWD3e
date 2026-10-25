@@ -23,7 +23,7 @@ struct Menu::FrameState
     u16 openedMode = 0;
     u16 roleTab = 0;
     u16 openedOnEquipment = 0;
-    u16 unk4A6AA8 = 0;
+    u16 unk4BE644 = 0;
     i32 tint = 0;
     i32 frames = 0;
     u32 flags = 0;
@@ -138,7 +138,7 @@ void Menu::SaveFrame(FrameState& kept) const
     kept.openedMode = this->openedMode;
     kept.roleTab = this->roleTab;
     kept.openedOnEquipment = this->openedOnEquipment;
-    kept.unk4A6AA8 = this->unk4A6AA8;
+    kept.unk4BE644 = this->unk4BE644;
     kept.tint = this->tint;
     kept.frames = this->frames;
     kept.flags = this->flags;
@@ -268,7 +268,7 @@ void Menu::LoadFrame(const FrameState& kept)
     this->openedMode = kept.openedMode;
     this->roleTab = kept.roleTab;
     this->openedOnEquipment = kept.openedOnEquipment;
-    this->unk4A6AA8 = kept.unk4A6AA8;
+    this->unk4BE644 = kept.unk4BE644;
     this->tint = kept.tint;
     this->frames = kept.frames;
     this->flags = kept.flags;

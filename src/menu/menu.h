@@ -752,7 +752,7 @@ public:
     u16 roleTab = 0;     // 0x0050A820 (low word) the role tab raised (the equipment page's role)
     // 0x0050B2C8 bit 0: the menu opened on the equipment, left back to the item choice
     u16 openedOnEquipment = 0;
-    u16 unk4A6AA8 = 0;  // 0x004BE644 the word after the tabs (BuildTabs sets it to NoRole)
+    u16 unk4BE644 = 0;  // 0x004BE644 the word after the tabs (BuildTabs sets it to NoRole)
     i32 tint = 0;       // 0x0050ACBC a screen tint while non-zero
     std::array<int, Party::Roles> visibleRoles = {};  // 0x0050A344 the roles in the party in order (ListPartyRoles)
     int visibleCount = 0;                             // 0x0050AB90

@@ -62,9 +62,9 @@
 4. `FUNC_THUNK` 且直接或经一层桩跳至导入的为 `import_thunk`；`0x4A1096` 起为 `crt`。
 5. 动态初始化器（`0x409D70..0x40A13A` 等）随所在地址区间归属，未必对应其全局对象所属编译单元，待还原时按对象类型调整。
 
-## 已识别的共享数据与资源（待逐函数核对）
+## 已识别的共享数据与资源（已核对）
 
-- 动态初始化表 `.data 0x4AF004..0x4AF0A0`（含CRT `__xi`/`__xc`/`__xp`/`__xt` 段，具体分界待核）。
-- C++ EH FuncInfo/unwind map `.rdata 0x4AD010..`；SEH scope table `0x4ACA48..`。
-- DirectInput 键盘数据格式 `c_dfDIKeyboard` `0x4A1040`（DIDATAFORMAT）及 `c_dfDIKeyboard_objects` `0x4A0040`（256×16字节），`GUID_Key` `0x4ABCB0`。
+- 动态初始化表 `.data 0x4AF000..0x4AF0A4`（CRT `__xc`/`__xi`/`__xp`/`__xt` 四段，分界与逐项已核对，见 `reverse/evidence/scope/init-tables.md`）。
+- C++ EH FuncInfo/unwind map `.rdata 0x4AD010..`；SEH scope table `0x4ACA48..`（编译器元数据，处理依据同上）。
+- DirectInput 键盘数据格式 `c_dfDIKeyboard` `0x4A1040`（DIDATAFORMAT）及 `c_dfDIKeyboard_objects` `0x4A0040`（256×16字节），`GUID_Key` `0x4ABCB0`（已核对，见 `reverse/evidence/scope/dinput-keyboard-format.md`）。
 - 外部数据文件（由字符串确认）：`maps.dat`、`namex.dat`、`Env.dat`、`swdghost.dat`、`Fame.dat`、`save\%d.sav`、`data\%d.cm`、`mcache.dat`、`HUGE.lmf`、`Talk%d.dat`、`all_char/item/magic/sys.tsw/.act`、`figtalk.dat`、`mon.dat`、`level.dat`、`battle.ffd`、`all.snd`、`music\*.mp3`、`Video\*`（Bink）、`Born.avi`。

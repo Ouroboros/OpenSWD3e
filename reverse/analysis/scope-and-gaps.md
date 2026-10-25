@@ -62,7 +62,7 @@
 
 自动分析后1470段，其中非填充94段：90段为函数后的 switch 跳转表；其余4段：
 
-- `0x4A0036..0x4A1058`：`c_dfDIKeyboard_objects`/`c_dfDIKeyboard` 数据（`0x43BB82` 引用 `0x4A1040`），已定义为数据，内容属待核对数据。
+- `0x4A0036..0x4A1058`：`c_dfDIKeyboard_objects`/`c_dfDIKeyboard` 数据（`0x43BB82` 引用 `0x4A1040`），已定义为数据；内容已核对为标准 DirectInput 键盘数据格式，见 `reverse/evidence/scope/dinput-keyboard-format.md`（使用它的 0x0043BA70 为平台替换）。
 - `0x4A5255`：`VC20XC00` 字符串（EH魔数）。
 - `0x4A3965`、`0x4A6357`：`lea esp,[esp+0]`/`mov edi,edi` 对齐填充。
 
