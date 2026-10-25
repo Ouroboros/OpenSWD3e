@@ -1,13 +1,10 @@
-// scripts/bestiary/dump <game dir> data | portrait <action> <first> <last> | pic <id> <first> <last>
+// scripts/bestiary/dump <game dir> data | portrait <action> <first> <last>
 // data: one JSON line per mon.dat object 1..500 (the bestiary's range) with the fields the page shows.
-// portrait: each act's action at its first frame as "id width height" and its RGBA rows.
-// pic: frames first..last of one tsw picture, the same way under their frame numbers.
+// portrait: each act's action at its first frame as "id width height" and its RGB rows.
 // Build after `cmake --build --preset linux`, linking build/linux/libswd3e_core.a and the libraries of swd3e_tests
 // (third_party/install/linux/lib: SDL3, avformat, avcodec, swscale, swresample, avutil) with -static -pthread.
-// The page, with <out> a directory in tmp/: dump <dir> data > <out>/monsters.jsonl;
-// dump <dir> portrait 59 1 500 > <out>/portraits.raw; dump <dir> portrait 50 9002 9002 > <out>/bestiary_bg.raw;
-// dump <dir> pic 9030 0 10 > <out>/tabs.raw; dump <dir> pic 9058 0 10 > <out>/tab.raw;
-// python3 scripts/bestiary/build.py <out> docs
+// The page: dump <dir> data > monsters.jsonl; dump <dir> portrait 59 1 500 > portraits.raw;
+// python3 scripts/bestiary/build.py monsters.jsonl portraits.raw docs/bestiary.html
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -179,51 +176,6 @@ int Data(const std::u8string& directory)
     return 0;
 }
 
-// A decoded picture as "id width height" and its RGBA rows: skip runs transparent, fill runs (the drop shadow)
-// half-transparent black.
-void Emit(const swd3e::RleCodec& codec, const swd3e::Picture& picture, int id)
-{
-    const std::optional<swd3e::RawPicture> raw = codec.Decode(picture.data);
-
-    if (!raw.has_value() || raw->width <= 0 || raw->height <= 0)
-    {
-        return;
-    }
-
-    const swd3e::RleColors colors;
-    std::vector<unsigned char> rgba(static_cast<std::size_t>(raw->width) * raw->height * 4);
-
-    for (int at = 0; at < raw->width * raw->height; ++at)
-    {
-        unsigned pixel = 0;
-        unsigned alpha = 255;
-
-        if (raw->format == 8)
-        {
-            const swd3e::u8 entry = raw->pixels[static_cast<std::size_t>(at)];
-            alpha = entry == colors.skip8 ? 0 : entry == colors.fill8 ? 128 : 255;
-            pixel = entry < picture.palette.size() ? picture.palette[entry] : 0;
-        }
-        else
-        {
-            const std::size_t from = 2 * static_cast<std::size_t>(at);
-            pixel = raw->pixels[from] | (raw->pixels[from + 1] << 8);
-            alpha = pixel == colors.skip16 ? 0 : pixel == colors.fill16 ? 128 : 255;
-        }
-
-        unsigned char* out = &rgba[4 * static_cast<std::size_t>(at)];
-        const bool shadow = alpha == 128;
-        out[0] = shadow ? 0 : static_cast<unsigned char>(((pixel >> 11) & 0x1F) << 3);
-        out[1] = shadow ? 0 : static_cast<unsigned char>(((pixel >> 5) & 0x3F) << 2);
-        out[2] = shadow ? 0 : static_cast<unsigned char>((pixel & 0x1F) << 3);
-        out[3] = static_cast<unsigned char>(alpha);
-    }
-
-    std::printf("%d %d %d\n", id, raw->width, raw->height);
-    std::fwrite(rgba.data(), 1, rgba.size(), stdout);
-    std::fflush(stdout);
-}
-
 int Portrait(const std::u8string& directory, int action, int first, int last)
 {
     QuietReporter quiet;
@@ -252,36 +204,44 @@ int Portrait(const std::u8string& directory, int action, int first, int last)
 
         const swd3e::Picture* picture = pictures.GetPicture(state.frame, state.picture);
 
-        if (picture != nullptr)
+        if (picture == nullptr)
         {
-            Emit(codec, *picture, id);
+            continue;
         }
-    }
 
-    return 0;
-}
+        const std::optional<swd3e::RawPicture> raw = codec.Decode(picture->data);
 
-// pic <id> <first> <last>: frames first..last of tsw picture `id`, each emitted under its frame number.
-int Pictures(const std::u8string& directory, int id, int first, int last)
-{
-    QuietReporter quiet;
-    swd3e::Surface scratch(64, 64);
-    swd3e::Painter painter;
-    painter.Init(scratch);
-    swd3e::RleCodec codec(painter);
-    swd3e::TswArchive pictures(codec, quiet);
-    pictures.SetGameDirectory(directory);
-    pictures.OpenArchives();
-    pictures.SetCacheLimit(32 << 20);
-
-    for (int frame = first; frame <= last; ++frame)
-    {
-        const swd3e::Picture* picture = pictures.GetPicture(static_cast<swd3e::u32>(id), static_cast<swd3e::u32>(frame));
-
-        if (picture != nullptr)
+        if (!raw.has_value() || raw->width <= 0 || raw->height <= 0)
         {
-            Emit(codec, *picture, frame);
+            continue;
         }
+
+        std::vector<unsigned char> rgb(static_cast<std::size_t>(raw->width) * raw->height * 3);
+
+        for (int at = 0; at < raw->width * raw->height; ++at)
+        {
+            unsigned pixel = 0;
+
+            if (raw->format == 8)
+            {
+                const swd3e::u8 entry = raw->pixels[static_cast<std::size_t>(at)];
+                pixel = entry < picture->palette.size() ? picture->palette[entry] : 0;
+            }
+            else
+            {
+                const std::size_t from = 2 * static_cast<std::size_t>(at);
+                pixel = raw->pixels[from] | (raw->pixels[from + 1] << 8);
+            }
+
+            unsigned char* out = &rgb[3 * static_cast<std::size_t>(at)];
+            out[0] = static_cast<unsigned char>(((pixel >> 11) & 0x1F) << 3);
+            out[1] = static_cast<unsigned char>(((pixel >> 5) & 0x3F) << 2);
+            out[2] = static_cast<unsigned char>((pixel & 0x1F) << 3);
+        }
+
+        std::printf("%d %d %d\n", id, raw->width, raw->height);
+        std::fwrite(rgb.data(), 1, rgb.size(), stdout);
+        std::fflush(stdout);
     }
 
     return 0;
@@ -293,7 +253,7 @@ int main(int argc, char** argv)
 {
     if (argc < 3)
     {
-        std::fprintf(stderr, "usage: dump <game dir> data | portrait <action> <first> <last> | pic <id> <first> <last>\n");
+        std::fprintf(stderr, "usage: dump <game dir> data | portrait <action> <first> <last>\n");
         return 2;
     }
 
@@ -303,11 +263,6 @@ int main(int argc, char** argv)
     if (std::strcmp(argv[2], "data") == 0)
     {
         return Data(directory);
-    }
-
-    if (std::strcmp(argv[2], "pic") == 0 && argc >= 6)
-    {
-        return Pictures(directory, std::atoi(argv[3]), std::atoi(argv[4]), std::atoi(argv[5]));
     }
 
     if (std::strcmp(argv[2], "portrait") == 0 && argc >= 6)
