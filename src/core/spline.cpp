@@ -13,7 +13,7 @@ namespace
 
 constexpr double kSegmentBase = 2.0;  // the first point of a segment is two before it
 // 0x004BF900: TalkCurvePoint goes 1/20 along the curve a step
-constexpr float kTalkStep = 0.05F;  // a float in the original
+constexpr float kTalkStep = 0.05F;  // 0x004BF900 (a float)
 
 }  // namespace
 

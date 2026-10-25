@@ -319,7 +319,7 @@ public:
     ObjectRecord unk5246E0;
     std::array<i32, 0x14> unk4FF168 = {};
     std::array<i32, 0x3C> unk524324 = {};
-    std::array<i32, 0xA> unk4FE5D4 = {};
+    std::array<i32, 0xA> unk4FE5D4 = {};             // 0x0050D88C the act of the item a role uses (LoadItemAction)
     std::array<std::u8string_view, 4> commandNames;  // 0x0050EBF0 the listed commands of the menu (pointers)
     std::array<u16, 4> commandKinds = {};            // 0x0050D870 their kinds (swd3e: four)
     std::array<i32, Units> unk524268 = {};           // 0x005376B8 per unit (swd3e: 0x78 bytes)
@@ -342,7 +342,7 @@ public:
     // 0x00536EE0 (swd3e) per enemy: its chosen order, taken into its slot record by AddSlotRecord (kind 2)
     std::array<PendingOrder, Enemies> enemyPendingOrders = {};
     i32 unk53BF80 = 0;  // cleared when a party unit's order is taken (InsertSlotRecord)
-    i32 unk53BFD0 = 0;
+    i32 unk53BFD0 = 0;  // 0x005772D0 set when a talk role order aims at a role (command 9)
     // 0x0057735C (swd3e) 1: the skill chosen (ActFlag17) is turned on the role itself once its enemy is aimed at, the
     // enemy kept in the role's unk34C0 (MenuConfirm states 2 and 3)
     i32 unk57735C = 0;
@@ -453,26 +453,26 @@ public:
     i16 proficiencyBonus = 0;  // 0x005373B4 the weapon proficiency step of the last strike
 
     // The state of the turns (0x0045BEA0, 0x00456680 and the commands).
-    i32 unk53BFC0 = 0;
+    i32 unk53BFC0 = 0;  // 0x005772BC
     i32 unk53BFC4 = 0;
     i32 unk53BF5C = 0;
     i32 turnUnit = 0;    // 0x00577020 the role unit taking the turn
     i32 endFade = 0;     // 0x005772E4 1: the field fades out once the battle is decided (CheckBattleEnd)
     u8 enemiesGone = 0;  // 0x005771E8 set to enemyCount by a retreat
     u8 unk53BF01 = 0;
-    u8 unk53BF02 = 0;
+    u8 unk53BF02 = 0;  // 0x005771EA
     u8 unk53BF03 = 0;
     // The turns (0x00464CC0, 0x0045ADF0, 0x0045AA00).
     i32 turnCommand = 0;  // 0x00576FA8 the order of the turn under way
     i32 unk53BF60 = 0;
     i32 unk53BF64 = 0;
-    i32 unk53BF74 = 0;
+    i32 unk53BF74 = 0;  // 0x00577270 set by talk command 0x4E
     // 0x00577314 set when a role turns to another enemy (RetargetRoles)
     i32 retargeted = 0;
     std::array<i32, Units> turnTaken = {};      // 0x00576024 per unit, set when it takes the turn
     std::array<i32, RoleUnits> roleOrder = {};  // 0x005368AC role units in order, a defeated one taken out
     i32 aimTarget = 1;                          // 0x004BF0DC the enemy a role turn aims at, 1-based
-    u16 unk4A7626 = 0xFFFF;
+    u16 unk4A7626 = 0xFFFF;                     // 0x004BF1CA the last enemy felled by a talk (command 0xA)
     // The rewards of the defeated enemies (RemoveDefeated).
     u16 battleGold = 0;         // 0x005771FA the battle's gold (bit 15: given out by DrawVictoryPanel)
     u16 battleExperience = 0;   // 0x005771FC the experience each standing party role gains
@@ -602,7 +602,7 @@ public:
     i32 enemySweeps = 0;            // 0x00577280 1: an enemy's hit sweeps (only written in swd3e)
     i32 enemyHitsAll = 0;           // 0x005772F4 1: an enemy's hit falls on the party at once (only written in swd3e)
     // 0x005135A4 (swd3e) per enemy: the hit act of its command (EnemyFrame); its spell runs it once to time the hits
-    std::array<i32, Enemies> enemyHitActs = {};
+    std::array<i32, Enemies> enemyHitActs = {};  // 0x005135A4
     std::array<u8, 20> enemyCommandTurns = {};  // 0x00537690 (swd3e) per role: the turns of the casting enemy's command
     u8 unk575FD0 = 0;  // 0x00575FD0 (swd3e) half the round limit of the spell's hit act (only written)
     std::array<u8, Enemies> escapedEnemies = {};  // 0x005379C0 (swd3e) per enemy: 1 once it ran away (0x00464ED0)
@@ -620,16 +620,16 @@ public:
     i32 sweepDefeated = 0;  // 0x00577060 the units an enemy's sweep defeated
     i32 enemyFaded = 0;     // 0x005772E0 1 once an enemy faded or left (Game::EnemyActionFrame)
     // The turn of an enemy (Game::EnemyFrame).
-    std::array<u16, Enemies> enemyOrders = {};  // swd32 0x005028AC the order of the fight talk for each enemy
+    std::array<u16, Enemies> enemyOrders = {};  // 0x00513434 the order of the fight talk for each enemy
     i32 enemyGaugeBoost = 0;                    // 0x00577348 the boost of the enemies' gauges
     i32 heldEnemy = 0;                          // swd32 0x0053BD58 the enemy (1-based) whose turn ended held
     i32 gatheringSweep = 0;                     // swd32 0x0053BF8C 1 while an enemy gathers the targets of a sweep
     i32 enemyTargetPicked = 0;                  // 0x00577318 1 once the acting enemy picked its target
     i32 enemyTarget = 0;                        // 0x00576FC0 the target of the acting enemy
-    i32 enemyAimsAtEnemies = 0;                 // swd32 0x0053BFD4 1: an ordered enemy aims at the enemies
+    i32 enemyAimsAtEnemies = 0;                 // 0x005772D4 1: an ordered enemy aims at the enemies
     i32 unk53BF9C = 0;
     i32 enemiesHitAct = 0;  // swd32 0x0053BDBC the hit act of the enemies (unk53AE90)
-    i32 unk53BFDC = 0;
+    i32 unk53BFDC = 0;      // 0x005772DC set when a talk fells an enemy (command 0xA)
     // The commands of a role (Game::RoleActionFrame).
     // 0x00577324 1: the taking (收化) succeeded; the enemy taken then gives no first reward and keeps its stolen
     // items (RemoveDefeated)
@@ -696,9 +696,9 @@ public:
     u16 talkRole = 0xFFFF;         // 0x004BF1D2 the role with a battle talk (0xFFFF: none)
     i32 orderedSkill = 0;          // 0x00577014 the skill a controlled enemy is ordered to use
     i32 unk53BD48 = 0;
-    i32 unk53C02C = 0;
-    i32 unk53BF88 = 0;
-    i32 unk53BFF0 = 0;
+    i32 unk53C02C = 0;          // 0x00577330 1 while the catch of talk command 0x4E runs
+    i32 unk53BF88 = 0;          // 0x00577284
+    i32 unk53BFF0 = 0;          // 0x005772F0
     i32 listReturnCommand = 0;  // 0x00576FB0 the menu command a list returns to
     i32 specialRow = 1;         // 0x004BF0F0 the row of the 絕招 list (1-based)
     i32 controlRows = 2;        // 0x004BF0FC the rows of the 控制 menu

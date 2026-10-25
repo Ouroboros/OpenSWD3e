@@ -2878,9 +2878,9 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
     battle.enemyOrders[static_cast<std::size_t>(enemy)] = 0;
     battle.orderSorted = 0;
 
-    if ((this->fightTalk.unk53CCDC & kTalkCountdown) != 0)
+    if ((this->fightTalk.waitCount & kTalkCountdown) != 0)
     {
-        --this->fightTalk.unk53CCDC;
+        --this->fightTalk.waitCount;
     }
 
     this->SpreadPoison(1);

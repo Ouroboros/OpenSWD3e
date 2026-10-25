@@ -174,11 +174,11 @@ public:
     int StartSpecialAct(BattleState& battle);
     void SpecialActFrame(BattleServices& services);
 
-    std::unique_ptr<RoleRecord> ownedRecord;     // the 0x38 bytes at +0x00
-    ObjectRecord unk2B24;                        // swd32 +0x2B24
+    std::unique_ptr<RoleRecord> ownedRecord;     // the 0x3C bytes at +0x00 (allocated cleared by the constructor)
+    ObjectRecord unk2B24;                        // +0x3074 (cleared by ClearExtras)
     std::array<ActState, ExtraActs> extraActs;   // +0x311C the sparks of an absorb (FlyExtraAct)
     ItemNode* skills = nullptr;                  // +0x3450 the first skill shown in the list
-    ItemNode* skillsHead = nullptr;              // swd32 +0x2EC4 the start of the list (its "無" head)
+    ItemNode* skillsHead = nullptr;              // +0x3454 the start of the list (its "無" head)
     ItemLink* inventory = nullptr;               // +0x3458 the first item shown (the next of inventoryNode)
     ItemNode* inventoryNode = nullptr;           // the item at +0x2EC8 itself; nullptr: the list head
     ItemLink* inventoryHead = nullptr;           // +0x345C the party's items
@@ -192,9 +192,9 @@ public:
     u16 unk2F18 = 0;
     u16 weaponId = 0;  // +0x34AA
     u16 unk2F1C = 0;
-    u16 bonusA = 0;  // swd32 +0x2F1E the sum of the +0x34 words of the armour (slots 1..6 without kind)
-    u16 bonusB = 0;  // swd32 +0x2F20 of their +0x36 words
-    u16 bonusC = 0;  // swd32 +0x2F22 of their +0x38 words
+    u16 bonusA = 0;  // +0x34AE the sum of the +0x34 words of the armour (slots 1..6 without kind)
+    u16 bonusB = 0;  // +0x34B0 of their +0x36 words
+    u16 bonusC = 0;  // +0x34B2 of their +0x38 words
     u16 unk2F24 = 0;
     u16 ghostOrder = 0;  // +0x34B6 (swd3e) the order the player gave the talisman ghost (SetGhostOrder)
     u16 ghostSkill = 0;  // +0x34B8 (swd3e) the index of the fed skill chosen (bit 15 while choosing)

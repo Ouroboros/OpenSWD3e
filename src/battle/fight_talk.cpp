@@ -76,8 +76,7 @@ void FightTalk::Close()
     this->unk53CE76 = 0;
     this->unk53CE78 = 0;
     this->windowFlags = 0;
-    this->unk53CCE4 = 0;
-    this->unk53CCDC = 0;
+    this->waitCount = 0;
     this->unk53CE90 = 0;
     this->unk53CE94 = 0;
     this->unk53CE98 = 0;

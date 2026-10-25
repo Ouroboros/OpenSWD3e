@@ -2852,10 +2852,9 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
     battle.orderSorted = 0;
     battle.enemyFaded = 1;
 
-    if ((this->fightTalk.unk53CCDC & kTalkCountdown) != 0)
+    if ((this->fightTalk.waitCount & kTalkCountdown) != 0)
     {
-        --this->fightTalk.unk53CCDC;
-        this->fightTalk.unk53CCE4 = 0;
+        --this->fightTalk.waitCount;
     }
 
     this->SpreadPoison(0);

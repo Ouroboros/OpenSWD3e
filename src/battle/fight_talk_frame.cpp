@@ -7,6 +7,7 @@
 #include "core/fault.h"
 #include "core/format.h"
 #include "core/spline.h"
+#include "core/words.h"
 
 namespace swd3e
 {
@@ -24,7 +25,7 @@ constexpr u16 kTalkMove = 5;
 constexpr u16 kTalkPause = 6;
 constexpr u16 kTalkHitPoints = 8;
 constexpr u16 kTalkOrder = 9;
-constexpr u16 kCountdown = 0x8000;  // FightTalk::unk53CCDC and unk53CCD4: counting
+constexpr u16 kCountdown = 0x8000;  // FightTalk::waitCount and unk53CCD4: counting
 constexpr u16 kCountMask = 0x7FFF;
 constexpr u16 kWindowShown = 0x8000;  // the high word of FightTalk::windowFlags
 constexpr int kTextEndSearch = 0xFF;
@@ -34,6 +35,7 @@ constexpr u32 kNoTimeout = 0xFFFF;
 constexpr u16 kWindowSpeed = 2;
 constexpr i16 kTalkAction = 0x24;
 constexpr i32 kLastEnemy = BattleState::Enemies - 1;  // swd3e: the units below 0x14 are enemies
+constexpr i32 kNoActingUnit = -1;                     // BattleState::actingUnit: none
 constexpr u16 kOrderForced = 0x8000;                  // BattleState::enemyOrders
 constexpr int kEnemySlot = 2;
 constexpr int kHangDraws = 0x10000;
@@ -170,6 +172,17 @@ constexpr int kEnemyKillHeal = -1000000;     // command 0x4C: an enemy loses thi
 constexpr std::size_t kResistanceWords = 5;  // swd3e: five elements (swd32: nine)
 constexpr std::size_t kCountedSkipWords = 4;
 
+// BattleUnit::GetPosition into the low words of two dwords of the talk, their high words kept (0x0048B500 writes
+// words).
+void ReadPosition(const BattleUnit& unit, i32& x, i32& y)
+{
+    u16 lowX = 0;
+    u16 lowY = 0;
+    unit.GetPosition(lowX, lowY);
+    x = static_cast<i32>(MakeWords(HighWord(static_cast<u32>(x)), lowX));
+    y = static_cast<i32>(MakeWords(HighWord(static_cast<u32>(y)), lowY));
+}
+
 }  // namespace
 
 // swd3e.exe 0x00479860: one step of the battle talk (figtalk.dat): the command at the cursor runs, most of them
@@ -299,7 +312,7 @@ void Game::FightTalkEnd()
         this->battleRoles[index].Reset(this->battleServices);
     }
 
-    this->fightTalk.unk53CCDC = 0;
+    this->fightTalk.waitCount = 0;
     this->EndBattle();
     this->fightTalk.Close();
 }
@@ -311,16 +324,15 @@ int Game::FightTalkWait()
 {
     FightTalk& talk = this->fightTalk;
 
-    if ((talk.unk53CCDC & kCountdown) == 0)
+    if ((talk.waitCount & kCountdown) == 0)
     {
-        talk.unk53CCE4 = talk.UnsignedWord(1);
-        talk.unk53CCDC = static_cast<u16>(talk.unk53CCE4 | kCountdown);
+        talk.waitCount = static_cast<u16>(talk.UnsignedWord(1) | kCountdown);
         return 1;
     }
 
-    if ((talk.unk53CCDC & kCountMask) == 0)
+    if ((talk.waitCount & kCountMask) == 0)
     {
-        talk.unk53CCDC = 0;
+        talk.waitCount = 0;
         talk.cursor += 2 * sizeof(u16);
         talk.enabled = 1;
 
@@ -344,7 +356,7 @@ int Game::FightTalkWait()
     const i32 end = talk.unk53CCE8;
     this->FightTalkEnd();
     talk.cursor += 2 * sizeof(u16);
-    talk.unk53CCDC = 0;
+    talk.waitCount = 0;
     talk.enabled = 1;
     return end;
 }
@@ -838,9 +850,11 @@ int Game::FightTalkWin()
     {
         if (battle.unk502984[index] != -1)
         {
+            battle.actingUnit = kNoActingUnit;
             this->BattleFrame();
             talk.unk53CE90 =
                 static_cast<i32>((static_cast<u32>(talk.unk53CE90) & kLowWordMask) | (1u << kHighWordShift));
+            battle.actingUnit = kNoActingUnit;
             return 1;
         }
     }
@@ -1063,13 +1077,12 @@ int Game::FightTalkShift()
     talk.unk53CE74 = talk.UnsignedWord(1);
     battle.shake = static_cast<i16>(talk.unk53CE74);
 
+    // The position is read into the low words of the two dwords, which keep their high words (0x0048B500); they are
+    // left set.
     auto shift = [&talk, &battle](BattleUnit& unit)
     {
-        u16 x = 0;
-        u16 y = 0;
-        unit.GetPosition(x, y);
-        talk.unk53CCE8 = x + battle.shake;
-        talk.unk53CCEC = y;
+        ReadPosition(unit, talk.unk53CCE8, talk.unk53CCEC);
+        talk.unk53CCE8 = static_cast<i32>(static_cast<u32>(talk.unk53CCE8) + static_cast<u32>(battle.shake));
         unit.SetPosition(static_cast<i16>(talk.unk53CCE8), static_cast<i16>(talk.unk53CCEC));
     };
 
@@ -2420,12 +2433,8 @@ int Game::FightTalkMisc(u16 command)
             talk.unk53CE90 = static_cast<i32>(
                 (static_cast<u32>(talk.unk53CE90) & kLowWordMask) | (static_cast<u32>(enemy.ActId()) << kHighWordShift)
             );
-            u16 x = 0;
-            u16 y = 0;
-            this->battleEnemies[0].GetPosition(x, y);
-            talk.unk53CCE8 = x;
-            talk.unk53CCEC = y;
-            enemy.SetPosition(static_cast<i16>(x), static_cast<i16>(y));
+            ReadPosition(this->battleEnemies[0], talk.unk53CCE8, talk.unk53CCEC);
+            enemy.SetPosition(static_cast<i16>(talk.unk53CCE8), static_cast<i16>(talk.unk53CCEC));
             talk.cursor += 2 * sizeof(u16);
             talk.unk53CE90 = static_cast<i32>(static_cast<u32>(talk.unk53CE90) & kLowWordMask);
             return 1;
@@ -2490,7 +2499,7 @@ int Game::FightTalkMisc(u16 command)
 
         case kTalkLearn:
             talk.unk53CCE8 = talk.Word(1);
-            talk.unk53CCEC = talk.UnsignedWord(2);
+            talk.unk53CCEC = talk.Word(2);  // 0x0047CCF3: movsx
 
             if (LearnSkill(
                     talk.unk53CCE8 - BattleState::FirstRoleUnit,
@@ -2789,7 +2798,8 @@ int Game::FightTalkMisc(u16 command)
             const i16 price = talk.Word(1);
             i32& gold = this->party.variables[Party::GoldVariable];
 
-            if (gold < price)
+            // An unsigned compare of the gold with the price sign-extended (0x0047E025).
+            if (static_cast<u32>(gold) < static_cast<u32>(static_cast<i32>(price)))
             {
                 talk.cursor += 4 * sizeof(u16);
                 return 1;

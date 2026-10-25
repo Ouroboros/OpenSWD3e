@@ -323,3 +323,40 @@ asm_identity 判为与正传相同（battle_identity.txt），且源码与正传
 - 0x00479360 Draw — exact（修正后）：链表空返回；颜色变量置 0xFFFF（每次调用一次）；字宽 0x16（不复原）。逐条：y = y+6、x = x+0x10；flags 最高位：panelAct、FillBox(0xA,0xA,0x26C,0x20, −8,−8,0xA, 模式 1)、WindowFrame(0xE,0xE,0x272,0x26, 0, 0x80000008)；0x40000000：FillColor(0xA, y, 0x26C, 0x20, 0xFF)；1：x = 0x12；2：x = 0x13B − ((20×(len>>1))>>1)；frames（i16）≤ 0 跳到下一条；0x10：y 0x10，半宽 = (22×(8−(len>>1)))>>1，slideX 为 0 时 0x280，slideX = (slideX+半宽+0xE3)>>1，盒 (slideX−半宽, 0xA, 0xB0, 0x20)；0x20：同样无初值；0x40：x = 半宽+0xE3、y = slideY = (slideY+0x20)/2（向零），盒 (0xE3, y−6)；colored：'$' 后 atoi 取颜色（无界，已登记），跳一字节，复制到 '$' 或 NUL 为止，画于 (x,y) 样式 0x10，x += 11×段长，至 NUL；否则以 0xFFFF、样式 0x10 画整段；frames 减一。第二轮：frames > 0 保留；0x20 slideX += 0x50、盒与原文字于 (slideX, 0x10)，< 0x280 保留；0x10 slideX −= 0x50，> 0 保留；0x40 slideY −= y、y ×= 2、盒 (slideX−半宽, slideY−6)、文字 (slideX, slideY)，> −0x20 保留；否则摘除，Exclusive 时 exclusive 减一，stacked > 0 时减一。
 - 修正：颜色变量（var_84）在 0x0047938B 每次 Draw 只初始化一次，后一条不以 '$' 开头的彩色消息沿用前一条最后的颜色；源码原每条消息重置为 0xFFFF，改为跨消息保留。deviations 0x00479360 补记以 '$' 结尾时越过结尾 0 的读取。
 - 0x00479820 Clear — exact：链表非空时逐个释放，清 exclusive、stacked；空链表不清计数。
+
+## Game::FightTalkFrame（第 1026 行）— exact（修正后）
+
+- 0x00479860：取命令字 movsx，加一后与 0x5A 无符号比较走 91 项跳转表（0x00479878）；−1 及表外、0、7、0x20、0x26 走默认（返回 1，不移游标）。按跳转表把汇编分段，逐命令与源码（FightTalkFrame 及其 FightTalk*／FightTalkUnits／FightTalkMisc 分支函数）对照：
+  - −1：全部敌人、角色 Reset，0x00578294 清零，EndBattle、Close，返回 0。1：等待计数（0x00578294，0x8000 计数中，低 15 位由 RoleFrame／EnemyFrame 递减）；计数完毕清零、游标 +4、enabled 1、savedUnit 归还 currentUnit；否则 battleRuns 1 跑 BattleFrame，返回非 1 时同 −1 收尾后游标 +4、返回该值。2、0x2C、0x3B：三种对话框（FixedPlace 0x800、SizedLayout 1／OneLine 0x10000、Timed 8 与 NoAdvance 0x400、速度 2、windowFlags 低字并入后清零；1000 起固定 (0x1EA,0xB4)，角色动作 0x24，0x3B 角色位置 −(0x3C,0x14) 且 y 取 GetOrigin；0x2C 敌人先 SetAC0(1) 再全部 0），窗口关闭后十个角色与前十个敌人 SetAC0(0)，跳过 %Q（0xFF 内）、清说话人与 0x00578430、高字。3、4、5、6、8、9、0xA–0x1A、0x1B–0x25、0x27–0x59 逐项一致（字段地址见下）。
+  - 位置读写：0x0048B500 只写两个双字的低字，0x0048B4C0 只取低字；0x16、0x32 留下的 0x005782A0／0x005782A4 高字保留原值（命令 9 以整个 0x005782A4 作敌人序号，deviations 已登记）。
+- 修正：
+  1. 命令 1 不写 0x0057829C（原程序该全局只写不读，删去 FightTalk::unk53CCE4，RoleFrame 中同一写入一并删去，行为不变）；unk53CCDC 更名 waitCount（0x00578294）。
+  2. 命令 0xC：敌人倒下未完时原程序在 BattleFrame 前后各写 actingUnit = −1（0x0047B2A3、0x0047B2BE），源码原缺，补上。
+  3. 命令 0x16、0x32：位置只写低字（新增 ReadPosition），保留高字残留。
+  4. 命令 0x37：第二参数按 movsx 读取（0x0047CCF3）。
+  5. 命令 0x58：金钱与价格（movsx）按无符号比较（0x0047E025 jb），源码原按有符号。
+- 字段地址注释：FightTalk 各 unk 字段注外传地址（正传 +0x3B5B8，repeatLimit 之后再 +4）；BattleState unk53BFD0（0x005772D0）、unk53BFC0（0x005772BC）、unk53BF02（0x005771EA）、unk4A7626（0x004BF1CA）、unk53BFDC（0x005772DC）、enemyOrders（0x00513434）、enemyAimsAtEnemies（0x005772D4）、unk4FE5D4（0x0050D88C）、enemyHitActs（0x005135A4）、unk53BF88（0x00577284）、unk53BFF0（0x005772F0）、unk53BF74（0x00577270）、unk53C02C（0x00577330）。
+- deviations：0x00479860 六行「待核」改引汇编地址，0x32 等命令的敌人数由八改为二十；新增指令 0x24 释放后读取一行。字符串核对：對話系統(GAON)、對話系統(G_AREA_OFF)、代碼值太大(%d)、代碼值重複(%d)、位置超出螢幕(x%d ,y%d ,w%d ,h%d)、錯誤、按鈕個數不對!!。
+
+## FightTalk::Load、Seek、Close（第 1027–1029 行）— exact
+
+- 0x0047E270 Load：drawMovedAtOnce 清零；enabled 为 0 返回；未打开时以「安装目录 + figtalk.dat」CreateFile(GENERIC_READ, 共享读, OPEN_ALWAYS)，句柄只与 0 比较（失败的 −1 照样记为已打开，其后读取失败、剧本全 0）；SetFilePointer(0x204) 再相对 4×战斗号−4（即 0x200+4×战斗号）读 4 字节偏移，SetFilePointer(偏移+0x200)；分配 0x8000 清零（旧缓冲区不释放）作剧本与游标，读 0x8000。返回值调用者不用（0x0045A03B）。
+- 0x0047E3A0 Seek：释放旧剧本，分配 0x1000 清零作剧本与游标，SetFilePointer(参数+0x200) 读 0x1000，0x00578460 = 参数。
+- 0x0047E420 Close：句柄非 −1 时 CloseHandle、置 −1；0x00578464、drawMovedAtOnce 清零；转入 0x0047E550：battleRuns、enabled 置 1，0x00578414..0x00578430、0x00578444..0x0057845C、0x00578294、0x0057828C、0x00578460..0x00578468 清零（0x0057829C 只写不读不建模），windowTimeout 0xFFFF；剧本已分配时释放并清剧本与游标（未分配时两者同为 0）。0x005782A0、文字位置与说话人不清。
+
+## TalkCurvePoint（第 1030 行）— exact
+
+- 0x0047E450：四个点（i16，movsx）转 float；Evaluate(0.0f, 点, 临时输出)（0x0043CA70，结果不用）；t = (float)(0.05f（0x004BF900）× step)；BasisWeights(t, 0x004BE010, 权重)、Weighted(权重, 点, 结果)；x、y = Ftol(结果) 写满两个双字。kTalkStep 注释补地址。
+
+## BattleRole::BattleRole（第 1031 行）— exact
+
+- 0x0047E660：BattleUnit 构造（0x0048B040）；+0x34BE（absorbFrames）、+0x34A8（unk2F18）字清零；分配 0x3C 字节清零作 +0x00 的角色记录（RoleRecord，static_assert 0x3C）。源码成员默认值与 ownedRecord 一致。注释：ownedRecord 0x38 改为 0x3C，skillsHead、bonusA/B/C 的正传偏移改为外传 +0x3454、+0x34AE、+0x34B0、+0x34B2（顺序布局推得）。
+
+## BattleRole::~BattleRole、BattleRole::ClearExtras（第 1032、1034 行）— exact
+
+- 0x0047E6D0 ~BattleRole：Release（0x004860D0），再 BattleUnit 析构（0x0048B100，源码基类析构）。
+- 0x0047E930 ClearExtras：字 +0x34AE／+0x34B0／+0x34B2（bonusA/B/C）、+0x2EB2、+0x34A0、+0x34A2、+0x34AC、+0x34AA、+0x34B4、+0x34A4、+0x34A8、+0x34A6 清零，双字 +0x349C（unk2F0C）、+0x3040（partyMember）清零；+0x311C 起 0xCD 双字（extraActs 5×0xA4）、+0xBAC 起 0x52 双字（slotActs[8]、[9]，+0x68C 起每 0xA4）、+0x3074 起 0x2A 双字（unk2B24，ObjectRecord 0xA8）清零；ActState、ObjectRecord 默认值全 0。unk2B24 注释改为 +0x3074。
+
+## BattleUnit::StepGauge（第 1033 行）— exact
+
+- 0x0047E720：marks 0x40／0x4000、defeated、+0x3038、+0x2FF0、+0x2BDA 位 2、+0x2BC0 最高位任一成立返回 0；gauge（+0x2F2E，u16）< gaugeFull（0x004BEFF8，有符号）时：速度 = (敏捷（记录 +0x16，u16）− 减速 + 加速)/4（有符号；加速／减速按 status 0x20000000／0x08000000 取 movsx +0x2EDA），boost 为 1 时 += 速度/4 + 1；status 最高位（隐身）时扣 (熟练度（u16）×速度/100)/2 + 4；+0x2FF0 清零，gauge = gauge + 速度 − 扣（字），返回 0。满时：鬼（0x0049B9C0）为 1 则 (i16)(Random(100)+1) 与 鬼记录 +0x104（双字，有符号）比较，大于时 +0x2BDA |= 1、gauge += gaugeFull / −3（截断）、返回 0；否则 TakeGhostOrder、+0x2BDA &= ~1。+0x2FF0 = 1、+0x302C = 0；+0x3068 为 1 时清零且 guestControl 为 0 时 facing 清零；+0x2D8、+0x2DC 清零、+0x494 = 1；+0x2BDA 位 0x80 时清该位、+0x2FF0 与 gauge 清零、返回 0，否则返回 1。
