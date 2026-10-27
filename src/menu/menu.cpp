@@ -757,11 +757,18 @@ bool Menu::PaintPage(bool replay)
     const i32 slideBefore = this->frames == kOpenedFrame ? kSlideMaximum : this->slide;
     this->slide = slideBefore;
 
-    const bool swapped = state.GameFlag(kSwappedPagesFlag);
-    const bool doubling = (this->page == Menu::AltarRolePage && this->code > Menu::MainCode && swapped) ||
-                          (this->page == Menu::FirstRolePage && this->code >= Menu::SubpageCodes);
+    // The slide doubles instead of halving on the altar's role page (swapped) and the role subpages; the tabs ask again
+    // after the page drew itself, with the page, the code and the flag as they are then.
+    auto doublingSlide = [this, &state]()
+    {
+        return (this->page == Menu::AltarRolePage && this->code > Menu::MainCode &&
+                state.GameFlag(kSwappedPagesFlag)) ||
+               (this->page == Menu::FirstRolePage && this->code >= Menu::SubpageCodes);
+    };
 
-    if (!doubling)
+    const bool swapped = state.GameFlag(kSwappedPagesFlag);
+
+    if (!doublingSlide())
     {
         this->slide >>= 1;
         this->Move(SlideValue, this->slide, slideBefore, this->slide);
@@ -796,7 +803,7 @@ bool Menu::PaintPage(bool replay)
 
     if (this->code != Menu::SystemPage && this->page != Menu::BestiaryPage)
     {
-        if (doubling)
+        if (doublingSlide())
         {
             if (this->slide == 0)
             {
