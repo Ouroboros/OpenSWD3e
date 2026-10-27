@@ -115,7 +115,8 @@ struct ParticleEffect
     i32 slowLimit = 0;   // +0x44 opaque pixels / 20
     i32 opaque = 0;      // +0x48 opaque pixels not yet gone
     i32 burstStep = 0;   // +0x4C pixel count / bursts
-    // +0x50 the particles, the head first; +0x54 the next free one (the empty successor the last burst appended).
+    // +0x50 the particles, the head first; +0x54 the next free one (none after a burst placed a particle, then the
+    // particle before the removed last one).
     std::list<Particle> list;
     std::list<Particle>::iterator tail = list.end();
 };

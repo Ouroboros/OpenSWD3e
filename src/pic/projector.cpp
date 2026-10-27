@@ -374,10 +374,12 @@ void Projector::DrawScaled(u16* screen, Painter& painter, const ProjectedPicture
 
 // swd3e.exe 0x00439890: tries `count` random pixels (within particleRange with flag 0x40, within one burst with 0x80)
 // and turns each opaque 2 x 2 block into a particle flying to a random point of the target rectangle; the block is
-// cleared to the fill colour. With flag 0x80 alone the start position is left from the previous particle (zero for
-// the first). Every particle gets an empty successor, which becomes the next free one. The original writes through a
-// missing or freed free particle and outside the picture for blocks at its last row or column; here a new particle is
-// appended and pixels outside the picture count as the fill colour (and are not cleared).
+// cleared to the fill colour. With flag 0x80 alone the particle's position is left as it is and its distance is taken
+// from the previous particle's start (count and 0 for the first). Every particle gets an empty successor, used by the
+// next attempt; the next free particle is then left empty (the successor's null link) until the frame removes that
+// successor. The original writes through a missing or freed free particle and outside the picture for blocks at its
+// last row or column; here a new particle is appended and pixels outside the picture count as the fill colour (and are
+// not cleared).
 int Projector::ParticlePut(ParticleEffect& effect, int count, const Painter& painter, crt::Random& random)
 {
     if (this->particleRange == 0)
@@ -496,7 +498,7 @@ int Projector::ParticlePut(ParticleEffect& effect, int count, const Painter& pai
         clear(below);
         clear(below + 1);
         particle = effect.list.emplace(std::next(particle));
-        effect.tail = particle;
+        effect.tail = effect.list.end();
     }
 
     --effect.bursts;
