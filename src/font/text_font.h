@@ -36,7 +36,7 @@ public:
     static constexpr int MaxGlyphs = 2000;
     static constexpr int DefaultGlyphSize = 16;
     static constexpr Pixel NoBackground = 0xFFFE;
-    // swd32.exe 0x0049FB74 (unmatched in swd3e) "MingLiU" in Big5
+    // The face name at 0x004B0BF4 (Big5), "MingLiU"
     static constexpr std::u8string_view DefaultFace = u8"細明體";
 
     explicit TextFont(GlyphRasterizer& rasterizer);
