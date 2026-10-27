@@ -72,7 +72,7 @@ struct RleColors
     u8 skip8 = 3;
 };
 
-// The drawing kernel (0x00416D30-0x004239D0): pixel format detection and colour tables, clipping, and the blitters
+// The drawing kernel (0x00417510-0x004277DE): pixel format detection and colour tables, clipping, and the blitters
 // of RLE pictures (see pic/rle.h), raw pictures and 16x16 map tiles on a 16-bit RGB surface.
 class Painter
 {

@@ -349,6 +349,8 @@ u16 Painter::Gray(u16 dest) const
 
 // The smear counter cycles 1..16 and copies the left neighbour, the pixel one row below, one row above or the right
 // neighbour; the 17th step resets the counter without writing. Both smear effects restart it at 0 for every picture.
+// The original takes the rows 0x500 bytes (640 pixels) apart; a canvas wider than that uses its own pitch here
+// (deviations.md).
 void Painter::Smear(u16* at)
 {
     const int step = this->smearCounter + 1;
@@ -524,11 +526,11 @@ void Painter::ForEachRun(const u8* codes, int start, int width, RunOp&& op) cons
 // ForEachRun with the run kinds read as the effect reads them. Both kind bits are tested for the first run of a line
 // and after a literal run left of the drawn columns; after other runs:
 // - Checked: both bits again.
-// - LiteralThenSkip: after a drawn literal run the code is a 0x4000/0x8000 run whatever its bits (0x00418503,
-//   0x00418AAD, 0x0041913B); its pixels are not passed over.
-// - Split: after a drawn literal run a code without 0x4000 is a 0x8000 run (0x0041A22B), after a 0x4000 run one
-//   without 0x8000 is a literal run (0x0041A27D, 0x0041A2B1) and after a 0x8000 run one without 0x4000 is a literal
-//   run (0x0041A2F8, 0x0041A33A).
+// - LiteralThenSkip: after a drawn literal run the code is a 0x4000/0x8000 run whatever its bits (0x00418EC3,
+//   0x0041946D, 0x00419AFB); its pixels are not passed over.
+// - Split: after a drawn literal run a code without 0x4000 is a 0x8000 run (0x0041ABED), after a 0x4000 run one
+//   without 0x8000 is a literal run (0x0041AC37, 0x0041AC73) and after a 0x8000 run one without 0x4000 is a literal
+//   run (0x0041ACB8, 0x0041ACFA).
 template <typename RunOp>
 void Painter::ForEachChainedRun(const u8* codes, int start, int width, RunChain chain, RunOp&& op) const
 {
@@ -771,7 +773,7 @@ int Painter::BlitAdditive(int, int, int, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x00419870: mirrored 0x00418840. The original's untinted loop jumps into the tinted one for a run clipped
+// swd3e.exe 0x00419870: mirrored 0x00419200. The original's untinted loop jumps into the tinted one for a run clipped
 // on both sides with uninitialised tint steps; with zero steps that loop gives the plain additive result used here.
 int Painter::BlitAdditiveMirrored(int, int, int width, int, const DrawArgument&)
 {
@@ -866,7 +868,7 @@ int Painter::BlitAlphaMap(int, int, int width, int, const DrawArgument& argument
     return 0;
 }
 
-// swd3e.exe 0x0041AD70: mirrored 0x00419570. Literal runs longer than 4 pixels write pairs: each step blends the
+// swd3e.exe 0x0041AD70: mirrored 0x00419F30. Literal runs longer than 4 pixels write pairs: each step blends the
 // pixel and its right neighbour with the swapped source pair (the neighbour gets blended again). 0x8000 runs map the
 // pixels through a lookup table one pixel to the right of the run; the game never sets that table (the original
 // reads through a null pointer), so those runs leave the destination unchanged here.
@@ -972,7 +974,7 @@ int Painter::BlitTint(int, int, int, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x0041BFE0: mirrored 0x0041B280 (wave rows 0x84 apart)
+// swd3e.exe 0x0041BFE0: mirrored 0x0041BC40 (wave rows 0x84 apart)
 int Painter::BlitTintMirrored(int, int, int width, int, const DrawArgument&)
 {
     if (!this->Tinted())
@@ -1020,7 +1022,7 @@ int Painter::BlitTranslucent(int, int, int, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x0041EF80: mirrored 0x0041D340
+// swd3e.exe 0x0041EF80: mirrored 0x0041DD00
 int Painter::BlitTranslucentMirrored(int, int, int width, int, const DrawArgument&)
 {
     this->mirrorStart = width - (this->placement.skipLeft + this->placement.width);
@@ -1063,7 +1065,7 @@ int Painter::BlitEdgeMark(int, int, int, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x0041D9D0: mirrored 0x0041CCF0; the end mark lands one pixel beyond the run and the wave phase is not
+// swd3e.exe 0x0041D9D0: mirrored 0x0041D6B0; the end mark lands one pixel beyond the run and the wave phase is not
 // advanced
 int Painter::BlitEdgeMarkMirrored(int, int, int width, int, const DrawArgument&)
 {
@@ -1159,7 +1161,7 @@ int Painter::BlitScaledGlow(int, int, int, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x00421730: mirrored 0x004208D0 (same uninitialised remainder)
+// swd3e.exe 0x00421730: mirrored 0x00421290 (same uninitialised remainder)
 int Painter::BlitScaledGlowMirrored(int, int, int width, int, const DrawArgument&)
 {
     this->mirrorStart = width - (this->placement.skipLeft + this->placement.width);
@@ -1223,7 +1225,7 @@ int Painter::BlitSilhouette(int, int, int, int, const DrawArgument& argument)
     return 0;
 }
 
-// swd3e.exe 0x00421F00: mirrored 0x00421230: the pairs are written swapped, so the high half lands on the left pixel;
+// swd3e.exe 0x00421F00: mirrored 0x00421BF0: the pairs are written swapped, so the high half lands on the left pixel;
 // the wave phase is not advanced
 int Painter::BlitSilhouetteMirrored(int, int, int width, int, const DrawArgument& argument)
 {
@@ -1293,7 +1295,7 @@ int Painter::BlitGray(int, int, int, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x004225A0: mirrored 0x00421850 (wave rows 0x84 apart)
+// swd3e.exe 0x004225A0: mirrored 0x00422210 (wave rows 0x84 apart)
 int Painter::BlitGrayMirrored(int, int, int width, int, const DrawArgument&)
 {
     this->mirrorStart = width - (this->placement.skipLeft + this->placement.width);
@@ -1335,7 +1337,7 @@ int Painter::BlitSubtractive(int, int, int, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x00422D60: mirrored 0x00422030, computing (dest + tint) - source
+// swd3e.exe 0x00422D60: mirrored 0x004229F0, computing (dest + tint) - source
 int Painter::BlitSubtractiveMirrored(int, int, int width, int, const DrawArgument&)
 {
     this->mirrorStart = width - (this->placement.skipLeft + this->placement.width);
@@ -1378,7 +1380,7 @@ int Painter::BlitSmear(int, int, int, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x00423380: mirrored 0x00422730; it smears before stepping back, so every pixel lands one to the right
+// swd3e.exe 0x00423380: mirrored 0x004230F0; it smears before stepping back, so every pixel lands one to the right
 // of its mirrored position; the wave phase is not advanced
 int Painter::BlitSmearMirrored(int, int, int width, int, const DrawArgument&)
 {
@@ -1576,7 +1578,7 @@ int Painter::BlitShadow(int x, int y, int width, int, const DrawArgument&)
     return 0;
 }
 
-// swd3e.exe 0x00420860: mirrored 0x0041F8D0 (wave phase not advanced)
+// swd3e.exe 0x00420860: mirrored 0x00420290 (wave phase not advanced)
 int Painter::BlitShadowMirrored(int x, int y, int width, int, const DrawArgument&)
 {
     const Tint tint = this->CurrentTint();

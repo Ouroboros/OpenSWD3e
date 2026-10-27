@@ -117,7 +117,7 @@ u32 ColorChannel::Ramp(int index) const
     return this->ramp[static_cast<std::size_t>(index + ColorChannel::Levels)];
 }
 
-// Ready to draw once Init has set the format and the screen (the tables of 0x00416D90 are built here as well).
+// Ready to draw once Init has set the format and the screen (the tables of 0x00417570 are built here as well).
 Painter::Painter()
 {
     this->BuildBlitTables();
@@ -348,13 +348,13 @@ void Painter::ColorMasks(u32& red, u32& green, u32& blue) const
     blue = this->displayBlue;
 }
 
-// swd3e.exe 0x00427680: through the converter of the display format (0x004238F0, 0x00423920, 0x00423990)
+// swd3e.exe 0x00427680: through the converter of the display format (0x004276C0, 0x004276F0, 0x00427760)
 void Painter::ConvertPixels(std::span<u16> pixels) const
 {
     Convert(this->conversion, pixels);
 }
 
-// swd3e.exe 0x004276A0: through the reverse converter (0x00423950 for RGB565, otherwise none)
+// swd3e.exe 0x004276A0: through the reverse converter (0x00427720 for RGB565, otherwise none)
 void Painter::ConvertPixelsBack(std::span<u16> pixels) const
 {
     ConvertBack(this->conversionBack, pixels);
