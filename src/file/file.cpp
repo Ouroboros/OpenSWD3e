@@ -244,7 +244,7 @@ bool File::UnmapView(const u8* view)
 
     if (current != view)
     {
-        ErrorLog(u8"cFile ,CloseView Src/Dest difference ");  // 0x00411F90
+        ErrorLog(u8"cFile ,CloseView Src/Dest difference ");  // 0x004BE090
         return false;
     }
 
@@ -391,7 +391,8 @@ u32 File::Seek(Origin origin, i32 distance)
     return static_cast<u32>(std::ftell(this->file));
 }
 
-// swd32.exe 0x004384A0 (unmatched in swd3e)
+// Seek from the current position, plus one like SeekBegin (the mon.dat reader 0x00489B00 calls SetFilePointer with
+// FILE_CURRENT itself)
 u32 File::SeekCurrent(i32 distance)
 {
     return this->Seek(Origin::Current, distance) + 1;
