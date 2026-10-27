@@ -118,10 +118,11 @@ int FieldView::ReadMovieFrame()
     Game& owner = this->game;
     MapMovie& film = this->movie;
 
+    // A chunk shorter than its trailer unpacks about 4 GB from the chunk buffer in the original (deviations.md).
     auto unpack = [&film](u32 bytes)
     {
-        film.buffer.resize(std::max<std::size_t>(film.buffer.size(), bytes));
-        MapCache::Unpack(std::span<const u8>(film.buffer.data(), bytes), film.frame);
+        const std::size_t count = std::min<std::size_t>(bytes, film.buffer.size());
+        MapCache::Unpack(std::span<const u8>(film.buffer.data(), count), film.frame);
     };
 
     MovieChunk* previous = &film.chunks;

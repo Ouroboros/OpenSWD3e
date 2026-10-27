@@ -171,9 +171,9 @@ constexpr int kSwayShift = 3;
 // Particle (bubble, lightning, firefly) coordinates are kept in 1/16 pixels.
 constexpr int kSubpixels = 0x10;
 
-// swd32.exe 0x004995D4 (unmatched in swd3e): the tint of a role's shadow by bits 20..23 of its flags.
+// The tint of a role's shadow by bits 20..23 of its flags (0x004AA5A4).
 constexpr std::array<i32, 16> kShadowTint = {-8, -7, -6, -5, -4, -3, -2, 0, 0, 0, -14, -13, -12, -11, -10, -9};
-// swd32.exe 0x00499594 (unmatched in swd3e): the tint added to a role by bits 20..23 of its flags.
+// The tint added to a role by bits 20..23 of its flags (0x004AA564).
 constexpr std::array<i32, 16> kRoleTint = {0, 2, 4, 6, 8, 10, 12, 0, 0, 0, -12, -10, -8, -6, -4, -2};
 // The action of a leaf by its vertical speed plus 3 (a table on the stack of 0x004161C0).
 constexpr std::array<char, 8> kLeafActions = {'4', '4', '4', '6', '8', '8', '8', '6'};

@@ -1233,7 +1233,7 @@ void Game::RefreshCursor()
     this->DrawPointer(this->state.pointerX, this->state.pointerY);
 }
 
-// Part of 0x004149B0: the pointer's action (0xF while key 0x2E is down) stepped; outside the
+// Part of 0x00414F70: the pointer's action (0xF while key 0x2E is down) stepped; outside the
 // menus the system button slides in at the top right after 16 idle frames (a click on it with no leader opens menu 1)
 void Game::StepPointer()
 {
@@ -1315,7 +1315,7 @@ void Game::StepPointer()
     }
 }
 
-// Part of 0x004149B0: the pointer's picture as last stepped, at (x, y).
+// Part of 0x00414F70: the pointer's picture as last stepped, at (x, y).
 void Game::DrawPointer(int x, int y)
 {
     const Role& pointer = this->scene.pointerRole;
