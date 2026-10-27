@@ -1083,7 +1083,13 @@ void Menu::DrawRoleTabs(int offset, int mode)
         const int x = kAttributesX - offset;
         int y = kElementY;
         text(x, y, element, owner.mediumFont);
-        const std::array<i32, 4> attributes = {record.strength, record.endurance, record.wisdom, record.agility};
+        // The attributes are read as unsigned words: a negative one shows as 65536 more.
+        const std::array<i32, 4> attributes = {
+            static_cast<u16>(record.strength),
+            static_cast<u16>(record.endurance),
+            static_cast<u16>(record.wisdom),
+            static_cast<u16>(record.agility),
+        };
 
         for (std::size_t at = 0; at < attributes.size(); ++at)
         {
