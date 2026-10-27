@@ -151,3 +151,8 @@
 
 汇编：未对齐返回；在跟随者表(0x004D1614 起) 1..数(0x004D3FC0)−1 找下标，找到末尾（=数）时 ErrorBox「CompanyWalk」「夥伴紀錄中找不到角色(%d)」返回（数为 0 时用槽 1）；记录 = 0x004D2370+槽·0x21C；角色字为空、尝试≠0 或当前方向为 0xFF 时：清空记录，目标 = 0x004D1380[2·槽]（x）、0x004D1300[2·槽]（y），旗标 0x4F 时掩码 0，寻路失败 ErrorLog「CmpyWalk PathFind fail ,G(%d) sx(%d/%d) sy(%d/%d) dx(%d/%d) dy(%d/%d)」（shr 4）；成功则类型 Path、角色、步 0、目标、尝试 0，ClearRoleCells，以镜头外扩 0x50（上、左，负取 0）／0xA0（下）／0x50（右）为界，屏幕外时逐步前进（步加一，坐标加 4·步长），进入屏幕时按 0x004AA448 设朝向；步|=0x8000，按坐标设格指针，MarkRoleCells，RemoveRole(id, 旗标&3, 0, 0)。之后：方向、掩码（旗标 0x4F 时 0 否则 0x40000000）探查，步|=0x8000，两步长清零；方向 0xFF 时动作 0、朝向取主角；阻挡时动作 0；否则步&=0x7FFF、尝试加一、动作 8、步长 2·StepX／2·StepY。
 对照：一致；scene.h 中 trailY、trailX、followerCount 注释改为 0x004D1300、0x004D1380、0x004D3FC0；ErrorLog 中的移位改为无符号；按坐标设格指针的保护并入 deviations.md 0x1D 行，格指针空并入空指针行。
+
+## 0x0040C460 RolePath::RoleId — diff → exact
+
+汇编：index ≥u 角色数时 wsprintfA("%d", roles[index].id) 并 MessageBoxA(hWnd, 文字, "Illegal Role id", 0)；返回 roles[index].id（0x004D3FEC，步长 0xE4）。
+对照：一致（先取 id 再报告，报告内容相同）。差异：下标越出数组时取最后一个角色的保护未登记。修正：补登 deviations「0x0040C420、0x0040C460 越界」。复核通过。

@@ -57,7 +57,7 @@ constexpr std::u8string_view kTimerFailed = u8"mmTimer init Failed.";
 constexpr std::u8string_view kErrorTitle = u8"SWD3";
 constexpr u32 kScreenshotDiskMegabytes = 0x40;  // key P: a screenshot needs more free space than this
 constexpr int kScreenshotNames = 0x1869E;       // ScrnShot\00000.bmp..ScrnShot\99997.bmp
-constexpr std::string_view kScreenshotName = "%sScrnShot\\%05d.bmp";  // swd32.exe 0x0049FB3C (unmatched in swd3e)
+constexpr std::string_view kScreenshotName = "%sScrnShot\\%05d.bmp";  // 0x004B0BBC
 
 // The defaults of the settings (before Env.dat).
 constexpr i32 kDefaultBattleSpeed = 0xB;
@@ -450,7 +450,7 @@ int Game::Run([[maybe_unused]] std::u8string_view commandLine)
     return 0;
 }
 
-// The work of an iteration of the message loop once its messages are handled (part of 0x00409EC0): the text box's
+// The work of an iteration of the message loop once its messages are handled (part of 0x0040A140): the text box's
 // input, the frame of the video, of the game or of the pause banner, and the screen shown while the game is inactive.
 void Game::LoopFrame()
 {

@@ -63,11 +63,6 @@ int Game::CheckStart()
 // stays as it is here.
 void Game::Activate(int state)
 {
-    if (this->graphics.GetSurface(Graphics::SurfaceId::Primary) == nullptr)
-    {
-        return;
-    }
-
     LogInfo(u8"game made %s", AsUtf8(state != 0 ? "active" : "inactive"));
     this->state.ClearFrameInterval();
 

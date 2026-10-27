@@ -705,8 +705,8 @@ private:
     i32 partyLeaderId =
         0;  // swd32 0x004B7BC4 the role id leading the party on the map (its cells marked as the leader's)
     TextEntryState textEntry;
-    i32 running = 0;    // swd32 0x004CC2AC frames run (F8 toggles)
-    u32 lastFrame = 0;  // swd32 0x004CC2B0
+    i32 running = 0;    // 0x004E6D08 frames run (F8 toggles)
+    u32 lastFrame = 0;  // 0x004E6D0C
     // The rebuild's smooth motion: whether the last game frame showed the map, the game frames run so far, when the
     // last game frame was due (SDL nanoseconds), the frame drawn between game frames and when the next one is due.
     bool smoothMotion = false;
@@ -736,8 +736,8 @@ private:
     bool vsync = true;                     // [display] vsync
     i64 frameRate = 0;                     // [display] frame_rate (0: no limit)
     u32 frameStart = 0;                    // 0x004C4654
-    u32 mainFrameStart = 0;                // swd32 0x004C844C frameStart when the main frame began
-    u32 lastFrameStart = 0;                // swd32 0x004C8444 frameStart of the main frame before
+    u32 mainFrameStart = 0;                // 0x004E4C2C frameStart when the main frame began
+    u32 lastFrameStart = 0;                // 0x004E4C24 frameStart of the main frame before
     u32 mainFrameTime = 0;                 // 0x004E4C28 the time the last main frame took (debug line)
     i32 debugText = 0;                     // 0x004E6CE0 the debug lines (debug key F1)
     i32 debugCells = 0;                    // 0x004E6CE4 the debug cell marks (debug key F2)
@@ -759,15 +759,15 @@ private:
     u16* drawSurface = nullptr;           // 0x004EDA44 the locked frame (the target of the painter and the fonts)
     i32 unknown14 = 0;                    // the dword of Env.dat at +0x14
     u8 effectsOff = 0;                    // Env.dat +0x1B
-    u32 deviceFlags = 0;                  // swd32 0x004ACB90 bit 1: DirectInput failed
-    i32 active = 0;                       // swd32 0x004B7CAC 1 once the display runs
+    u32 deviceFlags = 0;                  // 0x004C6334 bit 1: DirectInput failed
+    i32 active = 0;                       // 0x004D1630 1 once the display runs
     i32 inactive = 0;                     // 0x004D3FC4
     i32 frameCounter = 0;                 // 0x004C2B78
     u32 menuState = 0;                    // 0x004D1C88 bit 31: entered, low bits the menu
     i32 menuMode = 0;                     // 0x0050A404
     i32 storyState = Game::StoryRunning;  // 0x004E6CF4
     i32 saveScreenPage = 0;  // 0x004E6D00 the page of the save screen: 0 the flag view (F1), 1 the slots (F2)
-    i32 slotsLoad = 0;       // swd32 0x004CAEC0 the slots load (1) or save (0)
+    i32 slotsLoad = 0;       // 0x004E6D04 the slots load (1) or save (0)
     bool quit = false;
     bool inLoopFrame = false;  // LoopFrame runs (the live-resize exposes come from inside it too)
 };

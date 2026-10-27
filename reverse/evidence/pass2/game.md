@@ -91,3 +91,66 @@
 
 汇编：0x400 字节清零；以 OPEN_EXISTING、读写打开 "%sFame.dat"，成功时读 0x400 字节；关闭；1..500 号调 0x0048A500(0x004D3458, id, 字值)（压栈时 ecx 高位为栈地址残值，被调函数只按字读第三参数）。
 对照：一致。
+
+## 0x00409D70..0x0040A130 全局初始化片段（60 个，Game::Game 与 Game::talismanGhost）— exact
+
+汇编（逐个读出）：每组为「调用构造」+「atexit(0x004A1664) 注册析构」，或只有构造：
+- 0x00409D70／80／90／A0：MemoryManager 构造 0x0043D120（GetSystemInfo、HeapCreate、链表清零）于 0x004D0470，析构 0x0043D1B0（对链表中未释放块逐个 MessageBox「MemMgr report」）。全程序只有这两个片段引用 0x004D0470，0x0043DA70 走 CRT malloc，链表恒空，退出时不弹框——不创建等价。
+- 0x00409DB0／C0：TalismanGhost 构造 0x0049E7F0 于 0x004D0C10，不注册析构 → talismanGhost。
+- 0x00409DD0／DE0／E00／E10：ScriptObject 构造 0x00435B60(1,1,0,0,1,1) 于 0x004C6128，析构 0x00435BF0；除这两个片段外只有 0x00417230 以它为“前一节点”读写 +0x28（链表头 0x004C6150）→ Scene::objects。
+- 0x00409E20..E50、E60..E90、EA0..ED0：TextFont 构造 0x00439BA0／析构 0x00439BF0 于 0x004C5130、0x004E5830、0x004C3658 → largeFont、mediumFont、smallFont。
+- 0x00409EE0..0x0040A0D0：File 构造 0x0043CAE0／析构 0x0043CB10 于 0x004D0E08（maps）、0x004D1DB0（HUGE.lmf）、0x004E6B88（无其他引用，不创建）、0x004D3470（path）、0x004C2FA0（story）、0x004E6830（unitFile）、0x004D1438（无其他引用，不创建）、0x004C2A48（FieldView::file）。
+- 0x0040A0E0／F0：Graphics 构造 0x0043C020 于 0x004C5008，不注册析构 → graphics。
+- 0x0040A100／110／120／130：Input 构造 0x0043BA30 于 0x004D1C90（+0x100、+0x104、+0x108=0，+0x114=0xA），析构 0x0043BA60 → input。
+对照：game.cpp 中的初始化说明与上述逐组一致；构造函数本身的初值在各自行核对。构造／析构顺序之间没有相互依赖。
+
+## 0x0040A140 Game::Run — exact
+
+汇编：FindWindowExA("SoftstarSwd3") 已有则返回 0；找 Ghost 窗口("SsSwd3eg"/"Ghost") 发 0x401、Sleep(1000)；0x00411C10(命令行)==1 返回 0；0x00411F10 写日志分隔串（0x004B0B3C，73 个“=”，无换行）；CoInitialize；注册 WNDCLASSEX（图标 0x7D、光标 0x67、黑刷）；CreateWindowExA(0x40000, 640×480, X=-800)，失败返回 0（WM_CREATE 内做开始检查）；ShowWindow／UpdateWindow；SendMessage(0x404)；srand(time(0))、0x0043DAC0(time(0))；0x004E6D08=1；循环：PeekMessage 有消息→GetMessage(为 0 退出返回 wParam)／Translate／Dispatch；无消息时 running(0x004E6D08)≠0：系统旗标 0x20→0x0049C800（视频帧），否则旗标 1 或 inactive(0x004D3FC4)≠0→Sleep(0)，否则 0x0040A7B0；running=0：active(0x004D1630)==1→0x00411F20（暂停横幅），否则 Sleep(0)。
+对照：Run／LoopFrame 分支一致；已有实例、Ghost、命令行、消息循环与日志为已登记的平台替换（deviations 283、284、415、103、135）；分隔串逐字节一致。修正：LoopFrame 注释的地址（0x00409EC0→0x0040A140）。
+
+## 0x0040A380 Game::HandleEvent／Game::Start（窗口过程）— exact
+
+汇编（独立推导）：
+- 旗标 0x50 时先调输入框 0x0043D620；它只在 WM_IME_CHAR 时返回 0（窗口过程返回 1），其余消息照常往下处理——WM_KEYUP 不会被吞，F8、P、Esc 与源码顺序等价。
+- WM_CREATE：0x00429780 返回 0 则 SendMessage(WM_DESTROY)。WM_DESTROY：旗标 1 或系统旗标 4 时 0x00428EC0；CoUninitialize；PostQuitMessage(0)。
+- WM_SIZE（旗标 1）：wParam 4／3／1→Activate(0)，wParam 2／0→Activate(1)（新增偏差行）。WM_ACTIVATEAPP（旗标 1）：低字≠0→Activate(1) 否则 Activate(0)（deviations 287）。WM_SYSKEYDOWN 回车、WM_SYSCOMMAND 吞掉 0xF130／F140／F170／F090（deviations 285）。
+- WM_KEYUP：0x77 翻转 0x004E6D08；系统旗标 0x20 且 Esc→0x0049C7B0；旗标 1 且系统旗标 1 清且 'P'：0x00411D10()>0x40 时 MessageBeep(0)，在 0..0x1869D 中找第一个不存在的 "%sScrnShot\%05d.bmp"（0x004B0BBC，全部存在时用最后一个），0x004352D0(0x004EDA44, 640, 480, 名字)。
+- 0x404：PlaySound(0x78)；0x00428160；0x00428D60；清旗标 0x12，0x00409AC0 非 0 则置旗标 0x12；DialogBoxParamA(0x6B)：1→0x00428730，0x004D1C88=0、0x0050A404=3、0x004E6CF4=3、0x004E6D00=1、0x004E6D04=1，0x00406B50、0x004098C0；2→0x00428730；6→SendMessage(WM_DESTROY)；其他不处理。
+对照：Start 中各全局与 menuState=NoMenu、menuMode=TitleLoadMode(3)、storyState=SaveSlotsState(3)、saveScreenPage=1、slotsLoad=1 一一对应，Choice 值 1／2／6 一致；启动音随启动器（deviations 74）；截图、F8、视频 Esc、WM_DESTROY 的释放条件一致。
+修正：game.h 中 running、active、slotsLoad 的注释由 swd32 地址改为 0x004E6D08、0x004D1630、0x004E6D04；kScreenshotName 注释改为 0x004B0BBC；补登 WM_SIZE 映射偏差。
+
+## 0x0040A7B0 Game::MainFrame（含 RunTimers、EnterBattle、BattleMainFrame、EndMainFrame）— exact
+
+汇编（独立推导）：
+- 系统旗标 0x10→返回；active(0x004D1630)=0→Sleep(0) 返回；0x004C30D8=time(0)；0x004C4654=timeGetTime；(now−0x004E6D0C) <u 0x004D1540 → 返回；0x004E6D0C=now（固定步长为 deviations 84）。
+- 0x004C6334 位 1→清旗标 3、4。menuState(0x004D1C88)=0 时：旗标 0x10 且 --0x004E6B50<0 且 leader.id(0x004D0AC4)==0xFFFF 且 menuState=0 且 storyState(0x004E6CF4)=0：0x004E6B50=-1，清 0x10、清 0x12、置 0x11，0x0040F930／F840／F880／F8B0／0x0040DF30／0x0040F8E0，1..roleCount−1 调 0x0040FA20 后 roles[i]+0x26=0（0x004D40D2 起，步长 0xE4），leader +0x14=0、+0x20=0、+0x1E=0x004C2A9C、+0x24=0x004D1538、+0x10=0、+4=0、+8=0；旗标 0x4A 且 --0x004C2FF0<0：=-1，清 0x4A、置 0x4B。
+- 0x004E4C2C=now；0x004AF7A4=now−0x004E4C24；0x004E4C24=now；0x0043BD70；0x00404E00；0x004C64C0（pointerRole.act.action）=0xD。
+- 系统旗标 0x80：0x0049F510()==1 → 清 0x80；→尾。storyState≠0：0x004E6B58=0x400、0x004E582C=0x10、0x00406C50；→尾。
+- inBattle(0x004E6CF8)=0 且旗标 0xD 清且 0x004C2B84 符号位：去符号位，非 0 时：0x0049D3B0(0x00578A70，同码函数读 +0x0C 即 MusicQueue::mode)→0x004C15D0；0x00427080；0x00437D80；0x004367D0；UnmapView 失败→日志 0x004B0BFC（"into story fight CloseView fail ,%s"，无换行）；view=0；CloseMapping；0x00459BD0(低字)；inBattle=1；roles[1..count−1].flags &= ~0x01000000（0x004D40BC 起）。随后 0x004E581C=0、0x004C2B84=0。
+- inBattle≠0：r=0x00479860()；r=0：请求、inBattle 清 0，三种字体 0x0040F680(20／16／12)，0x004C30D4=0xB，重建映射并映射，失败日志 0x004B0BD0（"After fight ,Remapping map fail!"），0x0049D0C0(队列, 0x004C15D0, 1, 1)；r=2：清 0x10、0x12，置 0x11，清 inBattle 与请求，字体与 unit 同上，重新映射（不检查），leader +0x14=0、+0x20=0、+0x1E=0x63、+0x24=0x004D1538、+0x10=0；r=3：清两者、清旗标 0x11、重新映射并检查；均以 0x0040D140 结束并直接返回（不检查系统旗标 4）。
+- 否则 0x0040D130；menuState≠0：计数器 0x400／0x10，字体间距 0x16／0x12／0x10，(menuState&0x0FFFFFFF)：2→0x004560E0，1、3..6→0x0043EB10（跳转表 0x0040AE9C 读出）；→尾。
+- 0x004C6378（variables[2]）≠0 且 ++0x004E4C1C ≥ 900（有符号）：清 0；++day(0x004D0CD8) ≥ cycleDays(0x004D0CD4) 则 0；satiety(0x004D0D20) += −3−0x0043DB90(5)，为负则 0。
+- 0x0042B4C0；0x00402AA0；running、inactive、menuState、inBattle、storyState 任一不为 0 → 0x004E4C28=now−0x004E4C2C，→尾。否则 ++0x004C2B78 >u 0x14 → 置 0 并时钟递增，否则为 0 时也递增（++0x004C655C >u 1000 → 0）；0x0042BAF0(0x004D0AA0)；系统旗标 0x25 全清时 0x00405150、字体间距、0x004126A0；0x004E4C28 同上。
+- 尾：0x0040D140；系统旗标 4→SendMessage(WM_CLOSE)。
+对照：源码 MainFrame 与 RunTimers、EnterBattle、BattleMainFrame、EndMainFrame 逐条一致：常量（Timer 0x10／TimerExpired 0x11／TimerEvent 0x12、SecondTimer 0x4A／0x4B、SoundOnce 0x01000000、ClockFrames 0x14、ClockLimit 1000、900／3／5、0x63、0xB、结果 0／2／3、RepeatList 1）、Role 偏移（x +4、y +8、flags +0x10、eventOffset +0x14、event +0x1E、eventCursor +0x20、id +0x24、talkState +0x26；roles 0x004D3FC8）与有无符号比较均一致；平滑层与帧时钟为已登记的偏差（84、86）。
+修正：game.h 中 lastFrame、mainFrameStart、lastFrameStart、deviceFlags 注释由 swd32 地址改为 0x004E6D0C、0x004E4C2C、0x004E4C24、0x004C6334。
+
+## 0x0040AEC0 Game::Activate — diff → exact
+
+汇编：先 0x0040E0A0（frameInterval=0）。state=0：nullsub、0x00427080、inBattle==1 时 0x00459BA0、三种字体 0x00439CB0、active(0x004D1630)=0、inactive(0x004D3FC4)=1、ShowWindow(6)，返回 0。state≠0：ShowWindow(9)、SetWindowPos(640×480)、active=1、主表面与离屏表面 Restore（vtbl+0x6C）、0x00417510(离屏表面)、三种字体 0x0040F680(20／16／12)、inactive=0、inBattle==1 时 0x00459B50、等待主表面翻页链、0x0040E090(0x23)。函数开头没有任何表面判断。
+差异：源码开头在主表面为空时整个返回（继承自 swd3-rebuild，未登记），停用分支在原程序中根本不访问表面。修正：删去该判断；离屏表面为空时跳过 Painter::Init 的保护补登记为空指针偏差。窗口与表面恢复为 deviations 286。复核：两分支的调用顺序、赋值与 FrameInterval 0x23 一致。
+
+## 0x0040C420 GameState::FindRole(id)、0x0040C500 FindRole(id, &index)、0x0040C4D0 FindRoleOrPlayer — 0x0040C420 diff → exact，其余 exact
+
+汇编：0x0040C420：角色数 0x004AF71C 为 0 → −1；i=0.. 按无符号小于角色数，roles[i].id（0x004D3FC8+0x24）== id 且 flags 无 0x10000000 → i；否则 −1。0x0040C500：*index = 0x0040C420(id)，返回 (≠−1)。0x0040C4D0：*index=0；(u16)id==0xFFFE → *index=0x004C4B00，返回 1；否则 0x0040C500。
+对照：一致（Role::Removed 0x10000000、PlayerId 0xFFFE、playerRole 0x004C4B00）。差异：比较止于数组末尾的保护未登记。修正：补登 deviations「0x0040C420、0x0040C460 越界」。
+
+## 0x0040C530 ErrorBox — diff → exact
+
+汇编：vsprintf(0x004C4658, format, 参数)；MessageBoxA(hWnd, 0x004C4658, caption, 0)。
+对照：源码格式化后经错误报告接口按 (caption, 正文) 显示，日志为 “标题 正文”（一个空格连接）。差异：不限长度写进 0x400 字节共用缓冲区未登记。修正：补登偏差。
+
+## 0x0040C560 DebugLog — exact
+
+汇编：只有 retn。源码写到重建日志的 debug 级别（平台替换，deviations 135 类）。0x00411F10（ErrorLog）同为空函数（xor eax,eax／retn），注释无误。
