@@ -399,9 +399,9 @@ struct Scene
     static constexpr std::size_t ClearedBolts = 0x30;  // the bolts a new map clears
     std::array<Streak, 0x40> bolts;                    // 0x004D0E88
     i32 layerIndex = 0;                                // swd32 0x004B7944 the tile layer shown
-    std::array<i32, 0x20> trailY = {};                 // swd32 0x004B7998 the places of the leader, the latest first
+    std::array<i32, 0x20> trailY = {};                 // 0x004D1300 the places of the leader, the latest first
     std::array<i32, 0x20> trailDirection = {};         // swd32 0x004C8C00
-    std::array<i32, 0x20> trailX = {};                 // swd32 0x004B7A18
+    std::array<i32, 0x20> trailX = {};                 // 0x004D1380
     i32 layerTiles = 0;                                // swd32 0x004B7A98 the tiles of a layer
     std::array<i32, 8> followers = {};                 // 0x004D1610 the roles following the leader
     std::array<MapParticle, 4> leaves = {};            // 0x004D1C40 (x MapParticle::Unplaced: to be placed)
@@ -424,7 +424,7 @@ struct Scene
                         // 0x004C9A00; targets 0x004A93DC, 0x004B6C74, 0x004C9A04
     i32 unk4C9A08 = 0;  // shown as dbg1
     i32 unk4ACE64 = 0;  // shown as dbg2
-    i32 followerCount = 0;          // swd32 0x004BABA0 one past the last follower listed (slot 0 unused)
+    i32 followerCount = 0;          // 0x004D3FC0 one past the last follower listed (slot 0 unused)
     i32 mapWalkSpeed = 0;           // swd32 0x004C8BD8 the walking speed of the map
     u16 weatherActions = 0;         // 0x004E55A6 how many actions follow it
     i32 screenFlags = 0;            // 0x004E5820 ScreenFlag bits

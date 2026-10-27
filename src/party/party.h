@@ -17,7 +17,7 @@ namespace swd3e
 class Database;
 struct ObjectData;
 
-// A party member (0x38 bytes in the original, four of them at 0x004AB790). The attribute names follow the status
+// A party member (0x3C bytes in the original, four of them at 0x004C4F18). The attribute names follow the status
 // screen (attack and defence shown with their equipment bonus) and the battle checks of spirit and stamina costs;
 // those marked inferred are not yet confirmed by a label.
 struct RoleRecord
@@ -141,7 +141,7 @@ public:
     std::array<std::unique_ptr<ItemNode>, Roles> skills;                    // 0x004C2B68 each headed by "無"
     std::array<std::unique_ptr<ItemNode>, Roles * SlotsPerRole> equipment;  // 0x004E4CB0
     static constexpr u32 ClockLimit = 1000;                                 // the clock goes back to 0 past it
-    // swd32 0x004ACDB0 the game clock: a tick every Game::ClockFrames + 1 frames on the map (talk commands
+    // 0x004C655C the game clock: a tick every Game::ClockFrames + 1 frames on the map (talk commands
     i32 clock = 0;
     // 0x22..0x25)
     std::array<i32, Variables> variables = {};  // 0x004C6370 [0]: the gold

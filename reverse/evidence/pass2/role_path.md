@@ -95,3 +95,59 @@
 ## 构造函数未写字段
 
 +0x0C closest 在 Search 中先写后读；+0x20/+0x24 在 FindPath 中先写，UpdateBlocked 才读；+0x2C 起的 blocked 由 UpdateBlocked 先清零；+0x18/+0x1C 在本组函数中不被读。
+
+## 0x00405150 RolePath::Update — exact
+
+汇编：角色 1..数−1（无符号）：旗标无 0x8000 跳过；有 0x80 调 0x00406780(下标)；旗标位 31 或 +0x26==1 时 act.id 非 0 则 0x0040B270；+0x1C 非 0 调 0x00405220(下标)；否则旗标有 0x1000 且不是主角(0x004C4B00) 时 Run(act)，失败 ErrorBox「Act Err(Path:NoPathCycle)」0x004AF244 格式（id、act、动作、方向），act.id 非 0 时 0x0040B270。
+对照：一致。
+
+## 0x00405220 RolePath::RunScript — 差异已修正，exact
+
+汇编：pc = 0x004C6338+0x200+dword[0x004C6338+0x200+4·路径号(+0x1C)]+2·步(+0x18)；循环取码，按 0x004060E4 跳转表（38 项）分派，>0x25 走默认。
+- 0 Restart：步=0 返回。1 Stop：路径号=0、步=0 返回。2／3：动作(+0x48)／方向(+0x74)=操作数，步+2，Run，失败 ErrorBox「Act Err(Path:ChangQQ)」／「Act Err(Path:chang_dir)」，返回。
+- 4 SetCount：+0x22=操作数，pc+4、步+2，继续。5：+0x22>0（无符号）时减一否则步+1，返回。6：同 5（为 0 时步+1、pc+2），然后 Run，失败「Act Err(Path:Active)」，返回。
+- 7 FindPath：0x004061B0(下标, pc)，pc+6、步+3，继续。8 Step：x 或 y 低 4 位非 0 返回；0x004063A0 返回 2 时 pc+2、步+1、清 0x04000000 继续，否则返回。
+- 9 WaitClock：操作数≤时钟(0x004C655C，无符号) 时 pc+4、步+2；旗标 0x1000 时 Run（失败「Act Err(Path:WTime)」）；通过则继续，否则返回。
+- 0xA：操作数>时钟低 16 位 时 pc+8、步+4，否则 JumpTo(dword[pc+4])。0xB SetClock：时钟=操作数，>0x3E8 时 0；只前进 1 字（操作数作下一条指令）。0xC：JumpTo(dword[pc+2])。0xD／0xE：(旗标 ^ (码==0xE))==1 时跳 dword[pc+4]，否则 pc+8、步+4。
+- 0xF：数旗标列表（0xFFFF 结束，用 0x004AA468 位表，与 GameFlag 的 0x004AA4BC 内容相同），全部置位（含空列表）跳结束符后的 dword，否则 pc+2·n+8、步+n+4。0x10：有置位时跳，否则同样前进。
+- 0x11／0x12：置位／清位，pc+4、步+2。
+- 0x13..0x17：槽≥0x40 时 DebugLog「變數不合法(%d)(%d)」（0x004AF3F8，原串无换行）返回；值>0x3E8（u16）时 DebugLog「數值不合法(%d)(%d)」（0x004AF454，无换行）；设／加（无符号和>0x3E8 取 0x3E8）／减（结果为负取 0）前进 3；0x16 变量<值（无符号）前进 5 否则跳 dword[pc+6]；0x17 变量>值 前进 5 否则跳。
+- 0x18 StartPath：查角色（0x0040C4D0），在 72 个移动记录中第一个属于它的：Scripted 类 +8..+0xE 写 0xFFFF；Path 类坐标未对齐时清格、按方向表退回格边界、RemoveRole(id, 旗标&3, 原行, 0)，然后清空记录；本角色 pc+4、步+2；对方路径号 = [pc+2]（即同一个操作数），步=0；对方是自己时从新路径开头继续。
+- 0x19：时钟>标记(0x004D3C78)+操作数（32 位，无符号比较）时跳 dword[pc+4]，否则前进 4。0x1A：标记=时钟，前进 1。
+- 0x1B／0x1C：查角色，旗标清／置 0xC000（清时另 ClearRoleCells），pc+4、步+2，继续。
+- 0x1D PlaceRole：ClearRoleCells，x、y=操作数·16，格指针 = 格网+4·((y shr 4)·宽+(x shr 4))，Run（失败「Act Err(Path:MoveRole)」），MarkRoleCells，步+3，RemoveRole(id, 旗标&3, 0, 0)，返回。
+- 0x1E Wander：坐标对齐时 0x00406590(下标)，返回。0x1F SetAct：三项各自非 0xFFFF 时写 act.id／动作／方向，步+4，Run（失败「Act Err(Path:TakeActdata)」），返回。0x20 PlaySound：0x004270B0(音, x, y)，步+2，返回。
+- 0x21／0x24：查角色失败 ErrorBox「Path(Follow)」「角色不在地圖上 GUID[%d]」步+2 返回；对方未对齐返回；0x21 取对方格；0x24 按对方方向用 (i16)操作数 2、3 算偏移（方向 1 与 >7 取栈上残值，见第 119 行），目标格或其右格有 0x40000000 时退回对方格；FindPath(下标, 格)，前进 2（0x24 再前进 2）；|ftol(ftol(√(本 y²+本 x²)) − √(对方 x²+对方 y²))| > 128.0（0x004AA470）时置 0x04000000；继续。
+- 0x22 ShowLabel：释放旧标签；颜色=操作数，>0xA 取 0；从 pc+4 逐字节找 0x5125，步 += ((结束−pc+2)/2)&0xFFFF；复制文字；返回。0x23 ClearLabel：有标签时释放并清颜色，前进 1，继续。
+- 0x25：查角色失败 ErrorBox「guid Err(Path:DISTANCE_ROLE)」「guid(%d) not found」步+2 返回；距离 = ftol(√(dy²+dx²))（本减对方），>操作数·16（有符号）时前进 5，否则跳 dword[pc+6]。
+- 默认：ErrorBox「路徑系統」「無效的指令\nGUID(%d)-(%d)」(RoleId(下标), 码)，返回。
+对照：
+- 差异 1：指令 0x18 源码按两个操作数前进 3 字并取第 2 个字作路径号；汇编只前进 2 字（步+2、pc+4），路径号取 [pc+2]（与查角色的 guid 是同一字）。已改为一个操作数。（第一遍证据写作“操作数 2”，与汇编不符。）
+- 差异 2：0x13..0x17 两条 DebugLog 源码多了末尾 `\n`，原串（0x004AF3F8、0x004AF454）没有，已删去。
+- 差异 3：0x1D 坐标在地图外时源码把格指针置空，未登记；已补登 deviations.md（0x00405220 指令 0x1D 行）。
+- 其余指令的分支、出口、前进字数、位宽、调用顺序与错误框原文一致。
+
+## 0x004061B0 RolePath::FindPath — exact（错误框坐标改为无符号移位）
+
+汇编：在 72 个移动记录中找角色字为 0xFFFF 的空位，没有时返回 (72≠0x20)=1；目标 x、y = 操作数·16（u32），超出 16·地图宽／高（无符号）时 ErrorBox「路徑系統(piSetpos)」「路徑終點超出範圍 >> P(%d) RId(%d) Start(%d/%d) Dest(%d/%d)」(槽, 下标, x shr 4…) 返回 0；PathFinder::FindPath(角色 x、y, 目标, 宽, 高, 记录方向)：为 1 时记录 act／动作／方向 = −1、角色=下标、步=0、x、y=目标低 16 位、类型 (b&0xF1)|1；否则 ErrorBox「路徑無法產生 >> P(%d) GUID(%d) Start(%d/%d) Dest(%d/%d)」(槽, RoleId, …) 并把角色放到目标；返回 槽≠0x20。
+对照：一致（SetKind 掩码 0xF 与 &0xF1|1 结果相同）；差异——错误框中角色坐标源码用有符号移位，汇编为 shr，已改为无符号。
+
+## 0x004063A0 RolePath::Step — exact
+
+汇编：在 72 个记录中找属于角色的：Scripted 类返回 0，Path 类取用；没有时 ErrorBox「路徑」「路徑沒有設定 >> GUID(%d)\n ACT (%d)\nQQ (%d)\nPATH (%d)」返回 2。+0x26==1 时步|=0x8000 返回 0；方向 0xFF 时清空记录返回 2；尝试次数(u8)>8 时掩码 0x40000000 否则 0x60000000，探查四周；步|=0x8000、尝试加一、两步长清零；0x004AA3E8[方向] 不阻挡时步&=0x7FFF、尝试清零、步长取 0x004AA408／0x004AA428；返回 1。
+对照：一致（BlockedBy 与 0x004AA3E8 相同）；方向越界见第 122 行，格指针空并入空指针行。
+
+## 0x00406530 RolePath::JumpTo — exact（差值改为 32 位）
+
+汇编：pc = 数据+0x200+偏移；步 = (偏移 − 路径起点) 按 32 位相减后 sar 1；返回 1。
+对照：源码以 64 位 ptrdiff 相减，偏移小于起点 2^31 以上时与 32 位结果不同；改为 u32 相减转 i32 再算术右移。
+
+## 0x00406590 RolePath::Wander — exact
+
+汇编：先 rand()（0x004A14EC，结果丢弃），再 0x0043DB90(0x50)；在记录中找属于角色的：Scripted 返回 1，Path 取最后一个；没有时找空位，没有空位 DebugLog「Pth:rndwlk,g(%d)NoFreePath」(RoleId) 返回 0，有则角色=下标、步=0、x=y=0、类型 Path、方向[0]=1（不动尝试次数）；+0x26==1 或掷值>0x3C（有符号）时步|=0x8000、动作=0 返回 1；动作=8，掷值<8 时方向[0]=掷值；方向 0xFF 返回 1；同 Step 的掩码、探查，尝试加一、步=0x8000、步长清零；不阻挡时步=0、尝试=0、取步长；返回 1。
+对照：一致（随机数消耗两次、顺序相同）。
+
+## 0x00406780 RolePath::Follow — exact（注释改为 swd3e 地址、日志坐标改为无符号移位，补登格指针保护）
+
+汇编：未对齐返回；在跟随者表(0x004D1614 起) 1..数(0x004D3FC0)−1 找下标，找到末尾（=数）时 ErrorBox「CompanyWalk」「夥伴紀錄中找不到角色(%d)」返回（数为 0 时用槽 1）；记录 = 0x004D2370+槽·0x21C；角色字为空、尝试≠0 或当前方向为 0xFF 时：清空记录，目标 = 0x004D1380[2·槽]（x）、0x004D1300[2·槽]（y），旗标 0x4F 时掩码 0，寻路失败 ErrorLog「CmpyWalk PathFind fail ,G(%d) sx(%d/%d) sy(%d/%d) dx(%d/%d) dy(%d/%d)」（shr 4）；成功则类型 Path、角色、步 0、目标、尝试 0，ClearRoleCells，以镜头外扩 0x50（上、左，负取 0）／0xA0（下）／0x50（右）为界，屏幕外时逐步前进（步加一，坐标加 4·步长），进入屏幕时按 0x004AA448 设朝向；步|=0x8000，按坐标设格指针，MarkRoleCells，RemoveRole(id, 旗标&3, 0, 0)。之后：方向、掩码（旗标 0x4F 时 0 否则 0x40000000）探查，步|=0x8000，两步长清零；方向 0xFF 时动作 0、朝向取主角；阻挡时动作 0；否则步&=0x7FFF、尝试加一、动作 8、步长 2·StepX／2·StepY。
+对照：一致；scene.h 中 trailY、trailX、followerCount 注释改为 0x004D1300、0x004D1380、0x004D3FC0；ErrorLog 中的移位改为无符号；按坐标设格指针的保护并入 deviations.md 0x1D 行，格指针空并入空指针行。

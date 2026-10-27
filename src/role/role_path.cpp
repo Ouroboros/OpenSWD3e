@@ -191,8 +191,8 @@ bool RolePath::FindPath(int index, u16 tileX, u16 tileY)
             u8"路徑終點超出範圍 >> P(%d) RId(%d) Start(%d/%d) Dest(%d/%d)",
             slot,
             index,
-            role.x >> MapHeader::TileShift,
-            role.y >> MapHeader::TileShift,
+            static_cast<u32>(role.x) >> MapHeader::TileShift,
+            static_cast<u32>(role.y) >> MapHeader::TileShift,
             x >> MapHeader::TileShift,
             y >> MapHeader::TileShift
         );
@@ -228,8 +228,8 @@ bool RolePath::FindPath(int index, u16 tileX, u16 tileY)
             u8"路徑無法產生 >> P(%d) GUID(%d) Start(%d/%d) Dest(%d/%d)",
             slot,
             this->RoleId(static_cast<u32>(index)),
-            role.x >> MapHeader::TileShift,
-            role.y >> MapHeader::TileShift,
+            static_cast<u32>(role.x) >> MapHeader::TileShift,
+            static_cast<u32>(role.y) >> MapHeader::TileShift,
             x >> MapHeader::TileShift,
             y >> MapHeader::TileShift
         );
@@ -330,8 +330,8 @@ std::size_t RolePath::JumpTo(int index, u32 offset)
         start = PathScript::Dword(data, PathScript::DataAt + table);
     }
 
-    role.pathStep = static_cast<i32>(static_cast<std::ptrdiff_t>(offset) - static_cast<std::ptrdiff_t>(start)) >>
-                    PathScript::StepShift;
+    // The difference in 32 bits, shifted arithmetically (`sar`).
+    role.pathStep = static_cast<i32>(offset - start) >> PathScript::StepShift;
     return PathScript::DataAt + static_cast<std::size_t>(offset);
 }
 
@@ -491,13 +491,13 @@ void RolePath::Follow(int index)
                 u8"CmpyWalk PathFind fail ,G(%d) sx(%d/%d) sy(%d/%d) dx(%d/%d) dy(%d/%d)",
                 role.id,
                 role.x,
-                role.x >> MapHeader::TileShift,
+                static_cast<u32>(role.x) >> MapHeader::TileShift,
                 role.y,
-                role.y >> MapHeader::TileShift,
+                static_cast<u32>(role.y) >> MapHeader::TileShift,
                 targetX,
-                targetX >> MapHeader::TileShift,
+                static_cast<u32>(targetX) >> MapHeader::TileShift,
                 targetY,
-                targetY >> MapHeader::TileShift
+                static_cast<u32>(targetY) >> MapHeader::TileShift
             );
         }
         else
@@ -833,13 +833,13 @@ void RolePath::RunScript(int index)
 
                 if (slot >= Party::Variables || slot >= variables.size())
                 {
-                    DebugLog(u8"變數不合法(%d)(%d)\n", slot, value);
+                    DebugLog(u8"變數不合法(%d)(%d)", slot, value);  // 0x004AF3F8
                     return;
                 }
 
                 if (value > kVariableLimit)
                 {
-                    DebugLog(u8"數值不合法(%d)(%d)\n", slot, value);
+                    DebugLog(u8"數值不合法(%d)(%d)", slot, value);  // 0x004AF454
                 }
 
                 i32& variable = variables[slot];
@@ -950,8 +950,10 @@ void RolePath::RunScript(int index)
                     }
                 }
 
-                role.pathStep += PathScript::CommandWords(2);
-                at += PathScript::WordBytes * PathScript::CommandWords(2);
+                // One operand: the role's guid is also the path it starts (0x0040583F reads the word before the next
+                // command).
+                role.pathStep += PathScript::CommandWords(1);
+                at += PathScript::WordBytes * PathScript::CommandWords(1);
                 const u16 path = word(at - PathScript::WordBytes);
 
                 if (target < GameState::Roles)

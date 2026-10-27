@@ -46,7 +46,7 @@ enum class Button
     F1 = 19,
 };
 
-// The buttons the game reads each frame: the configured keys and the mouse (0x004B7CB0..0x004B7EAF and the frame
+// The buttons the game reads each frame: the configured keys and the mouse (0x004D1638..0x004D1837 and the frame
 // bookkeeping around them).
 class Controls
 {
