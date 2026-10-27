@@ -53,12 +53,13 @@ bool Launcher::LoadPictures()
     return loaded;
 }
 
-// swd3e.exe 0x00428210 (WM_INITDIALOG): the dialog is centred and the pictures placed; the highlights stay as the
-// template shows them until the first mouse message
+// swd3e.exe 0x00428210 (WM_INITDIALOG): the dialog is centred and the pictures placed, the highlights hidden
+// (SetWindowPos with SWP_HIDEWINDOW) until a mouse message lights one
 void Launcher::Init()
 {
     this->lit = {};
     this->litBefore = {};
+    this->shown = {};
 }
 
 // swd3e.exe 0x00428210 (WM_MOUSEMOVE, WM_LBUTTONDOWN): lights the picture under the mouse (the first only with a saved

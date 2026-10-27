@@ -367,3 +367,48 @@
 
 汇编：主控角色（0x004C4B00）在角色表的 x/y（0x004D3FCC/0x004D3FD0）；距离 = _ftol(fsqrt((px−x)²+(py−y)²))；≥0x200 返回。否则 0x0049D7B0(0, 编号, 0, 0, 1, 0)；音量 = (0x80 − 距离×0x80/0x200) × 0x004C4F0C / 11 → 0x0049DAB0；声像 = (x−px)×0x40/0x200（有符号）→ 0x0049DB00。
 对照：一致（kSoundRange 0x200、kSoundScale 0x80、kPanScale 0x40、Config::MaxVolume 11、crt::Ftol）。
+
+## 0x00428100 Game::SizeCaches — exact
+
+汇编：GlobalMemoryStatus，dwTotalPhys/6（无符号乘法取高位），有符号比较：<4 MB 取 4 MB，>16 MB 取 16 MB；0x004364C0(字节)；0x00436B40(0x80000)；返回 1。
+对照：一致（kTileCacheShare 6、kMinimumTileCache 4 MB、kActCache 0x80000）；内存来源为平台替换（deviations 79），上限 256 MB 为已登记增强（80）。
+
+## 0x00428730 Game::StartGraphics — exact
+
+汇编：0x00429790（角色名复位）；0x004288B0(hWnd)；返回 1。对照：一致。
+
+## 0x004288B0 Game::InitDrawKernel — diff → exact
+
+汇编：hWnd 存全局，0x004D3FC4 = 0x004C2B78 = 0，ShowCursor(0)；0x00428C20（返回值不看）；输入灵敏度 2.0、鼠标置 (0x140, 0xF0)；音乐音量 = 0x004E5814×127/11；0x00417510(离屏表面 0x004C6344) 失败 → MessageBox(0, "SWD3", "DrawKernel init Failed.") 并 WM_DESTROY、返回。所需空间 = 0x004D1434 − (0x004291B0(1)+0xFFFFF)>>20 + 0x40，≥ 0x00411D10 的剩余 MB（无符号）→ Sleep(0x400)、MessageBeep(0)、0x0040C530("!!! 注意 !!!", "遊戲過程中,磁碟空間不足\n請確認至少剩餘 %dM磁碟空間.", 所需)（exe 字节核对）。0x004295F0；加锁取画面指针、解锁；三个掩码字各转换 1 像素；0x004C5090 = 填充色对；三种字体 0x14/0x10/0x0C（0x0040F680，屏幕大小取 GetSystemMetrics）；0x004C30D4 = 0xB；剪裁 640×480；16 色两表：COLORREF 折成 RGB555 后各转换 1 像素、扩成对；再加锁取画面指针；0x0040E090(0x23) 失败 → MessageBox(0, "mmTimer init Failed.", "SWD3")、0x004D3FC4 = 1、WM_DESTROY、返回。0x0040F380（返回值不看）；剧本缓冲重配 0x8000；maps.dat 越过 0x200 字节读入；0x00401B30、0x0040E420、0x0043E900、0x00429B10；0x004D1C88 = 0x80000003。
+对照：一致（ShowError(标题, 文字) 的两种参数顺序、kLowDiskPause、kDiskReserve、kStartPointer、字体大小、kTalkUnit、TextColors::Convert、TitleMenu）；数据库打开失败时原程序在 0x0040F380 内 WM_DESTROY 后继续，源码以 Destroy 代之后继续，一致。
+差异/修正：离屏表面为空（显示初始化失败）时源码按绘图核心初始化失败处理，原程序 Init(NULL) 成功后经空表面加锁，未登记；deviations 新增「0x004288B0 空指针」行（源码不改）。复核：完整函数重新对照一致。
+
+## 0x00428C20 Game::InitDevices — exact
+
+汇编：0x004C6334 = 0；Miles 启动（安装目录）、音效打开、流播放器打开（传入音效驱动）；DirectInput 初始化非 0 → 0x004C6334 |= 2、MessageBox(0, "DirectInput 初始化錯誤%n", "軒轅劍三")、WM_DESTROY、返回 0；显示初始化（640×480×16）失败 → 0x004D1404 |= 4、MessageBox(0, "SWD3", "DDraw init Failed.")、WM_DESTROY、返回 0；建 640×480 离屏表面存 0x004C6344，0x004D1630 = 1，Bink 初始化，返回 1。
+对照：一致（字符串经 exe 字节核对、kInputFailed 2、QuitRequested 4）；各设备为已登记的平台替换。
+
+## 0x00428D60 Game::InitInstall — exact
+
+汇编：0x004E55A4 = 2，音效 = 音乐 = 6，快取 0x3C，文字速度 2，战斗速度 0xB；0x004C66AC = 0x00428080()（光驱数）；0x00427D80(…, &unknown14, &关闭特效, …)；0x00428100；0x004291B0(0)；0x00428E60 依次 "Save"、"Data"、"Music"、"ScrnShot"、"Video"；0x004364D0(安装目录)、0x00436510；置旗标 0x48，关闭特效 == 0 时清除。
+对照：一致（DefaultVolume 6、DefaultCacheMegabytes 0x3C、DefaultTextSpeed 2、kDefaultBattleSpeed 0xB、CheckSessionMark 0、kEffectsOffFlag 0x48、五个目录次序）；设置来源为平台替换（deviations 103），未初始化见 308，光驱与安装类型不再保存（101、103），启动时恢复走跑见 144（本轮补入 0x00428D60 地址）。
+
+## 0x00428E60 Game::MakeDirectory — exact
+
+汇编：路径 = 安装目录+名；SetCurrentDirectoryA 失败时 CreateDirectoryA；返回 1。
+对照：平台替换（deviations 78）：只在缺失时创建，不改当前目录。
+
+## 0x00428EC0 Game::ReleaseGame — exact
+
+汇编：依次 0x0049E590、三种字体关闭、0x00406C20、0x00469810、0x0048AF00、释放触发链（0x004C31AC，next +0x14）、0x0040F930、0x0040F840、0x0040F880、0x0040F8B0、0x0040DF30、0x0040F8E0、0x0040F980、0x0040F9C0、释放叠图链（0x004C4A7C，数据与节点）、释放通知链（0x004D1F4C）、0x00401BC0、0x0040F6F0、释放三层行表、0x0040F750、0x00437D80、0x004367D0、nullsub、0x00427080、释放 0x004E6CBC、释放 0x004EDA34、离屏表面 Release、0x0043C510、0x0043C590、0x0043BFA0；maps、path（UnmapView、CloseMapping、Close）、talk1、地图快取单元文件（UnmapView、CloseMapping、Close）逐个关闭，失败各以 0x00411F10 记一条（8 条字符串经 exe 字节核对，无换行）；释放 0x004D0D58、0x004D12B4、0x004D12B0、0x004E5818、0x004D1DA8、0x004C6470、区域链（0x004C6258）；0x00429520；ShowCursor(1)；0x004366B0；流播放器、音效关闭；AIL_shutdown；返回 1。
+对照：调用与释放次序一致；0x004C6470 全程序只被读（0x00410A80 作循环上界）从不写入，释放的是空指针，源码省略；0x004EDA34 只由 Paint 设置并清回，释放的也是空指针（源码注释已写明）；日志为平台替换（deviations 137），mapBehind 为宽画布增强。
+
+## 0x00429780 Game::CheckStart — exact
+
+汇编：返回 1。对照：一致。
+
+## 0x00429B10 GameState::ClearWorld — diff → exact
+
+汇编：释放地图图块与块缓冲（0x004D12B0/0x004D12B4），地图头 0x004D1298 起 0x64 字节清 0；角色数 0x004AF71C = 0；角色表（0x004D3FC8 起，0xE4 字节一项）逐项释放 +0x38 的缓冲后整项清 0；领头角色 0x004D0AA0 整项 0xE4 字节填 0xFF；72 条移动记录（0x004C6C88，0x21C 一条）逐条 0x0040E0B0。
+对照：一致（MapHeader{}、roleCount 0、Role{}、MoveRecord::Clear）。
+差异/修正：领头角色的指针字段在原程序为 0xFFFFFFFF，源码 FillUnused 置空，未登记；deviations 新增「0x00429B10 空指针」行（源码不改）。复核：完整函数重新对照一致。

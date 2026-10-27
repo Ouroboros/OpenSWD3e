@@ -26,14 +26,14 @@
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
 - 已实现／总数：1710／1710。
-- 已验证／总数：1710／1710（第一遍）；第二遍 325／1710（19.0%）。
-- 待实现／待验证：0／0（第二遍待核 1385）。
+- 已验证／总数：1710／1710（第一遍）；第二遍 350／1710（20.5%）。
+- 待实现／待验证：0／0（第二遍待核 1360）。
 
 ## 当前工作
 
 第二遍汇编验证，方法见 reverse/analysis/pass2-method.md：每个函数先只读汇编独立推导全部分支、出口、位宽、调用顺序、随机数消费与副作用，再对照源码；边界保护须与 deviations.md 登记一致；证据记入 reverse/evidence/pass2/，用 `scripts/mark_verified.py ... --pass 2` 登记。
 
-停点：reverse/functions.tsv 第 326 行（0x004277E0，已移除的 Env.dat 写出）。
+停点：reverse/functions.tsv 第 351 行（0x00429C20 MapCache::GetCachedMap）。
 
 ## 下一步
 

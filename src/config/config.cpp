@@ -24,7 +24,7 @@ constexpr int Slot(Button button)
     return static_cast<int>(button);
 }
 
-// The key slots [game.keys] holds: its members and their slots, in the rows of the key setup (swd32.exe 0x004A7210).
+// The key slots [game.keys] holds: its members and their slots, in the rows of the key setup (u16 slots, 0x004BED40).
 struct KeySlot
 {
     std::optional<i64> GameKeys::* member;
@@ -70,9 +70,8 @@ u16 ReadWord(std::span<const u8> data, std::size_t offset)
 // current format gives its keys, unknown14, settings bytes, channel masks, debug bit and session mark (its directories
 // and installation type are not used any more). An old-format file gives nothing (the original turned it into the
 // defaults). See deviations.md.
-// swd3e.exe EH funclet (tail) of 0x00427D80, swd32 0x00498170 (EH unwind of 0x00423FB0: the new cFile's memory freed
-// when its constructor throws)
-// swd3e.exe EH funclet (tail) of 0x00427D80, swd32 0x0049817B (EH handler of 0x00423FB0)
+// swd3e.exe EH funclet (tail) of 0x00427D80 at 0x004A94F0 (EH unwind: the new cFile's memory freed when its constructor
+// throws) and its EH handler at 0x004A94FB
 std::optional<GameSettings> Config::ImportEnv(std::span<const u8> data)
 {
     if (data.size() < Config::StringsAt || ReadDword(data, 0) != Config::CurrentFormat)
@@ -113,16 +112,14 @@ std::optional<GameSettings> Config::ImportEnv(std::span<const u8> data)
 
 // swd3e.exe 0x004277E0 (the installation's first Env.dat, written by the install command line): removed with the
 // command line; [game] is imported from Env.dat once instead (see ImportEnvFile and deviations.md).
-// swd3e.exe EH funclet (tail) of 0x004277E0, swd32 0x00498110 (EH unwind of 0x00423A10: the new cFile's memory freed
-// when its constructor throws)
-// swd3e.exe EH funclet (tail) of 0x004277E0, swd32 0x0049811B (EH handler of 0x00423A10)
+// swd3e.exe EH funclet (tail) of 0x004277E0 at 0x004A9490 (EH unwind: the new cFile's memory freed when its constructor
+// throws) and its EH handler at 0x004A949B
 
 // swd3e.exe 0x004278C0 (Env.dat rewritten with the keys, unknown14 and the settings bytes): the same values set in
 // [game] of the program's settings file (its channel masks and debug bit kept). The rewritten file ended with a session
-// mark of 0 (0x00423D8C), so saving the settings clears the mark. See deviations.md.
-// swd3e.exe EH funclet (tail) of 0x004278C0, swd32 0x00498130 (EH unwind of 0x00423AF0: the new cFile's memory freed
-// when its constructor throws)
-// swd3e.exe EH funclet (tail) of 0x004278C0, swd32 0x0049813B (EH handler of 0x00423AF0)
+// mark of 0 (0x00427B5C), so saving the settings clears the mark. See deviations.md.
+// swd3e.exe EH funclet (tail) of 0x004278C0 at 0x004A94B0 (EH unwind: the new cFile's memory freed when its constructor
+// throws) and its EH handler at 0x004A94BB
 void Config::Update(const Settings& settings)
 {
     this->Store(
@@ -143,9 +140,8 @@ void Config::Update(const Settings& settings)
 
 // swd3e.exe 0x00427BD0 (the key setup's keys written over the head of Env.dat, where they spoilt the format mark so the
 // next start reset every setting): the keys set in [game.keys]; nothing else changes. See deviations.md.
-// swd3e.exe EH funclet (tail) of 0x00427BD0, swd32 0x00498150 (EH unwind of 0x00423E00: the new cFile's memory freed
-// when its constructor throws)
-// swd3e.exe EH funclet (tail) of 0x00427BD0, swd32 0x0049815B (EH handler of 0x00423E00)
+// swd3e.exe EH funclet (tail) of 0x00427BD0 at 0x004A94D0 (EH unwind: the new cFile's memory freed when its constructor
+// throws) and its EH handler at 0x004A94DB
 void Config::SaveKeys()
 {
     this->Store(

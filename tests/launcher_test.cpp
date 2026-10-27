@@ -60,7 +60,7 @@ TEST_CASE("launcher: resources of swd3e.exe and the hover hotspots")
     Launcher launcher(resources, state, sound, u8"");
     CHECK(launcher.LoadPictures());
     launcher.Init();
-    CHECK(launcher.shown[0]);
+    CHECK(!launcher.shown[0]);  // WM_INITDIALOG hides the highlights (SWP_HIDEWINDOW, 0x004282A9)
     CHECK(launcher.OnMouse(0, kOutside, kOutside) == Launcher::Choice::None);
     CHECK(!launcher.shown[0]);
     const Launcher::Item& first = Launcher::Layout.front();

@@ -40,10 +40,8 @@ MapCache::MapCache(const Config& config, const Painter& painter, const MapHeader
 // the display's colour masks differ from those recorded (and records the new ones). The original keeps both in Env.dat
 // (the mark in its last byte, the masks at 0x1E); the rebuild in [game] (session_open, red_mask ...).
 // The bytes the cache holds afterwards.
-// swd3e.exe EH funclet (tail) of 0x004291B0, swd32 0x00498190 (EH unwind: the new object freed (operator delete))
-// swd3e.exe EH funclet (tail) of 0x004291B0, swd32 0x0049819B (EH unwind: the new object freed (operator delete))
-// swd3e.exe EH funclet (tail) of 0x004291B0, swd32 0x004981A6 (EH unwind: the new object freed (operator delete))
-// swd3e.exe EH funclet (tail) of 0x004291B0, swd32 0x004981B1 (EH handler of 0x00425570)
+// swd3e.exe EH funclets (tail) of 0x004291B0 at 0x004A9510, 0x004A951B and 0x004A9526 (EH unwind: the new object freed
+// (operator delete)) and its EH handler at 0x004A9531
 u32 MapCache::Check(int mode)
 {
     bool clear = false;
@@ -134,8 +132,8 @@ void MapCache::Clear()
 }
 
 // swd3e.exe 0x00429520: clears the session mark (at a clean exit)
-// swd3e.exe EH funclet (tail) of 0x00429520, swd32 0x004981C0 (EH unwind: the new object freed (operator delete))
-// swd3e.exe EH funclet (tail) of 0x00429520, swd32 0x004981CB (EH handler of 0x004258E0)
+// swd3e.exe EH funclet (tail) of 0x00429520 at 0x004A9540 (EH unwind: the new object freed (operator delete)) and its
+// EH handler at 0x004A954B
 void MapCache::MarkClean()
 {
     this->Store(
@@ -147,8 +145,8 @@ void MapCache::MarkClean()
 }
 
 // swd3e.exe 0x004295F0: sets the session mark (once the game runs)
-// swd3e.exe EH funclet (tail) of 0x004295F0, swd32 0x004981E0 (EH unwind: the new object freed (operator delete))
-// swd3e.exe EH funclet (tail) of 0x004295F0, swd32 0x004981EB (EH handler of 0x004259B0)
+// swd3e.exe EH funclet (tail) of 0x004295F0 at 0x004A9560 (EH unwind: the new object freed (operator delete)) and its
+// EH handler at 0x004A956B
 void MapCache::MarkDirty()
 {
     this->Store(
@@ -178,8 +176,8 @@ void MapCache::Store(const std::function<void(GameSettings&)>& change) const
 }
 
 // swd3e.exe 0x004296B0: the sizes of the unit files that exist
-// swd3e.exe EH funclet (tail) of 0x004296B0, swd32 0x00498200 (EH unwind: the new object freed (operator delete))
-// swd3e.exe EH funclet (tail) of 0x004296B0, swd32 0x0049820B (EH handler of 0x00425A70)
+// swd3e.exe EH funclet (tail) of 0x004296B0 at 0x004A9580 (EH unwind: the new object freed (operator delete)) and its
+// EH handler at 0x004A958B
 u32 MapCache::CacheBytes() const
 {
     u32 total = 0;

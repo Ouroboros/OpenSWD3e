@@ -73,7 +73,7 @@ public:
 
     std::array<i8, Items> lit = {};        // 0x004EF5A4 (4 bytes), 0x004EF5A8: SW_SHOW (5) under the mouse
     std::array<i8, Items> litBefore = {};  // 0x004EF5A9 (4 bytes), 0x004EF5AD
-    std::array<bool, Items> shown = {true, true, true, true, true};  // the highlight windows (visible at first)
+    std::array<bool, Items> shown = {};    // the highlight windows (hidden by Init)
 
 private:
     const ExeResources& resources;
