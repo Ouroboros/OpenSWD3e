@@ -206,7 +206,8 @@ void Talk::HandlePointer()
         const std::vector<u32>& blocks = state.map.blocks;
         const auto cellX = static_cast<u32>(cameraLeft + state.pointerX) >> MapHeader::TileShift;
         const auto cellY = static_cast<u32>(cameraTop + state.pointerY) >> MapHeader::TileShift;
-        const std::size_t cell = cellX + static_cast<std::size_t>(state.map.width) * cellY;
+        // The original multiplies and adds in 32 bits.
+        const u32 cell = cellX + static_cast<u32>(state.map.width) * cellY;
         const u8 regionId = cell < blocks.size() ? static_cast<u8>(blocks[cell] & MapHeader::RegionMask) : u8{0};
         MapRegion* region = nullptr;
 

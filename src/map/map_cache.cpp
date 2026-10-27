@@ -267,8 +267,8 @@ void MapCache::ReadUnitBytes(u32 base, u32 size, int legacy, u32& bytes)
 // the block lengths in order, each block the block size but the last) is written block by block of the block size; an
 // MSF3 unit (a 0x400-byte header: the block size, the unpacked size, then each block's offset from the map and length)
 // writes what each block unpacks to, until exactly the unpacked size is written.
-// swd3e.exe EH funclet (tail) of 0x0042A180, swd32 0x00498250 (EH unwind: the cFile, closed by its destructor)
-// swd3e.exe EH funclet (tail) of 0x0042A180, swd32 0x00498258 (EH handler of 0x00426DF0)
+// swd3e.exe EH funclet (tail) of 0x0042A180 at 0x004A95D0 (EH unwind: the cFile, closed by its destructor) and its EH
+// handler at 0x004A95D8
 void MapCache::DecompressMap(int unit, u32 base, u32 size, int legacy, u32& bytes)
 {
     if (size == 0)
@@ -430,8 +430,8 @@ void MapCache::DecompressMsf3(File& cached, u32 base, u32& bytes)
 }
 
 // swd3e.exe 0x0042A670: maps data\<unit>.cm as the view of the map (the previous view released)
-// swd3e.exe EH funclet (tail) of 0x0042A670, swd32 0x00498270 (EH unwind: the cFile, closed by its destructor)
-// swd3e.exe EH funclet (tail) of 0x0042A670, swd32 0x00498278 (EH handler of 0x00427140)
+// swd3e.exe EH funclet (tail) of 0x0042A670 at 0x004A95F0 (EH unwind: the cFile, closed by its destructor) and its EH
+// handler at 0x004A95F8
 const u8* MapCache::OpenUnit(int unit)
 {
     const std::u8string path = PathFormat(kUnitFormat, {this->config.installDirectory, unit});
@@ -466,10 +466,8 @@ const u8* MapCache::OpenUnit(int unit)
 // swd3e.exe 0x00429C20: the view of map `map` from the cache: every slot ages; a cached map is opened (its age back to
 // 0); otherwise slots are emptied (an old one, else the smallest) while the cache would exceed its size or no slot is
 // free, and the map is unpacked into the first free slot. An empty table is started with the map in slot 0.
-// swd3e.exe EH funclet (tail) of 0x00429C20, swd32 0x00498220 (EH unwind: the cFile, closed by its destructor)
-// swd3e.exe EH funclet (tail) of 0x00429C20, swd32 0x0049822B (EH unwind: the cFile, closed by its destructor)
-// swd3e.exe EH funclet (tail) of 0x00429C20, swd32 0x00498233 (EH unwind: the cFile, closed by its destructor)
-// swd3e.exe EH funclet (tail) of 0x00429C20, swd32 0x0049823E (EH handler of 0x00426840)
+// swd3e.exe EH funclets (tail) of 0x00429C20 at 0x004A95A0, 0x004A95AB and 0x004A95B3 (EH unwind: the cFiles, closed by
+// their destructors) and its EH handler at 0x004A95BE
 const u8* MapCache::GetCachedMap(u32 map, u32 base, u32 size, int legacy)
 {
     File table;

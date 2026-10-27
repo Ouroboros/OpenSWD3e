@@ -28,7 +28,8 @@ class Random;
 namespace smooth
 {
 class Scene;
-}
+class ScenePainter;
+}  // namespace smooth
 
 // What the battle code reaches besides the units: shared by the methods of BattleUnit and its kinds.
 struct BattleServices
@@ -49,6 +50,8 @@ struct BattleServices
     // The rebuild's smooth battle: the scene of the battle frame the parts deciding it add their draws to (drawn once
     // the frame is decided); none: each part's draws are drawn at once, in the original's order.
     smooth::Scene* frame = nullptr;
+    // The rebuild's smooth battle: the innermost scene painter alive (the scene a part is adding its draws to now).
+    smooth::ScenePainter* recording = nullptr;
     BattleEnemy* enemies = nullptr;  // Game::battleEnemies (BattleState::Enemies of them), set with the services
     BattleRole* roles = nullptr;     // Game::battleRoles (BattleState::RoleUnits of them), set with the services
     Database* database = nullptr;    // Game::database (swd3e: the talisman ghost loads its fed skills in StepGauge)

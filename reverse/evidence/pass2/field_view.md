@@ -164,3 +164,55 @@
 汇编：水波链（0x004C6150，前驱 0x004C6128，next +0x28）逐个：0x00435C50(屏幕) 复制、0x00435C80(屏幕) 折射、0x00435DB0 推进，返回非 0 → 摘除、0x00435BF0 析构并释放；否则前进。
 对照：一致。
 差异/修正：源码在画布行距改变后不复制、折射旧涟漪，重放（PaintBetween）时不推进；两处增强原已在 deviations 85、93 的说明中，地址列缺 0x00417230，行距一条未写明。补登记地址与行为，代码不改。复核：完整函数重新对照一致。
+
+## 0x00435080 FieldView::FillCellMark — exact
+
+汇编：双像素值 = ((颜色&0xFFFF)<<16) + 颜色；上下两条以行表 0x004E6D64[y]、[y+高] 加 2x 起，写 宽>>1（sar）个双像素；左右两条从 [y] 起、x 与 x+2×(宽>>1) 两列，按行距 1280 字节写 高 个像素（低字）。
+对照：一致；唯一调用者 MarkCells 给出的行号在 0..约 470，行表项即 行×行距，与源码直接相乘相同；表外与缓冲区外见 deviations 18、333。
+
+## 0x00435130 FieldView::MarkCells — exact
+
+汇编：起始格 = ((镜头上+16)>>4)×宽 + ((镜头左+16)>>4)（sar）；x 偏 = −(参数x&0xF)，y = −(参数y&0xF)+缩进+16；28 行 × x 从 16 起步进 16 到 <0x26F（38 列）：格 & 掩码 非 0 → 0x00435080(x+x偏+缩进, y, 15−缩进, 15−缩进, 颜色)；每行 y+16，格指针 + 宽×4 − 0x98。
+对照：一致；读格网越界见 deviations 111。
+
+## 0x004351F0 DrawDebugText — exact
+
+汇编：vsprintf 到 0x100 字节栈缓冲，小字体 0x004C3658 的 0x0043B590(目标, x, y, 缓冲, 颜色, 0x10)。
+对照：一致（DrawSmallText 以 BoldOutline 0x10 画到绘图面）；调用者（FieldView::DrawDebug）的格式与参数（区域名 0x20 字节、模式名等）总长到不了 0x100，不存在溢出路径。
+
+## 0x004357C0 FieldView::DrawTimer — exact
+
+汇编：which 0 时需旗标 0x10、1 时需 0x4A，旗标 0x4C 时不画；秒 = 帧 /30（0x004E6B50，which 非 0 时 0x004C2FF0，有符号），负取 0；数字动作 0x004C31B0：id 0x232C、方向 0；秒/600 非 0 时先画该数字；再画 (秒/60)%10、冒号（动作 10）、(秒%60)/10、(秒%60)%10；每个数字：动作 +8 = 值，0x00436C80（结果不用），取帧 +0x4A/图 +0x4C 的图片，方式 0 画在 (x, y)，x += 宽。
+对照：一致（kFramesPerSecond 0x1E、kSecondsPerMinute 0x3C、kTensBase 0xA、kTimerColon 0xA、TimerAct 0x232C）；图片缺失见 deviations 302。
+
+## 0x00435B60 ScriptObject::ScriptObject — exact
+
+汇编：+0 行距、+4 行数、+8 左、+0xC 上、+0x10 格宽、+0x14 格高、+0x18 阻尼 4、+0x1C 页 0、+0x28 下一个 0；高度格 格宽×格高×4 字节（两页 i16）清零 → +0x20；屏幕副本 行距×行数×2 字节（0x0043DA70 清零）→ +0x24。
+对照：一致（kDefaultDamping 4、kPages 2）；行距与行数取画布见 deviations 93。
+
+## 0x00435BF0 ScriptObject::~ScriptObject — exact
+
+汇编：释放 +0x20、+0x24。对照：一致（向量析构）。
+
+## 0x00435C10 ScriptObject::MoveTo — exact
+
+汇编：左 = x、上 = y；x+格宽 > 行距（有符号）→ 左 = 行距−格宽−1；y+格高 > 行数 → 上 = 行数−格高−1。对照：一致。
+
+## 0x00435C50 ScriptObject::CopyScreen — exact
+
+汇编：从参数复制 行距×行数×2 字节到 +0x24。对照：一致。
+
+## 0x00435C80 ScriptObject::Refract — exact
+
+汇编：at = (上+1)×行距+左；高度始终取第 0 页；格从 格宽+1 到 (格高−1)×格宽：每行到 格宽+格−2，每次处理两格：此格 h、下格 h[格+格宽]、右格 h[格+1]，源 = at + 行距×((h−下)>>3) + ((h−右)>>3)，像素[at] = 副本[源]；行末 at += 行距−格宽+2、格 += 2。
+对照：一致（kRefractShift 3、kGridBorder 2，两格展开的越界处理与源码同）；读写越界见 deviations 112。
+
+## 0x00435DB0 ScriptObject::Step — exact
+
+汇编：页 ^= 1；目标为新页、来源为旧页；sum = 源[2] + 源[2×格宽+2]；逐行：before = sum、sum = 源[格−宽]+源[格+宽]，到 宽+格−2：current = sum、sum = 源[格−宽+1]+源[格+宽+1]，值 = ((before+current+左+sum+右)>>2) − 目标[格]，写入 值 − (值>>阻尼)，非 0 则未平息；返回是否全为 0。
+对照：一致（kAverageShift 2）。
+
+## 0x00435EF0 ScriptObject::Splash — exact
+
+汇编：x <0 → rand() % (格宽−2r−1) + r + 1，y 同理（格高）；起止 dx、dy 各为 −r..r，按 1 与 格宽−1／格高−1 夹取；当前页逐格 dx²+dy² < r² 时 += _ftol((r−√(dx²+dy²))×深度)。
+对照：一致（随机数经 crt::Random 消费 rand()）；格宽恒为 2×半径（偶数），除数不会为 0。

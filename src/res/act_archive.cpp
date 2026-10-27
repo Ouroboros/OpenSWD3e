@@ -48,9 +48,9 @@ void ActArchive::SetGameDirectory(std::u8string directory)
     this->gameDirectory = std::move(directory);
 }
 
-void ActArchive::SetEffectStart(EffectStart start)
+void ActArchive::SetZoomStart(ZoomStart start)
 {
-    this->effectStart = std::move(start);
+    this->zoomStart = std::move(start);
 }
 
 int ActArchive::CacheBytes() const
@@ -319,9 +319,9 @@ int ActArchive::CloseAll()
     this->IndexClear();
     this->opened = false;
     this->reads = 0;
-    this->effectValue = 0;
-    this->effectX = 0;
-    this->effectY = 0;
+    this->lastZoom = 0;
+    this->lastZoomX = 0;
+    this->lastZoomY = 0;
 
     if (this->cacheBytes != 0)
     {
@@ -338,10 +338,10 @@ void ActArchive::SetUseCache(int value)
     this->useCache = value;
 }
 
-// swd3e.exe 0x00437E10: 1 makes 'CS' start its effect for every act
-void ActArchive::SetEffectEnabled(int value)
+// swd3e.exe 0x00437E10: 1 makes 'CS' set the zoom for every act (on during a battle)
+void ActArchive::SetZoomEnabled(int value)
 {
-    this->effectEnabled = value;
+    this->zoomEnabled = value;
 }
 
 // swd3e.exe 0x00437E20: reads the directory record of the entry (at the full entry number) into the front of its
@@ -656,32 +656,27 @@ int ActArchive::Run(ActState& state)
                 state.rotation = word(state.position++);
                 break;
 
-            case ActOpcode::Effect:
+            case ActOpcode::Zoom:
             {
                 const u16 value = word(state.position);
-                state.unknown5E = value;
-                state.unknown60 = value;
+                state.zoomX = value;
+                state.zoomY = value;
 
-                if ((state.unknown94 == 1 || this->effectEnabled == 1) && !this->peeking)
+                if ((state.unknown94 == 1 || this->zoomEnabled == 1) && !this->peeking)
                 {
-                    state.flags |= ActArchive::FlagEffect;
+                    state.flags |= ActArchive::FlagZoom;
 
-                    if (this->effectStart)
+                    if (this->zoomStart)
                     {
-                        this->effectStart(
-                            state.x,
-                            state.y,
-                            static_cast<i16>(state.unknown5E),
-                            static_cast<i16>(state.unknown60)
-                        );
+                        this->zoomStart(state.x, state.y, static_cast<i16>(state.zoomX), static_cast<i16>(state.zoomY));
                     }
                 }
 
                 if (!this->peeking)
                 {
-                    this->effectValue = state.unknown5E;
-                    this->effectX = LowWord(static_cast<u32>(state.x));
-                    this->effectY = LowWord(static_cast<u32>(state.y));
+                    this->lastZoom = state.zoomX;
+                    this->lastZoomX = LowWord(static_cast<u32>(state.x));
+                    this->lastZoomY = LowWord(static_cast<u32>(state.y));
                 }
 
                 ++state.position;

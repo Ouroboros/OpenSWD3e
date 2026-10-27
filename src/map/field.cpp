@@ -725,12 +725,12 @@ bool Field::LoadMap(u32 map, u32& systemFlags)
             node->parallaxX = static_cast<u16>((Byte(block, at + kOverlayKindsAt) >> kParallaxXShift) & kParallaxMask);
             node->parallaxY = static_cast<u16>((kinds >> kParallaxYShift) & kParallaxMask);
 
+            // 0x00401680 writes back the same width and height words read above, and nothing for another magic, so
+            // the size stays as read.
             if ((Word(node->picture, RleHeader::FormatAt) & RleHeader::CountMask) == RleHeader::TrueColor)
             {
                 RleHeader converted;
                 this->codec.ConvertToDisplay(node->picture, converted);
-                node->width = converted.width;
-                node->height = converted.height;
             }
 
             node->next = std::move(this->overlays);

@@ -166,7 +166,7 @@ void Game::StartBattle(u16 number)
     battle.battle = number;
     this->config.debugMode = state.GameFlag(GameState::DebugKeys) ? 1 : 0;
     battle.musicBeforeBattle = this->audio.Queue().Mode();
-    this->acts.SetEffectEnabled(1);
+    this->acts.SetZoomEnabled(1);
     this->battleMessages.Clear();
     SetGaugeFull(battle, this->config.battleSpeed);
     this->battleStage.Clear();

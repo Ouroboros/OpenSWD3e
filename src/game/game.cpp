@@ -11,6 +11,7 @@
 
 #include <SDL3/SDL.h>
 
+#include "battle/smooth/smooth_draw.h"
 #include "core/debug_log.h"
 #include "crt/msvc.h"
 #include "game/screenshot.h"
@@ -348,6 +349,12 @@ Game::Game(std::u8string installDirectory)
     this->battleServices.enemies = this->battleEnemies.data();
     this->battleServices.roles = this->battleRoles.data();
     this->battleServices.database = &this->database;
+    this->acts.SetZoomStart(
+        [this](i32 x, i32 y, i32 zoomX, i32 zoomY)
+        {
+            smooth::SetActZoom(this->battleServices, x, y, zoomX, zoomY);
+        }
+    );
     this->glyphs.Load(GlyphLibraryPath());
 }
 

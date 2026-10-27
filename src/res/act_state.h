@@ -66,7 +66,7 @@ enum class ActOpcode : u16
     OffsetX = ScriptTag('X', 'O'),
     OffsetY = ScriptTag('Y', 'O'),
     Picture = ScriptTag('A', 'P'),    // picture number, counts the rounds of the counter
-    Effect = ScriptTag('C', 'S'),     // a value for both fields of the effect (0x00423630 when enabled)
+    Zoom = ScriptTag('C', 'S'),       // the zoom of both axes (Painter::SetZoom when enabled)
     LoopRange = ScriptTag('P', 'L'),  // the rounds bounding a repeat and its count
     Action = ScriptTag('A', 'O'),
     Signal = ScriptTag('S', 'G'),
@@ -175,8 +175,8 @@ struct ActState
     u16 view = 0;             // +0x58 'VW'
     u16 target = 0;           // +0x5A 'TA' ActState::TargetBit
     u16 unknown5C = 0;        // +0x5C
-    u16 unknown5E = 0;        // +0x5E 'CS' (also +0x60); meaning unknown, passed on to 0x00423630
-    u16 unknown60 = 0;        // +0x60 'CS'
+    u16 zoomX = 0;            // +0x5E 'CS': the zoom of Painter::SetZoom (0x00423630)
+    u16 zoomY = 0;            // +0x60 'CS': the same value
     u16 offsetX = 0;          // +0x62 'XO'
     u16 offsetY = 0;          // +0x64 'YO'
     u16 drawLevel = 0;        // +0x66 'DL'
@@ -197,7 +197,7 @@ struct ActState
     u8 wavePhase = 0;         // +0x91 the phase its wave was drawn at (Painter::WavePhase)
     u8 signal = 0;            // +0x92 'SG'
     u8 unknown93 = 0;         // +0x93
-    u8 unknown94 = 0;         // +0x94 1: 'CS' starts the effect; meaning unknown (writers not identified)
+    u8 unknown94 = 0;         // +0x94 1: 'CS' sets the zoom for this act (writers not identified)
     i32 waiting = 0;          // +0x98 '2O' reached with no delay
     i32 hold = 0;             // +0x9C 1: stay on the current step
     i32 mask = 0;             // +0xA0 'MS'

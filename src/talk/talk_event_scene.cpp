@@ -269,7 +269,6 @@ bool Talk::PlaceRole(EventRun& run)
     const u16 id = this->EventRoleId(run, operand);
     i16 setBits = 0;
     i16 event = -1;
-    run.valueA = id;
 
     if (state.FindRoleOrPlayer(id, run.found))
     {
@@ -297,7 +296,6 @@ bool Talk::PlaceRole(EventRun& run)
                                         : static_cast<i16>(row);
     const i16 tileX = column == Talk::Keep ? static_cast<i16>(static_cast<u32>(player.x) >> MapHeader::TileShift)
                                            : static_cast<i16>(column);
-    run.valueA = map;
 
     if (!owner.UpdateRoleRecord(id, act, action, direction, tileX, tileY, event, talk, setBits, Game::KeepValue, map))
     {
@@ -348,6 +346,9 @@ bool Talk::PlaceRole(EventRun& run)
 
         if (placed != nullptr && (placed->flags & Role::Bubbles) != 0)
         {
+            // The loop's count (0x0042DD30) lies where the later commands read valueA.
+            run.valueA = static_cast<i32>(owner.scene.marks.size());
+
             for (RoleMark& mark : owner.scene.marks)
             {
                 if (mark.role == 0)
@@ -566,6 +567,8 @@ bool Talk::OpenMapMovie(EventRun& run)
         u32 colorBytes = MapMovie::PaletteBytes;
         film.file.Read(colors.data(), colorBytes);
         film.palette.assign(MapMovie::PaletteColors, 0);
+        // The conversion loop's count (0x0042F023) lies where the later commands read valueA.
+        run.valueA = static_cast<i32>(MapMovie::PaletteColors);
 
         for (std::size_t index = 0; index < MapMovie::PaletteColors; ++index)
         {
@@ -1098,7 +1101,11 @@ bool Talk::RunSceneCommand(EventRun& run)
             const auto speed = static_cast<double>(static_cast<i16>(operands.Word()));
             const i32 across = sprite->targetX - fromX;
             const i32 down = sprite->targetY - fromY;
-            const double scale = speed / std::sqrt(static_cast<double>(down * down + across * across));
+            // The squares are summed by 32-bit imul and add, wrapping, then read as signed (0x0042E5BB).
+            const auto squares = static_cast<i32>(
+                static_cast<u32>(down) * static_cast<u32>(down) + static_cast<u32>(across) * static_cast<u32>(across)
+            );
+            const double scale = speed / std::sqrt(static_cast<double>(squares));
             sprite->stepX = static_cast<float>(static_cast<double>(across) * scale);
             sprite->stepY = static_cast<float>(static_cast<double>(down) * scale);
             sprite->x = static_cast<float>(fromX);

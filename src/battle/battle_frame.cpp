@@ -546,7 +546,7 @@ void Game::EndBattle()
     this->archive.Flush();
     this->acts.CloseAll();
     this->audio.StopAllSounds();
-    this->acts.SetEffectEnabled(0);
+    this->acts.SetZoomEnabled(0);
     messages.Clear();
     this->database.CloseFiles();
     battle.learnedPending = 0;

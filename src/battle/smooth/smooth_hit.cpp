@@ -209,10 +209,10 @@ bool HitFrame::DrawHitPictureAdvance(BattleUnit& target, BattleUnit& attacker, u
         return false;
     }
 
-    if (hit.unknown5E != 0 || hit.unknown60 != 0)
+    if (hit.zoomX != 0 || hit.zoomY != 0)
     {
         hit.flags |= Painter::ZoomModes;
-        painter.SetZoom(hit.x, hit.y, hit.unknown5E, hit.unknown60);
+        painter.SetZoom(hit.x, hit.y, hit.zoomX, hit.zoomY);
     }
 
     // Once the walk reached the target the picture is not loaded again (nothing is drawn).

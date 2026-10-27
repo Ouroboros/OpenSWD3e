@@ -56,8 +56,8 @@ void FillUnused(ActState& state)
     ones(state.view);
     ones(state.target);
     ones(state.unknown5C);
-    ones(state.unknown5E);
-    ones(state.unknown60);
+    ones(state.zoomX);
+    ones(state.zoomY);
     ones(state.offsetX);
     ones(state.offsetY);
     ones(state.drawLevel);

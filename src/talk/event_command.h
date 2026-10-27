@@ -50,7 +50,7 @@ enum class EventCommand : u16
     JumpIfClockPassed = 0x24,
     MarkClock = 0x25,
     RemoveRole = 0x26,
-    HideRole = 0x27,
+    ShowRole = 0x27,
     PutRole = 0x28,
     JumpByChoice = 0x29,
     LockPlayer = 0x2A,
@@ -137,8 +137,8 @@ enum class EventCommand : u16
     SceneMusic = 0x7B,
     DialogLogged = 0x7C,
     AddLog = 0x7D,
-    JumpIfActionNot = 0x7E,
-    JumpIfAction = 0x7F,
+    JumpIfAction = 0x7E,
+    JumpIfActionNot = 0x7F,
     AddItem = 0x80,
     JumpIfItem = 0x81,
     JumpIfNoItem = 0x82,
@@ -291,7 +291,7 @@ constexpr std::array<CommandLength, 0xD7> kCommandBytes = {
     CommandLength{EventCommand::JumpIfClockPassed, 8},            // 0x24
     CommandLength{EventCommand::MarkClock, 2},                    // 0x25
     CommandLength{EventCommand::RemoveRole, 4},                   // 0x26
-    CommandLength{EventCommand::HideRole, 4},                     // 0x27
+    CommandLength{EventCommand::ShowRole, 4},                     // 0x27
     CommandLength{EventCommand::PutRole, 8},                      // 0x28
     CommandLength{EventCommand::JumpByChoice, 0},                 // 0x29
     CommandLength{EventCommand::LockPlayer, 2},                   // 0x2A
@@ -378,8 +378,8 @@ constexpr std::array<CommandLength, 0xD7> kCommandBytes = {
     CommandLength{EventCommand::SceneMusic, 10},                  // 0x7B
     CommandLength{EventCommand::DialogLogged, 2},                 // 0x7C
     CommandLength{EventCommand::AddLog, 0},                       // 0x7D
-    CommandLength{EventCommand::JumpIfActionNot, 10},             // 0x7E
-    CommandLength{EventCommand::JumpIfAction, 10},                // 0x7F
+    CommandLength{EventCommand::JumpIfAction, 10},                // 0x7E
+    CommandLength{EventCommand::JumpIfActionNot, 10},             // 0x7F
     CommandLength{EventCommand::AddItem, 6},                      // 0x80
     CommandLength{EventCommand::JumpIfItem, 8},                   // 0x81
     CommandLength{EventCommand::JumpIfNoItem, 8},                 // 0x82

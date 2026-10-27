@@ -779,8 +779,8 @@ bool Talk::RunStateCommand(EventRun& run)
             return false;
         }
 
-        case EventCommand::JumpIfActionNot:
         case EventCommand::JumpIfAction:
+        case EventCommand::JumpIfActionNot:
         {
             Operands operands = this->OperandsOf(run);
             const u16 operand = operands.Word();
@@ -801,7 +801,7 @@ bool Talk::RunStateCommand(EventRun& run)
 
             run.valueA = role->act.action;
 
-            if ((run.code == EventCommand::JumpIfAction) != (run.valueA == action))
+            if ((run.code == EventCommand::JumpIfActionNot) != (run.valueA == action))
             {
                 this->Jump(run, target);
             }
@@ -1097,7 +1097,10 @@ bool Talk::RunStateCommand(EventRun& run)
                 const Role& role = state.roles[run.found];
                 run.valueA = role.x - MapHeader::TileSize * column + MapHeader::TileSize / 2;
                 run.valueB = role.y - MapHeader::TileSize * row;
-                const i32 square = run.valueA * run.valueA + run.valueB * run.valueB;
+                // Summed by 32-bit imul and add, wrapping, then read as signed (0x00430ACD).
+                const auto acrossSquare = static_cast<u32>(run.valueA) * static_cast<u32>(run.valueA);
+                const auto downSquare = static_cast<u32>(run.valueB) * static_cast<u32>(run.valueB);
+                const auto square = static_cast<i32>(downSquare + acrossSquare);
                 const auto distance = static_cast<i32>(crt::Ftol(std::sqrt(static_cast<double>(square))));
 
                 if (distance > MapHeader::TileSize * tiles)
@@ -1855,7 +1858,11 @@ bool Talk::RunSystemCommand(EventRun& run)
             const i32 dy = one.y - other.y;
             run.valueA = dx;
             run.valueB = dy;
-            const auto distance = static_cast<i32>(crt::Ftol(std::sqrt(static_cast<double>(dx * dx + dy * dy))));
+            // Summed by 32-bit imul and add, wrapping, then read as signed (0x00431A8C).
+            const auto square = static_cast<i32>(
+                static_cast<u32>(dy) * static_cast<u32>(dy) + static_cast<u32>(dx) * static_cast<u32>(dx)
+            );
+            const auto distance = static_cast<i32>(crt::Ftol(std::sqrt(static_cast<double>(square))));
 
             if (distance > MapHeader::TileSize * tiles)
             {

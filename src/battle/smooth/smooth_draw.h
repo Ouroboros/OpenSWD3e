@@ -157,6 +157,7 @@ class ScenePainter
 {
 public:
     ScenePainter(BattleServices& services, Scene& scene, Scene::Where where = Scene::Where::current());
+    ~ScenePainter();
 
     ScenePainter(const ScenePainter&) = delete;
     ScenePainter& operator=(const ScenePainter&) = delete;
@@ -204,6 +205,8 @@ private:
     int ownerHeight = 0;
 
     std::size_t ScreenPixels(std::span<u16> pixels) const;
+
+    ScenePainter* outer = nullptr;  // BattleServices::recording before this one
 };
 
 // What a part deciding a frame draws text with in place of a font: the font's settings are its own (set in the
@@ -225,6 +228,9 @@ private:
     Scene& scene;
     Scene::Where where;
 };
+
+// Painter::SetZoom called by an act's 'CS' while it runs (ActArchive::ZoomStart).
+void SetActZoom(BattleServices& services, int anchorX, int anchorY, int zoomX, int zoomY);
 
 // The first `count` pixels of the screen (from its start, without its pitch) set to `color`.
 void FillScreen(u16 color, std::size_t count, Scene& scene, Scene::Where where = Scene::Where::current());

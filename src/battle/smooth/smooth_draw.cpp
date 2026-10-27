@@ -208,8 +208,15 @@ Scene::Owner::~Owner()
 ScenePainter::ScenePainter(BattleServices& services, Scene& scene, Scene::Where where)
     : services(services),
       scene(scene),
-      where(where)
+      where(where),
+      outer(services.recording)
 {
+    this->services.recording = this;
+}
+
+ScenePainter::~ScenePainter()
+{
+    this->services.recording = this->outer;
 }
 
 // A colour of the screen's format: it draws nothing.
@@ -594,6 +601,25 @@ void SceneFont::DrawText(Pixel*, int x, int y, std::u8string_view text, Pixel co
         },
         this->where
     );
+}
+
+// The original sets the zoom at once in 0x00436C80; here it is added to the scene being drawn into then (or to the
+// battle frame's scene), so that it comes before the draws that follow it there.
+void SetActZoom(BattleServices& services, int anchorX, int anchorY, int zoomX, int zoomY)
+{
+    if (services.recording != nullptr)
+    {
+        services.recording->SetZoom(anchorX, anchorY, zoomX, zoomY);
+        return;
+    }
+
+    if (services.frame != nullptr)
+    {
+        ScenePainter(services, *services.frame).SetZoom(anchorX, anchorY, zoomX, zoomY);
+        return;
+    }
+
+    services.painter.SetZoom(anchorX, anchorY, zoomX, zoomY);
 }
 
 void FillScreen(u16 color, std::size_t count, Scene& scene, Scene::Where where)

@@ -155,11 +155,19 @@ int ExplosionFrame::Advance(Painter& painter, crt::Random& random, ParticleEffec
     return 0;
 }
 
-// What Projector::DrawExplosion draws of the frame (see there).
+// What Projector::DrawExplosion draws of the frame (see there). The original writes outside the frame for a mirrored
+// body clipped inside but drawn before its first or past its last pixel and for a particle at x -1 on the top row;
+// those pixels are skipped here (see deviations.md).
 void ExplosionFrame::Draw(u16* screen, Painter& painter, const ExplosionView& view) const
 {
     const Projector& owner = this->projector;
     const u16 fill = view.fill;
+    const i64 screenPixels = static_cast<i64>(owner.screenWidth) * owner.screenHeight;
+
+    auto pixelAt = [screen, screenPixels](i64 index) -> u16*
+    {
+        return index >= 0 && index < screenPixels ? screen + index : nullptr;
+    };
 
     if (view.body)
     {
@@ -186,15 +194,20 @@ void ExplosionFrame::Draw(u16* screen, Painter& painter, const ExplosionView& vi
                     continue;
                 }
 
-                u16& target = screen[owner.screenRows[static_cast<std::size_t>(y)] + column + x];
+                u16* target = pixelAt(static_cast<i64>(owner.screenRows[static_cast<std::size_t>(y)]) + column + x);
+
+                if (target == nullptr)
+                {
+                    continue;
+                }
 
                 if (view.mixed)
                 {
-                    Mix(painter, pixel, target);
+                    Mix(painter, pixel, *target);
                 }
                 else
                 {
-                    target = pixel;
+                    *target = pixel;
                 }
             }
 
@@ -210,62 +223,66 @@ void ExplosionFrame::Draw(u16* screen, Painter& painter, const ExplosionView& vi
 
         if (px + 1 >= 0 && px + 1 < owner.screenWidth && py >= 0 && py < owner.screenHeight)
         {
-            u16* line = screen + owner.screenRows[static_cast<std::size_t>(py)] + px;
+            const i64 at = static_cast<i64>(owner.screenRows[static_cast<std::size_t>(py)]) + px;
+            u16* left = pixelAt(at);
+            u16& right = screen[at + 1];
 
             if (view.mixed)
             {
-                if (pixels[kUpperLeft] != fill)
+                if (pixels[kUpperLeft] != fill && left != nullptr)
                 {
-                    Mix(painter, pixels[kUpperLeft], line[0]);
+                    Mix(painter, pixels[kUpperLeft], *left);
                 }
 
                 if (pixels[kUpperRight] != fill)
                 {
-                    Mix(painter, pixels[kUpperRight], line[1]);
+                    Mix(painter, pixels[kUpperRight], right);
                 }
 
-                line[1] = pixels[kUpperRight];
+                right = pixels[kUpperRight];
             }
             else
             {
-                if (pixels[kUpperLeft] != fill)
+                if (pixels[kUpperLeft] != fill && left != nullptr)
                 {
-                    line[0] = pixels[kUpperLeft];
+                    *left = pixels[kUpperLeft];
                 }
 
                 if (pixels[kUpperRight] != fill)
                 {
-                    line[1] = pixels[kUpperRight];
+                    right = pixels[kUpperRight];
                 }
             }
         }
 
         if (px + 1 >= 0 && px + 1 < owner.screenWidth && py + 1 >= 0 && py + 1 < owner.screenHeight)
         {
-            u16* line = screen + owner.screenRows[static_cast<std::size_t>(py + 1)] + px;
+            const i64 at = static_cast<i64>(owner.screenRows[static_cast<std::size_t>(py + 1)]) + px;
+            u16* left = pixelAt(at);
+            u16& right = screen[at + 1];
 
             if (view.mixed)
             {
-                if (pixels[kLowerLeft] != fill)
+                if (pixels[kLowerLeft] != fill && left != nullptr)
                 {
-                    Mix(painter, pixels[kLowerLeft], line[0]);
+                    Mix(painter, pixels[kLowerLeft], *left);
                 }
 
                 if (pixels[kLowerRight] != fill)
                 {
-                    Mix(painter, pixels[kLowerRight], line[1]);
+                    Mix(painter, pixels[kLowerRight], right);
                 }
             }
             else
             {
-                if (pixels[kLowerLeft] != fill)
+                if (pixels[kLowerLeft] != fill && left != nullptr)
                 {
-                    line[0] = pixels[kLowerLeft];
+                    *left = pixels[kLowerLeft];
                 }
 
                 if (pixels[kLowerRight] != fill)
                 {
-                    line[1] = pixels[kLowerRight];
+                    right = pixels[kLowerRight];
                 }
             }
         }

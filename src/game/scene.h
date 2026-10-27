@@ -17,7 +17,7 @@
 namespace swd3e
 {
 
-// A talk window (0x4C bytes, the list at 0x004ACF48): its frame and place (growing out of the speaker or a point
+// A talk window (0x4C bytes, the list at 0x004C66F8): its frame and place (growing out of the speaker or a point
 // over four frames), the text with the page shown and the typing position, the colours, the timeout and the name.
 struct TalkWindow
 {
@@ -115,7 +115,7 @@ struct RoleMark
     u16 unk0E = 0;                        // +0x0E
 };
 
-// A falling or rising line of the screen (0x18 bytes, the list at 0x004BAB9C): `count` columns from (x, y) whose
+// A falling or rising line of the screen (0x18 bytes, the list at 0x004D3FBC): `count` columns from (x, y) whose
 // offsets and lengths the mode moves (high byte of `mode`: 0x80 down, 0x40 up, 0x20 open, 0x10 close, 0x08 still).
 struct ScriptEffect
 {
@@ -142,7 +142,7 @@ struct ScriptEffect
     std::unique_ptr<ScriptEffect> next;  // +0x14
 };
 
-// An act moving over the map (0xB0 bytes; the lists at 0x004AD3E8 and 0x004BA6E0). Sprites move by (stepX, stepY)
+// An act moving over the map (0xC0 bytes; the lists at 0x004C6BD4 and 0x004D3F94). Sprites move by (stepX, stepY)
 // until within 32 pixels of the target; the role heads of the second list slide along x towards targetX.
 struct ScriptSprite
 {
@@ -152,29 +152,29 @@ struct ScriptSprite
     static constexpr i16 HeadDropSpeed = 0x2710;  // the speed a placed head leaves with (off the screen at once)
 
     ActState act;                        // +0x00
-    i16 headX = 0;                       // +0x98
-    i16 headSpeed = 0;                   // +0x9A
-    i16 targetX = 0;                     // +0x9C
-    i16 targetY = 0;                     // +0x9E the head's y in the second list
-    float stepX = 0;                     // +0xA0
-    float stepY = 0;                     // +0xA4
-    float x = 0;                         // +0xA8 map pixels
-    float y = 0;                         // +0xAC
-    std::unique_ptr<ScriptSprite> next;  // +0xB0
+    i16 headX = 0;                       // +0xA4
+    i16 headSpeed = 0;                   // +0xA6
+    i16 targetX = 0;                     // +0xA8
+    i16 targetY = 0;                     // +0xAA the head's y in the second list
+    float stepX = 0;                     // +0xAC
+    float stepY = 0;                     // +0xB0
+    float x = 0;                         // +0xB4 map pixels
+    float y = 0;                         // +0xB8
+    std::unique_ptr<ScriptSprite> next;  // +0xBC
 };
 
-// An act played at a place of the screen until its script ends (0xA4 bytes; the lists at 0x004B7C70 and
-// 0x004B8968).
+// An act played at a place of the screen until its script ends (0xB0 bytes; the lists at 0x004D15F4 and
+// 0x004D1EBC).
 struct ScriptAnimation
 {
     i16 x = 0;                              // +0x00 screen pixels
     i16 y = 0;                              // +0x02
     i32 unk04 = 0;                          // +0x04
     ActState act;                           // +0x08
-    std::unique_ptr<ScriptAnimation> next;  // +0xA0
+    std::unique_ptr<ScriptAnimation> next;  // +0xAC
 };
 
-// A ripple over the screen (0x2C bytes, the list at 0x004AC9B8): a grid of heights in two pages over a copy of the
+// A ripple over the screen (0x2C bytes, the list at 0x004C6150): a grid of heights in two pages over a copy of the
 // screen, refracting it until the waves die out.
 struct ScriptObject
 {
@@ -320,11 +320,11 @@ struct Scene
     static constexpr i32 ChoicePointer = 0xD;
     static constexpr u32 PointerFlags = 0x9000;
 
-    i32 timerEvent = 0;  // 0x004C2A9C the event run when the first timer runs out
-    i32 unk4BAB78 = 0;
-    i32 unk4BAB7C = 0;
-    i32 unk4C97E8 = 0;
-    i32 unk4C97EC = 0;
+    i32 timerEvent = 0;                   // 0x004C2A9C the event run when the first timer runs out
+    i32 secondTimerUnk0 = 0;              // 0x004D3F9C cleared when the second timer starts; nothing reads it
+    i32 secondTimerUnk4 = 0;              // 0x004D3FA0 likewise
+    i32 timerUnk0 = 0;                    // 0x004E5598 cleared when the first timer starts; nothing reads it
+    i32 timerUnk4 = 0;                    // 0x004E559C likewise
     i32 secondTimerFrames = 0;            // 0x004C2FF0 the frames left on the second timer (-1: stopped)
     i32 returnColumn = 0;                 // 0x004C3008 its tile
     i32 returnRow = 0;                    // 0x004C3010

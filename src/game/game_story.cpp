@@ -206,15 +206,15 @@ void Game::StartTimer(int minutes, int seconds, int event, int which)
 
     if (which != 0)
     {
-        view.unk4BAB78 = 0;
-        view.unk4BAB7C = 0;
+        view.secondTimerUnk0 = 0;
+        view.secondTimerUnk4 = 0;
         view.secondTimerFrames = kTimerFrames * (seconds + kSecondsPerMinute * minutes);
         this->state.SetGameFlag(GameState::SecondTimer);
         return;
     }
 
-    view.unk4C97E8 = 0;
-    view.unk4C97EC = 0;
+    view.timerUnk0 = 0;
+    view.timerUnk4 = 0;
     view.timerFrames = kTimerFrames * (seconds + kSecondsPerMinute * minutes);
     view.timerEvent = event;
     this->state.SetGameFlag(GameState::Timer);

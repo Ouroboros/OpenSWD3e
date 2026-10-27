@@ -1327,7 +1327,7 @@ bool Talk::RunRoleCommand(EventRun& run)
             return true;
 
         case EventCommand::RemoveRole:
-        case EventCommand::HideRole:
+        case EventCommand::ShowRole:
         {
             Operands operands = this->OperandsOf(run);
             const u16 operand = operands.Word();

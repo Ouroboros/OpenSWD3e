@@ -40,28 +40,28 @@ public:
     static constexpr int Chains = 16;
     static constexpr u32 ChainMask = 0xF;
     static constexpr int MapAct = 0xFFFF;
-    static constexpr u16 FlagEffect = 0x80;  // ActState::flags: 'CS' started the effect
+    static constexpr u16 FlagZoom = 0x80;  // ActState::flags: 'CS' set the zoom (Painter::ZoomModes)
 
-    // The effect 'CS' starts (0x00423630): the state's x and y and the opcode's value twice.
-    using EffectStart = std::function<void(i32 x, i32 y, i32 first, i32 second)>;
+    // Painter::SetZoom (0x00423630) called by 'CS': the state's x and y as the anchor and the opcode's value twice.
+    using ZoomStart = std::function<void(i32 x, i32 y, i32 zoomX, i32 zoomY)>;
 
     explicit ActArchive(ErrorReporter& errors);
 
     // The directory the archives are opened from at the first use (the original reads 0x004C2B94 then).
     void SetGameDirectory(std::u8string directory);
-    void SetEffectStart(EffectStart start);
+    void SetZoomStart(ZoomStart start);
     void SetCacheLimit(int bytes);
     ActScript Get(int id, int sub);
     ActScript LoadDirect(int id, int sub);
     int CloseAll();
     void SetUseCache(int value);
-    void SetEffectEnabled(int value);
+    void SetZoomEnabled(int value);
     int CacheBytes() const;
     bool ScriptRestarted() const;
     // The rebuild's smooth motion: the flag put back after a menu frame is painted again.
     void SetScriptRestarted(bool value);
     int Run(ActState& state);
-    // The rebuild's smooth battle: `state` one frame on (a copy run without starting effects; what Run leaves in the
+    // The rebuild's smooth battle: `state` one frame on (a copy run without setting the zoom; what Run leaves in the
     // archive is kept).
     ActState Peek(const ActState& state);
 
@@ -96,20 +96,20 @@ private:
     File* ArchiveOf(int id);
 
     ErrorReporter& errors;
-    EffectStart effectStart;
+    ZoomStart zoomStart;
     std::u8string gameDirectory;
     std::array<File, FileCount> files;
     bool opened = false;                               // 0x004F5170
     int cacheLimit = 0x100000;                         // 0x004B70C0
     u32 cacheBytes = 0;                                // 0x004F5168
     int useCache = 0;                                  // 0x004F516C
-    int effectEnabled = 0;                             // 0x004F5400
+    int zoomEnabled = 0;                               // 0x004F5400
     bool restarted = false;                            // 0x004F5160
     bool peeking = false;                              // the rebuild's Peek
     u32 reads = 0;                                     // 0x004F5164: counts the file reads, read by nothing
-    u16 effectValue = 0;                               // 0x004F5120: the last 'CS' value, read by nothing
-    u16 effectX = 0;                                   // 0x004F517C, read by nothing
-    u16 effectY = 0;                                   // 0x004F517E, read by nothing
+    u16 lastZoom = 0;                                  // 0x004F5120: the last 'CS' value, read by nothing
+    u16 lastZoomX = 0;                                 // 0x004F517C, read by nothing
+    u16 lastZoomY = 0;                                 // 0x004F517E, read by nothing
     std::array<std::list<CacheEntry>, Chains> chains;  // 0x004F5180
     std::array<u16, Chains> chainCounts{};             // 0x004F4FBC
     std::array<std::list<IndexEntry>, Chains> index;   // 0x004F4FE0
