@@ -697,7 +697,7 @@ private:
     static constexpr u32 ScriptedBattle = 0x80000000;  // in `battleRequest`: started by a talk command
     i32 battleRequest = 0;                             // 0x004C2B84 a battle to start (its number in the low word)
     i32 musicBeforeBattle = 0;   // 0x004C15D0 the music queue's mode when a map battle starts (0x0040A7B0 restores it)
-    i32 inBattle = 0;            // swd32 0x004CAEB4 a battle from the map runs
+    i32 inBattle = 0;            // 0x004E6CF8 a battle from the map runs
     std::vector<u16> shopGoods;  // 0x004D1290 the items of talk command 0x85 for the shop, ended by 0
     i32 currentMap = 0;          // 0x004C3190 the number of the map shown
     i32 playClockStart = 0;      // swd32 0x004AB990 the time() the play time was last counted from
@@ -744,7 +744,7 @@ private:
     i32 frameTime = Game::FirstFrameTime;  // 0x004AF7A4 the milliseconds between the last two main frames
     i32 frameWallTime = 0;                 // 0x004C30D8 time(0) at each MainFrame (0x0040A7B0); no code reads it
     i32 frameUnkCleared = 0;               // 0x004E581C cleared by MainFrame (0x0040A7B0); no code reads it
-    i32 counterWait = 0;  // swd32 0x004CAD24 frames the controlled role stood still (the counter fades in after 0x64)
+    i32 counterWait = 0;     // 0x004E6B58 frames the controlled role stood still (the counter fades in after 0x64)
     i32 loadingPercent = 0;  // 0x004E6D14
     i32 loadingUnusedA = 0;  // 0x004E6D1C cleared when the loading screen starts; no code reads it
     i32 loadingRunner = 0;   // 0x004E6D2C the act running along the bar (1 or 2)
@@ -761,7 +761,7 @@ private:
     u8 effectsOff = 0;                    // Env.dat +0x1B
     u32 deviceFlags = 0;                  // swd32 0x004ACB90 bit 1: DirectInput failed
     i32 active = 0;                       // swd32 0x004B7CAC 1 once the display runs
-    i32 inactive = 0;                     // swd32 0x004BABA4
+    i32 inactive = 0;                     // 0x004D3FC4
     i32 frameCounter = 0;                 // 0x004C2B78
     u32 menuState = 0;                    // 0x004D1C88 bit 31: entered, low bits the menu
     i32 menuMode = 0;                     // 0x0050A404

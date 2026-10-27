@@ -332,7 +332,7 @@ PathNode* PathFinder::PopBest()
 
     if (node == nullptr)
     {
-        ErrorLog(u8"aStar ,Path find fail");
+        ErrorLog(u8"aStar ,Path find fail\n");  // 0x004AF120
         return nullptr;
     }
 
@@ -499,7 +499,7 @@ void PathFinder::InsertOpen(PathNode& node)
         return;
     }
 
-    while (current != nullptr && !(node.f <= current->f))
+    while (current != nullptr && node.f > current->f)
     {
         previous = current;
         current = current->listNext;

@@ -74,11 +74,13 @@ void EncodeLine(
 
         if (pixel != fill && pixel != skip)
         {
+            // The first pixel is written whatever the width (a picture 0 wide still gets one); the next ones while the
+            // line lasts.
             const std::size_t count = out.size();
             AppendWord(out, 0);
             int length = 0;
 
-            for (; x + length <= width; ++length)
+            do
             {
                 const Pixel value = source[length];
 
@@ -95,7 +97,9 @@ void EncodeLine(
                 {
                     out.push_back(value);
                 }
-            }
+
+                ++length;
+            } while (x + length <= width);
 
             lineBytes += sizeof(u16) + static_cast<u32>(length * sizeof(Pixel));
             WriteWord(out.data() + count, static_cast<u16>(length));
@@ -199,8 +203,19 @@ std::optional<RawPicture> RleCodec::Decode(std::span<const u8> rle) const
     }
 
     const std::size_t pixelSize = picture.format == RleHeader::TrueColor ? sizeof(u16) : sizeof(u8);
-    // The new block of Allocate (0x0043DA70) is cleared: pixels no code covers stay 0.
-    picture.pixels.assign(static_cast<std::size_t>(picture.width) * picture.height * pixelSize, u8{0});
+    // The size asked of Allocate (0x0043DA70) is width * height * pixel size in 32 bits; 0 or negative gives no block
+    // (the original returns it, writing to it first when a line has codes, see deviations.md). The new block is
+    // cleared: pixels no code covers stay 0.
+    const auto bytes = static_cast<u32>(
+        static_cast<u32>(picture.width) * static_cast<u32>(picture.height) * static_cast<u32>(pixelSize)
+    );
+
+    if (static_cast<i32>(bytes) <= 0)
+    {
+        return std::nullopt;
+    }
+
+    picture.pixels.assign(bytes, u8{0});
     std::size_t written = 0;
 
     auto put = [&picture, &written, pixelSize](u16 value)
@@ -277,9 +292,8 @@ std::optional<RawPicture> RleCodec::Decode(std::span<const u8> rle) const
 }
 
 // swd3e.exe 0x00401680: reads the header and, for a 16-bit picture, converts its literal pixels to the display format
-// in place. False for another magic or format (the header fields are still read for another format). A literal code of
-// count 0 converts the next code word (the converters loop do-while). Malformed data running past its end stops there
-// (read and written out of bounds in the original).
+// in place. False for another magic or format (the header fields are still read for another format). Malformed data
+// running past its end stops there (read and written out of bounds in the original).
 bool RleCodec::ConvertToDisplay(std::span<u8> rle, RleHeader& header) const
 {
     if (rle.size() < RleHeader::HeaderBytes || ReadWord(rle.data()) != this->painter.Rle().magic)
@@ -316,9 +330,9 @@ bool RleCodec::ConvertToDisplay(std::span<u8> rle, RleHeader& header) const
             if ((value & kKindMask) == kLiteral)
             {
                 const auto room = static_cast<std::size_t>(end > code ? (end - code) / sizeof(u16) : 0);
+                // A literal code is not 0 (0 ends the line), so its count is at least 1.
                 const std::size_t count = std::min<std::size_t>(value & kCountMask, room);
-                // The converters loop do-while: a count of 0 converts the word after the code (the next code) in place.
-                std::vector<u16> pixels(count == 0 ? std::min<std::size_t>(1, room) : count);
+                std::vector<u16> pixels(count);
                 std::memcpy(pixels.data(), code, pixels.size() * sizeof(u16));
                 this->painter.ConvertPixels(pixels);
                 std::memcpy(code, pixels.data(), pixels.size() * sizeof(u16));
@@ -334,8 +348,7 @@ bool RleCodec::ConvertToDisplay(std::span<u8> rle, RleHeader& header) const
 
 // swd3e.exe 0x00401780: an 8-bit picture becomes a 16-bit one through its palette (converted to the display format);
 // swd3e keeps the palette (swd32 freed it); the new line headers hold the plain length. A 16-bit picture is converted
-// in place and takes its size from the header. Malformed data (a literal of count 0, data running past its end) stops
-// at the end.
+// in place and takes its size from the header. Malformed data running past its end stops at the end.
 void RleCodec::ConvertTo16(Picture& picture) const
 {
     const u8* source = picture.data.data();

@@ -14,7 +14,7 @@ constexpr u32 kNone = 0xFFFFFFFF;
 constexpr u32 kSolid = MapHeader::Wall | MapHeader::SolidRole;
 constexpr u32 kSlideMask = MapHeader::Wall | MapHeader::SolidRole | MapHeader::Unk800000;
 
-// The tables of a slide (on the stack of 0x004040B0): a straight step has the cell offset ahead (replaced by the
+// The tables of a slide (on the stack of 0x00403DC0): a straight step has the cell offset ahead (replaced by the
 // role's size when it moves right or down) and the probe bits of the side steps; a diagonal one its step and the probe
 // bits of the diagonal, the horizontal and the vertical part.
 constexpr std::array<i32, 6> kSlideLeft = {
@@ -86,6 +86,12 @@ constexpr int kAlongY = 1;
 // A step (stepX, stepY) of -1..1 as one number (StepEvent, FindRoleAhead).
 constexpr int kStepRow = 3;
 constexpr int kStepCenter = kStepRow + 1;
+
+// A place in tiles as the original takes it: the pixels shifted unsigned (`shr`).
+constexpr int TileOf(i32 place)
+{
+    return static_cast<int>(static_cast<u32>(place) >> MapHeader::TileShift);
+}
 
 constexpr int StepCase(int stepX, int stepY)
 {
@@ -186,8 +192,8 @@ void RoleControl::Slide(Role& role, int& stepX, int& stepY) const
         }
 
         const u32 lanes = this->FreeLanes(
-            rule[kAheadOffset] + (role.x >> MapHeader::TileShift),
-            role.y >> MapHeader::TileShift,
+            rule[kAheadOffset] + TileOf(role.x),
+            TileOf(role.y),
             role.act.height,
             state.map.width,
             state.map.height,
@@ -246,8 +252,8 @@ void RoleControl::Slide(Role& role, int& stepX, int& stepY) const
         }
 
         const u32 lanes = this->FreeLanes(
-            role.x >> MapHeader::TileShift,
-            rule[kAheadOffset] + (role.y >> MapHeader::TileShift),
+            TileOf(role.x),
+            rule[kAheadOffset] + TileOf(role.y),
             role.act.width,
             1,
             state.map.width,
@@ -355,7 +361,7 @@ u32 RoleControl::FindRoleAt(u32 x, u32 y) const
     return kNone;
 }
 
-// swd3e.exe 0x00404DD0: 0x00404FD0 limited to roles triggered by touch (flag 0x2000)
+// swd3e.exe 0x00404DD0: 0x00404CF0 limited to roles triggered by touch (flag 0x2000)
 u32 RoleControl::FindTouchRoleAt(u32 x, u32 y) const
 {
     const u32 index = this->FindRoleAt(x, y);

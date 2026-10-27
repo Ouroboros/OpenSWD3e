@@ -22,21 +22,24 @@
 
 ## 整体进度
 
-- 当前阶段：第5阶段（交付）；第4阶段第一遍、偏差表核实与数据核对已完成。
+- 当前阶段：第4阶段第二遍汇编验证（以汇编为准，源码不默认正确）；第一遍、偏差表核实、数据核对已完成，Windows 版已试玩到对话正常。
 - 已识别函数数：1710；模块已按swd32配对对齐（`unknown` 0个）。
 - 函数总数：1710（静态取址闭合，`.rsrc`19项资源已核对，见reverse/analysis/scope-and-gaps.md）。
 - 已实现／总数：1710／1710。
-- 已验证／总数：1710／1710（第一遍）。
-- 待实现／待验证：0／0。
+- 已验证／总数：1710／1710（第一遍）；第二遍 37／1710（2.2%）。
+- 待实现／待验证：0／0（第二遍待核 1673）。
 
 ## 当前工作
 
-函数全集1710个均已实现并通过第一遍汇编对照（证据按模块记入reverse/evidence/pass1/），范围缺口已闭合（reverse/analysis/scope-and-gaps.md）；Linux测试172项全部通过（正传黄金结果的处理见reverse/evidence/tests/legacy-goldens.md）。偏差表全部按 swd3e 汇编核实（reverse/analysis/deviations.md），待核对数据已闭合（reverse/evidence/scope/）。Windows x64 构建通过、0 警告，构建与测试记录见 reverse/evidence/tests/build-results.md。当前等待用户运行 Windows 单元测试与试玩并回传结果。
+第二遍汇编验证，方法见 reverse/analysis/pass2-method.md：每个函数先只读汇编独立推导全部分支、出口、位宽、调用顺序、随机数消费与副作用，再对照源码；边界保护须与 deviations.md 登记一致；证据记入 reverse/evidence/pass2/，用 `scripts/mark_verified.py ... --pass 2` 登记。
+
+停点：reverse/functions.tsv 第 38 行（0x00405150 RolePath::Update）。
 
 ## 下一步
 
-1. 用户运行 build/windows/swd3e_tests.exe 与 swd3er.exe，回传测试输出与试玩问题。
-2. 按回传结果修正（修订使已验证函数失效时，恢复为待复核并重验），直至可正常游玩。
+1. 按函数表顺序逐函数完成第二遍，差异修正后完整复核再登记 exact。
+2. 每批修正后 Linux 构建与测试通过、Windows 构建 0 警告，提交推送并发 TG。
+3. 用户试玩中回传的问题按汇编判断是否为重建差异，差异照第二遍流程修正。
 
 ## GOAL完成条件
 
