@@ -666,11 +666,13 @@ int TextFont::InsertGlyph(u16 code)
     return position;
 }
 
-// swd3e.exe 0x0043B590: a Big5 string; single-byte characters advance by half of the advance. A glyph missing from the
-// cache is rasterized into it; once the cache would reach 1999 entries the count stays and the slot after the last
-// entry is cleared.
+// swd3e.exe 0x0043B590: a Big5 string up to its first NUL (strlen); single-byte characters advance by half of the
+// advance. A glyph missing from the cache is rasterized into it; once the cache would reach 1999 entries the count
+// stays and the slot after the last entry is cleared.
 void TextFont::DrawText(Pixel* target, int x, int y, std::string_view text, Pixel color, int style)
 {
+    text = text.substr(0, text.find('\0'));
+
     if (DrawPlacer* placer = DrawPlacer::Active(); placer != nullptr)
     {
         placer->Place(x, y, __builtin_return_address(0), nullptr);
