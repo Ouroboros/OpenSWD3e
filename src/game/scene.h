@@ -420,8 +420,8 @@ struct Scene
     std::array<i16, 0x40> heatCounts = {};      // 0x004C4A80 lines
     std::array<i32, 0x30> heatOffsets = {};     // 0x004C6154 pixels
     u16 heatFrame = 0;                          // 0x004E6CD8
-    ColorFade fade;     // 0x004C300C frames; steps 0x004A9A00, 0x004A94B8, 0x004C97F0; levels 0x004A93E0, 0x004B6C70,
-                        // 0x004C9A00; targets 0x004A93DC, 0x004B6C74, 0x004C9A04
+    ColorFade fade;     // 0x004C300C frames; steps 0x004C30DC, 0x004C2B90, 0x004E55A0; levels 0x004C2AA8, 0x004D0468,
+                        // 0x004E5808; targets 0x004C2AA4, 0x004D046C, 0x004E580C
     i32 unk4C9A08 = 0;  // shown as dbg1
     i32 unk4ACE64 = 0;  // shown as dbg2
     i32 followerCount = 0;          // 0x004D3FC0 one past the last follower listed (slot 0 unused)

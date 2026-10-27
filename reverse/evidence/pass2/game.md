@@ -265,3 +265,95 @@
 
 汇编：领队 = roles[0x004C4B00]；0x00411DA0(x+宽×8, y+高×8, 参数 x, 参数 y, &距离)，结果交给 0x00411E80 返回。
 对照：一致（宽高为 act +0x2C／+0x30，即 role +0x6C／+0x70）。
+
+## 0x0040E420 Game::NewGame — exact
+
+汇编（按段）：
+- 0x00459AE0；0x00437E00(1)；旗标区 0x400 字节清零；Set 1、Clear 0／2、Set 3／4、Clear 5..0x14、0x16..0x19、Set 0x46、Clear 0x48..0x53、0x5A、Set 0x1E、Clear 0x15（最终只有 1、3、4、0x1E、0x46 置位）。
+- variables[0]（0x004C6370）=100；0x004C3008、0x004C3010、0x004E6B50、0x004C2FF0 = −1；0x004E6CCC、0x004E4DC0、0x004C2A9C = 0；释放 0x004C3184/88/8C 并清 0；0x004D15F8 六项清 0；0x004D0B8C=1、0x004D0E58=0、0x004D0B84=0、0x004C6568=0；0x0049D0C0(1, 1, 0xA)。
+- 0x004C2B88=0x40000000；0x004C6624 起 0x80 字节填 0xCF；0x004C6564=3；0x004C4F10=1（全程序只此一处写、无读取，0x00428D60 只把相邻的 0x004C4F0C 当独立输出参数，不建模）；释放对话窗链（文字 +0x38、名字 +0x44）并清哑头 0x004C66B0 共 0x4C 字节；0x0040E080(0x10)。
+- 鼠标指针 0x004C6478：清 0xE4，act.id 0x2329、action 0、flags 0x9000，0x0040DF70，0x00436C80 失败 → 错误框「Act Err(Misc:Init:Mouse:Norm)」「設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]」。按钮指针 0x004E5468 与翻页指针 0x004E6BD8 清零并重置，前者 0x2329／0xC／0x9000，后者 0x2391／0／0x9000；分别 0x00436C80，失败时两者都用按钮指针的值报「…:Btn)」「…:nPage)」（原 BUG）。
+- 0x004C31B0 清 0xA4 并重置；0x004D0E84、0x004D0E5C = 0；0x004D34C0 起 12 个 act 清零重置，id 0x232E、action 0..11；0x004E4B78 重置，0x2329／8；0x004C6360/64/68/6C = 0x280/0x1E0/2/0；重置 0x004C6BD8、0x004C2AB0；0x004E6880 与 0x004C27B8 各 4 个 act 清零重置，id 0x232D/0x232F/0x2330/0x2331 与 0x2337×4，action 0；0x004C6290 重置，0x004E5550 填 0x0F0F0F0F，0x004C6290 id 0x232B、action 0x60；0x004C6888/692C/69D0/6A74 重置并 id 0x232B。
+- 遭遇组：表 0x12 数到 0xFFFF 得 w 字；重新分配 ((8w+0x80)/8)×2 字节清零；首字 = w/8；w&7 → 错误框「戰鬥機率讀取」「設定數質量必須是 8 的倍數」并不复制，否则复制到首字之后。
+- 0x004E4DB4=0，0x004C65F0 = 表 1，每项 +0x18 到 0xFFFF；表 6 的 4 个 0x34 字节记录交给 0x0040E0D0（目标 0x004C4F18 起步长 0x3C）。0x004C6700 起 4×0x60 字节清零；释放背包链（文字 +0xB0）并清头 0xB4 字节；0x004E5594 = 表 0x18；表 5 每 4 字节（id, 数量）到 id 0 调 0x00454970(背包, id, 数量, 1)。
+- 技能：0x004C2B68..0x004C2B78 四个链释放后换成 0x00454C70()；表 9..0xC 各自到 0 为止调 0x00454970(头, id, 1, 1)。
+- 装备：0x004E4CB0..0x004E4DB0 的 64 个槽释放并换成 0x00454C70()；表 0xD..0x10 每人前 11 个字：id≠0 → 0x00454970(&新链, id, 1, 1)，否则 0x00454C70()，释放旧槽后存入。
+对照：源码逐段一致（旗标最终状态、各全局与 scene／party 字段的地址注释、常量 100／0x40000000／0xCFCF／3／0x10／0x2329／0x9000／0xC／0x2391／0x232E×12／8／0x280／0x1E0／2／0x232D…／0x2337／0x232B／0x60、MapsDataTable 编号、StartRoleBytes 0x34、StartItemBytes 4、ItemCountMode::Count 1、SlotsPerRole 16、kEquipmentFromData 11），6 条字符串与 exe 逐字一致；Role{}／ActState{} 的默认值全为 0（talkState 默认 NoTalk 即 0），等同原程序清零。
+
+## 0x0040F0D0 Game::ShowLoading — exact
+
+汇编：percent==−1：0x004E6D14=0x004E6D1C=0，percent 视作 0，0x004E6D2C = Below(2)+1，0x004E6D18/10/28 = 0x1F/0x73/0xFF，0x004E6D20=0，重置 0x004C2AB0 与 0x004D0D60。旗标 0x46 未置时：锁定离屏面得 0x004EDA44、解锁；清 640×480×2 字节；len = percent×0x174/100（向零取整），len ≥0 时列 0..len：红 = r/1024+0x1F、绿 = g/1024+0x73、蓝 = b/1024+0xFF（/1024 向零取整，写回三个全局），色 = 0x004277A0(红>>3, 绿>>3, 蓝>>3)，在 (0x7B+列, 0x1BD) 起竖写 30 行；r += 0x268、g += 0xE7、b −= 0x2BD。0x004E6D14 = percent；0x0040EFF0(0x23AF, 0, 0x78, 0x1BA)；0x004D0D60 id = 跑者、action 0x10、方向 3，0x0040EF60(…, len+0x6B, 0x1CC)；主表面 Blt 离屏面。percent==100 → 清旗标 0x46。
+对照：一致（kLoadingBarWidth 0x174、kBarLeft/Top/Height 0x7B/0x1BD/0x1E、各步长与基值、kColorFraction 0x400、kChannelDrop 3、kPictureX/Y 0x78/0x1BA、kRunnerX/Y 0x6B/0x1CC、RunAction 0x10、Right 3、各全局地址）；Blt 为平台替换（ShowFrame）。
+
+## 0x0040F310 Game::MapName — diff → exact
+
+汇编：地名表 0x14：首字 0xFFFF → 0；字（零扩展）≠ map 时：若该字不是 0x5125 则逐字节找下一个 “%Q”，取其后一字为下一个地图号，指针 +2，遇 0xFFFF → 0；相等时把其后到 “%Q” 前的字节复制到输出并补 NUL，返回 1。
+对照：一致（PlaceNameAt 2、NameEnd 0x5125）。差异：越出 maps.dat 的保护未登记。修正：并入 maps.dat 越界一行。
+
+## 0x0040F380 GameDatabases::Open — exact
+
+汇编：依次以 "%s%s"（安装目录+名字）、OPEN_EXISTING、GENERIC_READ 打开 maps.dat（0x004D0E08）、path.dat（0x004D3470，成功后建映射并映射到 0x004C6338）、talk1.dat（0x004C2FA0）。maps／path 失败：错误框标题 "SWD3"、正文 "RoleDataBase init Failed."／"PathDataBase init Failed."；talk1 失败：MessageBoxA(0, "SWD3", "StoryDataBase init Failed.", 0)（标题与正文对调）。任一失败 SendMessage(WM_DESTROY)。两条出口都返回 0。
+对照：一致；原调用者 0x004288B0 不看返回值，源码以布尔返回值在调用处紧接着 Destroy（即 WM_DESTROY），顺序与效果相同。
+
+## 0x0040F4A0 Game::StartStory — exact
+
+汇编：释放 maps 数据，分配 (文件长−0x200)，定位 0x200 读入；0x0040E420、0x0043E900、0x00429B10；表 4：leader = +0xC；leader.eventOffset=0、0x004D1538 = leader.id = leader、eventCursor=0、event=0x64、flags=0；0x004D15F8 六项与 0x004C6568 清 0；参数==1 → 0x004C3190=0x51，0x0040C570(+0, +2, +4, +6, +8, +0xA, 0)（零扩展）；返回 1。
+对照：一致（LoadMaps、kOpeningEvent 100、VeniceTavern 0x51、NewStory 表 4 各偏移）。
+
+## 0x0040F5C0 Game::InitRole — exact
+
+汇编：act.flags(+0x58)=0；0x00436C80 失败 → 错误框「Act Err(Misc:newRoleInit)」「設定錯誤 GUID[%d]\nact[%d] qq[%d] dir[%d]」；flags &= 0xDF0FFFFF；cell = 格子表 + ((y shr 4)×宽 + (x shr 4))；flags&0x100 时：格子&0x800 → flags |= 0x20000000；格子&0xF000 ≠0 → flags = (flags&0xFF0FFFFF) | (格子&0xF000)<<8；act.id≠0 且 (flags&0x8400)==0x8000 → 0x0040B270。
+对照：一致（Reflects 0x20000000、CellShades 0xF00000、CellEffects 0x100、Reflecting 0x800、ShadeMask 0xF000、ShadeShift 8、Visible|Hidden 0x8400）；格子越界为已登记偏差（deviations 358）。
+
+## 0x0040F680 Game::SetupFont — exact
+
+汇编：0x00439CB0；0x00439C20(&graphics)；0x0043A070(GetSystemMetrics(0), GetSystemMetrics(1))（不用调用者传入的尺寸）；0x00439FC0("細明體" 0x004B0BF4, size)；size==0x14 → 0x0043A110(0x18)，size==0x10 → 0x0043A110(0x12)；0x0043A120(0xFFFE)；0x0043A130(0)。
+对照：一致（kLargeFontAdvance 24、kMediumFontAdvance 18、NoBackground 0xFFFE、DefaultFace 與 exe 一致）；屏幕尺寸固定 640×480 为已登记平台替换（deviations 102）。
+
+## 0x0040F6F0 GameState::ClearRoles — exact
+
+汇编：i=0..roleCount（含）释放 roles[i]+0x38；0x004D3FC8 起 300×0xE4 字节清零；每个角色的 act（+0x40）调 0x0040DF70。
+对照：一致（Role{} 等同清零）；下标到 300 时释放表外一项为已登记偏差（deviations 359）。
+
+## 0x0040F750 Game::FreeItemLists — exact
+
+汇编：背包链（头 0x004C3018，next +0，文字 +0xB0）逐个释放；技能 0x004C2B68..0x004C2B78 四个链连同头（及头的文字）释放并置 0；装备 0x004E4CB0..0x004E4DB0 非空槽同样释放并置 0。
+对照：FreeItemList(inventory)、skills／equipment 各 reset，一致。
+
+## 0x0040FA20 Game::ReleaseRole — exact
+
+汇编：flags 无 0x80000000 → 返回。72 个移动记录中 role==index 的：x 或 y 低 4 位非 0 → 0x0040B180，且 index ≠ 0x004C4B00 时按记录当前步方向 x −= StepX、y −= StepY 直到对齐；flags &= 0xBBFFFFFF，act.speed(+0x88)=0。0x00432630(index)。index ≥ 300 → 错误框「對話系統(TalkEnd)」「GUID(%d)\n陣列索引錯誤(crID %d) (manMax %d) 」(index, 角色数)。flags&0x800：savedAction ≠ −1 → action = 它，savedDirection ≠ −1 → direction = 它；两者置 −1；0x00436C80 失败 → 「Act Err(Talk:Talkend)」；两者再置 −1；flags &= 0x7FFFFFFF；act.delay(+0x84)=0。
+对照：一致（Stepping|FastMove 0x44000000、FacesTalker 0x800、Held 0x80000000，三条串逐字一致）；原程序与重建都只有 RunTimers 一处调用，index < 角色数 ≤ 300，越界不可达；方向越界与第三个 %d 为已登记偏差（deviations 269、428）。
+
+## 0x00411A50 Game::DrawTextInput — exact
+
+汇编：x = 0x0043D590(框)、y = 0x0043D5A0(框)（之前一次 0x0049D3B0 的结果未用）；withPicture：0x00436720(0x234E, 0) 以 (x−0x62, y−0x36) 不透明绘制；0x0043D5C0 复制最多 0x40 字节到 0x0050A41C；逐字符 CharNextA，单字节且为负的字节改为 '@'；色 = 0x004277A0(0x15, 0xF, 8)；0x0043B590（大字体，目标 0x004EDA44，x, y, 文字, 色, 4）；光标 = 0x0043D5B0；0x00440980(x+11×光标, y, 0xB, 0x16, 当前 ? 0x14 : 0xA, 当前 ? 0xD : 3, 0, 5)。
+对照：一致（kNameBox*、kName*、kCursor*、FillMode::Gradient 5、BoldShadow 4）；图片取不到为已登记偏差（deviations 357）。
+
+## 0x00411C10（按用户要求去除）— exact
+
+原程序在此读 Env.dat 的安装设定；按用户要求不读 Env.dat，为已登记的平台替换（deviations 103），无对应源码。
+
+## 0x00411D10 Game::DiskFreeMegabytes — exact
+
+汇编：LoadLibraryA("KERNEL32")、GetProcAddress("GetDiskFreeSpaceExA")，任一失败返回 −1；否则调用 (NULL, &可用, &总量, NULL)，返回 (可用.低>>20)+(可用.高<<12)（32 位）。
+对照：std::filesystem::space 的可用字节 >>20 取低 32 位，与上式相同；取不到时 0 为已登记平台替换（deviations 79；实际平台上 GetDiskFreeSpaceExA 总存在，−1 分支走不到）。
+
+## 0x00411DA0 AngleBetween — exact
+
+汇编：dx = fromX−toX、dy = fromY−toY，平方和 32 位回绕，fild→fsqrt→_ftol 得距离写出；为 0 返回 0。sine = |(dy<<13)/距离|。dy ≥0：dx<0 → 起点 180、下标 0、步 +5，否则 270、89、−5；dy <0：dx<0 → 90、89、−5，否则 0、0、+5。在 18 个候选中取 |sine−表[下标]| ≤ 当前最小（初值 0x2328）者（相等取后者），候选角 += 5、下标 += 步。
+对照：一致；正弦表 0x004B086C 有对 exe 的比对测试（tests/game_state_test.cpp）。
+
+## 0x00411E80 AngleToDirection — exact
+
+汇编：栈上 17 项表 {3,7,7,0,0,4,4,2,2,6,6,1,1,5,5,3,0}，下标 = (angle×16)/360（有符号）。
+对照：一致；三处调用的角度都来自 AngleBetween（0..355），下标不越界。
+
+## 0x00411F10 ErrorLog — exact
+
+汇编：xor eax,eax／retn。源码写到重建日志的警告级别（平台替换，deviations 136 类）。
+
+## 0x00411F20 Game::DrawPauseBanner — exact
+
+汇编：复制 "遊戲暫停  按F8繼續遊戲"（0x004B12E0）；半长 = lstrlenA/2（向零取整）；x = 0x140−11×半长；0x004412E0(x, 0xE5, 22×半长, 0x16, 0, 0, 0, 0)；大字体以 0x004277A0(0x19, 0x17, 0x11)、样式 4 写在 (x, 0xE5)；主表面 Blt 离屏面。
+对照：一致（kBanner*、kText*、kPanelStyle 4）；Blt 为 ShowFrame。

@@ -58,14 +58,14 @@ public:
     int Run();
     // DialogBoxParamA(0x70): the name of the first role asked for; 1 when one was given.
 
-    // The value column of a row (part of 0x00410490 and 0x00410600): "" without a value, the value alone without a
+    // The value column of a row (part of 0x004107E0 and 0x00410950): "" without a value, the value alone without a
     // maximum (its percent sign written and then overwritten), "value/maximum" over a maximum of 1, the text before it
     // (the id) for a maximum of 1.
     static std::string ValueText(i32 value, i32 maximum, const std::string& before);
-    // The counter shown for inventory object `node` (part of 0x00410730): its percent, its proficiency and maximum
+    // The counter shown for inventory object `node` (part of 0x00410A80): its percent, its proficiency and maximum
     // or its counter by its kind; -1 for none.
     void ObjectCounter(const ItemNode& node, i32& value, i32& maximum) const;
-    // The counters of an inventory object set from the value field (part of 0x0040F890).
+    // The counters of an inventory object set from the value field (part of 0x0040FBE0).
     void SetObjectCounter(const ItemNode& node, u16 id, i32 value);
     // The list of the tab (the inventory or a role's skills after its "無" head); nullptr for the other tabs.
     ItemLink* TabList() const;

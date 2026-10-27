@@ -261,6 +261,12 @@ void Field::InsertRole(Role& role, int layer)
 // `keep` 1 it is returned, otherwise put back by its y (and nullptr returned)
 Role* Field::RemoveRole(u16 id, int layer, int row, int keep)
 {
+    // The original indexes past its three layers for a layer of 3, as InsertRole does.
+    if (layer < 0 || layer >= Field::Layers)
+    {
+        return nullptr;
+    }
+
     std::vector<Role*>& lists = this->rows[static_cast<std::size_t>(layer)];
 
     for (int at = row; at < this->state.map.height; ++at)
@@ -326,6 +332,12 @@ Role* Field::RemoveRole(u16 id, int layer, int row, int keep)
 // it was there, otherwise nullptr
 Role* Field::UnlinkRole(Role& role, int layer)
 {
+    // The original indexes past its three layers for a layer of 3, as InsertRole does.
+    if (layer < 0 || layer >= Field::Layers)
+    {
+        return nullptr;
+    }
+
     std::vector<Role*>& lists = this->rows[static_cast<std::size_t>(layer)];
     const auto index = static_cast<std::size_t>(role.y / MapHeader::TileSize + Field::RowMargin);
 

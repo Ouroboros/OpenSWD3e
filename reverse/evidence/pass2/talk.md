@@ -37,3 +37,12 @@
 
 汇编：从哑头 0x004C66B0 沿 +0x48 走到最后一个窗口，last+0x48 = window，window+0x48 = 0。
 对照：源码一致（scene.talkWindows 对应哑头的 next）。
+
+## 0x004120A0 Talk::ReadNamePlate — diff → exact
+
+汇编：路径 = 安装目录+"namex.dat"（写进共用缓冲区 0x004D1F6C）；new File，OPEN_ALWAYS、GENERIC_READ；定位 0x200+4×index 读 4 字节偏移；定位偏移+0x200 读 size 字节到缓冲区；strstr(缓冲区, 查找串)，结果处写 0；关闭并释放；返回 结果−缓冲区。唯一调用者 0x0042BAF0 传 (index, 0x20, 0x004F43E0, "%Q" 0x004B2720)。
+对照：一致。差异：偏移未初始化与无 NUL 越读两点未写进偏差。修正：扩充 deviations「0x004120A0」一行。
+
+## 0x00411FD0、0x004121C0（按用户要求去除）— exact
+
+光盘卷标检查与等待光盘：已登记的平台替换（deviations 101），无对应源码。

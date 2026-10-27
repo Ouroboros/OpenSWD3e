@@ -297,7 +297,7 @@ void Fill(CheatDialog& cheat, HWND list)
     }
 }
 
-// The fields cleared after an entry changed (part of 0x0040F890)
+// The fields cleared after an entry changed (part of 0x0040FBE0)
 void ClearFields(HWND dialog)
 {
     for (const int field : {kIdField, kCountField, kValueField})
