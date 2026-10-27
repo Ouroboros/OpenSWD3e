@@ -8,7 +8,7 @@ namespace swd3e
 class Painter;
 class Surface;
 
-// The selection frame of moving grey dashes; its shade phase advances with every frame drawn (0x004CC2D4).
+// The selection frame of moving grey dashes; its shade phase advances with every frame drawn (0x004E6D30).
 class MarchingRect
 {
 public:

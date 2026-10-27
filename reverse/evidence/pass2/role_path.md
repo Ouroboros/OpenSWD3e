@@ -156,3 +156,7 @@
 
 汇编：index ≥u 角色数时 wsprintfA("%d", roles[index].id) 并 MessageBoxA(hWnd, 文字, "Illegal Role id", 0)；返回 roles[index].id（0x004D3FEC，步长 0xE4）。
 对照：一致（先取 id 再报告，报告内容相同）。差异：下标越出数组时取最后一个角色的保护未登记。修正：补登 deviations「0x0040C420、0x0040C460 越界」。复核通过。
+
+## 0x00405220 RolePath::RunScript — 第二遍复核：diff → exact
+
+核对 0x0040DB00 时发现：移动记录为路径类的角色在格间时，原程序在 0x004057AA 以 `shr ebx, 4` 求行号（无符号），源码写成 `other.y >> TileShift`（有符号）。修正为无符号右移。复核：该分支（0x00405784..0x0040583F：类型 1、低 4 位判断、0x0040B180、方向 = 记录 +0x1C+(step&0x7FFF)、x/y 按 0x004AA408／0x004AA428 减到对齐、0x00411890(id, flags&3, 行, 0)）其余与源码一致；函数其余部分沿用本遍前次逐段核对的结论，未改动。

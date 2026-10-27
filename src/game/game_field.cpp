@@ -600,7 +600,7 @@ void Game::FollowLeader(int index)
                 this->field.RemoveRole(
                     role.id,
                     static_cast<int>(role.flags & Role::LayerMask),
-                    (role.y >> MapHeader::TileShift) - 1,
+                    static_cast<i32>(static_cast<u32>(role.y) >> MapHeader::TileShift) - 1,
                     0
                 );
             }

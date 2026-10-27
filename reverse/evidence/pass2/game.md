@@ -154,3 +154,114 @@
 ## 0x0040C560 DebugLog — exact
 
 汇编：只有 retn。源码写到重建日志的 debug 级别（平台替换，deviations 135 类）。0x00411F10（ErrorLog）同为空函数（xor eax,eax／retn），注释无误。
+
+## 0x0040C570 Game::LoadCity — diff → exact
+
+汇编（独立推导，按段）：
+- frameInterval 清 0；绘图表面非空时载入画面 act（0x004C2AB0：id 0x232A、action 0x4F、方向/x/y 0）以 0x0040EF60 画在 (0x78, 0xCA)，0x0040F0D0(−1)。
+- 0x004E5820=0；清旗标 5、6；0x004E5550 起 0x10 个双字填 0x0F0F0F0F；0x0040DF70(0x004C6290)；0x004D1C40/50/60/70=0x7FFFFFFF；清旗标 7、8；0x004D0E88 起 0x300 字节清零，0x004D1E04、0x004C4650 字清零；清旗标 0x16；再清 0x004D0E88；0x004D0B88=0；0x004D3450=0x004C2B80=0x140，0x004D3FA4=0，0x004D3454=0x004E6CC4=0xF0，0x004C6608=0x004C660C=0；0x00437D80、0x004367D0、0x00427080。
+- 设置表（maps.dat 表 3，每项 0xE 字节，0xFFFF 结束）中找地图号：单元 +2；0x004D183C=字节4&0xF；0x004E4DB8=字节6&0xF；0x004AF714=+8；0x004D1EC0=+0xA；0x004D1E08=+0xC；0x004C6560 = 字节4&0x10 ? 0 : 1；旗标 0xF 依字节5&0x80；0x004C66A4=0x60、0x004E55A6=4，旗标 5 依 &0x40，&0x20 时置 5 并改为 0x40／8；旗标 6／7／8／0x13／0x16 依 &0x10／8／4／2／1；0x004C5114／0x004C512C／0x004C633C = 表 0x004B0C20[字6>>12]、[(字6>>8)&0xF]、[(字节6>>4)&0xF]；步速不是 1、2、4、8、0x10 → 4；层帧 <1 → 1；(i16)遭遇组 > (i16)*0x004E6CBC → 错误框「載入地圖」「錯誤的戰鬥機率組[%d]」并置 1。
+- 0x004E55A4==1 时等光盘（deviations 101 已去除）；0x0040D170(map)；0x0049E660；清旗标 0x19；表 0x19（4 字节一对，0 结束）中地图号相符且旗标未置 → 置该旗标与 0x19。
+- 单元为 0xFFFF → 错误框「遊戲初始」「找不到設定的起始地圖碼 (%d)」，WM_DESTROY，返回。
+- 0x0040F0D0(2)；0x004C3190=map；0x004AF718=1；置旗标 map+0x1388；选项位 0 → 0x0040D560(x, y)。0x004E5828=0；0x004D3C7C 起 0x258 字节清零；释放 0x004C31AC 链（next +0x14）；0x0040F930／F840／F880／F8B0／0x0040DF30／0x0040F8E0／F980／F9C0／F9E0；0x004D1638 起 0x200 字节清零；0x0040F6F0；0x004C6C88..0x004D0468、0x004D2370..0x004D3450 每 0x21C 调 0x0040E0B0；0x004D3FC0=0；0x004D1610 起 8 个 −1；释放 0x004C4A7C 链（next +0x1C，先释放 +0）与 0x004D1F4C 链（next +0x84）；0x0040F0D0(0xA)；角色数=1；释放 0x004D0D58。
+- 0x0042A7D0(单元, 地图头) 失败 → 错误框「載入地圖」「過程發生錯誤」，WM_DESTROY。8 位地图：分配 0x200，从像素指针复制 0x200 字节，0x00427680(…, 0x100)。像素为空 → 日志 "LoadCity ,gMap.Pixel==NULL"。
+- 0x004C4658 清零 0x400；0x004E6D44=1、0x004D12AC=0、0x004D1C84=0、0x004D1400=宽×高；0x0040F310(map, 缓冲区)==1 → 复制为地图名，否则错误框「讀取地圖名稱」「MapName.txt中找不到地圖[%d]名稱」（参数是单元号，原 BUG）并用 "不知道"（0x004B0EF0）。0x0040F0D0(0x55)、(0x5A)。
+- 旗标 5：4 个粒子依次 Below(3)+1、Below(0x004E55A6)(+0x004C66A4)、Below(宽<<4)、Below(高<<4)、Below(2)−2、Below(2)−2；另一处清 0。
+- 地图边界 0/0/宽<<4/高<<4；0x0040DD50(0x004C3198)；角色表 0x004C65F0；0x0040F0D0(0x5F)；0x004D3FC0=1。
+- 角色表（每项 0xC 字，0xFFFF 结束）：与前面各项 id 比较，重复 → 错误框「讀取路人」「重複定義角色(%d)」并跳到下一项（不再检查结束标记，边界随下标重算）；id 为 0、10000、10001 → 地图字 = map；id == 0x004D1538 → 写入地图、act、动作、方向、x、y，事件/路径/步 0，旗标 0xD100，0x004C4B00 = 0x004D1610 = 角色数+已放，trailY／trailX 填 y<<4／x<<4；地图字 == map 时：x >u 宽或 y >u 高 → 错误框（map、leader.event、id、宽、高、x、y），改为宽−1、高−1，跳过；否则填角色（id、act id/action/direction、wait/drawLevel/signal 0、x/y <<4、事件、路径号、步号符号扩展、旗标零扩展、talkState/eventOffset/eventCursor 0），0x0040D3B0，0x00411790(角色, 旗标&3)；id==1 且旗标 0x19 且 variables[2]≠0 → 0x0049E5D0(var+0x5A, 1, (float)x, (float)y, 2.0, 4.0)；旗标 0x80 → 0x0040D980(槽位)、置 0x8000，map==0x16 或 0x004D1E08&0x8000 时再清；旗标 0x200 → 烟囱表（0x004E6B10 起 4 项）满时错误框「地圖(%d)定義煙囪物件數量超過四個」，否则写 role +0xC、x +4、y +6，+8／+0xA／+0xE 清 0；已放+1。
+- 角色数 += 已放；0x0040F0D0(0x64)；1..角色数−1 调 0x0040F5C0；0x0040D410；两条空日志；0x0040E090(0x23)。
+对照：源码逐段一致（常量、Role／ActState／RoleMark 偏移、随机数顺序、所有 13 条字符串与 exe 逐字一致）。超过 300 个角色的保护已登记（deviations 350）。
+差异：遭遇组表为空、像素为空、地图名截断、maps.dat 表越界四处保护未登记。修正：补登偏差；game.h 中 UnknownPlace 注释由 swd32 地址改为 0x004B0EF0。复核通过。
+
+## 0x0040D130 Game::MusicCue、0x0040D140 Game::AudioPump — exact
+
+汇编：0x0040D130 只返回 1。0x0040D140：0x0049D1A0(0x00578A70 音乐队列)、0x0049E400(0x005795C0 流)、0x0049DB50(0x00578F40 音效)，返回 1。
+对照：AudioManager::Update 依次调 queue、streams、effects 的 Update，一致（返回值无人使用）。
+
+## 0x0040D170 Game::MusicZone — diff → exact
+
+汇编：表 2 第 1 项的偏移再取一次得场景音乐表（每项 8 字节，地图号 0 结束）。找不到：0x004D15FC=0x004D1600=0，0x004C6568 &= 0xFFF3FFFF。找到：marks=+6、first=+2、second=+4；与 0x004D15FC／0x004D1600 都相同时，若队列模式 0x0049D3B0()==2 且 0x004D1604==1 → 0x0049D0C0(1, marks&3, 0xF)，0x004D1604/08/0C=0；返回。否则 0x004D15F8/FC/1600 = marks/first/second；两段各以 安装目录+"music\\"（0x004B0FA0）+0x0040D390(曲号) 调 0x0049CF20(路径, 曲号, 段, 1)；0x004C6568=0；模式 ≠2 → 0x0049D0C0(1, marks&3, 0xF)；模式 2 且 0x004D1604==1 → 同上并清故事三项。
+对照：一致（musicTunes 0x004D15F8 六项、SceneRepeatFirst 0x40000、SceneLoops 0x80000、FirstList 1、SecondList 2、15 步）。差异：maps.dat 越界保护未登记。修正：补登 deviations「0x0040D170、0x0040D390、0x0040D3B0 越界」。
+
+## 0x0040D390 Game::MusicName — diff → exact
+
+汇编：返回 data + dword[data + dword[data + 表2偏移] + 4×index] + 4（C 字符串）。对照：一致；越界保护补登同上。
+
+## 0x0040D3B0 Game::LoadRoleSound — diff → exact
+
+汇编：表 0x15（每项 6 字节，id 0 结束）中 id == role.id(+0x24) → role+0x2C = +2，role+0x30 = (+4)<<16 | (+4)，返回 1；找不到返回 0。对照：一致；越界保护补登同上。
+
+## 0x0040D560 Game::SaveRoleStates — diff → exact
+
+汇编：角色数为 1 时返回；i=1 起 do-while 到 i == 角色数：复制 0xE4 字节；flags&0x18000000、id==0xFFFF 或 i==0x004C4B00 → 跳过。flags&0x80：0x0040D7C0(id, act.id, action, direction, x, y, event, pathNumber, flags, 0, 0x004C3190, 0x8080)。否则 pathNumber≠0 时：x、y &= ~0xF；path.dat（0x004C6338）中 dword[0x200+4×pathNumber] 起第 pathStep 字 == 8 → 在 0x004C6C88..0x004D0468（步长 0x21C）找 role==i 的移动记录，取其 x、y（u16），x >u 宽<<4 或 y >u 高<<4 → 错误框「角色回寫」「角色(%d)\n終點位置(%d,%d)\n不在地圖(%d,%d)內」(id, x, y, 宽<<4, 高<<4)；找到与否 pathStep 都 +1；0x0040D720(&副本)。
+对照：一致（第 12 个参数为 UpdateRoleRecord 的默认值 KeepVariables 0x8080；TileFraction 0xF；MoveRecord x/y 为 u16）。差异：path.dat 空指针与越界保护未登记。修正：补登偏差。复核通过。
+
+## 0x0040D720 Game::StoreRole — exact
+
+汇编：从角色表 0x004C65F0 起每项 0x18 字节：旗标 2 置位且地图字为 0xFFFF → 错误框「!!! 警告 !!!」「角色編號(%d)\n資料歸鍵時\n找不到符合的位置\n可能是定義錯誤或是角色不存在了」(id)，返回；id 相同 → +4 act.id、+6 action、+8 direction、+0xA (u16)x>>4、+0xC (u16)y>>4、+0xE event、+0x10 pathNumber、+0x12 pathStep、+0x14 flags（均取低 16 位）。旗标 2 未置时不检查结束标记。
+对照：一致；越过表尾为已登记偏差（deviations 117），两条串逐字一致。
+
+## 0x0040D7C0 Game::UpdateRoleRecord — diff → exact
+
+汇编：找 id（地图字 0xFFFF 结束）；各参数不为 0xFFFF 时写 +4、+6、+8、+0xA、+0xC、+0xE；路径号写 +0x10 并清 +0x12；清位 &=、置位 |= 到 +0x14（先清后置）；地图写 +0；变量不为 0x8080 写 +0x16；返回 1。找不到：wsprintfA(0x004C4658, "未定義角色[%d]") 交给空的调试日志，返回 0。
+对照：一致。差异：越出 maps.dat 的保护未登记。修正：并入 deviations「0x0040D170、0x0040D390、0x0040D3B0、0x0040D7C0、0x0040D8D0 越界」。
+
+## 0x0040D8D0 Game::LoadRoleRecord — diff → exact
+
+汇编：找 id；找到：role.id=id，act.id/action/direction = +4/+6/+8（零扩展），x、y = (+0xA)<<4、(+0xC)<<4，event=+0xE，pathNumber=+0x10，pathStep=0，flags=+0x14（零扩展），返回地图字；找不到：调试日志 "未定義角色[%d]"，返回 −1。
+对照：一致。差异与修正同上。
+
+## 0x0040D980 Game::FollowLeader — diff → exact
+
+汇编：role = roles[index]；pathNumber≠0 时在 72 个移动记录中找 role==index：x 或 y 低 4 位非 0 → 0x0040B180(role)；方向 = 记录 +0x1C+(step&0x7FFF) 字节；x 低 4 位非 0 时循环 x −= 0x004AA47C[方向] 直到对齐，y 同理用 0x004AA49C；0x00411890(id, flags&3, (y 无符号>>4)−1, 0)。随后 0x0040D7C0(id, 0xFFFF×7, 置位 0x80, 0xFFFF, 0xFFFF, 0x8080)，0x0040E0B0(记录)。最后 followers[0x004D3FC0] = index，0x0040E0B0(0x004D2370+计数×0x21C)，event=0，flags = (flags&~0x4000)|0x80，计数+1。
+对照：步长表 {4,0,−4,−4,−4,0,4,4}／{4,4,4,0,−4,−4,−4,0} 与 RolePath::StepX/StepY 一致；步长只有 0 与 ±4，TileStart 的“余数是步长倍数才结束，否则挂起”与原循环等价；UpdateRoleRecord 参数一致；方向无效与随行表满的保护已登记（deviations 354）。
+差异：移出格子的行号源码用有符号右移（role.y >> 4），原程序为 shr。修正：改为无符号右移。复核通过。
+
+## 0x0040DB00 Game::LeaveParty — diff → exact
+
+汇编：0x0040C4D0(id, &idx) 失败 → 角色表按 0x16 字节步长（原 BUG，记录实为 0x18）找 +2 == id，找到则 +0x14 &= 0xFF7F 返回，找不到错误框「解除夥伴」「角色(%d)不存在」。找到 idx：在 followers[0..7] 中找；找不到 → 错误框「角色(%d)不是夥伴」。找到 k：移动记录 0x004D2370+k×0x21C 的 step <u 0x7FFF 且 x 或 y 低 4 位非 0 → 0x0040B180；方向 = 记录 +0x1C+(step&0x7FFF)；方向 ≠0xFF 时 x += StepX[方向]、y += StepY[方向] 直到对齐；0x00411890(id, flags&3, (y shr 4)−1, 0)。随后清该移动记录；act.id/action/direction = 参数，event、pathNumber = 参数低字，pathStep=0，flags = 参数&0xFFFF；0x0040D7C0(id, 0xFFFF×5, event, path, 0, 0xFF7F, 0xFFFF, 0x8080)；0x0040B270；followers 与移动记录各前移一项（memmove 0x1C−4k、0xEC4−0x21C×k 字节，最后一项保留）；计数−1。
+对照：一致（0x16 步长保留，TileStart(x, −StepX) 即加步长，三条串逐字一致）。
+差异：移出格子的行号用了有符号右移；方向越界与 maps.dat 越界保护未登记。修正：改为无符号右移；补登 deviations「0x0040DB00 越界」。复核通过。
+
+## 0x0040DD50 Game::BuildTriggers — diff → exact
+
+汇编：表 7（每项 0xE 字节，0xFFFF 结束）中地图号（零扩展）== 0x004C3190 的项建 0x18 字节节点：+0/+4/+8/+0xC = +2/+4/+6/+8（零扩展），+0x10 = +0xA 起的双字，插到链表头（head+0x14）。
+对照：一致（AreaBytes 0xE、各偏移、MapTrigger 字段顺序）。差异：越出 maps.dat 的保护未登记。修正：并入 maps.dat 越界一行。
+
+## 0x0040DDD0 Game::RollEncounter — diff → exact
+
+汇编：遭遇组号 0 → 0。r = Below(100)。从遭遇组表 2+16×(组−1) 字节起，最多 4 对：累计 += (i16)门槛，steps < 累计（有符号）或 force==1 → 取该对；(i16)几率 > r 或 force==1 才继续，否则 0。列 = x shr 4、行 = y shr 4（领队 0x004C4B00），在触发区链表中找 left ≤ 列 ≤ right 且 top ≤ 行 ≤ bottom（有符号），找不到 0；找到则 n = 表首字，k = Below(n)，0x004E5828 = 0，返回表第 k+1 字。
+对照：一致（随机数先后：Below(100) 在前、Below(n) 在找到区域后；GroupsAt 1、GroupWords 8、kSetPairs 4、kForcedEncounter 1）。差异：表外读取保护未登记。修正：补登 deviations「0x0040DDD0 越界」。
+
+## 0x0040DEB0 ClickRegions::Count、0x0040DED0 ClickRegions::Find、0x0040DF30 ClickRegions::Free — exact
+
+汇编：Count：从 0x004E4DCC 沿 +4 数节点。Find：鼠标 (0x004C2FFC, 0x004C3000) 与各节点 left +8、top +0xA、right +0xC、bottom +0xE（u16）无符号比较，left < x < right 且 top < y < bottom 时停；*out = 节点（找不到为 0），返回下标（找不到为节点数）。Free：逐个释放，0x004E4DC8..0x004E4DD8 五个双字清 0。
+对照：一致（ClickRegion 偏移、flags 0x004E4DC8、state 0x004E4DD0 三项；鼠标坐标由调用者传入）。
+
+## 0x0040DF70 ResetPlayback — exact
+
+汇编：+0x1C、+0x20、+0x3C = −1；+0x48、+0x46、+0x44、+0x42 字 = 0；+0x9C = 0。
+对照：unknown1C、savedAction、savedDirection（NotSaved −1）、speed、frameDelay、delay、position、hold 偏移一致。
+
+## 0x0040DFC0 GameState::GameFlag、0x0040DFF0 SetGameFlag、0x0040E020 ClearGameFlag、0x0040E050 SetGameFlagTo — exact
+
+汇编：字节下标 = flag sar 3（算术右移），位 = 表 0x004AA4BC[flag&7]（读出 01 02 04 08 10 20 40 80）；GameFlag 返回 (字节&位)≠0；Set 或上该位并写回（返回值为新字节）；Clear 与上 0xFF−位；SetGameFlagTo：value==1 → Set，否则 Clear。
+对照：一致（FlagByteShift 3、BitMasks、flags 0x004C4B0C 共 0x400 字节）。旗标号越出 0x2000 的保护在剧本指令处（deviations 128）；LoadCity 首访表 0x19 的旗标号来自 maps.dat，实际 4 对、最大 0x19A，在范围内。
+
+## 0x0040E080 SetWalkSpeed、0x0040E090 SetFrameInterval、0x0040E0A0 ClearFrameInterval — exact
+
+汇编：0x004C4A58 = 参数；0x004D1540 = 参数并返回 1；0x004D1540 = 0 并返回 1（返回值无人使用）。对照：一致。
+
+## 0x0040E0B0 MoveRecord::Clear — exact
+
+汇编：0x87 个双字（0x21C 字节）填 0xFFFFFFFF。对照：Clear 把所有字段置为全 1，字段恰好覆盖 0x21C 字节；新增 static_assert 锁定 sizeof 0x21C 与 act +0x10、blockedTries +0x1A、directions +0x1C。
+
+## 0x0040E0D0 RoleRecord::Load — exact
+
+汇编：目标 +0 = 源双字 +0；+0xA/+0xC/+0xE = 源 +4/+6/+8；+4/+6/+8 = 源 +0xA/+0xC/+0xE；+0x10..+0x1E = 源同位置 8 字；+0x2A = 源 +0x20；+0x20 = 源字 +0x22 零扩展；+0x24/+0x26/+0x28 = 源同位置；+0x2C = 源字节 +0x2A；+0x2D..+0x35 = 源 +0x2B..+0x33；+0x36、+0x37 = 源 +0x33。
+对照：源码按顺序读出并赋给同名字段，RoleRecord 偏移与上述一一对应（sizeof 0x3C 有断言）；后两项抗性取第 9 项。
+
+## 0x0040E3A0 GameState::DirectionToPlayer — exact
+
+汇编：领队 = roles[0x004C4B00]；0x00411DA0(x+宽×8, y+高×8, 参数 x, 参数 y, &距离)，结果交给 0x00411E80 返回。
+对照：一致（宽高为 act +0x2C／+0x30，即 role +0x6C／+0x70）。

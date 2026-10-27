@@ -927,7 +927,7 @@ void RolePath::RunScript(int index)
                         {
                             if (((other.x | other.y) & MapHeader::TileFraction) != 0)
                             {
-                                const int row = other.y >> MapHeader::TileShift;
+                                const auto row = static_cast<i32>(static_cast<u32>(other.y) >> MapHeader::TileShift);
                                 owner.field.ClearRoleCells(other, leaderId);
                                 const u8 back = move.directions
                                                     [static_cast<std::size_t>(move.step & MoveRecord::StepMask) %

@@ -18,3 +18,17 @@
 - 高 >2：i=0..高+1，v[16+i] |= 左[i×地图宽]，v[24+i] |= 右[i×地图宽]；i=0..高−1：上左 |= v[16+i]，左 |= v[17+i]，下左 |= v[18+i]，上右 |= v[24+i]，右 |= v[25+i]，下右 |= v[26+i]。高 ≤2：读左右各 0..2，高==2 再读 3；上左 |= v16、左=v17、下左 |= v18、上右 |= v24、右=v25、下右 |= v26；高==2：上左 |= v17，左=v17|v18，下左 |= v19，上右 |= v25，右=v25|v26，下右 |= v27。
 - 结果位：上左 1、上 2、上右 4、右 8、下右 0x10、下 0x20、下左 0x40、左 0x80。
 对照：源码在四条边不重叠的尺寸内与上述逐项一致，方向位与 BlockingMap 常量一致；四条边分开存放、格网外视为 0xFFFFFFFF 为已登记偏差（deviations 116、111），空格指针见 deviations「0x00403DC0… 空指针」。
+
+## 0x0040D410 Field::CenterCamera — exact
+
+汇编：left = roles[0x004C4B00].x − 0x130，<0 → 0；top = y − 0xF0，<0 → 0；right = left+0x280，≥ 宽<<4 → right = 宽<<4、left = (宽−40)<<4；bottom = top+0x1E0，≥ 高<<4 → bottom = 高<<4、top = (高−30)<<4（写 0x004C5118／511C／5120／5124）。
+对照：CameraCentredOn 在 640×480、scale 1 时为 x−(320−16)、y−240，HoldCamera 先取 max(·,0)，再在 place+view ≥ extent 时取 extent−view，与上式相同；宽于 640×480 的视野为 deviations 93。
+
+## 0x0040D4C0 Field::CameraAround — exact
+
+汇编：rect.left = x−0x140（<0 → 0）、top = y−0xF0（<0 → 0）、right = left+0x280、bottom = top+0x1E0，越出地图时同 CenterCamera 夹紧。
+对照：HoldCamera(x−viewWidth/2, y−viewHeight/2) 在 640×480 时一致；CameraRect 字段顺序 left/top/right/bottom 与 +0／+4／+8／+0xC 一致。
+
+## 0x0040DFA0 Field::FindRegion — exact
+
+汇编：从 0x004C6258 沿 +0 找 +4 == id 的节点，找不到返回 0。对照：一致。

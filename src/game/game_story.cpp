@@ -129,7 +129,7 @@ void Game::LeaveParty(u16 id, u16 path, u16 event, i32 act, i32 action, i32 dire
         this->field.RemoveRole(
             role.id,
             static_cast<int>(role.flags & Role::LayerMask),
-            (role.y >> MapHeader::TileShift) - 1,
+            static_cast<i32>(static_cast<u32>(role.y) >> MapHeader::TileShift) - 1,
             0
         );
     }

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <climits>
+#include <cstddef>
 #include <list>
 #include <vector>
 
@@ -119,6 +120,11 @@ struct MoveRecord
         return this->directions[static_cast<std::size_t>(this->step & MoveRecord::StepMask) % this->directions.size()];
     }
 };
+
+static_assert(sizeof(MoveRecord) == 0x21C);
+static_assert(offsetof(MoveRecord, act) == 0x10);
+static_assert(offsetof(MoveRecord, blockedTries) == 0x1A);
+static_assert(offsetof(MoveRecord, directions) == 0x1C);
 
 // A clickable rectangle (0x10 bytes in the original list at 0x004E4DCC).
 struct ClickRegion

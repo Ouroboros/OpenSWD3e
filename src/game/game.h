@@ -167,7 +167,7 @@ public:
     // `storyState`: 0 while the story runs, SaveSlotsState while the save slots are shown.
     static constexpr i32 StoryRunning = 0;
     static constexpr i32 SaveSlotsState = 3;
-    static constexpr std::u8string_view UnknownPlace = u8"不知道";  // swd32 0x0049FEA4
+    static constexpr std::u8string_view UnknownPlace = u8"不知道";  // 0x004B0EF0
 
     explicit Game(std::u8string installDirectory);
 
