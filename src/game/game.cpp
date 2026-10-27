@@ -2020,6 +2020,7 @@ void Game::MainFrame()
     this->battleFrameShown = false;
     this->menuFrameShown = false;
     ++this->gameFrames;
+    this->fieldView.KeepRolePlaces();
 
     if ((this->deviceFlags & 1) != 0)
     {

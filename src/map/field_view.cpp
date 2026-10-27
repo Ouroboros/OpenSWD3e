@@ -686,21 +686,12 @@ void FieldView::Render()
                 role.act.direction = RolePath::Facing[direction];
             }
 
-            const auto slot = static_cast<std::size_t>(&move - state.moves.data());
+            role.x += stepX;
+            role.y += stepY;
 
-            if (owner.smoothMotion)
+            if (((role.x | role.y) & MapHeader::TileFraction) == 0)
             {
-                this->StartRoleStep(index, stepX, stepY, slot, direction, false);
-            }
-            else
-            {
-                role.x += stepX;
-                role.y += stepY;
-
-                if (((role.x | role.y) & MapHeader::TileFraction) == 0)
-                {
-                    this->ArriveMoving(index, slot, direction);
-                }
+                this->ArriveMoving(index, static_cast<std::size_t>(&move - state.moves.data()), direction);
             }
 
             if (state.leader.id == Role::NoId && (role.flags & Role::TouchEvent) != 0)
@@ -731,8 +722,6 @@ void FieldView::Render()
                 role.act.direction
             );
         }
-
-        this->TimeRoleStep(index);
 
         if (index == state.playerRole && (view.screenFlags & Scene::CameraHeld) == 0)
         {
@@ -767,19 +756,12 @@ void FieldView::Render()
                 role.act.direction = RolePath::Facing[direction];
             }
 
-            if (owner.smoothMotion)
-            {
-                this->StartRoleStep(move.role, move.stepX, move.stepY, follower, direction, true);
-            }
-            else
-            {
-                role.x += move.stepX;
-                role.y += move.stepY;
+            role.x += move.stepX;
+            role.y += move.stepY;
 
-                if (((role.x | role.y) & MapHeader::TileFraction) == 0)
-                {
-                    this->ArriveFollower(move.role, follower, direction);
-                }
+            if (((role.x | role.y) & MapHeader::TileFraction) == 0)
+            {
+                this->ArriveFollower(move.role, follower, direction);
             }
         }
 
@@ -795,8 +777,6 @@ void FieldView::Render()
                 role.act.direction
             );
         }
-
-        this->TimeRoleStep(move.role);
     }
 
     this->PanCamera();

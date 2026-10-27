@@ -10,6 +10,7 @@
 - PanCamera、ShakeCamera、锁定离屏面、Paint、DrawTimer(0x190, 8, 0)；鬼魂 Follow((float)(u32 x)+16.0f, (float)(u32 y)−64.0f)（0x004AA5E4、0x004AA5E8）与 Draw；480 行各清前两个像素；调试模式 1 时 DrawDebug(镜头左, 镜头上, 2)；呈现。主角在格上且可见时 SettlePlayer（RemoveRole、ClearRoleCells、格子指针加 (行步长和)×宽+列步长和、MarkRoleCells、四个步长清 0、坐标与轨迹首项不同时三条轨迹后移 31 项并写入 x、y、方向、格子效果）。主角旗标无 0x40000000 且有 0x1000 时 Run（失败报 "Act Err(PicPaint:Render:MRl)"）。图层计时加 1，≥ 帧数且层数不为 1 时清 0、序号加方向，越界（无符号）时方向取反并再走两步，偏移 = 序号×每层格数。震动表首字不为 0xCFCF 时镜头取震动前位置。
 - 差异与修正：步长加倍的条件原先读 Role::unkD4（沿用 swd32 的 +0xD4，从无写入，等于总是加倍），swd3e 读角色 +0xE0 即 act 的 mask（'MS' 指令置 1）。改为 role.act.mask，删去 Role::unkD4。
 - 格子步长表 kCellX/kCellY 移为 FieldView::CellStepX/CellStepY，新增 tests 与 0x004AA504、0x004AA524 逐字节比对；deviations.md 第 244 行的三个表地址由 swd32 改为 swd3e，来源改为 asm/004126A0.asm。注释中的 0x004120B0、0x00412930 改为 0x004126A0、0x00412F60，类注释的地址范围改为 0x004126A0..0x00417290。
+- 2026-10-27 平滑显示改为只改画面：删去移动记录与随行两段中 smooth_motion 开启时改走 StartRoleStep 的分支和两处 TimeRoleStep，只留原版路径（坐标加步长、落格时 ArriveMoving／ArriveFollower）。留下的代码与此前第一遍核对过的关闭平滑时的路径逐字相同，结论不变。对话中跟随队员停在半步、0x0040DB00 离队推回格子的循环卡死，由此消除；画面插值改由 KeepRolePlaces／CaptureRoleSteps 只读逻辑状态完成（deviations.md 第 87 行）。
 
 ## 0x00412F60 FieldView::Paint — exact
 
