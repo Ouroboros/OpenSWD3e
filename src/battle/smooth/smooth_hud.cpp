@@ -462,15 +462,13 @@ int HudFrame::DrawEffectAtAdvance(int id, int action, int x, int y, int mirror, 
     }
 
     u32 flags = state.flags;
-    i32 offset = state.x;
+    // 0x00458152..0x00458186: the offset is worked in dx and sign-extended (movsx) before it is subtracted
+    auto offset = static_cast<i16>(state.x);
 
     if (mirror == 1)
     {
         flags = (state.flags & 1) != 0 ? state.flags & ~1u : state.flags | 1;
-        // 0x00450AE2 mov dx / sub dx: only the low word becomes width - x, the high word of x stays
-        offset = static_cast<i32>(
-            (static_cast<u32>(state.x) & 0xFFFF0000u) | static_cast<u16>(picture->width - static_cast<u16>(state.x))
-        );
+        offset = static_cast<i16>(picture->width - static_cast<u16>(state.x));
     }
 
     painter.SetSource(*picture);

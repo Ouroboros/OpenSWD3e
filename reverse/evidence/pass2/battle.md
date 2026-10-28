@@ -69,3 +69,50 @@
 ## 0x00457CA0 BattleHud::DrawGaugeWide — exact
 
 汇编：帧 0 画于 (x, y)；帧 1 以宽度 (u16 参数)+2 画于 (x, y)（参数为 0 也画），返回其结果。对照：u16 参数与 kWideFillExtra 2 一致。
+
+## 0x00457D20 BattleHud::DrawSmallNumber — exact
+
+汇编：0x0050C310 = x、0x0050C314 = y、0x0050C318 = 0；除数 10^9 起 10 次：0x0050C320 = 当前余值，数字 = 余值 / 除数（有符号），余值 −= 数字×除数，数字 ≠0 或已开始 → 已开始、位数+1，除数 /= 10；位数为 0 → 1。从个位起画位数个：0x00436720(编号, 数字)（帧号寄存器只设低 16 位，0x00436950 与载入只用低 16 位），画于 (x, y)，x −= 帧宽；返回最后一次绘制的结果。对照：DrawSmallNumberAdvance（kSmallDigits 10、kSmallTopDivisor 10^9）与 numberX/numberY/numberStarted/numberValue 的写入一致。
+
+## 0x00457E10 BattleHud::DrawNumber — exact
+
+汇编：字 0x0050CB2E（numberFont 高字）= 编号，0x0050C320 = 值，0x0050C310 = x，0x0050C314 = y，0x0050C318 = 0；依次以 10^9、10^8 … 10 调 0x00457F70，每次 0x0050C310 += 返回值（u16）；0x0050C318 = 1 后以 1 调用并累加；返回最后一位的宽度。对照：DrawNumberAdvance 一致（DrawNumberDigit 不改 numberX，源码以参数 x 加首位宽度与原程序读全局相同）。
+
+## 0x00457F70 BattleHud::DrawNumberDigit — exact
+
+汇编：数字 = (u32)0x0050C320 / 除数；(u16)数字 = 0 且未开始 → 返回 0；0x00436720(0x0050CB2E, 数字)；字 0x0050C31C = 0x8000 → 模式 0x20，否则 0；0x00417A60(0x0050C310−16, 0x0050C314, 宽, 高, 模式, 0)；0x0050C320 −= (u16)数字×除数，0x0050C318 = 1；返回 0x0050C328 的宽。对照：kNumberDigitWidth 0x10、kDigitGlow8000、Painter::ScaledGlow（0x20）与写入顺序一致。
+
+## 0x00458040 BattleHud::DrawSlotAnimation — exact
+
+汇编：动作 = 0x0050C3F8 + 槽×0xA4，编号 = 参数、动作 0；0x00436C80 为 0 → 返回 0；0x00436720(+0x4A, +0x4C)，只写 0x004ED9BC（不写 0x0050C328）；0x00417A60(x, y, 宽, 高, 旗标 +0x18, 0)，返回其结果。对照：slotActs（0x0050C3F8）、GetPicture + SetSource（不经 Select、不改 lastPicture）与绘制参数一致；缺帧见 deviations 64。
+
+## 0x004580C0 BattleHud::FillColor — exact
+
+汇编：0x004ED9BC = 栈上颜色参数的地址；0x00417A60(x, y, 宽, 高, 8, 0)，返回其结果。对照：SetSource(&颜色)、Painter::RawGradient（8）、绘后清源一致；颜色低字为 RLE 标记见 deviations 425。
+
+## 0x004580F0 BattleHud::DrawEffectAt — diff → exact
+
+汇编：0x0050C258 编号、动作 = 参数；0x00436C80 为 0 → 返回 0；0x00436720(+0x4A, +0x4C)（不写 0x0050C328）；edx = 锚点 x（+0x10），旗标 +0x18；镜像（参数 = 1）→ 旗标位 0 取反，dx = 帧宽 − 锚点 x（16 位）；0x0045817E movsx ecx, dx，x' = x − ecx；y' = y − 锚点 y（+0x14，32 位）；0x00417A60(x', y', 宽, 高, 旗标, 0)；返回 +0x98（waiting）= 1。
+对照：effectAct（0x0050C258）、旗标翻转、y 偏移与返回值一致。
+差异：源码镜像时保留锚点 x 的高 16 位、低 16 位按无符号拼成偏移（帧宽小于锚点时得 0xFFxx 之类的正数），不镜像时用 32 位锚点 x；原程序两种情况都用低 16 位符号扩展；注释引用的 0x00450AE2 是正传地址。修正：偏移改为 i16（不镜像取锚点 x 低 16 位，镜像取帧宽 − 锚点 x 的低 16 位），注释改为 0x00458152..0x00458186。复核：完整函数重新对照一致。
+
+## 0x004581B0 BattleHud::ResetEffectAt — exact
+
+汇编：0x0050C258 起 0xA4 字节清零，返回 0。对照：effectAct = ActState{}、返回 0 一致。
+
+## 0x004581D0 BattleHud::DrawCursorAnimation — exact
+
+汇编：0x0050C938 编号 = 参数、动作 0；0x00436C80 为 0 → 返回；0x00436720(+0x4A, +0x4C)（只写 0x004ED9BC）；0x00417A60(x, y, 宽, 高, 旗标 +0x18, 0)，返回其结果。对照：cursorAct（0x0050C938）一致。
+
+## 0x00458240 BattleHud::DrawRoleIcon — exact
+
+汇编：0x0050C330 编号 0x23AA、动作 = 参数；0x00436C80 为 0 → 返回；0x00436720(+0x4A, +0x4C)（只写 0x004ED9BC）；0x00417A60(x−(+0x10), y−(+0x14), 宽, 高, 旗标 +0x18, 0)，返回其结果。对照：kRoleIconAct、roleIconAct（0x0050C330）一致。
+
+## 0x004582C0 BattleHud::DrawDigit — exact
+
+汇编：字体参数 = 0 → 0x00436720(0x2370, 数字)，写 0x0050C328 与 0x004ED9BC；否则沿用 0x0050C328（不改源指针）。字 0x0050C31C = 0x4000 → 模式 0x20，否则 0；0x00417A60(x, y, 宽, 高, 模式, 0)；返回 0x0050C328 的宽（u16）。对照：kDigitFont、kDigitGlow4000、lastPicture 的更新与沿用一致。
+
+## 0x00458330 BattleHud::DrawScrollBar — exact
+
+汇编：0x0050C1B0 编号 = (u16)参数；上端：动作 0x1A（样式 1 → 0x1E），不清动作状态即 0x00436C80；0x00436720(+0x4A, +0x4C)（只写 0x004ED9BC）；画于 (x, y)，旗标 +0x18。随后各段先清 0xA4 字节：轨道 0x18，第 i 段画于 (x+2, y+上端高+段高×i)（段数有符号 >0）；轨道长 = 段高×段数；滑块 0x19：长 = _ftol(7.0f / 0x0050C920 × 轨道长)，0x0050C304 = (轨道长−滑块长)/(0x0050C920−7)，上 = 偏移 + 步长×0x0050C924 + 轨道顶（0x0050C308、0x0050C918），下 = 上 + 滑块长，差 <5 → 上+5，0x0050C924+7 ≥ 0x0050C920 → 轨道顶+轨道长；0x0050C91C = 轨道顶，0x0050C3D4 = 下，0x0050C3D8 = 轨道顶+轨道长；裁剪 (x, y, x+0x20, 下)，滑块长 >0 时从 0 起每次画于 (x+5, 0x0050C308+k)、k += 帧高直到 ≥ 滑块长；恢复全屏裁剪；下端 0x1B（样式 2 → 0x1F）画于 (x, y+上端高+段高×实际段数)，返回其结果。任一动作 0x00436C80 为 0 → 返回。
+对照：DrawScrollBarAdvance 与 RunScroll 的动作号、首段不清状态、坐标、浮点截断（Ftol，7.0 与 exe 中 0x004AADDC 的 float 相同）、整数除法、写入的六个全局与裁剪一致；调用者只在条数大于可见行数时绘制，0x0050C920−7 不为 0；滑块帧高为 0 的保护见 deviations 67。
