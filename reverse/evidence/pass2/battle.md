@@ -997,3 +997,39 @@
 汇编：0x00576D3C 位 0x20 为 0 → 返回。面板 act（不清）运行；FillBox(0xEC, 0x56, 0xB8, 0x00577A48+0x28, 0, 4, 4, 0)；窗框 (0xF0, 0x5A, 0x1A0, 0x6A)；单位名（0x00577A44 所指记录首）在 (0x130, 0x5A) 0xFFC0；窗框 (0xF0, 0x7A, 0x1A0, 0x00577A48+0x7A)；GrowPanel(0x7A, 0xDE, 3)≠1 → 返回。五元素（名表 0x004BF61C：金木水火土），y 0x82 起每 0x14：抗 = (i8)记录 +0x9C+i；=0 → 色 = MakeColor(0x10,0x10,0x10)、"--"、长 = 2.0f；>0 → FillColor(0x11C, y, 0x78, 3, MakeColor(0x1C,0x1C,0x1C))、色 = MakeColor(0x1C,2,2)、"%2d%%"、长 = (float)(抗 × 0.01f（0x004AAE0C） × 120.0f（0x004AAE08）)；<0 两者不变（初值 0、0.0）。名 DrawText(0xFC, y−8, MakeColor(0x1F,0x1F,0x1F), 0x10)；FillColor(0x11C, y, _ftol(长), 3, 色)。格式化的 "--"/"%2d%%" 从不画出。
 对照：DrawResistancePanel（平滑绘制 DrawResistancePanelAdvance）一致；两个浮点常量与乘法次序一致。
 差异：无。
+
+## 0x004787F0 BattleMessages::DrawTallPanel — exact
+
+汇编：面板 act（不清）运行；0x00577A4C >0 → /2（有符号）；左 = x − 0x00577A4C；FillBox(左, y, 0x64, 0xC8, 0, 4, 4, 2)；DrawWindowFrame(帧, 左+4, y+4, 左+0x60, y+0xC4, 0, 0x80000008)；返回左。
+对照：DrawTallPanel → DrawSlidPanel 一致。
+差异：无。
+
+## 0x00478880 BattleMessages::DrawSmallPanel — exact
+
+汇编：同 0x004787F0，尺寸 0x34×0x34，窗框右下 (左+0x30, y+0x32)。
+对照：DrawSmallPanel → DrawSlidPanel 一致。
+差异：无。
+
+## 0x00478900 BattleMessages::DrawWidePanel — exact
+
+汇编：面板 act 运行；0x00577A4C >0 → /2；顶 = y − 0x00577A4C；FillBox(x, 顶, 0x82, 0x1E, 0, 4, 4, 2)；DrawWindowFrame(帧, x+4, 顶+4, x+0x7A, 顶+0x18, 0, 0x80000008)；返回 0x00577A4C ≤ 0。
+对照：DrawWidePanel 一致。
+差异：无。
+
+## 0x00478990 Game::DrawObjectStats — exact
+
+汇编：面板 act（不清）运行；0x00577A4C=0；id = 当前角色.SelectedItemId；LoadObject(0x00576D40, id)、0x0048B010；元素 = 第一个非 0 的 +0x9C+i（i<5）则 i+1，否则取参数 x；名 = (u16)0x0048A580(0x004D3458, id)；FillBox(x, y, 0x40, 0x42, 0, 4, 4, 2)；名 ≥10 → FillBox(x, y, 0x40, 0x42, 色表 0x004BF674[元素] 三值, 5)；窗框 (x+4, y+4, x+0x3C, y+0x3A)；小字体三行 "攻:"/"防:"/"敏:"（0x004BF8F0/EC/E8）在 (x+8, y+8+0x10×行) 亮色，"%3d"(u16 +0x5A/+0x5C/+0x5E) 在 x+0x22，色 MakeColor(0, 0x18, 0)；返回 x（调用者不用）。
+对照：DrawObjectStats（平滑绘制 DrawObjectStatsAdvance）一致。无元素时以 x 为下标越界读色表见 deviations 406。
+差异：无。
+
+## 0x00478C50 Game::DrawRefineStats — diff → exact
+
+汇编：面板 act（不清）运行；0x00577A4C=0；FillBox(x, y, 0x44, 0x40, 0, 4, 4, 2)；窗框 (x+4, y+4, x+0x3C, y+0x3A)；LoadObject(0x00576D40, 当前角色.SelectedItemId)、0x0048B010，记下攻（+0x5A 字）、防（+0x5C dword）、敏（+0x5E 字）；清 0x00576D40 0x2A dword；LoadObject(0x00576D40, 0x0050EFCA[0x00576FB8])、0x0048B010；三和以 dword 相加，格式化时取符号扩展的低 16 位。三行（y+8 起每 0x10）："攻"/"防"/"敏"（0x004BEFF0/DC/D8）在 x+8 亮色；"%3d" 在 x+0x22，MakeColor(0, 0x18, 0)；箭头 0x00436720(0x23B6, 0x13) 设源图后 0x00417A60(x+0x16, 行 y, 宽, 高, 0, 0)。返回 x。
+对照：DrawRefineStats（平滑绘制 DrawRefineStatsAdvance）一致；和只显示低 16 位，源码 sum 同。
+差异：箭头图片取不到时原程序读空指针，源码由 DrawPictureFrameAdvance 跳过，未登记。修正：登记偏差（代码不变）。复核：完整函数重新对照一致。
+
+## 0x00478FA0 Game::DrawChargePanel — exact
+
+汇编：面板 act（不清）运行；FillBox(x, y, 0x6E, 0x44, 0, 4, 4, 2)；窗框 (x+6, y+8, x+0x6A, y+0x18)、(x+6, y+0x28, x+0x6A, y+0x40)；DrawRoleIcon(0x004BF11C[当前], x+0x14, y+0x14)；wsprintf("X%2d", (i16)0x0049C2C0) 大字体在 (x+0x32, y+8) 亮色、标志 4。两选项（0x004BF66C："繼續""放勁"）：名在 (x+0x30×i+8, y+0x2C) 亮色；i=0 且 0x0049C2D0=0 → (x+8, y+0x2C) 暗色重画；i+1=光标 → SetBackground(0xF000)、(左+7, y+0x2B) 亮色，i=0 且同条件 → (x+7, y+0x2B) 暗色，SetBackground(0xFFFE)。返回 2。
+对照：DrawChargePanel（平滑绘制 DrawChargePanelAdvance）一致。partyRoles 越界读见 deviations 400。
+差异：无。
