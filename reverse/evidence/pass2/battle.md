@@ -171,3 +171,28 @@
 
 汇编：0x00577368 = 0 → 返回。0x00436720(0x2397, 0) 画于 (x, y)；帧 1 取出后写 0x0050C328；比率 = (i16)0x0050CDD4 / (i16)0x004BF002（x87），fcom 1.0（0x004AA6A0）后 C0/C3 均未置（大于 1）时取 1.0；目标 = _ftol(帧 1 高 × 比率)；0x0050CDD0 ≠ 目标 → 大于时 −1，否则 +1；裁剪 (x, y+高−当前高, x+宽, y+高)，设源后画帧 1（模式 0）；目标 ≠ 当前高 → 三通道色调 10、模式 0x10 再画；恢复全屏裁剪；0x00457E10(0x2377, 值, x+宽/2, y+高)。
 对照：DrawMeter 的比较（`share > 1.0`，NaN 保留，与 fcom 结果一致）、Ftol 截断、步进、裁剪、kMeterTint 10、Painter::TintUnder 与数值位置一致；缺帧见 deviations 64。
+
+## 0x004593C0 BattleHud::DrawGrowing — exact
+
+汇编：0x00436720(编号, 0) 写 0x0050C328/0x004ED9BC；0x00423630(宽/2, 高/2, 0x0050C3E0[槽]+0x400, 0x0050C3EC[槽]+0x400)；三通道色调 0；0x00417A60(x, y, 宽, 高, 0x84, 0)；0x0050C3EC[槽] += 0x50、0x0050C3E0[槽] += 0x3C、0x0050C928[槽] −1；0x0050C3E0[槽] ≥0x4B0 → 三者清 0、返回 1（al），否则返回 0。对照：growWidth/growHeight/growFrames、kGrowUnit 0x400、kGrowWidthStep 0x3C、kGrowHeightStep 0x50、kGrowEnd 0x4B0、Painter::ZoomAddTinted 0x84 一致；槽 ≥3 见 deviations 418，缺帧见 deviations 64。
+
+## 0x004594B0 BattleHud::DrawPicturePalette — exact
+
+汇编：0x00436720(编号, 0) 写 0x0050C328/0x004ED9BC；0x00417A60(x, y, 宽, 高, 0, 调色板)，返回其结果。对照：一致；缺帧见 deviations 64。
+
+## 0x004594F0 BattleHud::LoadAnimation — exact
+
+汇编：thiscall（ecx = 动画结构），5 个栈参数（retn 0x14）。局部 6 个字的已载表 = 0xFFFF；+0x12C = id、+0x120 = x、+0x124 = y；动作 +0 = id（u16）、+8 = 0；0x00436C80 为 0 → 返回 0。循环：字节 +0x90 ≠0 → +0x128 = 该值；帧 = 字 +0x4C，已载表[帧] = 0xFFFF → 0x00436770(+0x4A, +0x4C) 的 5 dword 帧头复制到 +0xA8 + 帧×20，已载表[帧] = 帧，0x00438A30(帧数据, 3, 0x280 / 除数（有符号）)；字 +0x42 = 0 → 动作 0xA4 字节清零、返回 0；否则动作编号 = 字 +0x12C、动作 0 再 0x00436C80，为 0 → 返回 0。
+对照：BattleAnimation（act +0、wave +0x128、id/x/y）、kNotLoaded、LoadPictureDirect、ShiftPicture（ShiftMode::Right = 3、Display::Width / 除数）、循环与退出条件一致；第一个栈参数（图形对象）不用；帧号 ≥6 见 deviations 68；源码在载入结果为空（档案缺失）时不移位，属 0x00436770 的载入失败处理。
+
+## 0x00459640 BattleHud::DrawAnimation — exact
+
+汇编：thiscall。字 +0x12C = 0 → 返回 0；动作编号 = id、动作 0，0x00436C80（结果不看）；0x004ED9BC = 帧[+0x4C] 的数据，0x004ED9AC = +0x128；0x00417A60(+0x120−锚点 x, +0x124−锚点 y, 帧宽, 帧高, 旗标 +0x18, 0)；0x004ED9AC = 0；返回 +0x98。对照：DrawAnimationAdvance（SetWave 前后、忽略 Run 结果、waiting）一致；Painter::waveMode 补注地址 0x004ED9AC（0x00419200 以它选波纹行）；帧号 ≥6 见 deviations 68。
+
+## 0x004596E0 BattleHud::PlayAnimationShifted — exact
+
+汇编：thiscall，2 个栈参数（retn 8）。局部 6 个字 = 0xFFFF；id = 0 → 返回 0；动作 0xA4 字节清零后编号 = id、动作 0，0x00436C80 为 0 → 返回 0。循环：帧 = +0x4C，首次出现 → 记下，位移量 ≠0 时 0x00438A30(帧数据, 位移 >0 ? 3 : 2, |位移|)（thiscall，被调方清栈），再画于 (+0x120−x, +0x124−y)（不设波纹）；已出现过的帧不画；+0x44、+0x46 清 0；+0x42 = 0 → 动作清零、返回 1；否则重新 0x00436C80，为 0 → 返回 0。对照：PlayAnimationShiftedAdvance、ShiftMode（Left 2、Right 3）一致；帧号 ≥6 见 deviations 68。
+
+## 0x00459830 BattleHud::FreeAnimation — exact
+
+汇编：thiscall。6 个帧头的数据指针非空则释放并清 0；字 +0x12C = 0、+0x128 = 0；动作 0xA4 字节清零（返回 0）。对照：pictures 逐个 reset、id、wave、act 清零一致。

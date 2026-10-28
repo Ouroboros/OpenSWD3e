@@ -424,7 +424,7 @@ private:
     std::array<Blitter, 256> blitters{};
 
     // Persistent effect state.
-    int waveMode = 0;
+    int waveMode = 0;  // 0x004ED9AC the row of the wave offsets plus 1 (0: no wave)
     int wavePhase = 0;
     int waveStart = 0;
     int wavePosition = 0;

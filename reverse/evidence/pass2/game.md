@@ -442,3 +442,13 @@
 
 汇编：按 DirectDraw 结果码选文字后 MessageBoxA(hWnd, 文字, 标题, 0)；码的分派由直接比较与两张字节表（0x00436378 对 0x88760082 起 251 项、0x004364A0 对 0x88760232 起 31 项）加跳转表 0x00436360、0x00436474 组成；未列出的码返回（eax 为残值，调用者不读）。
 对照：解码两张字节表与跳转表得到 22 个“码→文字”（含末尾空格，按 exe 字节），与源码 switch 逐项比较完全相同；其余 267 个码都落到默认分支，表 1 的第 7 个跳转项（指向跳转表本身）没有码使用。消息框改为 ErrorReporter 显示。
+
+## 0x00459880..0x004599D0 全局初始化片段（18 个，Game::Game 与 BattleState）— exact
+
+汇编（逐个读出）：
+- 0x00459880／890／8B0／8C0：0x004A1E72（eh vector constructor）以构造 0x0047E660、析构 0x0047E6D0 在 0x005136E0 构造 10 个 0x34D4 字节对象，atexit(0x004A1664) 登记 0x004598C0（0x004A1EF4 逐个析构）→ battleRoles（BattleRole::BattleRole／~BattleRole）。
+- 0x004598E0／8F0／910／920：同样以 0x00487B90／0x00487BF0 在 0x00539590 构造 20 个 0x3078 字节对象 → battleEnemies（BattleEnemy）。
+- 0x00459940／950／960／970：thiscall 0x00438700 构造 0x005761D0，atexit 登记 0x00438830 → BattleState::projector（Projector::Projector／Release）。
+- 0x00459980／990：thiscall 0x0046B210(0x0050F620, &0x005761D0)，不登记析构 → BattleState::file（BattleFile 以投影器指针构造）。
+- 0x004599A0／9B0／9C0／9D0：File 构造 0x0043CAE0／析构 0x0043CB10 于 0x005373C8；全程序只有这两个片段引用该地址 → 不创建等价。
+对照：game.cpp 中 0x00459880..0x004599D0 的初始化说明与上述逐组一致；构造／析构函数本身在各自行核对；BattleFile 构造只记下投影器指针，与 Projector 的构造先后无依赖。
