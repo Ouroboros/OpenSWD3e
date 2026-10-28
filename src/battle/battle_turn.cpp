@@ -1776,14 +1776,8 @@ std::size_t Game::PanelPlace(int unit)
 // panel; 0 when none can
 int Game::NextSelectableRole(int unit)
 {
+    // The callers pass panel units (8..11): `unit` is always in PanelUnits.
     std::size_t place = Game::PanelPlace(unit);
-
-    // Never so: the callers pass panel units (the original reads past the table).
-    if (place == BattleState::PanelUnits.size())
-    {
-        return 0;
-    }
-
     int candidate = BattleState::PanelUnits[place];
 
     if (this->CanSelectRole(candidate))
@@ -1816,13 +1810,8 @@ int Game::NextSelectableRole(int unit)
 // panel; 0 when none can
 int Game::PreviousSelectableRole(int unit)
 {
+    // The callers pass panel units (8..11): `unit` is always in PanelUnits.
     auto place = static_cast<int>(Game::PanelPlace(unit));
-
-    // Never so: the callers pass panel units (the original reads past the table).
-    if (place == static_cast<int>(BattleState::PanelUnits.size()))
-    {
-        return 0;
-    }
 
     for (int tries = 0; tries < static_cast<int>(BattleState::PanelUnits.size()); ++tries)
     {

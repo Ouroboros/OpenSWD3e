@@ -769,3 +769,63 @@
 - 状态 0x1B（ConfirmThrow）：检查同状态 2；0x00481540(4, …)=0 → 返回；B8=0 时 NextEnemyTurn；结果 3、PressConfirm。0x50（ConfirmBait）：另要求 (u16)0x005770DE≠0，类别 6，成功后指令 0x50、结果 3、PressConfirm。0x29（ConfirmFuse）：护卫数=0 → "沒有護駕,不能融合!!"；类别 3；从角色 0 起找未倒下且 AutoControl=1 者（无上限，见 deviations 414），0x004BF0DC=序号+1、0x005772D0=1、指令 0x29、结果 0xA、0x00576FB8=1、预定=1、PressConfirm。0x1E（ConfirmRefine）：B4=0 或当前=0 → 返回；B4=0；0x004BF0EC > (u16)0x005770DE → 音效 0x8C 返回；类别 5，未选中 → 音效 0x8C；PrepareOrder，ActFlag0=1 → 0x00577284=1、B4=1、0x004BF0DC=敌数，否则 B8=0 时 NextEnemyTurn；结果 3、PressConfirm（不关面板）。
 - 结束段（ConfirmEnd）：0x62 → 0x00577206/0x00577208 字=0、0x00577A48=0、0x00576FF4=0、0x00577998=0、结果 0x63、0x004BF1EE=0xFF。0x64 → 0x00577308≠1 且 0x00576FF4 ≥0x14 → 0x00576FF4=0、0x00577A48=0、结果 0x65。0x65 → 0x005770CE=0；0x0057733C≠0 且 ≥0x1E：0x00577A48=0，0x004BF1EE≠0xFF → 音效 0x2C、0x0057733C=0、计时 0、结果 0x6E；否则 0x005777EC≠0 → 音效 0x160，计时 0、0x00577258=0、0x0057733C=0、结果 0x66。0x66 → ≥0x14：0x005772E4=1、结果 0、计时 0、0x00577258=0、0x00577A48=0。0x67 → ≥0x14：MusicQueue::Switch(4, 1, 0)、0x005772E4=1、0x00577A48=0、结果 0、计时 0。0x68 → Switch(4, 1, 0)、0x005772E4=1、0x00577A48=0。0x6E → 0x00577A48=0；0x00577300=1：角色[(i8)0x004BF1EE] 未倒下 → RestartMainAct(4, 1)；音效 0x160、计时 0、结果 0x6F；否则 0x0057733C=0、计时 0、0x004BF1EE=0xFF、结果 0x65。0x6F → >0x14：0x00577A48=0、0x0057733C=0、0x00577300=0、计时 0、0x004BF1EE=0xFF、结果 0x65。0x70/0x71 → >0x14：0x00577A48=0、0x00577300=0、计时 0、0x004BF1EE=0xFF、结果写回 0x70/0x71（源码不写结果，取值相同）。0xC8 → 0x00576FA8=0、指令 1、当前=0、0x00577020=0、结果 0、B8=0、B4=0、敌人与角色（角色数）清描边、0x0057706C/0x00577070=0、BC=0、C0=0、0x00577258=0、PressConfirm、0x0057731C=1 → 0x004BF0F4=瞄准、清 commandNames 与 0x0057720A。与 ConfirmEnd 一致。
 差异：① ConfirmTalk 结束对话时原程序清 commandNames 全部 4 项（0x0050EBF0..0x0050EBFC），源码只清前 3 项；② 字段 unk53C01C 沿用正传地址命名。修正：① 改为整组清空；② 改名 unk577320 并注明只写。复核：完整函数（各状态）重新对照一致。
+
+## 0x00471E80 Game::DrawBattleMenu — exact
+
+汇编：结果 0x67 → 返回；当前=0 且 0x0057731C≠1 → 返回。当前≠0：角色.StatusBit5（0x0049A950）=1 → RandomRoleAct(当前)、当前=0；否则结果 0 → 1。0x00577258=1。按结果 −1（≤0x4F，字节表 0x00472954 → 跳转表 0x00472918）分派：
+- 1：单位=0 → 返回。0x004BF58C≠−1 且=当前：HasEffectBits(0x200)≠1 → DrawChargePanel(菜单x+0x32, 菜单y, 指令)、0x00577070=6 返回；否则 0x004BF58C=−1。0x00577070≠6 → 0x005772AC=0 时置 1，菜单 x/y = 0xF0/0x8C；≥6 → 6；0x00577074<0 → 0；DrawTallGauge(x, y, 成长, (u16)0x0057720A ≥2 ? 6 : 4)；<6 → 成长+1、0x00577074−1 返回。否则字体 SetShadow(0)、SetBackground(0xFFFE)，名字 = 0x0050ECB4 + 0x20×partyRoles[当前−0x14]，DrawText(x + 8×(0xA − ((长>>1) − 2)), y+0xE, 名字, 0xFFC0, 0x10)；指令 >9 → 1；DrawCommandMenu(x+0xE, y+0x28, 指令)；DrawRoleIcon(0x004BF11C[当前] 即 partyRoles[当前−0x14], x+0x1E, y+0x21)。
+- 2：0x005772C4=1、DrawListTabs(0xE0, 0x7E)；0x00577070=7 且 0x0057706C=0xA → DrawSpellList(0xE8, 0x86, 0x004BF0E8, 0x00576FD8)、0x0050C920=(i8)0x005770DC、0x0050C924=滚动，条目 >7 → DrawScrollBar(0x232A, 0x190, 0x9E, 4, 0x00577040, 0x00577078)；C0=1、BC=1。
+- 3：C0=1、BC=1、SetAdvance(0x10)。0x00577284=1：预定.+0=0 → 每个未倒下敌人 GetShadowRect、SetAC0(1)、GetOffset(&0x00577240, &0x00577244)，偏移全 0 时指针 0x238F 画在框中心，否则框 x/y 加 (i16)偏移；否则每个角色 AutoControl、GuestControl、Ghost 均≠1 且 StatusBit13=0 → GetShadowRect、SetAC0(1)、指针画中心。否则：预定=0 且敌[0x00576FB4] 倒下 → 循环 0x004BF0E0+1（>敌数 → 1）、0x00576FB4=enemyOrder、0x004BF0DC=它+1，计数 ≥ 敌数 → 结果 1；0x004BF0DC=−1 → 返回；B8=0：偏移清 0；预定≠0 → 角色[0x004BF0DC−1] GetShadowRect、GetOffset、SetAC0(1)、0x00577244+0xA；否则敌 SetAC0(1)、GetShadowRect、GetOffset、0x004BF0DC=它+1，指令 6/0x50 → 0x004BF1E8 = IsSmallMachine≠0；指针 0x004BF1E8=0 ? 0x2393 : 0x238F 画中心。B4=1 → DrawTargetTag(0xC, 0xE)。
+- 4：0x005772C4=1、DrawItemList(0xE0, 0x7E, 0x004BF0EC, 0x00576FDC)、C0/BC=1。5：DrawEscortList(0xC4, 0xCE)。0xA：DrawEscortFusionList(0xC4, 0xCE)。6：0x00577260=0 且 0x00577264=0 → 0x00577204|=0x4000、结果 0、当前=0、BC=1、C0=1。7：DrawControlMenu(菜单x+0xC, 菜单y+8, 0x004BF100)、C0/BC=1。8：0x005772C4=1、DrawSpecialList(0xE0, 0x7E, 0x004BF0F0)、C0/BC=1。
+- 9：C0/BC=1、SetAdvance(0x10)、0x00576FB4=0；B8=0：从 0 起跳过倒下敌人（无上限）、B4=1、偏移清 0、SetAC0(1)、GetShadowRect、GetOffset、0x004BF0DC=0x004BF0E4=它+1、指针 0x238F 画中心；B4=1 → DrawTargetTag(0xC, 0xE)。
+- 0x1B：0x005772C4=1、DrawThrowList(0xE0, 0x7E, 行, 滚动)，0x0050C920=(u16)0x005770DE、0x0050C924=滚动，>7（无符号）→ DrawScrollBar(0x232A, 0x192, 0x9E, 4, …)；C0/BC=1。0x50：DrawTitledItemList(…, 6, "誘餌" 0x004BF604)，滚动条同 0x1B。0x29：DrawTitledItemList(…, 3, "融合" 0x004BF200)，无滚动条。0x1E：DrawRefineList(0xE0, 0x7E, 行, 滚动)（0x00474AF0 只读前 3 个参数）。
+对照：DrawBattleMenu 与内联拆出的 DrawCommandPanel（平滑绘制 DrawCommandPanelAdvance，见 deviations 97、99）、DrawAimPointers、DrawGhostAimPointer 逐分支一致；常量与被调函数映射逐个核对。越界见 deviations 231、232、418。
+差异：无。
+
+## 0x004729B0 Game::RandomRoleAct — exact
+
+汇编：选 = rand%3；0x00576D3C 位 0x200 → 选 = rand%2（再消费一次）。0 → 指令 5、0x00577070=6、结果 1、B4=1、MenuConfirm。2 → 0x00577020=单位、0x00576FA8=0x11、结果 0、turnTaken=0x11、0x0057725C=1、SetTarget(1)、C0=1、BC=1。1 → 同样记攻击（指令 1）；(u8)0x005771E8 ≥ 敌数 → 返回；打角色 = rand%2；站着 = 角色数 − (u8)0x005771E7 − (u16)0x005770D4 − (u16)0x0057720E；站着 >1（无符号）且打角色≠0 → 预定[0x00577020].+0=1、0x004BF0DC=rand%角色数+1、RaiseUnk26B8Bit28，循环：目标角色倒下、Ghost=1 或就是自己 → 重抽 rand%角色数+1；否则 0x004BF0DC=rand%敌数+1，敌倒下 → 循环 +1（>敌数 → 1）、计数 ≥ 敌数 → 返回。
+对照：RandomRoleAct 一致（随机数消费次序相同；kRandomActs 3、kRandomGuard 0、kRandomLeave 2）。
+差异：无。
+
+## 0x00472C60 Controls::PressConfirm — exact
+
+汇编：0x004D1648（空格按下）=1、0x004D1654（空格帧数）=2、0x004D1734（左键帧数）=2、0x004D1704（回车帧数）=1，返回 2。
+对照：PressConfirm 一致（kConfirmFrames 2）。
+差异：无。
+
+## 0x00472C90 Game::NextSelectableRole — diff → exact
+
+汇编：在 0x004BF56C 四项中找参数（找不到时序号 4，读表后一项）；候选 = 表[序]、序+1，CanSelectRole=1 → 返回候选；否则循环：序=4 → 0，次数+1 ≥4 → 返回 0，候选 = 表[序]、序+1、检查。
+对照：查找与四次尝试同源码。
+差异：源码另有“找不到时返回 0”的保护，未登记；唯一调用者 0x0046F380 只传 8..11（PanelUnits 表内的值），不可达。修正：删除该保护，注明调用者只传面板单位。复核：完整函数重新对照一致。
+
+## 0x00472D00 Game::PreviousSelectableRole — diff → exact
+
+汇编：同样找序号；循环四次：候选 = 表[序]，序−1（<0 → 3），CanSelectRole=1 → 返回候选；四次都不行返回 0。
+对照：同源码。
+差异：同 0x00472C90，删除不可达的未登记保护（唯一调用者 0x0046F400 只传 8..11）。复核：完整函数重新对照一致。
+
+## 0x00472D50 Game::BuildCommandMenu — exact
+
+汇编：启用表 0x005378EC..0x005378F4 = 1,1,1,1,1,0,0,0,0；commandNames（0x0050EBF0..FC）、commandKinds（0x0050D870..0x0050D877）清 0；0x0057720A=0。当前−0x14=0 且 0x00536EDC 字节=1：名[0]="煉妖"（0x004BF614）、种[0]=6、列数=1、启用[5]=1；游戏旗标 0x5A → 列数=2、名[1]="符鬼"（0x004B12B4）、种[1]=7、启用[6]=1；饰品取 0x004E4CCC 起两格（第 0 个队伍角色）。否则取 partyRoles[当前−0x14] 的两格（0x004E4CCC + 4×(角色×16 + 格)）。每格：种 = 节点 +0x54（字），0x15 ≤ 种 < 0x32 才列：启用[5+列]=1、名[列]=0x004BF01C[种]、种[列]=种；种 0x28 且 0x00577368=1 → 名="釋放"（0x004BF60C）；0x29 且护卫数=0 → 启用=0；0x27 且当前角色 AccessoryProficiency(0x27) <10（无符号）→ 启用=0；列数+1。0x00577368=1 且 0x004BF590=当前 且 AccessoryProficiency(0x28)≠100 → 启用[1]=0；MarkBit8Clear=0 → 启用[1]=0；HasBlock30=0 → 启用[3]=0；每个已列项 CanUseAccessory(种)=0 → 启用[5+i]=0；MarkBit4=1 → 启用 = 1,0,0,0,1,0,0,0,0。
+对照：BuildCommandMenu 一致（kFirstAccessorySlot 7、SlotsPerRole 16、kGatherLeast 10、kFullProficiency 100；三个名称与 exe 字节一致）。空装备格见 deviations 147，种类 0x2F..0x31 取名越界见 411，第 9 项启用位见 415。
+差异：无。
+
+## 0x00473150 Game::NextEnemyTurn — exact
+
+汇编：0x00576FB4 ≥ 敌数 → 0。该敌倒下 → 循环 0x004BF0E0+1（>敌数 → 1）、0x00576FB4=enemyOrder[步]、计数+1 ≥ 敌数 → 结果 1 并跳出；未倒下跳出。SetAC0(1)、B4=1、0x004BF0DC=它+1、GetShadowRect、DrawSlotAnimation(0x2393, 0, 框中心)。
+对照：NextEnemyTurn 一致（kTurnsRunning 1、kEnemyPointer 0x2393）。矩形未写时读栈见 deviations 407（源码初值 0）。
+差异：无。
+
+## 0x00473270 Game::NextRoleTurn — exact
+
+汇编：周期 = 角色数 − (u16)0x0057720E − (u16)0x005771F4；从 0x004BF0E0 起 +1（>周期 → 1），直到 0x004BF578[步]（即 RoleCycle[步−1]）= 当前−0x14（无出口）；0x004BF0E0=步、0x004BF0DC=它+1、0x00576FB4=0、B4=1。
+对照：NextRoleTurn 一致。RoleCycle 越界读与找不到时的死循环见 deviations 408（RoleCycleRead、Hang()）。
+差异：无。
+
+## 0x004732D0 Game::DrawCommandMenu — exact
+
+汇编：当前=0 → 返回。大字体 SetShadow(0)、SetBackground(0xFFFE)；当前角色 +8 所指块首 dword=0x30 且 MarkBit1=0 → 启用[3]=1；BuildCommandMenu。五个固定指令（0x004BF0C4 表："攻擊""奇術""物品""絕技""防禦"）：位置 (x + 0x30×(i%3), y + 0x18×(i/3))，启用=1 用 0x0050EC74 否则 0x00537424，标志 4；i+1=光标 → SetBackground(0xF000)、同色在 (x−1, y−1) 标志 0x10 再画、SetBackground(0xFFFE)。四个列项（0x0050EBF0 名、0x0050D870 种）：名为空跳过；CanUseAccessory(种)=1 且启用=1 → 亮色，否则启用=0、暗色；光标同上。符鬼指令开：指令=7；FillBox(x−4, y−6, 0x94, 0x0057720A ≥2 ? 0x54 : 0x38, 1,1,1,0)；左 = DrawTallPanel(0x154, 0x6E)；8 项（0x004BF630）行顶 0x71 起每 0x18：(左+4, 顶+1) 亮色标志 4，行号=0x004BF0F8 → (左+3, 顶) 高亮。煉妖选项开：同遮罩，DrawSmallPanel(0x17C, 0xC8)，2 项（0x004BF650）行顶 0xCB，标记 0x00577990。五行开：同遮罩，DrawWidePanel(x, 0x10E)=1 时 5 项（0x004BF658）左 0x103 起每 0x18：(左+1, 0x112)，标记 0x0057798C → (左, 0x111) 高亮。最后 SetBackground(0xFFFE)。
+对照：DrawCommandMenu（平滑绘制 DrawCommandMenuAdvance，见 deviations 97、99）一致；坐标与颜色常量逐个核对，四个名称表与 exe 指针表所指字节一致。
+差异：无。
