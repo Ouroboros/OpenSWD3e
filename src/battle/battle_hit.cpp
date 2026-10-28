@@ -741,7 +741,7 @@ void Game::PlaceAllHit(BattleUnit& attacker, int width, int index, u16& delay)
             0,
             static_cast<i16>(x),
             0,
-            delay,
+            static_cast<i16>(delay),
             static_cast<i16>(second),
             0
         ) == 1)
