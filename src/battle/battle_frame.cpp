@@ -347,7 +347,7 @@ void Game::EndBattle()
     battle.unk524200.fill(0);
     std::fill_n(battle.turnTaken.begin() + kClearedTurnFrom, kClearedTurnUnits, 0);
     battle.unk5240C4 = 0;
-    battle.unk5244E8.fill(-1);
+    battle.unk537A20.fill(-1);
     battle.enemyOrders.fill(0);
     battle.enemyPlaces.fill(UnitPlacement{});
     battle.rolePlaces.fill(UnitPlacement{});
@@ -359,10 +359,10 @@ void Game::EndBattle()
     battle.pointerX = 0;
     battle.pointerY = 0;
     battle.formation = BattleFormation{};
-    battle.unk4FF168.fill(0);
+    battle.unk50ED68.fill(0);
     battle.roleListScrolls.fill(0);
-    battle.unk524324.fill(0);
-    battle.unk4FE5D4.fill(0);
+    battle.unk5377FC.fill(0);
+    battle.unk50D88C.fill(0);
     battle.actionQueue.fill(0);
     battle.commandNames[0] = {};
     battle.commandKinds = {};
@@ -379,7 +379,7 @@ void Game::EndBattle()
     battle.unk53AEDC = 0;
     battle.unk53AEE0 = 0;
     battle.unk4FF588.fill(0);
-    battle.unk525470 = ActState{};
+    battle.unk5394E8 = ActState{};
     battle.spiritRolling.fill(0);
     battle.spirit.fill(0);
     battle.enemyHitActs.fill(0);
@@ -493,7 +493,7 @@ void Game::EndBattle()
     battle.drawOrder.fill(0);
     battle.drawTaken.fill(0);
     messages.lootCounts = {};
-    battle.unk524268.fill(0);
+    battle.unk5376B8.fill(0);
     battle.hitFading.fill(0);
     battle.unk53BF5C = 0;
     battle.unk53BF60 = 0;
@@ -542,7 +542,7 @@ void Game::EndBattle()
     this->fightTalk.wonByTalk = 0;
     battle.levelUpPending = 0;
     battle.orderSorted = 0;
-    battle.unk53C048 = 0;
+    battle.unk57734C = 0;
     this->archive.Flush();
     this->acts.CloseAll();
     this->audio.StopAllSounds();

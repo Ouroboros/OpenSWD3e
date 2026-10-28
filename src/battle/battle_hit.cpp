@@ -1050,7 +1050,7 @@ void Game::DrainToSpirit(BattleRole& role, i32& damage)
     role.Damage(this->battleServices, 0, static_cast<i16>(damage), 0);
 }
 
-// A role attacking in HitFrame (inline in the original): its act is its unk4FE5D4. With wholeSide its hit sweeps a
+// A role attacking in HitFrame (inline in the original): its act is its unk50D88C. With wholeSide its hit sweeps a
 // side (hitsAtOnce 1: the whole side at once, the hits taken by the enemies; otherwise one unit after another as the
 // sweep reaches them, until sweepTotal are hit), else one target is hit (hitsAtOnce 1: HitAllFrame on the target
 // alone). unk53AE7C makes the party the target side.
@@ -1060,7 +1060,7 @@ int Game::RoleHitFrame(int role)
     BattleRole& attacker = this->battleRoles[static_cast<std::size_t>(role)];
     const auto target = static_cast<i16>(attacker.GetWord29A2());
     const auto at = static_cast<std::size_t>(target);
-    const u32 act = static_cast<u32>(battle.unk4FE5D4[static_cast<std::size_t>(role)]);
+    const u32 act = static_cast<u32>(battle.unk50D88C[static_cast<std::size_t>(role)]);
 
     if (battle.wholeSide != 0)
     {
@@ -1096,7 +1096,7 @@ int Game::RoleHitFrame(int role)
                         battle.flashing = 1;
                         ++battle.unk53BD88;
                         battle.unk4A7626 = 0;
-                        battle.unk502984[index] = static_cast<i32>(index);
+                        battle.unk513664[index] = static_cast<i32>(index);
                         this->FlashFrameWhite();
                     }
 
@@ -1148,7 +1148,7 @@ int Game::RoleHitFrame(int role)
             {
                 battle.unk4A7626 = static_cast<u16>(target);
                 battle.flashing = 1;
-                battle.unk502984[at] = target;
+                battle.unk513664[at] = target;
                 this->FlashFrameWhite();
             }
         }
@@ -1190,7 +1190,7 @@ int Game::RoleHitFrame(int role)
         {
             battle.unk4A7626 = static_cast<u16>(target);
             battle.flashing = 1;
-            battle.unk502984[at] = target;
+            battle.unk513664[at] = target;
             this->FlashFrameWhite();
         }
 
@@ -1250,7 +1250,7 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
                 battle.unk4A7626 = static_cast<u16>(aimed);
             }
 
-            battle.unk502984[slot] = static_cast<i32>(slot);
+            battle.unk513664[slot] = static_cast<i32>(slot);
             battle.flashing = 1;
             this->FlashFrameWhite();
         }
@@ -1911,7 +1911,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
 
     if (battle.unk53AF68 == 0 && aimed.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
-        battle.unk502984[at] = target;
+        battle.unk513664[at] = target;
         battle.lastRoleDefeated = static_cast<u16>(target);
         battle.flashing = 1;
         this->FlashFrameWhite();
@@ -2055,7 +2055,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 
             BattleEnemy& enemy = this->battleEnemies[battle.enemyCount];
             enemy.Reset(this->battleServices);
-            battle.unk5246E0 = ObjectRecord{};
+            battle.unk537D68 = ObjectRecord{};
             UnitPlacement& place = battle.enemyPlaces[battle.enemyCount];
             place.actId = battle.unk53BF28;
             place.x = kCallX;
@@ -2068,8 +2068,8 @@ int Game::CallEnemies(BattleEnemy& unit)
                 place.x = static_cast<i16>(Display::Width - place.x);
             }
 
-            this->database.LoadObject(battle.unk5246E0, battle.unk53BF28);
-            this->database.FreeDescription(battle.unk5246E0);
+            this->database.LoadObject(battle.unk537D68, battle.unk53BF28);
+            this->database.FreeDescription(battle.unk537D68);
             enemy.Setup(place, battle.unk53BF28, this->database, this->acts);
             enemy.SetStatus(BattleUnit::UnkMark400);
             ++battle.enemyCount;
@@ -2187,9 +2187,9 @@ int Game::EnemyFrame(int enemy)
         (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk53BF98 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
-    if (battle.unk53AE90[at] != -1 && this->PlayHitAct(unit, static_cast<u32>(battle.enemiesHitAct), enemy) == 1)
+    if (battle.unk575F38[at] != -1 && this->PlayHitAct(unit, static_cast<u32>(battle.enemiesHitAct), enemy) == 1)
     {
-        battle.unk53AE90[at] = -1;
+        battle.unk575F38[at] = -1;
     }
 
     unit.EnrageFrame(services);
@@ -2197,7 +2197,7 @@ int Game::EnemyFrame(int enemy)
 
     if (removed == 1)
     {
-        battle.unk502984[at] = -1;
+        battle.unk513664[at] = -1;
         battle.slotDamage[at] = 0;
         battle.slotTargets[at] = -1;
         battle.unk4A7626 = kNoAimedEnemy;

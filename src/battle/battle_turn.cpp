@@ -721,7 +721,7 @@ int Game::RemoveDefeated(int index, int role)
 
     unit.CancelCommand();
     battle.RemoveSlotRecord(unitId);
-    battle.unk524268[static_cast<std::size_t>(index)] = 0;
+    battle.unk5376B8[static_cast<std::size_t>(index)] = 0;
 
     if (battle.currentUnit == unitId)
     {
@@ -841,7 +841,7 @@ int Game::FadeFieldOut()
 }
 
 // swd3e.exe 0x004697A0: the objects held back in the battle given to the inventory: givenBack[1] and [2], and one
-// kThrownObject for each still thrown (unk53C4B0); the counts and escortCount are cleared.
+// kThrownObject for each still thrown (unk577994); the counts and escortCount are cleared.
 void Game::ReturnBattleItems()
 {
     BattleState& battle = this->battleState;
@@ -854,13 +854,13 @@ void Game::ReturnBattleItems()
         }
     }
 
-    for (i32 thrown = 0; thrown < battle.unk53C4B0; ++thrown)
+    for (i32 thrown = 0; thrown < battle.unk577994; ++thrown)
     {
         AddOneItem(this->party.inventory, kThrownObject, 0, this->database);
     }
 
     battle.escortCount = 0;
-    battle.unk53C4B0 = 0;
+    battle.unk577994 = 0;
     battle.givenBack[1] = 0;
     battle.givenBack[2] = 0;
 }
@@ -992,7 +992,7 @@ void Game::FieldFadeFrame(int counting)
 // swd3e.exe 0x00469BC0: while no unit acts and the battle is not kLostQuietly, a side that is all down or turned to
 // stone (UnkStatus4) loses: the party (auto, guest and ghost units and the defeated left out; the count against the
 // roles less unk5770D4, the escorts and the guests, in 8 bits) unless endFade, the stone roles counted as defeated and
-// the battle state 0x67; then, unless unk53C048, the standing enemies, counted as defeated, unk53C048 set, the auto
+// the battle state 0x67; then, unless unk57734C, the standing enemies, counted as defeated, unk57734C set, the auto
 // battle off and the battle state 0x63. 1 when a side lost.
 int Game::CheckStoneSides()
 {
@@ -1028,7 +1028,7 @@ int Game::CheckStoneSides()
         return 1;
     }
 
-    if (battle.unk53C048 != 0)
+    if (battle.unk57734C != 0)
     {
         return 0;
     }
@@ -1052,7 +1052,7 @@ int Game::CheckStoneSides()
     }
 
     battle.enemiesGone = static_cast<u8>(battle.enemiesGone + stoneEnemies);
-    battle.unk53C048 = 1;
+    battle.unk57734C = 1;
     battle.autoBattle = 0;
     battle.result = kBattleWon;
     return 1;
@@ -1125,7 +1125,7 @@ void Game::SpreadPoison(int enemies)
 // kind Unk16 plus 100 (hitDamage, lastDamage) while the cast pose of act 0x1775 plays; once it is done (1) the grey
 // band closes (2) and every standing enemy takes it: by the side of the coin (coinState) an enemy of the other kind
 // (ObjectUnkA2, 1 on 陽, 0 on 陰) is healed (minus the damage, HealTarget), the others are hit (flag 26B8 raised),
-// the number shown (at most 9999) after the hit picture 0x2389; one defeated becomes unk4A7626 (its unk502984 entry
+// the number shown (at most 9999) after the hit picture 0x2389; one defeated becomes unk4A7626 (its unk513664 entry
 // set), flashes the field (defeat pose 6) and whitens the frame. 0 while the pose plays.
 int Game::YinYangAttack(int role)
 {
@@ -1181,7 +1181,7 @@ int Game::YinYangAttack(int role)
         if (enemy.Damage(services, battle.lastDamage, 0, 0) == 1)
         {
             battle.unk4A7626 = static_cast<u16>(index);
-            battle.unk502984[index] = static_cast<i32>(index);
+            battle.unk513664[index] = static_cast<i32>(index);
             battle.flashing = 1;
             enemy.SetDefeatPose(kYinYangDefeatPose);
             std::fill_n(this->drawSurface, static_cast<std::size_t>(Display::Width) * Display::Height, kWhitePixel);
@@ -1335,7 +1335,7 @@ int Game::DamageNumbersFrame(int index, int role)
 }
 
 // swd3e.exe 0x00469930: the units in draw order show their guard text and their damage numbers, then take their
-// pending damage: a unit that does has its unk502984 entry set to its index and the slot record of that index removed.
+// pending damage: a unit that does has its unk513664 entry set to its index and the slot record of that index removed.
 // A role whose numbers are done (its slotTargets entry cleared) or whose damage is taken sets damageShown; then, out of
 // the menu, with the talisman ghost (ghostSlot) obeying, the first role standing below half its hit points and no
 // rescue yet, the ghost heals it when it can spend its spirit (kGhostRescuePercent): its act kGhostRescueAct, its
@@ -1359,7 +1359,7 @@ void Game::ApplyHits()
 
             if (enemy.ApplyPendingDamage(services))
             {
-                battle.unk502984[at] = unitId;
+                battle.unk513664[at] = unitId;
                 battle.RemoveSlotRecord(unitId);
             }
 
@@ -1380,7 +1380,7 @@ void Game::ApplyHits()
         if (role.ApplyPendingDamage(services))
         {
             battle.damageShown = 1;
-            battle.unk502984[at] = index;
+            battle.unk513664[at] = index;
             battle.RemoveSlotRecord(index);
         }
 
@@ -1409,7 +1409,7 @@ void Game::ApplyHits()
             continue;
         }
 
-        battle.unk4FE5D4[ghostAt] = static_cast<i32>(kGhostRescueAct);
+        battle.unk50D88C[ghostAt] = static_cast<i32>(kGhostRescueAct);
         battle.aimTarget = 1;
         battle.pendingOrders[ghostAt].unk00 = 1;
         ghost.Retarget(0);
@@ -2478,7 +2478,7 @@ void Game::MenuCancel()
             battle.unk53BFF0 = 0;
             battle.unk53BFD0 = 0;
             const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
-            battle.unk4FE5D4[unit] = 0;
+            battle.unk50D88C[unit] = 0;
             closePanels();
             battle.pendingOrders[unit].unk08 = 0;
             battle.pendingOrders[unit].unk00 = 0;
@@ -3809,7 +3809,7 @@ int Game::BattleDebugKeys()
 
                     if (!enemy.IsDefeated())
                     {
-                        battle.unk502984[index] = static_cast<i32>(index);
+                        battle.unk513664[index] = static_cast<i32>(index);
                         battle.slotDamage[index] = 0;
                         enemy.Damage(services, kDefeatHurt, 0, 0);
                     }
@@ -5132,9 +5132,9 @@ void Game::ConfirmSpell()
         return;
     }
 
-    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    u32 act = static_cast<u32>(battle.unk50D88C[unit]);
     const u16 kind = role.SelectSkill(this->database, battle.listPage, 0, battle.specialCursor, act);
-    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+    battle.unk50D88C[unit] = static_cast<i32>(act);
     PendingOrder& order = battle.pendingOrders[unit];
 
     const bool aimsEnemies = this->PrepareOrder();
@@ -5322,7 +5322,7 @@ void Game::ConfirmTarget()
             battle.turnCommand = kThrowOrder;
             battle.unk53C01C = 1;
             battle.turnTaken[static_cast<std::size_t>(battle.turnUnit)] = kThrowOrder;
-            ++battle.unk53C4B0;
+            ++battle.unk577994;
         }
         else
         {
@@ -5417,10 +5417,10 @@ void Game::ConfirmItem()
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     BattleRole& role = this->battleRoles[unit];
     u16 kind = kNoObjectKind;
-    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    u32 act = static_cast<u32>(battle.unk50D88C[unit]);
     const int chosen =
         role.SelectObject(this->database, this->battleState, battle.listRole, battle.listCursor, act, kind);
-    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+    battle.unk50D88C[unit] = static_cast<i32>(act);
 
     if (chosen == 0)
     {
@@ -5704,9 +5704,9 @@ void Game::ConfirmSpecial()
 
     battle.unk53BFB8 = 0;
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
-    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    u32 act = static_cast<u32>(battle.unk50D88C[unit]);
     const u16 kind = this->battleRoles[unit].SelectSkill(this->database, 0, 1, battle.specialCursor, act);
-    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+    battle.unk50D88C[unit] = static_cast<i32>(act);
 
     if (kind == kNoObjectKind)
     {
@@ -5746,11 +5746,11 @@ void Game::ConfirmThrow()
 
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     u16 kind = 0;
-    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    u32 act = static_cast<u32>(battle.unk50D88C[unit]);
     const int chosen =
         this->battleRoles[unit]
             .SelectObject(this->database, this->battleState, kThrowCategory, battle.listCursor, act, kind);
-    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+    battle.unk50D88C[unit] = static_cast<i32>(act);
 
     if (chosen == 0)
     {
@@ -5787,11 +5787,11 @@ void Game::ConfirmRefine()
 
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     u16 kind = 0;
-    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    u32 act = static_cast<u32>(battle.unk50D88C[unit]);
     const int chosen =
         this->battleRoles[unit]
             .SelectObject(this->database, this->battleState, kRefineCategory, battle.listCursor, act, kind);
-    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+    battle.unk50D88C[unit] = static_cast<i32>(act);
 
     if (chosen == 0)
     {
@@ -5905,11 +5905,11 @@ void Game::ConfirmFuse()
 
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     u16 kind = 0;
-    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    u32 act = static_cast<u32>(battle.unk50D88C[unit]);
     const int chosen =
         this->battleRoles[unit]
             .SelectObject(this->database, this->battleState, kFuseCategory, battle.listCursor, act, kind);
-    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+    battle.unk50D88C[unit] = static_cast<i32>(act);
 
     if (chosen == 0)
     {
@@ -5955,11 +5955,11 @@ void Game::ConfirmBait()
 
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     u16 kind = 0;
-    u32 act = static_cast<u32>(battle.unk4FE5D4[unit]);
+    u32 act = static_cast<u32>(battle.unk50D88C[unit]);
     const int chosen =
         this->battleRoles[unit]
             .SelectObject(this->database, this->battleState, kBaitCategory, battle.listCursor, act, kind);
-    battle.unk4FE5D4[unit] = static_cast<i32>(act);
+    battle.unk50D88C[unit] = static_cast<i32>(act);
 
     if (chosen == 0)
     {
@@ -7061,7 +7061,7 @@ void Game::DrawAimPointers()
 
 // swd3e.exe 0x00475CB0: the frame of the battle end states (not while a talk window or a battle message shows):
 // 0x60 back to state 0; 0x61 the glow of the unit after the roles (a level-up role 1 once over); 0x62 the 煉符 result;
-// 0x63 the end checked (every enemy down, unless the talk or unk53C048 ended it), then 0x64; 0x64 the victory panel
+// 0x63 the end checked (every enemy down, unless the talk or unk57734C ended it), then 0x64; 0x64 the victory panel
 // (without it the fade after kEndMessageFrames frames); 0x65 the level-ups one role at a time (0x70 once none is left);
 // 0x66 the loot; 0x67 the defeat; 0x68 a pause; 0x6E the level-up stats; 0x6F the new spell; 0x70 the new special
 // skills (0x71 after); 0x71 the masteries (0x66 after). The panels confirm themselves after kEndPanelFrames.
@@ -7309,7 +7309,7 @@ void Game::BattleEndFrame()
     }
 }
 
-// Battle state 0x63 of BattleEndFrame (inline in the original); see there. Unless the talk or unk53C048 ended the
+// Battle state 0x63 of BattleEndFrame (inline in the original); see there. Unless the talk or unk57734C ended the
 // battle, every enemy is unmarked and one still standing goes back to state 0; otherwise every role is unmarked and
 // its effects expire (1), and the victory follows (0x64).
 void Game::EndCheckFrame()
@@ -7319,7 +7319,7 @@ void Game::EndCheckFrame()
     battle.autoBattle = 0;
     battle.unk53C4C0 = 1;
 
-    if (this->fightTalk.wonByTalk == 0 && battle.unk53C048 == 0)
+    if (this->fightTalk.wonByTalk == 0 && battle.unk57734C == 0)
     {
         u32 defeated = 0;
 

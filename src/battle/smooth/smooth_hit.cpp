@@ -66,7 +66,7 @@ int HitFrame::PlayHitActAdvance(BattleUnit& unit, u32 act, int index, Scene& sce
         if (game.acts.Run(hit) == 0)
         {
             battle.followActs[at] = ActState{};
-            battle.unk4FF0BC[at] = 0;
+            battle.unk50EBFC[at] = 0;
             return 1;
         }
 
@@ -205,7 +205,7 @@ bool HitFrame::DrawHitPictureAdvance(BattleUnit& target, BattleUnit& attacker, u
     if (game.acts.Run(hit) == 0)
     {
         battle.followActs[at] = ActState{};
-        battle.unk4FF0BC[at] = 0;
+        battle.unk50EBFC[at] = 0;
         return false;
     }
 
@@ -472,7 +472,7 @@ void HitFrame::RippleHitFrameAdvance(BattleUnit& target, BattleUnit& attacker, i
 }
 
 // The second-tier spell picture of a hit act (inline in 0x004626D0 and 0x004632B0): an act marked AddsPicture adds
-// its effect at the place it was drawn (unk4FF0BC set); then the pictures are drawn and their target bits join the
+// its effect at the place it was drawn (unk50EBFC set); then the pictures are drawn and their target bits join the
 // act's.
 void HitFrame::AddAndDrawHitPictures(BattleUnit& target, BattleUnit& attacker, int index, Scene& scene)
 {
@@ -495,7 +495,7 @@ void HitFrame::AddAndDrawHitPictures(BattleUnit& target, BattleUnit& attacker, i
             static_cast<i16>(battle.hitDrawY + hit.anchorY),
             attacker.kind == 0 ? 1 : 0
         );
-        battle.unk4FF0BC[at] = 1;
+        battle.unk50EBFC[at] = 1;
     }
 
     DrawHitPictures(game.battleServices, scene);
@@ -708,7 +708,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
 
     battle.hitAllFrames = 0;
     battle.followActs[at] = ActState{};
-    battle.unk4FF0BC[at] = 0;
+    battle.unk50EBFC[at] = 0;
     return 1;
 }
 

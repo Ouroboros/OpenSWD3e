@@ -452,3 +452,8 @@
 - 0x00459980／990：thiscall 0x0046B210(0x0050F620, &0x005761D0)，不登记析构 → BattleState::file（BattleFile 以投影器指针构造）。
 - 0x004599A0／9B0／9C0／9D0：File 构造 0x0043CAE0／析构 0x0043CB10 于 0x005373C8；全程序只有这两个片段引用该地址 → 不创建等价。
 对照：game.cpp 中 0x00459880..0x004599D0 的初始化说明与上述逐组一致；构造／析构函数本身在各自行核对；BattleFile 构造只记下投影器指针，与 Projector 的构造先后无依赖。
+
+## 0x00459AE0 Game::ResetBattle — exact
+
+汇编：0x0048AF00；0x0048A470 依次清 0x004D3458、0x004C6348、0x004D1F58 三个计数列表；0x004C6700 起 0x180 字节清零；0x00539590 起 20 个（步长 0x3078）以 thiscall 0x00491690 重置；0x005136E0 起 10 个（步长 0x34D4）同样重置。
+对照：Fame::Free、ClearCounterList（三个列表互不依赖，源码按数组顺序清与原程序顺序不同但结果相同）、battleBlocks（4×0x18 dword = 0x180 字节）、先敌人后角色的 BattleUnit::Reset 一致。

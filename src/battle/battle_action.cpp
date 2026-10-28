@@ -289,7 +289,7 @@ void Game::RoleDefeated(int target)
 {
     BattleState& battle = this->battleState;
     battle.unk4A7626 = static_cast<u16>(target);
-    battle.unk502984[static_cast<std::size_t>(target)] = target;
+    battle.unk513664[static_cast<std::size_t>(target)] = target;
     battle.flashing = 1;
     this->FlashFrameWhite();
 }
@@ -895,7 +895,7 @@ void Game::DefeatAllByCast(BattleRole& unit)
 
         if (!enemy.IsDefeated())
         {
-            battle.unk502984[index] = static_cast<i32>(index);
+            battle.unk513664[index] = static_cast<i32>(index);
             enemy.StartDefeat(1);
             enemy.SetDefeatPose(kCastDefeatPose);
         }
@@ -1260,7 +1260,7 @@ int Game::SummonEscortFrame(BattleRole& unit, int role)
 
     battle.RemoveSlotRecord(battle.callingEscort + BattleState::FirstRoleUnit);
     battle.panelFlags &= ~kNoEscortPanel;
-    battle.unk524268[battle.callingEscort] = 0;
+    battle.unk5376B8[battle.callingEscort] = 0;
     battle.callingEscort = 0;
     escortOf = 0;
     battle.listGlow = kListGlowOn;
@@ -1515,7 +1515,7 @@ int Game::PoseSweepFrame(BattleRole& unit)
                 continue;
             }
 
-            battle.unk53AE90[index] = static_cast<i32>(index);
+            battle.unk575F38[index] = static_cast<i32>(index);
             battle.lastDamage = unit.HitDamage(services, enemy, battle.spiritDamage, battle.staminaDamage);
 
             if (battle.lastDamage >= kMaxHitDamage)
@@ -1682,7 +1682,7 @@ int Game::TimingAttackFrame(BattleRole& unit, int target)
     {
         battle.hitDamage = -1;
         battle.unk4A7626 = static_cast<u16>(target);
-        battle.unk502984[static_cast<std::size_t>(target)] = target;
+        battle.unk513664[static_cast<std::size_t>(target)] = target;
         battle.flashing = 1;
         enemy.SetHeld(1);
         this->FlashFrameWhite();
@@ -2289,7 +2289,7 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
 
             if (unit.SpendGhostSpirit(hitPoints, maximum, kGhostHealSpirit) == 1)
             {
-                battle.unk4FE5D4[at] = kGhostHealCast;
+                battle.unk50D88C[at] = kGhostHealCast;
                 order.unk00 = 1;
             }
             else
@@ -2317,10 +2317,10 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
 
     if (unit.Ghost() == 1)
     {
-        u32 act = static_cast<u32>(battle.unk4FE5D4[at]);
+        u32 act = static_cast<u32>(battle.unk50D88C[at]);
         u16 kind = 0;
         const int chosen = unit.GhostSkillCommand(this->database, act, kind);
-        battle.unk4FE5D4[at] = static_cast<i32>(act);
+        battle.unk50D88C[at] = static_cast<i32>(act);
 
         if (chosen == 1)
         {
@@ -2375,9 +2375,9 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
         return;
     }
 
-    u32 act = static_cast<u32>(battle.unk4FE5D4[at]);
+    u32 act = static_cast<u32>(battle.unk50D88C[at]);
     const int chosen = unit.ChooseCommand(services, this->database, act);
-    battle.unk4FE5D4[at] = static_cast<i32>(act);
+    battle.unk50D88C[at] = static_cast<i32>(act);
 
     if (chosen != 1)
     {
@@ -2413,7 +2413,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     const auto at = static_cast<std::size_t>(role);
     const int self = role + BattleState::FirstRoleUnit;
 
-    if (battle.unk524268[at] != 0 || unit.IsHeld() != 0 || unit.GetValueAB4() != 1 || battle.actingUnit != -1 ||
+    if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.GetValueAB4() != 1 || battle.actingUnit != -1 ||
         battle.result != 0 || battle.currentUnit != 0 || this->fightTalk.battleRuns != 1 ||
         unit.DrainSecondGauge() != 1)
     {
@@ -2433,7 +2433,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     const i32 taken = battle.turnTaken[static_cast<std::size_t>(self)];
     battle.unk5772BC = 1;
     battle.unk53BFC4 = 1;
-    battle.unk524268[at] = 1;
+    battle.unk5376B8[at] = 1;
     battle.turnUnit = self;
 
     if (taken != kOrderedTurn)
@@ -2588,7 +2588,7 @@ void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
         {
             BattleEnemy& enemy = this->battleEnemies[index];
 
-            if (enemy.IsDefeated() || battle.unk502984[index] != -1)
+            if (enemy.IsDefeated() || battle.unk513664[index] != -1)
             {
                 ++skipped;
                 continue;
@@ -2840,8 +2840,8 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
     battle.ClearActing();
     const auto at = static_cast<std::size_t>(role);
     battle.nameFlashes[at] = 0;
-    battle.unk4FE5D4[at] = 0;
-    battle.unk524268[at] = 0;
+    battle.unk50D88C[at] = 0;
+    battle.unk5376B8[at] = 0;
     battle.roleListScrolls.fill(0);
     battle.roleListRows.fill(1);
     battle.unk53BF46 = 0;
@@ -2916,7 +2916,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
                     battle.levelUpFrames = battle.lastDefeatedObject->data.level;
                 }
 
-                if (battle.unk502984[static_cast<std::size_t>(role)] != -1)
+                if (battle.unk513664[static_cast<std::size_t>(role)] != -1)
                 {
                     battle.levelUpFrames = kRetreatLevel;
                 }

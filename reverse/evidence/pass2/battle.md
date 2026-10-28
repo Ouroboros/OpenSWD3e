@@ -196,3 +196,34 @@
 ## 0x00459830 BattleHud::FreeAnimation — exact
 
 汇编：thiscall。6 个帧头的数据指针非空则释放并清 0；字 +0x12C = 0、+0x128 = 0；动作 0xA4 字节清零（返回 0）。对照：pictures 逐个 reset、id、wave、act 清零一致。
+
+## 0x004599E0 Game::LoadBattleBackground — exact
+
+汇编：0x00513638 非空 → 释放并清 0；0x00436770(背景+0x3A98, 0) 的 5 dword 帧头复制到 0x00513638；0x00438A30(数据, 3, 0x280 / 第二参数（有符号）)（thiscall 0x005761D0）；对 i < 0x005770B8：0x00459830(0x0050CEE8 + i×0x130)；再对 i < 0x005770B8：0x004594F0(0x0050CEE8 + i×0x130; 0x005761D0, x = 0x0050EE38[i], y = 0x0050EE58[i], 编号 = 0x0050EE08[i] 低字, 第二参数)；字 0x004BF1D6、0x004BF1D8、0x004BF1DA = −1。
+对照：kBackgroundPictures 15000、background（0x00513638，移动赋值替代释放后载入）、ShiftPicture（Right、Display::Width / scene）、formation（0x0050EDE0：animations +0x28、animationX +0x58、animationY +0x78）、backgroundAnimations、darkCopyTint 一致；动画数超过 8 见 deviations（0x004599E0、0x0045B8D0、0x00465B00 行）；载入结果为空时以空图代替属 0x00436770 的载入失败处理。
+
+## 0x00459B50 CreateBattleSurfaces — exact
+
+汇编：两个 dword 0x005379F4、0x005379F8 = 0x0043C620(GetSystemMetrics(0), GetSystemMetrics(1))（thiscall 0x004C5008）；字 0x004BF1D6..0x004BF1DA = −1；返回 −1。对照：surfaces、darkCopyTint 与返回值一致；按逻辑画面 640×480 建立见 deviations 320（平台替换）。
+
+## 0x00459BA0 ReleaseBattleSurfaces — exact
+
+汇编：两个表面非空 → 经虚表 +8（Release）释放并清 0。对照：surfaces 逐个 reset 一致。
+
+## 0x00459BD0 Game::StartBattle — diff → exact
+
+汇编（分段独立推导）：
+- 字 0x0057737A = 编号；0x004AF7A0 = 旗标 0x52；0x005770C8 = 0x0049D3B0(0x00578A70)；0x00437E10(1)；0x00479820；0x00457610(0x004C6610)。
+- 清零：0x005394E8（0xA4 字节）、0x0050ED68（0x14 dword）、0x00575F18（7 dword）、0x005377FC（0x3C）、0x0050D88C（0xA）、0x0053477C（0x14）、0x0050EBF0/F4/F8 与 0x0050D870/74、0x00537388（0xA，消息链表头与 0x0053738C 起 9 dword）、0x005376B8（0x1E，两次）、0x005378EC/F0、0x005369C8（0x32）、0x00536EE0（0x64）、0x0050EBFC（0x1E）、0x00537758（0x1E）、0x005394B4..C0、0x00537A10/14、0x00536EDC、0x0050CEBC、0x0050CEC0、0x005376A4..B4、0x00577224、字 0x00577228、0x005134A0（0xFF 字节）、0x005761C8 与字 0x005761CC、0x0050ECB4（0x20 dword）、0x0050D878..88、0x0050CE6C（0x14）、0x00576FBC、0x0050F41C（0x80 dword）、字节 0x005774E8、0x00576FC4、字节 0x00577254、0x00576FD0/C8/CC、0x0057734C、字 0x0057720A、0x00577994；置 −1：0x00513664、0x005378F8、0x00575F38（各 0x1E）、0x00537A20（0xD2）、0x00575F18；0x004591E0。
+- 名字：4 个角色各取 0x004E4C30 + 角色×0x20 的前 10 字节中非 0 的字节依次写入 0x0050ECB4 + 角色×0x20（每个角色从头计）。
+- 30 个槽记录（0x00537E10，步长 0x1C）：+0 = −1，+0x18、+0xC、+0x10、+0x14 = 0，字 +0xA = 0。0x0050F3D8..E4 = 1。0x0040DF70(0x004E54A8)，编号 0x2329、动作 0xC。0x004C5090 = 0x004EEE94。
+- 在队：旗标 0x1E+i = 1 → 0x00536EDC[i] = 1、0x00576FA4 +1、字 0x005770D2 |= 1<<i；partyRoles：从 next 找第一个在队者（next >3 停止），写入、next+1 >3 时停止。
+- 字 0x004BF1CE = 0x3C；GetWindowRect（deviations 321）；0x0043A110(0x10)；颜色 (0x1F,0x1D,0x17)→0x0050EC74、(0xF,0xE,0xB)→0x00537424、(0x19,0x19,0x1D)→0x0050D86C；0x00438880(0x004C5008)；指针 (0x140,0xC8) 写 0x004C2FFC/0x00513428、0x004C3000/0x0051342C 并 0x0043BEF0；0x00459BA0；0x00459B50；0x0047E270(编号)；“安装目录+battle.ffd”经 0x0046B260、0x0046B2E0(…, 编号, 0)（只用低 16 位）；敌数 = 字 +0x98、动画数 = 字 +0x24；敌数 0 → 0x00411F10(“第%d號戰鬥場景資料錯誤!!”, 编号) 返回。
+- 场景 = 0x0043DB90(4)+1；0x004599E0(背景, 场景)；0x005394E8 再清。
+- 敌人 e（u16，有符号比较）：0x00491690；0x00537D68 清 0xA8 字节；站位 0x00537070 + e×0x20：actId = enemies[e]、x = enemyX[e]、y = enemyY[e]、kind = 0；0x00577304 = 1 → 0x00495BF0(1)、x = 0x280−x；0x00487D60(站位, enemies[e])；guarding[e] = 1 → 0x00491C30(1)。
+- 角色站位：actId = 0x004BF17C[partyRoles[i]]、kind = 1；人数 1 → (0x20F,0x11F)；2 → 三种组合依次覆盖；3 → 三种组合并写 0x004BF57C..88；面板 0x0050F3B8 = 站位 + (0x14,−0x96)、(5,−0x9E)、(0x14,−0xA0)、(−5,−0xA3)。
+- 角色 i：0x00491690；镜像 → 0x00495BF0(1)、x = 0x280−x、面板 x = 0x270−面板 x；0x0047E9C0(记录, 战斗块, 站位)；倒下 → 字节 0x005771E7 +1。0x00467AB0；0x00467B00。再逐个 0x0047EFE0(装备栏)、0x0047EB10(技能表头)、0x0047EAF0(背包)、0x0049B170(名字)。再逐个：生命/灵力/体力条 = _ftol(值/最大值×48.0)（x87；灵力与体力按有符号字）写入条与副本，值写入，+8 所指战斗块首 dword 写入块值与副本。
+- 起手架势：倒下数 ≥ 人数 → 0x0057722A |= 0x80；人数 1 → 0；否则随机到未倒下者。字 0x005770D4 = 0。旗标 0x5A → 0x0048B570(1)；符鬼 +0x10C = 0xA8、+0x108 = 符鬼变量+0x5A；站位 (0x1C2,0xAA)；0x00491690；0x0047ED60(站位, 符鬼)；0x004BF0F8 = 0x004864F0()；字 0x005770D6 = 人数、0x005770D4 = 1、人数+1；1 号角色倒下 → 0x00577370 = 1、0x00491BD0(0x5000)。
+- 0x004655B0、0x00465660、0x00465A70；先手 = 0x0043DB90(10)：每个敌人 e，(u16)先手 <7 → 角色[e] 的 0x0048B1D0(0)；否则 0x0043DB90(10) 次 0x00487C40(0)；每个角色：等于起手架势者 0x0048B1D0(1)，否则 0。人数 − 字 0x0057720E − 字 0x005771F4 − 字 0x005770D4（u32）≤ 倒下数 → 0x00576FAC = 0x67。
+对照：源码 StartBattle（含 PlaceParty、Bar）与上述逐段一致：被调函数映射、常量（颜色、指针、组合坐标与 RoleCycle、面板偏移、kBarLength 48 与 exe 中 0x004AADE0 的 float 相同、符鬼常量、kHeadStartRoll 10、kHeadStartFrom 7、kNoParty 0x67）、随机数次数、u16 计数器与有符号/无符号比较、kCommandClearBytes 8、kClearedStolenLists 8、ClearActing 的 8 个字段都在 0x00575F18..0x00575F33 内。0x0050CEBC、0x0050CEC0 只在此写入、无人读取，unk5214FC（0x0053738C 起）只被清零、无人读取，源码不建或不清等价；源码第二次 BattleMessages::Clear 在链表已空时不做事，与原程序清链表头相同；roleBlock 判空不可达（Setup 已指向战斗块）；敌数超过 20、角色序号 10 起的随机计量、GetWindowRect、日志见 deviations 388、419、321、139。
+差异：这一段的 14 个占位字段名与 4 处注释用的是正传地址。修正：字段改名为外传地址（unk5394E8、unk537D68、unk50ED68、unk5377FC、unk50D88C、unk50EBFC、unk513664、unk575F38、unk537A20、unk537A10、unk537A14、unk5376B8、unk57734C、unk577994，同步各引用处），补地址注释；计量条副本、actionQueue、inParty 的注释改为外传地址。逻辑不变。复核：完整函数重新对照一致。

@@ -232,7 +232,7 @@ public:
     // MenuConfirm); from the third use an object costs a third more (ListObject, SelectObject)
     std::array<u8, ItemUseIds> itemUses = {};
     std::array<std::unique_ptr<Surface>, 2> surfaces;  // 0x005379F4 screen sized off-screen surfaces
-    // swd32 0x0053477C 4 rows of 10 (the queued refines of the roles)
+    // 0x0053477C 4 rows of 10 (the queued refines of the roles)
     std::array<i16, QueueRows * QueueColumns> actionQueue = {};
     i32 panelFlags = 0;        // 0x00576D3C bit 5: the resistance panel
     i16 pendingActionRow = 0;  // 0x00577206
@@ -258,7 +258,7 @@ public:
     // 0x0050ECB4 (swd3e) the names the battle shows for the party roles: the nonzero bytes of the first ten of each
     // RoleName (the surname and given name), set by StartBattle
     std::array<std::array<char, sizeof(RoleName)>, Party::Roles> roleNames = {};
-    // swd32 0x00521398 the four roles are in the party (story flags 0x1E..)
+    // 0x00536EDC the four roles are in the party (story flags 0x1E..)
     std::array<u8, Party::Roles> inParty = {};
     // 0x004BF578 the party roles by turn, from 1 (swd3e: a party of three rewrites [1..4], StartBattle)
     std::array<i32, 5> roleCycle = InitialRoleCycle;
@@ -300,29 +300,29 @@ public:
     std::array<UnitPlacement, RoleUnits> rolePlaces;     // 0x00576088
     std::array<i32, 2 * Party::Roles> panelPlaces = {};  // 0x0050F3B8 the x and y of the four role panels
     std::array<i32, Party::Roles> roleListRows = {};     // 0x0050F3D8 by role: its roleListRow
-    std::array<i32, RoleUnits> hitPointBars = {};        // 0x00534750 and its copy 0x00502914
+    std::array<i32, RoleUnits> hitPointBars = {};        // 0x00534750 and its copy 0x0051360C
     std::array<i32, RoleUnits> hitPointBarsShown = {};
     std::array<i32, RoleUnits> hitPoints = {};   // 0x005347CC
-    std::array<i32, RoleUnits> spiritBars = {};  // 0x00537430 and its copy 0x00524288
+    std::array<i32, RoleUnits> spiritBars = {};  // 0x00537430 and its copy 0x00537730
     std::array<i32, RoleUnits> spiritBarsShown = {};
     std::array<i32, RoleUnits> spirit = {};       // 0x00534728
-    std::array<i32, RoleUnits> staminaBars = {};  // 0x005374FC and its copy 0x00524490
+    std::array<i32, RoleUnits> staminaBars = {};  // 0x005374FC and its copy 0x00537998
     std::array<i32, RoleUnits> staminaBarsShown = {};
     std::array<i32, RoleUnits> stamina = {};      // 0x00536884
-    std::array<i32, RoleUnits> blockValues = {};  // 0x005377D4 and its copy 0x0052418C
+    std::array<i32, RoleUnits> blockValues = {};  // 0x005377D4 and its copy 0x00537524
     std::array<i32, RoleUnits> blockValuesShown = {};
-    std::array<i32, Units> unitY = {};         // 0x0053694C the y of each unit
-    std::array<i32, Units> drawOrder = {};     // 0x0053730C the units from the top down
-    std::array<i32, Units> drawTaken = {};     // 0x00536808
-    std::array<i32, Enemies> enemyOrder = {};  // 0x005368D4 the enemies from the top down
-    ActState unk525470;
-    ObjectRecord unk5246E0;
-    std::array<i32, 0x14> unk4FF168 = {};
-    std::array<i32, 0x3C> unk524324 = {};
-    std::array<i32, 0xA> unk4FE5D4 = {};             // 0x0050D88C the act of the item a role uses (LoadItemAction)
+    std::array<i32, Units> unitY = {};               // 0x0053694C the y of each unit
+    std::array<i32, Units> drawOrder = {};           // 0x0053730C the units from the top down
+    std::array<i32, Units> drawTaken = {};           // 0x00536808
+    std::array<i32, Enemies> enemyOrder = {};        // 0x005368D4 the enemies from the top down
+    ActState unk5394E8;                              // 0x005394E8 cleared twice by StartBattle
+    ObjectRecord unk537D68;                          // 0x00537D68 cleared by StartBattle for each enemy
+    std::array<i32, 0x14> unk50ED68 = {};            // 0x0050ED68
+    std::array<i32, 0x3C> unk5377FC = {};            // 0x005377FC
+    std::array<i32, 0xA> unk50D88C = {};             // 0x0050D88C the act of the item a role uses (LoadItemAction)
     std::array<std::u8string_view, 4> commandNames;  // 0x0050EBF0 the listed commands of the menu (pointers)
     std::array<u16, 4> commandKinds = {};            // 0x0050D870 their kinds (swd3e: four)
-    std::array<i32, Units> unk524268 = {};           // 0x005376B8 per unit (swd3e: 0x78 bytes)
+    std::array<i32, Units> unk5376B8 = {};           // 0x005376B8 per unit (swd3e: 0x78 bytes)
     // 0x005378EC the five commands of the menu and the four listed ones (swd3e; the ninth byte is the low byte of
     // hitDamage in the original, kept apart here: deviations.md)
     std::array<u8, 9> commandEnabled = {};
@@ -353,23 +353,23 @@ public:
     i16 unk53BF46 = 0;        // 0x0057723C only ever cleared (HurtFrame 0x0048FAAB and three others), never read
     i16 unk53BF48 = 0;        // 0x0057723E likewise
     u16 unk53BF28 = 0;        // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
-    std::array<i32, Units> unk4FF0BC = {};  // 0x0050EBFC (swd3e: 30 slots, 0x78 bytes)
+    std::array<i32, Units> unk50EBFC = {};  // 0x0050EBFC (swd3e: 30 slots, 0x78 bytes)
     i32 unk502944 = 0;
     i32 unk502948 = 0;
     i32 unk50294C = 0;
     i32 unk502950 = 0;
-    i32 unk5244D8 = 0;
-    i32 unk5244DC = 0;
+    i32 unk537A10 = 0;                        // 0x00537A10
+    i32 unk537A14 = 0;                        // 0x00537A14
     std::array<i32, Units> slotDamage = {};   // 0x00537758 per slot: the damage of the hit so far
-    std::array<i32, Units> unk502984 = {};    // 0x00513664 per slot: the slot of a unit the hit felled (-1: none)
+    std::array<i32, Units> unk513664 = {};    // 0x00513664 per slot: the slot of a unit the hit felled (-1: none)
     std::array<i32, Units> slotTargets = {};  // 0x005378F8 per slot: the unit it hits (-1: none)
-    std::array<i32, Units> unk53AE90 = {};    // 0x00575F38 (swd3e: 30 slots) set to -1 by StartBattle
-    std::array<i32, 0xD2> unk5244E8 =
-        {};  // 0x00537A20 (swd3e, 0x348 bytes) set to -1 by StartBattle and EndBattle only
-    i32 unk53C048 = 0;
+    std::array<i32, Units> unk575F38 = {};    // 0x00575F38 (swd3e: 30 slots) set to -1 by StartBattle
+    std::array<i32, 0xD2> unk537A20 =
+        {};                  // 0x00537A20 (swd3e, 0x348 bytes) set to -1 by StartBattle and EndBattle only
+    i32 unk57734C = 0;       // 0x0057734C
     i32 actingUnit = 0;      // 0x00575F18 the unit acting now (-1: none)
     u16 listedCommands = 0;  // 0x0057720A the commands the menu lists beyond its fixed ones
-    i32 unk53C4B0 = 0;
+    i32 unk577994 = 0;       // 0x00577994
     std::array<BattleSlotRecord, Units> slotRecords;  // 0x00537E10 the BattleSlotRecord of each slot
     u16 escortCount = 0;                              // 0x0057720E the high word of 0x0053BF24
 
@@ -628,7 +628,7 @@ public:
     i32 enemyTarget = 0;                        // 0x00576FC0 the target of the acting enemy
     i32 enemyAimsAtEnemies = 0;                 // 0x005772D4 1: an ordered enemy aims at the enemies
     i32 unk53BF9C = 0;
-    i32 enemiesHitAct = 0;  // swd32 0x0053BDBC the hit act of the enemies (unk53AE90)
+    i32 enemiesHitAct = 0;  // swd32 0x0053BDBC the hit act of the enemies (unk575F38)
     i32 unk53BFDC = 0;      // 0x005772DC set when a talk fells an enemy (command 0xA)
     // The commands of a role (Game::RoleActionFrame).
     // 0x00577324 1: the taking (收化) succeeded; the enemy taken then gives no first reward and keeps its stolen

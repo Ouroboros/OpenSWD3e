@@ -725,7 +725,7 @@ int Game::FightTalkDefeat()
         {
             battle.unk4A7626 = unit;
             battle.unk53BFDC = 1;
-            battle.unk502984[unit] = unit;
+            battle.unk513664[unit] = unit;
             battle.flashing = 1;
             battle.enemyFaded = 0;
             talk.battleRuns = 0;
@@ -848,7 +848,7 @@ int Game::FightTalkWin()
 
     for (u32 index = 0; index < battle.enemyCount; ++index)
     {
-        if (battle.unk502984[index] != -1)
+        if (battle.unk513664[index] != -1)
         {
             battle.actingUnit = kNoActingUnit;
             this->BattleFrame();
@@ -1165,9 +1165,9 @@ int Game::FightTalkSkill()
             battle.aimTarget = target + 1;
             BattleRole& actor = this->battleRoles[role];
             actor.SetTarget(1);
-            u32 act = static_cast<u32>(battle.unk4FE5D4[role]);
+            u32 act = static_cast<u32>(battle.unk50D88C[role]);
             actor.LoadItemAction(this->database, static_cast<u16>(talk.unk53CCE8), act);
-            battle.unk4FE5D4[role] = static_cast<i32>(act);
+            battle.unk50D88C[role] = static_cast<i32>(act);
             actor.FillSecondGauge();
             battle.pendingOrders[role].unk0C = static_cast<u16>(actor.ActSpeed());
             battle.pendingOrders[role].unk0E = 0;

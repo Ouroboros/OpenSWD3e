@@ -171,11 +171,11 @@ void Game::StartBattle(u16 number)
     SetGaugeFull(battle, this->config.battleSpeed);
     this->battleStage.Clear();
     this->mapBehind = false;
-    battle.unk525470 = ActState{};
-    battle.unk4FF168.fill(0);
+    battle.unk5394E8 = ActState{};
+    battle.unk50ED68.fill(0);
     battle.ClearActing();
-    battle.unk524324.fill(0);
-    battle.unk4FE5D4.fill(0);
+    battle.unk5377FC.fill(0);
+    battle.unk50D88C.fill(0);
     battle.actionQueue.fill(0);
     battle.commandNames[0] = {};
     battle.commandKinds = {};
@@ -186,17 +186,17 @@ void Game::StartBattle(u16 number)
     battle.pendingOrders.fill(PendingOrder{});
     battle.enemyPendingOrders.fill(PendingOrder{});
     battle.commandNames[3] = {};
-    battle.unk4FF0BC.fill(0);
+    battle.unk50EBFC.fill(0);
     battle.slotDamage.fill(0);
     battle.roleListScrolls.fill(0);
-    battle.unk502984.fill(-1);
+    battle.unk513664.fill(-1);
     battle.slotTargets.fill(-1);
-    battle.unk53AE90.fill(-1);
-    battle.unk5244E8.fill(-1);
-    battle.unk5244D8 = 0;
-    battle.unk5244DC = 0;
+    battle.unk575F38.fill(-1);
+    battle.unk537A20.fill(-1);
+    battle.unk537A10 = 0;
+    battle.unk537A14 = 0;
     battle.inParty.fill(0);
-    battle.unk524268.fill(0);
+    battle.unk5376B8.fill(0);
     battle.enemyHits.fill(0);
     battle.unk577224 = 0;
     battle.unk577228 = 0;
@@ -214,10 +214,10 @@ void Game::StartBattle(u16 number)
     battle.unk576FC8 = 0;
     battle.unk576FCC = 0;
     this->battleHud.ResetMeter();
-    battle.unk53C048 = 0;
+    battle.unk57734C = 0;
     battle.actingUnit = -1;
     battle.listedCommands = 0;
-    battle.unk53C4B0 = 0;
+    battle.unk577994 = 0;
 
     for (std::size_t role = 0; role < Party::Roles; ++role)
     {
@@ -305,7 +305,7 @@ void Game::StartBattle(u16 number)
 
     battle.scene = static_cast<u16>(this->random.Below(kScenes) + 1);
     this->LoadBattleBackground(battle.formation.background, battle.scene);
-    battle.unk525470 = ActState{};
+    battle.unk5394E8 = ActState{};
     // Past the 20 enemy units the original writes beyond its unit array (deviations.md): those are not built.
     const u32 builtEnemies = std::min<u32>(battle.enemyCount, BattleState::Enemies);
 
@@ -313,7 +313,7 @@ void Game::StartBattle(u16 number)
     {
         BattleEnemy& unit = this->battleEnemies[enemy];
         unit.Reset(services);
-        battle.unk5246E0 = ObjectRecord{};
+        battle.unk537D68 = ObjectRecord{};
         UnitPlacement& place = battle.enemyPlaces[enemy];
         place.actId = static_cast<u16>(battle.formation.enemies[enemy]);
         place.x = static_cast<i16>(battle.formation.enemyX[enemy]);
