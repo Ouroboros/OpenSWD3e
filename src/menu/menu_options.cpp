@@ -849,15 +849,14 @@ void Menu::OptionsDown()
                 {
                     this->FindNote(page.noteTop);
                     this->CountNotes();
-
-                    if (page.noteRow > page.notesShown - 1)
-                    {
-                        page.noteRow = page.notesShown - 1;
-                    }
                 }
                 else
                 {
                     page.noteTop -= kNotesPerPage;
+                }
+
+                if (page.noteRow > page.notesShown - 1)
+                {
                     page.noteRow = page.notesShown - 1;
                 }
 
