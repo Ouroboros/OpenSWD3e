@@ -2740,7 +2740,7 @@ void Game::DrawLevelUpPanel()
 // the level cap) levels up: the record is kept in levelUpBefore, the next level's maxima and attributes (LevelUp of
 // both levels; a skill learned sets learnedPending) are added to it as the difference, hit points, spirit and stamina
 // refilled, its level and experience mark taken; levelUpRole becomes the role and the level-up sound plays. Otherwise
-// levelUpRole is kNoLevelUp. unk53C4C8 is set either way.
+// levelUpRole is kNoLevelUp. unk577A70 is set either way.
 void Game::CheckLevelUps()
 {
     BattleState& battle = this->battleState;
@@ -2811,7 +2811,7 @@ void Game::CheckLevelUps()
         break;
     }
 
-    battle.unk53C4C8 = 1;
+    battle.unk577A70 = 1;
 }
 
 // swd3e.exe 0x00476A90: party role `role` raised level by level up to `level` (below the level cap): each step keeps
