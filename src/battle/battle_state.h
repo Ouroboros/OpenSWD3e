@@ -480,7 +480,7 @@ public:
     const ObjectRecord* lastDefeatedObject = nullptr;  // 0x005135A0 the object of the last defeated enemy
     // The hit acts of the units (0x004582B0, 0x00458DE0, PlayHitAct, FadeHitAct).
     std::array<ActState, Units> hitActs;     // 0x005347F8 the hit act of each unit
-    std::array<ActState, Units> followActs;  // swd32 0x004FE600 the follow act of each unit
+    std::array<ActState, Units> followActs;  // 0x0050D8B8 the follow act of each unit
     std::array<ActState, Units> fadeActs;    // 0x00538160 the fading act of each unit
     // 0x00538158 (swd3e) the step of the battle music volume: Config::musicVolume from BattleIntro, faded to 2 by
     // defeat pose 0x65
