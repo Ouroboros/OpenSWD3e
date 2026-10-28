@@ -1051,3 +1051,86 @@
 汇编：链空 → 返回；逐个摘下链首释放；之后 0x00577A80=0、0x00577A7C=0。
 对照：BattleMessages::Clear 一致。
 差异：无。
+
+## 0x00479860 Game::FightTalkFrame — diff → exact
+
+汇编与对照（逐命令，派发表 0x0047E0FC，内联处理与 FightTalk* 辅助函数）：
+
+- 分派：(i16)命令+1 ≤0x5A，跳转表 0x0047E0FC；默认（0、7、0x20、0x26 与范围外）返回 1 不动游标。
+- −1：FightTalkEnd 一致。
+- 1：FightTalkWait 一致（waitCount 0x00578294 字、enabled 0x004BF908、battleRuns 0x004BF904、savedUnit 0x00578424；结束路径 waitCount 在 Close 后清 0，源码先清，EndBattle/Close 不读它）。
+- 3、4 一致（4 写 windowTimeout 0x004BF8FC）；常量 kTalkSetUnk4A7B54 改名 kTalkWindowTimeout。
+- 18 个正传地址命名字段（unk53CCD4 等）改为注释中的外传地址名（unk57828C 等）。
+- 2：FightTalkWindow 一致（窗口 0x4C 字节、FixedPlace 0x800、SetupDialog(…, 0x005783F4, 1, 0, 0)、timeout|=0xFFFF、speed 2、flags|=低字、fromX/fromY；关窗后十个角色与前十个敌人清描边、找 %Q（0xFF 内）、清说话者 0x20 字节、battleRuns=1、0x005772BC=0、0x00578430 两字与高字清 0）。差异：说话者 0x1E..0x3E7 越界取角色未登记、源码未定义行为 → 加保护并登记偏差。
+- 5：FightTalkMove 一致（GetPosition 只写 0x005782A0/0x005782A4 低字，高字残留，SetPosition 只用低字）。差异：编号越界时原程序读写单位表外，源码 TalkUnit 未检查（未定义行为）→ TalkUnit 越界改用替身单位 talkStrayUnit 并登记，命令 5 改走 TalkUnit。
+- 6：FightTalkPause 一致（0x0057828C 以 movsx 的字 | 0x8000 起计，dword 递减）。
+- 8：FightTalkHitPoints 一致（游标先 +2、BattleFrame；字[1]=1 才查；生命 > (i16)字[2] → 游标 +10，否则 +6 并 Seek）；取单位改走 TalkUnit。
+- 9：FightTalkOrder 一致（角色：savedUnit、turnUnit、瞄准 = 目标+1，≥0x14 时 0x005772D0=1、−0x14、预定=1；SetTarget(1)、高字|=0x8000、0x00576FA8=1、0x005772E0=0、turnTaken=1；敌人：enemyOrders=0，目标 ≥0x14 经 TalkStandingRole（随机次序同），否则顺次跳过倒下敌人并 0x005772D4=1；|0x8000；按残留 0x005782A4 清回合指令（见偏差 425）；InsertSlotRecord(2, 单位, 0)；收尾同源码）。差异：编号越界的表外写入与读取未保护 → 改经 TalkUnit、越界写入跳过，登记偏差。
+- 0xA：FightTalkDefeat 一致（单位无符号字；StartDefeat(1)；敌人：0x004BF1CA、0x005772DC=1、0x00513664[单位]=单位、0x005772CC=1、0x005772E0=0、battleRuns=0；角色：0x005772D8=1、0x005772CC=1、0x004BF1C8=单位−0x14、0x005772E0=0；收尾同源码）。
+- 0xB、0x15、0x1A：FightTalkCommand 一致（指令 0x11/0xB/0xC；0x15 角色不 Retarget、敌人 Retarget(单位) 并 0x005772BC=1；0x1A 敌人写 0x00575F18；InsertSlotRecord 与收尾分支逐个对上）。差异：0x15 角色编号越界写预定指令未保护 → 加保护，并入命令 9 那一行偏差。
+- 0xC：FightTalkWin 一致（结果 ≤0x61 即“≠0x62 且 <0x63”）。0xD：FightTalkLift 一致。0x11：游标 +2 返回 1。
+- 0xE：FightTalkAllDone 一致（清单为空不动游标；全部倒下 → 游标 +2×数+4 并 Seek；否则 +2×数+8）。0xF、0x12：FightTalkMarks 一致（0x12 不清 battleRuns；字[2] 位 0x2000 → 0x005771E7 ±1）。
+- 0x10：FightTalkRepeat 一致。0x13：FightTalkRandomJump 一致（随机数 rand%数，次数非 0 时沿用残留）。
+- 0x16：FightTalkShift 一致（0x0057702C 取 movsx 字；先角色后敌人，读位置、x+偏移、写位置；游标 +4，0x0057842C=0）。
+- 0x14：SetFacing(1) 一致（单位无符号，高字写单位，游标 +4）。
+- 0x17：FightTalkSkill 一致（敌人：0x005782A4/A8、enemyOrders=0、目标 ≥0x14 经 TalkStandingRole 否则跳过倒下敌人并 0x005772D4=1；|0x4000；ClearTurnCommand、LoadSkillAction(技能, &0x005135A4[敌])、AddSlotRecord(2, 敌)；角色：savedUnit、turnUnit、目标 ≥0x14 → 0x005772D0=1、预定=1、−0x14；瞄准=目标+1；SetTarget(1)、LoadItemAction(&0x0050D88C[角])、FillSecondGauge、预定+0xC=ActSpeed&0xFFFF、ActFlag1 → 0x005772F0=1 与预定+8=1、ActFlag0 → 0x00577284=1、turnCommand=2、turnTaken=2；收尾游标 +8）。差异：编号越界的表外读写未保护 → 加保护，并入命令 9 那一行偏差。
+- 0x18：FightTalkNextBattle 一致（先敌后角 Reset、EndBattle、StartBattle(字[1])；EndBattle 只清 wonByTalk，提前读编号等价）。0x19：FightTalkLoot 一致。
+- 0x1B：SetAction 一致。0x1C：SetVitals 一致（角色另读生命写 0x005347CC[角]、读灵力 movsx 写 0x005346D8[单位]=0x00534728[角]；游标 +10，0x00578450=0）；差异：越界写表未保护 → 加保护。0x1D：SetAF8(1) 一致（敌人 0x005771EA 字节 +1；游标 +4，高字清 0）。
+- 0x1E：PlaySound(movsx 字[1], 音量 0x004C4F0C) 一致（编号只作 LoadSound 下标，负值两种宽度都越界，u16 等价）。0x1F：FightTalkChoice 一致（字符串 0x004B70C4 錯誤 / 0x004BF950 按鈕個數不對!! 与 exe 字节一致；choice+1 无符号比较）。
+- 0x21：头像入列一致（0xC0 清零、ResetPlayback、id/动作零扩展、目标 x/y、headX=−0x78，目标 x>0x140 有符号则 0x2F8，速度 0，挂到 0x004D3F94 表头；游标 +10）。0x22：找 id 与动作都相等的第一项，速度 −1，headX>0x140 则 1；游标 +6，一致。0x23：低字节 |0xA0（窗口旗标 Overlay|Skippable，使用处取低字并入窗口 +8）一致。
+- 0x24：FightTalkLines 一致（编号 <0x100；同编号已存在 → 0x0057844A=1、報“代碼值重複”；新建 0x18 块，坐标宽高 &~1，越界检查 x<0、y<0、x+w>0x280、y+h>0x1E0（movsx）→ 释放后报错（偏差 251）；种类 0x8000/0x4000（起点 宽−2）/0x800；各列 偏移=起点、长=2；0x0057844A=列数；挂 0x004D3FBC 表头；编号过大報“代碼值太大”；游标 +0x10）。字符串 0x004B28C8、0x004BF930、0x004BF90C、0x004BF940 与 exe 一致。负列数：原 0x0043DA70 对 ≤0 尺寸返回 NULL、循环不执行，与空数组等价。
+- 0x25：FightTalkLinesMode 一致（字符串 0x004B286C 對話系統(G_AREA_OFF) 一致；0/1/2 之外沿用残留高字）。
+- 0x27：FightTalkCurve 逻辑一致（高字=单位|0x8000，按 &0x7FFF 取单位读位置到低字；点 0、1=起点，2..6=起点+五对偏移（字加法），7、8=第 6 点；0x0057842C=1、0x0057842E=0；插值 fild movsx 0x0057842C；写位置；++0x0057842C >0x14 → 段 +1、步 0；MeasureUnits、BattleFrame；段 ≥6 收尾游标 +0x18）。差异：段与步的比较汇编为有符号，源码为无符号 → 改有符号；负段读表前 → 表外点取 0，登记偏差。
+- 0x28：FightTalkSlide 一致（字>0x10 或 <0 走三分法：位移 = −(左/3)，0x0057842C=左/3；否则按敌人取位置，0x0057842C=(x+0x140)/2 有符号，位移 0x140−它；位移 0 收尾游标 +4 并清 0x00578430、0x0057842C、0x0057844A、0x00578450、0x0057842E；否则平移所有单位、MeasureUnits、BattleFrame）。
+- 0x29：FightTalkIntro 一致（0x0057846C 为 0 时清零、BattleIntro(字[1] 零扩展)、置 1；0x0057722A 位 0x80 → 游标 +4；否则 BattleFrame 存 0x005782A0，=1 返回 1，否则重置单位、EndBattle、Close、游标 +4、enabled=1、返回该值）。
+- 0x2A：FightTalkSpeaker 一致（0x005783F4 32 字节清零，找 %Q 至多 32 字节，找到则复制并 +2；四个角色：0x005783D4 清零后放称呼前 4 字节，lstrcmpA 相等 → 0x0040BEA0(说话者, 称呼 0x004E4B04+角×0x20, 名字 0x004E4C3C+角×0x20, 0x20)；textAt += 长、游标=textAt、0x0057844A=0）。lstrcmpA 改字节相等未登记 → 追加平台替换偏差（连同其余三处同类调用）。
+- 0x2B：FightTalkQuietWin 一致（敌人数→0x005771E8 字节、0x005771EA=0、0x00577308=1、结果 0x63、0x0057731C=0、音乐 Switch(4,1,0)、wonByTalk=1、battleRuns=0、BattleFrame、游标 +2）。
+- 0x2C：FightTalkTimedWindow 一致（0x4C 窗口清零、旗标 0x800、SetupDialog(…, 说话者, 1, 0, 0)、AppendWindow、timeout|=0x004BF8FC、|8、|0x400、速度 2、|windowFlags 低字后清低字、0x004BF8FC=0xFFFF；编号 ≥1000 起点 (0x1EA,0xB4)，≥0x14 角色取位置、十个角色 AC0=0、该角色动作 0x24，否则敌人取位置、AC0=1、二十个敌人 AC0=0；fromX/Y、结果 0；ClearTalkMarks（十角色、十敌人）；SkipTalkText（%Q 至多 0xFF，+2）。差异：编号 0x1E..0x3E7 角色越界未保护 → 同命令 2 加保护，扩充偏差 472。
+- 0x2D：FightTalkMirror 一致（0x00577304=1 → 游标 +2、清 0；否则置 1，敌人 SetFacing(1)、x=0x280−x；角色 guestControl=1 则朝向 0 否则 1、x 同、面板 x=0x270−x；游标 +2）。差异：角色数超过四个时写出面板表未保护 → 加保护，登记偏差。
+- 0x2E/0x2F：Set/ClearGameFlag(movsx 字[1])，游标 +4，一致。0x30：GameFlag 返回 0/1，=1 → 游标 +4 再 Seek(该处字)，否则 +8，一致。0x31：0x005771E7=0xFF、角色数 0、MeasureUnits、游标 +2，一致。
+- 0x32：ActId→0x0057844A、读敌人 0 位置、写到敌人[字1]、游标 +4、0x0057844A=0，一致（越界见偏差 249）。0x33：SetDefeatPoseFixed(字2 低字节)、游标 +6，一致。0x34：SetAttributes(字2,字3,字4)、游标 +10，一致。
+- 0x35：FightTalkAddLoot 一致（十格 0x0050EFD0 零扩展与 movsx 字比较；命中 → AddOneItem(字,1)、0x0053949C[格]+1、0x0057844A=1；否则格=0x005777EC，AddOneItem 的记录写名字 0x00537970[格]、计数+1、总数+1、id 写格；游标 +4；超十格见偏差 245）。0x37：LearnSkill(字1−0x14, movsx 字2)=1 → 0x00577300=1，游标 +6，一致。0x38：敌人 SetWords66（六字），游标 +0x10，一致（越界见偏差 249）。
+- 0x4B：敌人 SetWords72（四字），游标 +0xC，一致（越界见偏差 249）。
+- 0x36：FightTalkEnemyCommand 一致（行动者 ≥0x14 → 游标 +8 直接返回；其余同 0x17 的敌人分支，LoadEnemyCommand=1 → |0x8000 否则 |0x4000；InsertSlotRecord(1, 敌, 0)）。差异：负编号与目标越界未保护 → 同 0x17 加保护，并入同一偏差行。
+- 0x39：panelFlags|=1、LoadBattleBackground(0x0050EDE4, 1)、游标 +2，一致。0x4D：panelFlags|=0x40、游标 +2，一致。0x3A：FightTalkPartyOrder 一致（角色：savedUnit、turnUnit、瞄准=目标+1，≥0x14 → 0x005772D0=1、−0x14、预定=1；SetTarget(1)、turnCommand=1、turnTaken=1、游标 +4；敌人：0x00578428 作角色，PartyMember=1 或 AutoControl=1 → enemyOrders=0、=角色、|0x8000、ClearTurnCommand、InsertSlotRecord(2, 敌, 0)；游标 +4）。差异：角色越界与敌人负编号未保护 → 加保护，并入偏差 474。
+- 0x3B：FightTalkLineWindow 一致（未显示时：编号 ≥1000 起点 (0x1EA,0xB4)；否则 GetDrawPosition、GetOrigin(&0x0057842C, &y)，角色全体 AC0=0、动作 0x24、x−0x3C、y−0x14，敌人全体 AC0=0；窗口 0x800、SetupDialog(…, 0x10000, movsx x, movsx y)、timeout|=0xFFFF、速度 2、|windowFlags 低字后清低字、x/y/fromX/fromY；高字|0x8000、0x005772BC=1、结果 0；0x004C66F8 非空 → battleRuns=0、BattleFrame；否则 ClearTalkMarks、SkipTalkText）。
+- 0x3C：FightTalkMusic 一致（名=%Q 前至多 0xFF 字节；0x005774EC = 安装目录 + "music\\" + 名；Switch(4,1,0)、SetSlot(路径,1,0,3)、Switch(3,1,0)、SetVolume(0x7F×音量/11)、AudioPump、panelFlags|=0x400；0xFF 无结尾见偏差 247）。0x3D：FightTalkCounters 一致（同 0xE 结构，Counter2A76 字为 0 计数）。
+- 0x3E：FightTalkFieldFade 一致（起色 movsx→float；目标字存 0x00578450/52/54，movsx→float；帧=字7 零扩展；步长 =(目标−_ftol(起色))/帧（x87 双精度控制，除 0 得 inf/NaN 同 IEEE）；游标 +0x10，三字清 0）。0x3F：帧 ≤0 → 游标 +2；battleRuns=0、BattleFrame、=1，一致。0x40：ShowsPicture 返回 0/1，=1 → 高字 0、游标 +6；BattleFrame、高字 0、0x00578450=0，一致。
+- 0x41：FightTalkObjects(false) 一致（0x0057844A=id、0x0057844C 低字=数；节点存在且 movsx 数量+movsx 待入 ≥ 数 → 0x0057844A=0、游标 +6、Seek；否则 BattleFrame、两字清 0、游标 +10）。0x42：FightTalkObjects(true) 一致（空节点见偏差 246；数量非 0：数量 > 需求（有符号对零扩展）→ 数量−=需求、需求=0，否则需求−=数量、数量=0；待入非 0 → 待入−=需求；两者皆 0 → 0x00454CC0 摘下（偏差 404）；BattleFrame、两字清 0、游标 +6）。延后核对：摘下后函数内不再读 0x00578434（仅 0x0047D6F6/0x0047D78D 写、0x0047D7CF/0x0047D7E7 在摘下前读；0x0047E420 不涉及），通过。
+- 0x43：0x00578474=1、游标 +2、BattleFrame，一致。0x44：按 movsx 字1 取单位 SetPosition(字2,字3)，清三值、battleRuns=0、BattleFrame、=1、游标 +8，一致。0x45：panelFlags|=8、游标 +2，一致。0x46：敌人 SetLevel(字2)、游标 +6，一致（越界见偏差 249）。0x47：0x005771E7=角色数低字节、panelFlags|=0x10、结果 0x67、游标 +2，一致。0x48：LoadBattleBackground(movsx 字1, 1)、游标 +10，一致。
+- 0x49：FightTalkSlideTo 一致（0x00578430 低字=字1、0x00578450=字2；位移 =(movsx 目标 − movsx 0x0057842C)/movsx 字2（32 位 idiv，除 0 见偏差 250）；battleRuns=0、0x0057702C=位移、0x0057842C+=位移；0 → 游标 +6、清六值、battleRuns=1；否则平移、MeasureUnits、BattleFrame）。
+- 0x4A：敌人 SetResistances(字2..字6)、游标 +0xE，一致（越界见偏差 249）。0x4C：先按 单位−0x14 的角色 CureEffects(0x8000)（敌人时越界，偏差 425 只对角色执行），敌人 Damage(−1000000,0,0)，角色 Damage(−9999,9999,9999)，游标 +4，一致。
+- 0x4F：FightTalkDamage 一致（敌人 Damage(−movsx 字2, 字3, 字4)；角色高字=单位−0x14，Damage(movsx 字2, 字3, 字4)、RaiseFlag26B8、PushTarget(0x2389)、SetDamageDigits(movsx 字2)、StepTargetCount(1)；清三值、高字 0、游标 +10）。差异：角色编号越界直接下标 → 改经 TalkUnit 替身，并入偏差 473。
+- 0x4E：FightTalkCatch 一致（0x00578450=0 时：0x0057844A=单位、瞄准=movsx 字2+1；角色倒下 → CureEffects(0x8000)、Damage(−9999,9999,9999)；currentUnit=0、Retarget(瞄准−1)、SetCommand(6)、turnCommand=6；0x005368AC 十项清 0；0x00537E10 三十条记录清零后 unit=−1；turnTaken[单位]=6、0x00575F18=单位、0x00577270=1、0x005772BC=1、0x00577314=1、0x00577264=0、敌人[瞄准−1].IncreaseHits、0x00577330=1、0x00578450=1；battleRuns=1、BattleFrame；0x00577330≠0 返回；否则两字清 0、游标 +6）。差异：角色、turnTaken、敌人越界未保护 → 加保护，登记偏差。
+- 0x50：敌人 Reload(movsx 字2)、游标 +6，一致（越界见偏差 249）。0x51：0x0057721C 字等于字1 → 清 0、高字 0、游标 +4、Seek；否则 +8，一致。0x52：0x00577038=2，字1=1 → panelFlags|=0x100，否则 &=~0x100 且 0x00577038=0；游标 +4，一致。0x53：panelFlags|=0x200、游标 +2，一致。0x54：0x00578458=字1、游标 +4，一致。
+- 0x55：FightTalkChanceJump 一致（0x0057844A=范围、0x0057844C 低字=阈值、0x005774E9=0；Below(范围)（有符号）< 阈值 → 0x005774E9=1、清两字与 0x005782A0、游标 +6、Seek；否则清同、游标 +10）。0x56：RaiseLevel(字1−0x14, 字2)（被调方两参都 &0xFFFF）、清高字与 0x0057844A、游标 +6，一致。0x57：金钱 += movsx 字1、游标 +4，一致。0x58：金钱 <（无符号）movsx 价 → +8；否则扣款、+4、Seek，一致。0x59：panelFlags|=0x800、游标 +2，一致。
+
+差异：(1) 剧本给的单位编号越界（角色 0x1E 起、敌人为负）时，命令 2、5、8、9、0x15、0x17、0x1C、0x2C、0x36、0x3A、0x4E、0x4F 直接下标读写单位表与 enemyOrders、pendingOrders、turnTaken、hitPoints、spirit 等表，未保护；(2) 命令 0x27 的段号与步数比较原为有符号，源码为无符号；(3) 命令 0x2D 角色数超过四个时写出面板位置表；(4) 命令 0x2A 等四处 lstrcmpA 改为字节比较未登记；(5) 18 个字段沿用正传地址命名。
+
+修正：越界处改经 TalkUnit 替身单位或跳过表外写入，登记偏差（单位替身一行、命令 9/0x17/0x36/0x3A 写表一行、命令 2/0x2C 说话者一行、0x27 负段、0x2D 面板、0x4E 捕捉、lstrcmpA 平台替换）；0x27 改为有符号比较，负段的表外曲线点取 (0, 0)；字段改为外传地址名，常量 kTalkSetUnk4A7B54 改名 kTalkWindowTimeout。延后核对项（摘下的物品节点之后不再读）：本函数内 0x00578434 只在摘下前读；但角色选中物品（+0x3460）与道具菜单当前项可能在战斗进行中指向该节点，原程序节点泄漏仍可读，重建版原先随即释放会悬空 → 改由 Game::detachedItems 保管不释放，偏差 404 同步改写。
+
+复核：完整函数重新对照一致。
+
+## 0x0047E270 FightTalk::Load — exact
+
+汇编：0x0057846C=0；0x004BF908=0 → 返回 1。0x00578464=0 时：路径 = 安装目录 + "figtalk.dat"（0x004BF960），CreateFileA(读、共享读、OPEN_ALWAYS)，句柄为 0 → 返回；否则 0x00578464=1。SetFilePointer(0x204, 起点)、SetFilePointer(4×编号−4, 当前)，读 4 字节偏移，SetFilePointer(偏移+0x200, 起点)；0x8000 字节清零块作 0x0057843C 与 0x00578440，ReadFile 0x8000。
+对照：Load 一致（0x204+4×编号−4 = 0x200+4×编号，编号由调用方 0x00459BD0 零扩展）。打开失败时原程序句柄为 −1（非 0）按已打开处理、读取失败、剧本全 0，源码直接给 0x8000 字节全 0 剧本，结果相同；CreateFileA 共享方式见偏差 106。
+差异：无。
+
+## 0x0047E3A0 FightTalk::Seek — exact
+
+汇编：释放 0x00578440（非空时）；分配 0x1000 字节清零块作 0x0057843C 与 0x00578440；SetFilePointer(偏移+0x200, 起点)、ReadFile 0x1000；0x00578460=偏移。
+对照：Seek 一致。
+差异：无。
+
+## 0x0047E420 FightTalk::Close — exact
+
+汇编：句柄 ≠ −1 → CloseHandle、句柄=−1；0x00578464=0、0x0057846C=0；共用尾部 0x0047E550：0x004BF904=1、0x004BF908=1，清 0x00578414/18/1C/20、0x005782A4/A8、0x00578424/28、0x0057842C/2E、0x00578430 两字、0x00578444 两字、0x0057829C、0x00578294、0x00578448 两字、0x0057844C 两字、0x00578450/52/54/56/58；0x004BF8FC=0xFFFF；清 0x0057845C、0x0057828C、0x00578460、0x00578464、0x00578468；0x00578440 非空则释放并清它与 0x0057843C。
+对照：Close 逐项一致。0x0057829C 只由 0x0045FA80 RoleFrame 与本函数写、全程序无读取者（只写全局），重建不保留。
+差异：无。
+
+## 0x0047E450 TalkCurvePoint — exact
+
+汇编：四个点各取两个 movsx 字转 float；0x0043CA70(0.0, 点, 局部)（结果不用）；t = 0x004BF900（float 0.05，exe 字节核对）× 步（x87 乘后存 float）；0x0043CA20(t, 0x004BE010 基矩阵, 权重)；0x0043C9D0(权重, 点, 结果)；x、y 各经 _ftol 写回。
+对照：TalkCurvePoint 一致；两个 float 的乘积在 double 中精确，转 float 的舍入与 x87 存 float 相同。被调函数第二遍已 exact。
+差异：无。

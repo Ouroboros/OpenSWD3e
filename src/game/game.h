@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <SDL3/SDL.h>
 
@@ -669,6 +670,10 @@ private:
     smooth::Stage battleStage;                                    // the rebuild's smooth battle
     std::array<BattleRole, BattleState::RoleUnits> battleRoles;   // 0x005136E0
     std::array<BattleEnemy, BattleState::Enemies> battleEnemies;  // 0x00539590
+    BattleEnemy talkStrayUnit;  // the rebuild: the stand-in of a talk unit number past the tables (deviations.md)
+    // the rebuild: the inventory nodes battle talk command 0x42 unlinked, kept as the original leaks them (pointers
+    // such as BattleRole::selectedItem may still read them; deviations.md)
+    std::vector<std::unique_ptr<ItemNode>> detachedItems;
     ActDrawer actDrawer;
     Notices notices;
     i32 scrollStepX = 0;        // 0x004D0E80 the step of the camera and the controlled role across (-1, 0, 1)
