@@ -6368,7 +6368,7 @@ int BattleUnit::StepOrbCounters(CounterList& list, const UnitCommand& command)
 
 // swd3e.exe 0x0048FE60: one frame of the unit's damage numbers (while unk2AD8): from damageSlot to targetCount, each
 // slot waits out its delay, then its four digits (font pushedTargets) hop up one after another by DigitHops (not while
-// held); once all have landed (step 9) a pending extra number (extraNumber: digits unk53AEDC..E4) becomes the next
+// held); once all have landed (step 9) a pending extra number (extraNumber: digits unk575FC4..E4) becomes the next
 // slot, and the slot rises and fades by 2 a frame up to kNumberFadeEnd before it is cleared and the next is shown. A
 // leading zero digit is not drawn. 1 once every slot is done (all cleared).
 int BattleUnit::DrawDamageNumbers(BattleServices& services)

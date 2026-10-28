@@ -887,12 +887,12 @@ TEST_CASE("battle state: the initial turn and push values match swd3e.exe")
             exe,
             kOpeningPlacesAt,
             std::array<swd3e::i32, 6>{
-                state.unk4A7580,
-                state.unk4A7584,
-                state.unk4A7588,
-                state.unk4A758C,
-                state.unk4A7590,
-                state.unk4A7594
+                state.unk4BF114,
+                state.unk4BF118,
+                state.unk4BF11C,
+                state.unk4BF120,
+                state.unk4BF124,
+                state.unk4BF128
             }
         )
     );
@@ -915,7 +915,7 @@ TEST_CASE("battle state: the initial turn and push values match swd3e.exe")
                 state.lastEnemyHit,
                 state.lastRoleDefeated,
                 state.unk4BF1CA,
-                state.unk4A7628,
+                state.unk4BF1CC,
                 state.levelCap
             }
         )
@@ -941,7 +941,7 @@ TEST_CASE("battle state: the initial turn and push values match swd3e.exe")
         )
     );
     CHECK(swd3etest::SameTable(exe, kSlideXAt, std::array<swd3e::i32, 1>{state.slideX}));
-    CHECK(swd3etest::SameTable(exe, kEndFlagAt, std::array<swd3e::i32, 2>{state.unk4A763C, state.turnPointer}));
+    CHECK(swd3etest::SameTable(exe, kEndFlagAt, std::array<swd3e::i32, 2>{state.unk4BF1E4, state.turnPointer}));
     CHECK(
         swd3etest::SameTable(exe, kEndFlagAt + 2 * sizeof(swd3e::i32), std::array<swd3e::u16, 1>{state.anyStateRole})
     );
@@ -1103,7 +1103,7 @@ TEST_CASE("battle unit: a damage number hops, rises and fades")
     unit.damageDigits[0] = {0, 0, kTens, kOnes};
     unit.unk283C[0] = {kHopFrames, kHopFrames, kHopFrames, kHopFrames};
     unit.extraNumber = 1;
-    all.state.unk53AEDC = kExtraDigit;
+    all.state.unk575FC4 = kExtraDigit;
     unit.DrawDamageNumbers(all.services);
     CHECK_EQ(unit.extraNumber, 0);
     CHECK_EQ(unit.targetCount, 2);

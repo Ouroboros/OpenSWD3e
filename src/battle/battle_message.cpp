@@ -344,6 +344,16 @@ void BattleMessages::Append(std::unique_ptr<BattleMessage> message, int x, int y
     *link = std::move(message);
 }
 
+// The rebuild: the list dropped as Game::EndBattle zeroes its head in the original (0x00465CD9), the messages freed
+// instead of leaked; the Centered and Exclusive counts are kept for the next battle.
+void BattleMessages::Drop()
+{
+    while (this->messages != nullptr)
+    {
+        this->messages = std::move(this->messages->next);
+    }
+}
+
 // swd3e.exe 0x00479820: every message freed; with any freed, the Centered and Exclusive counts cleared
 void BattleMessages::Clear()
 {

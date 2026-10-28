@@ -413,8 +413,8 @@ public:
     i16 darkRedShown = 0;    // 0x00577232 the tint applied, a step a frame towards darkRed (or back to 0)
     i16 darkGreenShown = 0;  // 0x00577234
     i16 darkBlueShown = 0;   // 0x00577236
-    i32 darkenedAt = -1;     // 0x004BF108 unk53BD0C when the darkened copies were made
-    i32 unk53BD0C = 0;
+    i32 darkenedAt = -1;     // 0x004BF108 unk576FE0 when the darkened copies were made
+    i32 unk576FE0 = 0;
 
     // The role panels (0x00459D10): the gauges move a step a frame towards their values and the numbers roll.
     i32 currentUnit = 0;                          // 0x00577024 the unit whose panel is highlighted
@@ -500,19 +500,19 @@ public:
     u16 pushFrames = 0;        // 0x005770CC frames since the push was halved
     i16 slideBackPicture = 0;  // 0x00575F22 the hit act picture after which the units slide back
     i32 quakeStepFrames = 0;   // 0x00577038 frames of a quake step
-    i32 unk53AEDC = 0;         // 0x00575FC4 the digits of the extra damage number (BattleUnit::DrawDamageNumbers)
-    i32 unk53AEE0 = 0;         // 0x00575FC8
-    i32 unk53AEE4 = 0;         // 0x00575FCC
+    i32 unk575FC4 = 0;         // 0x00575FC4 the digits of the extra damage number (BattleUnit::DrawDamageNumbers)
+    i32 unk575FC8 = 0;         // 0x00575FC8
+    i32 unk575FCC = 0;         // 0x00575FCC
     // The turns of the units and the lists (NextEnemyTurn, NextRoleTurn, ScrollListBack).
     i32 actingEnemy = 0;  // 0x00576FB4 the enemy taking the turn
     i32 orderStep = 1;    // 0x004BF0E0 1-based step through enemyOrder or RoleCycle
-    i32 unk53BFB8 = 0;
+    i32 unk5772B4 = 0;
     i32 damageShown = 0;  // 0x005772D8 set when a unit's damage numbers are done (ApplyHits)
-    i32 unk53BD9C = 0;
+    i32 unk577078 = 0;
     i32 pageListRow = 1;  // 0x004BF0E8 the row marked in the list of state 2 (1-based)
     // 0x004BF0EC the row marked in the lists of states 4 and 0x1B (1-based)
-    i32 roleListRow = 1;
-    i32 listScroll = 0;                       // swd32 0x0053BD04 the scroll of a list
+    i32 roleListRow = 1;                      // 0x004BF0EC
+    i32 listScroll = 0;                       // 0x00576FD8 the scroll of a list
     i32 roleListScroll = 0;                   // 0x00576FDC the scroll of the lists of states 4 and 0x1B
     i32 listRole = 2;                         // 0x004BF104 a party role
     u8 listEntries = 0;                       // 0x005770DC the entries of the list of state 2
@@ -539,8 +539,8 @@ public:
     u8 unk5774E9 = 0;        // 0x005774E9 (swd3e) 0 or 1, set by FightTalkFrame (0x0047DF22, 0x0047DF46); debug overlay
     i32 unk576084 = 0;
     i32 hitsAllRoles = 0;  // 0x00577264 1: the hit falls on all roles at once
-    i32 unk53BD88 = 0;
-    i32 unk53BD80 = 0;
+    i32 unk577064 = 0;
+    i32 unk577050 = 0;
     i32 snapNext = 0;           // 0x005772E8 1: the next frame is saved as a screenshot
     std::u8string battleMusic;  // 0x005774EC the path of the battle music
     i32 unk53AF30 = 0;
@@ -569,7 +569,7 @@ public:
     u16 unk577212 = 0;
     // The confirm key of the menu (Game::MenuConfirm).
     i32 unk577080 = 0;
-    i32 unk53BCDC = 0;
+    i32 unk576F9C = 0;
     i32 unk53C01C = 0;
     std::array<u16, Units> escortCalled = {};  // 0x00536EA8 per unit: the escort place it called
     u16 callingEscort = 0;                     // 0x0057720C the escort being called (its low word)
@@ -593,9 +593,9 @@ public:
     i32 hitAllFrames = 0;  // 0x0050D868 the frames of a hit act on a whole side (Game::HitAllFrame)
     // The hits of the acting unit (Game::HitFrame).
     i32 hitLanded = 0;              // 0x005772A4 1 once a hit landed
-    i32 sweepHit = 0;               // swd32 0x0053BF7C 1 once a sweep hit a unit
+    i32 sweepHit = 0;               // 0x00577278 1 once a sweep hit a unit
     u16 sweepGap = 0;               // 0x005770D0 frames between the units a sweep reaches
-    u16 unk4FDF7C = 0;              // the attacker's word 29A2 of the last hit
+    u16 unk50CE6A = 0;              // the attacker's word 29A2 of the last hit
     u16 lastRoleHit = 0xFFFF;       // 0x004BF1C4 the last role hit
     u16 lastEnemyHit = 0xFFFF;      // 0x004BF1C6 the last enemy hit
     u16 lastRoleDefeated = 0xFFFF;  // 0x004BF1C8 the last role defeated by a hit
@@ -645,45 +645,45 @@ public:
     u16 slotRecordFrames = 0;  // 0x00577202 frames since the last slot record was taken
     u16 snapNumber = 0;        // 0x005777EE the number of the last snapshot
     // Cleared by Game::EndBattle (no other use found).
-    std::array<i32, Enemies> unk524200 = {};  // 0x005375C8 (swd3e: 0x50 bytes) cleared by EndBattle only
-    std::array<i32, 8> unk52100C = {};
-    std::array<i32, 0xF0> unk4FF318 = {};  // 0x0050EFF8 (swd3e: 0x3C0 bytes) cleared by EndBattle only
-    std::array<i32, 0xA> unk4FF588 = {};
-    i32 unk53AED8 = 0;
-    i32 unk4A7580 = 0x60;  // the opening places of unk4A7580..unk4A7594 (exe data)
-    i32 unk4A7584 = 0x180;
-    i32 unk4A7588 = 0xF0;
-    i32 unk4A758C = 0xFA;
-    i32 unk4A7590 = 0xF2;
-    i32 unk4A7594 = 0x64;
-    i32 unk53BD4C = 0;
-    i32 unk53BD74 = 0;
-    i32 unk53BD78 = 0;
-    i32 unk520FBC = 0;
-    i32 unk520FC0 = 0;
-    u16 unk520FC4 = 0;
-    i32 unk53BF04 = 0;
+    std::array<i32, Enemies> unk5375C8 = {};  // 0x005375C8 (swd3e: 0x50 bytes) cleared by EndBattle only
+    std::array<i32, 8> unk536B44 = {};
+    std::array<i32, 0xF0> unk50EFF8 = {};  // 0x0050EFF8 (swd3e: 0x3C0 bytes) cleared by EndBattle only
+    std::array<i32, 0xA> unk50F3E8 = {};
+    i32 unk575FC0 = 0;
+    i32 unk4BF114 = 0x60;  // the opening places of unk4BF114..unk4BF128 (exe data)
+    i32 unk4BF118 = 0x180;
+    i32 unk4BF11C = 0xF0;
+    i32 unk4BF120 = 0xFA;
+    i32 unk4BF124 = 0xF2;
+    i32 unk4BF128 = 0x64;
+    i32 unk57701C = 0;
+    i32 unk577044 = 0;
+    i32 unk577048 = 0;
+    i32 unk536AF8 = 0;
+    i32 unk536AFC = 0;
+    u16 unk536B00 = 0;
+    i32 unk5771EC = 0;
     i32 unk5771F0 = 0;  // 0x005771F0 the bytes of the intro's screen buffers (BattleIntro; only written)
-    u16 unk5242F8 = 0;
-    u16 unk4A7628 = 6;  // passed to DrawRolePanels, which takes no argument
-    u8 unk53BDEE = 0;
-    i32 unk53BF6C = 0;
-    i32 unk53BF70 = 0;
-    i32 unk53BF78 = 0;
-    i32 unk53BF90 = 0;
-    i32 unk53BFA0 = 0;
-    i32 unk53BFA4 = 0;
-    i32 unk53BFAC = 0;
-    i32 unk53BFB4 = 0;
-    i32 unk4A763C = 1;
-    i32 unk53C028 = 0;
+    u16 unk5377D0 = 0;
+    u16 unk4BF1CC = 6;  // passed to DrawRolePanels, which takes no argument
+    u8 unk5770D8 = 0;
+    i32 unk577268 = 0;
+    i32 unk57726C = 0;
+    i32 unk577274 = 0;
+    i32 unk57728C = 0;
+    i32 unk57729C = 0;
+    i32 unk5772A0 = 0;
+    i32 unk5772A8 = 0;
+    i32 unk5772B0 = 0;
+    i32 unk4BF1E4 = 1;
+    i32 unk57732C = 0;
     i32 autoTarget = -1;  // 0x004BF0F4 the enemy the auto battle aims at (1-based), -1: none
     // 0x004BF1EC a role unit that may take the panel in any battle state (SelectRoleUnit)
-    u16 anyStateRole = 0xFFFF;
-    i32 menuCommand = 1;  // 0x004BF0D8 the command chosen in the menu (1-based)
-    i32 listPage = 0;     // 0x00576FEC the page of the list of state 2 (0..2)
+    u16 anyStateRole = 0xFFFF;  // 0x004BF1EC
+    i32 menuCommand = 1;        // 0x004BF0D8 the command chosen in the menu (1-based)
+    i32 listPage = 0;           // 0x00576FEC the page of the list of state 2 (0..2)
     // The menu (MenuCancel).
-    i32 unk53BFB0 = 0;
+    i32 unk5772AC = 0;
     // The rebuild (deviations.md): the unit the keys went to last frame; a new one spends the keys held.
     i32 keysUnit = 0;
     i32 listPanelFrames = 0;               // 0x0057706C the frames of the list panel act
@@ -698,7 +698,7 @@ public:
     i32 unk577018 = 0;
     i32 unk577330 = 0;          // 0x00577330 1 while the catch of talk command 0x4E runs
     i32 unk577284 = 0;          // 0x00577284
-    i32 unk53BFF0 = 0;          // 0x005772F0
+    i32 unk5772F0 = 0;          // 0x005772F0
     i32 listReturnCommand = 0;  // 0x00576FB0 the menu command a list returns to
     i32 specialRow = 1;         // 0x004BF0F0 the row of the 絕招 list (1-based)
     i32 controlRows = 2;        // 0x004BF0FC the rows of the 控制 menu
@@ -715,7 +715,7 @@ public:
     std::array<u16, 3> givenBack = {};  // 0x0050EFCA [1], [2]: objects given back at the end (set by 0x0045EC60)
     i32 promptFrames = 0;               // 0x00577084 frames of the prompt
     i32 unk577088 = 0;
-    i32 unk53BFBC = 0;
+    i32 unk5772B8 = 0;
     i32 turnPointer = 1;  // 0x004BF1E8 1: the pointer shows the turn mark
     i32 unk57724C = 0;
     i16 unk577246 = 0;

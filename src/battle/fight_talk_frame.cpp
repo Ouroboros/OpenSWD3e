@@ -1174,7 +1174,7 @@ int Game::FightTalkSkill()
 
             if (actor.ActFlag1() == 1)
             {
-                battle.unk53BFF0 = 1;
+                battle.unk5772F0 = 1;
                 battle.pendingOrders[role].unk08 = 1;
             }
 

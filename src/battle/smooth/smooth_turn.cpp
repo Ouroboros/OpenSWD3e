@@ -725,7 +725,7 @@ void TurnFrame::DrawThrowListAdvance(int x, int y, int cursor, int top, Scene& s
                 FillMode::Gradient,
                 scene);
             battle.listCursor = next;
-            battle.unk53BFB8 = 1;
+            battle.unk5772B4 = 1;
         }
 
         font.SetBackground(TextFont::NoBackground);
@@ -840,7 +840,7 @@ void TurnFrame::DrawRefineListAdvance(int x, int y, int cursor, Scene& scene)
                     scene);
                 font.DrawText(game.drawSurface, columnX, rowY, name, battle.lightColor, TextFont::BoldOutline);
                 font.SetBackground(TextFont::NoBackground);
-                battle.unk53BFB8 = 1;
+                battle.unk5772B4 = 1;
                 battle.listCursor = piece == 1 ? object + 1 : object;
 
                 if (battle.roleListEntries == 0)
@@ -987,7 +987,7 @@ void TurnFrame::DrawSpecialListAdvance(int x, int y, int cursor, Scene& scene)
                 );
                 font.SetBackground(TextFont::NoBackground);
                 battle.specialCursor = index;
-                battle.unk53BFB8 = 1;
+                battle.unk5772B4 = 1;
             }
 
             ++row;
@@ -1425,7 +1425,7 @@ void TurnFrame::DrawSpellListAdvance(int x, int y, int cursor, int top, Scene& s
                 TextFont::BoldOutline
             );
             font.SetBackground(TextFont::NoBackground);
-            battle.unk53BFB8 = 1;
+            battle.unk5772B4 = 1;
             battle.specialCursor = index;
         }
 
@@ -1520,7 +1520,7 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
                 kItemScrollY,
                 kItemScrollRows,
                 battle.unk53BD70,
-                battle.unk53BD9C,
+                battle.unk577078,
                 scene
             );
     }
@@ -1581,7 +1581,7 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
                     FillMode::Gradient,
                     scene);
                 battle.listCursor = index;
-                battle.unk53BFB8 = 1;
+                battle.unk5772B4 = 1;
 
                 if (battle.listRole == kObjectStatsCategory)
                 {
@@ -2091,7 +2091,7 @@ void TurnFrame::DrawTitledItemListAdvance(
                 kItemScrollY,
                 kItemScrollRows,
                 battle.unk53BD70,
-                battle.unk53BD9C,
+                battle.unk577078,
                 scene
             );
     }
@@ -2157,7 +2157,7 @@ void TurnFrame::DrawTitledItemListAdvance(
                 FillMode::Gradient,
                 scene);
             battle.listCursor = index;
-            battle.unk53BFB8 = 1;
+            battle.unk5772B4 = 1;
 
             if (category == kObjectStatsCategory)
             {
@@ -2845,7 +2845,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
         text(
             kDebugStateX,
             kDebugMenuY,
-            WinFormat(kMenuDebugLine, {battle.result, battle.unk53BFBC, battle.menuCommand})
+            WinFormat(kMenuDebugLine, {battle.result, battle.unk5772B8, battle.menuCommand})
         );
         text(kDebugStateX, kDebugCountsY, WinFormat(kCommandDebugLine, {battle.unk577270}));
         text(
@@ -2854,13 +2854,13 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             WinFormat(kAimDebugLine, {battle.aimTarget, battle.unk5772BC, battle.unk5772C0})
         );
         text(kDebugLocksX, kDebugTop, WinFormat(kLockDebugLine, {battle.sweepTotal, battle.sweepTargets}));
-        text(kDebugLocksX, kDebugFlagsY, WinFormat(kAllHitDebugLine, {battle.unk53BD80}));
+        text(kDebugLocksX, kDebugFlagsY, WinFormat(kAllHitDebugLine, {battle.unk577050}));
         text(kDebugRightX, kDebugMenuY, WinFormat(kBattleDebugLine, {static_cast<i32>(battle.battle)}));
         text(kDebugRightX, kDebugUnitsY, WinFormat(kGoneDebugLine, {static_cast<i32>(battle.enemiesGone)}));
         text(
             kDebugRightX,
             kDebugCountsY,
-            WinFormat(kTalkDebugLine, {static_cast<i32>(battle.unk5774E9), battle.unk53BFB8})
+            WinFormat(kTalkDebugLine, {static_cast<i32>(battle.unk5774E9), battle.unk5772B4})
         );
         text(kDebugStateX, kDebugTop, WinFormat(kFrameDebugLine, {kMillisecondsPerSecond / battle.frameMilliseconds}));
     }
@@ -2892,9 +2892,9 @@ void TurnFrame::DrawCommandPanelAdvance(i32 nameIndex, Scene& scene)
     // swd3e: the menu opens at its place.
     if (grown != kMenuOpened)
     {
-        if (battle.unk53BFB0 == 0)
+        if (battle.unk5772AC == 0)
         {
-            battle.unk53BFB0 = 1;
+            battle.unk5772AC = 1;
         }
 
         battle.menuX = kMenuHomeX;

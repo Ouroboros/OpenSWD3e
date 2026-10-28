@@ -834,9 +834,9 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
             if (unit.targetCount < BattleUnit::MaxTargets)
             {
                 std::array<i16, BattleUnit::DamageDigits>& extra = unit.damageDigits[unit.targetCount];
-                extra[0] = static_cast<i16>(services.state.unk53AEDC);
-                extra[1] = static_cast<i16>(services.state.unk53AEE0);
-                extra[2] = static_cast<i16>(services.state.unk53AEE4);
+                extra[0] = static_cast<i16>(services.state.unk575FC4);
+                extra[1] = static_cast<i16>(services.state.unk575FC8);
+                extra[2] = static_cast<i16>(services.state.unk575FCC);
                 ++unit.targetCount;
             }
         }
