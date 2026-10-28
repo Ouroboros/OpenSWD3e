@@ -871,3 +871,33 @@
 汇编：当前=0 → 返回。面板 act（不清 0x0050AF70，只写 act 0x2396、动作 0）运行；FillBox(x, y, 0xBE, 0xAC, 0, −8, −8, 1)；窗框 (x+6, y+8, x+0xBA, y+0x18)、(x+6, y+0x28, x+0xBA, y+0xA8)；标题 "絕技"（0x004BF1F0）在 (x+0x50, y+8) 0xFFC0；SetShadow(0)、SetBackground(0xFFFE)、SetAdvance(0x10)；0x005770DD=0、CountSkills(0, 1, &0x005770DD)、ShowAllSkills。序 1 起：ListSkill(0, 1, 序, 0x005774D4, &花费)；0xFFFF → ShowAllSkills、结束；花费=0 跳过；否则名在 (x+0x10, y+0x16×行+0x28) 亮色；行+1=光标 → 名再画 (x+0xF, 行顶−1)、FillBox(x, y+0x16×行+0x25, 0xC0, 0x18, 0x1F, 0x14, 0, 5)、描述栏与 0x00441200(角色 +0x3450) 居中、SetBackground(0xFFFE)、0x00576FE4=序、B4=1；行+1。每项后行 ≥7 → 结束。最后 SetBackground(0xFFFE)。
 对照：DrawSpecialList（平滑绘制 DrawSpecialListAdvance）一致。原程序 ListSkill 对花费为 0 的项也把名字写进 0x005774D4，源码只在画出时更新 listName；0x005774D4 只被这几个列表绘制写入后立即用来画字，另由 0x0045FA80、0x0046EAC0 清空，没有其他读取者，结果不受影响。
 差异：无。
+
+## 0x004751D0 Game::DrawEscortList — exact
+
+汇编：面板 act（不清，act 0x2396、动作 0）运行；FillBox(0xC4, 0xB0, 0xBC, 0x58, 0, 4, 4, 0)；窗框 (0xC8, 0xB4, 0x178, 0xC4)；标题 "佈置護駕"（0x004BF748）在 (0xFC, 0xB4) 0xFFC0；窗框 (0xC8, 0xD4, 0x178, 0x104)；FillBox(x−2, y + 0x16×0x00576FB8 − 0x12, 0xBC, 0x18, 0x1F, 0x14, 0, 5)。剩 = (u16)0x0057720E 递减到 1：角色[角色数−剩] 倒下 → "無"（0x004AF630）暗色画在 (x+0xC, y + 0x16×(护卫数−剩) + 8)；否则 SetAdvance(0x12)、名（0x0049D3B0）0xFFFF 画在同处。护卫数=1 → "無" 暗色画在 (x+0xC, y+0x1E)。SetAdvance(0x10)。
+对照：DrawEscortList（平滑绘制 DrawEscortListAdvance）一致；常量与标题逐个核对。
+差异：无。
+
+## 0x004753C0 Game::DrawEscortFusionList — exact
+
+汇编：面板与窗框同 0x004751D0，标题 "護駕融合"（0x004BF754）。剩 = 护卫数递减到 1：角色[角色数−剩] 倒下 → "無" 暗色；否则 SetAdvance(0x12)、名 = 0x0049D3B0，0x004875F0=1 → 名暗色；否则名 0xFFFF，剩 = 0x00576FB8 → DrawRefineStats(0x172, 0x18×剩 + 0xAA)；行 y = y + 0x16×(护卫数−剩) + 8、x+0xC。循环后 FillBox(x−2, y + 0x16×0x00576FB8 − 0x12, 0xBC, 0x18, 0x1F, 0x14, 0, 5)；护卫数=1 → "無" 暗色在 (x+0xC, y+0x1E)；SetAdvance(0x10)。
+对照：DrawEscortFusionList（平滑绘制 DrawEscortFusionListAdvance）一致（kFusionStatsX 0x172、kFusionStatsRow 0x18、kFusionStatsTop 0xAA）。
+差异：无。
+
+## 0x00475680 Game::DrawTargetTag — exact
+
+汇编：预定[当前].+0=1、0x00577284=1、或 0x004BF0DC ≤0 或 > 敌数 → 返回。敌[瞄准−1]：名 = 0x0049D3B0，半 = lstrlen/2；见数 = 0x0048A580(名声表 0x004D3458, ActId)；元素 = 0x004896D0；0x00577304=1 → 左 = 0x276 − 20×半 − x，否则 x。面板 act（不清）运行；FillBox(左−4, y−4, 20×半+8, 0x1C, 0, 4, 4, 2)；见数 ≥10（无符号字）→ FillBox(左−4, y−3, 宽+8, 0x1F, 色表 0x004BF674[元素] 三值, 5)；DrawWindowFrame(帧, 左, y, 宽+左+4, y+0x18, 0, 0x80000008)；SetAdvance(0x14)、名 (左+2, y+4) 0xFFFF、SetAdvance(0x10)；见数 ≥10 → GetHitPoints(&生, &上)、wsprintf("生命:%d/%d")（0x004BF760）画在 (宽+左+0xC, y−2)；见数 ≥15 → 长 = (u16)0x0048B140，>0 → FillColor(宽+左+0xC, y+0x11, 长, 3, MakeColor(0x18, 0, 0))。
+对照：DrawTargetTag（平滑绘制 DrawTargetTagAdvance）一致；常量与格式串逐个核对。无当前单位时读预定指令越界见 deviations 231 同类处理（源码视为未设）。
+差异：无。
+
+## 0x00475940 Game::DrawControlMenu — exact
+
+汇编：DrawTileBox(0x2387, x−8, y−0x28, 4, 2, 0x48)；"控制"（0x004BF280）DrawText(x, y−0x20, 0xFFFF, 0x10)；DrawTileBox(0x2387, x−8, y−8, 4, 0x004BF0FC, 0x48)；SetShadow(0)、SetBackground(0xFFFE)；"攻擊"（0x004BE664）画在 (x, y)，光标 1 → SetBackground(0xF000) 再画。物品 0..2：清 0x00577494 六 dword，敌[(i16)0x004BF1D0].0x00489180(选, 缓冲, &编号)=1 → 列数+1、号+1、y+0x14，SetBackground(0xFFFE)、画名；号=光标 → 0x00577014=编号、0x00577018=0、高亮再画。技能 0..1：号 = 列数+1、y = 原 y + 0x14×列数；清缓冲，0x00489260(选, 缓冲)=1 → 再清、列数+1、号+1、y+0x14、wsprintf("特殊%d", 选+1)（0x004BF76C）、SetBackground(0xFFFE)、画；号=光标 → 0x00577014=0、0x00577018=选+1、高亮。"釋放"（0x004BF60C）画在 y + 0x14×(列数+1)，光标 = 列数+2 → 高亮。SetBackground(0xFFFE)。编号变量只在开头清 0，ItemName 只写不读它。
+对照：DrawControlMenu（平滑绘制 DrawControlMenuAdvance）一致；常量与四个字符串逐个核对。
+差异：无。
+
+## 0x00475CB0 Game::BattleEndFrame — exact
+
+汇编：有对话框或 0x00537388（战斗消息链）非空 → 返回。按结果 −0x60（0..0x11）分派：0x60 → C0=0、B4=0、结果 0。0x61 → 角色[角色数].0x004828E0(位置[角色数] (i16)x, (i16)y)=1 → 0x004BF1EE=1。0x62 → BC=1、0x00478330。0x63 → (u16)0x00577204=0、0x0057731C=0、0x00577A50=1；0x00578468=0 且 0x0057734C=0 时逐敌 SetAC0(0) 并数倒下，≠敌数 → 结果 0 返回；角色逐个 SetAC0(0)、0x00494840(1)；结果 0x64。0x64 → 0x00577308=1：计时+1 ≥0x14 → 计时 0、0x005772E4=1；否则 DrawVictoryPanel、0x00577260=0、BC=1、C0=1、0x00577270=1、当前=0、计时+1 ≥0x96 → ConfirmKey。0x65 → 0x004BF1EE=0xFF 时 CheckLevelUps，仍 0xFF → 计时 0、结果 0x70；0x0057733C=0：角色[(i8)它] 未倒下 → 0x0057733C = RestartMainAct(2, 0)（只返回 0/1），仍 0 → 返回；0xFF → 计时 0、结果 0x70，否则 DrawLevelUpPanel、计时+1。0x66 → 0x005777EC=0 → 0x005772E4=1；否则计时+1 ≥0x96 → ConfirmKey，0x00478070。0x67 → BC=1、C0=1；0x00576D3C 位 8 → 计时+1 ≥0x1E → 计时 0、0x005772E4=1；否则 0x00478210、计时+1 ≥0x96 → ConfirmKey。0x68 → BC=1、C0=1、计时+1 >0x14 → ConfirmKey。0x6E → 0x00476CB0。0x6F → 0x004776B0、计时+1。0x70 → 0xFF 时 0x00477A00，有角色 → 音效 0x160、未倒下 RestartMainAct(4, 1)；仍 0xFF → 计时 0、结果 0x71；否则 0x00477850、计时+1。0x71 → 0xFF 时 0x00477EE0，有角色同上；仍 0xFF → 结果 0x66、计时 0，0x005777EC≠0 → 音效 0x160；否则 0x00477C40、计时+1。其余返回。
+对照：BattleEndFrame 与内联拆出的 EndCheckFrame 一致（kEndMessageFrames 0x14、kEndPanelFrames 0x96、kEndQuietFrames 0x1E、kLevelUpPose 2、kLearnedPose 4）。0x61 越界见 deviations 234。
+差异：无。
