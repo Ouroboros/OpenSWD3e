@@ -485,7 +485,7 @@ public:
     // 0x00538158 (swd3e) the step of the battle music volume: Config::musicVolume from BattleIntro, faded to 2 by
     // defeat pose 0x65
     i32 musicLevel = 0;  // 0x00538158 (swd3e) the battle music's volume while a boss sinks or an enemy casts (0..11)
-    std::array<i8, Units> fadeActLevels = {};   // swd32 0x00521374 the fade of fadeActs
+    std::array<i8, Units> fadeActLevels = {};   // 0x00536EAC the fade of fadeActs
     std::array<u16, Units> walkLineCalls = {};  // 0x0050CED0 the step factor of WalkLine, doubling while it has none
     std::array<u16, Units> walkDelays = {};     // 0x005372FC (swd3e) the calls WalkLine has waited
     // 0x00575FB0 (swd3e) the mode of WalkLine: 1 rises to y 0x32 first, then 0x8000 (low bits 0: walking)

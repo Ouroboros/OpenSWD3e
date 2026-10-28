@@ -292,3 +292,9 @@
 汇编：槽 index 的命中动作 +0x5A 位 15 → 0x00577030 = 0、0x0057730C = 1。+0x98 = 0：+0 = act、+8 = 0、+0x9C = 0，0x00436C80 = 0 → 0x0050D8B8[index×0xA4] 清 0x29 dword、0x0050EBFC[index] = 0、返回 1；0x00436770(+0x4A, +0x4C)，0x004ED9BC = 像素，旗标 +0x18、原点 +0x10，0x00577304 = 1 → 位 0 取反、原点 = 宽 − 原点；0x0048B280 偏移 x、y 都非零 → 0x0048B310 原点加偏移，否则 0x0048B230 绘制位置；x −= 原点、y −= +0x14；音效 +0x58，(i16)x + 原点 <0x140 → 0x00427090(−0x30) 否则 0x30；+0x58 = 0；0x00417A60((i16)x, (i16)y, 宽, 高, 旗标, 调色板)、释放。等待 = 1 → 命中动作清 0x29 dword、返回 1；否则 0。
 对照：PlayHitActAdvance 的条件、调用顺序和写入一致（偏移要 x、y 都非零才用原点的原有写法保留；kHitPanCentre 0x140、kHitPan 0x30、Mirror 1、Quakes 0x8000）。图片读取失败见 deviations 216，LoadPictureKept 见 84，平滑绘制见 97。
 差异：无。
+
+## 0x00464110 Game::FadeHitAct — diff → exact
+
+汇编：act = 0 → 返回 1。字节 0x00536EAC[index] ≤ −0x20（有符号）→ 清 0、返回 1。0x0048B230 取单位绘制位置；0x00538160[index×0xA4]：+0 = act、+8 = action、+0x9C = 0，0x00436C80 = 0 → 返回 0；0x00436770(+0x4A, +0x4C)（不释放）；0x004ED9A4/0x004EC180/0x004EC178 = (i8) 淡出值，0x004ED9BC = 像素，0x00417A60((i16)x − +0x10, (i16)y − +0x14, 宽, 高, +0x18, 调色板)；淡出值 −4；返回 0。
+对照：FadeHitActAdvance 一致（kHitFadeEnd −0x20、kHitFadeStep 4，三通道色调同值）。图片缺失与不释放见 deviations 217、403，LoadPictureKept 见 84，平滑绘制见 97。
+差异：fadeActLevels 的注释写正传地址。修正：改为 0x00536EAC，逻辑不变。复核：完整函数重新对照一致。
