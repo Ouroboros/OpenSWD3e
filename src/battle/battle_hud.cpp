@@ -634,12 +634,13 @@ int BattleHud::DrawRoulette(int x, int y, i32& value, int stop)
         this->audio.PlaySound(kRouletteSound, this->services->config.soundVolume);
     }
 
-    if (stop == 1)
+    // Only a stopping call counts the digit and, with the last one, gives the number.
+    if (stop != 1)
     {
-        ++roulette.stopped;
+        return 0;
     }
 
-    if (roulette.stopped < roulette.digits)
+    if (++roulette.stopped < roulette.digits)
     {
         return 0;
     }

@@ -66,7 +66,7 @@ class BattleHud
     friend class smooth::HudFrame;
 
 public:
-    // The marks of the timing bar (swd32.exe 0x004A74D0).
+    // The marks of the timing bar (0x004BEFFC).
     static constexpr std::array<u16, 3> TimingMarks = {20, 40, 55};
     static constexpr u32 InitialCoinDelay = 0x10001;
 

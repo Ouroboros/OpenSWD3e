@@ -27,13 +27,13 @@ DrawArgument PaletteArgument(const Picture& picture);
 struct DrawOptions
 {
     bool dropLines = false;  // every third line is skipped (kAdditive, kSubtractive)
-    int tintRed = 0;         // tint steps per channel, in 1/16 of the channel range
-    int tintGreen = 0;
-    int tintBlue = 0;
-    int unusedFlag = 0;   // reset like the others, read by no effect
-    int scaleHeight = 0;  // output height of the vertically scaled effects (0: unscaled)
-    int shear = 0;        // horizontal shear over the picture height (kShadow)
-    int alpha = 0;        // kTranslucent level 1..15
+    int tintRed = 0;         // 0x004ED9A4 tint steps per channel, in 1/16 of the channel range
+    int tintGreen = 0;       // 0x004EC180
+    int tintBlue = 0;        // 0x004EC178
+    int unusedFlag = 0;      // reset like the others, read by no effect
+    int scaleHeight = 0;     // output height of the vertically scaled effects (0: unscaled)
+    int shear = 0;           // horizontal shear over the picture height (kShadow)
+    int alpha = 0;           // 0x004E6D58 kTranslucent level 1..15
     // The rebuild's smooth motion (a menu frame painted between frames): a translucent draw that far (0..1) from
     // `alpha` towards the next level, the colours of the two levels mixed.
     double alphaFraction = 0.0;

@@ -116,3 +116,58 @@
 
 汇编：0x0050C1B0 编号 = (u16)参数；上端：动作 0x1A（样式 1 → 0x1E），不清动作状态即 0x00436C80；0x00436720(+0x4A, +0x4C)（只写 0x004ED9BC）；画于 (x, y)，旗标 +0x18。随后各段先清 0xA4 字节：轨道 0x18，第 i 段画于 (x+2, y+上端高+段高×i)（段数有符号 >0）；轨道长 = 段高×段数；滑块 0x19：长 = _ftol(7.0f / 0x0050C920 × 轨道长)，0x0050C304 = (轨道长−滑块长)/(0x0050C920−7)，上 = 偏移 + 步长×0x0050C924 + 轨道顶（0x0050C308、0x0050C918），下 = 上 + 滑块长，差 <5 → 上+5，0x0050C924+7 ≥ 0x0050C920 → 轨道顶+轨道长；0x0050C91C = 轨道顶，0x0050C3D4 = 下，0x0050C3D8 = 轨道顶+轨道长；裁剪 (x, y, x+0x20, 下)，滑块长 >0 时从 0 起每次画于 (x+5, 0x0050C308+k)、k += 帧高直到 ≥ 滑块长；恢复全屏裁剪；下端 0x1B（样式 2 → 0x1F）画于 (x, y+上端高+段高×实际段数)，返回其结果。任一动作 0x00436C80 为 0 → 返回。
 对照：DrawScrollBarAdvance 与 RunScroll 的动作号、首段不清状态、坐标、浮点截断（Ftol，7.0 与 exe 中 0x004AADDC 的 float 相同）、整数除法、写入的六个全局与裁剪一致；调用者只在条数大于可见行数时绘制，0x0050C920−7 不为 0；滑块帧高为 0 的保护见 deviations 67。
+
+## 0x00458670 BattleHud::DrawCoinToss — exact
+
+汇编：帧数 0x0050CDC8 = 0 时：字 0x0050CDCE（胜次）≥1 → 0x0050CDCC 两字清 0；否则 0x0050CDCC = 0x0043DB90(2)。旋转动作 0x0050C1B0：编号 0x239B、动作 0，0x00436C80 为 0 → 返回 0；0x00436720(+0x4A, +0x4C)；缩放 0x0050C3DC < 0x400 → 0x00423630(宽/2, 高/2, 0x400−缩放, 同)；画于 (0x104−锚点 x, 0xC8−锚点 y)，旗标 |0x80。hold（+0x9C）= 0：帧数+1，%25 = 0 → 延迟 = (u16)(2×0x004BEFF4)，+0x46 +1，0x004BEFF4 两字 = 延迟，+0x44 = +0x46；否则延迟 = 低字；延迟 ≥0x40（无符号）→ 0x004BEFF4 = 0x00010001、缩放 0，结果 = 1 → 胜次+1，hold = 1，音效 0x117，延迟 = 1；倒数（高字）−1，为 0 → = 延迟；+0x44 = 0 → 音效 0x2E；返回 0。hold ≠0：0x0050CA88 编号 0x239B；帧数 ≠1 → 动作 = 结果+1，画于 (0x104−x, 0xC8−y)，倒数 +1 >0x1E → 音效 0x197、清 0x0050CA88、帧数 1、倒数 1；返回 0。帧数 = 1 → 动作 3，0x00423630(宽/2, 高/2, 5×缩放+0x400, 同)，三通道色调 0，旗标 0x84；缩放 += 0x3C，<0x400 → 返回 0；否则帧数、缩放 = 0，倒数 1，清两个动作，返回 1。
+对照：DrawCoinTossAdvance 的分支、16 位运算、常量（kCoinAct 0x239B、kCoinX/Y、kCoinSlowFrames 25、kCoinStopDelay 0x40、各音效、kCoinFaceFrames 0x1E、kCoinEndAction 3、kCoinEndGrowth 5、kCoinFullZoom 0x400、kCoinZoomStep 0x3C）、Painter::ZoomCopy 0x80 与 Additive 4、随机数（random.Below(2)，0x0043DB90）一致；coinDelay 初值 0x00010001 与 exe 中 0x004BEFF4 相同；ActState 的 hold/delay/frameDelay 偏移一致；缺帧见 deviations 64。
+
+## 0x00458A00 BattleHud::DrawTimingBar — exact
+
+汇编：0x00436720(0x2380, 0) 写 0x0050C328/0x004ED9BC，画于 (x, y)；字 0x0050C934 = 0；对 0x004BEFFC 的 3 个刻度（20、40、55）：裁剪 (x+刻度, y, x+刻度+1, y+0x0050C328 高)，0x00436720(0x2380, 1) 画于 (x, y)；指针 = (u16)0x0050C2FC >> 1 再 +1，刻度 ≤ 指针 ≤ 刻度+2（有符号）→ 0x0050C934 = 序号+1，(u16)0x0050CB2C = 序号+1 → 0x0050C934 = 0，否则字 0x0050CB2C = 0。之后裁剪 (x+指针+1, y, x+指针+2, y+高)，再画帧 1，恢复全屏裁剪；字 0x0050C2FC +1；((u16)计数 >> 1)+1 = 0x3E → 字 0x0050C2FC = 0x8000、返回 1；否则返回 0。
+对照：DrawTimingBarAdvance 的裁剪（随 lastPicture 的高）、TimingMarks（与 exe 字节相同）、kNeedleShift 1、kNeedleReach 2、kNeedleEnd 0x3D（等价于原程序的 +1 = 0x3E）、kTimingDone 0x8000 与 numberFont 低字的清零一致；缺帧见 deviations 64。
+
+## 0x00458BB0 BattleHud::DrawTallGauge — exact
+
+汇编：0x00436720(0x237A, 2) 只写 0x0050C328；每级高 = 帧高/6（级数参数 = 4 时 (帧高−0x20)/6），显示高 = 级 × 每级高。帧 0 画于 (x, y)；身顶 = y + 帧 0 高 − 2；级 <6 → 裁剪 (x, 身顶, x+帧 0 宽, 身顶+显示高)；帧 2 画于 (x+4, 身顶)，高为帧高（级数 = 6）或帧高−0x20；alpha 0x004E6D58 = 8，帧 3 以模式 0x14 画于 (x+0xE, 身顶+0x1F)，高为帧高或帧高−0x1E；恢复全屏裁剪；帧 1 画于 (x, 身顶+显示高−3)，返回其结果。
+对照：DrawTallGaugeAdvance 的帧号、除法、级数比较（4 与 6）、裁剪、alpha 与 Painter::Translucent（0x14）一致；DrawOptions 的 alpha 与三通道色调补注地址 0x004E6D58、0x004ED9A4、0x004EC180、0x004EC178（按 0x00417A60 与 0x004271D0 的读写确认）；缺帧见 deviations 64。
+
+## 0x00458D80 BattleHud::SetupRoulette — exact
+
+汇编：字节 0x004BF004..0x004BF007 = 5、5、0、0，0x004BF008 = 2；步数（有符号）>0 时调 0x00458DC0 步数次。对照：Roulette::InitialTops、BaseDigits 与 exe 初值（05 05 00 00 02）一致。
+
+## 0x00458DC0 BattleHud::RaiseRoulette — exact
+
+汇编：依次找第一个 <9（有符号字节）的位：+1 后返回；第 3、4 位时先把 0x004BF008 设为 3、4。全 9 时不变。对照：TopDigit 9、digits = 位序号+1（≥2 时）一致。
+
+## 0x00458FD0 BattleHud::ResetRoulette — exact
+
+汇编：字节 0x0050CDD8 = 0，dword 0x0050CDDC、0x0050C324 = 0；对 0..0x004BF008−1：字节 0x0050CDE0[i] = 0x0043DB90(10)。对照：stopped、result（4 字节）、spins（4 字节）清零与 random.Below(10) 的次数一致。
+
+## 0x00458E30 BattleHud::DrawRoulette — diff → exact
+
+汇编：0x00436720(0x23B0, stop = 1 ? 1 : 0) 写 0x0050C328/0x004ED9BC，画于 (x−宽+0x34, y−高/2+2)，模式 0。周期 bl = 3，对 i = 0..0x004BF008−1（x 每位 −0xE）：i ≥2 → 周期−1；i < 已停位数（有符号字节 0x0050CDD8）→ 0x00457E10(0x2377, 结果[i], x, y)；否则取滚动值 0x0050CDE0[i]，stop = 1 → 结果 0x0050CDDC[i] = 该值，0x00457E10(0x2377, 该值, x, y)，计帧 0x0050C324[i] = 周期 → 计帧 0、滚动值 = (滚动值+1) % (上限 0x004BF004[i]+1)；计帧+1。之后计帧[已停位数] = 1 → 音效 0x125。stop = 1 → 已停位数+1，≥ 位数 → *参数 = 结果[0] + 10×结果[1] + 100×结果[2] + 1000×结果[3]（有符号字节），返回 1。其余返回 0。
+对照：帧与坐标、周期、DrawNumber（kMeterNumbers 0x2377、kRouletteDigitWidth 0xE）、取模、音效 0x125（battle_hud_constants.h）与合成公式一致；计帧下标越出 4 位见 deviations 431。
+差异：源码在 stop ≠1 时也比较已停位数，全部停下后以 stop = 0 调用（battle_action.cpp 每帧）会重写伤害值并返回 1；原程序 stop ≠1 一律返回 0、不写。修正：stop ≠1 直接返回 0，只在停下一位时计数并在最后一位写出数值。复核：完整函数重新对照一致。
+
+## 0x00459010 BattleHud::RouletteBonus — exact
+
+汇编：首位 0x0050CDDC[0] = 0：字 0x00577220 = 10，其后各位全为 0 时每位 +10，最后写回并 wsprintf(0x0050CDE4, “此場戰鬥經驗值加百分之%d”) 后 0x00479220(0x118, 0xA, 0x3C, 文字, 0x40000002)，返回 0；某位非 0 → 0x00577220 = 0、返回 0。首位 = 7：字 0x0057721E 从原值起其后各位全为 7 时每位 +2，写回，非 0 时以“此場戰鬥金錢變%d倍”提示，返回 0；某位不为 7 → 0x0057721E = 0、返回 0。其他：其后各位都等于首位时每位 +10，非 0 时以“龍颿法寶加%d點額外經驗”提示并返回该值；位数 ≤1 或某位不同 → 返回 0。
+对照：experienceBonus（0x00577220）、moneyTimes（0x0057721E）、kRouletteStep 10、kLuckyDigit 7、kLuckyStep 2、提示的位置与旗标（BlackBar | Centered = 0x40000002）、三段文字（按 exe 字节解码一致）与返回值一致；位数 ≤1 时 moneyTimes 不写回与原程序跳过写入相同。
+
+## 0x00459170 BattleHud::SetMeterLimit — exact
+
+汇编：字 0x004BF002 = 参数（返回 ax = 参数）。对照：meterLimit（初值 100 与 exe 相同）一致。
+
+## 0x00459180 BattleHud::AddToMeter — exact
+
+汇编：参数 = 0xFFFF → 0x0050CDD6 = 0、0x0050CDD4 = 0；否则 0x0050CDD6 = 参数（负 → 0），0x0050CDD4 += 参数（16 位），结果为负 → 0；0x0050CDD4 ≤ 0x004BF002（有符号）→ 返回 1；否则两者清 0、返回 0。对照：一致。
+
+## 0x004591E0 BattleHud::ResetMeter — exact
+
+汇编：0x0050CDD0 = 0、字 0x0050CDD4 = 0、0x00577368 = 0（不动 0x0050CDD6），返回 0。对照：一致。
+
+## 0x00459200 BattleHud::DrawMeter — exact
+
+汇编：0x00577368 = 0 → 返回。0x00436720(0x2397, 0) 画于 (x, y)；帧 1 取出后写 0x0050C328；比率 = (i16)0x0050CDD4 / (i16)0x004BF002（x87），fcom 1.0（0x004AA6A0）后 C0/C3 均未置（大于 1）时取 1.0；目标 = _ftol(帧 1 高 × 比率)；0x0050CDD0 ≠ 目标 → 大于时 −1，否则 +1；裁剪 (x, y+高−当前高, x+宽, y+高)，设源后画帧 1（模式 0）；目标 ≠ 当前高 → 三通道色调 10、模式 0x10 再画；恢复全屏裁剪；0x00457E10(0x2377, 值, x+宽/2, y+高)。
+对照：DrawMeter 的比较（`share > 1.0`，NaN 保留，与 fcom 结果一致）、Ftol 截断、步进、裁剪、kMeterTint 10、Painter::TintUnder 与数值位置一致；缺帧见 deviations 64。
