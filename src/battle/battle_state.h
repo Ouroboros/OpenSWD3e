@@ -52,7 +52,7 @@ struct PendingOrder
     i32 targetCount = 0;  // +0x10 the units it hits, counted as they are gathered (to targetCount)
 };
 
-// What an object bought in the shop changes for a party role (0x10 bytes, four of them at 0x004FD3C8): the attack,
+// What an object bought in the shop changes for a party role (0x10 bytes, four of them at 0x0050BF30): the attack,
 // defence (each with its equipment bonus) and agility against the equipment worn, and whether the role can use it.
 struct ShopComparison
 {
@@ -200,7 +200,7 @@ public:
     i32 listBCount = 0;         // 0x0050BF18 the rows of the list shown from listB, at most 13
     ItemNode* listB = nullptr;  // 0x0050C034 the first item shown (itemsHead itself until the list is made)
     i32 mode = 0;               // 0x0050C0EC bits 0..1: the shop and sell modes of the item lists
-    ItemNode itemsHead;         // 0x0050C0F8 the node heading the sorted item list (its count at 0x004FD588)
+    ItemNode itemsHead;         // 0x0050C0F8 the node heading the sorted item list (its count at 0x0050C100)
 
     // The shop (talk command ItemMenu, Game::ItemChoiceMenu).
     i32 shopStage = 0;    // 0x0050BF7C 0: closed, 1: buy, sell or leave, 2: the list, 3: the total, 4: equip now?, 0xA:
@@ -212,7 +212,7 @@ public:
     i16 lessPressed = 0;  // 0x0050BF1C frames the minus arrow of the row chosen shows pressed
     i16 morePressed = 0;  // 0x0050BF74 the plus arrow
     std::array<i16, Party::Roles> faceSlides = {};              // 0x0050BF20 the roles' faces slide out (8..16)
-    std::array<ShopComparison, Party::Roles> comparisons = {};  // swd32 0x004FD3C8
+    std::array<ShopComparison, Party::Roles> comparisons = {};  // 0x0050BF30
     u16 scrollArrows = 0;              // 0x0050BF80 frames the scroll arrows show pressed (bits 0..3: up, 4..7: down)
     std::vector<u16> shopScreen;       // 0x0050BF84 the darkened grey map under the shop
     std::vector<u16> shopScreenSaved;  // 0x0050C0F0 a copy of it
