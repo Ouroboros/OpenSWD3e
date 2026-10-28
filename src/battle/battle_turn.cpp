@@ -532,12 +532,6 @@ int Game::RemoveDefeated(int index, int role)
 
     if (role != 1)
     {
-        // The rebuild's callers pass -1 for none (the original's do not).
-        if (index == -1)
-        {
-            return 0;
-        }
-
         BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(index)];
 
         if (enemy.DefeatFrame(services) != 1)
@@ -3605,7 +3599,7 @@ void Game::AimGhostStep(int step)
 }
 
 // swd3e.exe 0x00468480: the debug keys of the battle (with the debug mode). With a Ctrl key: F3 stops the music, F4
-// toggles showRoleBlocks, F1 and X toggle unk5244E0 and unk576084, K starts a strong attack (強攻擊), Z refills the
+// toggles showRoleBlocks, F1 and X toggle unk537A18 and unk576084, K starts a strong attack (強攻擊), Z refills the
 // roles (vitals, fury and strong attributes), T draws the enemies' gauges again, D and R hurt the roles, V the enemies,
 // F9 toggles skipping the talk, E ends the battle (0), C ends the spell and the acting unit (the original then resets
 // the turn of role actingUnit - 20 and enemy actingUnit with actingUnit just set to -1: not done here), F5 slows the
@@ -3646,7 +3640,7 @@ int Game::BattleDebugKeys()
             if (pressed(Input::F1))
             {
                 pause();
-                battle.unk5244E0 = battle.unk5244E0 == 0 ? 1 : 0;
+                battle.unk537A18 = battle.unk537A18 == 0 ? 1 : 0;
             }
 
             if (pressed(Input::X))
@@ -3877,7 +3871,7 @@ int Game::BattleDebugKeys()
     return 1;
 }
 
-// swd3e.exe 0x00468B20: the debug overlay (unk5244E0): each enemy's hit points, lock (GetWord2A74), command and
+// swd3e.exe 0x00468B20: the debug overlay (unk537A18): each enemy's hit points, lock (GetWord2A74), command and
 // level, each role's lock and command, the slot records (攻擊順序), the party order (我方等待順序) and the draw order
 // (排列順序), the acting and current units, each enemy's action gauge as a two-row bar of kGaugePixel at its place
 // with its second gauge as a green bar, and the state values (無敵, UM, 戰鬥, the menu, the command, the aim, the

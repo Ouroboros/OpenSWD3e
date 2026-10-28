@@ -41,7 +41,7 @@ struct BattleSlotRecord
     i32 unk18 = 0;        // +0x18
 };
 
-// The order a party unit chose (0x14 bytes, ten at 0x00520E90), taken into its slot record by InsertSlotRecord.
+// The order a party unit chose (0x14 bytes, ten at 0x005369C8), taken into its slot record by InsertSlotRecord.
 struct PendingOrder
 {
     i32 unk00 = 0;  // +0x00 to the record's unk0C
@@ -275,7 +275,7 @@ public:
     i32 unk57736C = 0;  // 0x0057736C (swd3e) 1: every party role standing is taunted (EnemyFrame aims at them all)
     // 0x005376A4 (swd3e) per enemy: the party's hits on it (MenuConfirm; cleared when it falls); the roles acting by
     // themselves aim at the most hit (MostHitEnemy)
-    std::array<u8, Enemies> enemyHits = {};
+    std::array<u8, Enemies> enemyHits = {};  // 0x005376A4 per enemy: the hits it took (MostHitEnemy)
     // swd3e: the units slide sideways with the field (SlideUnits): 1 to a unit's place, 2 back to the middle; never on
     // (0x00577364 is only read)
     i32 slideEnabled = 0;  // 0x00577364
@@ -468,7 +468,7 @@ public:
     i32 unk577260 = 0;  // 0x00577260
     i32 unk577270 = 0;  // 0x00577270 set by talk command 0x4E
     // 0x00577314 set when a role turns to another enemy (RetargetRoles)
-    i32 retargeted = 0;
+    i32 retargeted = 0;  // 0x00577314 1 once the acting role checked (and retargeted) its aim this command
     std::array<i32, Units> turnTaken = {};      // 0x00576024 per unit, set when it takes the turn
     std::array<i32, RoleUnits> roleOrder = {};  // 0x005368AC role units in order, a defeated one taken out
     i32 aimTarget = 1;                          // 0x004BF0DC the enemy a role turn aims at, 1-based
@@ -530,7 +530,7 @@ public:
     // 0x005770CE the frames of the level-up stats (the high word of 0x0053BDE8)
     u16 levelUpFrames = 0;
     // The debug keys (Game::BattleDebugKeys) and the acting unit.
-    i32 unk5244E0 = 0;   // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' second gauges
+    i32 unk537A18 = 0;   // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' second gauges
     i32 slowFrames = 0;  // 0x005777F8 (swd3e) the debug keys' F5: the frames are slowed to 100 ms
     i32 unk577360 = 0;   // 0x00577360 (swd3e) set when an enemy's step-in attack fells it (0x00487FE0); 0x0045EE20
     u8 itemStolen = 0;   // 0x00577255 (swd3e) 1 once an enemy stole (EnemyHitDamage, command flag 0x100000); 0x0045EE20
@@ -612,8 +612,8 @@ public:
     std::array<i32, Enemies> unk50CE6C = {};  // 0x0050CE6C (swd3e) per enemy, set by EnemyFrame, cleared once it falls
     // 0x00576DE8 (swd3e) by battle number - 1: the times the battle was fought while a battle talk limits it
     // (FightTalk::repeatLimit, BattleIntro); past the limit its enemies give half their first two rewards
-    std::array<u8, 0x1B4> battleRepeats = {};
-    std::array<char, 0x40> noticeText = {};  // 0x00577494 (swd3e) the shared text of the notices (a stolen item)
+    std::array<u8, 0x1B4> battleRepeats = {};  // 0x00576DE8 per battle number (1-based): the times it was fought
+    std::array<char, 0x40> noticeText = {};    // 0x00577494 (swd3e) the shared text of the notices (a stolen item)
     i32 slideUnit = 0;      // 0x00577800 (swd3e) the enemy attacking last: SlideUnits slides by it (never enabled)
     i16 slideX = 0x140;     // 0x004BF1E0 (swd3e) the x the units slide to
     i32 sweepTargets = 0;   // 0x0057704C the units an enemy's sweep hits
@@ -633,8 +633,8 @@ public:
     // The commands of a role (Game::RoleActionFrame).
     // 0x00577324 1: the taking (收化) succeeded; the enemy taken then gives no first reward and keeps its stolen
     // items (RemoveDefeated)
-    i32 absorbSucceeded = 0;
-    u16 usedUpItem = 0;  // 0x0057721C the item used up by the last command
+    i32 absorbSucceeded = 0;  // 0x00577324 1 once an absorb succeeded: the felled enemy gives no experience
+    u16 usedUpItem = 0;       // 0x0057721C the item used up by the last command
     i32 unk5770B0 = 0;
     i32 unk5770B4 = 0;
     SkillScript accessoryEffect;  // 0x0050ED38 the buff or ailment of an accessory command

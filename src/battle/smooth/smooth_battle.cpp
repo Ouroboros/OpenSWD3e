@@ -511,7 +511,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             }
         }
 
-        if (battle.unk5244E0 == 1)
+        if (battle.unk537A18 == 1)
         {
             const auto second = static_cast<u16>(unit.SecondGaugeLength());
 

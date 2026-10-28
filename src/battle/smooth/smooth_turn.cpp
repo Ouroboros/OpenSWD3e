@@ -2718,7 +2718,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
         font.DrawText(game.drawSurface, x, y, line, kWhite, TextFont::BoldOutline);
     };
 
-    if (battle.unk5244E0 == 1)
+    if (battle.unk537A18 == 1)
     {
         font.SetBackground(TextFont::NoBackground);
         font.SetShadow(0);
