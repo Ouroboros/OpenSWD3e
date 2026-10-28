@@ -310,7 +310,7 @@ constexpr i32 kRepeatStep = 3;
 constexpr i32 kConfirmRepeatStep = 6;
 // swd3e: the keypad keys of commands 1..9 (7 8 9 / 4 5 6 / 1 2 3 as the menu grid)
 constexpr std::array<int, 9> kCommandKeys = {0x47, 0x48, 0x49, 0x4B, 0x4C, 0x4D, 0x4F, 0x50, 0x51};
-constexpr i32 kUnk53BDACBit30 = 0x40000000;  // with bit 31: the confirm key sets bit 0
+constexpr i32 kUnk577088Bit30 = 0x40000000;  // with bit 31: the confirm key sets bit 0
 constexpr int kDigitKey1 = 2;                // the scan code of 1
 constexpr i32 kSpaceMark = 1;
 constexpr u16 kRetreatMark = 0x4000;
@@ -4049,9 +4049,9 @@ int Game::MouseHover()
         }
 
         battle.unk577078 = 0;
-        battle.unk53BD6C = 0;
-        battle.unk53BD70 = 0;
-        battle.unk53BFF8 = 0;
+        battle.unk57703C = 0;
+        battle.unk577040 = 0;
+        battle.unk5772FC = 0;
         return battle.roleListEntries > kListRowsShown;
     };
 
@@ -6499,11 +6499,11 @@ void Game::BattleKeys()
         if (pointerY > static_cast<u32>(this->battleHud.scrollThumbTop) &&
             pointerY < static_cast<u32>(this->battleHud.scrollThumbBottom) && held == 1)
         {
-            battle.unk53BD6C = this->state.pointerY;
-            battle.unk53BD70 = 0;
+            battle.unk57703C = this->state.pointerY;
+            battle.unk577040 = 0;
         }
 
-        if (battle.unk53BFF8 == 1 && held >= 1)
+        if (battle.unk5772FC == 1 && held >= 1)
         {
             battle.unk577078 = kThumbPart;
         }
@@ -6535,7 +6535,7 @@ void Game::BattleKeys()
             battle.unk577088 |= 1;
         }
 
-        if ((battle.unk577088 & kUnk53BDACBit30) != 0)
+        if ((battle.unk577088 & kUnk577088Bit30) != 0)
         {
             battle.unk577088 |= 1;
         }
@@ -6715,7 +6715,7 @@ void Game::DrawBattleMenu()
 
         if (count > kListRowsShown)
         {
-            hud.DrawScrollBar(kListScrollBar, x, kListScrollY, kListScrollRows, battle.unk53BD70, battle.unk577078);
+            hud.DrawScrollBar(kListScrollBar, x, kListScrollY, kListScrollRows, battle.unk577040, battle.unk577078);
         }
     };
 

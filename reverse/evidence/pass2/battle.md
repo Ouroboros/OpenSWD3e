@@ -622,3 +622,28 @@
 汇编：返回链首 = 0。
 对照：ImageList::Empty 一致。
 差异：无。
+
+## 0x0046B210 BattleFile::BattleFile — exact
+
+汇编：+0x2718 起 0x7B dword 清 0；+0 = projector；k = 0..29：+0x3C24 + 8k = k、+0x3C28 + 8k = 5k/4（向零取整）。
+对照：构造函数一致（unk2718 默认清零、unk3C24 = {k, 5k/4}）。
+差异：无。
+
+## 0x0046B260 BattleFile::ReadHeader — exact
+
+汇编：CreateFileA(路径, GENERIC_READ, 0, 0, OPEN_EXISTING, 0x80, 0) 失败 → CloseHandle 后返回 0；ReadFile(+4, 0x2714)，*计数指针 = +0x1F48；CloseHandle；返回 1。
+对照：ReadHeader 一致（计数表由 Counts() 取 header +0x1F44 起）。文件打开方式见 deviations 106。
+差异：无。
+
+## 0x0046B2E0 BattleFile::ReadFormation — exact
+
+汇编：打开失败 → 返回 0。读文件头 0x2714 字节；数 = (i8)header[0x1F44 + 战斗]，≤0 或 choice（i8）> 数 → 关闭返回 0；和 = 序号 1..战斗−1 的 (i8) 计数之和；记录 = dword header[4 + 4×(和 + choice)]；SetFilePointer(记录 × 0x1EC + 0x2714, 起点)；ReadFile(编队, 0x1EC)；关闭返回 1。
+对照：ReadFormation 一致（RecordsAt 4、RecordBytes 0x1EC、HeaderBytes 0x2714、CountsAt 0x1F44）。战斗编号或记录号超出表时的越界见 deviations 398，文件打开见 106。
+差异：无。
+
+## 0x0046B3D0 Game::BattleKeys — diff → exact
+
+汇编：清 0x00577078。结果 <2、当前单位 ≠0、无对话框、0x00577999/0x0057799A/0x0057799B 均 0、0x004BF58C ≠ 当前单位时：依次查数字键 2..0xA 与小键盘 0x47/0x48/0x49/0x4B/0x4C/0x4D/0x4F/0x50/0x51，第一个按下的指令 k：k=5（防禦）→ 指令 ≠5 时（结果 0 则置 1）0x00577070=6、B4=1、B8=0、指令=5、ConfirmKey(0)，随后结果=0、B4=0、指令=1 返回；其余 → 结果 0 则置 1，BuildCommandMenu，可用表 0x005378EC[k−1]=1 时 0x00577070=6、B4=1、B8=0、指令=k、ConfirmKey(0)，返回。无指令键时 G 键（按下且 1 帧或 ≥15 且 %3=1）：0x00577204≠0、0x00577264=1、0x00577260=1、结果 0x63/0x64/3、有对话框 → 返回；角色 IsHeld=1，或敌数−0x005771E8=1 且 0x004BF1CA≠0xFFFF → 返回；当前单位=0（不可达）→ 跳过；MarkBit11Clear=0 或 0x00576D3C 位 0x200 → Sleep(0x14)、提示(0x118, 0xA, 5, "無法撤退!!", 0x40000002)、音效 0x8C 返回；否则 Sleep(0x32)，0x0057725C=1、0x00577020=当前、结果=0、0x004BF1A0=0、0x004BF0DC=当前−0x13、0x00577204|=0x4000、当前=0、B4=0、BC=1、C0=1、0x0057706C=0、0x00577070=0、0x00577074=4，单位取 0。
+之后：0x00577328=1 且空格 1 帧按下 → 0x00577080|=1；右 Ctrl 按下 ≥1 帧 → Esc 按下、帧数同。右 Shift 重复：结果 >1 返回；0x004BF1EC=0、指令=1、SelectPreviousRole，结果=1 则 ConfirmKey(0)，0x004BF1EC=0xFFFF 返回。A 键重复：结果=1、无对话框、0x0057722A 位 0x80 → B8=0、0x0057731C=1、0x00576FA8=1、0x00576024[单位]=1、B4=1、指令=1、结果=3 返回。鼠标右键 ≥1 帧 → 0x00577084=0、B8=1、Esc 按下同帧数。鼠标左键重复：B8=1；0x004BF1EC≠0xFFFF → SelectRoleUnit(movsx)，同右 Shift 收尾返回；否则 0x00577084=0，滚动条部位 1..4 依次写 0x00577078 并调 MenuUp/MenuDown/ScrollListBack/ScrollListForward（每次重读部位）；指针 y（无符号）在 0x0050C918 与 0x0050C3D4 之间且 1 帧 → 0x0057703C=指针 y、0x00577040=0；0x005772FC=1 且 ≥1 帧 → 0x00577078=5；空格按下=1、帧数=左键、B8=1。回车按下且帧 %3=1 → 空格按下、帧数同并确认；否则空格未按下不确认。确认（空格 1 帧或 ≥15 且 %6=1）：0x00577088 位 31、位 30 各令 |=1；0x00577264=1 → 敌[0x00575F18].GetWord29A2 的角色 CancelHitNumber；B8=1 时 0x005379FC≠0、否则 0x004E4DCC≠0 → ClickRegions::Free；左键未按下：指令 6 或 0x50 时 B8=0 → B4=1、0x00577084=0x12C，否则 B8=0；其他指令 B4=1、B8=0；部位=0。清 0x00576D3C 位 0x20，ConfirmKey(0)。上/下键重复且无对话框：MenuUp+SelectPreviousRole+部位 1／MenuDown+SelectNextRole+部位 2。左/右键重复：有点击区时选项 −1（位 15 → 个数−1）／+1（无符号 > 个数−1 → 0）；无对话框时结果=3 → MenuUp／MenuDown，左：SelectNextRole、MenuLeft；右：MenuRight、SelectPreviousRole。PageUp/PageDown 帧 %3=1 → ScrollListBack/ScrollListForward。Esc 重复 → MenuCancel、0x005770A8=0、0x005770AC=0。
+对照：逐分支与源码一致（按键 0x10 步长：Esc 0x004D1638、空格 0x004D1648、右 Shift 0x004D1658、左 0x004D1668、上 0x004D1678、右 0x004D1688、下 0x004D1698、PageUp 0x004D16A8、PageDown 0x004D16B8、右 Ctrl 0x004D16C8、回车 0x004D16F8、右键 0x004D1718、左键 0x004D1728、A 0x004D1748、G 0x004D1758；拒绝提示帧数 5 即寄存器 esi 当时的值；"無法撤退!!" 与 0x004BF540 字节一致；被调函数映射逐个核对）。
+差异：字段 unk53BD6C、unk53BD70、unk53BFF8 与常量 kUnk53BDACBit30 沿用正传地址命名。修正：改名为 unk57703C、unk577040、unk5772FC、kUnk577088Bit30（0x0046BFB0 同样读写这三处），声明处注明外传地址。复核：完整函数重新对照一致。

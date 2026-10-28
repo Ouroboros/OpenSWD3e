@@ -1525,7 +1525,7 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
                 kItemScrollX,
                 kItemScrollY,
                 kItemScrollRows,
-                battle.unk53BD70,
+                battle.unk577040,
                 battle.unk577078,
                 scene
             );
@@ -2096,7 +2096,7 @@ void TurnFrame::DrawTitledItemListAdvance(
                 kTitledScrollX,
                 kItemScrollY,
                 kItemScrollRows,
-                battle.unk53BD70,
+                battle.unk577040,
                 battle.unk577078,
                 scene
             );

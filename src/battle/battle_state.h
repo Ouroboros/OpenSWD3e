@@ -562,10 +562,10 @@ public:
     i32 menuY = 0;                       // 0x00576FFC
     i32 hoverPageTab = -1;               // 0x004BF10C the page tab under the pointer (list of state 2)
     i32 hoverRoleTab = -1;               // 0x004BF110 the role tab under the pointer (list of state 4)
-    i32 unk53BD6C = 0;
-    i32 unk53BD70 = 0;
-    i32 unk53BFF8 = 0;
-    i32 hoverUnit = 0;  // 0x00577988 the unit aimed at under the pointer
+    i32 unk57703C = 0;                   // 0x0057703C the pointer y when the scroll thumb is pressed
+    i32 unk577040 = 0;                   // 0x00577040 the list scroll bar position
+    i32 unk5772FC = 0;                   // 0x005772FC 1: the scroll thumb is dragged
+    i32 hoverUnit = 0;                   // 0x00577988 the unit aimed at under the pointer
     u16 unk577212 = 0;
     // The confirm key of the menu (Game::MenuConfirm).
     i32 unk577080 = 0;
