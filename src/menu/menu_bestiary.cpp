@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <optional>
 #include <string>
 
 #include "core/error_box.h"
@@ -887,31 +888,34 @@ void Menu::BestiaryLines(int index)
         return;
     }
 
-    auto nameOf = [&owner](u16 id) -> std::string
+    // The name of an object that loads, also an empty one (none for id 0 or a record that does not load).
+    auto nameOf = [&owner](u16 id) -> std::optional<std::string>
     {
         ObjectRecord record;
-        return id != 0 && owner.database.LoadObject(record, id) ? ObjectName(record) : std::string();
+
+        if (id == 0 || !owner.database.LoadObject(record, id))
+        {
+            return std::nullopt;
+        }
+
+        return ObjectName(record);
     };
 
-    const std::string first = nameOf(data.itemA);
-
-    if (!first.empty())
+    if (const std::optional<std::string> first = nameOf(data.itemA); first.has_value())
     {
-        book.lines[kItemLines] = first;
+        book.lines[kItemLines] = *first;
     }
 
-    const std::string second = nameOf(data.itemB);
-
-    if (!second.empty() && second != book.lines[kItemLines])
+    if (const std::optional<std::string> second = nameOf(data.itemB);
+        second.has_value() && *second != book.lines[kItemLines])
     {
-        book.lines[kItemLines + 1] = second;
+        book.lines[kItemLines + 1] = *second;
     }
 
-    const std::string third = nameOf(data.itemC);
-
-    if (!third.empty() && third != book.lines[kItemLines] && third != book.lines[kItemLines + 1])
+    if (const std::optional<std::string> third = nameOf(data.itemC);
+        third.has_value() && *third != book.lines[kItemLines] && *third != book.lines[kItemLines + 1])
     {
-        book.lines[kItemLines + 2] = third;
+        book.lines[kItemLines + 2] = *third;
     }
 }
 
