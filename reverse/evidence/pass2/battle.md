@@ -1434,3 +1434,51 @@
 汇编：standAct 动作 0x32、hold = +0x3010=1、id = 零扩展 +0x2F28；Run=0 → 0。图片 = GetPicture。standAct waiting 非 0 → 清零返回 1。+0x3050=1 且 act +0x1C 为 0 → 旗标位 0 取反、+0x1C = 旗标|0x8000、act x = 图宽 − x。目标.GetDrawPosition → x = 目标 x − act x、y = 目标 y − act y（字）；缩放高 = 图高/3、剪切 = 图高>>2、着色 −6（+0x3044=1 时 −1）；PlaySound(view)、声像 x（有符号字）>0x140 ? 0x30 : −0x30；+0x2BAC = (旗标 & 0x8000000F) | 0xC；view=0；阴影画在 (x−5, y − 缩放高 + act y)，本体画在 (x, y)。返回 0。
 对照：PoseAtTarget（平滑绘制 RoleFrame::PoseAtTargetAdvance）一致（掩码 0x8000000F 与 RleSource|Mirror|Flip 在并上 0xC 后相同；常量核对）；空图片见偏差 164。
 差异：无。
+
+## 0x00482FC0 BattleRole::Steal — exact
+
+汇编：物品 = 目标.Data()；+0x8C 为 0 → 返回 25000。熟练度(0x17)；+0x2BE6 < 100（无符号）：roll = rand%10，扣 = 熟练度/25；扣 > roll（低 16 位）→ 值 0，否则 roll − 扣；值（字）≥ +0x8E（无符号）→ 返回 0。返回 +0x8C 并清 0。
+对照：Steal 一致（常量与字段偏移核对）。
+差异：无。
+
+## 0x00483060 BattleRole::AttackPose — exact
+
+汇编：standAct id = 零扩展 +0x2F28、+0x2FEC=1、动作 0x3C、hold = +0x3010=1；Run=0 → 0。图片 = GetPicture；+0x2EC6 = act x、+0x2BA8 = act flags、+0x2EBC = act anchorX；+0x3050=1 → 旗标位 0 取反、+0x2EC6 = 图宽 − act x，anchorX 非 0 → +0x2EBC = 图宽 − anchorX。缩放高 = 图高/3、着色 −6、剪切 = 图高>>2；PlaySound(view)、声像 −0x30、view=0；+0x2BAC = (旗标 & 0x8000000F)|0xC；阴影画在 (阵位 x − act x, 阵位 y − 缩放高)，本体画在 (阵位 x − act x, 阵位 y − act y)。target 低字节 & 9 → target=0、返回 0x9B78；waiting≠1 → 0；否则 +0x2FEC=0、standAct 清零、返回 2。两个栈参数不读。
+对照：AttackPose（平滑绘制 RoleFrame::AttackPoseAdvance）一致（kAttackPoseHit|kHitCast = 0x9B78、kPoseDone=2）；空图片见偏差 165。
+差异：无。
+
+## 0x004832A0 BattleRole::CanTarget — exact
+
+汇编：目标.Data()（结果写入已用完的参数槽），返回 1。
+对照：CanTarget 一致。
+差异：无。
+
+## 0x004832C0 BattleRole::CanAbsorb — exact
+
+汇编：物品 = 目标.Data()；目标.GetHitPoints(生命, 上限)。种类位 0x20 有或位 0x800 无 → 0。+0x34BC 非 0 且 +0x34BA = 物品类别（+0x56 字）→ rand%10 < 零扩展 +0x34BC。类别 >10（无符号）→ 0。高 = 物品等级（+0x58）− 角色等级字节：≥12 → 0；低 = −高 ≥10 → 1；高 7..11 → 生命 ≤ 上限/4；低 5..9 → 生命 ≤ 上限/3 则 1，否则 rand%100 ≤ 80；高 1..6 → 同上，否则 ≤ 20 − 5×高；低 ≥5 或 <0 → 0；其余 → 生命 ≤ 上限/3 则 1，否则 ≤ 10×低 + 20。
+对照：CanAbsorb 一致（常量与旗标核对）。
+差异：无。
+
+## 0x00483490 BattleUnit::MarkBit11Clear — exact
+
+汇编：返回 (~+0x2BD8 字 >> 11) & 1。
+对照：(marks & UnkMark800) == 0，一致。
+差异：无。
+
+## 0x004834A0 BattleRole::DirectAttack — exact
+
+汇编：standAct id = 零扩展 +0x2F28、+0x2FEC=1、动作 0x2A、hold = +0x3010=1；Run=0 → 0。图片、+0x2EC6/+0x2BA8/+0x2EBC 与镜像同 AttackPose。目标.GetDrawPosition → 阴影 y = 目标 y − act y（字）；缩放高 = 图高/3、剪切 = 图高>>2、着色 −6（+0x3044=1 时 −1）；PlaySound(view)、声像 (阵位 x − movsx +0x2EC6) ≥ 0x140 ? 0x30 : −0x30；+0x2BAC = (+0x2BA8 & 0x8000000F)|0xC；view=0；阴影画在 (x, movsx 阴影 y − 缩放高 + act y)，本体画在 (x, 阵位 y − act y)。target 低字节 & 9 → target=0、+0x2B84 = 0x8000、目标.RaiseFlag2BC0、伤害 = movsx HitDamage(目标, &灵力, &体力)，0x00575F34 = 伤害，≥9999 → 9999；0x005378F4 += 伤害；目标.SetDamageDigits(伤害)、StepTargetCount(1)。+0x2B84 ≠ 0x8000 → 0。slotActs[0] id 0x1C9A、动作 0；AimAction(目标, slotActs[0], 0, 0)；以 (movsx +0x2ECE, movsx +0x2ED0)、+0x2BAC 绘制；standAct waiting≠1 → 0；否则 +0x2B84=0、slotActs[0] 与 standAct 清零，返回 1。
+对照：DirectAttack（平滑绘制 RoleFrame::DirectAttackAdvance）一致（HitDamage 返回 i16；常量核对）；空图片见偏差 166。
+差异：无。
+
+## 0x00483830 BattleRole::DrainShare — exact
+
+汇编：+0x2BD0 位 0x10 无 → 0。熟练度(0x37)、0x0049A0E0(0x004D1F58, 0x37, 0xC)；+0x2BE6 字逻辑右移 1；量 = 零扩展熟练度 × 量 /100 + 1；返回 1。
+对照：DrainShare 一致（kDrainStep=0xC）。
+差异：无。
+
+## 0x004838A0 BattleRole::Pose36Frame — exact
+
+汇编：角色记录（+4）movsx 生命 ≤ movsx 上限/4（截断）→ 1。standAct id = 零扩展 +0x2F28、动作 0x36（不设 hold）；Run=0 → 0。图片 = GetPicture；+0x2EC0 = act +0x62、+0x2EBC = act anchorX；旗标 = act flags、原点 x = act x 字；+0x3050=1 → 旗标位 0 取反、原点 x = 图宽 − act x，anchorX 非 0 → +0x2EBC = 图宽 − anchorX。PlaySound(view)、声像 (阵位 x − 原点 x) ≥ 0x140 ? 0x30 : −0x30、view=0；缩放高 = 图高/3、着色 −6、剪切 = 图高>>2；+0x2BAC = (旗标 & 0x8000000F)|0xC；阴影画在 (左, 阵位 y − 缩放高)，本体画在 (左, 阵位 y − act y)。act +0x4E 与 +0x50 都非 0 → 叠加图 +0x2A4C = GetPicture(+0x4E, +0x50 − 1)，画在 (movsx +0x2EC0 − 原点 x + 阵位 x, 阵位 y − act y + movsx +0x64)、旗标|4；waiting=1 → 清 +0x4E、+0x50、+0x62、+0x64。waiting=1 → standAct 清零返回 1；否则 0。
+对照：Pose36Frame 一致（常量与 ActState 偏移核对）；图片缺失见偏差 211。
+差异：无。
