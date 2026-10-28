@@ -690,11 +690,11 @@ public:
     i32 menuGrow = 0;                      // 0x00577070 how far the command menu has opened
     i32 listRows = 0;                      // 0x00577074 the rows of the list open
     std::array<char, 0x14> listName = {};  // 0x005774D4 a name shown by the lists
-    i32 unk53C49C = 0;
-    i32 unk53BFC8 = 0;
-    u16 controlledEnemy = 0xFFFF;  // 0x004BF1D0 the enemy under control (0xFFFF: none)
-    u16 talkRole = 0xFFFF;         // 0x004BF1D2 the role with a battle talk (0xFFFF: none)
-    i32 orderedSkill = 0;          // 0x00577014 the skill a controlled enemy is ordered to use
+    i32 unk5777F0 = 0;                     // 0x005777F0 set to 1 when the aim steps by key
+    i32 unk5772C4 = 0;                     // 0x005772C4 set to 1 by the battle menu (0x00471E80) while a list shows
+    u16 controlledEnemy = 0xFFFF;          // 0x004BF1D0 the enemy under control (0xFFFF: none)
+    u16 talkRole = 0xFFFF;                 // 0x004BF1D2 the role with a battle talk (0xFFFF: none)
+    i32 orderedSkill = 0;                  // 0x00577014 the skill a controlled enemy is ordered to use
     i32 unk577018 = 0;
     i32 unk577330 = 0;          // 0x00577330 1 while the catch of talk command 0x4E runs
     i32 unk577284 = 0;          // 0x00577284

@@ -84,8 +84,10 @@ constexpr u16 kBackSound = 0x2E;
 constexpr i32 kListState2 = 2;
 constexpr i32 kListState4 = 4;
 constexpr i32 kListState1B = 0x1B;
-constexpr i32 kFirstPanelUnit = BattleState::FirstRoleUnit;  // the four party roles have the panels
-constexpr i32 kLastPanelUnit = BattleState::FirstRoleUnit + 3;
+// The panel units of SelectPreviousRole and SelectNextRole keep the numbering of PanelUnits (8..11, 0x0046F38F),
+// below FirstRoleUnit: the current unit (a role unit) is never among them, so the role keys never move the panel.
+constexpr i32 kFirstPanelUnit = 8;
+constexpr i32 kLastPanelUnit = 0xB;
 constexpr u16 kNoPanelRole = 0xFFFF;
 constexpr i32 kMenuState = 1;  // the command menu
 
@@ -2330,9 +2332,9 @@ void Game::MenuCancel()
     auto clearList = [&battle]
     {
         battle.listName = {};
-        battle.unk53BFC8 = 0;
+        battle.unk5772C4 = 0;
         battle.unk5772AC = 0;
-        battle.unk53C49C = 1;
+        battle.unk5777F0 = 1;
         battle.listRows = kListRows;
     };
 
@@ -2484,7 +2486,7 @@ void Game::MenuCancel()
             battle.result = kMenuState;
             battle.roleListScroll = 0;
             battle.listRows = kListRows;
-            battle.unk53BFC8 = 0;
+            battle.unk5772C4 = 0;
             battle.unk5772AC = 0;
             cancelCommand();
             break;
@@ -3549,9 +3551,15 @@ void Game::AimStep(int step)
         this->battleHud.portraitHighlight[panel] = 0;
     }
 
-    this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(1);
+    // 融合 without a standing escort keeps the aim past the roles (aimTarget 11); the original marks a unit past the
+    // role table (deviations.md).
+    if (static_cast<u32>(battle.aimTarget - 1) < this->battleRoles.size())
+    {
+        this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(1);
+    }
+
     battle.unk5772B4 = 1;
-    battle.unk53C49C = 1;
+    battle.unk5777F0 = 1;
 }
 
 // The aim through the standing enemies by `step` (inline in MenuUp and MenuDown): enemyOrder stepped (wrapping) past
@@ -3584,7 +3592,7 @@ void Game::AimEnemyStep(int step, UnitRect& rect)
 
     this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].SetAC0(1);
     battle.unk5772B4 = 1;
-    battle.unk53C49C = 1;
+    battle.unk5777F0 = 1;
     battle.aimTarget = battle.actingEnemy + 1;
 }
 
@@ -4876,7 +4884,7 @@ void Game::ConfirmCommand()
     battle.unk5772B4 = 0;
     battle.unk577284 = 0;
     battle.unk5772F0 = 0;
-    battle.unk53C49C = 1;
+    battle.unk5777F0 = 1;
     battle.listReturnCommand = command;
 
     if (command >= kFirstAccessoryMenuCommand && battle.MenuKind(command) != 0)
@@ -5368,7 +5376,7 @@ void Game::ConfirmTarget()
         }
     }
 
-    battle.unk53BFC8 = 0;
+    battle.unk5772C4 = 0;
     this->controls.PressConfirm();
 
     if (battle.autoBattle == 1)
@@ -6227,7 +6235,7 @@ void Game::ConfirmKey()
 
     this->audio.PlaySound(kOpenSound, this->config.soundVolume);
     battle.unk5772B4 = 1;
-    battle.unk53C49C = 1;
+    battle.unk5777F0 = 1;
     battle.listRows = kListRows;
     role.GetPosition(battle.unk577240, battle.unk577244);
 
@@ -6750,7 +6758,7 @@ void Game::DrawBattleMenu()
             return;
 
         case kListState2:
-            battle.unk53BFC8 = 1;
+            battle.unk5772C4 = 1;
             this->DrawListTabs(kListX, kListY);
 
             if (battle.menuGrow == kListGrown && battle.listPanelFrames == kListOpened)
@@ -6767,7 +6775,7 @@ void Game::DrawBattleMenu()
             return;
 
         case kListState4:
-            battle.unk53BFC8 = 1;
+            battle.unk5772C4 = 1;
             this->DrawItemList(kListX, kListY, battle.roleListRow, battle.roleListScroll);
             listDrawn();
             return;
@@ -6794,7 +6802,7 @@ void Game::DrawBattleMenu()
             return;
 
         case kSkillListState:
-            battle.unk53BFC8 = 1;
+            battle.unk5772C4 = 1;
             this->DrawSpecialList(kListX, kListY, battle.specialRow);
             listDrawn();
             return;
@@ -6808,20 +6816,20 @@ void Game::DrawBattleMenu()
             return;
 
         case kListState1B:
-            battle.unk53BFC8 = 1;
+            battle.unk5772C4 = 1;
             this->DrawThrowList(kListX, kListY, battle.roleListRow, battle.roleListScroll);
             scrollBar(battle.roleListEntries, battle.roleListScroll, kThrowScrollX);
             listDrawn();
             return;
 
         case kWaitState1E:
-            battle.unk53BFC8 = 1;
+            battle.unk5772C4 = 1;
             this->DrawRefineList(kListX, kListY, battle.roleListRow);
             listDrawn();
             return;
 
         case kWaitState29:
-            battle.unk53BFC8 = 1;
+            battle.unk5772C4 = 1;
             this->DrawTitledItemList(
                 kListX,
                 kListY,
@@ -6834,7 +6842,7 @@ void Game::DrawBattleMenu()
             return;
 
         case kWaitState50:
-            battle.unk53BFC8 = 1;
+            battle.unk5772C4 = 1;
             this->DrawTitledItemList(
                 kListX,
                 kListY,
