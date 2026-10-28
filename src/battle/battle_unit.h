@@ -419,7 +419,7 @@ public:
     static constexpr int UnkSlot8 = 8;
     static constexpr int UnkSlot9 = 9;
     static constexpr u32 NoTarget = 0xFFFFFFFF;
-    static constexpr u16 NoUnk29A2 = 0xFFFF;
+    static constexpr u16 NoUnk2EAE = 0xFFFF;
     static constexpr u16 MaxTargets = 0x23;      // pushedTargets entries
     static constexpr u16 Healing = 0x8000;       // a damage amount that heals
     static constexpr i32 Opaque = 0xF;           // fadeLevel of a fully visible unit; the fade out counts down from it
@@ -457,7 +457,7 @@ public:
     u16 GetCommandA() const;
     u16 GetCommandB() const;
     u16 GetWord2A74() const;
-    u16 GetWord29A2() const;
+    u16 GetWord2EAE() const;
     int ClearIdleAction();
     int SetCommand(int command);
     void ClearFlag2BC0();
@@ -489,7 +489,7 @@ public:
     u16 Counter2A76() const;
     void IncreaseHits();
     i16 DecreaseHits();
-    void ClearWord29A2();
+    void ClearWord2EAE();
     void SetAA8();
     int GetAA8() const;
     int GetAE0() const;
@@ -812,7 +812,7 @@ public:
     u32 colorPair = DefaultColorPair;  // +0x2BC4
     u32 status = 0;                    // +0x2BC8 status bits (2: stone, 12: frozen, ...)
     u32 equipmentFlags = 0;            // +0x2BD0 bits 0, 2..6 from the equipment
-    u32 unk26CC = 0;
+    u32 unk2BD4 = 0;
     u16 marks = 0;      // +0x2BD8 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
     u16 unk2BDA = 0;    // +0x2BDA (swd3e) bit 0: the weak stand pose (IdleFrame); bit 2 (0x00486540)
     i16 guardPose = 0;  // +0x2BDC the guard pose (1, 2, 4)
@@ -829,8 +829,8 @@ public:
     i16 glowLevel = 0;   // +0x2E64 the brightness of a glow act (GlowAct)
     std::array<i16, MaxTargets> numberFades = {};  // +0x2E66 the rise and fade of each damage number
     i16 guardRise = 0;                             // +0x2EAC
-    u16 unk29A2 = NoUnk29A2;
-    u16 unk29A4 = 0;
+    u16 unk2EAE = NoUnk2EAE;
+    u16 unk2EB0 = 0;
     // +0x2EB2 (swd3e) a count kept by HitDamage (0x00497900), cleared by ClearExtras; while positive the role has no
     // critical attack; shown as "X%2d" plus one by the panel of 0x00478FA0 against a tenth of the proficiency of
     // accessory kind 0x27
@@ -916,7 +916,7 @@ public:
     u16 queuedActions = 0;  // +0x2F9C the acts AddQueuedAction appended
     u16 landedActions = 0;  // swd32 +0x2A82 the queued acts that reached their end
     u16 pendingDamage = 0;  // +0x2FA6 bit 15: healing
-    u16 commandFlags = 0;   // +0x2FB0 CommandFlag bits (high byte at +0x2A87)
+    u16 commandFlags = 0;   // +0x2FB0 CommandFlag bits (high byte at +0x2FB1)
     u16 restAction = 0;     // swd32 +0x2A88 the rest action of the frame (IdleFrame)
     u16 magicAction = 0;    // +0x2FB4 the action of its magic act
     u16 unk2A8C = 0;

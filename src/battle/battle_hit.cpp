@@ -968,7 +968,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
 
 // swd3e.exe 0x004665A0: the hits of the acting unit actingUnit once its spell took effect (SpellCast, not SpellOver);
 // 1 once they are over (the hit acts and, after a sweep, the slot totals cleared). The target is the attacker's
-// word 29A2. The coin toss (UnkSpell400) runs YinYangAttack instead. A defeated target (Damage 1) flashes the frame
+// word 2EAE. The coin toss (UnkSpell400) runs YinYangAttack instead. A defeated target (Damage 1) flashes the frame
 // white and is recorded. See RoleHitFrame and EnemyHitFrame.
 int Game::HitFrame()
 {
@@ -1058,7 +1058,7 @@ int Game::RoleHitFrame(int role)
 {
     BattleState& battle = this->battleState;
     BattleRole& attacker = this->battleRoles[static_cast<std::size_t>(role)];
-    const auto target = static_cast<i16>(attacker.GetWord29A2());
+    const auto target = static_cast<i16>(attacker.GetWord2EAE());
     const auto at = static_cast<std::size_t>(target);
     const u32 act = static_cast<u32>(battle.unk50D88C[static_cast<std::size_t>(role)]);
 
@@ -1138,7 +1138,7 @@ int Game::RoleHitFrame(int role)
                 return 0;
             }
 
-            battle.unk50CE6A = attacker.GetWord29A2();
+            battle.unk50CE6A = attacker.GetWord2EAE();
             battle.lastEnemyHit = static_cast<u16>(target);
             battle.hitLanded = 1;
             battle.slotTargets[at] = target;
@@ -1179,7 +1179,7 @@ int Game::RoleHitFrame(int role)
             return 0;
         }
 
-        battle.unk50CE6A = attacker.GetWord29A2();
+        battle.unk50CE6A = attacker.GetWord2EAE();
         battle.lastEnemyHit = static_cast<u16>(target);
         battle.hitLanded = 1;
         battle.slotTargets[at] = target;
@@ -1206,7 +1206,7 @@ int Game::RoleHitFrame(int role)
         return 0;
     }
 
-    battle.unk50CE6A = attacker.GetWord29A2();
+    battle.unk50CE6A = attacker.GetWord2EAE();
     battle.lastRoleHit = static_cast<u16>(target);
 
     if (battle.unk576084 == 0 &&
@@ -1315,7 +1315,7 @@ int Game::EnemyHitFrame(int enemy)
     BattleState& battle = this->battleState;
     BattleEnemy& attacker = this->battleEnemies[static_cast<std::size_t>(enemy)];
     CounterList& proficiency = this->party.fame.lists[Fame::ProficiencyList];
-    const auto target = static_cast<i16>(attacker.GetWord29A2());
+    const auto target = static_cast<i16>(attacker.GetWord2EAE());
     const auto at = static_cast<std::size_t>(target);
     const u32 act = static_cast<u32>(battle.enemyHitActs[static_cast<std::size_t>(enemy)]);
 
@@ -1332,7 +1332,7 @@ int Game::EnemyHitFrame(int enemy)
             }
 
             role.StepOrbCounters(proficiency, attacker.command);
-            battle.unk50CE6A = attacker.GetWord29A2();
+            battle.unk50CE6A = attacker.GetWord2EAE();
             battle.lastRoleHit = static_cast<u16>(target);
             battle.hitLanded = 1;
             this->ApplyDrain(battle.hitDamage, attacker, role);
@@ -1367,7 +1367,7 @@ int Game::EnemyHitFrame(int enemy)
                 return 0;
             }
 
-            battle.unk50CE6A = attacker.GetWord29A2();
+            battle.unk50CE6A = attacker.GetWord2EAE();
             battle.lastEnemyHit = static_cast<u16>(target);
             battle.hitLanded = 1;
 
@@ -1391,7 +1391,7 @@ int Game::EnemyHitFrame(int enemy)
         }
 
         role.StepOrbCounters(proficiency, attacker.command);
-        battle.unk50CE6A = attacker.GetWord29A2();
+        battle.unk50CE6A = attacker.GetWord2EAE();
         battle.lastRoleHit = static_cast<u16>(target);
         battle.hitLanded = 1;
         this->ApplyDrain(battle.slotDamage[0], attacker, role);
@@ -2724,7 +2724,7 @@ void Game::EnemyActFrame(BattleEnemy& unit, int enemy)
         battle.skillNamePending[at] = 0;
     }
 
-    if (this->EnemyActionFrame(enemy, static_cast<i16>(unit.GetWord29A2())) == 1)
+    if (this->EnemyActionFrame(enemy, static_cast<i16>(unit.GetWord2EAE())) == 1)
     {
         this->EnemyAfterAction(unit, enemy);
     }
@@ -2772,7 +2772,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
     battle.unk577298 = 0;
-    const auto target = static_cast<i16>(unit.GetWord29A2());
+    const auto target = static_cast<i16>(unit.GetWord2EAE());
     BattleRole& ghost = this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)];
 
     if (ghost.GhostObeys(services) == 1 && target == 0 && battle.unk575F28 == 0 &&

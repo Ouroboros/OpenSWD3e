@@ -174,7 +174,7 @@ constexpr u16 kFurySound = 0x2FD;
 // Regenerate: the gains show 6 frames apart.
 constexpr u16 kRegenerateDelay = 6;
 
-// UseAccessorySkill: the unk26CC bit of each accessory kind (RepeatAttack is kRepeatAttack).
+// UseAccessorySkill: the unk2BD4 bit of each accessory kind (RepeatAttack is kRepeatAttack).
 constexpr u32 kAccessoryBit16 = 0x2;
 constexpr u32 kAccessoryBit17 = 0x4;
 constexpr u32 kAccessoryBit18 = 0x8;
@@ -217,7 +217,7 @@ constexpr u16 kCostFlag = 0x8000;  // ObjectData::costBits: the low 15 bits are 
 constexpr u16 kCostValueMask = 0x7FFF;
 constexpr u16 kFixedCostBit = 0x800;
 constexpr u16 kFixedCost = 1000;
-constexpr double kCounterPercent = 100.0;  // swd32.exe 0x00499D28 (unmatched in swd3e)
+constexpr double kCounterPercent = 100.0;  // 0x004AAE10 (a float)
 constexpr u16 kNoSkillChosen = 0xFFFF;
 constexpr u16 kHealPercentBit = 0x200;  // ObjectData::useKind: the heals are percentages
 constexpr u32 kOffensiveKind = 8;
@@ -236,7 +236,7 @@ constexpr u16 kFullPercent = 100;  // StepWornCounters: a counter with no top is
 constexpr std::size_t kClearedNameBytes = 0x10;
 constexpr u32 kSeparateKind = 0x800;     // ObjectData::kind: the object plays its own act (UnkCommandFlag1000)
 constexpr u32 kReusableKind = 0x80;      // an object not taken when used
-constexpr int kUnk1FScale = 0xB;         // Unk1F: unk29A4 is 11 percent of the proficiency and 1 (swd3e)
+constexpr int kUnk1FScale = 0xB;         // Unk1F: unk2EB0 is 11 percent of the proficiency and 1 (swd3e)
 constexpr int kAccessoryBaseShare = 10;  // the heals add a tenth of their base
 constexpr int kTenthShare = 10;          // Unk22 / Unk24: the proficiency is halved, less a tenth of it (swd3e)
 constexpr int kSpiritShare = 5;          // Unk23: a fifth of the proficiency
@@ -1378,7 +1378,7 @@ void BattleRole::CancelCommand()
     this->restoreHitPoints = 0;
     this->restoreSpirit = 0;
     this->restoreStamina = 0;
-    this->unk29A4 = 0;
+    this->unk2EB0 = 0;
     this->usedItem = 0;
 
     if (this->selectedItem == nullptr)
@@ -1515,8 +1515,8 @@ void BattleRole::Regenerate(BattleServices& services)
 }
 
 // swd3e.exe 0x0047F5C0: the command of an accessory of `kind` (the stamina it costs taken first when none is owed):
-// the kind sets its unk26CC bit and becomes command A (some take command B with UnkCommandFlag400, command A 0) and
-// most read the accessory's proficiency into proficiency; Unk1F scales unk29A4, Unk22 / Unk23 / Unk24 a heal of the
+// the kind sets its unk2BD4 bit and becomes command A (some take command B with UnkCommandFlag400, command A 0) and
+// most read the accessory's proficiency into proficiency; Unk1F scales unk2EB0, Unk22 / Unk23 / Unk24 a heal of the
 // hit points / spirit / stamina of the battle record; swd3e adds Unk25 (command A only, no step), Unk27 (unk2EB2 up),
 // Unk28 (armed by one use, taken as command A by the next) and Unk29. The proficiencies then step by kAccessoryStep.
 void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
@@ -1538,7 +1538,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
     switch (static_cast<AccessoryKind>(kind))
     {
         case AccessoryKind::RepeatAttack:
-            this->unk26CC |= kRepeatAttack;
+            this->unk2BD4 |= kRepeatAttack;
             this->commandA = 1;
             this->AccessoryProficiency(kind, proficiency);
             this->StepAccessoryCounters(proficiency, kind, kAccessoryStep);
@@ -1547,36 +1547,36 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 
         case AccessoryKind::Unk16:
             this->commandA = 0;
-            this->unk26CC |= kAccessoryBit16;
+            this->unk2BD4 |= kAccessoryBit16;
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
             this->commandB = kind;
             break;
 
         case AccessoryKind::Steal:
             this->commandA = kind;
-            this->unk26CC |= kAccessoryBit17;
+            this->unk2BD4 |= kAccessoryBit17;
             break;
 
         case AccessoryKind::Unk18:
-            this->unk26CC |= kAccessoryBit18;
+            this->unk2BD4 |= kAccessoryBit18;
             this->commandA = kind;
             this->AccessoryProficiency(kind, proficiency);
             break;
 
         case AccessoryKind::Unk19:
             this->commandA = 0;
-            this->unk26CC |= kAccessoryBit19;
+            this->unk2BD4 |= kAccessoryBit19;
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
             this->commandB = kind;
             break;
 
         case AccessoryKind::Unk1A:
             this->commandA = kind;
-            this->unk26CC |= kAccessoryBit1A;
+            this->unk2BD4 |= kAccessoryBit1A;
             break;
 
         case AccessoryKind::Unk1B:
-            this->unk26CC |= kAccessoryBit1B;
+            this->unk2BD4 |= kAccessoryBit1B;
             this->commandA = kind;
             this->AccessoryProficiency(kind, proficiency);
             break;
@@ -1588,12 +1588,12 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 
         case AccessoryKind::Unk1D:
             this->commandA = kind;
-            this->unk26CC |= kAccessoryBit1D;
+            this->unk2BD4 |= kAccessoryBit1D;
             break;
 
         case AccessoryKind::Unk1E:
             this->commandA = kind;
-            this->unk26CC |= kAccessoryBit1E;
+            this->unk2BD4 |= kAccessoryBit1E;
             break;
 
         case AccessoryKind::Unk1F:
@@ -1601,7 +1601,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             this->commandA = 0;
             this->commandB = kind;
             this->AccessoryProficiency(kind, proficiency);
-            this->unk29A4 = static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);  // 0x0047F77B: 32 bits
+            this->unk2EB0 = static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);  // 0x0047F77B: 32 bits
             break;
 
         case AccessoryKind::Unk20:
@@ -1641,7 +1641,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             {
                 this->equipmentFlags &= ~kUnk28Armed;
                 this->commandA = kind;
-                this->unk26CC |= kAccessoryBit28;
+                this->unk2BD4 |= kAccessoryBit28;
             }
             else
             {
@@ -1669,7 +1669,7 @@ int BattleRole::RollCritical(BattleServices& services)
 {
     BattleState& battle = services.state;
 
-    if (this->autoControl == 1 || this->guestControl == 1 || this->unk26CC != 0 || this->unk2EB2 > 0 ||
+    if (this->autoControl == 1 || this->guestControl == 1 || this->unk2BD4 != 0 || this->unk2EB2 > 0 ||
         this->MarkBit4() == 1 || battle.lastCriticalRole == this->placement.actId)
     {
         return 0;
@@ -1753,7 +1753,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
 
     if (kind != static_cast<u16>(AccessoryKind::Unk1B))
     {
-        this->unk29A4 = this->battleRecord->attackBonus;
+        this->unk2EB0 = this->battleRecord->attackBonus;
     }
 
     this->UseAccessorySkill(services, kind);
@@ -2791,7 +2791,7 @@ int BattleRole::CanPaySkill(BattleServices& services, int category, int index)
 // swd3e.exe 0x00481540: the `index`th object of `category` (0..6) usable by roles bit 0 or 2 with some left (category
 // 6 whoever may use it; category 4 also counts every object with kListedObject) taken as the role's command: the
 // command and the first bytes of the skill name cleared, the used item 0; UnkCommandFlag4000 set and the object
-// chosen. A listed object of category 4 loads its unk3E script, unk29A4 its unk24 (1). An object with an unk48 script
+// chosen. A listed object of category 4 loads its unk3E script, unk2EB0 its unk24 (1). An object with an unk48 script
 // loads it (not for category 6), else its unk3E script; a spirit or stamina cost (unk34A0, staminaCost; the stamina
 // cost doubled from the object's third use in the battle when it has no unk48 script) above the role's gives 0. The
 // heals as SelectSkill; `act` the cast act; an object of kind kSeparateKind sets UnkCommandFlag1000 with its act as
@@ -2863,7 +2863,7 @@ int BattleRole::SelectObject(
     if (kinds == kCategory4 && (data.costBits & kListedObject) != 0)
     {
         this->LoadCommand(database, data.skillScript);
-        this->unk29A4 = data.attackBonusUp;
+        this->unk2EB0 = data.attackBonusUp;
         return 1;
     }
 

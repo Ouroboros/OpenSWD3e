@@ -471,7 +471,7 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
     const std::size_t length = std::min(name.size(), this->skillName.size() - 1);
     std::copy_n(name.begin(), length, this->skillName.begin());
     this->skillName[length] = '\0';
-    this->unk29A4 = static_cast<u16>(this->unk29A4 + this->command.value);
+    this->unk2EB0 = static_cast<u16>(this->unk2EB0 + this->command.value);
     this->SetCommand(kSkillCommand);
     this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
     kind = 0;
@@ -502,7 +502,7 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
 }
 
 // swd3e.exe 0x00486E10: the ghost's attack: its weapon's script as the command (command 1), the weak stand pose
-// cleared, unk29A4 raised by the record's attack bonus; an attack of command flags 0x18 under command 1 becomes command
+// cleared, unk2EB0 raised by the record's attack bonus; an attack of command flags 0x18 under command 1 becomes command
 // 0xC8 with command B 1.
 void BattleRole::GhostAttackCommand(Database& database)
 {
@@ -512,7 +512,7 @@ void BattleRole::GhostAttackCommand(Database& database)
     this->SetCommand(kAttackCommand);
     const u16 flags = this->command.flags;
     this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::WeakStand);
-    this->unk29A4 = static_cast<u16>(this->unk29A4 + this->battleRecord->attackBonus);
+    this->unk2EB0 = static_cast<u16>(this->unk2EB0 + this->battleRecord->attackBonus);
 
     if ((flags & kWalkingFlags) != 0 && this->commandA == 1)
     {

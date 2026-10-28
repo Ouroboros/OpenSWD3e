@@ -507,7 +507,7 @@ constexpr swd3e::u16 kAccessory1C = 0x1C;
 constexpr swd3e::u16 kAccessory1D = 0x1D;
 constexpr swd3e::u16 kAccessory20 = 0x20;
 constexpr swd3e::u16 kSpiritFan = 0x39;
-constexpr swd3e::u32 kAccessory19Bit = 0x10;  // unk26CC bit set by accessory 0x19
+constexpr swd3e::u32 kAccessory19Bit = 0x10;  // unk2BD4 bit set by accessory 0x19
 constexpr swd3e::u32 kAccessory1DBit = 0x100;
 constexpr swd3e::u16 kAccessoryCost = 30;
 constexpr swd3e::i16 kLowStamina = 20;
@@ -587,11 +587,11 @@ TEST_CASE("battle unit: accessory commands")
     record.stamina = kStamina;
     role.roleRecord = &record;
     CHECK_EQ(role.CanUseAccessory(kAccessory19), 1);
-    CHECK_EQ(role.unk26CC & kAccessory19Bit, kAccessory19Bit);
+    CHECK_EQ(role.unk2BD4 & kAccessory19Bit, kAccessory19Bit);
     CHECK_EQ(role.CanUseAccessory(kAccessory1C), 1);
     role.status = BattleUnit::Invisible;
     CHECK_EQ(role.CanUseAccessory(kAccessory1C), 0);
-    role.unk26CC |= kAccessory1DBit;
+    role.unk2BD4 |= kAccessory1DBit;
     CHECK_EQ(role.CanUseAccessory(kAccessory1D), 0);
     role.status = BattleUnit::Barrier;
     CHECK_EQ(role.CanUseAccessory(kAccessory20), 0);
@@ -670,10 +670,10 @@ TEST_CASE("battle unit: an enemy with nothing to use attacks")
     CHECK_EQ(enemy.idleTurns, 1);
     CHECK_EQ(enemy.itemWait, 1);
     CHECK_EQ(enemy.skillWait, 1);
-    CHECK_EQ(enemy.unk29A4, kEnemyAttack);
+    CHECK_EQ(enemy.unk2EB0, kEnemyAttack);
     enemy.ChooseCommand(all.services, database, act);
     CHECK_EQ(enemy.idleTurns, 2);
-    CHECK_EQ(enemy.unk29A4, 2 * kEnemyAttack);
+    CHECK_EQ(enemy.unk2EB0, 2 * kEnemyAttack);
 }
 
 TEST_CASE("battle unit: an enemy chooses its first skill")
@@ -725,7 +725,7 @@ TEST_CASE("battle unit: the damage of an enemy's hit")
     attackerData.data.unk60 = kEnemyLevel;
     BattleUnit attacker;
     attacker.data = &attackerData;
-    attacker.unk29A4 = kAttackValue;
+    attacker.unk2EB0 = kAttackValue;
     swd3e::ObjectRecord targetData;
     targetData.data.defense = static_cast<swd3e::u16>(kTargetDefense);
     BattleUnit target;

@@ -426,9 +426,9 @@ u16 BattleUnit::GetWord2A74() const
 }
 
 // swd3e.exe 0x0048B5E0
-u16 BattleUnit::GetWord29A2() const
+u16 BattleUnit::GetWord2EAE() const
 {
-    return this->unk29A2;
+    return this->unk2EAE;
 }
 
 // swd3e.exe 0x0048B5F0
@@ -563,7 +563,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->commandB = 0;
     this->unk2A72 = 0;
     this->drainingGauge = 0;
-    this->unk29A4 = 0;
+    this->unk2EB0 = 0;
     this->fadeLevel = BattleUnit::Opaque;
     this->brightLevel = 1;
     this->slotTint = 0;
@@ -579,7 +579,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->restoreStamina = 0;
     this->mainAct.anchorX = 0;
     this->mainAct.anchorY = 0;
-    this->unk26CC = 0;
+    this->unk2BD4 = 0;
 
     if (wasDefeated == 0 && this->unk3038 == 0 && (this->command.flags & kResetClearsGuard) != 0)
     {
@@ -630,7 +630,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
 int BattleUnit::Retarget(i16 value)
 {
     this->gauge = 0;
-    this->unk29A2 = static_cast<u16>(value);
+    this->unk2EAE = static_cast<u16>(value);
     this->unk2AB4 = 1;
     this->unk2AE0 = 1;
     return 1;
@@ -676,9 +676,9 @@ i16 BattleUnit::DecreaseHits()
 }
 
 // swd3e.exe 0x0048BA30
-void BattleUnit::ClearWord29A2()
+void BattleUnit::ClearWord2EAE()
 {
-    this->unk29A2 = BattleUnit::NoUnk29A2;
+    this->unk2EAE = BattleUnit::NoUnk2EAE;
 }
 
 // swd3e.exe 0x0048BA40
@@ -718,7 +718,7 @@ u16 BattleUnit::GetWordDA6() const
     return this->command.unk16;
 }
 
-// swd3e.exe 0x00490390: unless flag 2 of +0x2A87 is set
+// swd3e.exe 0x00490390: unless flag 2 of +0x2FB1 is set
 void BattleUnit::MarkAC8()
 {
     if ((this->commandFlags & BattleUnit::UnkCommandFlag200) == 0)
@@ -1296,7 +1296,7 @@ constexpr std::u8string_view kResistAllEnd = u8"$1%s$0抵抗所有攻擊解除";
 constexpr u32 kAilmentRoll = 10;  // an ailment lands on a roll of 1..kAilmentRoll up to the ailment chance
 
 // The damage of a hit (HitDamage).
-constexpr u32 kAttackFromBonus = 9;  // unk26CC bits: the attack is the bonus of the battle record (enraged)
+constexpr u32 kAttackFromBonus = 9;  // unk2BD4 bits: the attack is the bonus of the battle record (enraged)
 constexpr u32 kLevelShare = 3;       // the attack roll is 1..level / kLevelShare + kLevelRollBase
 constexpr u32 kLevelRollBase = 3;
 constexpr int kAttackBuffPercent = 30;
@@ -1531,8 +1531,8 @@ constexpr i16 kFirstTreasureLevel = 0x32;  // AddTreasureExperience: the experie
 constexpr i16 kSecondTreasureLevel = 0x78;
 constexpr i16 kThirdTreasureLevel = 0x12C;
 constexpr i16 kLastTreasureLevel = 0x201;
-constexpr u16 kTreasureTier1 = 4;
-constexpr u16 kTreasureTier2 = 8;
+constexpr i16 kTreasureTier1 = 4;
+constexpr i16 kTreasureTier2 = 8;
 constexpr i16 kTreasureTier3 = 0x10;
 constexpr i32 kWeakEnemyShare = 3;
 constexpr int kPulseRaise = 30;
@@ -1991,7 +1991,7 @@ void BattleUnit::Reset(BattleServices& services)
     services.state.enemyEvadeStreak = 0;
 
     this->targets = {BattleUnit::NoTarget, BattleUnit::NoTarget, BattleUnit::NoTarget, BattleUnit::NoTarget};
-    this->unk29A2 = BattleUnit::NoUnk29A2;
+    this->unk2EAE = BattleUnit::NoUnk2EAE;
     this->fadeLevel = BattleUnit::Opaque;
     this->brightLevel = 1;
     this->flashPhase = BattleUnit::FlashStart;
@@ -2004,7 +2004,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->guardPose = 0;
     this->glowLevel = 0;
     this->action = 0;
-    this->unk29A4 = 0;
+    this->unk2EB0 = 0;
     this->actId = 0;
     this->gauge = 0;
     this->unk2A14 = 0;
@@ -2032,7 +2032,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->choicePhase = 0;
     this->pendingDamage = 0;
     this->equipmentFlags = 0;
-    this->unk26CC = 0;
+    this->unk2BD4 = 0;
     this->unk2BE8 = 0;
     this->enrageCounter2FD3 = 0;
     this->enrageCounter2FD5 = 0;
@@ -2577,7 +2577,7 @@ bool BattleUnit::ShowsPicture(i16 picture) const
 }
 
 // swd3e.exe 0x00488BB0: skill `id` of mon.dat taken as the unit's action: its act (written to the whole dword, the
-// high word 0), its name, its command script (the command's +0x0E adding to +0x29A4) and command 2
+// high word 0), its name, its command script (the command's +0x0E adding to +0x2EB0) and command 2
 void BattleUnit::LoadSkillAction(Database& database, u16 id, i32& act)
 {
     database.LoadObject(this->object, id);
@@ -2587,13 +2587,13 @@ void BattleUnit::LoadSkillAction(Database& database, u16 id, i32& act)
     std::copy_n(name.begin(), length, this->skillName.begin());
     this->skillName[length] = '\0';
     this->LoadCommand(database, this->object.data.skillScript);
-    this->unk29A4 = static_cast<u16>(this->unk29A4 + static_cast<u16>(this->command.value));
+    this->unk2EB0 = static_cast<u16>(this->unk2EB0 + static_cast<u16>(this->command.value));
     this->SetCommand(BattleUnit::UnkCommand2);
     this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
 }
 
 // swd3e.exe 0x00488C20: an enemy's command: with +0x2A8C a command of flag 2 runs (command 2, its cast act returned);
-// otherwise the enemy's own skill script is read afresh, +0x29A4 starts from its attack and command 1 follows
+// otherwise the enemy's own skill script is read afresh, +0x2EB0 starts from its attack and command 1 follows
 u16 BattleUnit::PrepareCommand(Database& database)
 {
     if (this->unk2A8C != 0)
@@ -2608,10 +2608,10 @@ u16 BattleUnit::PrepareCommand(Database& database)
         return this->command.castAct;
     }
 
-    this->unk29A4 = 0;
+    this->unk2EB0 = 0;
     this->command = UnitCommand{};
     this->LoadCommand(database, this->data->data.skill);
-    this->unk29A4 = static_cast<u16>(this->unk29A4 + this->data->data.attack);
+    this->unk2EB0 = static_cast<u16>(this->unk2EB0 + this->data->data.attack);
     this->SetCommand(1);
     return 0;
 }
@@ -2697,7 +2697,7 @@ bool RollChance(Random& random, int percent)
 // wisdom, UnkCommandFlag200 by the weapon's attack). The original computes the damage in 16 bits.
 i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spiritDamage, i16& staminaDamage)
 {
-    i32 attack = static_cast<u16>(this->unk29A4);
+    i32 attack = static_cast<u16>(this->unk2EB0);
     i16 value = this->command.value;
     spiritDamage = 0;
     staminaDamage = 0;
@@ -2792,12 +2792,12 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
 
             auto nothingShown = [this, value]
             {
-                return value == 0 && this->unk29A4 == 0;
+                return value == 0 && this->unk2EB0 == 0;
             };
 
             auto missed = [this, value, &struck, &evaded]
             {
-                if (value != 0 || this->unk29A4 != 0)
+                if (value != 0 || this->unk2EB0 != 0)
                 {
                     struck();
                 }
@@ -2920,7 +2920,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
     {
         target.CountEnrageEvent(0);
 
-        if ((this->unk26CC & kAttackFromBonus) != 0)
+        if ((this->unk2BD4 & kAttackFromBonus) != 0)
         {
             attack = this->battleRecord->attackBonus;
         }
@@ -2960,7 +2960,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
             raise += static_cast<i16>(attack) * this->attackShift / kPercent;
         }
 
-        if ((this->status & BattleUnit::AttackDown) != 0 && (this->unk26CC & kAttackDownIgnored) == 0)
+        if ((this->status & BattleUnit::AttackDown) != 0 && (this->unk2BD4 & kAttackDownIgnored) == 0)
         {
             cut = static_cast<i16>(attack) * this->attackShift / kPercent;
         }
@@ -3028,7 +3028,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
             attack = 1;
         }
 
-        if ((this->unk26CC & kAttackFromBonus) != 0)
+        if ((this->unk2BD4 & kAttackFromBonus) != 0)
         {
             // 0x00498090: 40 times the attack word in 32 bits, divided, then kept to 16 bits.
             const auto share = static_cast<u16>(kEnragedSharePercent * static_cast<i16>(attack) / kPercent);
@@ -3512,10 +3512,10 @@ int BattleUnit::ReturnHome(BattleServices& services, const BattleUnit& target, i
 int BattleUnit::LoadEnemyCommand(Database& database, int choice, u32& act)
 {
     this->command = UnitCommand{};
-    this->unk29A4 = 0;
+    this->unk2EB0 = 0;
     const ObjectData& data = this->data->data;
     this->LoadCommand(database, choice == 1 ? data.skillA : data.skillB);
-    this->unk29A4 = static_cast<u16>(this->command.value);
+    this->unk2EB0 = static_cast<u16>(this->command.value);
 
     if ((this->command.flags & UnitCommand::UnkFlag2) != 0)
     {
@@ -4397,7 +4397,7 @@ int BattleUnit::WalkToTarget(BattleServices& services, const BattleUnit& target)
 
 // swd3e.exe 0x0049A000: whether the accessory command of `kind` can be taken: not when it costs more stamina than the
 // role has; Unk1C not while Invisible, Unk1D not with its bit, Unk20 not under a Barrier, SpiritFan only with the
-// equipment; Unk19 sets its unk26CC bit.
+// equipment; Unk19 sets its unk2BD4 bit.
 int BattleUnit::CanUseAccessory(u16 kind)
 {
     if (static_cast<i32>(this->AccessoryValue(kind)) > this->roleRecord->stamina)
@@ -4408,14 +4408,14 @@ int BattleUnit::CanUseAccessory(u16 kind)
     switch (kind)
     {
         case kAccessory19:
-            this->unk26CC |= kAccessory19Bit;
+            this->unk2BD4 |= kAccessory19Bit;
             return 1;
 
         case kAccessory1C:
             return (this->status & BattleUnit::Invisible) != 0 ? 0 : 1;
 
         case kAccessory1D:
-            return (this->unk26CC & kAccessory1DBit) != 0 ? 0 : 1;
+            return (this->unk2BD4 & kAccessory1DBit) != 0 ? 0 : 1;
 
         case kAccessory20:
             return (this->status & BattleUnit::Barrier) != 0 ? 0 : 1;
@@ -5809,7 +5809,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
             return this->ChooseAttack(database);
         }
 
-        this->unk29A4 = static_cast<u16>(this->command.value);
+        this->unk2EB0 = static_cast<u16>(this->command.value);
         --count;
 
         if ((this->command.actionFlags & UnitCommand::UnkAction1000) != 0)
@@ -5942,7 +5942,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
     const std::size_t length = std::min<std::size_t>(strnlen(name.data(), name.size()), this->skillName.size() - 1);
     std::copy_n(name.begin(), length, this->skillName.begin());
     this->skillName[length] = '\0';
-    this->unk29A4 = static_cast<u16>(this->unk29A4 + static_cast<u16>(this->command.value));
+    this->unk2EB0 = static_cast<u16>(this->unk2EB0 + static_cast<u16>(this->command.value));
     this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
 
     if (data.unk60 >= kWiseEnemy)
@@ -5975,11 +5975,11 @@ int BattleUnit::ChooseAttack(Database& database)
 
     if (this->kind != 0)
     {
-        this->unk29A4 = static_cast<u16>(this->unk29A4 + this->battleRecord->attackBonus);
+        this->unk2EB0 = static_cast<u16>(this->unk2EB0 + this->battleRecord->attackBonus);
     }
     else
     {
-        this->unk29A4 = static_cast<u16>(this->unk29A4 + this->data->data.attack);
+        this->unk2EB0 = static_cast<u16>(this->unk2EB0 + this->data->data.attack);
     }
 
     this->MarkDelayedAttack();
@@ -6018,7 +6018,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
     Random& random = services.random;
     ObjectData& data = this->data->data;
     const i16 value = this->command.value;
-    i32 damage = static_cast<u16>(this->unk29A4);
+    i32 damage = static_cast<u16>(this->unk2EB0);
     bool resisted = false;
     u32 defense = 0;
     std::array<u8, kElementResistances> resistances = {};
@@ -6045,7 +6045,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
         {
             if (((ailment & kAilment40) != 0 || (ailment & kAilment100) != 0) && this->command.value == 0)
             {
-                this->command.value = static_cast<i16>(this->unk29A4);
+                this->command.value = static_cast<i16>(this->unk2EB0);
             }
 
             if (target.AddAilment(services, this->CommandSkill()) == 1)
@@ -6062,7 +6062,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
                 }
             }
             else if (
-                (this->unk2A8C == 0 && this->commandA != BattleUnit::UnkCommand2) || value != 0 || this->unk29A4 != 0
+                (this->unk2A8C == 0 && this->commandA != BattleUnit::UnkCommand2) || value != 0 || this->unk2EB0 != 0
             )
             {
                 target.RaiseFlag2BC0(services.state);
@@ -6072,7 +6072,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
                 target.RollEvade(services, kEvadeRoll);
             }
 
-            if (this->command.ailment != 0 && value == 0 && this->unk29A4 == 0)
+            if (this->command.ailment != 0 && value == 0 && this->unk2EB0 == 0)
             {
                 return -1;
             }
@@ -6211,7 +6211,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
         }
         else
         {
-            const i32 bare = (raised & kHighWordMask) | static_cast<u16>(this->unk29A4);
+            const i32 bare = (raised & kHighWordMask) | static_cast<u16>(this->unk2EB0);
 
             if (up)
             {
@@ -7375,22 +7375,25 @@ int BattleUnit::AddTreasureExperience(CounterList& list, u16 kind, u16 amount)
             ++at->level;
             at->toNext = 0;
 
-            if (at->level < kTreasureTier1)
+            // The level is compared as a signed word (0x0047FDDD..0x0047FE1C).
+            const auto level = static_cast<i16>(at->level);
+
+            if (level < kTreasureTier1)
             {
                 at->toNext = kFirstTreasureLevel;
             }
 
-            if (at->level >= kTreasureTier1 && at->level < kTreasureTier2)
+            if (level >= kTreasureTier1 && level < kTreasureTier2)
             {
                 at->toNext = kSecondTreasureLevel;
             }
 
-            if (at->level >= kTreasureTier2 && at->level < kTreasureTier3)
+            if (level >= kTreasureTier2 && level < kTreasureTier3)
             {
                 at->toNext = kThirdTreasureLevel;
             }
 
-            if (static_cast<i16>(at->level) >= kTreasureTier3)
+            if (level >= kTreasureTier3)
             {
                 at->toNext = kLastTreasureLevel;
             }

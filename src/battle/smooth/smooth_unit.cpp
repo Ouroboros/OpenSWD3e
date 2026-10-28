@@ -231,7 +231,7 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
 
     if (unit.kind != 0)
     {
-        if ((unit.unk26CC & kWalksHome) == 0 &&
+        if ((unit.unk2BD4 & kWalksHome) == 0 &&
             (unit.command.flags & (UnitCommand::UnkFlag8 | UnitCommand::UnkFlag20)) == 0)
         {
             return 1;
@@ -399,7 +399,7 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
         line = LineWalker{};
         pose = ActState{};
         act = ActState{};
-        unit.unk26CC &= ~kWalksHome;
+        unit.unk2BD4 &= ~kWalksHome;
         return 1;
     }
 

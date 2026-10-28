@@ -1558,7 +1558,7 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
                 case SkillScript::AttackDown:
                     end(kAttackDownEnd, kEndFlags);
                     this->status &= ~BattleUnit::AttackDown;
-                    this->unk26CC &= ~kAttackDownIgnored;
+                    this->unk2BD4 &= ~kAttackDownIgnored;
                     this->attackShift = 0;
                     break;
 

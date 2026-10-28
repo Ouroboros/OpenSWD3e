@@ -595,7 +595,7 @@ public:
     i32 hitLanded = 0;              // 0x005772A4 1 once a hit landed
     i32 sweepHit = 0;               // 0x00577278 1 once a sweep hit a unit
     u16 sweepGap = 0;               // 0x005770D0 frames between the units a sweep reaches
-    u16 unk50CE6A = 0;              // the attacker's word 29A2 of the last hit
+    u16 unk50CE6A = 0;              // the attacker's word 2EAE of the last hit
     u16 lastRoleHit = 0xFFFF;       // 0x004BF1C4 the last role hit
     u16 lastEnemyHit = 0xFFFF;      // 0x004BF1C6 the last enemy hit
     u16 lastRoleDefeated = 0xFFFF;  // 0x004BF1C8 the last role defeated by a hit

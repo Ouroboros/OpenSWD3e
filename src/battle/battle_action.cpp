@@ -2686,7 +2686,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
         battle.darkenUnit = static_cast<i16>(battle.actingUnit);
         unit.MarkAC8();
 
-        if (this->RoleActionFrame(role, static_cast<i16>(unit.GetWord29A2())) == 1)
+        if (this->RoleActionFrame(role, static_cast<i16>(unit.GetWord2EAE())) == 1)
         {
             this->RoleAfterAction(unit, role);
         }
@@ -2699,7 +2699,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
         return;
     }
 
-    BattleEnemy& aimed = this->battleEnemies[static_cast<std::size_t>(static_cast<i16>(unit.GetWord29A2()))];
+    BattleEnemy& aimed = this->battleEnemies[static_cast<std::size_t>(static_cast<i16>(unit.GetWord2EAE()))];
 
     if (aimed.GetValueAAC() != 0)
     {
@@ -2780,7 +2780,7 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
         ghost.SetStatus(kGhostBackStatus);
     }
 
-    const auto target = static_cast<i16>(unit.GetWord29A2());
+    const auto target = static_cast<i16>(unit.GetWord2EAE());
     battle.unk5771EB = 0;
     battle.unk577260 = 0;
     battle.shake = 0;
@@ -2869,7 +2869,7 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
         EnrageEnemies(services, kLowStaminaCause);
     }
 
-    unit.ClearWord29A2();
+    unit.ClearWord2EAE();
 }
 
 // The retreat of RoleFrame (inline in the original). While asked (kRetreatAsked) each role steps back; once all have

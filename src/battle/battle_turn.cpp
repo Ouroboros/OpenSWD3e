@@ -482,7 +482,7 @@ void Game::RetargetRoles(int role, int enemy)
         }
 
         BattleRole& unit = this->battleRoles[index];
-        const auto aim = static_cast<i16>(unit.GetWord29A2());
+        const auto aim = static_cast<i16>(unit.GetWord2EAE());
 
         if (aim < 0 || static_cast<u16>(aim) != battle.unk4BF1CA)
         {
@@ -806,7 +806,7 @@ void Game::SortActingDrawOrder()
     if (acting >= BattleState::FirstRoleUnit)
     {
         const auto role = static_cast<std::size_t>(acting - BattleState::FirstRoleUnit);
-        target = static_cast<i16>(this->battleRoles[role].GetWord29A2());
+        target = static_cast<i16>(this->battleRoles[role].GetWord2EAE());
 
         // Never so here (the original returned above).
         if (battle.unk575F24 == 1)
@@ -816,7 +816,7 @@ void Game::SortActingDrawOrder()
     }
     else
     {
-        target = static_cast<i16>(this->battleEnemies[static_cast<std::size_t>(acting)].GetWord29A2());
+        target = static_cast<i16>(this->battleEnemies[static_cast<std::size_t>(acting)].GetWord2EAE());
 
         if (battle.unk575F28 == 0)
         {
@@ -6543,7 +6543,7 @@ void Game::BattleKeys()
         if (battle.hitsAllRoles == 1)
         {
             const auto hit = static_cast<std::size_t>(
-                this->battleEnemies[static_cast<std::size_t>(battle.actingUnit)].GetWord29A2()
+                this->battleEnemies[static_cast<std::size_t>(battle.actingUnit)].GetWord2EAE()
             );
             this->battleRoles[hit].CancelHitNumber(this->battleServices);
         }
