@@ -447,7 +447,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
     role.targets.fill(BattleUnit::NoTarget);
     role.slotTint = 0;
     role.recoilTint = 1;
-    role.unk2AB0 = 0;
+    role.unk2FF0 = 0;
     role.fadedIn = 0;
     role.stage = 0;
 
@@ -1743,7 +1743,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
         role.trails = {};
         role.targets.fill(BattleUnit::NoTarget);
         role.slotTint = 0;
-        role.unk2AB0 = 0;
+        role.unk2FF0 = 0;
         role.stage = 0;
         role.unk26D4 = 0;
         battle.criticalAttack = 0;

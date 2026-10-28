@@ -529,7 +529,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
         {
             const auto gauge = static_cast<u16>(unit.GaugeLength(game.battleServices));
 
-            if (unit.unk2AB0 == 0)
+            if (unit.unk2FF0 == 0)
             {
                 hud.DrawGaugeWideAdvance(kNameGauge, nameX, kNameY, gauge, scene);
             }
@@ -540,7 +540,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             font.DrawText(game.drawSurface, nameX, kNameY, name, kDefeatedColor, kNameStyle);
         }
 
-        if (unit.unk2AB0 == 1 && battle.panelGrown[slot] == 1)
+        if (unit.unk2FF0 == 1 && battle.panelGrown[slot] == 1)
         {
             if (current)
             {
@@ -665,7 +665,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             scene
         );
 
-        if (unit.unk2AB0 == 1 && unit.PartyMember() == 1 && battle.panelGrown[slot] == 0)
+        if (unit.unk2FF0 == 1 && unit.PartyMember() == 1 && battle.panelGrown[slot] == 0)
         {
             battle.panelGrown[slot] =
                 static_cast<u8>(game.battleHud.DrawGrowing(index, kNameGauge, nameX, kNameY, scene));

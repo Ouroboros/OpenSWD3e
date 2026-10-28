@@ -271,7 +271,7 @@ public:
     i32 unk576FD0 = 0;  // 0x00576FD0 (swd3e)
     i32 unk576FCC = 0;  // 0x00576FCC (swd3e) cleared by StartBattle, used by EnemyFrame
     // 0x0050D878 (swd3e) per enemy: 1 while the name of its skill is to show when it acts (EnemyFrame)
-    std::array<u8, Enemies> skillNamePending = {};
+    std::array<u8, Enemies> skillNamePending = {};  // 0x0050D878 per enemy: its skill name is shown when it acts
     i32 unk57736C = 0;  // 0x0057736C (swd3e) 1: every party role standing is taunted (EnemyFrame aims at them all)
     // 0x005376A4 (swd3e) per enemy: the party's hits on it (MenuConfirm; cleared when it falls); the roles acting by
     // themselves aim at the most hit (MostHitEnemy)
@@ -340,7 +340,7 @@ public:
     std::array<i32, Party::Roles> roleListScrolls = {};      // 0x005394B4 by role: the scroll of its list
     std::array<PendingOrder, RoleUnits> pendingOrders = {};  // 0x005369C8
     // 0x00536EE0 (swd3e) per enemy: its chosen order, taken into its slot record by AddSlotRecord (kind 2)
-    std::array<PendingOrder, Enemies> enemyPendingOrders = {};
+    std::array<PendingOrder, Enemies> enemyPendingOrders = {};  // 0x00536EE0
     i32 unk57727C = 0;  // cleared when a party unit's order is taken (InsertSlotRecord)
     i32 unk5772D0 = 0;  // 0x005772D0 set when a talk role order aims at a role (command 9)
     // 0x0057735C (swd3e) 1: the skill chosen (ActFlag17) is turned on the role itself once its enemy is aimed at, the
@@ -622,14 +622,14 @@ public:
     // The turn of an enemy (Game::EnemyFrame).
     std::array<u16, Enemies> enemyOrders = {};  // 0x00513434 the order of the fight talk for each enemy
     i32 enemyGaugeBoost = 0;                    // 0x00577348 the boost of the enemies' gauges
-    i32 heldEnemy = 0;                          // swd32 0x0053BD58 the enemy (1-based) whose turn ended held
-    i32 gatheringSweep = 0;                     // swd32 0x0053BF8C 1 while an enemy gathers the targets of a sweep
+    i32 heldEnemy = 0;                          // 0x00577028 the enemy (1-based) whose turn ended held
+    i32 gatheringSweep = 0;                     // 0x00577288 1 while an enemy gathers the targets of a sweep
     i32 enemyTargetPicked = 0;                  // 0x00577318 1 once the acting enemy picked its target
     i32 enemyTarget = 0;                        // 0x00576FC0 the target of the acting enemy
     i32 enemyAimsAtEnemies = 0;                 // 0x005772D4 1: an ordered enemy aims at the enemies
-    i32 unk53BF9C = 0;
+    i32 unk577298 = 0;
     i32 enemiesHitAct = 0;  // 0x00577098 the hit act of the enemies (unk575F38)
-    i32 unk53BFDC = 0;      // 0x005772DC set when a talk fells an enemy (command 0xA)
+    i32 unk5772DC = 0;      // 0x005772DC set when a talk fells an enemy (command 0xA)
     // The commands of a role (Game::RoleActionFrame).
     // 0x00577324 1: the taking (收化) succeeded; the enemy taken then gives no first reward and keeps its stolen
     // items (RemoveDefeated)

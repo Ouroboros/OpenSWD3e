@@ -934,7 +934,7 @@ public:
     i32 unk2AA4 = 0;
     i32 unk2AA8 = 0;
     i32 unk2AAC = 0;
-    i32 unk2AB0 = 0;
+    i32 unk2FF0 = 0;
     i32 unk2AB4 = 0;
     i32 defeated = 0;  // +0x2FF8
     i32 dying = 0;     // +0x2FFC 1 while the defeat runs (DefeatFrame)

@@ -709,7 +709,7 @@ int Game::TalkCommandStarted()
 }
 
 // Command 0xA of FightTalkFrame (inline in the original): the unit of the second word is defeated (an enemy: kept
-// for the removal, unk53BFDC; a role: damageShown), the field flashes, a frame runs and the talk goes on.
+// for the removal, unk5772DC; a role: damageShown), the field flashes, a frame runs and the talk goes on.
 int Game::FightTalkDefeat()
 {
     BattleState& battle = this->battleState;
@@ -724,7 +724,7 @@ int Game::FightTalkDefeat()
         if (unit <= kLastEnemy)
         {
             battle.unk4BF1CA = unit;
-            battle.unk53BFDC = 1;
+            battle.unk5772DC = 1;
             battle.unk513664[unit] = unit;
             battle.flashing = 1;
             battle.enemyFaded = 0;

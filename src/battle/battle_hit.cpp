@@ -2114,7 +2114,7 @@ int Game::EnemyFrame(int enemy)
         {
             unit.TickEffects(services);
 
-            if (unit.unk2AB0 == 0 && unit.AdvanceGauge(services, battle.enemyGaugeBoost) == 1)
+            if (unit.unk2FF0 == 0 && unit.AdvanceGauge(services, battle.enemyGaugeBoost) == 1)
             {
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
                 battle.unk5772C0 = 1;
@@ -2202,7 +2202,7 @@ int Game::EnemyFrame(int enemy)
         battle.slotTargets[at] = -1;
         battle.unk4BF1CA = kNoAimedEnemy;
         battle.enemyFaded = 1;
-        battle.unk53BFDC = 0;
+        battle.unk5772DC = 0;
     }
 
     return removed;
@@ -2771,7 +2771,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
 {
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
-    battle.unk53BF9C = 0;
+    battle.unk577298 = 0;
     const auto target = static_cast<i16>(unit.GetWord29A2());
     BattleRole& ghost = this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)];
 

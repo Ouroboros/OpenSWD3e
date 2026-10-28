@@ -510,7 +510,7 @@ void Game::EndBattle()
     battle.unk53BF90 = 0;
     battle.unk577290 = 0;
     battle.unk577294 = 0;
-    battle.unk53BF9C = 0;
+    battle.unk577298 = 0;
     battle.unk53BFA0 = 0;
     battle.unk53BFA4 = 0;
     battle.hitLanded = 0;
@@ -526,7 +526,7 @@ void Game::EndBattle()
     battle.enemyAimsAtEnemies = 0;
     battle.enemyFaded = 0;
     battle.damageShown = 0;
-    battle.unk53BFDC = 0;
+    battle.unk5772DC = 0;
     battle.endFade = 0;
     battle.unk53BFF0 = 0;
     battle.enemyHitsAll = 0;

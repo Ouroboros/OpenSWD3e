@@ -547,7 +547,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->gauge = 0;
     this->unk2AAC = 0;
     const i32 wasDefeated = this->defeated;
-    this->unk2AB0 = 0;
+    this->unk2FF0 = 0;
     this->unk2AB4 = 0;
     this->unk2AA8 = 0;
     this->unk2AE0 = 0;
@@ -2049,7 +2049,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2AA4 = 0;
     this->unk2AA8 = 0;
     this->unk2AAC = 0;
-    this->unk2AB0 = 0;
+    this->unk2FF0 = 0;
     this->unk2AB4 = 0;
     this->defeated = 0;
     this->outline = 0;
@@ -2180,12 +2180,12 @@ int BattleUnit::AdvanceGauge(const BattleServices& services, int boost)
             loss = step * this->proficiency / kPercent / 2 + kInvisibleLoss;
         }
 
-        this->unk2AB0 = 0;
+        this->unk2FF0 = 0;
         this->gauge = static_cast<u16>(step + gauge - loss);
         return 0;
     }
 
-    this->unk2AB0 = 1;
+    this->unk2FF0 = 1;
     this->unk2AEC = 0;
 
     if (this->facingTurnsBack == 1)
@@ -3610,7 +3610,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
 }
 
 // swd3e.exe 0x0047E720: one tick of the action gauge: nothing while held, stopped (Unk4000), defeated, with unk3038,
-// full (unk2AB0), kept by its master (GhostGuards) or staggering. Below gaugeFull it fills by a quarter of the agility
+// full (unk2FF0), kept by its master (GhostGuards) or staggering. Below gaugeFull it fills by a quarter of the agility
 // with speedShift added under SpeedUp and taken under SpeedDown (a quarter more and 1 with `boost`), less by half the
 // proficiency percent of it and 4 while Invisible (0). Full, the talisman ghost obeys on a roll of 1..100 up to its
 // unk104 and takes its order (else it stands weak and its gauge falls back a third, 0); it is then marked full, the
@@ -3619,7 +3619,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
 int BattleUnit::StepGauge(BattleServices& services, int boost)
 {
     if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::Unk4000) != 0 || this->defeated == 1 ||
-        this->unk3038 == 1 || this->unk2AB0 == 1 || (this->unk2BDA & BattleUnit::GhostGuards) != 0 ||
+        this->unk3038 == 1 || this->unk2FF0 == 1 || (this->unk2BDA & BattleUnit::GhostGuards) != 0 ||
         (this->unk26B8 & kFlag26B8) != 0)
     {
         return 0;
@@ -3647,7 +3647,7 @@ int BattleUnit::StepGauge(BattleServices& services, int boost)
             cut = speed * this->proficiency / kPercent / 2 + kInvisibleSlowdown;
         }
 
-        this->unk2AB0 = 0;
+        this->unk2FF0 = 0;
         this->gauge = static_cast<u16>(speed + gauge - cut);
         return 0;
     }
@@ -3666,7 +3666,7 @@ int BattleUnit::StepGauge(BattleServices& services, int boost)
         this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::WeakStand);
     }
 
-    this->unk2AB0 = 1;
+    this->unk2FF0 = 1;
     this->unk2AEC = 0;
 
     if (this->facingTurnsBack == 1)
@@ -3688,7 +3688,7 @@ int BattleUnit::StepGauge(BattleServices& services, int boost)
         return 1;
     }
 
-    this->unk2AB0 = 0;
+    this->unk2FF0 = 0;
     this->gauge = 0;
     this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostRests);
     return 0;

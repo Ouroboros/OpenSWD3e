@@ -440,7 +440,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     role.trails = {};
     role.targets.fill(BattleUnit::NoTarget);
     role.slotTint = 0;
-    role.unk2AB0 = 0;
+    role.unk2FF0 = 0;
     role.stage = 0;
     role.unk26D4 = 0;
     battle.criticalAttack = 0;
@@ -529,7 +529,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         enemy.trails = {};
         enemy.targets.fill(BattleUnit::NoTarget);
         enemy.stage = 0;
-        enemy.unk2AB0 = 0;
+        enemy.unk2FF0 = 0;
         enemy.fadedIn = 0;
         enemy.nudge = 0;
         enemy.gauge = static_cast<u16>(enemy.gauge + services.random.Below(kGaugeRestRoll) + kGaugeRestBase);
