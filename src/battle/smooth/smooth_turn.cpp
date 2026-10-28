@@ -2868,6 +2868,13 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             kDebugCountsY,
             WinFormat(kTalkDebugLine, {static_cast<i32>(battle.unk5774E9), battle.unk5772B4})
         );
+
+        // The frames per second divide (idiv) by the milliseconds between the last two frames: none faults.
+        if (battle.frameMilliseconds == 0)
+        {
+            Fault(game.errors, u8"Integer divide by zero (0x004691B6)");
+        }
+
         text(kDebugStateX, kDebugTop, WinFormat(kFrameDebugLine, {kMillisecondsPerSecond / battle.frameMilliseconds}));
     }
 
