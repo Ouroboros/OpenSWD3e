@@ -5313,7 +5313,7 @@ void Game::ConfirmTarget()
             role->UseSelectedItem(battle.listRole);
         }
 
-        if (role != nullptr && role->Word2A86Bit13() == 1)
+        if (role != nullptr && role->Word2FB0Bit13() == 1)
         {
             battle.turnCommand = kThrowOrder;
             battle.unk577320 = 1;
@@ -5437,7 +5437,7 @@ void Game::ConfirmItem()
         return;
     }
 
-    if (role.Word2A86Bit12() == 1)
+    if (role.Word2FB0Bit12() == 1)
     {
         this->CallEscort(role);
         return;

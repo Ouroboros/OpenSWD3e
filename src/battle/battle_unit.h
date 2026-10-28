@@ -709,8 +709,8 @@ public:
     int MarkBit1() const;
     bool MarkBit8Clear() const;
     bool HasBlock30() const;
-    int Word2A86Bit13() const;
-    int Word2A86Bit12() const;
+    int Word2FB0Bit13() const;
+    int Word2FB0Bit12() const;
     bool RestartMainAct(i16 value, int force);
     int CommandStatusBit() const;
     void CommandValues(u16& value, u16& turns) const;
@@ -791,8 +791,8 @@ public:
     i32 unk2B6C = 0;         // +0x2B6C
     i32 fadeLevel = Opaque;  // +0x2B70 (also the dash offset of ChargeAttackFrame)
     i32 brightLevel = 1;     // +0x2B74
-    i32 homePoseX = 0;       // swd32 +0x2670 the x offset of the stand pose while walking home (ReturnHome)
-    i32 unk2674 = 0;
+    i32 homePoseX = 0;       // +0x2B78 the x offset of the stand pose while walking home (ReturnHome)
+    i32 unk2B7C = 0;
     i32 unk2678 = 0;
     u32 stage = 0;       // +0x2B84 BattleUnit::Stage bits
     i32 throwSteps = 0;  // +0x2B88 the frames of the thrown act so far (ThrowAct)

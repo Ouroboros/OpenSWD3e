@@ -569,7 +569,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->slotTint = 0;
     this->flashPhase = BattleUnit::FlashStart;
     this->flashFall = BattleUnit::FlashPeak;
-    this->unk2674 = 0;
+    this->unk2B7C = 0;
     this->action = 0;
     this->readyAction = 0;
     this->homePoseX = 0;
@@ -2386,13 +2386,13 @@ bool BattleUnit::HasBlock30() const
 }
 
 // swd3e.exe 0x00482350
-int BattleUnit::Word2A86Bit13() const
+int BattleUnit::Word2FB0Bit13() const
 {
     return (this->commandFlags & BattleUnit::UnkCommandFlag2000) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00482360
-int BattleUnit::Word2A86Bit12() const
+int BattleUnit::Word2FB0Bit12() const
 {
     return (this->commandFlags & BattleUnit::UnkCommandFlag1000) != 0 ? 1 : 0;
 }
@@ -5042,7 +5042,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
 
         if (this->kind == 1)
         {
-            this->unk2674 = 0;
+            this->unk2B7C = 0;
         }
 
         act.action = kReadyAction;

@@ -1380,3 +1380,57 @@
 汇编：+0x34BE（字）+1；效果着色 5、5、5；+0x303C=1；投影器 0x00439250(0x004EDA44, 效果)=1 → +0x34BE=0、+0x303C=0、释放像素、效果 0x58 字节清零、+0x3488 五个 dword 清零、+0x106C 0x20 字节与 attackAct 清零，返回 1。爆发数为 0 → 返回 0。否则 0x00482B40 FlyExtraAct(act, 0, 槽, x = 效果 x + (宽>>2), y = 高 − 爆发数 + 效果 y + 偏移, 步数)：槽 0 每帧 (0x1C2B, −5, 0xE)；帧数（有符号字）≥10 → 槽 1 (0x1C2C, −10, 0xA)；≥20 → 槽 2 (0x1C2D, −15, 0xC)；≥30 → 槽 3 (0x1C2B, 0, 8)；≥40 → 槽 4 (0x1C2C, 5, 0x10)。返回 0。
 对照：AbsorbFrame（平滑绘制 RoleFrame::AbsorbFrameAdvance）一致，kSparks 表与五组参数逐项相同；绘制经平滑场景（偏差 97/99）。
 差异：无。
+
+## 0x00481FF0 BattleRole::BeatsLevel — exact
+
+汇编：等级参数为 0 → 0。自身 = 记录 +0x2C 字节；自身 < 参数（无符号字）→ rand%100 ≤ 35。差 = 自身 − 参数：0..7 → rand%100 ≤ 70；8..12 → ≤ 90；≥13 → 1。
+对照：BeatsLevel 一致（区间互斥，各分支只取一次随机数；常量核对）。
+差异：无。
+
+## 0x00482080 BattleRole::StepBack — exact
+
+汇编：+0x2FF8=1 → +0x2FEC=0、返回 1。+0x2E64 = 模式 0 ? 2 : 6。IsHeld=1：+0x2B70 > movsx +0x2E64 → 减 1 返回 0，否则 = 0xF 返回 1。否则 +0x2B70 ≤ +0x2E64 → recoilAct 清零、+0x2B70=0xF，模式 1 → +0x2FEC=1、+0x3044=1 时 +0x2FF8=1；返回 1。否则 recoilAct id = +0x2F28、+0x2FEC=1、动作 0x2F（act 1 → 0x2E；+0x3044=1 → 0x24），hold = +0x3010=1；Run=0 → 返回 1；图片 = GetPicture(+0x4A, +0x4C)；+0x2EC6 = act x、+0x2BA8 = act flags，act 1 → 旗标位 0 取反；+0x2B70=0xF 且模式 1 → view=0x2F、PlaySound(0x2F)、声像 facing=1 ? −0x30 : 0x30、view=0；取位置，模式 1 → facing=1 且 +0x3044=0 ? x−0x1E : x+0x1E，写回；旗标 & 0x14 = 0x14 → 透明度 = act +0x92；以 (阵位 x − movsx +0x2EC6, 阵位 y − act y) 绘图；+0x2B70 减 1，返回 0。
+对照：StepBack（平滑绘制 RoleFrame::StepBackAdvance）一致；空图片见偏差 190；常量与 ActState 偏移核对。
+差异：无。
+
+## 0x00482350 BattleUnit::Word2FB0Bit13 — diff → exact
+
+汇编：返回 (+0x2FB0 字 >> 13) & 1。
+对照：commandFlags & UnkCommandFlag2000 → 1/0，一致。
+差异：函数名沿用正传偏移（Word2A86Bit13）。修正：改名 Word2FB0Bit13（源码与函数表）。复核：完整函数重新对照一致。
+
+## 0x00482360 BattleUnit::Word2FB0Bit12 — diff → exact
+
+汇编：返回 (+0x2FB0 字 >> 12) & 1。
+对照：commandFlags & UnkCommandFlag1000 → 1/0，一致。
+差异：函数名沿用正传偏移（Word2A86Bit12）。修正：改名 Word2FB0Bit12（源码与函数表）。复核：完整函数重新对照一致。
+
+## 0x00482370 BattleRole::ThrowAct — exact
+
+汇编：attackAct（+0x544）id 0x186B、动作 0、hold = +0x3010=1；Run=0 → 0。图片 = GetPicture(+0x4A, +0x4C)；+0x2EC6 = act x、+0x2BA8 = act flags；+0x3050=1 → 旗标位 0 取反、+0x2EC6 = 图宽 − act x。目标.GetOffset(锚 x, 锚 y)：任一字为 0 → 目标.GetDrawPosition(x, y)，终点 = (x − +0x2EC6, y − act y)；否则目标.GetOrigin，终点 = (原点 x + 锚 x − +0x2EC6, 原点 y + 锚 y − act y)。飞行线（+0x106C）清零，起点 x = movsx +0x2EBC − movsx +0x2EC2 + 阵位 x − movsx +0x2EC6、起点 y = 阵位 y + movsx mainAct anchorY − mainAct y − act y，终点 movsx。最多走 +0x2B88×8 步 LineStep，起点 x + 线 x = 终点 x 即到达；+0x2B88+1；PlaySound(act view)、view=0；到达 → 画在终点、+0x2B88=0、线与 attackAct 清零，返回 1；否则画在 (起点 x + 线 x, 起点 y + 线 y)，返回 0。
+对照：ThrowAct（平滑绘制 RoleFrame::ThrowActAdvance）一致（kThrownAct=0x186B、kThrowSteps=8）；空图片见偏差 161。
+差异：无。
+
+## 0x00482650 BattleRole::CatchAct — exact
+
+汇编：attackAct id 0x186B、动作 1、hold = +0x3010=1；Run=0 → 0。图片 = GetPicture(+0x4A, +0x4C)（不改 +0x2EC6、+0x2BA8，不镜像）。目标.GetOffset：任一字为 0 → GetDrawPosition，起点 = (x − act x, y − act y)；否则 GetOrigin，起点 = (原点 + 锚 − act x/y)。飞行线清零，起点 movsx；终点 x = 阵位 x − movsx +0x2EC2 + movsx mainAct anchorX − act x，终点 y = 阵位 y + movsx mainAct anchorY − mainAct y − act y。走步、+0x2B88+1、音效同 ThrowAct；以 act flags 绘制：到达 → 画在终点、清理，返回 1；否则画在当前点，返回 0。
+对照：CatchAct（平滑绘制 RoleFrame::CatchActAdvance）一致（kCaughtAction=1）；空图片见偏差 162。
+差异：无。
+
+## 0x004828E0 BattleRole::GlowAct — exact
+
+汇编：attackAct id = 零扩展 +0x34A4、动作 0x24、hold = +0x3010=1；Run=0 → 0。图片 = GetPicture；PlaySound(attackAct view)；recoilAct 的 view（+0x4F8）清 0（原 BUG：清的不是 attackAct）；+0x2B90 = act flags、+0x2B94 = act x；+0x3050=0 → 旗标位 0 取反、+0x2B94 = 图宽 − act x。阶段（+0x2F82）0：着色 = movsx +0x2E64/2（截断）− 0x1F，+0x2E64 += 2，>0x3E → 阶段 1。阶段 1：同样着色，−= 2，+0x34BE+1，≤0 → 阶段 2。以 (x − +0x2B94, y − act y)、旗标 | 4 绘制。阶段 2 → PlaySound(0x6A)，清 +0x2E64、+0x2B90、+0x2B94、+0x2F82、+0x34BE、+0x2F94，attackAct 与五个附加 act 清零，返回 1；否则 0。
+对照：GlowAct（平滑绘制 RoleFrame::GlowActAdvance）一致（常量核对）；空图片见偏差 163。
+差异：无。
+
+## 0x00482B40 BattleRole::FlyExtraAct — diff → exact
+
+汇编：附加 act[槽]（+0x311C+槽×0xA4）id、动作 = 参数，hold = +0x3010=1；Run=0 → 0。图片 = GetPicture；飞行线（+0x106C）清零，起点 = (movsx(x − act x), movsx(y − act y))，终点 x = 阵位 x − movsx +0x2EC2 + movsx mainAct anchorX − act x，终点 y = 阵位 y + movsx mainAct anchorY − mainAct y − act y；LineStep 走 步数[槽]（+0x3488+槽×4）× 参数步数 次；步数[槽]+1；PlaySound(act view)、view=0；止点 = 终点 x − +0x2B7C；当前 x = 起点 x + 线 x ≥ 止点（有符号）→ 画在 (止点, 终点 y)、步数[槽]=0、线清零，返回 1；否则画在 (当前 x, 起点 y + 线 y)，返回 0。
+对照：FlyExtraAct（平滑绘制 RoleFrame::FlyExtraActAdvance）一致；返回值唯一调用者 0x00481DB0 不用，源码 void 等价。
+差异：+0x2B7C 字段沿用正传偏移命名 unk2674，homePoseX 注释写正传偏移 +0x2670。修正：改名 unk2B7C（以相邻的 brightLevel +0x2B74、stage +0x2B84 定位），注释改为 +0x2B78。复核：完整函数重新对照一致。
+
+## 0x00482D70 BattleRole::PoseAtTarget — exact
+
+汇编：standAct 动作 0x32、hold = +0x3010=1、id = 零扩展 +0x2F28；Run=0 → 0。图片 = GetPicture。standAct waiting 非 0 → 清零返回 1。+0x3050=1 且 act +0x1C 为 0 → 旗标位 0 取反、+0x1C = 旗标|0x8000、act x = 图宽 − x。目标.GetDrawPosition → x = 目标 x − act x、y = 目标 y − act y（字）；缩放高 = 图高/3、剪切 = 图高>>2、着色 −6（+0x3044=1 时 −1）；PlaySound(view)、声像 x（有符号字）>0x140 ? 0x30 : −0x30；+0x2BAC = (旗标 & 0x8000000F) | 0xC；view=0；阴影画在 (x−5, y − 缩放高 + act y)，本体画在 (x, y)。返回 0。
+对照：PoseAtTarget（平滑绘制 RoleFrame::PoseAtTargetAdvance）一致（掩码 0x8000000F 与 RleSource|Mirror|Flip 在并上 0xC 后相同；常量核对）；空图片见偏差 164。
+差异：无。

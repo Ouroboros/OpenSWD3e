@@ -1215,7 +1215,7 @@ void RoleFrame::FlyExtraActAdvance(
     ++count;
     services.audio.PlaySound(act.view, services.config.soundVolume);
     act.view = 0;
-    const int endX = line.toX - role.unk2674;
+    const int endX = line.toX - role.unk2B7C;
     const int atX = line.fromX + line.x;
 
     if (atX >= endX)

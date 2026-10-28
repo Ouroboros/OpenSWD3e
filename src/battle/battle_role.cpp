@@ -942,7 +942,7 @@ void BattleRole::StartAbsorb(BattleServices& services, BattleUnit& source)
 
 // swd3e.exe 0x00482B40: one frame of extra act `slot` (`id`, `action`) flying from (x, y) into the role's main act
 // anchor, extraSteps[slot] * `steps` line steps a frame (one more each frame). Its sound plays centred; past the
-// role's x less unk2674 it is drawn there for the last time and its steps and the line are cleared.
+// role's x less unk2B7C it is drawn there for the last time and its steps and the line are cleared.
 void BattleRole::FlyExtraAct(BattleServices& services, i32 id, i32 action, int slot, i16 x, i16 y, int steps)
 {
     smooth::Scene scene;
