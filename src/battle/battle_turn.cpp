@@ -4813,9 +4813,7 @@ void Game::ConfirmCommand()
         }
         else
         {
-            this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetGhostOrder(
-                static_cast<u16>(battle.ghostOrderRow)
-            );
+            this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetGhostOrder(battle.ghostOrderRow);
         }
 
         battle.ghostOrdersOpen = 0;
@@ -5821,7 +5819,7 @@ void Game::ConfirmGhostTarget()
     battle.result = kMenuState;
     battle.menuCommand = kGhostMenuEntry;
     battle.ghostOrdersOpen = 0;
-    this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetGhostOrder(static_cast<u16>(battle.ghostOrderRow));
+    this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetGhostOrder(battle.ghostOrderRow);
     this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
 }
 

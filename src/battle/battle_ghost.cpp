@@ -92,11 +92,12 @@ constexpr int kSpecialProficiencyShare = 90;  // and the proficiency percent of 
 }  // namespace
 
 // swd3e.exe 0x004864C0: the order the player gave the ghost (1..8); order 4 keeps it by its master
-void BattleRole::SetGhostOrder(u16 order)
+void BattleRole::SetGhostOrder(i32 order)
 {
     this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostGuards);
-    this->ghostOrder = order;
+    this->ghostOrder = static_cast<u16>(order);
 
+    // The whole dword is compared (0x004864D4); only its low word is kept.
     if (order == kGuardOrder)
     {
         this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostGuards);
@@ -454,7 +455,10 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
         return 0;
     }
 
-    const i32 skill = this->ghostActs == 1 ? this->ghostRecord->skills[this->ghostSkill] : 0;
+    // A ghostSkill still marked 0x8000 (ChooseGhostSkillOf short of spirit) reads far past the fed skills in the
+    // original (deviations.md): read as no skill.
+    const bool listed = this->ghostSkill < this->ghostRecord->skills.size();
+    const i32 skill = this->ghostActs == 1 && listed ? this->ghostRecord->skills[this->ghostSkill] : 0;
 
     if (skill == 0 || !this->LoadGhostSkill(database, skill))
     {

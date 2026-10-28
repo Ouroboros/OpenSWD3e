@@ -1560,3 +1560,147 @@
 汇编：standAct id = 零扩展 +0x2F28、+0x2FEC=1、动作 0x2A（不设 hold）；Run=0 → 0。图片、+0x2EC6/+0x2BA8/+0x2EBC 与镜像、阴影与本体绘制、声像同 DirectAttack。target 低字节 & 9 为 0 → 0。slotActs[0] 动作 0、id = 参数；目标.GetDrawPosition(x, y)。+0x2B84=0：+0x349C=0 → 0x00496510(id, 0, 阵位 x, 阵位 y, movsx x, movsx y, 0x1C, 0, −1, 4)、0x004965D0(0, 0, 0xC)、+0x349C=1；Queued(目标, 0)=1 → +0x349C=0、+0x2B84=1、目标.RaiseFlag2BC0。+0x2B84=1：+0x349C=0 → 0x00496510(id, 0, x, y, 阵位 x, 阵位 y, 0x20, 7, −1, 4)、0x004965D0(0, 0, 0xC)、+0x349C=1；Queued=1 → +0x349C=0、+0x2B84=2、PlaySound(0x114)。+0x2B84=2 → 清 0、slotActs[0] 与 standAct 清零、返回 1；否则 0。
 对照：BoomerangFrame（平滑绘制 RoleFrame::BoomerangFrameAdvance）一致（常量核对）；空图片见偏差 177。
 差异：无。
+
+## 0x004864C0 BattleRole::SetGhostOrder — diff → exact
+
+汇编：+0x2BDA 清位 2；+0x34B6 = 参数低字；参数（整个 dword）= 4 → +0x2BDA 置位 2。
+对照：清位、存值、判 4 置位一致。
+差异：源码参数为 u16，调用处先截断再比较；汇编比较完整 dword（0x004864D4），参数（0x004BF0F8 ghostOrderRow）超过 0xFFFF 时结果不同。修正：参数改为 i32，按完整值比较、只存低字，两个调用处不再截断。复核：完整函数重新对照一致。
+
+## 0x004864F0 BattleRole::GhostOrder — exact
+
+汇编：返回零扩展 +0x34B6。
+对照：一致。
+差异：无。
+
+## 0x00486500 BattleRole::RollHalf — exact
+
+汇编：rand%100（有符号字）≥ 50 → 1，否则 0。
+对照：一致（kHalfRoll=100、kHalfRollFrom=50）。
+差异：无。
+
+## 0x00486520 BattleRole::GhostOrderIs5 — exact
+
+汇编：+0x34B6 = 5。
+对照：一致。
+差异：无。
+
+## 0x00486530 BattleRole::GhostOrderIs6 — exact
+
+汇编：+0x34B6 = 6。
+对照：一致。
+差异：无。
+
+## 0x00486540 BattleRole::TakeSkillUsed — exact
+
+汇编：+0x2BDA 位 4 无 → 0；清位 4；鬼记录 +0x104 ≥ 0x33 → 1，否则 0。
+对照：一致。
+差异：无。
+
+## 0x00486570 BattleRole::TakeAttackUsed — exact
+
+汇编：+0x2BDA 位 8 无 → 0；清位 8；+0x34B6 为 1 或 3 且鬼记录 +0x104 ≥ 0x51 → 1，否则 0。
+对照：一致。
+差异：无。
+
+## 0x004865B0 BattleRole::TakeHealUsed — exact
+
+汇编：+0x2BDA 位 0x10 无 → 0；清该位；鬼记录 +0x104 ≥ 0x51 → 1，否则 0。
+对照：一致。
+差异：无。
+
+## 0x004865E0 BattleRole::TakeOrder7 — exact
+
+汇编：+0x2BDA 位 0x20 无 → 0；清该位，返回 1。
+对照：一致。
+差异：无。
+
+## 0x00486600 BattleRole::GhostObeys — exact
+
+汇编：+0x2BDA 位 2 无 → 0；movsx(rand%100+1) > 鬼记录 +0x104 → +0x2BDA|=1、返回 0；否则 1。
+对照：一致（kObeyRoll=100）。
+差异：无。
+
+## 0x00486640 BattleRole::RestoreGhostSpirit — exact
+
+汇编：+0x2BDA 位 0x80 无 → 0；量 = movsx(rand%10+5) × movsx 记录 +0xC /100；PushTarget(0x237E)、SetDamageDigits(movsx 量)、StepTargetCount(1)、Damage(0, 量, 0)；返回 1。
+对照：一致（kRestoreRoll=10、kRestoreBase=5、kGhostHeal=0x237E）。
+差异：无。
+
+## 0x004866C0 BattleRole::HasCommandEffect — exact
+
+汇编：目标.0x00493D50(零扩展命令 +0x1A)=1 → 1；否则返回 目标.0x00493D50(命令 +0x08)=1。
+对照：一致。
+差异：无。
+
+## 0x00486700 BattleRole::SetGhostActs — exact
+
+汇编：+0x34CC = 参数，返回参数。
+对照：一致。
+差异：无。
+
+## 0x00486710 BattleRole::ChooseGhostSkill — exact
+
+汇编：+0x34CC≠1 → 1。+0x34B8 = rand%3；技能 = 鬼记录 +0x118[它]；为 0 → +0x34CC=0、返回 1。0x00489B00 载入到 +0x3074、释放说明；+0x34A0 = 花费 & 0x7FFF；movsx 灵力 < 它 → 1。命令清零、0x00489750(命令, +0x3E)；种类 & 8 → +0x2BDA|=8；& 4 → |=0x10；& 0x1000 → |=4；返回 1。
+对照：ChooseGhostSkill 一致（battle_ghost.cpp 的 kCostMask=0x7FFF；种类常量核对）。
+差异：无。
+
+## 0x004867F0 BattleRole::ChooseGhostSkillOf — exact
+
+汇编：模式 1：鬼记录 +0x120（第三个）为 0 → 无；载入、+0x34A0 = 花费 & 0x7FFF，灵力不足 → 无；命令清零并载入脚本、+0x2BDA|=4、+0x34B8=2，返回 1。模式 3/2：前两个技能非 0 时 +0x3074 清 0xA8 字节后载入，种类低字节 & 0x18（模式 2 为 & 4）→ 合格；两个都合格 → +0x34B8 = rand%2 | 0x8000；否则取第一个合格的序号 | 0x8000，都不合格则 +0x34B8 不变；+0x34B8 无位 15 → 清 0、无；否则按低 15 位载入，灵力不足 → 无（+0x34B8 保留）；命令清零并载入脚本、+0x2BDA |= 8（模式 2 为 0x10）、+0x34B8 = 序号，返回 1。其余模式 → 无。“无”= +0x34A0=0、命令清零、返回 0。
+对照：ChooseGhostSkillOf 一致（不合格时沿用残留的 +0x34B8 位 15，与源码相同）。
+差异：无。
+
+## 0x00486B60 BattleRole::TakeGhostOrder — exact
+
+汇编：按零扩展 +0x34B6 −1 跳转（8 项）：1 → +0x34CC = RollHalf，=1 时 ChooseGhostSkill；2 → +0x2BDA|=0x80、+0x34CC=0、RestoreGhostSpirit；3 → +0x34CC=1、ChooseGhostSkillOf(3)；4 → +0x2BDA|=2；5、6、8 → +0x34CC = RollHalf，=1 时 ChooseGhostSkillOf(3)；7 → +0x2BDA|=0x20；其余无。
+对照：TakeGhostOrder 一致（命令常量核对）。
+差异：无。
+
+## 0x00486C40 BattleRole::GhostSkillCommand — diff → exact
+
+汇编：+0x2B38 起 16 字节清零。+0x2BDA 位 0x40 → 清该位、返回 0。+0x34CC=1 时技能 = 鬼记录 +0x118[零扩展 +0x34B8]，为 0 或灵力不足（载入到 +0x3074，+0x34A0 = 花费 & 0x7FFF，movsx 灵力 < 它）→ GhostAttackCommand、返回 0。否则命令清零、载入脚本 +0x3E；act 输出 = 零扩展 +0x54；技能名 16 字节清零后 lstrcpy；+0x2EB0 += 命令 +0xE；SetCommand(2)；+0x2FB1|=0x80；种类输出 = 0，物品种类有 0x1000 或 4 → 1；+0x3C 为 0 → +0x2EB6/B8/BA = +0x34/+0x36/+0x38；+0x2FD0=0，+0x3C 位 0x200 → 1 并赋值；返回 1。
+对照：流程与常量一致。
+差异：0x004867F0 灵力不足放弃时 +0x34B8 保留 0x8000|序号，此处原程序以它作下标读到四个技能之外，源码 std::array 下标同样越界且未登记。修正：下标超出时按技能 0（改走普通攻击），登记偏差。复核：完整函数重新对照一致。
+
+## 0x00486E10 BattleRole::GhostAttackCommand — exact
+
+汇编：技能名 16 字节、命令 0x2C 字节清零；0x00489750(命令, weapon +0x3E)；SetCommand(1)；+0x2BDA&=~1；+0x2EB0 += 记录 +0x26；命令 +0x1010 & 0x18 且 +0x2F88=1 → +0x2F8C=1、+0x2F88=0xC8。
+对照：一致（读命令旗标在 SetCommand 之后）。
+差异：无。
+
+## 0x00486E90 BattleRole::SpendGhostSpirit — exact
+
+汇编：花费 = 基数 × 百分比 /100 − 减项；+0x2EB6 = 花费（字）；movsx 灵力 < 花费：灵力 < 花费×40/100 → +0x2EB6=0、返回 0，否则 +0x2EB6 = 灵力。灵力 −= +0x2EB6；SetCommand(2)；+0x2FB1|=0x80；+0x2BDA = (& ~1) | 0x40；返回 1。
+对照：一致（kSpendShare=40）。
+差异：无。
+
+## 0x00486F40 BattleRole::LevelGapRoll — exact
+
+汇编：技能名 16 字节清零。差 = 零扩展等级参数 − 记录 +0x2C 字节：≥0x14 且 rand%100（字）< 0x55 → 1；≥0xF 且物品 +0x6E/+0x72/+0x76/+0x7A/+0x7E 全 0 且 rand < 0x32 → 1；movsx 生命 < movsx 上限/3 且差 ≥10 且 rand < 0x28 → 1；字差 1..8 → 0；9..15 且 rand < 10 → 1；16..19 且 rand < 0x14 → 1；否则 0。
+对照：一致（常量与 ObjectData 计数字段偏移核对）。
+差异：无。
+
+## 0x00487090 BattleRole::LowHitPoints — exact
+
+汇编：参数 0 → 角色记录（+4）movsx 生命 < movsx 上限/2（截断）；参数 1 → 生命 < 上限/3；其余 → 0。
+对照：一致（kHalfShare=2、kThirdShare=3）。
+差异：无。
+
+## 0x004870F0 BattleRole::SetElement — exact
+
+汇编：熟练度(0x26)。下标 = movsx 元素 − 1；= movsx 战斗记录 +0x36 → 战斗记录抗性[下标] = +0x38 字节，否则 = 低字节(movsx +0x38 × 零扩展熟练度 /100)；战斗记录抗性[movsx 角色记录 +0x37] = 0；角色记录 +0x37 = 元素 − 1。
+对照：一致（kElementAccessory=0x26、kBattleElementAt=9）；越界下标见偏差 428。
+差异：无。
+
+## 0x00487160 BattleRole::SetUnk34C0 — exact
+
+汇编：+0x34C0 = 参数低字，返回之。
+对照：一致。
+差异：无。
+
+## 0x00487170 BattleRole::Unk34C0 — exact
+
+汇编：返回 movsx +0x34C0。
+对照：一致。
+差异：无。
