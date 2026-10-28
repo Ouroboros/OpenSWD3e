@@ -164,7 +164,8 @@ int HudFrame::DrawPortraitAdvance(u16 index, int x, int y, int dim, Scene& scene
         return 0;
     }
 
-    if (hud.portraitHighlight[index] == 1)
+    // A ghost's portrait (index 4..8) reads hitFading past the four bytes in the original (deviations.md).
+    if (index < hud.portraitHighlight.size() && hud.portraitHighlight[index] == 1)
     {
         DrawArgument outline;
         outline.colorPair = kOutlineGreen;

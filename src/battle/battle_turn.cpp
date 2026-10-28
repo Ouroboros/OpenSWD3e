@@ -4537,7 +4537,11 @@ int Game::HoverTarget()
         }
     }
 
-    portraits[static_cast<std::size_t>(battle.hoverUnit)] = 0;
+    // An enemy or a guest aimed at clears a byte past the four portraits (hitFading) in the original (deviations.md).
+    if (static_cast<u32>(battle.hoverUnit) < portraits.size())
+    {
+        portraits[static_cast<std::size_t>(battle.hoverUnit)] = 0;
+    }
 
     // The pointer is compared unsigned (jb/ja in the original).
     if (static_cast<u32>(y) < static_cast<u32>(kPortraitRowTop) ||

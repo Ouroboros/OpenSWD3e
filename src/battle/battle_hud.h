@@ -115,7 +115,7 @@ public:
     int LoadAnimation(BattleAnimation& animation, int unused, int x, int y, u16 id, u16 divisor);
     int PlayAnimationShifted(BattleAnimation& animation, int unused, int amount);
 
-    std::array<u8, 8> portraitHighlight = {};  // 0x00537480 roles outlined in green
+    std::array<u8, 4> portraitHighlight = {};  // 0x00537480 roles outlined in green (hitFading follows)
     ActState scrollAct;                        // 0x0050C1B0 shared by the scroll bar and the coin toss
     ActState effectAct;                        // 0x0050C258
     i32 timingCounter = 0;                     // 0x0050C2FC low word: the needle * 2 (0x8000 when done)
@@ -140,7 +140,7 @@ public:
     ActState cursorAct;                           // 0x0050C938
     ActState coinFaceAct;                         // 0x0050CA88 (swd3e) the face of the tossed coin
     u32 numberFont = 0;                           // 0x0050CB2C high word: the picture of DrawNumber's digits
-    std::array<ActState, 4> arrowActs;            // swd32 0x004FDD10
+    std::array<ActState, 4> arrowActs;            // 0x0050CB30
     i32 coinFrames = 0;                           // 0x0050CDC8 the frames of the toss (1: the face shown)
     u32 coinState = 0;                            // 0x0050CDCC low word: the side, high word: the wins
     u32 coinDelay = BattleHud::InitialCoinDelay;  // 0x004BEFF4 low word: the delay, high word: the countdown
