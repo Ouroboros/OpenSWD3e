@@ -5683,7 +5683,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
 
     // The command may be used: its buffs (unk08) not held by the unit already, not those of all party members
     // (items only), nor of party members while none is buffed; not a forced unit's kNoForcedStatus or support command,
-    // nor an UnkAction1000 one while unk53BF28 is set.
+    // nor an UnkAction1000 one while unk577210 is set.
     auto usable = [this, &services, &data](bool item)
     {
         const auto buffs = static_cast<u32>(this->command.unk08);
@@ -5721,7 +5721,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
             return false;
         }
 
-        return (this->command.actionFlags & UnitCommand::UnkAction1000) == 0 || services.state.unk53BF28 == 0;
+        return (this->command.actionFlags & UnitCommand::UnkAction1000) == 0 || services.state.unk577210 == 0;
     };
 
     if (choice == kHealChoice)
@@ -5922,7 +5922,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
         this->LoadCommand(database, this->object.data.skillScript);
 
         if ((this->autoControl != 1 || (static_cast<u32>(this->command.unk08) & kNoForcedStatus) == 0) &&
-            ((this->command.actionFlags & UnitCommand::UnkAction1000) == 0 || services.state.unk53BF28 == 0))
+            ((this->command.actionFlags & UnitCommand::UnkAction1000) == 0 || services.state.unk577210 == 0))
         {
             chosen = true;
             act = this->object.data.act;

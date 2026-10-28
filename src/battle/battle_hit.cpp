@@ -1306,8 +1306,8 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
 
 // An enemy attacking in HitFrame (inline in the original): its act is its enemyHitActs. Without wholeSide one target
 // is hit: a role (hitsAtOnce 1: HitAllFrame on it alone) steps its orb counters by the enemy's command, takes the drain
-// before the damage and its DrainShare as spirit, a held aimed role ends the menu; an enemy (unk53AE80) takes the hit.
-// With wholeSide the hit sweeps: hitsAtOnce 1 all roles at once, otherwise the enemies (unk53AE80) or the roles the
+// before the damage and its DrainShare as spirit, a held aimed role ends the menu; an enemy (unk575F28) takes the hit.
+// With wholeSide the hit sweeps: hitsAtOnce 1 all roles at once, otherwise the enemies (unk575F28) or the roles the
 // sweep has reached, until sweepTargets are hit (counting the defeats in sweepDefeated); the drains of the roles are
 // summed and given to the enemy at the end (ApplyDrainSums).
 int Game::EnemyHitFrame(int enemy)
@@ -1358,7 +1358,7 @@ int Game::EnemyHitFrame(int enemy)
             return 1;
         }
 
-        if (battle.unk53AE80 != 0)
+        if (battle.unk575F28 != 0)
         {
             BattleEnemy& aimed = this->battleEnemies[at];
 
@@ -1538,7 +1538,7 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
         return false;
     }
 
-    if (battle.unk53AE80 != 0)
+    if (battle.unk575F28 != 0)
     {
         for (u32 slot = 0; slot < battle.sweptUnits; ++slot)
         {
@@ -1602,16 +1602,16 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
 }
 
 // swd3e.exe 0x0045EE20: one frame of the action of enemy `enemy` (its command A) on role `target` (or enemy `target`
-// while unk53AE80); 1 once the action is over (a defeated enemy or one without commands at once). 1: the attack (the
+// while unk575F28); 1 once the action is over (a defeated enemy or one without commands at once). 1: the attack (the
 // stolen item, the drain and the damage, a defeat flashing white, the enrage damage; on a role it goes on with
 // command 0x12C and stays 0); 2: the spell (SpellCast set, the sweep reset, the hit act timed, a ripple battle for
 // ActFlag13; the music fades meanwhile) until SpellOver; 4: the enemy's skill act (EnemySkillFrame, then command
 // 0x12C); 6: the drain of a role out of battle; 9: the role's defeat, with unit `target` + 4 taken out of the slot
 // records and the menu (as in the original); 0xA the fade out; 0xB and 0xC the fade in and out (0xC ends the battle
-// once every enemy left); 0xF calls unk53BF2A enemies of act unk53BF28 for 0x19 frames; 0x11 the escape; 100 at once;
+// once every enemy left); 0xF calls unk577212 enemies of act unk577210 for 0x19 frames; 0x11 the escape; 100 at once;
 // 200 walks to the role; 300 returns home.
-// swd32.exe 0x00498370 (unmatched in swd3e) (EH unwind: the new ripple, freed by its unique_ptr)
-// swd32.exe 0x0049837B (unmatched in swd3e) (EH handler of 0x00455D60)
+// swd3e.exe 0x004A9700 (EH unwind: the new ripple, freed by its unique_ptr)
+// swd3e.exe 0x004A970B (EH handler of 0x0045EE20)
 int Game::EnemyActionFrame(int enemy, int target)
 {
     BattleState& battle = this->battleState;
@@ -1793,7 +1793,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
     BattleServices& services = this->battleServices;
     const auto at = static_cast<std::size_t>(target);
 
-    if (battle.unk53AE80 == 0)
+    if (battle.unk575F28 == 0)
     {
         battle.slideUnit = enemy;
         battle.slideX = kSlideMiddle;
@@ -1962,7 +1962,7 @@ int Game::EnemySpellAction(int enemy, BattleEnemy& unit, int target)
         {
             battle.sweepTargets = 0;
 
-            if (battle.unk53AE80 != 0)
+            if (battle.unk575F28 != 0)
             {
                 for (u32 index = 0; index < battle.enemyCount; ++index)
                 {
@@ -2043,9 +2043,9 @@ int Game::CallEnemies(BattleEnemy& unit)
     if ((battle.pushFrames & kCallStarted) == 0)
     {
         battle.pushFrames = kCallStarted | kCallFrames;
-        unit.CommandValues(battle.unk53BF28, battle.unk53BF2A);
+        unit.CommandValues(battle.unk577210, battle.unk577212);
 
-        for (u16 called = 0; called < battle.unk53BF2A; ++called)
+        for (u16 called = 0; called < battle.unk577212; ++called)
         {
             // The original sets up enemies past the last one with the field full.
             if (battle.enemyCount >= this->battleEnemies.size())
@@ -2057,7 +2057,7 @@ int Game::CallEnemies(BattleEnemy& unit)
             enemy.Reset(this->battleServices);
             battle.unk537D68 = ObjectRecord{};
             UnitPlacement& place = battle.enemyPlaces[battle.enemyCount];
-            place.actId = battle.unk53BF28;
+            place.actId = battle.unk577210;
             place.x = kCallX;
             place.y = called == 1 ? kSecondCallY : kCallY;
             place.kind = 0;
@@ -2068,9 +2068,9 @@ int Game::CallEnemies(BattleEnemy& unit)
                 place.x = static_cast<i16>(Display::Width - place.x);
             }
 
-            this->database.LoadObject(battle.unk537D68, battle.unk53BF28);
+            this->database.LoadObject(battle.unk537D68, battle.unk577210);
             this->database.FreeDescription(battle.unk537D68);
-            enemy.Setup(place, battle.unk53BF28, this->database, this->acts);
+            enemy.Setup(place, battle.unk577210, this->database, this->acts);
             enemy.SetStatus(BattleUnit::UnkMark400);
             ++battle.enemyCount;
             this->MeasureUnits();
@@ -2088,7 +2088,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 
     battle.darkenUnit = -1;
     battle.pushFrames = 0;
-    battle.unk53BF2A = 0;
+    battle.unk577212 = 0;
     return 1;
 }
 
@@ -2214,7 +2214,7 @@ void Game::EnemyAimSide(BattleEnemy& unit)
 {
     BattleState& battle = this->battleState;
 
-    if (battle.unk53AE80 != 0)
+    if (battle.unk575F28 != 0)
     {
         battle.sweepTargets = 0;
         battle.enemySweeps = 1;
@@ -2315,7 +2315,7 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
         }
 
         unit.RaiseUnk26B8Bit28();
-        battle.unk53AE80 = 1;
+        battle.unk575F28 = 1;
         return true;
     }
 
@@ -2446,7 +2446,7 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
 // units past the last are read past their array by the original: taken as down.
 bool Game::AimedDown(i32 index) const
 {
-    if (this->battleState.unk53AE80 == 1)
+    if (this->battleState.unk575F28 == 1)
     {
         return index < 0 || static_cast<std::size_t>(index) >= this->battleEnemies.size() ||
                this->battleEnemies[static_cast<std::size_t>(index)].IsDefeated();
@@ -2520,7 +2520,7 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     {
         if (battle.enemyAimsAtEnemies == 1)
         {
-            battle.unk53AE80 = 1;
+            battle.unk575F28 = 1;
             battle.enemyAimsAtEnemies = 0;
         }
 
@@ -2590,7 +2590,7 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     if (unit.CommandSupports() == 1)
     {
         pending.unk00 = 1;
-        battle.unk53AE80 = 1;
+        battle.unk575F28 = 1;
         battle.enemyTarget = enemy;
     }
 
@@ -2621,7 +2621,7 @@ void Game::EnemyAimHeal(BattleEnemy& unit, int enemy)
     {
         if (pending.unk00 == 0 && unit.ChooseHeal(this->battleServices))
         {
-            battle.unk53AE80 = 1;
+            battle.unk575F28 = 1;
             pending.unk00 = 1;
             battle.enemyTarget = target;
         }
@@ -2775,7 +2775,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
     const auto target = static_cast<i16>(unit.GetWord29A2());
     BattleRole& ghost = this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)];
 
-    if (ghost.GhostObeys(services) == 1 && target == 0 && battle.unk53AE80 == 0 &&
+    if (ghost.GhostObeys(services) == 1 && target == 0 && battle.unk575F28 == 0 &&
         this->battleRoles[0].LowHitPoints(0) != 1)
     {
         battle.turnUnit = battle.ghostSlot + BattleState::FirstRoleUnit;
@@ -2821,7 +2821,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
             this->ReturnHeldEscort(this->battleRoles[index], index, true);
         }
     }
-    else if (battle.unk53AE80 == 0 && hit != nullptr)
+    else if (battle.unk575F28 == 0 && hit != nullptr)
     {
         this->ReturnHeldEscort(*hit, static_cast<std::size_t>(target), false);
     }

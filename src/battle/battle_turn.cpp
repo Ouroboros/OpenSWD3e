@@ -521,7 +521,7 @@ void Game::RetargetRoles(int role, int enemy)
 // over. An enemy (none counted once the battle is won) adds its rewards (battleExperience, battleGold unless unk5772F8,
 // battleProficiency), halved past the battle talk's repeat limit; one that ran away gives none and no bestiary count;
 // its stolen items come back (unless absorbSucceeded) with their notice. All down wins the battle, a last one standing
-// is enraged, and a lone standing first enemy of a unk53BF28 battle ends the others. A role counts as defeated (an
+// is enraged, and a lone standing first enemy of a unk577210 battle ends the others. A role counts as defeated (an
 // escort clears its place and returned object: once all are down their places go and the units are measured again),
 // drops 蓄勁, its command, slot record, order and its panel; a role with a special act left is not counted. Battle role
 // 0 with the ghost takes the ghost out; with no role left standing the battle is lost, else the enemies are enraged.
@@ -645,12 +645,12 @@ int Game::RemoveDefeated(int index, int role)
             EnrageEnemies(services, kLastStandingCause);
         }
 
-        if (battle.unk53BF28 != 0 && !this->battleEnemies[0].IsDefeated() &&
+        if (battle.unk577210 != 0 && !this->battleEnemies[0].IsDefeated() &&
             static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1)
         {
             battle.enemyCount = 1;
             battle.enemiesGone = 0;
-            battle.unk53BF28 = 0;
+            battle.unk577210 = 0;
             this->MeasureUnits();
             battle.SortDrawOrder();
             battle.ListEnemyOrder();
@@ -793,12 +793,12 @@ int Game::RemoveDefeated(int index, int role)
 }
 
 // swd3e.exe 0x00465750: the draw order with the acting unit (actingUnit) drawn right after the unit it aims at (none
-// while unk53C4C0, unk575F24 or unk53AE80 is set or no unit acts): a role aims at an enemy, an enemy at a role.
+// while unk53C4C0, unk575F24 or unk575F28 is set or no unit acts): a role aims at an enemy, an enemy at a role.
 void Game::SortActingDrawOrder()
 {
     BattleState& battle = this->battleState;
 
-    if (battle.unk53C4C0 == 1 || battle.unk575F24 == 1 || battle.unk53AE80 == 1 || battle.actingUnit == -1)
+    if (battle.unk53C4C0 == 1 || battle.unk575F24 == 1 || battle.unk575F28 == 1 || battle.actingUnit == -1)
     {
         return;
     }
@@ -821,7 +821,7 @@ void Game::SortActingDrawOrder()
     {
         target = static_cast<i16>(this->battleEnemies[static_cast<std::size_t>(acting)].GetWord29A2());
 
-        if (battle.unk53AE80 == 0)
+        if (battle.unk575F28 == 0)
         {
             target += BattleState::FirstRoleUnit;
         }
@@ -4387,7 +4387,7 @@ int Game::HoverRefineCell()
     }
 }
 
-// The aim of MouseHover in battle state 3 (inline in the original; none with a whole side, unk53C4C0 or unk53BF2A).
+// The aim of MouseHover in battle state 3 (inline in the original; none with a whole side, unk53C4C0 or unk577212).
 // With an order on the party: the party members from the last whose idle picture is under the pointer (sampled every
 // pixel of an 8 x 8 square; the current role only for menu commands 2 and 3, its other samples still taken), or
 // whose portrait is (PortraitX by place). Otherwise the standing enemies from the last whose picture is under it
@@ -4400,7 +4400,7 @@ int Game::HoverTarget()
     const int x = this->state.pointerX;
     const int y = this->state.pointerY;
 
-    if (battle.unk53BF88 == 1 || battle.unk53C4C0 == 1 || battle.unk53BF2A != 0)
+    if (battle.unk53BF88 == 1 || battle.unk53C4C0 == 1 || battle.unk577212 != 0)
     {
         return 0;
     }

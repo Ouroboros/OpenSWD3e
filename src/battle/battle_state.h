@@ -296,7 +296,7 @@ public:
     u16 darkColor = 0;               // 0x00537424
     i32 pointerX = 0;                // 0x00513428
     i32 pointerY = 0;                // 0x0051342C
-    std::array<UnitPlacement, Enemies> enemyPlaces;      // swd32 0x005213A0
+    std::array<UnitPlacement, Enemies> enemyPlaces;      // 0x00537070
     std::array<UnitPlacement, RoleUnits> rolePlaces;     // 0x00576088
     std::array<i32, 2 * Party::Roles> panelPlaces = {};  // 0x0050F3B8 the x and y of the four role panels
     std::array<i32, Party::Roles> roleListRows = {};     // 0x0050F3D8 by role: its roleListRow
@@ -352,7 +352,7 @@ public:
     i32 ghostLockTarget = 0;  // 0x00576FBC (swd3e) the enemy (1-based) the ghost's 鎖定目標 aims at; 0: none
     i16 unk53BF46 = 0;        // 0x0057723C only ever cleared (HurtFrame 0x0048FAAB and three others), never read
     i16 unk53BF48 = 0;        // 0x0057723E likewise
-    u16 unk53BF28 = 0;        // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
+    u16 unk577210 = 0;        // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
     std::array<i32, Units> unk50EBFC = {};  // 0x0050EBFC (swd3e: 30 slots, 0x78 bytes)
     i32 unk502944 = 0;
     i32 unk502948 = 0;
@@ -493,7 +493,7 @@ public:
     // The draw order around the acting unit (SortDrawOrderAround).
     u8 unk53C4C0 = 0;
     i32 unk575F24 = 0;
-    i32 unk53AE80 = 0;
+    i32 unk575F28 = 0;
     i32 orderSorted = 0;  // 0x00577344 set once the order is sorted around the acting unit
     // The push of a hit (Game::PushUnits).
     i16 hitPush = 0x1A4;       // 0x004BF1DE the push, halved each frame
@@ -566,7 +566,7 @@ public:
     i32 unk53BD70 = 0;
     i32 unk53BFF8 = 0;
     i32 hoverUnit = 0;  // 0x00577988 the unit aimed at under the pointer
-    u16 unk53BF2A = 0;
+    u16 unk577212 = 0;
     // The confirm key of the menu (Game::MenuConfirm).
     i32 unk577080 = 0;
     i32 unk53BCDC = 0;

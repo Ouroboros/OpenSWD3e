@@ -161,7 +161,7 @@ int Game::BattleFrame()
             battle.unk53AE78,
             static_cast<u16>(battle.slideBackPicture),
             battle.unk575F24,
-            battle.unk53AE80,
+            battle.unk575F28,
             battle.wholeSide,
             battle.hitsAtOnce
         };
@@ -172,7 +172,7 @@ int Game::BattleFrame()
         battle.unk53AE78 = acting.kind;
         battle.slideBackPicture = static_cast<i16>(acting.unk0A);
         battle.unk575F24 = acting.unk0C;
-        battle.unk53AE80 = acting.unk10;
+        battle.unk575F28 = acting.unk10;
         battle.wholeSide = acting.unk14;
         battle.hitsAtOnce = acting.unk18;
 
@@ -482,8 +482,8 @@ void Game::EndBattle()
     battle.ghostOrdersOpen = 0;
     battle.refineOptionsOpen = 0;
     battle.elementsOpen = 0;
-    battle.unk53BF28 = 0;
-    battle.unk53BF2A = 0;
+    battle.unk577210 = 0;
+    battle.unk577212 = 0;
     battle.quakeStepFrames = 0;
     battle.unk53C4C0 = 0;
     battle.chargingRole = -1;
