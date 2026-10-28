@@ -787,12 +787,12 @@ int Game::RemoveDefeated(int index, int role)
 }
 
 // swd3e.exe 0x00465750: the draw order with the acting unit (actingUnit) drawn right after the unit it aims at (none
-// while unk53C4C0, unk575F24 or unk575F28 is set or no unit acts): a role aims at an enemy, an enemy at a role.
+// while unk577A50, unk575F24 or unk575F28 is set or no unit acts): a role aims at an enemy, an enemy at a role.
 void Game::SortActingDrawOrder()
 {
     BattleState& battle = this->battleState;
 
-    if (battle.unk53C4C0 == 1 || battle.unk575F24 == 1 || battle.unk575F28 == 1 || battle.actingUnit == -1)
+    if (battle.unk577A50 == 1 || battle.unk575F24 == 1 || battle.unk575F28 == 1 || battle.actingUnit == -1)
     {
         return;
     }
@@ -4381,7 +4381,7 @@ int Game::HoverRefineCell()
     }
 }
 
-// The aim of MouseHover in battle state 3 (inline in the original; none with a whole side, unk53C4C0 or unk577212).
+// The aim of MouseHover in battle state 3 (inline in the original; none with a whole side, unk577A50 or unk577212).
 // With an order on the party: the party members from the last whose idle picture is under the pointer (sampled every
 // pixel of an 8 x 8 square; the current role only for menu commands 2 and 3, its other samples still taken), or
 // whose portrait is (PortraitX by place). Otherwise the standing enemies from the last whose picture is under it
@@ -4394,7 +4394,7 @@ int Game::HoverTarget()
     const int x = this->state.pointerX;
     const int y = this->state.pointerY;
 
-    if (battle.unk577284 == 1 || battle.unk53C4C0 == 1 || battle.unk577212 != 0)
+    if (battle.unk577284 == 1 || battle.unk577A50 == 1 || battle.unk577212 != 0)
     {
         return 0;
     }
@@ -6168,7 +6168,7 @@ void Game::ConfirmKey()
         return;
     }
 
-    if (battle.unk53C4C0 == 0 && static_cast<i32>(battle.enemyCount) - battle.enemiesGone <= 1 &&
+    if (battle.unk577A50 == 0 && static_cast<i32>(battle.enemyCount) - battle.enemiesGone <= 1 &&
         battle.unk4BF1CA != kNoTalkRole && battle.result != kBattleWon)
     {
         battle.result = 0;
@@ -7311,7 +7311,7 @@ void Game::EndCheckFrame()
     BattleState& battle = this->battleState;
     battle.unk577204 = 0;
     battle.autoBattle = 0;
-    battle.unk53C4C0 = 1;
+    battle.unk577A50 = 1;
 
     if (this->fightTalk.wonByTalk == 0 && battle.unk57734C == 0)
     {

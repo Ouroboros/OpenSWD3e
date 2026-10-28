@@ -328,3 +328,33 @@
 汇编：0x005777F4 = 1，返回（调用者压的一个参数不读）。
 对照：DarkenByTint 一致（darkenByTint 即 0x005777F4）。
 差异：无。
+
+## 0x004655B0 Game::MeasureUnits — exact
+
+汇编：0x0053694C 与 0x0053730C 各 30 dword 清 0；敌人 i（< 0x00576FA0，无符号）0x0048B230 的 y movsx 写 0x0053694C[i]；角色 i 写 0x0053694C[0x14 + i]（0x14 + i < 0x14 + 角色数）。
+对照：MeasureUnits 一致（unitY、drawOrder 为 i32 表）。
+差异：无。
+
+## 0x00465660 BattleState::SortDrawOrder — exact
+
+汇编：单位数 = 角色数 + 敌数，为 0 → 只清 drawTaken。每一轮：从 0 起找第一个 unitY ≠0 且 drawTaken ≠1 的序号（到 30 为止，30 时读表后的 0x005369C4），其 y 为基准；敌人中序号 > 它、未取、y 更小者覆盖；角色单位 0x14 起未取、y 更小者覆盖；drawTaken[选中] = 1、drawOrder[轮] = 选中。结束清 drawTaken 30 dword。
+对照：SortDrawOrder 一致（表外读写见 deviations 148）。
+差异：无。
+
+## 0x00465750 Game::SortActingDrawOrder — diff → exact
+
+汇编：字节 0x00577A50 = 1、0x00575F24 = 1、0x00575F28 = 1、0x00575F18 = −1 任一 → 返回。行动者 < 0x14 → 目标 = 敌人 0x0048B5E0 movsx，0x00575F28 = 0 时 +0x14；否则角色 0x0048B5E0 movsx（0x00575F24 = 1 时 +0x14，此处不成立）。同侧范围（行动者为角色 0x14..0x1E，否则 0..0x14）内 unitY ≠0、非行动者、非目标且 y < 行动者 y 的单位按 y 插入排序：在已放的序列中找第一个 y 更大的位置，其后整体后移一项再写入，否则放在末尾，drawTaken 置位。之后已放数 ≠ 总单位数时循环：行动者未放时基准 = 其 y；从 0 找第一个 unitY ≠0、（行动者已放或不在同侧或 y < 基准）且未取的单位；敌人中未取、更小、非行动者且（行动者为角色或已放）者覆盖，角色中未取、更小、非行动者且（行动者为敌人或已放）者覆盖；选中 = 目标 → 依次放目标与行动者、两者置位、清行动者与目标，否则放选中并置位。结束清 drawTaken，0x00577344 = 1，排序表含 30 → 0x00465660。
+对照：SortActingDrawOrder 与 SortDrawOrderAround 的条件、移动次数（已放数 + 1 − 位置）与写入一致；单位 30 记到表外与成对放入超出 30 项见 deviations 218。
+差异：unk53C4C0（外传字节 0x00577A50）以正传地址命名。修正：改名为 unk577A50，逻辑不变。复核：完整函数重新对照一致。
+
+## 0x00465A70 BattleState::ListEnemyOrder — exact
+
+汇编：按 0x0053730C 的 30 项依次取序号 < 0x14 者写 0x005368D4[已列]，已列 +1 等于敌数即停止。
+对照：ListEnemyOrder 一致（超过 20 项写表外见 deviations 149）。
+差异：无。
+
+## 0x00465AB0 Game::UpdateUnits — exact
+
+汇编：总数 = 敌数 + 角色数（循环前取一次，≤0 → 返回）。按 0x0053730C 依次：序号 < 0x14 且 < 敌数（每次重读，有符号）→ 0x004612D0(序号)；≥0x14 且 序号−0x14 < 角色数 → 0x0045FA80(序号−0x14)。
+对照：UpdateUnits 一致。
+差异：无。

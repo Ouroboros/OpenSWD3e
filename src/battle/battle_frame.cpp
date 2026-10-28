@@ -485,7 +485,7 @@ void Game::EndBattle()
     battle.unk577210 = 0;
     battle.unk577212 = 0;
     battle.quakeStepFrames = 0;
-    battle.unk53C4C0 = 0;
+    battle.unk577A50 = 0;
     battle.chargingRole = -1;
     messages.lootCount = 0;
     messages.lootNames = {};

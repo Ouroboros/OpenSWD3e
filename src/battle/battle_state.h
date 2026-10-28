@@ -491,7 +491,7 @@ public:
     // 0x00575FB0 (swd3e) the mode of WalkLine: 1 rises to y 0x32 first, then 0x8000 (low bits 0: walking)
     std::array<u16, Units> walkModes = {};
     // The draw order around the acting unit (SortDrawOrderAround).
-    u8 unk53C4C0 = 0;
+    u8 unk577A50 = 0;
     i32 unk575F24 = 0;
     i32 unk575F28 = 0;
     i32 orderSorted = 0;  // 0x00577344 set once the order is sorted around the acting unit
