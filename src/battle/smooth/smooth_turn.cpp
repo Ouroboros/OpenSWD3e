@@ -1130,7 +1130,7 @@ void TurnFrame::DrawTargetTagAdvance(int x, int y, Scene& scene)
         battle.currentUnit >= BattleState::FirstRoleUnit &&
         battle.pendingOrders[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].unk00 == 1;
 
-    if (partyOrder || battle.unk53BF88 == 1 || battle.aimTarget <= 0 ||
+    if (partyOrder || battle.unk577284 == 1 || battle.aimTarget <= 0 ||
         battle.aimTarget > static_cast<i32>(battle.enemyCount))
     {
         return;
@@ -2851,7 +2851,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
         text(
             kDebugStateX,
             kDebugAimY,
-            WinFormat(kAimDebugLine, {battle.aimTarget, battle.unk5772BC, battle.unk53BFC4})
+            WinFormat(kAimDebugLine, {battle.aimTarget, battle.unk5772BC, battle.unk5772C0})
         );
         text(kDebugLocksX, kDebugTop, WinFormat(kLockDebugLine, {battle.sweepTotal, battle.sweepTargets}));
         text(kDebugLocksX, kDebugFlagsY, WinFormat(kAllHitDebugLine, {battle.unk53BD80}));

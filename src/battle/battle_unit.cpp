@@ -4874,8 +4874,8 @@ int BattleUnit::HurtStep(BattleServices& services)
     }
 
     this->nudge = 0;
-    services.state.unk53BF46 = 0;
-    services.state.unk53BF48 = 0;
+    services.state.unk57723C = 0;
+    services.state.unk57723E = 0;
     this->hurtStep = 1;
     services.painter.Options().shear = 0;
     this->nudged = 0;

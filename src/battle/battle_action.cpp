@@ -2013,7 +2013,7 @@ int Game::RoleFrame(int role)
         (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
-    if (this->fightTalk.battleRuns == 1 && battle.actingUnit == -1 && battle.unk5772BC == 0 && battle.unk53BFC4 == 0)
+    if (this->fightTalk.battleRuns == 1 && battle.actingUnit == -1 && battle.unk5772BC == 0 && battle.unk5772C0 == 0)
     {
         unit.TickEffects(services);
 
@@ -2069,13 +2069,13 @@ void Game::RoleGaugeFull(BattleRole& unit, int role)
     if (unit.AutoControl() != 1 && unit.GuestControl() != 1 && unit.Ghost() != 1)
     {
         this->audio.PlaySound(kGaugeFullSound, this->config.soundVolume);
-        battle.unk53BFC4 = 1;
+        battle.unk5772C0 = 1;
         battle.currentUnit = role + BattleState::FirstRoleUnit;
         battle.unk5772BC = 1;
 
         if (battle.autoBattle == 0)
         {
-            battle.unk53BF5C = 1;
+            battle.unk577258 = 1;
             this->ConfirmKey();
         }
 
@@ -2101,7 +2101,7 @@ void Game::RoleGaugeFull(BattleRole& unit, int role)
     }
 
     this->RoleAutoCommand(unit, role);
-    battle.unk53BFC4 = 1;
+    battle.unk5772C0 = 1;
     battle.unk5772BC = 1;
 }
 
@@ -2195,7 +2195,7 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
         aimByStrength(false);
     }
 
-    battle.unk53BF60 = 1;
+    battle.unk57725C = 1;
 
     if (unit.TakeSkillUsed())
     {
@@ -2432,7 +2432,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
 
     const i32 taken = battle.turnTaken[static_cast<std::size_t>(self)];
     battle.unk5772BC = 1;
-    battle.unk53BFC4 = 1;
+    battle.unk5772C0 = 1;
     battle.unk5376B8[at] = 1;
     battle.turnUnit = self;
 
@@ -2450,7 +2450,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
 
     PendingOrder& order = battle.pendingOrders[at];
     battle.actingUnit = self;
-    battle.unk53AE78 = 1;
+    battle.unk575F20 = 1;
     battle.unk577270 = 1;
     battle.wholeSide = order.unk04;
     battle.unk575F24 = order.unk00;
@@ -2474,8 +2474,8 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
 
     auto taken = [&battle]
     {
-        battle.unk53BF60 = 0;
-        battle.unk53BF5C = 0;
+        battle.unk57725C = 0;
+        battle.unk577258 = 0;
         battle.turnUnit = 0;
     };
 
@@ -2540,16 +2540,16 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
     battle.aiTarget = 1;
 }
 
-// The targets of a sweep order of RoleOrderFrame (inline in the original): on the roles (unk53BFD0) every role in
+// The targets of a sweep order of RoleOrderFrame (inline in the original): on the roles (unk5772D0) every role in
 // battle not an escort, a guest, the ghost or StatusBit13 while the acting role is not ready, and with every role
 // standing gathered the last role standing is aimed at; on the enemies every enemy standing without a pending removal
-// (the count in targetCount), and with every one gathered the first one standing (unk53BF80).
+// (the count in targetCount), and with every one gathered the first one standing (unk57727C).
 void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
 {
     BattleState& battle = this->battleState;
     i32 aim = -1;
 
-    if (battle.unk53BFD0 != 0)
+    if (battle.unk5772D0 != 0)
     {
         for (u32 index = 0; index < battle.roleCount; ++index)
         {
@@ -2618,7 +2618,7 @@ void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
         return;
     }
 
-    battle.unk53BF80 = 1;
+    battle.unk57727C = 1;
     unit.SetAA8();
     unit.Retarget(static_cast<i16>(aim));
 }
@@ -2636,11 +2636,11 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
 
     if (unit.AutoControl() != 0 || unit.GuestControl() != 0 || unit.Ghost() != 0)
     {
-        battle.unk53BF60 = 0;
+        battle.unk57725C = 0;
         unit.SetTarget(0);
-        battle.unk53BF5C = 0;
-        battle.unk53BF88 = 0;
-        battle.unk53BF80 = 0;
+        battle.unk577258 = 0;
+        battle.unk577284 = 0;
+        battle.unk57727C = 0;
         return;
     }
 
@@ -2652,7 +2652,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
     }
 
     unit.SetAD4(0);
-    battle.unk53BF60 = 0;
+    battle.unk57725C = 0;
     unit.SetTarget(0);
 
     if (command == kMagicAttackCommand)
@@ -2661,9 +2661,9 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
     }
 
     unit.PrepareCommand(this->battleServices, this->database);
-    battle.unk53BF5C = 0;
-    battle.unk53BF88 = 0;
-    battle.unk53BF80 = 0;
+    battle.unk577258 = 0;
+    battle.unk577284 = 0;
+    battle.unk57727C = 0;
     battle.turnUnit = 0;
     battle.menuCommand = 1;
     battle.pageListRow = 1;
@@ -2781,10 +2781,10 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
     }
 
     const auto target = static_cast<i16>(unit.GetWord29A2());
-    battle.unk53BF03 = 0;
+    battle.unk5771EB = 0;
     battle.unk577260 = 0;
     battle.shake = 0;
-    battle.unk5240C4 = 0;
+    battle.unk53742C = 0;
 
     if (battle.unk5772C8 == 0)
     {
@@ -2797,8 +2797,8 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
         }
     }
 
-    battle.unk53BFC4 = 0;
-    battle.unk53BFD0 = 0;
+    battle.unk5772C0 = 0;
+    battle.unk5772D0 = 0;
     battle.retargeted = 0;
 
     if (target != -1)
@@ -2844,8 +2844,8 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
     battle.unk5376B8[at] = 0;
     battle.roleListScrolls.fill(0);
     battle.roleListRows.fill(1);
-    battle.unk53BF46 = 0;
-    battle.unk53BF48 = 0;
+    battle.unk57723C = 0;
+    battle.unk57723E = 0;
     battle.actingUnit = -1;
     battle.proficiencyBonus = 0;
     battle.spellStage = 0;
@@ -2892,7 +2892,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
     if ((battle.unk577204 & kRetreatAsked) != 0)
     {
         battle.unk5772BC = 1;
-        battle.unk53BFC4 = 1;
+        battle.unk5772C0 = 1;
 
         if (unit.StepBack(services, 0) == 1 && ++battle.sweptUnits >= static_cast<u32>(standing()))
         {
@@ -2930,13 +2930,13 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
                 battle.sweptUnits = 1;
                 battle.levelUpFrames = 0;
                 battle.unk5772BC = 0;
-                battle.unk53BFC4 = 0;
+                battle.unk5772C0 = 0;
             }
 
             if (this->battleRoles[0].BeatsLevel(services, level) == 1)
             {
                 unit.SetValueAAC(1);
-                battle.unk53BF5C = 0;
+                battle.unk577258 = 0;
                 battle.currentUnit = 0;
                 battle.levelUpFrames = 0;
                 battle.unk577204 = kRetreating;
@@ -2962,7 +2962,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
                 battle.sweptUnits = 1;
                 battle.levelUpFrames = 0;
                 battle.unk5772BC = 0;
-                battle.unk53BFC4 = 0;
+                battle.unk5772C0 = 0;
                 EnrageEnemies(services, kRetreatFailedCause);
             }
         }
@@ -2974,8 +2974,8 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
     }
 
     battle.unk5772BC = 1;
-    battle.unk53BFC4 = 1;
-    battle.unk53BF5C = 0;
+    battle.unk5772C0 = 1;
+    battle.unk577258 = 0;
     battle.currentUnit = 0;
 
     if (role == 0)

@@ -210,7 +210,7 @@ void BattleState::StartFieldFade(int red, int green, int blue, int toRed, int to
 
 // swd3e.exe 0x0046AAE0: unless already in a record, `unit` put at place `at` among the records (the records from there
 // to the first free one move down a place). Kind 1 (a party unit) at -1 goes to the first free record, and takes its
-// pending order (cleared, as are unk53BF80 and unk53BFD0). The original counts from 0 when no record is free, puts a
+// pending order (cleared, as are unk57727C and unk5772D0). The original counts from 0 when no record is free, puts a
 // kind 1 unit placed past the first free record at place 0, and moves the last record past the array when only it was
 // free.
 void BattleState::InsertSlotRecord(int kind, i32 unit, int at)
@@ -289,8 +289,8 @@ void BattleState::InsertSlotRecord(int kind, i32 unit, int at)
         order = PendingOrder{};
     }
 
-    this->unk53BF80 = 0;
-    this->unk53BFD0 = 0;
+    this->unk57727C = 0;
+    this->unk5772D0 = 0;
 }
 
 // The slot records filled with 0xFF bytes (inline in the original, by 0x0045ADF0, 0x0045AA00 and others).
@@ -499,7 +499,7 @@ void BattleState::ClearActing()
 {
     this->actingUnit = 0;
     this->sweepTotal = 0;
-    this->unk53AE78 = 0;
+    this->unk575F20 = 0;
     this->slideBackPicture = 0;
     this->unk575F24 = 0;
     this->unk575F28 = 0;

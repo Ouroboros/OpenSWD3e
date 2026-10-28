@@ -341,8 +341,8 @@ public:
     std::array<PendingOrder, RoleUnits> pendingOrders = {};  // 0x005369C8
     // 0x00536EE0 (swd3e) per enemy: its chosen order, taken into its slot record by AddSlotRecord (kind 2)
     std::array<PendingOrder, Enemies> enemyPendingOrders = {};
-    i32 unk53BF80 = 0;  // cleared when a party unit's order is taken (InsertSlotRecord)
-    i32 unk53BFD0 = 0;  // 0x005772D0 set when a talk role order aims at a role (command 9)
+    i32 unk57727C = 0;  // cleared when a party unit's order is taken (InsertSlotRecord)
+    i32 unk5772D0 = 0;  // 0x005772D0 set when a talk role order aims at a role (command 9)
     // 0x0057735C (swd3e) 1: the skill chosen (ActFlag17) is turned on the role itself once its enemy is aimed at, the
     // enemy kept in the role's unk34C0 (MenuConfirm states 2 and 3)
     i32 unk57735C = 0;
@@ -350,8 +350,8 @@ public:
     // (StartBattle, RoleFrame); the auto battle key waits for it
     u8 startPoseRole = 0;
     i32 ghostLockTarget = 0;  // 0x00576FBC (swd3e) the enemy (1-based) the ghost's 鎖定目標 aims at; 0: none
-    i16 unk53BF46 = 0;        // 0x0057723C only ever cleared (HurtFrame 0x0048FAAB and three others), never read
-    i16 unk53BF48 = 0;        // 0x0057723E likewise
+    i16 unk57723C = 0;        // 0x0057723C only ever cleared (HurtFrame 0x0048FAAB and three others), never read
+    i16 unk57723E = 0;        // 0x0057723E likewise
     u16 unk577210 = 0;        // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
     std::array<i32, Units> unk50EBFC = {};  // 0x0050EBFC (swd3e: 30 slots, 0x78 bytes)
     i32 unk502944 = 0;
@@ -454,17 +454,17 @@ public:
 
     // The state of the turns (0x0045BEA0, 0x00456680 and the commands).
     i32 unk5772BC = 0;  // 0x005772BC (StartRipple sets it with 0x005772C8)
-    i32 unk53BFC4 = 0;
-    i32 unk53BF5C = 0;
+    i32 unk5772C0 = 0;
+    i32 unk577258 = 0;
     i32 turnUnit = 0;    // 0x00577020 the role unit taking the turn
     i32 endFade = 0;     // 0x005772E4 1: the field fades out once the battle is decided (CheckBattleEnd)
     u8 enemiesGone = 0;  // 0x005771E8 set to enemyCount by a retreat
     u8 unk5771E9 = 0;
     u8 unk5771EA = 0;  // 0x005771EA
-    u8 unk53BF03 = 0;
+    u8 unk5771EB = 0;
     // The turns (0x00464CC0, 0x0045ADF0, 0x0045AA00).
     i32 turnCommand = 0;  // 0x00576FA8 the order of the turn under way
-    i32 unk53BF60 = 0;
+    i32 unk57725C = 0;
     i32 unk577260 = 0;  // 0x00577260
     i32 unk577270 = 0;  // 0x00577270 set by talk command 0x4E
     // 0x00577314 set when a role turns to another enemy (RetargetRoles)
@@ -546,7 +546,7 @@ public:
     i32 unk53AF30 = 0;
     i32 unk53AF34 = 0;
     i32 sweepTotal = 0;  // 0x00575F1C the units a sweep is to hit
-    u16 unk53AE78 = 0;
+    u16 unk575F20 = 0;
     i32 hitsAtOnce = 0;  // 0x00575F30 1: a sweep of the whole side hits it at once (HitFrame)
     i32 wholeSide = 0;   // 0x00575F2C 1: the hit or effect falls on a whole side (the effect messages name the side)
     u16 unk53BF4A = 0;   // a unit's place read for the debug gauge and the menu
@@ -640,7 +640,7 @@ public:
     SkillScript accessoryEffect;  // 0x0050ED38 the buff or ailment of an accessory command
     // The frame of a role (Game::RoleFrame).
     i32 aiTarget = 1;  // 0x004BF0E4 the enemy (1-based) an AI role aims at
-    u16 unk5240C4 = 0;
+    u16 unk53742C = 0;
     // The frame of the battle (Game::BattleFrame).
     u16 slotRecordFrames = 0;  // 0x00577202 frames since the last slot record was taken
     u16 snapNumber = 0;        // 0x005777EE the number of the last snapshot
@@ -697,7 +697,7 @@ public:
     i32 orderedSkill = 0;          // 0x00577014 the skill a controlled enemy is ordered to use
     i32 unk577018 = 0;
     i32 unk577330 = 0;          // 0x00577330 1 while the catch of talk command 0x4E runs
-    i32 unk53BF88 = 0;          // 0x00577284
+    i32 unk577284 = 0;          // 0x00577284
     i32 unk53BFF0 = 0;          // 0x005772F0
     i32 listReturnCommand = 0;  // 0x00576FB0 the menu command a list returns to
     i32 specialRow = 1;         // 0x004BF0F0 the row of the 絕招 list (1-based)

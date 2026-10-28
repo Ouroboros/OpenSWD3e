@@ -158,7 +158,7 @@ int Game::BattleFrame()
         BattleSlotRecord acting{
             battle.actingUnit,
             battle.sweepTotal,
-            battle.unk53AE78,
+            battle.unk575F20,
             static_cast<u16>(battle.slideBackPicture),
             battle.unk575F24,
             battle.unk575F28,
@@ -169,7 +169,7 @@ int Game::BattleFrame()
         this->TakeSlotRecord(acting);
         battle.actingUnit = acting.unit;
         battle.sweepTotal = acting.targetCount;
-        battle.unk53AE78 = acting.kind;
+        battle.unk575F20 = acting.kind;
         battle.slideBackPicture = static_cast<i16>(acting.unk0A);
         battle.unk575F24 = acting.unk0C;
         battle.unk575F28 = acting.unk10;
@@ -346,7 +346,7 @@ void Game::EndBattle()
     battle.roleOrder.fill(0);
     battle.unk524200.fill(0);
     std::fill_n(battle.turnTaken.begin() + kClearedTurnFrom, kClearedTurnUnits, 0);
-    battle.unk5240C4 = 0;
+    battle.unk53742C = 0;
     battle.unk537A20.fill(-1);
     battle.enemyOrders.fill(0);
     battle.enemyPlaces.fill(UnitPlacement{});
@@ -423,8 +423,8 @@ void Game::EndBattle()
     battle.unk4A758C = kOpeningPlaces[3];
     battle.unk4A7590 = kOpeningPlaces[4];
     battle.unk4A7594 = kOpeningPlaces[5];
-    battle.unk53BF46 = 0;
-    battle.unk53BF48 = 0;
+    battle.unk57723C = 0;
+    battle.unk57723E = 0;
     battle.unk53BD74 = 0;
     battle.unk53BD78 = 0;
     battle.sweepTargets = 0;
@@ -495,8 +495,8 @@ void Game::EndBattle()
     messages.lootCounts = {};
     battle.unk5376B8.fill(0);
     battle.hitFading.fill(0);
-    battle.unk53BF5C = 0;
-    battle.unk53BF60 = 0;
+    battle.unk577258 = 0;
+    battle.unk57725C = 0;
     battle.unk577260 = 0;
     battle.hitsAllRoles = 0;
     battle.unk53BF6C = 0;
@@ -504,8 +504,8 @@ void Game::EndBattle()
     battle.unk577270 = 0;
     battle.unk53BF78 = 0;
     battle.sweepHit = 0;
-    battle.unk53BF80 = 0;
-    battle.unk53BF88 = 0;
+    battle.unk57727C = 0;
+    battle.unk577284 = 0;
     battle.gatheringSweep = 0;
     battle.unk53BF90 = 0;
     battle.unk577290 = 0;
@@ -520,9 +520,9 @@ void Game::EndBattle()
     battle.unk53BFB8 = 0;
     battle.unk53BFBC = 0;
     battle.unk5772BC = 0;
-    battle.unk53BFC4 = 0;
+    battle.unk5772C0 = 0;
     battle.flashing = 0;
-    battle.unk53BFD0 = 0;
+    battle.unk5772D0 = 0;
     battle.enemyAimsAtEnemies = 0;
     battle.enemyFaded = 0;
     battle.damageShown = 0;

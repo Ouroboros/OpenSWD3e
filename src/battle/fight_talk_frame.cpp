@@ -604,7 +604,7 @@ int Game::FightTalkOrder()
 
             if (battle.aimTarget > kLastEnemy)
             {
-                battle.unk53BFD0 = 1;
+                battle.unk5772D0 = 1;
                 battle.aimTarget -= BattleState::FirstRoleUnit;
                 battle.pendingOrders[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].unk00 = 1;
             }
@@ -1157,7 +1157,7 @@ int Game::FightTalkSkill()
 
             if (target > kLastEnemy)
             {
-                battle.unk53BFD0 = 1;
+                battle.unk5772D0 = 1;
                 target -= BattleState::FirstRoleUnit;
                 battle.pendingOrders[role].unk00 = 1;
             }
@@ -1180,7 +1180,7 @@ int Game::FightTalkSkill()
 
             if (actor.ActFlag0() == 1)
             {
-                battle.unk53BF88 = 1;
+                battle.unk577284 = 1;
             }
 
             battle.turnCommand = kSpellOrder;
@@ -2551,7 +2551,7 @@ int Game::FightTalkMisc(u16 command)
 
             if (battle.aimTarget > kLastEnemy)
             {
-                battle.unk53BFD0 = 1;
+                battle.unk5772D0 = 1;
                 battle.aimTarget -= BattleState::FirstRoleUnit;
                 battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
             }
