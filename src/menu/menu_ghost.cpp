@@ -882,7 +882,7 @@ void Menu::GhostDrawGauges()
         owner.actDrawer.DrawPicture(kGaugeFile, AfterGrowth, at + kDayLeft, kGaugeTop);
     }
 
-    // The original counts a tick to 0xC7 and holds it there for a frame before wrapping (read by nothing).
+    // The original counts a tick from 0 to 0xC7 and wraps it to 0 (read by nothing).
     if (++page.tick >= kTickWrap)
     {
         page.tick = 0;
