@@ -226,6 +226,7 @@ constexpr int kRefineRowFirst = 0xBA;
 constexpr int kRefineRowEnd = 0x11E;
 constexpr int kHitSquare = 8;
 constexpr int kEnemyHitStep = 2;
+constexpr int kRoleHitStep = 1;  // every pixel of the square over a role
 constexpr i32 kRefineMenuCommand = 6;
 constexpr int kPortraitRowTop = 0x180;  // swd3e: HoverTarget, the portraits of the party
 constexpr int kPortraitHitMargin = 0xA;
@@ -4453,7 +4454,7 @@ int Game::HoverTarget()
             enemy.GetShadowRect(services, rect);
             const Picture* picture = enemy.StepIdleAction(services);
 
-            // A missing picture is read through a null pointer in the original.
+            // A missing picture is read through a null pointer in the original (deviations.md).
             if (picture == nullptr || picture->data.empty())
             {
                 continue;
@@ -4492,7 +4493,12 @@ int Game::HoverTarget()
         this->battleRoles[index].SetAC0(0);
     }
 
-    this->battleRoles[static_cast<std::size_t>(battle.hoverUnit)].SetAC0(0);
+    // An enemy aimed at before (hoverUnit up to 19) writes past the role table in the original (deviations.md).
+    if (static_cast<u32>(battle.hoverUnit) < this->battleRoles.size())
+    {
+        this->battleRoles[static_cast<std::size_t>(battle.hoverUnit)].SetAC0(0);
+    }
+
     auto& portraits = this->battleHud.portraitHighlight;
 
     for (i32 role = static_cast<i32>(battle.roleCount) - 1; role >= 0; --role)
@@ -4525,7 +4531,7 @@ int Game::HoverTarget()
         checked.GetShadowRect(services, rect);
         const Picture* picture = checked.StepIdleAction(services);
 
-        if (sample(checked, rect, picture, 1, aim))
+        if (sample(checked, rect, picture, kRoleHitStep, aim))
         {
             return 1;
         }
@@ -4547,9 +4553,8 @@ int Game::HoverTarget()
 
     for (u32 place = 0; place < battle.roleCount; ++place)
     {
-        // Places past the portraits read the table after PortraitX in the original; only party members (the first
-        // places) reach it.
-        if (this->battleRoles[place].PartyMember() == 0 || place >= BattleState::PortraitX.size())
+        // Only the party roles set up at the battle start (the first places, at most four) are party members.
+        if (this->battleRoles[place].PartyMember() == 0)
         {
             continue;
         }
@@ -4601,7 +4606,7 @@ int Game::HoverGhostTarget()
         enemy.GetShadowRect(services, rect);
         const Picture* picture = enemy.StepIdleAction(services);
 
-        // A missing picture is read through a null pointer in the original.
+        // A missing picture is read through a null pointer in the original (deviations.md).
         if (picture == nullptr || picture->data.empty())
         {
             continue;
