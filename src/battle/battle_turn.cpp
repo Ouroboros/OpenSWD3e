@@ -458,7 +458,7 @@ void Game::RandomRoleAct(int unit)
     }
 }
 
-// swd3e.exe 0x00465460: when `enemy` is unk4A7626, each role but `role` aiming at it turns to the first standing enemy
+// swd3e.exe 0x00465460: when `enemy` is unk4BF1CA, each role but `role` aiming at it turns to the first standing enemy
 // other than it (retargeted set). With none and one enemy left, such a role's command, target and turn are reset and
 // the turn order is cleared.
 void Game::RetargetRoles(int role, int enemy)
@@ -466,7 +466,7 @@ void Game::RetargetRoles(int role, int enemy)
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
 
-    if (battle.unk4A7626 != enemy)
+    if (battle.unk4BF1CA != enemy)
     {
         return;
     }
@@ -481,7 +481,7 @@ void Game::RetargetRoles(int role, int enemy)
         BattleRole& unit = this->battleRoles[index];
         const auto aim = static_cast<i16>(unit.GetWord29A2());
 
-        if (aim < 0 || static_cast<u16>(aim) != battle.unk4A7626)
+        if (aim < 0 || static_cast<u16>(aim) != battle.unk4BF1CA)
         {
             continue;
         }
@@ -491,7 +491,7 @@ void Game::RetargetRoles(int role, int enemy)
 
         for (int other = 0; other < count; ++other)
         {
-            if (battle.unk4A7626 != other && !this->battleEnemies[static_cast<std::size_t>(other)].IsDefeated())
+            if (battle.unk4BF1CA != other && !this->battleEnemies[static_cast<std::size_t>(other)].IsDefeated())
             {
                 unit.Retarget(static_cast<i16>(other));
                 battle.retargeted = 1;
@@ -632,7 +632,7 @@ int Game::RemoveDefeated(int index, int role)
             ++battle.enemiesGone;
         }
 
-        if (battle.enemiesGone - battle.unk53BF02 >= count)
+        if (battle.enemiesGone - battle.unk5771EA >= count)
         {
             battle.result = kBattleWon;
             battle.autoBattle = 0;
@@ -640,7 +640,7 @@ int Game::RemoveDefeated(int index, int role)
             battle.unk5772BC = 1;
         }
 
-        if (count + battle.unk53BF02 - battle.enemiesGone == 1)
+        if (count + battle.unk5771EA - battle.enemiesGone == 1)
         {
             EnrageEnemies(services, kLastStandingCause);
         }
@@ -673,7 +673,7 @@ int Game::RemoveDefeated(int index, int role)
         const auto roles = static_cast<i32>(battle.roleCount);
         const i32 row = index + escorts - roles;
         battle.rolePlaces[static_cast<std::size_t>(index)].actId = 0;
-        ++battle.unk53BF01;
+        ++battle.unk5771E9;
 
         // Rows outside the escorts write the words beside givenBack in the original; none here.
         if (row >= 0 && static_cast<std::size_t>(row + 1) < battle.givenBack.size())
@@ -681,7 +681,7 @@ int Game::RemoveDefeated(int index, int role)
             battle.givenBack[static_cast<std::size_t>(row + 1)] = 0;
         }
 
-        if (battle.unk53BF01 < escorts)
+        if (battle.unk5771E9 < escorts)
         {
             if (row == 1)
             {
@@ -700,7 +700,7 @@ int Game::RemoveDefeated(int index, int role)
 
             battle.escortCount = 0;
             battle.roleCount = static_cast<u32>(roles - escorts);
-            battle.unk53BF01 = 0;
+            battle.unk5771E9 = 0;
         }
 
         this->MeasureUnits();
@@ -793,12 +793,12 @@ int Game::RemoveDefeated(int index, int role)
 }
 
 // swd3e.exe 0x00465750: the draw order with the acting unit (actingUnit) drawn right after the unit it aims at (none
-// while unk53C4C0, unk53AE7C or unk53AE80 is set or no unit acts): a role aims at an enemy, an enemy at a role.
+// while unk53C4C0, unk575F24 or unk53AE80 is set or no unit acts): a role aims at an enemy, an enemy at a role.
 void Game::SortActingDrawOrder()
 {
     BattleState& battle = this->battleState;
 
-    if (battle.unk53C4C0 == 1 || battle.unk53AE7C == 1 || battle.unk53AE80 == 1 || battle.actingUnit == -1)
+    if (battle.unk53C4C0 == 1 || battle.unk575F24 == 1 || battle.unk53AE80 == 1 || battle.actingUnit == -1)
     {
         return;
     }
@@ -812,7 +812,7 @@ void Game::SortActingDrawOrder()
         target = static_cast<i16>(this->battleRoles[role].GetWord29A2());
 
         // Never so here (the original returned above).
-        if (battle.unk53AE7C == 1)
+        if (battle.unk575F24 == 1)
         {
             target += BattleState::FirstRoleUnit;
         }
@@ -898,7 +898,7 @@ void Game::CheckBattleEnd()
         }
     }
 
-    if (battle.enemiesGone - battle.unk53BF02 >= static_cast<i32>(battle.enemyCount) || this->fightTalk.wonByTalk == 1)
+    if (battle.enemiesGone - battle.unk5771EA >= static_cast<i32>(battle.enemyCount) || this->fightTalk.wonByTalk == 1)
     {
         battle.unk53BF5C = 1;
 
@@ -912,10 +912,10 @@ void Game::CheckBattleEnd()
     }
 }
 
-// swd3e.exe 0x00469410: the pointer prompt of the battle state for its first 300 frames (always while unk53BDAC is
+// swd3e.exe 0x00469410: the pointer prompt of the battle state for its first 300 frames (always while unk577088 is
 // negative): kWaitPointer in states 1, 2, 4, 5, 8, 0x1B, 0x1E, 0x29 and 0x50; in states 3 and 9 (with unk53BFBC)
 // kTurnPointer or kNoTurnPointer by turnPointer; otherwise kUnitPointer with a current unit, else kNoUnitPointer, or
-// with a negative unk53BDAC the effect kMarkEffect at (unk53BF50, unk53BF52) (unk53BF58 cleared once it ends).
+// with a negative unk577088 the effect kMarkEffect at (unk577246, unk577248) (unk57724C cleared once it ends).
 void Game::DrawBattlePrompt()
 {
     BattleState& battle = this->battleState;
@@ -924,7 +924,7 @@ void Game::DrawBattlePrompt()
     const int y = this->state.pointerY;
     ++battle.promptFrames;
 
-    if (battle.promptFrames >= kPromptFrames && battle.unk53BDAC >= 0)
+    if (battle.promptFrames >= kPromptFrames && battle.unk577088 >= 0)
     {
         return;
     }
@@ -957,7 +957,7 @@ void Game::DrawBattlePrompt()
             break;
 
         default:
-            if (battle.unk53BDAC >= 0)
+            if (battle.unk577088 >= 0)
             {
                 const smooth::Scene::Pointer following(this->battleServices);
                 hud.DrawEffectAt(battle.currentUnit != 0 ? kUnitPointer : kNoUnitPointer, 0, x, y, 0);
@@ -965,14 +965,14 @@ void Game::DrawBattlePrompt()
             else if (
                 hud.DrawEffectAt(
                     kMarkEffect,
-                    battle.unk53BF58,
-                    battle.unk53BF50,
-                    battle.unk53BF52,
+                    battle.unk57724C,
+                    battle.unk577246,
+                    battle.unk577248,
                     battle.mirrored != 0 ? 1 : 0
                 ) == 1
             )
             {
-                battle.unk53BF58 = 0;
+                battle.unk57724C = 0;
             }
 
             break;
@@ -1125,7 +1125,7 @@ void Game::SpreadPoison(int enemies)
 // kind Unk16 plus 100 (hitDamage, lastDamage) while the cast pose of act 0x1775 plays; once it is done (1) the grey
 // band closes (2) and every standing enemy takes it: by the side of the coin (coinState) an enemy of the other kind
 // (ObjectUnkA2, 1 on 陽, 0 on 陰) is healed (minus the damage, HealTarget), the others are hit (flag 26B8 raised),
-// the number shown (at most 9999) after the hit picture 0x2389; one defeated becomes unk4A7626 (its unk513664 entry
+// the number shown (at most 9999) after the hit picture 0x2389; one defeated becomes unk4BF1CA (its unk513664 entry
 // set), flashes the field (defeat pose 6) and whitens the frame. 0 while the pose plays.
 int Game::YinYangAttack(int role)
 {
@@ -1180,7 +1180,7 @@ int Game::YinYangAttack(int role)
 
         if (enemy.Damage(services, battle.lastDamage, 0, 0) == 1)
         {
-            battle.unk4A7626 = static_cast<u16>(index);
+            battle.unk4BF1CA = static_cast<u16>(index);
             battle.unk513664[index] = static_cast<i32>(index);
             battle.flashing = 1;
             enemy.SetDefeatPose(kYinYangDefeatPose);
@@ -2408,12 +2408,12 @@ void Game::MenuCancel()
             else
             {
                 battle.orderedSkill = 0;
-                battle.unk53BD48 = 0;
+                battle.unk577018 = 0;
                 battle.result = kTalkState;
             }
 
             battle.turnPointer = 1;
-            battle.unk53C02C = 0;
+            battle.unk577330 = 0;
             cancelCommand();
 
             for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
@@ -2637,7 +2637,7 @@ void Game::DrawTargetTag(int x, int y)
 // swd3e.exe 0x00475940: the 控制 menu of the controlled enemy (controlledEnemy) at (x, y): a tile box with the title, a
 // tile box of controlRows rows, then 攻擊, its objects by name, its skills as 特殊1 and 特殊2, and 釋放, 20 pixels a
 // row. Entry `cursor` (from 1) is drawn again over a dark background; an object sets orderedSkill to its id (always the
-// first object's, see ItemName) and a skill unk53BD48 to its number.
+// first object's, see ItemName) and a skill unk577018 to its number.
 void Game::DrawControlMenu(int x, int y, int cursor)
 {
     smooth::Scene scene;
@@ -3175,7 +3175,7 @@ void Game::MenuUp()
 
         case kTalkState:
             battle.orderedSkill = 0;
-            battle.unk53BD48 = 0;
+            battle.unk577018 = 0;
             tick();
 
             if (--battle.controlCursor < 1)
@@ -3378,7 +3378,7 @@ void Game::MenuDown()
 
         case kTalkState:
             battle.orderedSkill = 0;
-            battle.unk53BD48 = 0;
+            battle.unk577018 = 0;
             tick();
 
             if (++battle.controlCursor > battle.controlRows)
@@ -3605,7 +3605,7 @@ void Game::AimGhostStep(int step)
 }
 
 // swd3e.exe 0x00468480: the debug keys of the battle (with the debug mode). With a Ctrl key: F3 stops the music, F4
-// toggles showRoleBlocks, F1 and X toggle unk5244E0 and unk53AF68, K starts a strong attack (強攻擊), Z refills the
+// toggles showRoleBlocks, F1 and X toggle unk5244E0 and unk576084, K starts a strong attack (強攻擊), Z refills the
 // roles (vitals, fury and strong attributes), T draws the enemies' gauges again, D and R hurt the roles, V the enemies,
 // F9 toggles skipping the talk, E ends the battle (0), C ends the spell and the acting unit (the original then resets
 // the turn of role actingUnit - 20 and enemy actingUnit with actingUnit just set to -1: not done here), F5 slows the
@@ -3652,7 +3652,7 @@ int Game::BattleDebugKeys()
             if (pressed(Input::X))
             {
                 pause();
-                battle.unk53AF68 = battle.unk53AF68 == 0 ? 1 : 0;
+                battle.unk576084 = battle.unk576084 == 0 ? 1 : 0;
             }
 
             if (pressed(Input::K))
@@ -3780,17 +3780,17 @@ int Game::BattleDebugKeys()
             {
                 pause();
 
-                if (battle.unk53C02C == 1)
+                if (battle.unk577330 == 1)
                 {
                     battle.panelFlags &= ~BattleState::UnkPanel2;
-                    battle.unk53C02C = 0;
+                    battle.unk577330 = 0;
                     this->battleMessages
                         .Add(kDebugMessageX, kDebugMessageY, kDebugMessageFrames, kNormalPact, BattleMessage::Centered);
                 }
                 else
                 {
                     battle.panelFlags |= BattleState::UnkPanel2;
-                    battle.unk53C02C = 1;
+                    battle.unk577330 = 1;
                     this->battleMessages.Add(
                         kDebugMessageX,
                         kDebugMessageY,
@@ -3819,7 +3819,7 @@ int Game::BattleDebugKeys()
                 battle.roleOrder = {};
                 std::fill_n(battle.turnTaken.begin() + kClearedTurnFirst, kClearedTurnUnits, 0);
                 battle.slotRecords.fill(BattleSlotRecord{});
-                battle.unk4A7626 = kNoTalkRole;
+                battle.unk4BF1CA = kNoTalkRole;
                 battle.unk53BF80 = 1;
                 battle.unk53BD80 = 0;
                 battle.unk577260 = 0;
@@ -5008,7 +5008,7 @@ void Game::ConfirmCommand()
 
         case kStealCommand:
             battle.result = kTargetState;
-            battle.unk53BDA4 = 0;
+            battle.unk577080 = 0;
             break;
 
         case kListState1B:
@@ -6160,8 +6160,8 @@ void Game::ConfirmEnd()
     }
 }
 
-// swd3e.exe 0x0046F100: the confirm key of the battle (not while unk53BF1C, unk53C024, the fade out or a negative
-// unk53BDAC): with one standing enemy left and a talk role, the menu closes (unless won); the level-up stats skip to
+// swd3e.exe 0x0046F100: the confirm key of the battle (not while unk577204, unk577328, the fade out or a negative
+// unk577088): with one standing enemy left and a talk role, the menu closes (unless won); the level-up stats skip to
 // their end (0x1D, then all at once); a talk window moves on; outside the menu MenuConfirm takes it; a role taking
 // the panel (not held) opens the menu (kOpenSound): the command menu, or the talk menu of the talk role with its
 // answers (攻擊, the enemy's objects and skills, 釋放).
@@ -6169,13 +6169,13 @@ void Game::ConfirmKey()
 {
     BattleState& battle = this->battleState;
 
-    if (battle.unk53BF1C != 0 || battle.unk53C024 == 1 || battle.endFade == 1 || battle.unk53BDAC < 0)
+    if (battle.unk577204 != 0 || battle.unk577328 == 1 || battle.endFade == 1 || battle.unk577088 < 0)
     {
         return;
     }
 
     if (battle.unk53C4C0 == 0 && static_cast<i32>(battle.enemyCount) - battle.enemiesGone <= 1 &&
-        battle.unk4A7626 != kNoTalkRole && battle.result != kBattleWon)
+        battle.unk4BF1CA != kNoTalkRole && battle.result != kBattleWon)
     {
         battle.result = 0;
         return;
@@ -6347,7 +6347,7 @@ void Game::BattleKeys()
 
         if (controls.At(Button::KeyG).press != 0 && Game::KeyRepeats(controls.At(Button::KeyG)))
         {
-            if (battle.unk53BF1C != 0 || battle.hitsAllRoles == 1 || battle.unk577260 == 1 ||
+            if (battle.unk577204 != 0 || battle.hitsAllRoles == 1 || battle.unk577260 == 1 ||
                 battle.result == kTalkOrder || battle.result == kEndVictory || battle.result == kTargetState ||
                 this->scene.talkWindows != nullptr)
             {
@@ -6358,7 +6358,7 @@ void Game::BattleKeys()
                 this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
 
             if (role.IsHeld() == 1 ||
-                (static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1 && battle.unk4A7626 != kNoTalkRole))
+                (static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1 && battle.unk4BF1CA != kNoTalkRole))
             {
                 return;
             }
@@ -6384,7 +6384,7 @@ void Game::BattleKeys()
             battle.sweptUnits = 0;
             battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
             unit = 0;
-            battle.unk53BF1C |= kRetreatMark;
+            battle.unk577204 |= kRetreatMark;
             battle.currentUnit = 0;
             battle.unk53BFB8 = 0;
             battle.unk5772BC = 1;
@@ -6397,9 +6397,9 @@ void Game::BattleKeys()
 
     const ButtonState& space = controls.At(Button::Space);
 
-    if (battle.unk53C024 == 1 && space.heldFrames == 1 && space.press != 0)
+    if (battle.unk577328 == 1 && space.heldFrames == 1 && space.press != 0)
     {
-        battle.unk53BDA4 |= kSpaceMark;
+        battle.unk577080 |= kSpaceMark;
     }
 
     const ButtonState& rightControl = controls.At(Button::RightControl);
@@ -6536,14 +6536,14 @@ void Game::BattleKeys()
 
     if (confirm && (spaceHeld == 1 || (spaceHeld >= kRepeatDelay && spaceHeld % kConfirmRepeatStep == 1)))
     {
-        if (battle.unk53BDAC < 0)
+        if (battle.unk577088 < 0)
         {
-            battle.unk53BDAC |= 1;
+            battle.unk577088 |= 1;
         }
 
-        if ((battle.unk53BDAC & kUnk53BDACBit30) != 0)
+        if ((battle.unk577088 & kUnk53BDACBit30) != 0)
         {
-            battle.unk53BDAC |= 1;
+            battle.unk577088 |= 1;
         }
 
         if (battle.hitsAllRoles == 1)
@@ -6780,7 +6780,7 @@ void Game::DrawBattleMenu()
         case kLeaveState:
             if (battle.unk577260 == 0 && battle.hitsAllRoles == 0)
             {
-                battle.unk53BF1C |= kRetreatMark;
+                battle.unk577204 |= kRetreatMark;
                 battle.result = 0;
                 battle.currentUnit = 0;
                 battle.unk5772BC = 1;
@@ -7315,7 +7315,7 @@ void Game::BattleEndFrame()
 void Game::EndCheckFrame()
 {
     BattleState& battle = this->battleState;
-    battle.unk53BF1C = 0;
+    battle.unk577204 = 0;
     battle.autoBattle = 0;
     battle.unk53C4C0 = 1;
 

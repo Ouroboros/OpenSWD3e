@@ -688,7 +688,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
     if (battle.unk5772F8 == 1)
     {
         // A cast that defeats every enemy ends once they are all gone.
-        if (static_cast<i32>(battle.enemiesGone) - battle.unk53BF02 < static_cast<i32>(battle.enemyCount))
+        if (static_cast<i32>(battle.enemiesGone) - battle.unk5771EA < static_cast<i32>(battle.enemyCount))
         {
             return 0;
         }

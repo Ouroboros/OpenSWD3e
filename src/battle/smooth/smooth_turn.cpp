@@ -1288,7 +1288,7 @@ void TurnFrame::DrawControlMenuAdvance(int x, int y, int cursor, Scene& scene)
 
         if (cursor == number)
         {
-            battle.unk53BD48 = 0;
+            battle.unk577018 = 0;
             battle.orderedSkill = static_cast<i32>(id);
         }
     }
@@ -1313,7 +1313,7 @@ void TurnFrame::DrawControlMenuAdvance(int x, int y, int cursor, Scene& scene)
         if (cursor == number)
         {
             battle.orderedSkill = 0;
-            battle.unk53BD48 = choice + 1;
+            battle.unk577018 = choice + 1;
         }
     }
 
@@ -2839,7 +2839,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             kDebugFlagsY,
             WinFormat(
                 kFlagsDebugLine,
-                {battle.unk53AF68, static_cast<i32>(battle.darkenUnit), game.fightTalk.battleRuns}
+                {battle.unk576084, static_cast<i32>(battle.darkenUnit), game.fightTalk.battleRuns}
             )
         );
         text(

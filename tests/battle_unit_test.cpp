@@ -914,7 +914,7 @@ TEST_CASE("battle state: the initial turn and push values match swd3e.exe")
                 state.lastRoleHit,
                 state.lastEnemyHit,
                 state.lastRoleDefeated,
-                state.unk4A7626,
+                state.unk4BF1CA,
                 state.unk4A7628,
                 state.levelCap
             }

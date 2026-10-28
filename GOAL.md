@@ -33,7 +33,7 @@
 
 第二遍汇编验证，方法见 reverse/analysis/pass2-method.md：每个函数先只读汇编独立推导全部分支、出口、位宽、调用顺序、随机数消费与副作用，再对照源码；边界保护须与 deviations.md 登记一致；证据记入 reverse/evidence/pass2/，用 `scripts/mark_verified.py ... --pass 2` 登记。
 
-停点：reverse/functions.tsv 第 898 行（0x0045BEA0 Game::RoleActionFrame）。
+停点：reverse/functions.tsv 第 899 行（0x0045EE20 Game::EnemyActionFrame）。
 
 ## 下一步
 

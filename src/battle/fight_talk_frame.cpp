@@ -723,7 +723,7 @@ int Game::FightTalkDefeat()
 
         if (unit <= kLastEnemy)
         {
-            battle.unk4A7626 = unit;
+            battle.unk4BF1CA = unit;
             battle.unk53BFDC = 1;
             battle.unk513664[unit] = unit;
             battle.flashing = 1;
@@ -862,7 +862,7 @@ int Game::FightTalkWin()
     if (talk.wonByTalk == 0)
     {
         battle.enemiesGone = static_cast<u8>(battle.enemyCount);
-        battle.unk53BF02 = 0;
+        battle.unk5771EA = 0;
 
         if (battle.result <= kLastPlayState)
         {
@@ -1276,7 +1276,7 @@ int Game::FightTalkLoot()
 
     talk.wonByTalk = 1;
     battle.enemiesGone = static_cast<u8>(battle.enemyCount);
-    battle.unk53BF02 = 0;
+    battle.unk5771EA = 0;
     talk.battleRuns = 0;
 
     if (this->BattleFrame() != 0)
@@ -1332,7 +1332,7 @@ int Game::FightTalkUnits(u16 command)
 
             if (unit <= kLastEnemy)
             {
-                ++battle.unk53BF02;
+                ++battle.unk5771EA;
             }
 
             talk.cursor += 2 * sizeof(u16);
@@ -2268,7 +2268,7 @@ int Game::FightTalkSlideTo()
 
 // Command 0x4E of FightTalkFrame (inline in the original): the role of the second word (healed fully and cured of
 // bit 0x8000 when defeated) catches the enemy of the third (command 6, at once: the queues and records cleared, the
-// role acting); the talk waits until the catch is over (unk53C02C).
+// role acting); the talk waits until the catch is over (unk577330).
 int Game::FightTalkCatch()
 {
     BattleState& battle = this->battleState;
@@ -2302,14 +2302,14 @@ int Game::FightTalkCatch()
         battle.hitsAllRoles = 0;
         battle.actingUnit = unit;
         this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].IncreaseHits();
-        battle.unk53C02C = 1;
+        battle.unk577330 = 1;
         talk.unk53CE98 = 1;
     }
 
     talk.battleRuns = 1;
     this->BattleFrame();
 
-    if (battle.unk53C02C != 0)
+    if (battle.unk577330 != 0)
     {
         return 1;
     }
@@ -2377,7 +2377,7 @@ int Game::FightTalkMisc(u16 command)
 
         case kTalkQuietWin:
             battle.enemiesGone = static_cast<u8>(battle.enemyCount);
-            battle.unk53BF02 = 0;
+            battle.unk5771EA = 0;
             battle.victoryWithoutPanel = 1;
             battle.result = kEndCheckState;
             battle.autoBattle = 0;

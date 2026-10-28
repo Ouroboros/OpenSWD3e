@@ -160,7 +160,7 @@ int Game::BattleFrame()
             battle.sweepTotal,
             battle.unk53AE78,
             static_cast<u16>(battle.slideBackPicture),
-            battle.unk53AE7C,
+            battle.unk575F24,
             battle.unk53AE80,
             battle.wholeSide,
             battle.hitsAtOnce
@@ -171,7 +171,7 @@ int Game::BattleFrame()
         battle.sweepTotal = acting.targetCount;
         battle.unk53AE78 = acting.kind;
         battle.slideBackPicture = static_cast<i16>(acting.unk0A);
-        battle.unk53AE7C = acting.unk0C;
+        battle.unk575F24 = acting.unk0C;
         battle.unk53AE80 = acting.unk10;
         battle.wholeSide = acting.unk14;
         battle.hitsAtOnce = acting.unk18;
@@ -441,20 +441,20 @@ void Game::EndBattle()
     battle.battleGold = 0;
     battle.battleExperience = 0;
     battle.battleProficiency = 0;
-    battle.unk53BF1C = 0;
-    battle.unk53BDAC = 0;
+    battle.unk577204 = 0;
+    battle.unk577088 = 0;
     battle.pendingActionRow = 0;
     battle.pendingAction = 0;
     battle.flashLevel = BattleState::FlashStart;
     battle.defeatedRoles = 0;
     battle.enemiesGone = 0;
-    battle.unk53BF02 = 0;
+    battle.unk5771EA = 0;
     battle.unk53BF04 = 0;
     battle.unk5771F0 = 0;
     battle.lastRoleHit = kNoUnit;
     battle.lastEnemyHit = kNoUnit;
     battle.lastRoleDefeated = kNoUnit;
-    battle.unk4A7626 = kNoUnit;
+    battle.unk4BF1CA = kNoUnit;
     battle.unk4FDF7C = 0;
     battle.unk5242F8 = 0;
     battle.unk4A7628 = kOpeningPanels;

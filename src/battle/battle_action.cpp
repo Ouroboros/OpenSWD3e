@@ -70,7 +70,7 @@ constexpr int kRouletteY = 0x64;
 constexpr u16 kRouletteTarget = 0x2389;
 constexpr u16 kRouletteTreasure = 0x25;  // the treasure kind of the roulette (AddTreasureExperience)
 constexpr u16 kRoulettePoints = 5;
-constexpr i32 kRouletteSetUp = 0x40000000;  // BattleState::unk53BDAC while the roulette runs
+constexpr i32 kRouletteSetUp = 0x40000000;  // BattleState::unk577088 while the roulette runs
 constexpr i32 kRouletteStopped = 0x20000000;
 constexpr u32 kRouletteFrames = 0xFFFFFF;
 constexpr u32 kRouletteRest = 0xF;
@@ -146,7 +146,7 @@ constexpr u16 kOrderPrepared = 0x8000;  // BattleState::enemyOrders
 constexpr u16 kOrderSpell = 0x4000;
 constexpr int kTimingX = 0x140;  // RoleActionFrame command 0x1A: the timing bar
 constexpr int kTimingY = 0xC8;
-constexpr i32 kTimingPressed = 1;  // BattleState::unk53BDA4
+constexpr i32 kTimingPressed = 1;  // BattleState::unk577080
 constexpr i32 kTimingTaken = 0x8000;
 constexpr i32 kTimingKept = 0xFFF;
 constexpr u16 kTimingDone = 0x8000;
@@ -154,7 +154,7 @@ constexpr u16 kTimingSound = 0x2C;
 constexpr u32 kLowWord = 0xFFFF;
 constexpr u32 kHighWord = 0xFFFF0000;
 constexpr u16 kTimingStart = 1;
-constexpr i32 kTimerStarted = static_cast<i32>(0x80000000u);  // BattleState::unk53BDAC
+constexpr i32 kTimerStarted = static_cast<i32>(0x80000000u);  // BattleState::unk577088
 constexpr i32 kTimerPressed = 1;
 constexpr int kTimerSeconds = 5;
 constexpr int kTimerFlag = 0x4B;
@@ -186,7 +186,7 @@ constexpr i16 kLowStaminaCause = 0x1A;
 constexpr i16 kRetreatFailedCause = 0x16;
 constexpr i16 kSkillNameFrames = 0x23;
 constexpr u16 kRetreatLevel = 0xC8;
-constexpr u16 kRetreatAsked = 0x4000;  // BattleState::unk53BF1C
+constexpr u16 kRetreatAsked = 0x4000;  // BattleState::unk577204
 constexpr u16 kRetreating = 0x8000;
 constexpr u16 kRetreatRoles = 0x7FFF;
 constexpr i16 kRetreatFrames = 0x1E;
@@ -200,7 +200,7 @@ constexpr u16 kTalkCountdown = 0x7FFF;
 }  // namespace
 
 // swd3e.exe 0x0045BEA0: one frame of the command of role `role` on unit `target` (an enemy, or a role while
-// unk53AE7C); 1 once the command is over (at once for a defeated role, for an enemy target past the enemies unless
+// unk575F24); 1 once the command is over (at once for a defeated role, for an enemy target past the enemies unless
 // the hit falls on a whole side, and for a role without commands). Command A 0xC8 walks to the target, the larger
 // ones are the special attacks (RoleSpecialFrame); the others, and command B, run RoleCommandFrame (command B alone
 // takes none of them: 0).
@@ -217,7 +217,7 @@ int Game::RoleActionFrame(int role, int target)
         return 1;
     }
 
-    if (battle.unk53AE7C == 0 && battle.wholeSide == 0 && target >= static_cast<i32>(battle.enemyCount))
+    if (battle.unk575F24 == 0 && battle.wholeSide == 0 && target >= static_cast<i32>(battle.enemyCount))
     {
         return 1;
     }
@@ -242,12 +242,12 @@ int Game::RoleActionFrame(int role, int target)
     return this->RoleCommandFrame(unit, role, target, command);
 }
 
-// The unit a role's command aims at (inline in 0x0045BEA0): role `target` while unk53AE7C, otherwise enemy `target`.
+// The unit a role's command aims at (inline in 0x0045BEA0): role `target` while unk575F24, otherwise enemy `target`.
 BattleUnit& Game::AimedUnit(int target)
 {
     const auto at = static_cast<std::size_t>(target);
 
-    if (this->battleState.unk53AE7C != 0)
+    if (this->battleState.unk575F24 != 0)
     {
         return this->battleRoles[at];
     }
@@ -288,7 +288,7 @@ void Game::RoleHitLanded(int target)
 void Game::RoleDefeated(int target)
 {
     BattleState& battle = this->battleState;
-    battle.unk4A7626 = static_cast<u16>(target);
+    battle.unk4BF1CA = static_cast<u16>(target);
     battle.unk513664[static_cast<std::size_t>(target)] = target;
     battle.flashing = 1;
     this->FlashFrameWhite();
@@ -350,7 +350,7 @@ int Game::RoleSpecialFrame(BattleRole& unit, int role, int target, u16 command)
     // The damage of a landed special attack (inline in the original).
     auto damage = [this, &battle, &unit, &enemy, role, target]
     {
-        if (battle.unk53AF68 == 0 && enemy.Damage(this->battleServices, battle.hitDamage, 0, 0) == 1)
+        if (battle.unk576084 == 0 && enemy.Damage(this->battleServices, battle.hitDamage, 0, 0) == 1)
         {
             battle.hitDamage = -1;
             this->RoleDefeated(target);
@@ -420,7 +420,7 @@ int Game::RoleSpecialFrame(BattleRole& unit, int role, int target, u16 command)
             this->RoleHitLanded(target);
             this->AddSpecialPoints(role, kHitPoints);
 
-            if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
+            if (battle.unk576084 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
             {
                 this->RoleDefeated(target);
                 this->AddSpecialPoints(role, kDefeatPoints);
@@ -498,7 +498,7 @@ int Game::ComboFrame(BattleRole& unit, int role, int target)
     this->RoleHitLanded(target);
     this->AddSpecialPoints(role, kHitPoints);
 
-    if (battle.unk53AF68 == 0 && enemy.Damage(this->battleServices, battle.hitDamage, 0, 0) == 1)
+    if (battle.unk576084 == 0 && enemy.Damage(this->battleServices, battle.hitDamage, 0, 0) == 1)
     {
         battle.hitDamage = -1;
         this->RoleDefeated(target);
@@ -563,7 +563,7 @@ int Game::RoleCommandFrame(BattleRole& unit, int role, int target, u16 command)
             this->AddSpellPoints(role, kHitPoints);
             this->RoleHitLanded(target);
 
-            if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
+            if (battle.unk576084 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
             {
                 battle.hitDamage = -1;
                 this->RoleDefeated(target);
@@ -679,7 +679,7 @@ int Game::RoleCommandFrame(BattleRole& unit, int role, int target, u16 command)
 
             battle.usedUpItem = unit.UseSelectedItem(kListedCategory);
 
-            if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
+            if (battle.unk576084 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
             {
                 this->RoleDefeated(target);
             }
@@ -793,7 +793,7 @@ CounterList& Game::ProficiencyList()
 }
 
 // Command 1 of RoleActionFrame (inline in the original): the attack lands on its target (an enemy, or a role while
-// unk53AE7C). The attacker drains after the hit (on the enemy of the target's index even for a role target, kept); a
+// unk575F24). The attacker drains after the hit (on the enemy of the target's index even for a role target, kept); a
 // vampire ring (DrainKind 8) turns a tenth plus its proficiency of the rest into healing of the attacker (on an enemy
 // target, with its digits; on a role target the share is only computed); its counters step by 5. An enemy target
 // slides the units back (SlideBack). The command goes on with 0x12C.
@@ -812,19 +812,19 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
 
     this->RoleHitLanded(target);
 
-    if (battle.unk53AE7C == 0)
+    if (battle.unk575F24 == 0)
     {
         battle.slideMode = BattleState::SlideBack;
     }
 
     // A defeat keeps the damage (no -1 as after the special attacks).
-    if (battle.unk53AF68 == 0 && aimed.Damage(services, battle.hitDamage, 0, 0) == 1)
+    if (battle.unk576084 == 0 && aimed.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
         this->RoleDefeated(target);
         unit.SetCommand(kAfterAction);
     }
 
-    if (battle.unk53AE7C != 0)
+    if (battle.unk575F24 != 0)
     {
         this->ApplyDrain(battle.hitDamage, unit, enemy);
     }
@@ -834,7 +834,7 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
         const i32 share = static_cast<u16>(unit.AccessoryProficiency(kVampireRing, this->ProficiencyList()));
         const i32 tenth = battle.hitDamage * kTenthPercent / kPercent;
 
-        if (battle.unk53AE7C != 0)
+        if (battle.unk575F24 != 0)
         {
             battle.hitDamage = tenth + battle.hitDamage * share / kPercent;
             battle.lastDamage = 0;
@@ -854,7 +854,7 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
         unit.StepAccessoryCounters(this->ProficiencyList(), kVampireKind, kVampireStep);
     }
 
-    if (battle.unk53AE7C == 0)
+    if (battle.unk575F24 == 0)
     {
         this->ApplyDrain(battle.hitDamage, unit, enemy);
     }
@@ -915,7 +915,7 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, int target)
 
     if ((battle.spellStage & BattleState::SpellCast) == 0)
     {
-        if (battle.unk53AE7C == 0)
+        if (battle.unk575F24 == 0)
         {
             battle.slideMode = BattleState::SlideToUnit;
             battle.slideUnit = target;
@@ -930,7 +930,7 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, int target)
                 std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
         }
 
-        if (battle.unk53AE7C != 0)
+        if (battle.unk575F24 != 0)
         {
             if (battle.wholeSide == 1)
             {
@@ -1024,7 +1024,7 @@ int Game::RoleItemFrame(BattleRole& unit, int role, int target)
         this->StartRoleCast(unit);
         i32 units = static_cast<i32>(battle.roleCount);
 
-        if (battle.unk53AE7C == 0)
+        if (battle.unk575F24 == 0)
         {
             units = static_cast<i32>(battle.enemyCount);
             battle.slideMode = BattleState::SlideToUnit;
@@ -1097,15 +1097,15 @@ int Game::AbsorbFrame(BattleRole& unit, int target, bool sealed)
         }
 
         this->EndCommandDarkening();
-        battle.unk4A7626 = kNoUnit;
-        battle.unk53C02C = 0;
+        battle.unk4BF1CA = kNoUnit;
+        battle.unk577330 = 0;
 
         if (battle.unk5772C8 == 0)
         {
             battle.undarkening = 1;
         }
 
-        if (sealed && static_cast<i32>(battle.enemiesGone) - battle.unk53BF02 >= static_cast<i32>(battle.enemyCount))
+        if (sealed && static_cast<i32>(battle.enemiesGone) - battle.unk5771EA >= static_cast<i32>(battle.enemyCount))
         {
             battle.autoBattle = 0;
             battle.result = kEndCheckState;
@@ -1124,14 +1124,14 @@ int Game::AbsorbFrame(BattleRole& unit, int target, bool sealed)
             static_cast<u16>(FindCounterValue(this->party.fame.lists[Fame::FameList], enemy.ActId())) >= kKnownAbsorbs
         )
         {
-            battle.unk53C02C = 1;
+            battle.unk577330 = 1;
         }
 
         if (unit.CanAbsorb(services, enemy) == 1)
         {
-            battle.unk53C02C = 1;
+            battle.unk577330 = 1;
         }
-        else if (battle.unk53C02C != 1)
+        else if (battle.unk577330 != 1)
         {
             battle.absorbSucceeded = 0;
             battle.pushFrames = kAbsorbWait;
@@ -1153,7 +1153,7 @@ int Game::AbsorbFrame(BattleRole& unit, int target, bool sealed)
 
         if (sealed)
         {
-            battle.unk4A7626 = static_cast<u16>(target);
+            battle.unk4BF1CA = static_cast<u16>(target);
         }
 
         AddOneItem(
@@ -1221,9 +1221,9 @@ int Game::SummonEscortFrame(BattleRole& unit, int role)
 
     if (battle.pushFrames == 0)
     {
-        if (battle.unk53BF01 != 0)
+        if (battle.unk5771E9 != 0)
         {
-            --battle.unk53BF01;
+            --battle.unk5771E9;
         }
 
         if ((battle.panelFlags & kNoEscortPanel) == 0 && battle.escortCount < kMaxEscorts)
@@ -1245,8 +1245,8 @@ int Game::SummonEscortFrame(BattleRole& unit, int role)
 
         escort.SetupEscort(battle.rolePlaces[battle.callingEscort], this->battleServices, this->database);
         battle.pushFrames = 1;
-        battle.unk53BDD4 = 0;
-        battle.unk53BDD8 = 0;
+        battle.unk5770B0 = 0;
+        battle.unk5770B4 = 0;
     }
 
     this->DarkenForCommand();
@@ -1282,7 +1282,7 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
 
-    if (battle.unk53BF1C == 0)
+    if (battle.unk577204 == 0)
     {
         if (unit.StepBack(services, 0) != 1)
         {
@@ -1314,9 +1314,9 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
             return 1;
         }
 
-        battle.unk53BF1C = 1;
+        battle.unk577204 = 1;
     }
-    else if (battle.unk53BF1C != 1)
+    else if (battle.unk577204 != 1)
     {
         return 0;
     }
@@ -1330,7 +1330,7 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
 
         const u16 escorts = battle.escortCount;
         const auto roles = static_cast<i32>(battle.roleCount);
-        battle.unk53BF1C = 0;
+        battle.unk577204 = 0;
         const i32 row = role + escorts - roles;
 
         // Rows outside the escorts write the words beside givenBack in the original; none here.
@@ -1339,10 +1339,10 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
             battle.givenBack[static_cast<std::size_t>(row + 1)] = 0;
         }
 
-        ++battle.unk53BF01;
+        ++battle.unk5771E9;
         battle.rolePlaces[static_cast<std::size_t>(role)].actId = 0;
 
-        if (battle.unk53BF01 < escorts)
+        if (battle.unk5771E9 < escorts)
         {
             if (row == 1)
             {
@@ -1361,7 +1361,7 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
 
             battle.escortCount = 0;
             battle.roleCount = static_cast<u32>(roles - escorts);
-            battle.unk53BF01 = 0;
+            battle.unk5771E9 = 0;
         }
 
         return 1;
@@ -1390,7 +1390,7 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
         battle.result = kRetreatedState;
     }
 
-    battle.unk53BF1C = 0;
+    battle.unk577204 = 0;
     this->battleMessages.Add(kNoticeX, kNoticeY, kRetreatFrames, kRetreated, kRetreatFlags);
     return 1;
 }
@@ -1528,7 +1528,7 @@ int Game::PoseSweepFrame(BattleRole& unit)
             enemy.SetDamageDigits(services, battle.hitDamage);
             enemy.StepTargetCount(services, 1);
 
-            if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
+            if (battle.unk576084 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
             {
                 this->RoleDefeated(static_cast<int>(index));
             }
@@ -1552,7 +1552,7 @@ int Game::PoseSweepFrame(BattleRole& unit)
 // Command 0x19 of RoleActionFrame (inline in the original): without a controlled enemy the role tries to control the
 // enemy (控制成功!!: it faces the party, its turn resets and it leaves the slot records; or 控制失敗!!). With one the
 // role orders it: its order (enemyOrders) is a prepared command, the chosen skill (orderedSkill) or the chosen object
-// (unk53BD48), its act in the enemy's enemyHitActs, aimed at the enemy actingEnemy (1-based in aimTarget), and it is
+// (unk577018), its act in the enemy's enemyHitActs, aimed at the enemy actingEnemy (1-based in aimTarget), and it is
 // queued to act.
 int Game::ControlFrame(BattleRole& unit, int role, int target)
 {
@@ -1594,7 +1594,7 @@ int Game::ControlFrame(BattleRole& unit, int role, int target)
         battle.orderedSkill = 0;
     }
 
-    if (battle.unk53BD48 != 0)
+    if (battle.unk577018 != 0)
     {
         order = kOrderPrepared;
         u32 act = static_cast<u32>(hitAct);
@@ -1609,7 +1609,7 @@ int Game::ControlFrame(BattleRole& unit, int role, int target)
 }
 
 // Command 0x1A of RoleActionFrame (inline in the original): the timing bar runs while the role holds still
-// (kComboStill once the needle starts); a press (unk53BDA4) takes the timing: a hit with the needle on the mark
+// (kComboStill once the needle starts); a press (unk577080) takes the timing: a hit with the needle on the mark
 // (timingHit) sounds and frees the role, otherwise the next attack repeats (numberFont's low word). Each attack that
 // lands holds the role again; a defeat holds the enemy and ends the bar (kTimingDone), as does the bar's end without a
 // press.
@@ -1631,27 +1631,27 @@ int Game::TimingAttackFrame(BattleRole& unit, int target)
         unit.ClearStatus(kComboStill);
         unit.SetCommand(kAfterAction);
         hud.timingHit = 0;
-        battle.unk53C024 = 0;
+        battle.unk577328 = 0;
         setLow(hud.numberFont, 0);
         setLow(hud.timingCounter, 0);
     };
 
-    battle.unk53C024 = 1;
+    battle.unk577328 = 1;
 
     if ((static_cast<u32>(hud.timingCounter) & kLowWord) == kTimingStart)
     {
         unit.SetStatus(kComboStill);
     }
 
-    if (hud.DrawTimingBar(kTimingX, kTimingY) == 1 && (battle.unk53BDA4 & kTimingTaken) == 0)
+    if (hud.DrawTimingBar(kTimingX, kTimingY) == 1 && (battle.unk577080 & kTimingTaken) == 0)
     {
         end();
         return 0;
     }
 
-    if ((battle.unk53BDA4 & kTimingPressed) != 0)
+    if ((battle.unk577080 & kTimingPressed) != 0)
     {
-        battle.unk53BDA4 = kTimingTaken;
+        battle.unk577080 = kTimingTaken;
 
         if ((hud.numberFont & kLowWord) == 0)
         {
@@ -1674,14 +1674,14 @@ int Game::TimingAttackFrame(BattleRole& unit, int target)
         return 0;
     }
 
-    battle.unk53BDA4 &= kTimingKept;
+    battle.unk577080 &= kTimingKept;
     this->RoleHitLanded(target);
-    battle.unk53C024 = 0;
+    battle.unk577328 = 0;
 
-    if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
+    if (battle.unk576084 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
         battle.hitDamage = -1;
-        battle.unk4A7626 = static_cast<u16>(target);
+        battle.unk4BF1CA = static_cast<u16>(target);
         battle.unk513664[static_cast<std::size_t>(target)] = target;
         battle.flashing = 1;
         enemy.SetHeld(1);
@@ -1752,7 +1752,7 @@ int Game::AccessoryBuffFrame(BattleRole& unit, int target, int command)
 }
 
 // Command 0x1F of RoleActionFrame (inline in the original): a five-second timer (StartTimer) runs over the enemy
-// (its place in unk53BF50); game flag 0x4B (the timer's end) ends the command; each press (unk53BDAC) hits the enemy
+// (its place in unk577246); game flag 0x4B (the timer's end) ends the command; each press (unk577088) hits the enemy
 // with the role's hit (its digits) and a defeat clears game flag 0x4A and ends it.
 int Game::TimerAttackFrame(BattleRole& unit, int target)
 {
@@ -1761,47 +1761,47 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
     BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(target)];
     battle.result = 0;
 
-    if (battle.unk53BDAC == 0)
+    if (battle.unk577088 == 0)
     {
-        battle.unk53BDAC = kTimerStarted;
+        battle.unk577088 = kTimerStarted;
         this->StartTimer(0, kTimerSeconds, 0, 1);
         u16 x = 0;
         u16 y = 0;
         enemy.GetDrawPosition(x, y);
-        battle.unk53BF50 = static_cast<i16>(x);
-        battle.unk53BF52 = static_cast<i16>(y);
+        battle.unk577246 = static_cast<i16>(x);
+        battle.unk577248 = static_cast<i16>(y);
         this->battleHud.ResetEffectAt();
     }
 
     if (this->state.GameFlag(kTimerFlag))
     {
         this->state.ClearGameFlag(kTimerFlag);
-        battle.unk53BDAC = 0;
-        battle.unk53BF58 = 0;
+        battle.unk577088 = 0;
+        battle.unk57724C = 0;
         battle.darkenUnit = -1;
         return 1;
     }
 
-    if ((battle.unk53BDAC & kTimerPressed) == 0)
+    if ((battle.unk577088 & kTimerPressed) == 0)
     {
         return 0;
     }
 
     this->audio.PlaySound(kTimerSound, this->config.soundVolume);
     this->battleHud.ResetEffectAt();
-    battle.unk53BDAC = kTimerStarted;
-    battle.unk53BF58 = 1;
+    battle.unk577088 = kTimerStarted;
+    battle.unk57724C = 1;
     battle.hitDamage = unit.HitDamage(services, enemy, battle.spiritDamage, battle.staminaDamage);
     enemy.RaiseFlag26B8(this->battleState);
     enemy.SetDamageDigits(services, battle.hitDamage);
     enemy.StepTargetCount(services, 1);
 
-    if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
+    if (battle.unk576084 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
         this->state.ClearGameFlag(kTimerDefeatFlag);
         this->RoleDefeated(target);
         battle.hitDamage = 0;
-        battle.unk53BDAC = 0;
+        battle.unk577088 = 0;
         battle.darkenUnit = -1;
         return 1;
     }
@@ -1869,22 +1869,22 @@ int Game::RouletteFrame(BattleRole& unit, int target)
         return 0;
     }
 
-    if ((battle.unk53BDAC & kRouletteSetUp) == 0)
+    if ((battle.unk577088 & kRouletteSetUp) == 0)
     {
         hud.SetupRoulette(static_cast<i16>(unit.TreasureLevel(this->ProficiencyList())));
-        battle.unk53BDAC |= kRouletteSetUp;
+        battle.unk577088 |= kRouletteSetUp;
     }
 
-    if ((battle.unk53BDAC & kRouletteStopped) == 0)
+    if ((battle.unk577088 & kRouletteStopped) == 0)
     {
-        if ((battle.unk53BDAC & kTimerPressed) != 0)
+        if ((battle.unk577088 & kTimerPressed) != 0)
         {
             this->audio.PlaySound(kRouletteSound, this->config.soundVolume);
-            battle.unk53BDAC = kRouletteSetUp;
+            battle.unk577088 = kRouletteSetUp;
 
             if (hud.DrawRoulette(kRouletteX, kRouletteY, battle.hitDamage, 1) == 1)
             {
-                battle.unk53BDAC |= kRouletteStopped;
+                battle.unk577088 |= kRouletteStopped;
             }
         }
         else
@@ -1897,7 +1897,7 @@ int Game::RouletteFrame(BattleRole& unit, int target)
 
     hud.DrawRoulette(kRouletteX, kRouletteY, battle.hitDamage, 0);
 
-    if ((static_cast<u32>(++battle.unk53BDAC) & kRouletteFrames) < kRouletteRest)
+    if ((static_cast<u32>(++battle.unk577088) & kRouletteFrames) < kRouletteRest)
     {
         return 0;
     }
@@ -1908,7 +1908,7 @@ int Game::RouletteFrame(BattleRole& unit, int target)
     enemy.SetDamageDigits(services, battle.hitDamage);
     enemy.StepTargetCount(services, 1);
 
-    if (battle.unk53AF68 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
+    if (battle.unk576084 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
         this->RoleDefeated(target);
         battle.darkenUnit = -1;
@@ -1926,14 +1926,14 @@ int Game::RouletteFrame(BattleRole& unit, int target)
     }
 
     hud.ResetRoulette();
-    battle.unk53BDAC = 0;
+    battle.unk577088 = 0;
     battle.hitDamage = 0;
     return 1;
 }
 
 // Command 0x28 of RoleActionFrame (inline in the original): the meter. Without it shown the role casts at itself
 // (act 0x1776) and shows it; with it the role casts at the enemy (act 0x1C9D) and hits it (capped, its digits, a
-// defeat flashing white even while unk53AF68), and the meter goes.
+// defeat flashing white even while unk576084), and the meter goes.
 int Game::MeterAttackFrame(BattleRole& unit, int target)
 {
     BattleState& battle = this->battleState;
@@ -2420,7 +2420,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
         return;
     }
 
-    if (battle.unk4A7626 != kNoUnit && static_cast<i32>(battle.enemyCount) - battle.enemiesGone <= 1)
+    if (battle.unk4BF1CA != kNoUnit && static_cast<i32>(battle.enemyCount) - battle.enemiesGone <= 1)
     {
         unit.ResetTurn(services);
     }
@@ -2453,7 +2453,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     battle.unk53AE78 = 1;
     battle.unk577270 = 1;
     battle.wholeSide = order.unk04;
-    battle.unk53AE7C = order.unk00;
+    battle.unk575F24 = order.unk00;
     battle.hitsAtOnce = order.unk08;
     battle.slideBackPicture = static_cast<i16>(order.unk0C);
     battle.sweepTotal = order.targetCount;
@@ -2673,7 +2673,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
 
 // The acting role of RoleFrame (inline in the original); nothing while the battle waits (hitsAllRoles) before it
 // acts. Once its target stands (unkAAC clear) the role starts acting: a sweep needs an enemy standing; a single hit at
-// a defeated enemy passes to the first enemy standing (unless a taking holds it, unk53C02C); the skill name shows and
+// a defeated enemy passes to the first enemy standing (unless a taking holds it, unk577330); the skill name shows and
 // the cost is paid. While acting it runs RoleActionFrame; once that is over the action ends (RoleAfterAction).
 void Game::RoleActFrame(BattleRole& unit, int role)
 {
@@ -2711,7 +2711,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
 
     if (unit.GetAA8() != 0)
     {
-        if (battle.unk53AE7C == 0)
+        if (battle.unk575F24 == 0)
         {
             bool standing = false;
 
@@ -2730,7 +2730,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
             }
         }
     }
-    else if (battle.unk53AE7C == 0 && battle.pendingAction == 0 && aimed.IsDefeated() && battle.unk53C02C == 0)
+    else if (battle.unk575F24 == 0 && battle.pendingAction == 0 && aimed.IsDefeated() && battle.unk577330 == 0)
     {
         u32 first = 0;
 
@@ -2806,7 +2806,7 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
         this->RetargetRoles(role, target);
 
         if (this->battleEnemies[static_cast<std::size_t>(target)].IsDefeated() &&
-            static_cast<i32>(battle.enemyCount) + battle.unk53BF02 - battle.enemiesGone == 0)
+            static_cast<i32>(battle.enemyCount) + battle.unk5771EA - battle.enemiesGone == 0)
         {
             for (u32 index = 0; index < battle.roleCount; ++index)
             {
@@ -2889,7 +2889,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
                battle.guestCount;
     };
 
-    if ((battle.unk53BF1C & kRetreatAsked) != 0)
+    if ((battle.unk577204 & kRetreatAsked) != 0)
     {
         battle.unk5772BC = 1;
         battle.unk53BFC4 = 1;
@@ -2926,7 +2926,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
 
             if (level == 0)
             {
-                battle.unk53BF1C = 0;
+                battle.unk577204 = 0;
                 battle.sweptUnits = 1;
                 battle.levelUpFrames = 0;
                 battle.unk5772BC = 0;
@@ -2939,7 +2939,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
                 battle.unk53BF5C = 0;
                 battle.currentUnit = 0;
                 battle.levelUpFrames = 0;
-                battle.unk53BF1C = kRetreating;
+                battle.unk577204 = kRetreating;
                 battle.sweptUnits = static_cast<u16>(standing());
             }
             else
@@ -2958,7 +2958,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
                     services
                 );
                 this->audio.PlaySound(kRetreatFailedSound, this->config.soundVolume);
-                battle.unk53BF1C = 0;
+                battle.unk577204 = 0;
                 battle.sweptUnits = 1;
                 battle.levelUpFrames = 0;
                 battle.unk5772BC = 0;
@@ -2968,7 +2968,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
         }
     }
 
-    if ((battle.unk53BF1C & kRetreating) == 0)
+    if ((battle.unk577204 & kRetreating) == 0)
     {
         return;
     }
@@ -2987,13 +2987,13 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
 
     const auto bit = static_cast<u16>(1 << role);
 
-    if ((battle.unk53BF1C & kRetreatRoles & bit) != 0 || unit.StepBack(services, 1) != 1)
+    if ((battle.unk577204 & kRetreatRoles & bit) != 0 || unit.StepBack(services, 1) != 1)
     {
         return;
     }
 
     battle.enemyFaded = 1;
-    battle.unk53BF1C = static_cast<u16>(battle.unk53BF1C | bit);
+    battle.unk577204 = static_cast<u16>(battle.unk577204 | bit);
 
     if (++battle.defeatedRoles >=
         static_cast<u32>(battle.roleCount - battle.unk5770D4 - battle.escortCount - battle.guestCount))
@@ -3002,7 +3002,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
         battle.roleOrder.fill(0);
         battle.slotRecords.fill(BattleSlotRecord{0, 0, 0, 0, 0, 0, 0, 0});
         battle.result = kRetreatedState;
-        battle.unk53BF1C = 0;
+        battle.unk577204 = 0;
         battle.actingUnit = -1;
     }
 }
