@@ -1332,3 +1332,51 @@
 汇编：ShowAllItems；标志=0；类别 0/1/2/3/6 → 种类位 0x10/0xC/0x1001/0x800/2，其余原值。逐个物品（空 → 标志 0、返回 0）：种类命中时，种类位 = 2 → 剩余（movsx 待入 − 零扩展 +6 + movsx 数量）> 0 计数 +1；否则用者 & 5 且剩余 >0 计数 +1；每个节点后 计数 = 序号即停。找到：+0x3460 = 节点；种类命中 → lstrcpy 名字、数量 = 剩余（字）、标志 |= 0x8000；花费位 14 → 花费 = & 0x3FFF，0x005134A0[id]+1 ≥ 3 → 花费 += 花费/3、标志 |= 0x2000；花费 > movsx 体力 → 标志 |= 0x4000。返回 1。
 对照：ListObject 一致（ObjectsLeft 以 u16 取 workCount；CostlyUses=2 与“次数+1 ≥ 3”相同；常量核对）。
 差异：无。
+
+## 0x00481460 BattleRole::CountObjects — exact
+
+汇编：类别 0..6 → 种类位 0x10/0xC/0x1001/0x800/0x2000/0x8000000/2，其余原值；ShowAllItems；逐个物品：种类命中时，种类位 = 2 → 剩余 >0 计数字 +1 并取下一个；否则用者 & 5 且剩余 >0 → +1；随后（种类未命中也走到）种类位 = 0x2000 且花费位 13 → +1。
+对照：CountObjects 一致（kCountCategories=7、kListedObject=0x2000）。
+差异：无。
+
+## 0x00481540 BattleRole::SelectObject — exact
+
+汇编：命令 0x2C 字节清零、+0x2B38 起 16 字节清零、+0x34A4=0；类别映射同 CountObjects；序号 0 → 0。ShowAllItems；逐个物品（空 → 0），计数规则同 CountObjects，计数 = 序号即停。找到：+0x2FB1|=0x40、+0x3460 = 节点、种类输出 = 0。种类位 0x2000 且花费位 13 → 0x00489750(命令, +0x3E)、+0x2EB0 = +0x24，返回 1。+0x48 非 0：种类位 2 → 跳过载入；否则 0x00489750(命令, +0x48)，花费位 15 → +0x34A0 = & 0x7FFF，> movsx 灵力 → 0；位 14 → +0x34A2 = & 0x3FFF，> movsx 体力 → 0。+0x48 为 0：0x00489750(命令, +0x3E)，位 15 同上；位 14 → +0x34A2 = & 0x3FFF，0x005134A0[id]+1 ≥ 3 → ×2，> movsx 体力 → 0。随后：+0x3C=0 → +0x2EB6/B8/BA = +0x34/+0x36/+0x38；+0x2FD0=0，+0x3C 位 0x200 → 1 并赋值；act 输出 = 零扩展 +0x1018；物品种类位 0x800 → +0x2FB1|=0x10、+0x34A4 = +0x54；种类位 & 8 且物品种类 & 8 → 种类=1；种类位 & 0x10 → 种类=1；（物品种类无 0x80 或有 0x8000000）且种类位 ≠ 0x800 → +6 加 1。返回 1。
+对照：SelectObject 逐分支一致（常量核对）。
+差异：无。
+
+## 0x004818E0 BattleRole::UseSelectedItem — exact
+
+汇编：位置=0、剩余次数=0；ShowAllItems；类别映射后只用“= 2”（即类别 6）判断。+0x3460 为空 → 0。循环：位置+1，+0x3458 = 其 next，为空 → 返回 0（+0x3458 留空）；id 与选中物品相同即停。+0x3458 = 选中节点、+0x34A4 = id；+0x3C 位 0x400 且低字节非 0 → 低字节 −1，剩余次数 = 新值。类别 6 → +0x2FB1|=8、+0x34BA = +0x4A、+0x34BC = +0x4C。剩余次数 0 且（物品种类无 0x80 或有 0x8000000）：数量非 0 → −1，否则待入非 0 → −1；+6 非 0（无符号）→ −1；+0x3460=0。数量与待入都为 0 → 保存 next、释放节点、ShowAllItems、走 位置−1 步到前一节点，其 next = 保存值，+0x3458 = 前一节点。+0x3458 所指节点花费位 13 → 0，否则返回 +0x34A4。被摘的是首项时读列表头变量 +0x4D（偏差 182，视为无旗标）。
+对照：UseSelectedItem 一致（第二个参数原程序不读；kMultiUse、kUsesMask、kKeptKind、kNoUseAct 核对）。
+差异：无。
+
+## 0x00481AB0 BattleRole::ListedObject — exact
+
+汇编：ShowAllItems；逐个物品（空 → 0）：花费位 13 → 计数 +1；计数 = 序号即停；lstrcpy 名字、数量 = 待入 + 数量（字）；返回 1。
+对照：ListedObject 一致。
+差异：无。
+
+## 0x00481B20 BattleRole::ThrowableObject — exact
+
+汇编：ShowAllItems；逐个物品（空 → 0）：可投掷参数为 0 → id = 0x300 即停且不设选中；否则物品种类位 27 且 id ≠ 0x300 → 计数 +1；计数 = 序号即停并 +0x3460 = 节点。用者 & 5 → lstrcpy 名字、数量 = 待入 + 数量。返回 1。
+对照：ThrowableObject 一致（kThrownObject=0x300）。
+差异：无。
+
+## 0x00481BC0 BattleRole::CountUsableObjects — exact
+
+汇编：ShowAllItems；计数（第二个参数）= 0；逐个物品：种类位 27、id ≠ 0x300、用者 & 5 → 计数 += 待入 + 数量（字）。第一个参数不读。
+对照：CountUsableObjects 一致。
+差异：无。
+
+## 0x00481C10 BattleRole::StartAbsorb — exact
+
+汇编：+0x2A54 = 来源.0x0048B520（StepIdleAction）；来源.GetOrigin(x, y)；粒子效果（+0x108C）0x58 字节清零；0x004014B0(图片数据, …) 解码，像素指针存效果 +0；宽 +4、高 +6 取图片 +0xC/+0xE；x = movsx 原点 x −1、y = movsx 原点 y；+0x20 = 0x14、+0x22 = 0x1E；目标左 = movsx +0x2EBC − movsx +0x2EC2 + 阵位 x − 0x32、宽 1、上 = 阵位 y − mainAct y + 0x28、高 1；爆发数 = 高 ≥100（无符号）? 高>>1 : 高−10；除数 0x28；着色 5、5、5；旗标 0x56，来源 Mirrored=1 → |1。+0x2FB1|=8；投影器 SetScreen(GetSystemMetrics(0), (1))；+0x2B88=0；+0x106C 0x20 字节、attackAct（+0x544）、+0x311C 0x334 字节清零。
+对照：StartAbsorb 一致（ParticleEffect 偏移与常量核对）；空图片见偏差 158，屏幕尺寸见偏差 159。
+差异：无。
+
+## 0x00481DB0 BattleRole::AbsorbFrame — exact
+
+汇编：+0x34BE（字）+1；效果着色 5、5、5；+0x303C=1；投影器 0x00439250(0x004EDA44, 效果)=1 → +0x34BE=0、+0x303C=0、释放像素、效果 0x58 字节清零、+0x3488 五个 dword 清零、+0x106C 0x20 字节与 attackAct 清零，返回 1。爆发数为 0 → 返回 0。否则 0x00482B40 FlyExtraAct(act, 0, 槽, x = 效果 x + (宽>>2), y = 高 − 爆发数 + 效果 y + 偏移, 步数)：槽 0 每帧 (0x1C2B, −5, 0xE)；帧数（有符号字）≥10 → 槽 1 (0x1C2C, −10, 0xA)；≥20 → 槽 2 (0x1C2D, −15, 0xC)；≥30 → 槽 3 (0x1C2B, 0, 8)；≥40 → 槽 4 (0x1C2C, 5, 0x10)。返回 0。
+对照：AbsorbFrame（平滑绘制 RoleFrame::AbsorbFrameAdvance）一致，kSparks 表与五组参数逐项相同；绘制经平滑场景（偏差 97/99）。
+差异：无。
