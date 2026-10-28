@@ -378,11 +378,11 @@ void Game::ShopBack()
     }
 }
 
-// The row chosen described and compared after a move (inline in the original, 0x0044DF00 and its neighbours).
+// The row chosen described and compared after a move (inline in the original: 0x004555ED of ShopDown and the same
+// tails of ShopUp, ShopPageDown and ShopPageUp).
 void Game::ShopRowChanged(bool sound, u16 arrows)
 {
     BattleState& shop = this->battleState;
-    CountListB(shop);
     const ItemNode* chosen = ItemAfter(shop.listRow + shop.listTop, shop.itemsHead.next);
     this->menu.description =
         chosen != nullptr ? ObjectDescription(this->databases.mapsData, chosen->id) : std::string();
@@ -425,6 +425,7 @@ void Game::ShopDown()
         if (shop.listTop + shop.listBCount < shop.itemCount)
         {
             SkipItems(++shop.listTop, shop.itemsHead.next, shop.listB);
+            CountListB(shop);
         }
     }
 
@@ -454,6 +455,7 @@ void Game::ShopUp()
         if (shop.listTop > 0)
         {
             SkipItems(--shop.listTop, shop.itemsHead.next, shop.listB);
+            CountListB(shop);
         }
     }
 
@@ -538,6 +540,7 @@ void Game::ShopPageUp()
         SkipItems(0, shop.itemsHead.next, shop.listB);
     }
 
+    CountListB(shop);
     this->ShopRowChanged(false, kScrollDown);
 }
 
@@ -619,7 +622,7 @@ void Game::ShopMore()
 
             if ((shop.mode & kSellChoice) != 0)
             {
-                const int carried = static_cast<u16>(item->pending) + static_cast<u16>(item->count);
+                const int carried = item->count + item->pending;
 
                 if (static_cast<u16>(item->workCount) <= carried)
                 {

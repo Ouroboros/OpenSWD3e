@@ -216,9 +216,9 @@ int Party::RoleStat(int field, int role) const
 }
 
 // swd3e.exe 0x00454D80: object `object` used on (or worn by) a party role: its skill's ailment with bit 15 revives a
-// defeated role. A standing role, or any role when the object's unk52 is at most 0x1B, gains by unk3C: 0 the vitals
-// (up to the maxima) and the attributes, 0x100 the maxima and the attributes, 0x200 the vitals in percent of the
-// maxima. Otherwise (a defeated role and unk52 above 0x1B) only the vitals rise.
+// defeated role. A standing role then gains, when the object's category is above 0x1B, only the vitals (up to the
+// maxima); otherwise by useKind: 0 the vitals (up to the maxima) and the attributes, 0x100 the maxima and the
+// attributes, 0x200 the vitals in percent of the maxima. A role still defeated gains nothing.
 void ApplyObject(RoleRecord& record, const ObjectData& object, Database& database)
 {
     SkillScript skill;

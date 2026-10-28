@@ -105,7 +105,8 @@ void MergePendingCounts(ItemLink& list)
 }
 
 // swd3e.exe 0x00454BC0: a copy of the list in reverse order, with copies of the descriptions (null for an empty list).
-// A node without a description gets an uninitialised one-byte copy in the original; here an empty one.
+// A node without a description gets an empty one (lstrlenA and lstrcpyA take the null source as empty, and the
+// one-byte block from 0x0043DA70 is cleared).
 ItemLink CopyItemList(const ItemLink& list)
 {
     ItemLink copy;

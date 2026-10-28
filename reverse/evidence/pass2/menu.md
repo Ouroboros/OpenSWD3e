@@ -995,3 +995,53 @@
 汇编：编号 = 0x0050BE84[序号]（u16），maps.dat 基址 0x004E5818，表位置 = [基址+0x44]（表 0x11），文字 = 基址 + dword(基址 + 表位置 + 4×编号)；0x00435590(文字, x, y, 2, 0x154, 4)，0x00435590 只读前 5 个参数。对照：MapsTable(Notes = 0x11)、MapsDword、kNoteLines = 2、kNoteWidth = 0x154 一致。
 
 差异：偏移项与偏移的越界保护（MapsWord 表外读 0xFFFF、偏移越出数据时画空串）此前未登记。修正：deviations 新增 0x00454930 越界行，源码不改。复核：完整函数重新对照一致。
+
+## 0x00454FC0 Game::OpenShop — diff → exact
+
+汇编：0x00441910；0x0040DFF0(0xA)；0x00412F60；0x0040E020(0xA)；0x004EDA44 = 0x00417740(0x004C6344)，0x00417790 解锁；两块 0x96000 字节（0x0050BF84、0x0050C0F0）；画面复制进第一块，0x00420E50(块, 0x4B000, −4, −4, −8)，0x00422970(块, 0x4B000)，再复制到第二块；0x0050C0F8 清 0xB4 字节，0x0050C034 = 0x0050C0F8；0x0050C0EC、0x0050BF18、0x0050C1AC、0x0050BF88、0x0050BF70 = 0，字 0x0050BF1C、0x0050BF74 = 0，0x0050BF7C = 1；0x00455140；字 0x0050BF20..0x0050BF26 = 0，0x0050BF78 = 0。
+对照：ListPartyRoles、NoPointer（0xA）、FieldView::Paint、LockSurface/UnlockSurface、TintPixels(−4,−4,−8)、GrayPixels、两份屏幕副本、表头与 listB、mode/listBCount/listRow/listTop/itemCount/lessPressed/morePressed、shopStage = kShopChoice（1）、ResetShopActs、faceSlides、shopFlags 一致。
+差异：地图经 BeginMapCanvas/EndMapCanvas 画在宽地图画布上再取中间 640×480（wide_map 关闭时画布即 640×480、偏移 0，与原程序相同），deviations 93 未列本函数地址。修正：补登记地址，源码不改。复核：完整函数重新对照一致。
+
+## 0x004550E0 Game::CloseShop — exact
+
+汇编：释放 0x004D1290 并清 0；释放 0x0050BF84、0x0050C0F0 并清 0；0x00454C40(&0x0050C0F8)；0x0050C0F8 清 0xB4 字节。对照：shopGoods、两份屏幕、FreeItemList(itemsHead.next)、表头重置一致。
+
+## 0x00455140 Game::ResetShopActs — exact
+
+汇编：0x0040DF70 依次重置 0x0050A900、0x0050A9A4、0x0050AA48、0x0050AAEC（四个头像）、0x0050B0C8、0x0050A360、0x0050A1F8、0x0050B2E0、0x0050BF90；对 0..0x00441980()−1：头像 id = 0x00441960(序号)+1、动作 5、方向（+0x34）0；四个动作的方向清 0，0x0050BF90 = 0x232A/0x16，0x0050B2E0 = 0x232A/0x32，0x0050A360 = 0x232A/0x1C，0x0050A1F8 = 0x232A/0x1D。
+对照：ResetPlayback 各自独立（顺序无影响）；upArrowAct（0x0050A360）= kMinusAction 0x1C、downArrowAct（0x0050A1F8）= kPlusAction 0x1D、tabsPanelAct = 0x32、shopTitle = 0x16、kFaceAction = 5 一致。源码的 `slot < items.size()` 不可达：VisibleCount 由 ListPartyRoles 计数，至多 Party::Roles（4）= items 的大小。
+
+## 0x00455240 Game::ShopMouse — exact
+
+汇编：0x00441270 读鼠标。阶段 1：x ∈ (0x118,0x1B2)、y ∈ (0x144,0x15C)（无符号）→ 0x0050C0EC = (原值 & ~3) | (x−0x118)/0x37，点击位 0 → 0x00455B20；之后点击位 2 → 0x00456050。阶段 2：点击位 0..1 有：x ∈ (0x9E,0x1F4)、y ∈ (0x3C,0x181) → 行 = (y−0x3C)/25，≠ 选中行 → 音效 0xBF、选中行 = 行−1、0x00455580；= 选中行 → x ∈ (0x178,0x191) 且 y ∈ (25行+0x3D, 25行+0x50) → 0x004558E0 并重读坐标与点击；点击位 0..1 且 x ∈ (0x193,0x1AC) 且 y 同上 → 0x004559B0；随后 x ∈ (0x1B8,0x1E0)、y ∈ (0x193,0x1AF) → 0x00455B20。点击位 0..1 无：位 2 → 0x00456050；否则左键 press（0x004D1728）≠0、物品数 >0xD、x ∈ (0x1ED,0x1FF) 时，y（有符号）∈ (0x31,0x43) → 0x00455670，∈ (0x177,0x187) → 0x00455580，∈ (0x0050AEA0,0x0050AEA8) → 0x00455830，∈ (0x0050AEA4,0x0050AEAC) → 0x00455740，每次调用后重读 y。阶段 3：x ∈ (0x153,0x1E2)、阶段 4：x ∈ (0xFA,0x17E)，y ∈ (0x1A8,0x1C0)：(x−左)/0x42 为 0 → 0x004558E0，否则 0x004559B0，点击位 0..1 → 0x00455B20；范围外 → 点击位 2 时 0x00456050。阶段 0xA：点击位 0..3 → 阶段 2。
+对照：ShopMouse 与内联的清单部分（ShopListMouse）的范围、无符号与有符号比较、除数、重读时机、调用顺序一致；滚动条 MenuScrollBar（0x0050AEA0：top、thumbBottom、thumbTop、bottom）、ButtonState（0x004D1638 起每键 0x10 字节，MouseLeft = 15 的 press 在 0x004D1728）一致。
+
+## 0x00455580 Game::ShopDown — diff → exact
+
+汇编：阶段 1：选项 = min((0x0050C0EC & 3)+1, 2) 写回低两位。阶段 2：行+1，≥ 显示数 → 行 0，显示数 ≥1 → 行 = 显示数−1；顶+显示数 < 物品数 → 顶+1、0x004411C0(顶, &表头, &0x0050C034)、0x00456DE0。随后（各路径）0x00441200(0x004411E0(顶+行))、音效 0xBF、0x0050BF80 |= 0x30、0x00457100(0x00454D50(&表头, 顶+行))。其他阶段返回。
+对照：行、顶的推进与汇编一致。
+差异：源码在共用的尾部（ShopRowChanged）每次都调用 CountListB，原程序只在卷动后调用 0x00456DE0。修正：CountListB 移入卷动分支，ShopRowChanged 不再重算；注释中的正传地址 0x0044DF00 改为本函数的 0x004555ED。复核：完整函数重新对照一致。
+
+## 0x00455670 Game::ShopUp — diff → exact
+
+汇编：阶段 1：选项 = max((0x0050C0EC & 3)−1, 0)。阶段 2：行−1，负 → 行 0，顶 >0 → 顶−1、0x004411C0、0x00456DE0。随后同 ShopDown 的尾部，箭头位 |= 3。
+差异与修正：同 ShopDown（重算只在卷动后）。复核：完整函数重新对照一致。
+
+## 0x00455740 Game::ShopPageDown — diff → exact
+
+汇编：阶段 2：行 ≠ 显示数−1 → 行 0，显示数 ≥1 → 行 = 显示数−1，返回（无音效、无说明）。否则顶 +13，≥ 物品数 → 顶 −13、行 = 显示数−1（与原值相同）；否则 0x004411C0(顶)、0x00456DE0、行 > 显示数−1 → 行 = 显示数−1。尾部：说明、音效 0xBF、箭头位 |= 0x30、比较装备。
+差异与修正：顶不变的路径原程序不调用 0x00456DE0，源码经 ShopRowChanged 重算；修正后只在卷动分支重算。复核：完整函数重新对照一致。
+
+## 0x00455830 Game::ShopPageUp — diff → exact
+
+汇编：阶段 2：行 ≠0 → 行 0 返回。否则顶 −13，非负 → 0x004411C0(顶)；负 → 行 0、顶 0、0x004411C0(0)；两路径都 0x00456DE0。尾部：说明、无音效、箭头位 |= 0x30（翻上一页也标“下”箭头，原样保留）、比较装备。
+差异与修正：重算由 ShopRowChanged 移到本函数两条路径之后，行为与修正前相同（两路径本就重算），与汇编同构。复核：完整函数重新对照一致。
+
+## 0x004558E0 Game::ShopLess — exact
+
+汇编：阶段 1：选项 = max((0x0050C0EC & 3)−1, 0)。阶段 2：节点 = 0x004411C0(顶+行, &表头)，工作数量 +6 减 1（16 位），>0 → 音效 0xB9；否则清 0（无音效）；字 0x0050BF1C = 2。阶段 3：0x0050C0EC &= ~4；阶段 4：&= ~8。对照：kCountSound 0xB9、kPressFrames 2、kTotalCancel 4、kEquipCancel 8 一致；空节点见 deviations 267。
+
+## 0x004559B0 Game::ShopMore — diff → exact
+
+汇编：阶段 1：选项 = min((0x0050C0EC & 3)+1, 2)。阶段 2：节点工作数量 +1；卖出（位 0）：工作数量（零扩展）> 数量+待入（各按有符号扩展相加，有符号比较）→ 工作数量 = 两者的 16 位和；否则音效 0xB9；字 0x0050BF74 = 2。买入：0x00456D80 > 金钱 0x004C6370（无符号）→ 工作数量 −1、阶段 0xA、音效 0x8C 返回；否则持有 = 0x00457050(id)，工作数量（零扩展）≥ 99−持有 → 工作数量 = 99−持有（无音效），否则音效 0xB9；0x0050BF74 = 2。阶段 3：|= 4；阶段 4：|= 8。
+差异：卖出时源码把数量与待入数量按无符号相加，汇编为有符号扩展（两值实际不为负，结果相同）。修正：改为 i16 相加，与汇编同构。复核：完整函数重新对照一致；空节点见 deviations 268。
