@@ -281,7 +281,7 @@ constexpr std::array<std::u8string_view, 16> kKeyRows = {
 constexpr std::size_t kSpeedNameBytes = 6;   // the speed names are padded to six bytes
 constexpr std::size_t kSampleCharBytes = 2;  // the sample types out by Big5 characters
 
-// The speed line of the settings (inline in the original, 0x004490C0 and 0x0044C160): the name of text speed `speed`
+// The speed line of the settings (inline in the original, 0x00451DA0 and 0x00453A40): the name of text speed `speed`
 // (none outside 0..4) with the first `words` characters of the sample copied after its six bytes; the line ends at
 // its first NUL as drawn.
 inline std::string SpeedSample(int speed, std::size_t words)

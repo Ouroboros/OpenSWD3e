@@ -188,7 +188,7 @@ void Menu::SystemEnter()
         this->SystemSelect();
     }
 
-    owner.unk4A9484 = 0;
+    owner.unk4C2B58 = 0;
 
     // The title music (the first list from tune 10) is started only when 0x00411F10 returns true; it always returns 0,
     // so the original never starts it.

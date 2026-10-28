@@ -693,7 +693,7 @@ private:
     i32 slotMouseBlock = 0;               // 0x004C1610 frames a key or click keeps the pointer from choosing a slot
     u32 systemFlags = 0;                  // 0x004D1404 SystemFlag bits
     i32 counterAlpha = 0;                 // 0x004E582C the alpha the counters (gold, digits) draw with
-    i32 unk4A9484 = 0;
+    i32 unk4C2B58 = 0;                    // 0x004C2B58 only cleared by the system page (no reader)
     static constexpr u32 ScriptedBattle = 0x80000000;  // in `battleRequest`: started by a talk command
     i32 battleRequest = 0;                             // 0x004C2B84 a battle to start (its number in the low word)
     i32 musicBeforeBattle = 0;   // 0x004C15D0 the music queue's mode when a map battle starts (0x0040A7B0 restores it)
