@@ -812,9 +812,9 @@ public:
     AltarPage altar;
     EquipPage equip;
     SkillsPage skills;
-    std::vector<MenuTown> towns;  // 0x0050A1EC (its count at 0x004FC834)
-    i32 townTop = 0;              // swd32 0x004FBED4
-    i32 townRow = 0;              // swd32 0x004FC510
+    std::vector<MenuTown> towns;  // 0x0050A1EC (its count at 0x0050B2D0)
+    i32 townTop = 0;              // 0x0050A828
+    i32 townRow = 0;              // 0x0050AEC0
     i32 townShown = 0;            // 0x0050A1F0
     MenuScrollBar townBar;        // 0x0050AEB0
     MenuScrollBar unk4FBAB4;      // 0x0050A408 a second bar of the equipment list (only drawn)
