@@ -739,10 +739,10 @@ public:
     Handler shift = &Menu::Nothing;              // 0x0050B2D8
     Handler end = &Menu::Nothing;                // 0x0050A8D8
     Handler select = &Menu::Nothing;             // 0x0050AD6C
-    Handler draw = &Menu::Nothing;               // swd32 0x004FBEC8
+    Handler draw = &Menu::Nothing;               // 0x0050A81C
     std::array<Handler, Pages> enterTable = {};  // 0x0050B35C the role pages opened (entries 0xB..0x11)
-    std::array<Handler, Pages> leaveTable = {};  // swd32 0x004FB884 left
-    std::array<Handler, Pages> drawTable = {};   // swd32 0x004FBF54 drawn
+    std::array<Handler, Pages> leaveTable = {};  // 0x0050A1A0 left
+    std::array<Handler, Pages> drawTable = {};   // 0x0050A8B0 drawn
 
     u16 code = 0;        // 0x0050B3AC the code the menu was opened with
     u16 page = 0;        // 0x0050AD70 (low word) the page index

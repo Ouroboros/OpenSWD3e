@@ -11,8 +11,8 @@ namespace swd3e
 
 class Database;
 
-// The view of a scrolled object list of a menu page (for the items page the counts at 0x004FD08C, 0x004FD164,
-// 0x004FD098, 0x004FD298 and the first node shown at 0x004FD150).
+// The view of a scrolled object list of a menu page (for the items page the counts at 0x0050BBE4, 0x0050BCC8,
+// 0x0050BBF0, 0x0050BE04 and the first node shown at 0x0050BCB4).
 struct MenuList
 {
     i32 count = 0;              // the objects of the list
