@@ -133,7 +133,7 @@ void BattleMessages::DrawCraftResultPanel()
 }
 
 // swd3e.exe 0x004784D0: a shaded framed box (the frame to its right and bottom edges); the text goes to (textX, textY)
-// unless both are 0
+// unless both are 0, then to (x + 2, y + 4)
 void BattleMessages::DrawMessageBox(int x, int y, int width, int height, int textX, int textY, std::string_view text)
 {
     smooth::Scene scene;

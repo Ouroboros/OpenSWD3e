@@ -931,3 +931,69 @@
 汇编：0x004BF1EE=0xFF → 返回。面板 act（不清）运行；FillBox(0xC4, 0x4C, 0xD4, 0x00577A48+0x28, 0, 4, 4, 0)；窗框 (0xC8, 0x50, 0x190, 0x60)；名（0x0050ECB4+0x20×partyRoles[(i8)角色]）在 (0x118, 0x50) 0xFFC0；窗框 (0xC8, 0x70, 0x190, 0x00577A48+0x70)；GrowPanel(0x70, 0x10C, 2)≠1 → 返回。七行旧值（0x0050EC78 记录：+0xA/+0xC/+0xE 有符号，+0x10..+0x16 无符号）按 "生命力:%4d" 等格式画在 (0xD8, 0x78+0x14×行) 0xFFFF。(u16)0x005770CE=0x64 → 滚动值 0x005372F4 三字与 0x005394C4 六字清 0；=0x1D → 九个滚动值 = 现−前（+0xA..+0x1A）后计数+1；<0x1E → 计数+1，仍 <0x1E 返回。各行：现 > 前（前三行有符号、后四项无符号）→ " ==> " 在 (0x136, 行 y)，"%4d"(现−滚动) 0xF000 在 (0x158, 行 y)；递减条件：第 0 行滚动 >0；第 1、2 行前一滚动=0 且本滚动 >0；力量本滚动≠0；耐力、智慧、敏捷前一滚动=0 且本滚动≠0；递减后音效 0x125。
 对照：DrawLevelUpStats（平滑绘制 DrawLevelUpStatsAdvance）一致；七个格式串与箭头、"%4d" 与 exe 字节一致。滚动值的两段全局只在本函数读写，源码合为 statRolls（第 7、8 项照算不画）。
 差异：无。
+
+## 0x004776B0 Game::DrawNewSpell — exact
+
+汇编：0x00577300≠1 → 返回。文 = wsprintf("%s學到新奇術"（0x004BF830）, 角色名)，半 = lstrlen/2（有符号）；面板 act（不清）运行；FillBox(0xF6, 0xB0, 20×半+8, 0x00577A48+8, 0, 4, 4, 0)；DrawWindowFrame(帧, 0xFA, 0xB4, 20×半+0xFA, 0x00577A48+0xB4, 0, 0x80000008)；GrowPanel(0xB4, 0xEC, 3)=1 → 文在 (0x104, 0xBC) 0xFFFF；技 = wsprintf("[%s]", 0x0057747C)，x = ((半<<4)>>1) − ((lstrlen(技)>>2)<<4) + 0xFA，y 0xD2，0xF000。
+对照：DrawNewSpell 即 DrawLearnedBox(kNewSpellLine, false)（平滑绘制 DrawLearnedBoxAdvance），一致。
+差异：无。
+
+## 0x00477850 Game::DrawNewSpecial — exact
+
+汇编：与 0x004776B0 逐条相同，只多一处：0x00577A48=0 时音效 0x160；格式串为 "%s學到新絕技"（0x004BF840）。
+对照：DrawNewSpecial 即 DrawLearnedBox(kNewSpecialLine, true)，一致。
+差异：无。
+
+## 0x00477A00 Game::LearnSpecials — exact
+
+汇编：逐角色（AutoControl、GuestControl、Ghost 都 ≠1，未倒下）：块 = 0x004C6700 + 0x20×队伍角色，[3]（+0xC）=−1 → 下一个。从技能链表头（0x004C2B68[队伍角色]）的下一节点起：种类字 +0x62 = 0x14 且 [3] 位 31 未置 → LoadObject(0x00576D40, 节点 id)、0x0048B010、[2] = (u16)+0x44、[3] = (u16)+0x42 | 0x80000000（另有记最大 id 的局部变量，不被使用）。[1] < [2]（有符号）或 [3] & 0x7FFFFFFF = 0 → 下一个。否则 LoadObject(0x00576D40, (u16)[3])、0x0048B010；走到链尾，新建 0xB4 字节清零节点挂上，id=(u16)[3]、LoadObject(节点 +0xC, id)；0x00577300=1；lstrcpy(0x0057747C, 节点名)；0x004BF1EE=序；[1]=0、[2]=(u16)+0x44、[3]=(u16)+0x42 | 0x80000000，+0x42=0 → [3]=−1；返回。
+对照：LearnSpecials 一致（kSpecialType 0x14、kSpecialMark 0x80000000、kSpecialIdMask 0x7FFFFFFF）。空表头见 deviations 209，名称复制越界见 220。
+差异：无。
+
+## 0x00477C40 BattleMessages::DrawMastery — exact
+
+汇编：0x00577300≠1 → 返回。转化 = lstrcmp(0x00577A54, "")≠0；文 = 转化 ? wsprintf("法寶[%s]轉化為[%s]!!"（0x004BF858）, 0x0057747C, 0x00577A54) : wsprintf("法寶%s已完全成長!!"（0x004BF870）, 0x0057747C)。半 = lstrlen/2（有符号），宽 = 17×半 + 0x20；FillBox(0xC4, 0xD0, 宽+0xC, 0x00577A48+8, 0, 4, 4, 0)（不运行面板 act）；DrawWindowFrame(帧, 0xC8, 0xD4, 宽+0xC8, 0x00577A48+0xD4, 0, 0x80000008)。转化时：SetAdvance(0x11)，依次画 "法寶"（0x004BEB60，0xFFC0）、名（0xF000）、"轉化為"（0x004BF850，0xFFC0）、新名（0xF000），起点 (0xD8, 0xDA)，每段后 x += 18×(长/2)；缓冲最后只剩新名。GrowPanel(0xD4, 0xF4, 3)=1 → SetAdvance(0x11)、缓冲画在 (0xD8, 0xDA) 0xFFC0、SetAdvance(0x10)（未长成时保留 0x11）。
+对照：DrawMastery（平滑绘制 DrawMasteryAdvance）一致；四个字符串与 exe 字节一致。
+差异：无。
+
+## 0x00477EE0 Game::AnnounceMastery — diff → exact
+
+汇编：清 0x00577A54 六 dword。逐角色（AutoControl、GuestControl、Ghost ≠1，未倒下）：完成 = (u16)0x0047FF60(0x004D1F58)，0 → 下一个。LoadObject(0x00576D40, 完成)、0x0048B010；0x00577300=1；lstrcpy(0x0057747C, 名)；0x004BF1EE=序；+0x42 字=0 → 返回。两饰品格（0x004E4CCC + 64×队伍角色 + 4×格）节点 id 字 = 完成 → id=0xFFDC、+8=1、+0xA=0、+6=0、+0xC dword=0、lstrcpy(+0xC, "無")；AddOneItem(+0x42, 1)；LoadObject(0x00576D40, +0x42)、0x0048B010；lstrcpy(0x00577A54, 新名)；返回。都不符 → 返回。
+对照：AnnounceMastery 一致。空格见 deviations 210。
+差异：新名以 lstrcpyA 复制进只有 0x18 字节的 0x00577A54，长名会写到其后全局；源码以 std::string 保存，未登记。修正：登记偏差（代码不变）。复核：完整函数重新对照一致。
+
+## 0x00478070 BattleMessages::DrawLootPanel — exact
+
+汇编：底 = 0xD4 + 0x14×(u16)0x005777EC；SetAdvance(0x12)；面板 act（不清）运行；FillBox(0xC4, 0xB0, 0xB8, 0x00577A48+0x28, 0, 4, 4, 0)；窗框 (0xC8, 0xB4, 0x178, 0xC4)；"戰利品"（0x004BF890）在 (0x108, 0xB4) 0xFFC0；窗框 (0xC8, 0xD4, 0x178, 0x00577A48+0xD4)；GrowPanel(0xD4, 底, 3)=1 且条目 >0 → 每项 wsprintf("%-12s X %2d", 0x00537970[i], (u16)0x0053949C[i]) 画在 (0xD2, 0xD4+0x14×i) 0xFFC0；SetAdvance(0x10)。
+对照：DrawLootPanel（平滑绘制 DrawLootPanelAdvance，PanelFrame 即面板 act 运行）一致；两个字符串与 exe 字节一致。
+差异：无。
+
+## 0x00478210 BattleMessages::DrawDefeatPanel — exact
+
+汇编：面板 act（不清）运行；FillBox(0xC4, 0xB0, 0xB8, 0x00577A48+0x28, 0, 4, 4, 0)；窗框 (0xC8, 0xB4, 0x178, 0xC4)；"戰鬥失敗"（0x004BF8A4）在 (0x104, 0xB4) 0xFFC0；窗框 (0xC8, 0xD4, 0x178, 0x00577A48+0xD4)；GrowPanel(0xD4, 0xF4, 3)=1 → SetAdvance(0x11)、"隊伍全滅!!"（0x004BF898）在 (0xFE, 0xD8)、SetAdvance(0x10)。
+对照：DrawDefeatPanel（平滑绘制 DrawDefeatPanelAdvance）一致。
+差异：无。
+
+## 0x00478330 BattleMessages::DrawCraftResultPanel — exact
+
+汇编：面板 act（不清）运行；FillBox(0xC4, 0xB0, 0xB8, 0x00577A48+0x28, 0, 4, 4, 0)；窗框 (0xC8, 0xB4, 0x178, 0xC4)、(0xC8, 0xD4, 0x178, 0x00577A48+0xD4)；GrowPanel(0xD4, 0xFC, 3)≠1 → 返回。0x00577998=1 → "煉符成功"（0x004BF8D8）在 (0x100, 0xB4)、wsprintf("得到符咒:%s"（0x004BF8CC）, 0x00537970[0]) 在 (0xD0, 0xDE)；否则 "煉符失敗"（0x004BF8C0）、"沒有得到東西"（0x004BF8B0）同位置；颜色 0xFFC0、0x10。
+对照：DrawCraftResultPanel（平滑绘制 DrawCraftResultPanelAdvance）一致；四个字符串与 exe 字节一致。
+差异：无。
+
+## 0x004784D0 BattleMessages::DrawMessageBox — exact
+
+汇编：面板 act（不清）运行；FillBox(x, y, 宽, 高, 0, 4, 4, 0)；DrawWindowFrame(帧, x+4, y+4, x+宽, y+高, 0, 0x80000008)；文字 x、y 都为 0 → 画在 (x+2, y+4)，否则 (文字 x, 文字 y)；0xFFC0、0x10。
+对照：DrawMessageBox（平滑绘制 DrawMessageBoxAdvance）一致（kBoxTextX 2、kBoxTextY 4）。函数前注释原只写了“都为 0 时不按参数画”，补上实际位置（不涉及逻辑）。
+差异：无。
+
+## 0x00478590 BattleMessages::GrowPanel — exact
+
+汇编：步 = (底 − 0x00577A48 − 顶) / 除数（有符号 idiv）；0x00577A48 += 步；返回 步=0。
+对照：GrowPanel 一致。
+差异：无。
+
+## 0x004785C0 BattleMessages::DrawResistancePanel — exact
+
+汇编：0x00576D3C 位 0x20 为 0 → 返回。面板 act（不清）运行；FillBox(0xEC, 0x56, 0xB8, 0x00577A48+0x28, 0, 4, 4, 0)；窗框 (0xF0, 0x5A, 0x1A0, 0x6A)；单位名（0x00577A44 所指记录首）在 (0x130, 0x5A) 0xFFC0；窗框 (0xF0, 0x7A, 0x1A0, 0x00577A48+0x7A)；GrowPanel(0x7A, 0xDE, 3)≠1 → 返回。五元素（名表 0x004BF61C：金木水火土），y 0x82 起每 0x14：抗 = (i8)记录 +0x9C+i；=0 → 色 = MakeColor(0x10,0x10,0x10)、"--"、长 = 2.0f；>0 → FillColor(0x11C, y, 0x78, 3, MakeColor(0x1C,0x1C,0x1C))、色 = MakeColor(0x1C,2,2)、"%2d%%"、长 = (float)(抗 × 0.01f（0x004AAE0C） × 120.0f（0x004AAE08）)；<0 两者不变（初值 0、0.0）。名 DrawText(0xFC, y−8, MakeColor(0x1F,0x1F,0x1F), 0x10)；FillColor(0x11C, y, _ftol(长), 3, 色)。格式化的 "--"/"%2d%%" 从不画出。
+对照：DrawResistancePanel（平滑绘制 DrawResistancePanelAdvance）一致；两个浮点常量与乘法次序一致。
+差异：无。
