@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <memory>
 #include <span>
 #include <string_view>
@@ -138,6 +139,10 @@ struct UnitPlacement
     u16 unk1A = 0;
     i32 kind = 0;  // +0x1C 1: a party role
 };
+
+static_assert(sizeof(UnitPlacement) == 0x20);
+static_assert(offsetof(UnitPlacement, actId) == 0x14);
+static_assert(offsetof(UnitPlacement, kind) == 0x1C);
 
 // The command block of a unit (0x28 bytes, cleared whole).
 // The rectangle GetShadowRect fills (four dwords in the original).

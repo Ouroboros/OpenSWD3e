@@ -570,7 +570,7 @@ public:
     // The confirm key of the menu (Game::MenuConfirm).
     i32 unk577080 = 0;
     i32 unk576F9C = 0;
-    i32 unk53C01C = 0;
+    i32 unk577320 = 0;  // 0x00577320 set to 1 when a thrown object lands (MenuConfirm; never read)
     std::array<u16, Units> escortCalled = {};  // 0x00536EA8 per unit: the escort place it called
     u16 callingEscort = 0;                     // 0x0057720C the escort being called (its low word)
     i32 levelUpPending = 0;                    // 0x0057733C a level-up to show at the end

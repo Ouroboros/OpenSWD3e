@@ -5327,7 +5327,7 @@ void Game::ConfirmTarget()
         if (role != nullptr && role->Word2A86Bit13() == 1)
         {
             battle.turnCommand = kThrowOrder;
-            battle.unk53C01C = 1;
+            battle.unk577320 = 1;
             battle.turnTaken[static_cast<std::size_t>(battle.turnUnit)] = kThrowOrder;
             ++battle.unk577994;
         }
@@ -5648,10 +5648,9 @@ void Game::ConfirmTalk()
         battle.turnCommand = kTalkOrder;
         this->controls.PressConfirm();
         this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].SetTarget(1);
-        battle.commandNames[0] = {};
+        battle.commandNames = {};
         battle.unk57725C = 1;
         battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
-        battle.commandNames[1] = {};
         battle.turnUnit = battle.currentUnit;
         battle.currentUnit = 0;
         battle.unk5772B4 = 0;
@@ -5660,7 +5659,6 @@ void Game::ConfirmTalk()
         battle.menuGrow = 0;
         battle.listedCommands = 0;
         battle.listRows = kOpenListRows;
-        battle.commandNames[2] = {};
         return;
     }
 
