@@ -532,3 +532,93 @@
 汇编：字 0x0050CDCC = 0 与 ≠0 两段相同，只在判定上不同。伤害 = (u16)角色 0x00499F40(0x16) × 0x960 / 100（有符号）+ 100，写 0x005378F4 与 0x00575F34；0x004877A0(0x1775) ≠1 → 返回 0。字 0x00577214 = 2。各未倒敌人：0x00575F34 = 0x005378F4、0x0048B730(0x2389)；0x004896C0 的 al：0x0050CDCC = 0 时 al = 0、≠0 时 al = 1 → 0x00575F34 取负、0x0048B730(0x237D)，否则 0x0048B690；≥0x270F 取 0x270F；0x00491A00、0x00490FF0(1)、0x00495330(伤害, 0, 0) = 1 → 0x004BF1CA = 序号、0x00513664[序号] = 序号、0x005772CC = 1、0x00495670(6)、画面填白。最后两个伤害清 0、返回 1。
 对照：YinYangAttack 一致（kYinYangScale 0x960、kYinYangPercent 100、kYinYangBase 100、kYinYangAct 0x1775、kYinYangHitPicture 0x2389、HealTarget 0x237D、kYinYangMost 0x270F、kYinYangDefeatPose 6、kGrayBandCloses 2、AccessoryKind::Unk16 0x16；ObjectUnkA2 返回 u8，与只比较 al 相同）。
 差异：无。
+
+## 0x0046A320 Game::PickRoleTarget — diff → exact
+
+汇编：方式 = criterion 低字节 −1，>5 → 返回 0。六种方式结构相同：基准 = 角色 0 的值；上限 = 角色数 − 0x005770D4 − 0x0057720E（每次重算），<1 → 返回 0；序号从 1 起，角色[序号−1] 倒下或 0x0049B990 = 0 → 基准 = 角色[序号] 的值、序号 +1，超过上限 → 返回 0；找到后对序号 1 起（< 角色数）未倒且 0x0049B990 ≠0 的角色比较：方式 1 血量（0x0049B680，32 位有符号）更小、2 精神（0x0049A9F0，i16）更大、3 体力（0x0049A9C0，i16）更大、4 敏捷（0x0049AA20，u16）更小、5 防御（0x00497790，u16）更小、6 攻击（0x0049AA40，u16）更大 → 选中 = 序号+1（基准不更新）；返回选中。
+对照：PickRoleTarget 一致（kTargetFewestHitPoints 1 … kTargetMostAttack 6；RoleAgility、Defense 以 u16 取值，RoleAttackBonus 返回 u16，与原程序的无符号字比较相同；精神、体力以 i16 取值与有符号字比较相同；方式取低字节，源码以 i8 判断 1..6 结果相同）。
+差异：跳过角色时对角色[10] 的预读越界未登记。修正：deviations 464 登记，代码不变。复核：完整函数重新对照一致。
+
+## 0x0046A930 AllRolesHaveEffect — exact
+
+汇编：序号 < 角色数（无符号）：敌人[序号] 0x00490FA0 = 1 或角色[序号] 0x0049B990 = 0 → 跳过；角色[序号] 0x00493D50(bits) = 0 → 返回 0。循环结束返回 1。
+对照：AllRolesHaveEffect 一致（以敌人表同序号判断倒下，照原样）。
+差异：无。
+
+## 0x0046A9A0 AnyRoleBuffed — exact
+
+汇编：序号 < 角色数：敌人[序号] 倒下或角色[序号] 0x0049B990 = 0 → 跳过；角色 0x00493D90 = 1 → 返回 1。结束返回 0。
+对照：AnyRoleBuffed 一致（同样以敌人表判断倒下）。
+差异：无。
+
+## 0x0046AA00 BattleState::AddSlotRecord — exact
+
+汇编：kind = 1 → 第一个 unit = −1 的记录：unit = 参数、kind 字 = 1；kind = 2 → 同样 kind 字 = 2，并从 0x00536EE0[unit×0x14] 取 +4 → 记录 +0x14、+0 → +0x10、+8 → +0x18、字 +0xC → 字 +0xA、+0x10 → +4，该待命令清 5 dword；其他 kind 或无空记录 → 返回。
+对照：AddSlotRecord 一致（kSecondKind 2）。
+差异：无。
+
+## 0x0046AAE0 BattleState::InsertSlotRecord — exact
+
+汇编：已有 unit = 参数的记录 → 返回。数 = 第一个空记录序号（无则 0）。kind = 1：at = −1 → 位置 = 数；数 < at → 位置 = 0；否则位置 = at，并把 [at..数] 各后移一项；写 unit、kind 字 1，从 0x005369C8[(unit−0x14)×0x14] 取 +4 → +0x14、+0 → +0xC、+8 → +0x18、字 +0xC → +0xA、+0x10 → +4，清该待命令，0x0057727C = 0x005772D0 = 0。kind ≠1：数 ≥ at → 同样后移；写 [at] 的 unit 与 kind 字。
+对照：InsertSlotRecord 一致（数 < at 时放在第 0 项，照原样）。后移写到表外与单位号 < 0x14 时读写待命令表之前见 deviations 185。
+差异：无。
+
+## 0x0046AC40 BattleState::RemoveSlotRecord — diff → exact
+
+汇编：找第一个 unit = 参数的记录，无则返回；序号 < 30 → 其后各项前移一项（最后一次从表外 0x00538158 复制到第 30 项）；第 30 项清 7 dword 后填 −1。
+对照：RemoveSlotRecord 一致（末项为 {−1, −1, 0xFFFF, 0xFFFF, −1, −1, −1, −1}）。
+差异：前移时读表外一项的越界读未登记。修正：deviations 465 登记，代码不变。复核：完整函数重新对照一致。
+
+## 0x0046ACB0 Game::TakeSlotRecord — exact
+
+汇编：序号从 0 起，记录 unit ≤ 0x14（有符号）或角色[unit−0x14] 0x00495C10 ≠1 → 停，否则下一项。把该记录复制给调用者；其 unit = −1 → 返回；序号 < 29 → 其后各项前移一项（到第 29 项为止，第 30 项保留）；第一个空记录的序号（无则用原序号）< 30 → 从它起每项清 7 dword 后 unit = −1。
+对照：TakeSlotRecord 与 TakeSlotRecordAt 一致（单位号 = 0x14 的角色 0 不被跳过；清出的记录为 unit −1、其余 0）。序号最多跳过 9 个角色，源码 at ≥30 的判断走不到。
+差异：无。
+
+## 0x0046AD80 BattleState::ClearHitBits — exact
+
+汇编：字 0x005778CC = 0。
+对照：ClearHitBits 一致（hitBits 即 0x005778CC）。
+差异：无。
+
+## 0x0046AD90 BattleState::AddHitPicture — exact
+
+汇编：id ≤0 → 0x0040C530(“第二層”, “第二層魔法act號碼錯誤!!”) 后继续。找 0x00577818 链尾，新建 0xB4 字节节点清零挂上：+0xC（act +8）= action、字 +0xAC = x、+4（act +0）= id、字 +0xAE = y、+0xA8 = mirrored。
+对照：AddHitPicture 一致（字符串与 exe 0x004BF54C、0x004BF554 字节一致）。
+差异：无。
+
+## 0x0046AE10 DrawHitPictures — exact
+
+汇编：链首为空 → 返回。0x0046AD80；链首动作 0x00436C80 = 0 → 返回。每个节点：0x00436770(+0x4E, +0x50)，旗标 +0x1C、原点 +0x14，+0xA8 = 1 → 位 0 取反、原点 ≠0 时 = 宽 − 原点；+0x5E 位 0x20 → +0x28 ≠0 时 0x0046AD90(+0x28, +0x2C, x, y, +0xA8)，+0x5E = 0；+0x5E ≠0 → 字 0x005778CC |= 它、清 0；音效 +0x5C，(i16)x <0x140 → 0x00427090(−0x30) 否则 0x30，+0x5C = 0；0x00417A60((i16)x − 原点, (i16)y − +0x18, 宽, 高, 旗标, 0)、释放；+0x9C = 1 → 字节 +0xB0 = 1。下一节点为空 → 摘除 +0xB0 = 1 的节点；否则其动作 0x00436C80 = 0 → 直接返回（不摘除）。
+对照：DrawHitPictures 一致（kPanCentre 0x140、kPan 0x30）。图片载入失败见 deviations 397，平滑绘制见 97。
+差异：无。
+
+## 0x0046AFE0 BattleState::HitPicturesDone — exact
+
+汇编：返回 0x00577818 = 0。
+对照：HitPicturesDone 一致。
+差异：无。
+
+## 0x0046AFF0 BattleState::HitBits — exact
+
+汇编：返回字 0x005778CC。
+对照：HitBits 一致。
+差异：无。
+
+## 0x0046B000 ImageList::Add — exact
+
+汇编：图像 +0xBA 位 0 置位且（上次帧 +0xCA = +0xB4 且上次图 +0xCC = +0xB6，或上次 +0xCE = +0xB8）→ 返回。找链尾，新建 0xC8 字节节点清零后整块复制参数（0x32 dword，含开头的 next）挂上；计数 +0xC8 +1，记下帧、图与 +0xB8。
+对照：ImageList::Add 一致（两个调用者 0x0048FB20、0x0049A220 都先把参数的 next 置 0，整块复制与源码新建节点等价）。
+差异：无。
+
+## 0x0046B0C0 ImageList::Draw — exact
+
+汇编：链空 → 返回 1。每个节点：0x00436720(+0xB4, +0xB6) 的图片，+0xC2 >0 → 减 +0xC4、<0 归 0；0x004E6D58 = (i16)+0xC2，0x00417A60(+0xA8, +0xAC, 宽, 高, +0xB0 | 0x14, 0)；+0xC2 >0 → 三通道色调 (i16)+0xBC/+0xBE/+0xC0，0x00417A60(…, +0xB0 | 0x10, 0)，仍 >0 → 保留；否则计数 −1、摘除释放。返回 1。
+对照：ImageList::Draw 一致（Translucent 0x14、TintUnder 0x10）。图片缺失见 deviations 396，平滑绘制见 97。
+差异：无。
+
+## 0x0046B200 ImageList::Empty — exact
+
+汇编：返回链首 = 0。
+对照：ImageList::Empty 一致。
+差异：无。
