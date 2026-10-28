@@ -1512,3 +1512,51 @@
 汇编：+0x2F90 非 0 或 +0x3018=1 → 0。+0x2FEC=1；法术 act = slotActs[8+槽]：id = 零扩展 +0x2F28、动作 = 零扩展 +0x2FB4，0x0049A220(目标, 它)。target 位 8 且位 0x100（冲刺）：残影[0]（+0x1314）未开始 → 0x98 字节清零、开始=1、八张图 = 0xFFFF、蓝着色 0xC、+0x2B70=0；法术 hold=1；attackAct id = +0x2F28、动作 = +0x2FB4+0x28，图号 <2 时反复 Run（Run=0 → 0）；滑行：透明度 8、以 +0x2BA8|0x14 画在 (movsx +0x2ECA − +0x2B70, movsx +0x2ECC)，蓝着色 10、以 |0x10 再画；+0x2B70 += facing=0 ? 10 : −10；attackAct hold=1；其 target 位 1 → 目标.RaiseFlag2BC0、清 target；+0x2B70 % 150 ≠ 0 → 0；否则法术 target=0、+0x2E64=0、+0x2B80=0、+0x2FB8=0xFFFF、两个 hold=0、+0x3004=1。+0x3004=1：attackAct waiting 非 0 → 同样滑行、+0x2B70 += facing=0 ? −10 : 10、hold=1，为 0 → 同样收尾并 +0x2B70=0、+0x3004=0；否则冲到目标（Run、图片、音效、+0x2BAC = flags、+0x2EC6 = x 与镜像；目标绘制位置减偏移；残影[1] 初始化后方向 2、数 3、淡出 1，0x00498DF0 画残影，再画本体；target 位 8 → +0x2B84|=0x800、slotActs[1] 清零；无 0x800 → 继续；跟随 act[1] id = castAct（effectA 优先），waiting 非 0 → 继续；Run=0 → 0；图片、flags 与镜像、音效声像 facing=1 ? 0x30 : −0x30；再次镜像、+0x2EC8 = 图宽 − 它，锚点同法；两边锚点都有时画在 (冲刺 x − 跟随锚 x + 冲锋锚 x, 冲锋锚 y − 跟随锚 y + 冲刺 y)，否则 (0, 0)；target 位 1 → +0x2E60=0、清位、Strike(目标, 0)）。法术 target 位 8 → +0x2B84|=0x8000、清 target；位 1 → Strike(目标, 0)、清 target、|=0x8000、+0x2E60=0、0x005373B4=0、slotActs[0] 清零。无 0x8000 → 0。slotActs[0] 动作 0、id = castAct，AimAction(目标, 它, 法术 anchorX, anchorY)；其 target 位 1 → +0x2E60=0、清位、Strike(目标, 0)。waiting=1：两个 effectA 清 0，法术 waiting=1 且 +0x3004=0 → 清法术、attackAct、recoilAct、slotActs[0]、[1]、八个残影，+0x2F72 = −1×4，+0x2E60、+0x2FF0、+0x2B84、+0x2BDE 清 0，0x00578474=0、0x00578470+1、+0x3004=0，返回 1；否则 0。waiting≠1：无 0x4000 时以 +0x2BAC 和阴影图调色板画在 (aimX, aimY)；返回 0。
 对照：ChargeAttackFrame（平滑绘制 RoleFrame::ChargeAttackFrameAdvance 与 ChargeOnTargetAdvance）逐分支一致（常量与 AfterimageTrail 偏移核对）；图片缺失见偏差 172。
 差异：三个字段沿用正传偏移命名（unk2678、unk2A8E 与 kNoUnk2A8E、unk26D4）。修正：改名 unk2B80、unk2FB8/kNoUnk2FB8、unk2BDE（以相邻 unk2B7C/stage、unk2FB6/barrierTurns、guardPose 定位）。复核：完整函数重新对照一致。
+
+## 0x004854B0 Game::MagicAttackFrame — exact
+
+汇编：+0x2F90 非 0 或 +0x3018=1 → 0。+0x2FEC=1；slotActs[8] hold = target 位 0x200 ? 1 : 0；id = 零扩展 +0x2F28、动作 = 零扩展 +0x2FB4；0x0049A220(目标, 它)。位 2：effectA 非 0 → +0x2B84|=0x4000、recoilAct id/动作 = effectA/effectQ；位 0x200 → hold=1；清位 2、effectA、effectQ。+0x2B84 位 0x4000 且 Recoil(recoilAct, anchorY)=1 → target=0、hold=0、清 0x4000。位 0x8000 → 0x0057730C=1、0x00577030=0。位 4 → target=0、+0x2B84|=0x8000、目标.RaiseFlag2BC0。位 8：位 0x400 → 0x00577334=1、0x00467C40(七个光照值) 并清；清位 8、|=0x8000、+0x2E60=0、target=0、slotActs[0] 清零。位 1 → |=0x8000、+0x2E60=0、target=0、Strike(目标, 0)、slotActs[0] 清零。0x0057722C/2E/30 = act +0x68/6A/6C、DarkenByTint，任一非 0 → 0x00577290=1。无 0x8000 → 0。跟随 slotActs[0] 动作 0、id = castAct；法术 effectA 非 0 → id = effectA、动作 = effectQ。id=0 → waiting=1；命令位 1 → Fly(目标, 跟随, 0, id, movsx +0x2EBC − movsx +0x2EC6 + 阵位 x, 阵位 y + movsx standAct anchorY − standAct y, movsx 命令 +0x26, 命令 +0x28, 0)≠1 → 0，否则跟随 target|=1、standAct waiting=1、跟随 waiting=1、+0x2E60=0；否则 AimAction(目标, 跟随, 法术 anchorX, anchorY)。跟随 target：位 0x8000 → 地震；位 4 → 目标.RaiseFlag2BC0、target=0；位 1 → +0x2E60=0、0x005373B4=0、target=0、Strike(目标, 0)。waiting≠1：无 0x4000 时以 +0x2BAC 与阴影图调色板画在 (aimX, aimY)，返回 0。waiting=1：有 0x4000 → 0；清法术与 attackAct 的 effectA；id 非 0 且命令无位 1：+0x2E60 > −0x20 → 以其着色、当前图调色板画在瞄准点，−= 8，+0x3010=1 时加回，返回 0；否则 +0x2E60=0。法术 waiting≠1、ImageList 非空或 +0x2E60≠0 → 0；否则清法术、attackAct、recoilAct、跟随、八个残影，+0x2F72 = −1×4，+0x2E60、+0x2FF0、+0x2B84、+0x2BDE 清 0，0x00578474=0、0x00578470+1，返回 1。
+对照：MagicAttackFrame（平滑绘制 DamageFrame::MagicAttackFrameAdvance）逐分支一致（kMagicFadeEnd=−0x20、kMagicFadeStep=8）；图片缺失见偏差 173。
+差异：无。
+
+## 0x00485AD0 RollChance — exact
+
+汇编：r = rand%100；值 = 参数×70/100 + 10（字）；返回 值 ≥ r（无符号字比较）? 1 : 0。
+对照：RollChance 一致（kChanceScale=70、kChanceBase=10；唯一副作用是一次随机数，求值顺序无影响）。
+差异：无。
+
+## 0x00485B10 BattleRole::SwarmSpellFrame — exact
+
+汇编：slotActs[8] 动作 = 零扩展 +0x2FB4、+0x2FEC=1、id = 零扩展 +0x2F28，0x0049A220(目标, 它)。位 2 / 后坐处理同 MagicFrame（后坐结束 target=0、hold=0）。target 低字节 & 9 → +0x2B84|=0x8000、target=0，瞄准：目标.GetDrawPosition(x, y)，命令 +0x1008 位 1 → x=y=0，0x00498CE0 ClearMoveAxes(x, y)；+0x349C = 零扩展 +0x34B4、+0x34B4+1。无 0x8000 → 0。+0x2E64+1；movsx +0x2E64 %3 = 1 且 +0x2F9C < 8（无符号）→ 再瞄准，位 = +0x2F9C & 7，0x00496510 AddQueuedAction(零扩展 castAct, +0x349C, 阵位 x + 0x004BF9B0[位], 阵位 y + 0x004BF9C0[位], movsx x, movsx y − 0x28, 1, 0x34, 0, 0)、0x004965D0(0, 0, 0xC)、PlaySound(0x3E)。0x00495FF0 Queued(目标, +0x349C)=1 → +0x2B84=0，法术 waiting=1 → +0x2E64、+0x349C、+0x34B4 清 0，slotActs[0] 与 [8] 清零，返回 1；否则 0。
+对照：SwarmSpellFrame（平滑绘制 RoleFrame::SwarmSpellFrameAdvance）一致；SwarmOffsetX/Y 与 exe 0x004BF9B0/0x004BF9C0 字节一致；常量核对。
+差异：无。
+
+## 0x00485DD0 BattleRole::LeapSpellFrame — exact
+
+汇编：slotActs[8] id = 零扩展 +0x2F28、+0x2FEC=1、动作 = 零扩展 +0x2FB4。+0x2B84=0 → 0x0049A220(目标, 它)。=1 → 动作+1、目标.GetDrawPosition(x, y)、0x0049B3B0 DrawActionAt(x, y, 它)（被调方只读两参数低字）。=2 → 命令 +0x1010 |= 8、动作 += 2、0x00499760 ReturnHome(目标, id, 动作)=1 → +0x2B84=3。法术 waiting=1 → 清零、+0x2B84+1。target 位 8 → 0x00577378 无 0x8000 则置位、target=0。0x00577378 位 0 且 +0x2B84 ≥ 3（有符号）→ +0x2B84=0、清零、返回 1；否则 0。
+对照：LeapSpellFrame（平滑绘制 RoleFrame::LeapSpellFrameAdvance）一致（阶段常量 0/1/2/3、kLeapReturnAction=2）。
+差异：无。
+
+## 0x00485F30 BattleRole::Strike — exact
+
+汇编：+0x2E60=0、0x005373B4=0；Ghost()=0 → 0x005373B4 = 0x0048A5B0(0x004C6348, +0x34AA, weapon +0x44, weapon +0x42)。闪避值 = +0x2BC8 位 0x80 ? 8 : 0。参数=1 且 +0x305C=0 且 目标.0x00490D20(闪避值)≠0 → +0x305C=1 返回。0x00575F34=0；伤害 = movsx HitDamage(目标, …)；非 0 → += movsx 0x005373B4；≥9999 → 9999；0x005378F4 += 伤害；伤害 ≠ −1 → 目标.SetDamageDigits、StepTargetCount(1)；目标.RaiseFlag2BC0；+0x305C=1。
+对照：Strike 一致（Fame 第 0 张表即 0x004C6348；kStruckEvasion=8）。
+差异：无。
+
+## 0x00486030 BattleRole::CancelCommand — exact
+
+汇编：+0x2FB0=0；命令 0x2C 字节清零；+0x2B38 起 16 字节清零；+0x34A0、+0x34A2、+0x2FB4、+0x34A6、+0x34A8、+0x2EB6/B8/BA、+0x2EB0、+0x34A4 清 0；+0x3460 非空 → +0x3458 所指节点 +6（无符号）非 0 时减 1，+0x3460=0。
+对照：CancelCommand 一致；游标在列表头时把列表头变量当节点减计数见偏差 183（不减）。
+差异：无。
+
+## 0x004860D0 BattleRole::Release — exact
+
+汇编：+0x3118（+0x3074 记录的说明指针）非空 → 释放并清；[+0] 角色战斗记录非空 → 释放并清。
+对照：unk3074.description.reset()、ownedRecord.reset()、battleRecord 置空，一致。
+差异：无。
+
+## 0x00486110 BattleRole::BoomerangFrame — exact
+
+汇编：standAct id = 零扩展 +0x2F28、+0x2FEC=1、动作 0x2A（不设 hold）；Run=0 → 0。图片、+0x2EC6/+0x2BA8/+0x2EBC 与镜像、阴影与本体绘制、声像同 DirectAttack。target 低字节 & 9 为 0 → 0。slotActs[0] 动作 0、id = 参数；目标.GetDrawPosition(x, y)。+0x2B84=0：+0x349C=0 → 0x00496510(id, 0, 阵位 x, 阵位 y, movsx x, movsx y, 0x1C, 0, −1, 4)、0x004965D0(0, 0, 0xC)、+0x349C=1；Queued(目标, 0)=1 → +0x349C=0、+0x2B84=1、目标.RaiseFlag2BC0。+0x2B84=1：+0x349C=0 → 0x00496510(id, 0, x, y, 阵位 x, 阵位 y, 0x20, 7, −1, 4)、0x004965D0(0, 0, 0xC)、+0x349C=1；Queued=1 → +0x349C=0、+0x2B84=2、PlaySound(0x114)。+0x2B84=2 → 清 0、slotActs[0] 与 standAct 清零、返回 1；否则 0。
+对照：BoomerangFrame（平滑绘制 RoleFrame::BoomerangFrameAdvance）一致（常量核对）；空图片见偏差 177。
+差异：无。
