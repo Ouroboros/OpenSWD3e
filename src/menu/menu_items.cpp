@@ -173,23 +173,23 @@ constexpr int kTownsBottom = 0x18B;
 constexpr int kTownHeight = 0x19;
 
 // The texts.
-// swd32.exe 0x004A7030 (unmatched in swd3e)..
+// 0x004BEC78, 0x004BEC70, 0x004BEC68 (copied to the stack by ItemsDraw)
 constexpr std::array<std::u8string_view, 3> kModeLabels = {u8"使用", u8"整理", u8"丟棄"};
-// swd32.exe 0x004A6E4C (unmatched in swd3e)
+// 0x004BEA88
 constexpr std::u8string_view kNoItems = u8"沒有物品";
-// swd32.exe 0x004A700C (unmatched in swd3e)
+// 0x004BEC54
 constexpr std::u8string_view kDiscardQuestion = u8"是否丟棄";
-// swd32.exe 0x0049FA54 (unmatched in swd3e)
+// 0x004AF698
 constexpr std::u8string_view kYesNo = u8"  是  否";
-// swd32.exe 0x004A6FF0 (unmatched in swd3e)
+// 0x004BEC38
 constexpr std::u8string_view kRecallQuestion = u8"使用中 要回收嗎?";
-// swd32.exe 0x004A6FDC (unmatched in swd3e)
+// 0x004BEC24
 constexpr std::u8string_view kCallQuestion = u8"閒置中 要使用嗎?";
-// swd32.exe 0x004A6FD0 (unmatched in swd3e)
+// 0x004BEC18
 constexpr std::u8string_view kConfirmGiveUp = u8"確定  放棄";
-// swd32.exe 0x004A6F64 (unmatched in swd3e)
+// 0x004BEBA8
 constexpr std::u8string_view kCannotUseHere = u8"此地無法使用";
-// swd32.exe 0x004A7038 (unmatched in swd3e)
+// 0x004BEC80
 constexpr std::u8string_view kBadObject = u8"!警告! 物[%d] 種[%x]錯誤 ";
 constexpr std::string_view kNameFormat = " %-14s";
 constexpr std::string_view kCountFormat = "%3d";
@@ -1599,7 +1599,7 @@ void Menu::ItemsDrawFollowers(Pixel color, std::string& line)
     );
 
     // One record for all of them, as the original: a follower missing from the table keeps the one before it (the
-    // original's first is uninitialised memory).
+    // original's first starts cleared, allocated by 0x0043DA70).
     Role role;
 
     for (int follower = 0, offset = 0; follower < page.followers; ++follower, offset += kFollowerHeight)
