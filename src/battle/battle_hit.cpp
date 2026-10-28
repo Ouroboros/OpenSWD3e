@@ -2098,7 +2098,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 // whole side aims at the first unit; otherwise it picks a target (EnemyPickTarget) and, once ready, a command
 // (EnemyChooseCommand). A chosen command waits for the second gauge (unk50CE6C) and is slotted again; then the enemy
 // acts (EnemyActionFrame) until the action is over (EnemyAfterAction). Every frame it is drawn at rest (its acts
-// holding while the field is darkened with word 2A74, or while an enemy enrages), its hit act plays, its enrage runs
+// holding while the field is darkened with word 2F90, or while an enemy enrages), its hit act plays, its enrage runs
 // and a defeat is taken out; the result of RemoveDefeated is returned (ResetTurn's when a held or defeated acting enemy
 // ends its turn, the target when no role is left to aim at).
 int Game::EnemyFrame(int enemy)
@@ -2184,7 +2184,7 @@ int Game::EnemyFrame(int enemy)
     }
 
     const bool holding =
-        (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
+        (unit.GetWord2F90() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
     if (battle.unk575F38[at] != -1 && this->PlayHitAct(unit, static_cast<u32>(battle.enemiesHitAct), enemy) == 1)

@@ -1248,3 +1248,87 @@
 汇编：结果=0、已完成=0。两个饰品：act 为 0 → 跳过；已完成=1 → 返回结果；从表头本身起找 id = act、完成标志 0、值 ≥ 上限（无符号）的节点：值 = 上限、完成=1、已完成=1、结果 = act，停止查找。返回结果（字）。
 对照：FinishProficiency 一致。
 差异：无。
+
+## 0x0047FFD0 BattleRole::AttackFrame — diff → exact
+
+汇编：+0x2F90 非 0 或 +0x3018=1 → 返回 0。（+0x3044=1 或 StatusBit5=1）且命令 +0x1010 & 0x38：+0x2BC0 位 28 → SetFacing(1)；+0x3064=0 时 0x004906F0(目标)=0 → +0x3064=1 返回 0。+0x3048=1 → 阵位 x/y = 0x140/0x136。+0x2FEC=1；standAct（+0x358）hold=0，+0x3010=1 或 target 位 0x200 → hold=1。暴击（+0x34CA=1 或 0x00578474=1）且 MarkBit4=0：PartyMember=1 → 0x00578474=1、id=+0x2F28、动作 0x29，强制（+0x3044 或 +0x3048）→ 动作 0x28，否则 castAct（+0x1018）= weapon +0x48；非队员 → id、动作 0x28。否则 id=+0x2F28、动作 0x28，MarkBit4=1 → id 0xFA；强制且 +0x2FB6≠0 → 动作 0x30（为 2 时 0x31）。0x0049A220(目标, standAct)=0 → 0x0040C530("Attack Act" 0x004BFA50, "[%s]QQ:%d號錯誤!!" 0x004BFA5C, 名字 +0x2A58, 动作) 返回 1。target 位 2：effectA 非 0 → recoilAct id=effectA、+0x2B84|=0x4000、动作=effectQ；位 0x200 → hold=1；清位 2、effectA、effectQ。+0x2B84 位 0x4000 且 0x0049ACC0(recoilAct, anchorY)=1 → 清位 0x200、hold=0、清 0x4000。位 0x8000 → 0x0057730C=1、0x00577030=0。位 0x800 → 0x00468440(0) 并清；位 0x40 → 0x00468460(0) 并清。位 8：位 0x400 → 0x00577334=1、0x00467C40(七个光照值，前六个转 float) 并清；清位 8、+0x2B84|=0x8000、slotActs[槽] 清零。位 4 → 0x0048B690(目标)、target=0、|=0x8000。位 1 → +0x2E60=0、|=0x8000、0x005373B4=0、slotActs[槽] 清零、Strike(目标, 1)、target=0。+0x2B84 无 0x8000 → 返回 0。跟随动作 waiting≠1：id=castAct（effectA 非 0 则取之），动作 0；id=0 → waiting=1 返回 0；命令位 1：Fly(目标, slotActs[1], 0, id, 起点 x = movsx +0x2EBC − movsx +0x2EC6 + 阵位 x, 起点 y = 阵位 y + movsx anchorY − standAct y, movsx +0x102A, +0x102C, 0)≠1 → 返回 0，否则两个 waiting=1、跟随 target|=1；否则 0x0049AA60 AimAction(目标, 跟随, anchorX, anchorY) 后以当前图片绘制；跟随 target 位 0x20 → 清位、AddHitPicture(effectA, effectQ, aimX+anchorX, aimY+anchorY, 0)；DrawHitPictures；target |= HitBits；位 1 → target=0、Strike(目标, 1)；返回 0。waiting=1：id 非 0、命令位 1 无、+0x2E60 > −0x20 → 以 +0x2E60 着色绘制（阴影模式 & 0x2C 时不着色、+0x2E60=−0x20），+0x2E60 −= 4，+0x3010=1 时加回，返回 0；否则 standAct waiting=1 且 ImageList::Empty 且 HitPicturesDone → 清 standAct、recoilAct、slotActs[槽]、[1]、[2]，+0x2F72 四个 dword = −1，+0x2E60=0、+0x2E62=1、+0x2FF0=0、+0x3064=0、+0x2B84=0；0x00578474=0 时：+0x2FCD=0 → +0x2BD4&=~1，+0x2FCD>0 → 减 1 返回 0；0x00578470 字节 +1、+0x34CA=0、0x00578474=0，返回 1。
+对照：AttackFrame（平滑绘制 RoleFrame::AttackAdvance）逐分支一致；绘制经平滑场景（偏差 97/99），图片缺失见偏差 157；常量与字段偏移核对，字符串与 exe 字节一致。
+差异：四个字段沿用正传偏移命名（unk2A74 与 GetWord2A74、unk2A8C、unk2AAC、unk2AD8）。修正：按外传偏移改为 unk2F90/GetWord2F90、unk2FB6、unk2FEC、unk3018（注释中的 word 2A74、+0x2A8C 同步），0x0048B5D0 读 +0x2F90 核对。复核：完整函数重新对照一致。
+
+## 0x004807B0 BattleRole::RollCritical — exact
+
+汇编：+0x3044=1、+0x3048=1、+0x2BD4≠0、+0x2EB2>0（有符号字）、MarkBit4=1、0x00578478 = 零扩展阵位 actId（+0xFD8）任一 → 返回 0。+0x2BD0 位 0 或 +0x2BC8 位 0x40000 → +0x34CA=1 返回 1。0x00578470（字节）≥ 角色数+8（无符号）→ 暴击；否则 <8 → 0；rand%10（字）≤5 → 0；否则暴击。暴击：+0x34CA=1、0x00578470=0、0x00578478=actId，返回 1。
+对照：RollCritical 一致（kCriticalAttacks=8、kCriticalRoll=10、kCriticalChance=5、StrongAttack=0x40000）。
+差异：无。
+
+## 0x004808C0 BattleRole::ShowAllSkills — exact
+
+汇编：+0x3450 = +0x3454。
+对照：skills = skillsHead，一致。
+差异：无。
+
+## 0x004808D0 BattleRole::PrepareCommand — diff → exact
+
+汇编：+0x2F8C≠2 → +0x2B38 起 16 字节清 0。+0x2F88=0 → 返回 1。+0x2FB1 位 2：+0x3054=1，+0x34A8 非 0 → +0x2F88 = 它；命令 +0x1010 & 0x28 → +0x2F8C = +0x2F88、+0x2F88 = 0xC8、返回 1，否则返回 0。种类 = +0x2F88；≠0x1B → +0x2EB0 = 记录 +0x26。UseAccessorySkill(种类)、RollCritical；命令 +0x1004 起 0x2C 字节清零，0x00489750(命令, 0)；+0x2BD0 位 0x20 → 命令 +0x1008 |= 0x100。weapon +0x3E（+0xFA）为 0：命令位 0x28 且 +0x2F88 ∈ {1, 0x17, 0x1A} 且 +0x3040=1 → +0x2F8C = +0x2F88、+0x2F88 = 0xC8；返回 0。否则清命令、0x00489750(命令, MarkBit4=1 ? 0xA6 : 技能)，位 0x20 同上。StatusBit5=1：+0x2F88≠1 → 返回 1；+0x2BC0 位 28：命令位 4 → SetFacing(1)、阵位 (0x154, 0x140)，返回 1；否则命令位 0x28 → +0x2F8C=1、+0x2F88=0xC8；返回 1。否则（命令位 0x28 或 +0x2F88=0x17）且 +0x2F88 ∈ {1, 0x17, 0x1A} 且 +0x3040=1 → 同样改为行走；返回 1。
+对照：PrepareCommand 逐分支一致（常量核对）。
+差异：+0x3054 字段沿用正传偏移命名 unk2B0C。修正：改为 unk3054。复核：完整函数重新对照一致。
+
+## 0x00480B10 BattleRole::ListSkill — exact
+
+汇编：类别 0/1/2 → 种类位 0x10/0xC/0x1001，其余原值；类型 0/1 → 0x11/0x14，其余原值。ShowAllSkills；逐个 +0x3450 = 其 next：为空 → 花费 = 0xFFFF、返回 0xFFFF；种类位 & 物品 +0x20 且用者低字节 & 5 时，类型 0x11 比较类别字 = 0x11，否则比较 = 0x14，相等则计数 +1；每个节点后 计数 = 序号 → 找到。类型不是 0x11/0x14 → 花费 0、返回未初始化栈字（偏差 390）；否则 0x00489750(栈上命令, 物品 +0x3E)、lstrcpy(名字, 记录名)，花费位：15 → & 0x7FFF；14 → (& 0x3FFF) | 0x8000；11 → 1000；类型 0x14 → 1；返回栈命令 +0x10 字。
+对照：ListSkill 一致（CategoryKinds、kCountedUsers=5、费用常量核对；返回值按偏差 390 取完整 SkillScript 的 unk10）。
+差异：无。
+
+## 0x00480C60 BattleRole::CountSkills — exact
+
+汇编：类别与类型映射同 ListSkill；ShowAllSkills；逐个节点：用者低字节 & 5 且种类位命中时，类型 0x11 → 类别 = 0x11 计数字节 +1，否则类别 = 0x14 → +1。
+对照：CountSkills 一致。
+差异：无。
+
+## 0x00480CF0 BattleRole::CanPaySkill — exact
+
+汇编：类别映射同 ListSkill；序号 0 → 返回 0。ShowAllSkills；逐个节点（空 → 0）：用者 & 5、种类命中、类别字 = 0x11 时计数 +1，计数 = 序号即停。花费位 15 → +0x3460=0、+0x34A0 = & 0x7FFF；位 14 → +0x3460=0、+0x34A2 = & 0x3FFF；位 11 → +0x34A0 = & 0x7FF，ShowAllItems，逐个物品：到尾 → 消息链空时 0x00479220(0x118, 0xA, 0x14, "物品不夠!!" 0x004BFA90, 0x40000002) 与 0x00427040(0x8C, 音量)，返回 0；id = +0x34A0 → 数量 >0 或待入 >0（有符号）→ +0x3460 = 它、返回 1，否则同样提示返回 0。无位 11：ShowAllSkills；+0x34A0 非 0：movsx 灵力 ≥ 它 → 1，否则提示 "靈力值不夠!!"（0x004BFA80）后继续；+0x34A2 非 0：movsx 体力 ≥ 它 → 1，否则提示 "體力值不夠!!"（0x004BFA70）；返回 0。
+对照：CanPaySkill 一致（常量与三条字符串和 exe 字节一致）。
+差异：无。
+
+## 0x00480F30 BattleRole::SelectSkill — exact
+
+汇编：类别映射同 ListSkill；序号 0 → 0xFFFF。类型 0 → +0x2FB1|=0x80、类型 0x11；类型 1 → +0x2FB1|=2、类型 0x14。命令 0x2C 字节清零；ShowAllSkills；逐个节点（空 → 0xFFFF）：用者 & 5 且种类命中、类别符合则计数 +1；计数 = 序号 → act 输出 = 零扩展物品 +0x54；0x00489750(命令, 物品 +0x3E)；记录 +0x14（无符号）≥ 0x32 → 命令 +0x18 += (智慧−0x32)×零扩展 +0x18 /100；+0x2B38 起 16 字节清零后 lstrcpy 名字；+0x2FB0 位 0x200 → +0x2FB4 = 物品 +0x48、+0x34A6 = +0x54、+0x34A8 = +0x40；物品 +0x3C 为 0 → +0x2EB6/B8/BA = +0x34/+0x36/+0x38；+0x2FD0=0，+0x3C 位 0x200 → =1 并同样赋值；返回 (种类位 & 8 且物品种类 & 8) ? 1 : (种类位 位 4)。
+对照：SelectSkill 一致（常量核对）。
+差异：无。
+
+## 0x00481170 BattleRole::LoadItemAction — exact
+
+汇编：栈上 0xA8 字节记录清零，0x00489B00 载入物品、0x0048B010 释放说明；act 输出 = 零扩展记录 +0x54；0x00489750(命令 +0x1004, 记录 +0x3E)；命令 +0x10 为 0 → 命令 +0xE = 记录 +0x34；+0x2FB1 |= 0x80。
+对照：LoadItemAction 一致。
+差异：无。
+
+## 0x00481200 BattleRole::FinishCommand — exact
+
+汇编：+0x2FB1 位 0x80：+0x3460 非空 → 0x004818E0(0, 0)（被调方只读第一个参数）、+0x3460=0；否则记录灵力 −= +0x34A0，<0 → 0；+0x34A0=0。最后 0x00481270 PayStamina。
+对照：FinishCommand 一致。
+差异：无。
+
+## 0x00481270 BattleRole::PayStamina — exact
+
+汇编：+0x34A2 为 0 → 返回；记录体力 −= 它，<0 → 0；+0x34A2=0。
+对照：PayStamina 一致。
+差异：无。
+
+## 0x004812A0 BattleRole::TakeCommand34A8 — diff → exact
+
+汇编：+0x2FB1 |= 2、+0x3054=1；+0x34A8 非 0 → +0x2F88 = 它；+0xBAC 起 0x148 字节（slotActs 第 8、9 项）清零。
+对照：逻辑一致。
+差异：函数名与注释沿用正传偏移（TakeCommand2F18；+0x2A86、+0x2B0C、+0x2F18）。修正：改名 TakeCommand34A8（源码、函数表、偏差 227 行），注释改为 +0x2FB0、+0x3054、+0x34A8。复核：完整函数重新对照一致。
+
+## 0x004812E0 BattleRole::ShowAllItems — exact
+
+汇编：+0x3458 = +0x345C。
+对照：inventory = inventoryHead、inventoryNode 置空（表头位置），一致。
+差异：无。
+
+## 0x004812F0 BattleRole::ListObject — exact
+
+汇编：ShowAllItems；标志=0；类别 0/1/2/3/6 → 种类位 0x10/0xC/0x1001/0x800/2，其余原值。逐个物品（空 → 标志 0、返回 0）：种类命中时，种类位 = 2 → 剩余（movsx 待入 − 零扩展 +6 + movsx 数量）> 0 计数 +1；否则用者 & 5 且剩余 >0 计数 +1；每个节点后 计数 = 序号即停。找到：+0x3460 = 节点；种类命中 → lstrcpy 名字、数量 = 剩余（字）、标志 |= 0x8000；花费位 14 → 花费 = & 0x3FFF，0x005134A0[id]+1 ≥ 3 → 花费 += 花费/3、标志 |= 0x2000；花费 > movsx 体力 → 标志 |= 0x4000。返回 1。
+对照：ListObject 一致（ObjectsLeft 以 u16 取 workCount；CostlyUses=2 与“次数+1 ≥ 3”相同；常量核对）。
+差异：无。

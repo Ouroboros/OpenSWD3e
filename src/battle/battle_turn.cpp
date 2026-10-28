@@ -3869,7 +3869,7 @@ int Game::BattleDebugKeys()
     return 1;
 }
 
-// swd3e.exe 0x00468B20: the debug overlay (unk537A18): each enemy's hit points, lock (GetWord2A74), command and
+// swd3e.exe 0x00468B20: the debug overlay (unk537A18): each enemy's hit points, lock (GetWord2F90), command and
 // level, each role's lock and command, the slot records (攻擊順序), the party order (我方等待順序) and the draw order
 // (排列順序), the acting and current units, each enemy's action gauge as a two-row bar of kGaugePixel at its place
 // with its second gauge as a green bar, and the state values (無敵, UM, 戰鬥, the menu, the command, the aim, the
@@ -5327,7 +5327,7 @@ void Game::ConfirmTarget()
     }
     else if (battle.turnCommand == kSkillCommand && role != nullptr)
     {
-        role->TakeCommand2F18();
+        role->TakeCommand34A8();
     }
 
     if (battle.menuCommand == kListState1B || battle.menuCommand == kWaitState50)

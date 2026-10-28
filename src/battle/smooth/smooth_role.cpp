@@ -32,7 +32,7 @@ constexpr i32 kAttackPoseAction = 0x3C;  // swd3e: AttackPose (swd32: kAttackAct
 constexpr u16 kAttackPoseHit = 0x1B78;   // swd3e: AttackPose hits with this act, not the command's cast act
 
 constexpr i32 kCriticalAction = 0x29;
-constexpr i32 kForcedAttackAction2 = 0x31;  // unk2A8C 2
+constexpr i32 kForcedAttackAction2 = 0x31;  // unk2FB6 2
 constexpr i16 kForcedX = 0x140;             // a unit with guestControl attacks from the middle of the field
 constexpr i16 kForcedY = 0x136;
 constexpr u16 kSecondForcedAttack = 2;
@@ -116,7 +116,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
     BattleRole& role = this->role;
     BattleState& battle = services.state;
 
-    if (role.unk2A74 != 0 || role.unk2AD8 == 1)
+    if (role.unk2F90 != 0 || role.unk3018 == 1)
     {
         return 0;
     }
@@ -141,7 +141,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
         role.placement.y = kForcedY;
     }
 
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     ActState& attack = role.standAct;
     attack.hold = 0;
 
@@ -185,9 +185,9 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
             attack.id = kMarkedAttackAct;
         }
 
-        if (forced && role.unk2A8C != 0)
+        if (forced && role.unk2FB6 != 0)
         {
-            attack.action = role.unk2A8C == kSecondForcedAttack ? kForcedAttackAction2 : kForcedAttackAction;
+            attack.action = role.unk2FB6 == kSecondForcedAttack ? kForcedAttackAction2 : kForcedAttackAction;
         }
     }
 
@@ -478,7 +478,7 @@ int RoleFrame::CastAtAdvance(BattleServices& services, const BattleUnit& target,
     BattleRole& role = this->role;
     ActState& act = role.standAct;
     act.id = role.actId;
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     act.action = kCastPose;
 
     if (services.acts.Run(act) == 0)
@@ -705,7 +705,7 @@ int RoleFrame::StepBackAdvance(BattleServices& services, int mode, Scene& scene)
 
     if (role.defeated == 1)
     {
-        role.unk2AAC = 0;
+        role.unk2FEC = 0;
         return 1;
     }
 
@@ -732,7 +732,7 @@ int RoleFrame::StepBackAdvance(BattleServices& services, int mode, Scene& scene)
 
         if (mode == 1)
         {
-            role.unk2AAC = 1;
+            role.unk2FEC = 1;
 
             if (role.autoControl == 1)
             {
@@ -743,7 +743,7 @@ int RoleFrame::StepBackAdvance(BattleServices& services, int mode, Scene& scene)
         return 1;
     }
 
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     act.id = role.actId;
     act.action = kStepBackAction;
 
@@ -1018,7 +1018,7 @@ u16 RoleFrame::AttackPoseAdvance(BattleServices& services, Scene& scene)
     BattleRole& role = this->role;
     ActState& act = role.standAct;
     act.id = role.actId;
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     act.action = kAttackPoseAction;
     act.hold = 0;
 
@@ -1083,7 +1083,7 @@ u16 RoleFrame::AttackPoseAdvance(BattleServices& services, Scene& scene)
         return 0;
     }
 
-    role.unk2AAC = 0;
+    role.unk2FEC = 0;
     act = ActState{};
     return kPoseDone;
 }
@@ -1239,7 +1239,7 @@ int RoleFrame::DirectAttackAdvance(BattleServices& services, BattleUnit& target,
     u16 targetY = 0;
     ActState& act = role.standAct;
     act.id = role.actId;
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     act.action = kDirectAttackAction;
     act.hold = 0;
 
@@ -1507,7 +1507,7 @@ int RoleFrame::MagicFrameAdvance(BattleServices& services, BattleUnit& target, S
     BattleState& battle = services.state;
     ActState& act = role.slotActs[BattleUnit::UnkSlot8];
     act.action = role.magicAction;
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     act.id = role.actId;
     UnitFrame(role).Action(services, target, act, scene);
 
@@ -1580,12 +1580,12 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
     BattleState& battle = services.state;
     ScenePainter painter(services, scene);
 
-    if (role.unk2A74 != 0 || role.unk2AD8 == 1)
+    if (role.unk2F90 != 0 || role.unk3018 == 1)
     {
         return 0;
     }
 
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     ActState& magic = role.slotActs[BattleUnit::UnkSlot8 + static_cast<std::size_t>(slot)];
     ActState& charge = role.attackAct;
     magic.id = role.actId;
@@ -1777,7 +1777,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
     ScenePainter painter(services, scene);
     ActState& act = role.standAct;
     act.id = role.actId;
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     act.action = kDirectAttackAction;
 
     if (services.acts.Run(act) == 0)
@@ -1913,7 +1913,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
     u16 targetX = 0;
     u16 targetY = 0;
     magic.action = role.magicAction;
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     magic.id = role.actId;
     UnitFrame(role).Action(services, target, magic, scene);
 
@@ -2022,7 +2022,7 @@ int RoleFrame::BeamSpellFrameAdvance(BattleServices& services, BattleUnit& targe
     ScenePainter painter(services, scene);
     ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
     ActState& rise = role.slotActs[BattleUnit::UnkSlot9];
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     magic.id = role.actId;
     magic.action = role.magicAction;
 
@@ -2252,7 +2252,7 @@ int RoleFrame::LeapSpellFrameAdvance(BattleServices& services, BattleUnit& targe
     BattleState& battle = services.state;
     ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
     magic.id = role.actId;
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     magic.action = role.magicAction;
 
     if (role.stage == kLeapCasting)

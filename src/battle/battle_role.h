@@ -139,7 +139,7 @@ public:
     void ShowAllSkills();
     void ShowAllItems();
     void PayStamina();
-    void TakeCommand2F18();
+    void TakeCommand34A8();
 
     // The talisman ghost in battle and the helpers of the roles acting by themselves (battle_ghost.cpp, swd3e).
     u16 SelectedItemId() const;

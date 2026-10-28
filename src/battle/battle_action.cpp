@@ -1985,7 +1985,7 @@ int Game::MeterAttackFrame(BattleRole& unit, int target)
 
 // swd3e.exe 0x0045FA80: one frame of battle role `role`; 1 always. The role of the start pose only runs its pose
 // (Pose36Frame) until it is over. Otherwise the role is drawn at rest (its acts holding while the field is darkened
-// with word 2A74, or while an enemy enrages). While the fight talk lets the battle run and no unit acts its effects
+// with word 2F90, or while an enemy enrages). While the fight talk lets the battle run and no unit acts its effects
 // tick and its gauge steps; a full gauge regenerates it and either opens the menu for a party role or lets an AI role
 // (an escort, a guest, the talisman ghost) choose its command (RoleGaugeFull). A role whose turn comes is slotted or
 // acts at once (RoleTakeTurn); its order is taken (RoleOrderFrame), the acting role acts (RoleActFrame) and a retreat
@@ -2010,7 +2010,7 @@ int Game::RoleFrame(int role)
 
     BattleRole& unit = this->battleRoles[static_cast<std::size_t>(role)];
     const bool holding =
-        (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
+        (unit.GetWord2F90() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
     if (this->fightTalk.battleRuns == 1 && battle.actingUnit == -1 && battle.unk5772BC == 0 && battle.unk5772C0 == 0)
@@ -2657,7 +2657,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
 
     if (command == kMagicAttackCommand)
     {
-        unit.TakeCommand2F18();
+        unit.TakeCommand34A8();
     }
 
     unit.PrepareCommand(this->battleServices, this->database);

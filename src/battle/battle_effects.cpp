@@ -1830,11 +1830,11 @@ int BattleUnit::Enrage(BattleServices& services)
 
 // swd3e.exe 0x0049C0D0: one frame of an enraged enemy's enrage act (slot act 10, its sound panned left) at the unit;
 // once it waits, an enrage 0x3F3 makes the unit invisible for 255 turns, the field brightens again and the enrage is
-// done (unk2BC0 bit 22). A defeated unit drops the enrage instead. 0 while not enraged (or casting, unk2AAC) or with
+// done (unk2BC0 bit 22). A defeated unit drops the enrage instead. 0 while not enraged (or casting, unk2FEC) or with
 // no act; 1 otherwise.
 int BattleUnit::EnrageFrame(BattleServices& services)
 {
-    if ((this->unk2BC0 & kEnraged) == 0 || this->unk2AAC == 1)
+    if ((this->unk2BC0 & kEnraged) == 0 || this->unk2FEC == 1)
     {
         return 0;
     }

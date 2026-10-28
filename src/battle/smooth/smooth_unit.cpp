@@ -48,7 +48,7 @@ constexpr int kFixedOriginY = 0x12C;
 constexpr int kHomeSteps = 0x1C;  // ReturnHome: line steps per frame and frame followed up
 constexpr int kGhostHomeSteps = 0x18;
 constexpr i32 kHomePose = 0x28;
-constexpr i32 kHomePose1 = 0x30;           // an enemy with unk2A8C 1
+constexpr i32 kHomePose1 = 0x30;           // an enemy with unk2FB6 1
 constexpr i32 kHomePose2 = 0x31;           // and with kSecondHomePose
 constexpr i32 kRoleWalkAction = 0x2E;      // swd3e (swd32: 0x2A)
 constexpr u32 kWalkBlocked = 0x80000000u;  // unk2BC0: the unit does not walk (WalkToTarget, swd3e)
@@ -248,7 +248,7 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
         return 1;
     }
 
-    unit.unk2AAC = 1;
+    unit.unk2FEC = 1;
     ActState& act = unit.attackAct;
     ActState& pose = unit.recoilAct;
     act.hold = unit.held == 1 ? 1 : 0;
@@ -276,12 +276,12 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
 
     if (unit.kind == 0)
     {
-        if (unit.unk2A8C == 1)
+        if (unit.unk2FB6 == 1)
         {
             pose.action = kHomePose1;
         }
 
-        if (unit.unk2A8C == kSecondHomePose)
+        if (unit.unk2FB6 == kSecondHomePose)
         {
             pose.action = kHomePose2;
         }
@@ -439,7 +439,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
 {
     BattleUnit& unit = this->unit;
 
-    if (unit.unk2AD8 == 1)
+    if (unit.unk3018 == 1)
     {
         return 0;
     }
@@ -460,7 +460,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
         return 0;
     }
 
-    unit.unk2AAC = 1;
+    unit.unk2FEC = 1;
     ActState& act = unit.attackAct;
     ActState& pose = unit.recoilAct;
     const bool vanishing = (unit.unk2BC0 & kVanishWalk) != 0;
@@ -495,12 +495,12 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
 
     if (unit.kind == 0)
     {
-        if (unit.unk2A8C == 1)
+        if (unit.unk2FB6 == 1)
         {
             pose.action = kHomePose1;
         }
 
-        if (unit.unk2A8C == kSecondHomePose)
+        if (unit.unk2FB6 == kSecondHomePose)
         {
             pose.action = kHomePose2;
         }
@@ -723,7 +723,7 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
 {
     BattleUnit& unit = this->unit;
 
-    if (unit.unk2AD8 == 0)
+    if (unit.unk3018 == 0)
     {
         return 0;
     }
@@ -889,7 +889,7 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
     clearMode();
     unit.targetCount = 0;
     unit.damageSlot = 0;
-    unit.unk2AD8 = 0;
+    unit.unk3018 = 0;
     return 1;
 }
 
@@ -2639,10 +2639,10 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
         return 1;
     }
 
-    unit.unk2AAC = 1;
+    unit.unk2FEC = 1;
     unit.recoilAct.action = unit.commandA == BattleUnit::UnkCommand1 ? kCommand1Action : kShadowAction;
     unit.recoilAct.id = unit.actId;
-    const u16 pose = unit.unk2A8C;
+    const u16 pose = unit.unk2FB6;
 
     if (pose != 0)
     {
@@ -2761,7 +2761,7 @@ int UnitFrame::DrawFadeOutAdvance(BattleServices& services, Scene& scene)
     }
 
     unit.recoilAct.id = unit.actId;
-    unit.unk2AAC = 1;
+    unit.unk2FEC = 1;
     unit.recoilAct.action = kShadowAction;
     unit.recoilAct.hold = unit.held == 1 ? 1 : 0;
 
@@ -2899,7 +2899,7 @@ int UnitFrame::RunAwayAdvance(BattleServices& services, Scene& scene)
     }
 
     run.id = unit.actId;
-    unit.unk2AAC = 1;
+    unit.unk2FEC = 1;
     run.action = kShadowAction;
     run.hold = 0;
 

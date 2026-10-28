@@ -456,7 +456,7 @@ public:
     int GetValueAB4() const;
     u16 GetCommandA() const;
     u16 GetCommandB() const;
-    u16 GetWord2A74() const;
+    u16 GetWord2F90() const;
     u16 GetWord2EAE() const;
     int ClearIdleAction();
     int SetCommand(int command);
@@ -907,7 +907,7 @@ public:
     u16 unk2A6E = 0;
     u16 commandB = 0;  // +0x2F8C commands 2, 3, 6, 13, 14 and 15
     u16 unk2A72 = 0;
-    u16 unk2A74 = 0;
+    u16 unk2F90 = 0;
     u16 hurtStep = 0;  // +0x2F94 the step of the stagger (HurtFrame)
     u16 unk2A76 = 0;
     u16 drainingGauge = 0;  // +0x2F96 (swd3e) 1 while the second gauge (unk2BE8) runs down (0x004902E0)
@@ -919,7 +919,7 @@ public:
     u16 commandFlags = 0;   // +0x2FB0 CommandFlag bits (high byte at +0x2FB1)
     u16 restAction = 0;     // swd32 +0x2A88 the rest action of the frame (IdleFrame)
     u16 magicAction = 0;    // +0x2FB4 the action of its magic act
-    u16 unk2A8C = 0;
+    u16 unk2FB6 = 0;
     u16 unk2A8E = 0;
     u16 barrierTurns = 0;  // +0x2FBA
     u8 unk2A92 = 0;
@@ -938,7 +938,7 @@ public:
     i32 kind = 0;          // +0x2FE0 1: a party role
     i32 unk2AA4 = 0;
     i32 unk2AA8 = 0;
-    i32 unk2AAC = 0;
+    i32 unk2FEC = 0;
     i32 unk2FF0 = 0;
     i32 unk2AB4 = 0;
     i32 defeated = 0;  // +0x2FF8
@@ -949,7 +949,7 @@ public:
     i32 unk2ACC = 0;
     i32 held = 0;  // +0x3010
     i32 unk2AD4 = 0;
-    i32 unk2AD8 = 0;
+    i32 unk3018 = 0;
     i32 unk2ADC = 0;
     i32 unk2AE0 = 0;
     i32 target = 0;       // +0x3024
@@ -966,7 +966,7 @@ public:
     i32 autoControl = 0;   // +0x3044 1: the role acts by itself (AI)
     i32 guestControl = 0;  // +0x3048 1: a guest role, acting by itself
     i32 facing = 0;        // +0x3050
-    i32 unk2B0C = 0;
+    i32 unk3054 = 0;
     i32 fadedIn = 0;  // +0x3064 a forced unit has faded in for its attack (AttackFrame)
     i32 facingTurnsBack =
         0;           // +0x3068 set with the facing (SetFacingIfAble); 1: the facing turns back when the gauge fills

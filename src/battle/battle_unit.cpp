@@ -398,7 +398,7 @@ const void* BattleUnit::SelectEntry(int second) const
 // swd3e.exe 0x0048B590
 int BattleUnit::GetValueAAC() const
 {
-    return this->unk2AAC;
+    return this->unk2FEC;
 }
 
 // swd3e.exe 0x0048B5A0
@@ -420,9 +420,9 @@ u16 BattleUnit::GetCommandB() const
 }
 
 // swd3e.exe 0x0048B5D0
-u16 BattleUnit::GetWord2A74() const
+u16 BattleUnit::GetWord2F90() const
 {
-    return this->unk2A74;
+    return this->unk2F90;
 }
 
 // swd3e.exe 0x0048B5E0
@@ -545,19 +545,19 @@ int BattleUnit::StartDefeat(int defeat)
 int BattleUnit::ResetTurn(BattleServices& services)
 {
     this->gauge = 0;
-    this->unk2AAC = 0;
+    this->unk2FEC = 0;
     const i32 wasDefeated = this->defeated;
     this->unk2FF0 = 0;
     this->unk2AB4 = 0;
     this->unk2AA8 = 0;
     this->unk2AE0 = 0;
     this->evadeRolled = 0;
-    this->unk2A8C = 0;
+    this->unk2FB6 = 0;
     this->commandFlags = 0;
     this->unk2AC8 = 0;
     this->unk2AD4 = 0;
     this->unk2ACC = 0;
-    this->unk2B0C = 0;
+    this->unk3054 = 0;
     this->unk2AF4 = 0;
     this->commandA = 0;
     this->commandB = 0;
@@ -651,16 +651,16 @@ u16 BattleUnit::Counter2A76() const
 // swd3e.exe 0x0048BA10
 void BattleUnit::IncreaseHits()
 {
-    ++this->unk2A74;
+    ++this->unk2F90;
     this->unk2AE0 = 1;
 }
 
 // swd32.exe 0x00478AE0 (unmatched in swd3e)
 i16 BattleUnit::DecreaseHits()
 {
-    if (this->unk2A74 != 0)
+    if (this->unk2F90 != 0)
     {
-        --this->unk2A74;
+        --this->unk2F90;
     }
 
     auto result = static_cast<i16>(this->unk2A76);
@@ -951,7 +951,7 @@ int BattleUnit::StepTargetCount(BattleServices& services, int increase)
     if (increase != 1)
     {
         --this->targetCount;
-        this->unk2AD8 = increase;
+        this->unk3018 = increase;
         return increase;
     }
 
@@ -979,7 +979,7 @@ int BattleUnit::StepTargetCount(BattleServices& services, int increase)
     }
 
     ++count;
-    this->unk2AD8 = 1;
+    this->unk3018 = 1;
     this->targetCount = count;
 
     if (count >= BattleUnit::MaxTargets)
@@ -2012,7 +2012,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->commandA = 0;
     this->unk2A6E = 0;
     this->unk2A72 = 0;
-    this->unk2A74 = 0;
+    this->unk2F90 = 0;
     this->hurtStep = 0;
     this->drainingGauge = 0;
     this->targetCount = 0;
@@ -2048,7 +2048,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->kind = 0;
     this->unk2AA4 = 0;
     this->unk2AA8 = 0;
-    this->unk2AAC = 0;
+    this->unk2FEC = 0;
     this->unk2FF0 = 0;
     this->unk2AB4 = 0;
     this->defeated = 0;
@@ -2058,10 +2058,10 @@ void BattleUnit::Reset(BattleServices& services)
     this->stage = 0;
     this->held = 0;
     this->unk2AD4 = 0;
-    this->unk2AD8 = 0;
+    this->unk3018 = 0;
     this->unk2ADC = 0;
     this->unk2AE0 = 0;
-    this->unk2A8C = 0;
+    this->unk2FB6 = 0;
     this->target = 0;
     this->extraNumber = 0;
     this->unk302C = 0;
@@ -2077,7 +2077,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->ghost = 0;
     this->unk2BDA = 0;
     this->facing = 0;
-    this->unk2B0C = 0;
+    this->unk3054 = 0;
     this->facingTurnsBack = 0;
     this->goldGuard = 0;
     this->unk3070 = 0;
@@ -2322,7 +2322,7 @@ bool BattleUnit::Unk2EB2BelowProficiency(CounterList& proficiency)
 // swd3e.exe 0x0049B160
 int BattleUnit::SetValueAAC(int value)
 {
-    this->unk2AAC = value;
+    this->unk2FEC = value;
     return value;
 }
 
@@ -2592,11 +2592,11 @@ void BattleUnit::LoadSkillAction(Database& database, u16 id, i32& act)
     this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
 }
 
-// swd3e.exe 0x00488C20: an enemy's command: with +0x2A8C a command of flag 2 runs (command 2, its cast act returned);
+// swd3e.exe 0x00488C20: an enemy's command: with +0x2FB6 a command of flag 2 runs (command 2, its cast act returned);
 // otherwise the enemy's own skill script is read afresh, +0x2EB0 starts from its attack and command 1 follows
 u16 BattleUnit::PrepareCommand(Database& database)
 {
-    if (this->unk2A8C != 0)
+    if (this->unk2FB6 != 0)
     {
         if ((this->command.flags & UnitCommand::UnkFlag2) == 0)
         {
@@ -2858,7 +2858,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
                     return -1;
                 }
             }
-            else if (this->autoControl != 1 || this->commandA == BattleUnit::UnkCommand2 || this->unk2A8C != 0)
+            else if (this->autoControl != 1 || this->commandA == BattleUnit::UnkCommand2 || this->unk2FB6 != 0)
             {
                 missed();
 
@@ -3508,7 +3508,7 @@ int BattleUnit::ReturnHome(BattleServices& services, const BattleUnit& target, i
 
 // swd3e.exe 0x00488CA0: an enemy's command taken from its object (skill skillA for choice 1, skillB for another): the
 // command script and its value; a UnkFlag2 command gives its cast act, sets UnkCommandFlag8000 and command 2 (0);
-// another sets unk2A8C to the choice and command 1 (1).
+// another sets unk2FB6 to the choice and command 1 (1).
 int BattleUnit::LoadEnemyCommand(Database& database, int choice, u32& act)
 {
     this->command = UnitCommand{};
@@ -3525,7 +3525,7 @@ int BattleUnit::LoadEnemyCommand(Database& database, int choice, u32& act)
         return 0;
     }
 
-    this->unk2A8C = static_cast<u16>(choice);
+    this->unk2FB6 = static_cast<u16>(choice);
     this->SetCommand(BattleUnit::UnkCommand1);
     return 1;
 }
@@ -3778,7 +3778,7 @@ int BattleUnit::DefeatFrame(BattleServices& services)
         return 0;
     }
 
-    this->unk2AAC = 1;
+    this->unk2FEC = 1;
     this->defeated = 1;
     ActState& act = this->castAct;
     act.id = this->actId;
@@ -3805,7 +3805,7 @@ int BattleUnit::DefeatFrame(BattleServices& services)
         this->gauge = 0;
         act = ActState{};
         this->ResetTurn(services);
-        this->unk2AAC = 0;
+        this->unk2FEC = 0;
         this->dying = 0;
         this->defeated = 1;
         this->unk2BC0 = 0;
@@ -3929,7 +3929,7 @@ int BattleUnit::EndDefeat(BattleServices& services)
     this->gauge = 0;
     this->castAct = ActState{};
     this->ResetTurn(services);
-    this->unk2AAC = 0;
+    this->unk2FEC = 0;
     this->defeated = 1;
     this->dying = 0;
     return 1;
@@ -4236,7 +4236,7 @@ int BattleUnit::DefeatBoss(BattleServices& services, const Picture& picture)
         this->attackAct = ActState{};
         this->absorb = ParticleEffect{};
         this->ResetTurn(services);
-        this->unk2AAC = 0;
+        this->unk2FEC = 0;
         this->defeated = 1;
         this->dying = 0;
         return 1;
@@ -4855,7 +4855,7 @@ int BattleUnit::HurtStep(BattleServices& services)
     }
 
     const u16 step = this->hurtStep;
-    this->unk2AAC = 1;
+    this->unk2FEC = 1;
 
     if (step <= kHurtSteps || (act.waiting != 1 && this->unk3070 != 1))
     {
@@ -4881,7 +4881,7 @@ int BattleUnit::HurtStep(BattleServices& services)
     this->nudged = 0;
     act.target = 0;
     this->unk2BC0 &= ~(kFlag2BC0Spell | kFlag2BC0Damage);
-    this->unk2AAC = 0;
+    this->unk2FEC = 0;
     this->charging = 1;
     act = ActState{};
     this->targets.fill(BattleUnit::NoTarget);
@@ -4970,7 +4970,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         return;
     }
 
-    if (this->unk2AAC == 1)
+    if (this->unk2FEC == 1)
     {
         return;
     }
@@ -5828,7 +5828,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
             return 1;
         }
 
-        this->unk2A8C = static_cast<u16>(skill + 1);
+        this->unk2FB6 = static_cast<u16>(skill + 1);
         this->SetCommand(BattleUnit::UnkCommand1);
         this->MarkDelayedAttack();
         return 0;
@@ -6010,7 +6010,7 @@ void BattleUnit::MarkDelayedAttack()
 // steal of gold (action flag 0x80000) takes the gold from a party member up to the value (the enemy then flees); a
 // steal (0x100000) succeeds on a roll of 0..9 under unk24 (itemStolen, the enemy flees). Command 1 rolls on the level,
 // raised and cut by the attack effects, less the defence (else the bare attack, at least 1, rolled again unless
-// unk2A8C); other commands add a roll to a positive value, command 2 halved under DamageTransferred. The elements scale
+// unk2FB6); other commands add a roll to a positive value, command 2 halved under DamageTransferred. The elements scale
 // it, restoreHitPoints heals instead, a guard cuts it by 10..39%, and a party role gains fury. The original computes
 // in 16 bits.
 i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
@@ -6062,7 +6062,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
                 }
             }
             else if (
-                (this->unk2A8C == 0 && this->commandA != BattleUnit::UnkCommand2) || value != 0 || this->unk2EB0 != 0
+                (this->unk2FB6 == 0 && this->commandA != BattleUnit::UnkCommand2) || value != 0 || this->unk2EB0 != 0
             )
             {
                 target.RaiseFlag2BC0(services.state);
@@ -6230,7 +6230,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
                 damage = 1;
             }
 
-            if (this->unk2A8C == 0)
+            if (this->unk2FB6 == 0)
             {
                 damage +=
                     static_cast<i32>(random.Below(static_cast<u16>(data.level / kLevelShare + kLevelRollBase))) + 1;
@@ -6366,7 +6366,7 @@ int BattleUnit::StepOrbCounters(CounterList& list, const UnitCommand& command)
     return counts;
 }
 
-// swd3e.exe 0x0048FE60: one frame of the unit's damage numbers (while unk2AD8): from damageSlot to targetCount, each
+// swd3e.exe 0x0048FE60: one frame of the unit's damage numbers (while unk3018): from damageSlot to targetCount, each
 // slot waits out its delay, then its four digits (font pushedTargets) hop up one after another by DigitHops (not while
 // held); once all have landed (step 9) a pending extra number (extraNumber: digits unk575FC4..E4) becomes the next
 // slot, and the slot rises and fades by 2 a frame up to kNumberFadeEnd before it is cleared and the next is shown. A
@@ -7572,7 +7572,7 @@ int BattleUnit::ZoomEntranceFrame(BattleServices& services, BattleUnit& anchor, 
 namespace swd3e
 {
 
-// swd3e.exe 0x004877A0: one frame of the cast pose (action 0x34 of the unit's act; unk2AAC set): its picture over its
+// swd3e.exe 0x004877A0: one frame of the cast pose (action 0x34 of the unit's act; unk2FEC set): its picture over its
 // shadow (a third high, sheared by a quarter, tinted -6, -1 for an auto role) at its place, mirrored when facing back
 // (actAnchorX from the right edge then), its sound played once and panned to the unit's side. Once the pose marks
 // Strikes or FollowsUp it is done (1) without `slotAct`; with one, slot act 0 plays it over the screen from (0, 0) and
@@ -7581,7 +7581,7 @@ int BattleUnit::CastPoseFrame(BattleServices& services, i32 slotAct)
 {
     ActState& pose = this->standAct;
     pose.id = this->actId;
-    this->unk2AAC = 1;
+    this->unk2FEC = 1;
     pose.action = kCastPoseAction;
 
     if (services.acts.Run(pose) == 0)

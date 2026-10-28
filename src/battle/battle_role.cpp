@@ -770,11 +770,11 @@ void BattleRole::PayStamina()
     this->staminaCost = 0;
 }
 
-// swd3e.exe 0x004812A0: flag 9 of +0x2A86 and +0x2B0C set, command A from +0x2F18 when set, slot acts 8 and 9 cleared
-void BattleRole::TakeCommand2F18()
+// swd3e.exe 0x004812A0: flag 9 of +0x2FB0 and +0x3054 set, command A from +0x34A8 when set, slot acts 8 and 9 cleared
+void BattleRole::TakeCommand34A8()
 {
     this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag200);
-    this->unk2B0C = 1;
+    this->unk3054 = 1;
 
     if (this->unk34A8 != 0)
     {
@@ -1733,7 +1733,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
 
     if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
     {
-        this->unk2B0C = 1;
+        this->unk3054 = 1;
 
         if (this->unk34A8 != 0)
         {

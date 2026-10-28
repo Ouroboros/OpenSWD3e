@@ -2743,7 +2743,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
                 y,
                 WinFormat(
                     kEnemyDebugLine,
-                    {hitPoints, static_cast<i32>(enemy.GetWord2A74()), static_cast<i32>(enemy.GetCommandA()), level}
+                    {hitPoints, static_cast<i32>(enemy.GetWord2F90()), static_cast<i32>(enemy.GetCommandA()), level}
                 )
             );
             y += kListRowHeight;
@@ -2757,7 +2757,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             text(
                 kDebugRolesX,
                 y,
-                WinFormat(kRoleDebugLine, {static_cast<i32>(role.GetWord2A74()), static_cast<i32>(role.GetCommandA())})
+                WinFormat(kRoleDebugLine, {static_cast<i32>(role.GetWord2F90()), static_cast<i32>(role.GetCommandA())})
             );
             y += kListRowHeight;
         }

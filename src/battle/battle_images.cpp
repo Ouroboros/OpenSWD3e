@@ -143,7 +143,7 @@ constexpr std::size_t kKnockBackTrail = 1;
 int BattleUnit::KnockBackFrame(BattleServices& services)
 {
     ActState& act = this->attackAct;
-    this->unk2AAC = 1;
+    this->unk2FEC = 1;
     act.id = this->actId;
     act.action = kKnockBackAction;
 
@@ -238,7 +238,7 @@ int BattleUnit::KnockBackFrame(BattleServices& services)
 
     this->hurtStep = 0;
     this->trails[kKnockBackTrail].started = 0;
-    this->unk2AAC = 0;
+    this->unk2FEC = 0;
     this->unk2BC0 &= ~kFlag2BC0Blocked;
     act = ActState{};
     return 1;

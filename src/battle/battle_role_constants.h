@@ -10,7 +10,7 @@ namespace swd3e
 
 constexpr i32 kAttackAction = 0x28;
 constexpr std::size_t kFlightAct = 1;      // the slot act a flying follow-up uses
-constexpr i32 kForcedAttackAction = 0x30;  // unk2A8C 1 of a forced unit
+constexpr i32 kForcedAttackAction = 0x30;  // unk2FB6 1 of a forced unit
 constexpr i32 kDirectAttackAction = 0x2A;  // swd3e: DirectAttack and BoomerangFrame (swd32: kForcedAttackAction)
 constexpr i32 kDirectFollowAct = 0x1C9A;   // swd3e: the follow act of DirectAttack (swd32: the cast act)
 constexpr u32 kRepeatAttack = 1;           // unk2BD4 bit 0: the attack repeats extraAttacks times (skill 0x15)

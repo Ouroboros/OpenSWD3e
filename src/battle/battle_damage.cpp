@@ -202,7 +202,7 @@ int Game::MagicAttackFrame(BattleRole& role, BattleUnit& target)
 
 // swd3e.exe 0x00487FE0 (a method of the unit in the original): one frame of `enemy`'s attack on `target`; 1 once it
 // is over (its gauge then gains 10..129). An UnkFlag8 command fades the enemy out and in at the target first (turning
-// first with unk2BC0 bit 28). The attack act (by unk2A8C) is drawn, an error box when it cannot run; under unk2BC0
+// first with unk2BC0 bit 28). The attack act (by unk2FB6) is drawn, an error box when it cannot run; under unk2BC0
 // bit 16 the enemy then darkens away and falls. Its target bits play the effect in the recoil act, fade the field,
 // start the follow-up (queued at once when it flies to the unit), quake, slide the units to it or back, raise flag
 // 2BC0 of the target or strike; the act's colour darkens the field. The follow-up flies (TargetsUnit, mirrored once

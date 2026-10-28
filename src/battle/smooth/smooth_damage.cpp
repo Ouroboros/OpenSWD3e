@@ -22,8 +22,8 @@ constexpr int kSpellPanCentre = 0x140;
 constexpr int kSpellPan = 0x30;
 constexpr u16 kDrainGainDelay = 8;  // the stamina gain shows 8 frames after the healing
 constexpr i32 kEnemyAttackAction = 0x28;
-constexpr i32 kEnemyAttackAction1 = 0x30;  // unk2A8C 1
-constexpr i32 kEnemyAttackAction2 = 0x31;  // unk2A8C 2
+constexpr i32 kEnemyAttackAction1 = 0x30;  // unk2FB6 1
+constexpr i32 kEnemyAttackAction2 = 0x31;  // unk2FB6 2
 constexpr u16 kSecondEnemyAttack = 2;
 constexpr std::size_t kEnemyFlightAct = 1;  // the slot act a flying follow-up uses
 constexpr u16 kEnemyStrikeBits = ActState::Strikes | ActState::UnkTarget10;
@@ -55,7 +55,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
     BattleServices& services = game.battleServices;
     ScenePainter painter(game.battleServices, scene);
     ActState& act = role.slotActs[BattleUnit::UnkSlot8];
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     act.id = role.actId;
     act.action = role.magicAction;
 
@@ -188,13 +188,13 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     BattleServices& services = game.battleServices;
     ScenePainter painter(game.battleServices, scene);
 
-    if (role.unk2A74 != 0 || role.unk2AD8 == 1)
+    if (role.unk2F90 != 0 || role.unk3018 == 1)
     {
         return 0;
     }
 
     ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
-    role.unk2AAC = 1;
+    role.unk2FEC = 1;
     magic.hold = 0;
 
     if ((magic.target & ActState::Holds) != 0)
@@ -458,14 +458,14 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     // The evade chance of the strikes (the drain kind of the first strike carries into the second, as in the original).
     u16 chance = 0;
 
-    if (enemy.unk2A74 != 0)
+    if (enemy.unk2F90 != 0)
     {
         return 0;
     }
 
     ActState& attack = enemy.standAct;
     ActState& follow = enemy.castAct;
-    enemy.unk2AAC = 1;
+    enemy.unk2FEC = 1;
     attack.hold = 0;
 
     if (enemy.held == 1)
@@ -501,9 +501,9 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     attack.id = enemy.actId;
     attack.action = kEnemyAttackAction;
 
-    if (enemy.unk2A8C != 0)
+    if (enemy.unk2FB6 != 0)
     {
-        attack.action = enemy.unk2A8C == kSecondEnemyAttack ? kEnemyAttackAction2 : kEnemyAttackAction1;
+        attack.action = enemy.unk2FB6 == kSecondEnemyAttack ? kEnemyAttackAction2 : kEnemyAttackAction1;
     }
 
     if (UnitFrame(enemy).Action(services, target, attack, scene) == 0)
@@ -902,7 +902,7 @@ int DamageFrame::EnemySkillFrameAdvance(BattleUnit& enemy, BattleUnit& target, S
     BattleState& battle = game.battleState;
     BattleServices& services = game.battleServices;
     ActState& act = enemy.standAct;
-    enemy.unk2AAC = 1;
+    enemy.unk2FEC = 1;
 
     if ((enemy.command.flags & UnitCommand::UnkFlag8) != 0 && enemy.fadedIn == 0)
     {

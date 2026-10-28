@@ -705,7 +705,7 @@ TEST_CASE("battle unit: an enemy chooses its first skill")
         if (first)
         {
             CHECK_EQ(object.data.skillACount, 0);
-            CHECK_EQ(enemy.unk2A8C, 1);
+            CHECK_EQ(enemy.unk2FB6, 1);
             CHECK_EQ(enemy.idleTurns, 1);  // swd3e: a skill leaves the idle turns
         }
         else
@@ -748,7 +748,7 @@ TEST_CASE("battle unit: the damage of an enemy's hit")
     CHECK_EQ(attacker.EnemyHitDamage(all.services, target), kAttackValue + roll - kTargetDefense);
 
     targetData.data.defense = static_cast<swd3e::u16>(kHighDefense);
-    attacker.unk2A8C = 1;
+    attacker.unk2FB6 = 1;
     CHECK_EQ(attacker.EnemyHitDamage(all.services, target), 1);
 
     attacker.restoreHitPoints = kHeal;
@@ -1071,7 +1071,7 @@ TEST_CASE("battle unit: a damage number hops, rises and fades")
     Services all;
     BattleUnit unit;
     CHECK_EQ(unit.DrawDamageNumbers(all.services), 0);
-    unit.unk2AD8 = 1;
+    unit.unk3018 = 1;
     unit.targetCount = 1;
     unit.damageDigits[0] = {0, 0, kTens, kOnes};
     unit.damageDelays[0] = kDelay;
@@ -1094,10 +1094,10 @@ TEST_CASE("battle unit: a damage number hops, rises and fades")
     CHECK_EQ(frame, kFrames);
     CHECK_EQ(unit.DrawDamageNumbers(all.services), 1);
     CHECK_EQ(unit.targetCount, 0);
-    CHECK_EQ(unit.unk2AD8, 0);
+    CHECK_EQ(unit.unk3018, 0);
     CHECK_EQ(unit.damageDigits[0][2], 0);
 
-    unit.unk2AD8 = 1;
+    unit.unk3018 = 1;
     unit.targetCount = 1;
     unit.damageSlot = 0;
     unit.damageDigits[0] = {0, 0, kTens, kOnes};
