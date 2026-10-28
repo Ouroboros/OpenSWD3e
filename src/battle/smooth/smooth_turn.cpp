@@ -373,7 +373,13 @@ void TurnFrame::FieldFadeFrameAdvance(int counting, Scene& scene)
     ScenePainter painter(services, scene);
     ColorFade& fade = game.battleState.fieldFade;
 
-    if (fade.stepRed == 0 && fade.stepGreen == 0 && fade.stepBlue == 0)
+    // fcomp with 0 sets C3 for an unordered result too (0x00467B56): a step of NaN (0/0 over 0 frames) is still.
+    auto still = [](float step)
+    {
+        return !(step < 0 || step > 0);
+    };
+
+    if (still(fade.stepRed) && still(fade.stepGreen) && still(fade.stepBlue))
     {
         return;
     }

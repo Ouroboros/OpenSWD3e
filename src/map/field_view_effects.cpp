@@ -9,7 +9,13 @@ void FieldView::FadeColors(int step)
 {
     ColorFade& fade = this->game.scene.fade;
 
-    if (fade.stepRed == 0.0F && fade.stepGreen == 0.0F && fade.stepBlue == 0.0F)
+    // fcomp with 0 sets C3 for an unordered result too (0x00414CC6): a step of NaN (0/0 over 0 frames) is still.
+    auto still = [](float value)
+    {
+        return !(value < 0.0F || value > 0.0F);
+    };
+
+    if (still(fade.stepRed) && still(fade.stepGreen) && still(fade.stepBlue))
     {
         return;
     }

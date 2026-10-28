@@ -449,8 +449,9 @@ ItemNode* AddItem(ItemLink& list, u16 id, i16 amount, ItemCountMode mode, Databa
 
 // swd3e.exe 0x004679E0: one of item `id` added (to the pending count when `pending` is 1) unless the entry holds
 // MaxCount in all; a new entry goes first, its object loaded from mon.dat even when it has none. The record of the
-// entry is returned. The original takes the inventory list directly; its head is a static node (0x004A9940) whose
-// record (0x004A994C, all zero) id 0 returns (0x0045D18A): nullptr here, read by the callers as an empty name.
+// entry is returned. The original takes the inventory list directly; its head (0x004C3018) is read as a static node
+// whose id (0x004C301C) and record (0x004C3024) nothing writes: id 0 returns that zero record (taken as a loot name at
+// 0x0047CC87), nullptr here, read by the callers as an empty name.
 ObjectRecord* AddOneItem(ItemLink& list, u16 id, int pending, Database& database)
 {
     if (id == 0)
