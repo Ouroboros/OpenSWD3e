@@ -283,8 +283,8 @@ int Game::SlideUnits(int unit, i16 x, i16 target)
         const auto at = static_cast<std::size_t>(unit);
         const BattleUnit& moving = target != 0 ? static_cast<const BattleUnit&>(this->battleRoles[at])
                                                : static_cast<const BattleUnit&>(this->battleEnemies[at]);
-        moving.GetPosition(battle.unk53BF4A, battle.unk53BF4E);
-        const auto from = static_cast<i16>(battle.unk53BF4A);
+        moving.GetPosition(battle.unk577240, battle.unk577244);
+        const auto from = static_cast<i16>(battle.unk577240);
         step = (x - from) / kSlideToShare;
         battle.shake = step;
 

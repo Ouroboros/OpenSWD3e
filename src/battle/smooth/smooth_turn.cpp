@@ -2805,8 +2805,8 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
         for (u32 index = 0; index < battle.enemyCount; ++index)
         {
             BattleEnemy& enemy = game.battleEnemies[index];
-            enemy.GetPosition(battle.unk53BF4A, battle.unk53BF4E);
-            const int row = Display::Width * static_cast<i16>(battle.unk53BF4E);
+            enemy.GetPosition(battle.unk577240, battle.unk577244);
+            const int row = Display::Width * static_cast<i16>(battle.unk577244);
             // The length is taken as an unsigned word (0x00468ECC).
             const auto gauge = static_cast<u16>(enemy.GaugeLength(services));
 
@@ -2814,8 +2814,8 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             for (int pixel = 0; pixel < gauge; ++pixel)
             {
                 for (const int at :
-                     {row + pixel + static_cast<i16>(battle.unk53BF4A),
-                      row + pixel + Display::Width + static_cast<i16>(battle.unk53BF4A)})
+                     {row + pixel + static_cast<i16>(battle.unk577240),
+                      row + pixel + Display::Width + static_cast<i16>(battle.unk577240)})
                 {
                     if (at >= 0 && at < Display::Width * Display::Height)
                     {
@@ -2830,8 +2830,8 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             {
                 HudFrame(game.battleHud)
                     .FillColor(
-                        static_cast<i16>(battle.unk53BF4A),
-                        static_cast<i16>(battle.unk53BF4E),
+                        static_cast<i16>(battle.unk577240),
+                        static_cast<i16>(battle.unk577244),
                         second,
                         kDebugGaugeHeight,
                         painter.MakeColor(0, kDebugGaugeGreen, 0),

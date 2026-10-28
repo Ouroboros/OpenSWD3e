@@ -549,8 +549,8 @@ public:
     u16 unk575F20 = 0;
     i32 hitsAtOnce = 0;  // 0x00575F30 1: a sweep of the whole side hits it at once (HitFrame)
     i32 wholeSide = 0;   // 0x00575F2C 1: the hit or effect falls on a whole side (the effect messages name the side)
-    u16 unk53BF4A = 0;   // a unit's place read for the debug gauge and the menu
-    u16 unk53BF4E = 0;
+    u16 unk577240 = 0;   // a unit's place read for the debug gauge and the menu
+    u16 unk577244 = 0;
     i32 hoverScrollPart = 0;    // 0x0057707C the part of the scroll bar under the pointer (1..4)
     i32 frameMilliseconds = 1;  // 0x004BF18C the milliseconds of a frame (the debug overlay shows 1000 / it)
     i32 frameNow = 0;           // 0x005770A0 (swd3e) the time of this frame (milliseconds)

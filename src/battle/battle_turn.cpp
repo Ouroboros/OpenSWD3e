@@ -6224,7 +6224,7 @@ void Game::ConfirmKey()
     battle.unk5772B4 = 1;
     battle.unk53C49C = 1;
     battle.listRows = kListRows;
-    role.GetPosition(battle.unk53BF4A, battle.unk53BF4E);
+    role.GetPosition(battle.unk577240, battle.unk577244);
 
     if (battle.controlledEnemy == kNoTalkRole || battle.talkRole != battle.currentUnit - BattleState::FirstRoleUnit)
     {
@@ -6867,13 +6867,13 @@ void Game::DrawGhostAimPointer()
         }
 
         battle.unk5772B4 = 1;
-        battle.unk53BF4E = 0;
-        battle.unk53BF4A = 0;
+        battle.unk577244 = 0;
+        battle.unk577240 = 0;
         BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)];
         enemy.SetAC0(1);
         UnitRect rect;
         enemy.GetShadowRect(this->battleServices, rect);
-        enemy.GetOffset(battle.unk53BF4A, battle.unk53BF4E);
+        enemy.GetOffset(battle.unk577240, battle.unk577244);
         battle.aimTarget = battle.actingEnemy + 1;
         battle.aiTarget = battle.actingEnemy + 1;
         this->battleHud.DrawSlotAnimation(kTurnPointer, 0, rect.x + (rect.width >> 1), rect.y + (rect.height >> 1));
@@ -6950,15 +6950,15 @@ void Game::DrawAimPointers()
 
             enemy.GetShadowRect(this->battleServices, rect);
             enemy.SetAC0(1);
-            enemy.GetOffset(battle.unk53BF4A, battle.unk53BF4E);
+            enemy.GetOffset(battle.unk577240, battle.unk577244);
 
-            if (battle.unk53BF4A != 0 || battle.unk53BF4E != 0)
+            if (battle.unk577240 != 0 || battle.unk577244 != 0)
             {
                 hud.DrawSlotAnimation(
                     kTurnPointer,
                     static_cast<int>(index),
-                    rect.x + static_cast<i16>(battle.unk53BF4A),
-                    rect.y + static_cast<i16>(battle.unk53BF4E)
+                    rect.x + static_cast<i16>(battle.unk577240),
+                    rect.y + static_cast<i16>(battle.unk577244)
                 );
             }
             else
@@ -7009,8 +7009,8 @@ void Game::DrawAimPointers()
 
     if (battle.unk5772B8 == 0)
     {
-        battle.unk53BF4E = 0;
-        battle.unk53BF4A = 0;
+        battle.unk577244 = 0;
+        battle.unk577240 = 0;
 
         if (atParty)
         {
@@ -7020,9 +7020,9 @@ void Game::DrawAimPointers()
             {
                 BattleRole& role = this->battleRoles[aimed];
                 role.GetShadowRect(this->battleServices, rect);
-                role.GetOffset(battle.unk53BF4A, battle.unk53BF4E);
+                role.GetOffset(battle.unk577240, battle.unk577244);
                 role.SetAC0(1);
-                battle.unk53BF4E = static_cast<u16>(battle.unk53BF4E + kRoleAimDrop);
+                battle.unk577244 = static_cast<u16>(battle.unk577244 + kRoleAimDrop);
             }
         }
         else
@@ -7030,7 +7030,7 @@ void Game::DrawAimPointers()
             BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)];
             enemy.SetAC0(1);
             enemy.GetShadowRect(this->battleServices, rect);
-            enemy.GetOffset(battle.unk53BF4A, battle.unk53BF4E);
+            enemy.GetOffset(battle.unk577240, battle.unk577244);
             battle.aimTarget = battle.actingEnemy + 1;
 
             if (battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50)
