@@ -185,7 +185,7 @@ struct UnitCommand
     {
         TargetsUnit = 1,  // a target command (ClearMoveAxes)
         UnkFlag2 = 2,
-        UnkFlag4 = 4,      // swd3e: under StatusBit5 with unk26B8 bit 28 the role stands aside (PrepareCommand)
+        UnkFlag4 = 4,      // swd3e: under StatusBit5 with unk2BC0 bit 28 the role stands aside (PrepareCommand)
         UnkFlag8 = 8,      // with UnkFlag20: a party role walks home after it acts (ReturnHome)
         UnkFlag10 = 0x10,  // an enemy walks home after it acts
         UnkFlag20 = 0x20,  // the walks wait for the act to follow up, then cover 1/16 (there) or 1/12 (home) a frame
@@ -300,7 +300,7 @@ public:
         StatsScaled = 0x200,  // a party role's attributes are scaled (undone when it ends)
         UnkStatus400 = 0x400,
         Poisoned = 0x1000,         // swd3e: a poison (EffectNode::bits 0x1000) eats hit points a tick
-        DamageTransfer = 0x20000,  // swd3e: 傷害轉移 (no ailment lands; RaiseFlag26B8 outside a cast spell)
+        DamageTransfer = 0x20000,  // swd3e: 傷害轉移 (no ailment lands; RaiseFlag2BC0 outside a cast spell)
         StrongAttack = 0x40000,    // swd3e: 強攻擊 (a role's attacks are always critical)
         DefenseDown = 0x100000,
         AttackDown = 0x1000000,
@@ -460,9 +460,9 @@ public:
     u16 GetWord29A2() const;
     int ClearIdleAction();
     int SetCommand(int command);
-    void ClearFlag26B8();
-    void RaiseFlag26B8(const BattleState& battle);
-    int Flag26B8() const;
+    void ClearFlag2BC0();
+    void RaiseFlag2BC0(const BattleState& battle);
+    int Flag2BC0() const;
     int PushTarget(u16 target);
     int StartDefeat(int kind);
     int ResetTurn(BattleServices& services);
@@ -472,8 +472,8 @@ public:
     int ActFlag17() const;
     bool HasActionFlags(u32 flags) const;
     int SetAF8(int value);
-    void RaiseFlag26B8Bit17();
-    int Flag26B8Bit17() const;
+    void RaiseFlag2BC0Bit17();
+    int Flag2BC0Bit17() const;
     bool HitPointsAtMost(int share) const;
     i16 RoleAgility() const;
     u16 RoleAttackBonus() const;
@@ -551,7 +551,7 @@ public:
     bool PoisonLasted() const;
     i16 PoisonBase() const;
     void CountPoisonTurn();
-    void RaiseUnk26B8Bit28();
+    void RaiseUnk2BC0Bit28();
     i32 PartyMember() const;
     i32 AutoControl() const;
     i32 GuestControl() const;
@@ -560,10 +560,10 @@ public:
     int CountEnrageEvent(int event);
     u8 EnrageElement() const;
     u8 CommandTurns() const;
-    void SetUnk26B8Bit19(int on);
-    int Unk26B8Bit23() const;
-    i32 RaiseUnk26B8(i32 bits);
-    i32 ClearUnk26B8(i32 bits);
+    void SetUnk2BC0Bit19(int on);
+    int Unk2BC0Bit23() const;
+    i32 RaiseUnk2BC0(i32 bits);
+    i32 ClearUnk2BC0(i32 bits);
     int DamageTransferred() const;
     int CommandSupports() const;
     int CommandRefreshOnly() const;
@@ -746,8 +746,8 @@ public:
     RoleRecord* battleRecord =
         nullptr;  // swd32 +0x0 the battle copy of a party role's record (+0x26, +0x28: attack, defence)
     RoleRecord* roleRecord = nullptr;  // swd32 +0x4 the role's party record
-    i32* roleBlock = nullptr;  // swd32 +0x8 the role's 0x60-byte block at 0x004ACF50 ([0]: the fury gauge, inferred)
-    ObjectRecord* data = nullptr;             // +0xC an enemy's mon.dat object (usually `object`)
+    i32* roleBlock = nullptr;          // +0x8 the role's 0x60-byte block at 0x004C6700 ([0]: the fury gauge, inferred)
+    ObjectRecord* data = nullptr;      // +0xC an enemy's mon.dat object (usually `object`)
     TalismanGhost* ghostRecord = nullptr;     // +0x10 (swd3e) the talisman ghost's record (SetupGhost)
     std::unique_ptr<ObjectRecord> ownedData;  // a party role's block at +0x0C (freed by Reset)
     ObjectRecord object;                      // +0x14 (its description at +0xB8; ResetTurn clears it)
@@ -808,7 +808,7 @@ public:
     i32 unk26AC = 0;
     i32 damageCarry = 0;               // +0x2BB8
     i32 hitPointsOverride = 0;         // +0x2BBC an enemy's current hit points when set
-    u32 unk26B8 = 0;                   // +0x2BC0 bit 31
+    u32 unk2BC0 = 0;                   // +0x2BC0 bit 31
     u32 colorPair = DefaultColorPair;  // +0x2BC4
     u32 status = 0;                    // +0x2BC8 status bits (2: stone, 12: frozen, ...)
     u32 equipmentFlags = 0;            // +0x2BD0 bits 0, 2..6 from the equipment
@@ -954,7 +954,7 @@ public:
     i32 unk2AE0 = 0;
     i32 target = 0;       // +0x3024
     i32 extraNumber = 0;  // +0x3028
-    i32 unk2AEC = 0;
+    i32 unk302C = 0;
     i32 guarding = 0;  // +0x3030
     i32 unk2AF4 = 0;
     i32 unk3038 = 0;    // +0x3038 1: the gauge tick (0x0047E720) and the poison spread (0x00469D80) skip the unit
@@ -969,8 +969,8 @@ public:
     i32 unk2B0C = 0;
     i32 fadedIn = 0;  // +0x3064 a forced unit has faded in for its attack (AttackFrame)
     i32 facingTurnsBack =
-        0;  // swd32 +0x2B20 set with the facing (SetFacingIfAble); 1: the facing turns back when the gauge fills
-    i32 nudged = 0;       // +0x3058 (swd3e) set by SetNudge for a shake, read by HurtFrame
+        0;           // +0x3068 set with the facing (SetFacingIfAble); 1: the facing turns back when the gauge fills
+    i32 nudged = 0;  // +0x3058 (swd3e) set by SetNudge for a shake, read by HurtFrame
     i32 evadeRolled = 0;  // +0x305C 1: the evade roll of the attack was made
     i32 goldGuard = 0;    // +0x3060
 };

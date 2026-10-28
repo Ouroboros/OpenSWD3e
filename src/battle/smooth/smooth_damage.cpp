@@ -32,14 +32,14 @@ constexpr i16 kEnemyFadeEnd = -0x20;
 constexpr i16 kEnemyFadeStep = 4;
 constexpr u32 kGaugeRestRoll = 0x78;  // the gauge gains 10..129 once the attack is over
 constexpr u16 kGaugeRestBase = 10;
-constexpr u32 kStandsAsideFlag = 0x10000000;  // unk26B8: the enemy turns before it fades in at the target (swd3e)
-constexpr u32 kStepsAway = 0x10000;           // unk26B8: the attack fells the enemy (swd3e)
+constexpr u32 kStandsAsideFlag = 0x10000000;  // unk2BC0: the enemy turns before it fades in at the target (swd3e)
+constexpr u32 kStepsAway = 0x10000;           // unk2BC0: the attack fells the enemy (swd3e)
 constexpr i16 kStepAwayTintFrom = 0xF;
 constexpr i16 kStepAwayFrames = 0x1F;
 constexpr u8 kStepAwayPose = 2;
 constexpr u32 kEvadeStatus = 0x80;         // status bit 7: the target evades with kStatusEvade
 constexpr i16 kEvadedEnrageCause = 0x1B;   // an evaded strike checks this enrage cause
-constexpr u32 kFliesMirrored = 0x1000000;  // unk26B8: the follow-up flies mirrored once
+constexpr u32 kFliesMirrored = 0x1000000;  // unk2BC0: the follow-up flies mirrored once
 }  // namespace
 
 DamageFrame::DamageFrame(Game& game)
@@ -149,7 +149,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
         return 0;
     }
 
-    target.RaiseFlag26B8(this->game.battleState);
+    target.RaiseFlag2BC0(this->game.battleState);
     i16 spirit = 0;
     i16 stamina = 0;
     i32 damage = role.HitDamage(services, target, spirit, stamina);
@@ -243,7 +243,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     {
         magic.target = 0;
         role.stage |= BattleUnit::FollowingUp;
-        target.RaiseFlag26B8(this->game.battleState);
+        target.RaiseFlag2BC0(this->game.battleState);
     }
 
     ActState& follow = role.slotActs[0];
@@ -349,7 +349,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
 
     if ((follow.target & ActState::UnkTarget4) != 0)
     {
-        target.RaiseFlag26B8(this->game.battleState);
+        target.RaiseFlag2BC0(this->game.battleState);
         follow.target = 0;
     }
 
@@ -485,7 +485,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
             return 0;
         }
 
-        if ((enemy.unk26B8 & kStandsAsideFlag) != 0)
+        if ((enemy.unk2BC0 & kStandsAsideFlag) != 0)
         {
             enemy.SetFacing(1);
         }
@@ -535,8 +535,8 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         enemy.gauge = static_cast<u16>(enemy.gauge + services.random.Below(kGaugeRestRoll) + kGaugeRestBase);
     };
 
-    // swd3e: unk26B8 bit 16: the act shows once, then the enemy darkens away under itself and falls.
-    if ((enemy.unk26B8 & kStepsAway) != 0)
+    // swd3e: unk2BC0 bit 16: the act shows once, then the enemy darkens away under itself and falls.
+    if ((enemy.unk2BC0 & kStepsAway) != 0)
     {
         attack = ActState{};
 
@@ -672,11 +672,11 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     {
         enemy.stage |= BattleUnit::FollowingUp;
         attack.target = 0;
-        target.RaiseFlag26B8(battle);
+        target.RaiseFlag2BC0(battle);
     }
 
     // A strike of the act or its follow-up (inline twice in the original): the evasion roll unless already rolled,
-    // the Strikes bit raising the target's flag 26B8; an evaded strike checks the enemy's enrage cause 0x1B, a hit
+    // the Strikes bit raising the target's flag 2BC0; an evaded strike checks the enemy's enrage cause 0x1B, a hit
     // counts its damage (at most 9999) and shows it, a hit that drains at most hit points counting on the target. True
     // once the hit was shown with such a drain.
     auto strike = [&](u16 bits)
@@ -696,7 +696,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
 
         if ((bits & ActState::Strikes) != 0)
         {
-            target.RaiseFlag26B8(battle);
+            target.RaiseFlag2BC0(battle);
         }
 
         if (evaded != 0)
@@ -824,7 +824,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
 
     if ((enemy.command.flags & UnitCommand::TargetsUnit) != 0)
     {
-        if ((enemy.unk26B8 & kFliesMirrored) != 0)
+        if ((enemy.unk2BC0 & kFliesMirrored) != 0)
         {
             enemy.facing = 1;
             const int flown = UnitFrame(enemy).Queued(services, target, 0, scene);
@@ -836,7 +836,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
             }
 
             follow.waiting = 1;
-            enemy.unk26B8 &= ~kFliesMirrored;
+            enemy.unk2BC0 &= ~kFliesMirrored;
         }
         else
         {
@@ -911,7 +911,7 @@ int DamageFrame::EnemySkillFrameAdvance(BattleUnit& enemy, BattleUnit& target, S
             return 0;
         }
 
-        if ((enemy.unk26B8 & kStandsAsideFlag) != 0)
+        if ((enemy.unk2BC0 & kStandsAsideFlag) != 0)
         {
             enemy.SetFacing(1);
         }

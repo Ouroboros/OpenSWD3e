@@ -252,18 +252,18 @@ int BattleRole::ChooseGhostSkill(BattleServices& services, Database& database)
         return 1;
     }
 
-    database.LoadObject(this->unk2B24, static_cast<u16>(skill));
-    Database::FreeDescription(this->unk2B24);
-    this->unk2F10 = static_cast<u16>(this->unk2B24.data.costBits & kCostMask);
+    database.LoadObject(this->unk3074, static_cast<u16>(skill));
+    Database::FreeDescription(this->unk3074);
+    this->unk34A0 = static_cast<u16>(this->unk3074.data.costBits & kCostMask);
 
-    if (this->battleRecord->spirit < this->unk2F10)
+    if (this->battleRecord->spirit < this->unk34A0)
     {
         return 1;
     }
 
     this->command = UnitCommand{};
-    this->LoadCommand(database, this->unk2B24.data.skillScript);
-    const u32 kind = this->unk2B24.data.kind;
+    this->LoadCommand(database, this->unk3074.data.skillScript);
+    const u32 kind = this->unk3074.data.kind;
 
     if ((kind & kAttackKind) != 0)
     {
@@ -283,14 +283,14 @@ int BattleRole::ChooseGhostSkill(BattleServices& services, Database& database)
     return 1;
 }
 
-// The fed skill of `index` loaded into unk2B24 with its spirit cost in unk2F10 (inline in ChooseGhostSkillOf and
+// The fed skill of `index` loaded into unk3074 with its spirit cost in unk34A0 (inline in ChooseGhostSkillOf and
 // GhostSkillCommand); true when the ghost has the spirit for it.
 bool BattleRole::LoadGhostSkill(Database& database, i32 skill)
 {
-    database.LoadObject(this->unk2B24, static_cast<u16>(skill));
-    Database::FreeDescription(this->unk2B24);
-    this->unk2F10 = static_cast<u16>(this->unk2B24.data.costBits & kCostMask);
-    return this->battleRecord->spirit >= this->unk2F10;
+    database.LoadObject(this->unk3074, static_cast<u16>(skill));
+    Database::FreeDescription(this->unk3074);
+    this->unk34A0 = static_cast<u16>(this->unk3074.data.costBits & kCostMask);
+    return this->battleRecord->spirit >= this->unk34A0;
 }
 
 // swd3e.exe 0x004867F0: a fed skill chosen by `mode`: 1 the third (GhostSkillUsed); 2 one of the first two of kind 4
@@ -300,7 +300,7 @@ int BattleRole::ChooseGhostSkillOf(BattleServices& services, Database& database,
 {
     auto none = [this]
     {
-        this->unk2F10 = 0;
+        this->unk34A0 = 0;
         this->command = UnitCommand{};
         return 0;
     };
@@ -308,7 +308,7 @@ int BattleRole::ChooseGhostSkillOf(BattleServices& services, Database& database,
     auto take = [this, &database](u16 flag)
     {
         this->command = UnitCommand{};
-        this->LoadCommand(database, this->unk2B24.data.skillScript);
+        this->LoadCommand(database, this->unk3074.data.skillScript);
         this->unk2BDA = static_cast<u16>(this->unk2BDA | flag);
     };
 
@@ -343,11 +343,11 @@ int BattleRole::ChooseGhostSkillOf(BattleServices& services, Database& database,
             continue;
         }
 
-        this->unk2B24 = ObjectRecord{};
-        database.LoadObject(this->unk2B24, static_cast<u16>(skill));
-        Database::FreeDescription(this->unk2B24);
+        this->unk3074 = ObjectRecord{};
+        database.LoadObject(this->unk3074, static_cast<u16>(skill));
+        Database::FreeDescription(this->unk3074);
 
-        if ((this->unk2B24.data.kind & wanted) != 0)
+        if ((this->unk3074.data.kind & wanted) != 0)
         {
             qualifies[static_cast<std::size_t>(at)] = 1;
         }
@@ -462,12 +462,12 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
         return 0;
     }
 
-    const ObjectData& data = this->unk2B24.data;
+    const ObjectData& data = this->unk3074.data;
     this->command = UnitCommand{};
     this->LoadCommand(database, data.skillScript);
     act = data.act;
     std::fill_n(this->skillName.begin(), kClearedName, '\0');
-    const std::string name = ObjectName(this->unk2B24);
+    const std::string name = ObjectName(this->unk3074);
     const std::size_t length = std::min(name.size(), this->skillName.size() - 1);
     std::copy_n(name.begin(), length, this->skillName.begin());
     this->skillName[length] = '\0';

@@ -36,7 +36,7 @@ constexpr i32 kForcedAttackAction2 = 0x31;  // unk2A8C 2
 constexpr i16 kForcedX = 0x140;             // a unit with guestControl attacks from the middle of the field
 constexpr i16 kForcedY = 0x136;
 constexpr u16 kSecondForcedAttack = 2;
-constexpr u32 kTurnsBeforeFadeIn = 0x10000000;  // unk26B8 bit 28: the role turns before it fades in (swd3e)
+constexpr u32 kTurnsBeforeFadeIn = 0x10000000;  // unk2BC0 bit 28: the role turns before it fades in (swd3e)
 constexpr i32 kMarkedAttackAct = 0xFA;          // swd3e: the attack act of a role under MarkBit4
 constexpr std::u8string_view kAttackActTitle = u8"Attack Act";   // 0x004BFA50
 constexpr std::u8string_view kActError = u8"[%s]QQ:%d號錯誤!!";  // 0x004BFA5C
@@ -123,7 +123,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
 
     if ((role.autoControl == 1 || role.StatusBit5() == 1) && (role.command.flags & UnitCommand::AtTarget) != 0)
     {
-        if ((role.unk26B8 & kTurnsBeforeFadeIn) != 0)
+        if ((role.unk2BC0 & kTurnsBeforeFadeIn) != 0)
         {
             role.SetFacing(1);
         }
@@ -273,7 +273,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
 
     if ((attack.target & ActState::UnkTarget4) != 0)
     {
-        target.RaiseFlag26B8(services.state);
+        target.RaiseFlag2BC0(services.state);
         attack.target = 0;
         role.stage |= BattleUnit::FollowingUp;
     }
@@ -1300,7 +1300,7 @@ int RoleFrame::DirectAttackAdvance(BattleServices& services, BattleUnit& target,
     {
         act.target = 0;
         role.stage = BattleUnit::FollowingUp;
-        target.RaiseFlag26B8(services.state);
+        target.RaiseFlag2BC0(services.state);
         i16 spirit = 0;
         i16 stamina = 0;
         i32 damage = role.HitDamage(services, target, spirit, stamina);
@@ -1653,7 +1653,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
 
         if ((charge.target & ActState::Strikes) != 0)
         {
-            target.RaiseFlag26B8(services.state);
+            target.RaiseFlag2BC0(services.state);
             charge.target = 0;
         }
 
@@ -1839,7 +1839,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
 
     if (role.stage == kBoomerangGoing)
     {
-        if (role.unk2F0C == 0)
+        if (role.unk349C == 0)
         {
             role.AddQueuedAction(
                 thrown.id,
@@ -1854,20 +1854,20 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
                 QueuedAction::UnkFlag4
             );
             role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
-            role.unk2F0C = 1;
+            role.unk349C = 1;
         }
 
         if (UnitFrame(role).Queued(services, target, 0, scene) == 1)
         {
-            role.unk2F0C = 0;
+            role.unk349C = 0;
             role.stage = kBoomerangReturning;
-            target.RaiseFlag26B8(services.state);
+            target.RaiseFlag2BC0(services.state);
         }
     }
 
     if (role.stage == kBoomerangReturning)
     {
-        if (role.unk2F0C == 0)
+        if (role.unk349C == 0)
         {
             role.AddQueuedAction(
                 thrown.id,
@@ -1882,12 +1882,12 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
                 QueuedAction::UnkFlag4
             );
             role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
-            role.unk2F0C = 1;
+            role.unk349C = 1;
         }
 
         if (UnitFrame(role).Queued(services, target, 0, scene) == 1)
         {
-            role.unk2F0C = 0;
+            role.unk349C = 0;
             role.stage = kBoomerangBackHome;
             services.audio.PlaySound(kBoomerangSound, services.config.soundVolume);
         }
@@ -1962,8 +1962,8 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
         role.stage |= BattleUnit::FollowingUp;
         magic.target = 0;
         aim();
-        role.unk2F0C = role.unk2F24;
-        ++role.unk2F24;
+        role.unk349C = role.unk34B4;
+        ++role.unk34B4;
     }
 
     if ((role.stage & BattleUnit::FollowingUp) == 0)
@@ -1979,7 +1979,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
         const std::size_t place = role.queuedActions & (kSwarmActs - 1);
         role.AddQueuedAction(
             role.command.castAct,
-            role.unk2F0C,
+            role.unk349C,
             static_cast<i16>(role.placement.x + BattleRole::SwarmOffsetX[place]),
             static_cast<i16>(role.placement.y + BattleRole::SwarmOffsetY[place]),
             static_cast<i16>(targetX),
@@ -1993,7 +1993,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
         services.audio.PlaySound(kSwarmSound, services.config.soundVolume);
     }
 
-    if (UnitFrame(role).Queued(services, target, role.unk2F0C, scene) != 1)
+    if (UnitFrame(role).Queued(services, target, role.unk349C, scene) != 1)
     {
         return 0;
     }
@@ -2006,8 +2006,8 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
     }
 
     role.glowLevel = 0;
-    role.unk2F0C = 0;
-    role.unk2F24 = 0;
+    role.unk349C = 0;
+    role.unk34B4 = 0;
     role.slotActs[0] = ActState{};
     magic = ActState{};
     return 1;
@@ -2185,7 +2185,7 @@ int RoleFrame::BeamSpellFrameAdvance(BattleServices& services, BattleUnit& targe
                 scene
             ) == 1)
         {
-            target.RaiseFlag26B8(services.state);
+            target.RaiseFlag2BC0(services.state);
             i16 spirit = 0;
             i16 stamina = 0;
             i32 damage = role.HitDamage(services, target, spirit, stamina);

@@ -370,7 +370,7 @@ std::u8string_view CommandKindName(u16 kind)
 // swd3e.exe 0x004729B0: role unit `unit` that may not choose (StatusBit5) acts by chance: one in three guards (the
 // menu confirming 防禦), attacks or leaves (without the retreat, NoRetreat, one in two guards or attacks). An attack
 // aims, while an enemy stands, at a random role (one in two, with more than one role standing besides the left-out
-// and escort ones: not defeated, not the ghost, not itself; unk26B8 bit 28 raised) or a random enemy, going on past
+// and escort ones: not defeated, not the ghost, not itself; unk2BC0 bit 28 raised) or a random enemy, going on past
 // defeated ones for at most enemyCount tries.
 void Game::RandomRoleAct(int unit)
 {
@@ -427,7 +427,7 @@ void Game::RandomRoleAct(int unit)
     {
         battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
         battle.aimTarget = static_cast<i32>(this->random.Below(battle.roleCount)) + 1;
-        this->battleRoles[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].RaiseUnk26B8Bit28();
+        this->battleRoles[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].RaiseUnk2BC0Bit28();
 
         while (true)
         {
@@ -1121,7 +1121,7 @@ void Game::SpreadPoison(int enemies)
 // swd3e.exe 0x0046A000: one frame of the 陰陽 command of role `role`: its damage 0x960 percent of the proficiency of
 // kind Unk16 plus 100 (hitDamage, lastDamage) while the cast pose of act 0x1775 plays; once it is done (1) the grey
 // band closes (2) and every standing enemy takes it: by the side of the coin (coinState) an enemy of the other kind
-// (ObjectUnkA2, 1 on 陽, 0 on 陰) is healed (minus the damage, HealTarget), the others are hit (flag 26B8 raised),
+// (ObjectUnkA2, 1 on 陽, 0 on 陰) is healed (minus the damage, HealTarget), the others are hit (flag 2BC0 raised),
 // the number shown (at most 9999) after the hit picture 0x2389; one defeated becomes unk4BF1CA (its unk513664 entry
 // set), flashes the field (defeat pose 6) and whitens the frame. 0 while the pose plays.
 int Game::YinYangAttack(int role)
@@ -1164,7 +1164,7 @@ int Game::YinYangAttack(int role)
         }
         else
         {
-            enemy.RaiseFlag26B8(battle);
+            enemy.RaiseFlag2BC0(battle);
         }
 
         if (battle.lastDamage >= kYinYangMost)
@@ -2690,7 +2690,7 @@ int Game::DrawChargePanel(int x, int y, int cursor)
     return result;
 }
 
-// swd3e.exe 0x004753C0: the 護駕融合 panel: as the 佈置護駕 panel (DrawEscortList), an escort with flag 26B8 bit 17
+// swd3e.exe 0x004753C0: the 護駕融合 panel: as the 佈置護駕 panel (DrawEscortList), an escort with flag 2BC0 bit 17
 // dark and the refine stats (DrawRefineStats) by the escort counted guardCursor from the last, the gradient bar on row
 // guardCursor drawn after the names.
 void Game::DrawEscortFusionList(int x, int y)
@@ -5841,7 +5841,7 @@ void Game::ConfirmFusePlace()
 
     BattleRole& escort = this->battleRoles[static_cast<std::size_t>(row)];
 
-    if (escort.Flag26B8Bit17() == 1)
+    if (escort.Flag2BC0Bit17() == 1)
     {
         this->battleMessages.Add(kNoticeX, kNoticeY, kNoticeFrames, kFusedAlready, kNoticeFlags);
         return;

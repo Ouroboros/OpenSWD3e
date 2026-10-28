@@ -57,7 +57,7 @@ struct RoleRecord
 
 static_assert(sizeof(RoleRecord) == 0x3C);
 
-// The 0x60-byte battle block of a party role (four of them at 0x004ACF50).
+// The 0x60-byte battle block of a party role (four of them at 0x004C6700).
 struct RoleBattleBlock
 {
     std::array<i32, 0x18> values = {};  // by the battle's constants (the special points, the next special, ...)

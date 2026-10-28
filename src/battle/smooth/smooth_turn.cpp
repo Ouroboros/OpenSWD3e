@@ -1979,7 +1979,7 @@ void TurnFrame::DrawEscortFusionListAdvance(int x, int y, Scene& scene)
         font.SetAdvance(kEscortAdvance);
         const std::string name = ObjectName(*escort.Data());
 
-        if (escort.Flag26B8Bit17() == 1)
+        if (escort.Flag2BC0Bit17() == 1)
         {
             font.DrawText(game.drawSurface, x + kEscortNameX, rowY, name, battle.darkColor, TextFont::BoldOutline);
             continue;

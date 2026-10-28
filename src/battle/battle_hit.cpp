@@ -87,7 +87,7 @@ constexpr int kStepHomeCommand = 0x12C;                   // CatchRoll 0: the en
 constexpr u32 kUnaimedEffect = SkillScript::UnkAilment4;  // an enemy does not aim at a unit with this effect
 constexpr u32 kTauntEffect = SkillScript::UnkAilment8;    // the enemies aim past a role with it while others are free
 constexpr i32 kSameTargetLimit = 3;     // an enemy aims at the same role at most this many times in a row
-constexpr i32 kMarkedRoleBit = 0x1000;  // unk26B8 of an enemy marking a role (unk576FC8)
+constexpr i32 kMarkedRoleBit = 0x1000;  // unk2BC0 of an enemy marking a role (unk576FC8)
 constexpr int kMarkedShare = 5;         // HitPointsAtMost: the role marked is at a twentieth of its hit points
 constexpr i32 kMarkedTurns = 2;
 constexpr u16 kTransferTarget = 0x2389;  // the hit picture of a transferred damage
@@ -472,7 +472,7 @@ void Game::QuakeFrame()
 // picture is read straight from its file (zoomed by its 'CS' values) and drawn, walking to the target for a moving
 // attack; reaching it strikes, a command of several turns (enemyCommandTurns) walks again, and the attacker's follow
 // act becomes the act's effect: added as a second-tier spell picture where the act was drawn. The target bits:
-// Quakes the quake, FollowsUp the nudges and the field fade, UnkTarget4 raises flag 26B8, Strikes (and UnkTarget10)
+// Quakes the quake, FollowsUp the nudges and the field fade, UnkTarget4 raises flag 2BC0, Strikes (and UnkTarget10)
 // take the damage of the hit with its digits (and the spirit and stamina digits of a role's hit).
 int Game::HitTargetFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index)
 {
@@ -546,13 +546,13 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
 
     if ((hit.target & ActState::UnkTarget4) != 0)
     {
-        target.RaiseFlag26B8(this->battleState);
+        target.RaiseFlag2BC0(this->battleState);
         hit.target = 0;
     }
 
     if ((hit.target & ActState::Strikes) != 0)
     {
-        target.RaiseFlag26B8(this->battleState);
+        target.RaiseFlag2BC0(this->battleState);
     }
     else if ((hit.target & ActState::UnkTarget10) == 0)
     {
@@ -779,7 +779,7 @@ void Game::NudgeAllHit(BattleUnit& target, BattleUnit& attacker, int all)
     }
 }
 
-// The flag 26B8 of HitAllFrame (inline in the original): with `all` every role in battle standing (while
+// The flag 2BC0 of HitAllFrame (inline in the original): with `all` every role in battle standing (while
 // hitsAllRoles) or every enemy standing, otherwise the target.
 void Game::RaiseAllHit(BattleUnit& target, int all)
 {
@@ -787,7 +787,7 @@ void Game::RaiseAllHit(BattleUnit& target, int all)
 
     if (all != 1)
     {
-        target.RaiseFlag26B8(this->battleState);
+        target.RaiseFlag2BC0(this->battleState);
         return;
     }
 
@@ -799,7 +799,7 @@ void Game::RaiseAllHit(BattleUnit& target, int all)
 
             if (role.GuestControl() != 1 && role.Ghost() != 1 && !role.IsDefeated())
             {
-                role.RaiseFlag26B8(this->battleState);
+                role.RaiseFlag2BC0(this->battleState);
             }
         }
 
@@ -812,7 +812,7 @@ void Game::RaiseAllHit(BattleUnit& target, int all)
 
         if (!enemy.IsDefeated())
         {
-            enemy.RaiseFlag26B8(this->battleState);
+            enemy.RaiseFlag2BC0(this->battleState);
         }
     }
 }
@@ -876,7 +876,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
     {
         if ((hit.target & ActState::Strikes) != 0)
         {
-            target.RaiseFlag26B8(this->battleState);
+            target.RaiseFlag2BC0(this->battleState);
             battle.quakePhase = 0;
         }
 
@@ -916,7 +916,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
 
                 if ((hit.target & ActState::Strikes) != 0)
                 {
-                    role.RaiseFlag26B8(this->battleState);
+                    role.RaiseFlag2BC0(this->battleState);
                 }
 
                 damage = attacker.EnemyHitDamage(this->battleServices, role);
@@ -954,7 +954,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
 
         if ((hit.target & ActState::Strikes) != 0)
         {
-            enemy.RaiseFlag26B8(this->battleState);
+            enemy.RaiseFlag2BC0(this->battleState);
         }
 
         const i16 damage = attacker.HitDamage(this->battleServices, enemy, battle.spiritDamage, battle.staminaDamage);
@@ -1888,7 +1888,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
             return 0;
         }
 
-        role.RaiseFlag26B8(battle);
+        role.RaiseFlag2BC0(battle);
         role.SetDamageDigits(services, battle.enrageDamage);
         role.PushTarget(kEnrageHitPicture);
         role.StepTargetCount(services, 1);
@@ -2245,7 +2245,7 @@ bool Game::EnemyMayAim(const BattleRole& role) const
 
 // The target of an acting enemy in EnemyFrame (inline in the original); false when every role has fallen (the enemy
 // does not act). An enemy kept from acting (StatusBit5) aims at a role at random when it is the last enemy standing,
-// else at another enemy at random (not StatusBit13, without kUnaimedEffect; unk26B8 bit 28 raised). Otherwise, unless
+// else at another enemy at random (not StatusBit13, without kUnaimedEffect; unk2BC0 bit 28 raised). Otherwise, unless
 // an order aims it already, the role its enrage element points at, else a role at random: the role the enemy marked
 // (unk576FC8, counting down unk576FCC), skipping roles with effect 8 (taunted; all of them: none skipped) and with
 // kUnaimedEffect; the same role three times in a row (unk576FC4, unk5774E8) is drawn again while others are left. The
@@ -2314,7 +2314,7 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
             }
         }
 
-        unit.RaiseUnk26B8Bit28();
+        unit.RaiseUnk2BC0Bit28();
         battle.unk575F28 = 1;
         return true;
     }
@@ -2393,7 +2393,7 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
                 {
                     battle.unk576FD0 = 0;
                     battle.unk576FC8 = 0;
-                    unit.ClearUnk26B8(kMarkedRoleBit);
+                    unit.ClearUnk2BC0(kMarkedRoleBit);
                 }
 
                 return true;
@@ -2402,7 +2402,7 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
             battle.unk576FD0 = 0;
             battle.unk576FC8 = 0;
             battle.unk576FCC = 0;
-            unit.ClearUnk26B8(kMarkedRoleBit);
+            unit.ClearUnk2BC0(kMarkedRoleBit);
         }
 
         const i32 others = static_cast<i32>(battle.roleCount) - battle.escortCount - battle.defeatedRoles -
@@ -2808,7 +2808,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
 
         BattleEnemy& other = this->battleEnemies[passedTo];
         other.PushTarget(kTransferTarget);
-        other.RaiseFlag26B8(this->battleState);
+        other.RaiseFlag2BC0(this->battleState);
         other.SetDamageDigits(services, battle.hitDamage);
         other.StepTargetCount(services, 1);
         other.Damage(services, battle.hitDamage, 0, 0);
@@ -2907,7 +2907,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
             battle.unk576FC8 = static_cast<i32>(index) + 1;
             battle.unk576FCC = kMarkedTurns;
             battle.unk576FD0 = enemy;
-            unit.RaiseUnk26B8(kMarkedRoleBit);
+            unit.RaiseUnk2BC0(kMarkedRoleBit);
             break;
         }
     }

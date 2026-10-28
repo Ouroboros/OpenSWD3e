@@ -254,7 +254,7 @@ constexpr i8 kCounter2FD6Limit = 5;
 constexpr i8 kCounter2FD8Limit = 2;
 constexpr i8 kCounterSpent = -1;    // the byte 0xFF
 constexpr i32 kLowShare = 3;        // enrage condition 1: below a third of the maximum hit points
-constexpr u32 kEnraged = 0x200000;  // unk26B8: the enrage condition was met
+constexpr u32 kEnraged = 0x200000;  // unk2BC0: the enrage condition was met
 
 // Enrage: the effects (ObjectData::enrageEffect).
 enum EnrageEffect : u16
@@ -268,9 +268,9 @@ enum EnrageEffect : u16
     DefenseDoubledAgilityHalved = 0x3EF,
     AgilityDoubledAttackHalved = 0x3F0,
     AgilityDoubledDefenseHalved = 0x3F1,
-    Unk3F2 = 0x3F2,           // unk26B8 bit 23
+    Unk3F2 = 0x3F2,           // unk2BC0 bit 23
     InvisibleEnrage = 0x3F3,  // the unit turns invisible once the enrage act ends (EnrageFrame)
-    BurstDamage = 0x3F4,      // enrageDamage, unk26B8 bit 16
+    BurstDamage = 0x3F4,      // enrageDamage, unk2BC0 bit 16
     FirstElement = 0x3F5,     // 0x3F5..0x3FA: enrageElement 1..6
     LastElement = 0x3FA,
     FirstSkill = 0x3E9,  // below it: the skill the enemy takes up
@@ -278,14 +278,14 @@ enum EnrageEffect : u16
 };
 
 constexpr u16 kEnrageRise = 70;
-constexpr u32 kEnrage3F2 = 0x800000;  // unk26B8
-constexpr u32 kEnrage3F4 = 0x10000;   // unk26B8
+constexpr u32 kEnrage3F2 = 0x800000;  // unk2BC0
+constexpr u32 kEnrage3F4 = 0x10000;   // unk2BC0
 constexpr double kBurstScale = 1.4;
 constexpr u16 kEnrageSkillCount = 10000;  // the uses of the skill an enrage gives
 constexpr u8 kEnrageSkillChance = 8;
 constexpr i16 kEnrageDark = -12;  // the field darkens to -12 in each channel
 constexpr i32 kEnrageAct = 0x1C98;
-constexpr u32 kEnrageDone = 0x400000;  // unk26B8: the enrage act ended
+constexpr u32 kEnrageDone = 0x400000;  // unk2BC0: the enrage act ended
 constexpr u8 kEnrageInvisibleTurns = 0xFF;
 
 // The resistances of the elements (RoleRecord and ObjectData, swd3e: 金 木 水 火 土).
@@ -357,7 +357,7 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
         }
 
         if ((ailment & SkillScript::UnkAilment4) != 0 || (buffs & SkillScript::Invisible) != 0 ||
-            (this->unk26B8 & kFlag26B8Poison) != 0)
+            (this->unk2BC0 & kFlag2BC0Poison) != 0)
         {
             return 0;
         }
@@ -412,7 +412,7 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
     if ((status & BattleUnit::StatsScaled) != 0)
     {
         if ((ailment & kStatsScaledOpen) == 0 && (ailment & kStatsScaledOpen2) == 0 &&
-            (this->unk26B8 & kFlag26B8Poison) == 0)
+            (this->unk2BC0 & kFlag2BC0Poison) == 0)
         {
             return 0;
         }
@@ -442,7 +442,7 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
         return 0;
     }
 
-    if ((this->unk26B8 & kFlag26B8Poison) != 0 && (HighByte(ailment) & HighByte(SkillScript::PoisonAilment)) != 0)
+    if ((this->unk2BC0 & kFlag2BC0Poison) != 0 && (HighByte(ailment) & HighByte(SkillScript::PoisonAilment)) != 0)
     {
         return 0;
     }
@@ -727,7 +727,7 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
             break;
 
         case SkillScript::LastingPoisonAilment:
-            this->unk26B8 |= kFlag26B8Poison;
+            this->unk2BC0 |= kFlag2BC0Poison;
             this->poisonBase = static_cast<i16>(node.value);
             this->poisonLevel = 0;
             node.bits = SkillScript::PoisonAilment;
@@ -748,7 +748,7 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
 // ten turns. The tail of the effects is walked first, for nothing.
 int BattleUnit::AddPoison(BattleServices& services, i16 base, u8 level)
 {
-    if ((this->unk26B8 & kFlag26B8Poison) != 0)
+    if ((this->unk2BC0 & kFlag2BC0Poison) != 0)
     {
         return 0;
     }
@@ -776,7 +776,7 @@ int BattleUnit::AddPoison(BattleServices& services, i16 base, u8 level)
         node.turns = kNamedPoisonTurns;
     }
 
-    this->unk26B8 |= kFlag26B8Poison;
+    this->unk2BC0 |= kFlag2BC0Poison;
     this->status |= BattleUnit::Poisoned;
     node.icon = LastingPoisonIcon;
     return 1;
@@ -1502,7 +1502,7 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
 
                 case SkillScript::PoisonAilment:
                     this->status &= ~BattleUnit::Poisoned;
-                    this->unk26B8 &= ~kFlag26B8Poison;
+                    this->unk2BC0 &= ~kFlag2BC0Poison;
                     this->unk2FA0 = 0;
                     break;
 
@@ -1637,10 +1637,10 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
 
 // swd3e.exe 0x0049BB50: whether the cause `cause` (or the element `element`, or the unit's state) meets the enrage
 // condition of an enemy's object (not a party role, a held unit, a defeated one, one without a condition or one
-// enraged already): unk26B8 bit 21 marks it, and the enrage runs (it does nothing unless marked). 0 for those left out.
+// enraged already): unk2BC0 bit 21 marks it, and the enrage runs (it does nothing unless marked). 0 for those left out.
 int BattleUnit::EnrageCheck(BattleServices& services, i16 cause, i16 element)
 {
-    if ((this->unk26B8 & kEnraged) != 0 || this->kind == BattleUnit::PartyRole || (this->marks & BattleUnit::Held) != 0)
+    if ((this->unk2BC0 & kEnraged) != 0 || this->kind == BattleUnit::PartyRole || (this->marks & BattleUnit::Held) != 0)
     {
         return 0;
     }
@@ -1713,7 +1713,7 @@ int BattleUnit::EnrageCheck(BattleServices& services, i16 cause, i16 element)
 
     if (met)
     {
-        this->unk26B8 |= kEnraged;
+        this->unk2BC0 |= kEnraged;
     }
 
     this->Enrage(services);
@@ -1725,7 +1725,7 @@ int BattleUnit::EnrageCheck(BattleServices& services, i16 cause, i16 element)
 // chance 8) and the field darkens with the enrage act in slot act 10
 int BattleUnit::Enrage(BattleServices& services)
 {
-    if ((this->unk26B8 & kEnraged) == 0)
+    if ((this->unk2BC0 & kEnraged) == 0)
     {
         return 0;
     }
@@ -1788,12 +1788,12 @@ int BattleUnit::Enrage(BattleServices& services)
             break;
 
         case Unk3F2:
-            this->unk26B8 |= kEnrage3F2;
+            this->unk2BC0 |= kEnrage3F2;
             break;
 
         case BurstDamage:
             services.state.enrageDamage = crt::Ftol(static_cast<double>(data.maxHitPoints) * kBurstScale);
-            this->unk26B8 |= kEnrage3F4;
+            this->unk2BC0 |= kEnrage3F4;
             break;
 
         default:
@@ -1830,16 +1830,16 @@ int BattleUnit::Enrage(BattleServices& services)
 
 // swd3e.exe 0x0049C0D0: one frame of an enraged enemy's enrage act (slot act 10, its sound panned left) at the unit;
 // once it waits, an enrage 0x3F3 makes the unit invisible for 255 turns, the field brightens again and the enrage is
-// done (unk26B8 bit 22). A defeated unit drops the enrage instead. 0 while not enraged (or casting, unk2AAC) or with
+// done (unk2BC0 bit 22). A defeated unit drops the enrage instead. 0 while not enraged (or casting, unk2AAC) or with
 // no act; 1 otherwise.
 int BattleUnit::EnrageFrame(BattleServices& services)
 {
-    if ((this->unk26B8 & kEnraged) == 0 || this->unk2AAC == 1)
+    if ((this->unk2BC0 & kEnraged) == 0 || this->unk2AAC == 1)
     {
         return 0;
     }
 
-    if ((this->unk26B8 & kEnrageDone) != 0)
+    if ((this->unk2BC0 & kEnrageDone) != 0)
     {
         return 1;
     }
@@ -1865,7 +1865,7 @@ int BattleUnit::EnrageFrame(BattleServices& services)
     if (this->defeated == 1)
     {
         release();
-        this->unk26B8 &= ~kEnraged;
+        this->unk2BC0 &= ~kEnraged;
         act = ActState{};
         return 1;
     }
@@ -1910,7 +1910,7 @@ int BattleUnit::EnrageFrame(BattleServices& services)
     }
 
     release();
-    this->unk26B8 |= kEnrageDone;
+    this->unk2BC0 |= kEnrageDone;
     act = ActState{};
     return 1;
 }

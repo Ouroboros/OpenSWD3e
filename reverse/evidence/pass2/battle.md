@@ -1134,3 +1134,81 @@
 汇编：四个点各取两个 movsx 字转 float；0x0043CA70(0.0, 点, 局部)（结果不用）；t = 0x004BF900（float 0.05，exe 字节核对）× 步（x87 乘后存 float）；0x0043CA20(t, 0x004BE010 基矩阵, 权重)；0x0043C9D0(权重, 点, 结果)；x、y 各经 _ftol 写回。
 对照：TalkCurvePoint 一致；两个 float 的乘积在 double 中精确，转 float 的舍入与 x87 存 float 相同。被调函数第二遍已 exact。
 差异：无。
+
+## 0x0047E660 BattleRole::BattleRole — exact
+
+汇编：基类构造 0x0048B040；+0x34BE、+0x34A8 两字清 0；分配 0x3C 字节清零块存到 +0x00（角色战斗记录）；异常展开尾 0x004A9720 调基类析构。
+对照：成员默认值 absorbFrames、unk34A8 为 0，ownedRecord 为 make_unique<RoleRecord>()（0x3C，全 0），battleRecord 指向它，一致。
+差异：无（+0x34A8 字段原名沿用正传偏移 unk2F18，随 ClearExtras 一并改名）。
+
+## 0x0047E6D0 BattleRole::~BattleRole — exact
+
+汇编：0x004860D0 Release，再基类析构 0x0048B100（展开尾 0x004A9740 同）。
+对照：~BattleRole 调 Release，基类析构随后自动执行，一致。
+差异：无。
+
+## 0x0047E930 BattleRole::ClearExtras — diff → exact
+
+汇编：清 +0x34AE/B0/B2、+0x2EB2、+0x349C（dword）、+0x34A0/A2/AC/AA/B4/A4/A8/A6、+0x3040（dword）；+0x311C 起 0x334 字节（五个附加 act）清零；+0xBAC 起 0x148 字节（slotActs 第 8、9 项，+0x68C+8×0xA4）清零；+0x3074 起 0xA8 字节（物品记录与说明指针）清零。
+对照：逐项一致。
+差异：七个字段沿用正传偏移命名（unk2F0C、unk2F10、unk2F16、unk2F18、unk2F1C、unk2F24、unk2B24）。修正：按外传偏移改名为 unk349C、unk34A0、unk34A6、unk34A8、unk34AC、unk34B4、unk3074（battle_role.h、battle_role.cpp、battle_ghost.cpp、smooth_role.cpp），注释里旧名 unk2F12 改为 staminaCost。复核：完整函数重新对照一致。
+
+## 0x0047E720 BattleUnit::StepGauge — diff → exact
+
+汇编：+0x2BD8 位 0x40 或 0x4000、+0x2FF8=1、+0x3038=1、+0x2FF0=1、+0x2BDA 位 2、+0x2BC0 位 31 任一成立 → 返回 0。槽 +0x2F2E（零扩展）< 0x004BEFF8（有符号）：状态 +0x2BC8 位 29 → 加 movsx +0x2EDA，位 27 → 减同值；速度 =(记录 +0x16 零扩展 + 加 − 减)/4（截断）；参数=1 → 速度 += 速度/4 + 1；位 31 → 减速 =(零扩展 +0x2BE6 × 速度)/100/2 + 4；+0x2FF0=0、槽 = 槽 − 减速 + 速度（字），返回 0。否则：Ghost()=1 时 rand%100+1（movsx）> 鬼记录 +0x104 → +0x2BDA|=1、槽 += 满/−3（截断）返回 0；不然 TakeGhostOrder、+0x2BDA&=~1。然后 +0x2FF0=1、+0x302C=0；+0x3068=1 → 清 0，+0x3048=0 时 +0x3050=0；mainAct +0x24/+0x28 清 0、castAct +0x98=1；+0x2BDA 位 0x80 → 清该位、+0x2FF0=0、槽=0 返回 0；否则返回 1。
+对照：StepGauge 逐分支一致（常量 kAgilityShare=4、kBoostShare=4、kPercent=100、kInvisibleSlowdown=4、kObeyRoll=100、kDisobeyShare=3；字段偏移核对）。
+差异：字段与旗标沿用正传偏移命名（unk26B8 一组与 unk2AEC），facingTurnsBack 注释写正传偏移 +0x2B20。修正：26B8 一组（字段 unk26B8、常量 kFlag26B8*、成员函数 RaiseFlag26B8 等与注释中的 flag 26B8）全部改为外传偏移 2BC0，unk2AEC 改为 unk302C，注释改为 +0x3068。复核：完整函数重新对照一致。
+
+## 0x0047E9C0 BattleRole::Setup — diff → exact
+
+汇编：ClearExtras；+0x3040=1；阵位 0x20 字节拷到 +0xFC4，再拷到 +0xFE4；+0x2FE0 = 阵位 +0x1C；角色记录 0x3C 字节拷到 [+0]；+4 = 记录指针、+8 = 战斗块指针（调用方 0x004C6700 + 0x60×成员）；+0x2FC5 = 拷贝 +0x1E 低字节；+0x2F28 = 阵位 +0x14，为 0 → 0x00436050("戰鬥角色actNumber為0!!" 0x004BF9D8, manrole.cpp, 0x10B)；拷贝 +0x26 = +0x10、+0x28 = +0x12；原记录 +0xA、+4、+0xC、+6、+0xE、+8 各自有符号 > 9999 → 9999；+0x2FF8=0，拷贝 +0x24 位 15 或原记录生命为 0 → 1。
+对照：Setup 一致（字符串与 exe 字节一致）。
+差异：roleBlock 注释与 party.h 战斗块注释写正传地址 0x004ACF50。修正：改为外传 0x004C6700（0x00459BD0 0x0045A5A4 处核对）。复核：完整函数重新对照一致。
+
+## 0x0047EAF0 BattleRole::SetInventory — diff → exact
+
+汇编：+0x3458 与 +0x345C 都设为参数（物品链表头的指针）。
+对照：inventory 与 inventoryHead 设为 list，inventoryNode 置空（表示 +0x3458 指向的就是表头的后继位置），与原程序同一含义。
+差异：inventoryNode 注释写正传偏移 +0x2EC8。修正：改为外传说法（+0x3458 所在节点）。复核：完整函数重新对照一致。
+
+## 0x0047EB10 BattleRole::SetSkills — exact
+
+汇编：+0x3450 与 +0x3454 都设为参数。
+对照：skills 与 skillsHead 设为 list，一致。
+差异：无。
+
+## 0x0047EB30 BattleRole::SetupEscort — exact
+
+汇编：+0x3040=0；分配 0xA8 字节清零块存 +0xC，0x00489B00 按阵位 +0x14 载入物品，0x0048B010 释放说明；阵位拷到 +0xFC4 与 +0xFE4；+0x2FE0 = 阵位 +0x1C；+0x2F28 = 阵位 +0x14，为 0 → 0x00436050("護駕actNumber為0!!" 0x004BFA0C, manrole.cpp, 0x15B)。战斗记录：+0x26 ← 物品 +0x5A、+0x28 ← +0x5C、+0x16 ← +0x5E、+0x14 ← +0x60、+0x1E ← 零扩展字节 +0x9A、+0x2C ← 字节 +0x58、+0x2D 起 5 字节 ← +0x9C；+0x2FC5 ← 记录 +0x1E 低字节；记录 +4 ← 物品 +0x68 低字、+0xA ← +4；+0xFA（weapon 的 +0x3E）← 物品 +0x64；+4 = [+0]；+0x3070=0；attackAct（+0x544）id = +0x2F28、动作 0x26，0x00436C80 返回 0 → +0x3070=1；attackAct 0xA4 字节清零。
+对照：SetupEscort 逐项一致（字符串与 exe 字节一致）。
+差异：无。
+
+## 0x0047ECC0 BattleRole::TakeObjectForm — exact
+
+汇编：0x00489B00 把物品载入 +0x3074，0x0048B010 释放说明；战斗记录 +0x26 += +0x30CE、+0x28 += +0x30D0、+0x16 += +0x30D2、+0x14 += +0x30D4、+0x1E += 零扩展字节 +0x310E、字节 +0x2C += 字节 +0x30CC；+0x2D 起 5 字节 ← +0x3110；+4 = [+0]；+0x2FC5 ← 记录 +0x1E 低字节。
+对照：TakeObjectForm 一致（unk3074 内偏移 0x5A/5C/5E/60/9A/58/9C）。
+差异：无。
+
+## 0x0047ED60 BattleRole::SetupGhost — exact
+
+汇编：+0x3040=0；阵位拷到 +0xFC4、+0xFE4；+0x10 = 鬼记录；+0x2FE0=1；+0x2F28 = 鬼 +0x108 低字，为 0 → 0x00436050("符鬼actNumber為0!!" 0x004BFA20, manrole.cpp, 0x1E2)；rand%5（丢弃）；记录 +0x26 ← 鬼 +0xF4、+0x14 ← +0xFC、+0x16 ← +0x100、+0xC ← +0xF0（低字）。日数 = 鬼 +0xC8（有符号）：0..6 → 敏捷字逻辑右移 1、攻击 −= 零扩展攻击×30/100；7..10 → 敏捷 −= 零扩展敏捷×30/100、攻击字逻辑右移 1、智慧 += 零扩展智慧×30/100；11..0x18 → 敏捷、攻击各 += 自身×30/100。记录 +6 ← +0xC；鬼 +0x104 ← 鬼 +0x10；+0x304C=1、+0x2FC0=+0x2FC2=0；+0xFA ← 鬼 +0x10C 低字；+0x34B6：为 0 → 1；为 4 → +0x2BDA|=2；为 8 → 1；+4 = [+0]。
+对照：SetupGhost 逐项一致（日数以 u32 比较与有符号区间判断等价；常量与字符串核对）。
+差异：无。
+
+## 0x0047EFE0 BattleRole::ApplyEquipment — diff → exact
+
+汇编：+0x164 起 0x150 字节（两个饰品记录）清零。0..15 格：数组指针为空才跳过（不逐格判空，偏差 147/429）。第 0 格：节点 +0xC 起 0xA8 字节拷到 weapon（+0xBC），+0x34AA = 节点 id，weapon +0x48 为 0 → 0x00436050("武器%d號的強攻擊act沒設!!" 0x004BFA34, id, manrole.cpp, 0x23C)。各格：记录 +0x26/+0x28/+0x16/+0x14/+0x18/+0x1E 分别加物品 +0x24/+0x26/+0x2C/+0x2E/+0x30/+0x32；+0x28 非 0 → 力量与攻击加成各加；+0x2A 非 0 → 耐力与防御加成各加。第 7、8 格：拷到 +0x164/+0x20C，id≠0xFFDC 时其 act（+0x54）= id，再 ApplyAccessory。第 9、10 格结束。其余格：元素 = movsx 记录 +0x37；抗性[元素] += 物品 +0x9C+元素 字节，有符号 >100 → 100、<0 → 0；记录 +0x38 = 抗性[元素]；格 <7 且物品 +0x3C=0 → +0x34AE/B0/B2 分别加物品 +0x34/+0x36/+0x38（非 0 时）。
+对照：ApplyEquipment 逐项一致。
+差异：元素下标越界时源码连记录 +0x38 的写入也跳过；偏差 428 写的是越界读取取 0，+0x38 在表内，应写入读到的 0。修正：越界时 unk38[0] = 0，偏差 428 补注此点。复核：完整函数重新对照一致。
+
+## 0x0047F210 BattleRole::Regenerate — exact
+
+汇编：角色记录（+4）+0x24 位 15 → 返回。延迟 = 0。+0x34AE 非 0：+0x2EB6 = 零扩展加成 × movsx 记录 +0xA /100（截断，字为 0 取 1），取负；Damage(movsx 值, 0, 0)、PushTarget(0x237D)、SetDamageDigits(movsx 值)、PushTargetAlt(0)、StepTargetCount(1)；延迟=6；+0x2EB6=0。+0x34B0 非 0：+0x2EB8 同法按 +0xC；Damage(0, 值, 0)、PushTarget(0x237E)、SetDamageDigits、PushTargetAlt(延迟)、StepTargetCount(1)；延迟 += 6；清 0。+0x34B2 非 0：+0x2EBA 同法按 +0xE；Damage(0, 0, 值)、PushTarget(0x237F)、SetDamageDigits、PushTargetAlt(延迟)、StepTargetCount(1)；清 0。
+对照：Regenerate 一致（常量 HealTarget、SpiritGainTarget、StaminaGainTarget、kRegenerateDelay 核对）。
+差异：无。
+
+## 0x0047F3E0 BattleRole::ApplyAccessory — exact
+
+汇编：按饰品 +0x48（movsx）−0x32 经跳转表 0x0047F58C 分派 10 项（exe 字节核对）：0x32 → +0x2BD0|=1；0x33 → 熟练度 = 0x0048A770(0x004D1F58, act +0x54)，找 +0x9C 起五个抗性中第一个非 0 的，都为 0 → 返回；记录抗性[该项] += 低字节((零扩展熟练度×80)/100)，有符号 >100 → 100；0x34 → 半 = 熟练度字逻辑右移 1，非 0 时 额外 = 零扩展攻击加成×半/100，攻击加成 = 加成 + 加成×10/100 + 额外；0x35..0x3A → +0x2BD0 |= 4/8/0x10/0x20/0x40/0x80；0x3B → +0x3060=1；其余返回。
+对照：ApplyAccessory 一致（AccessoryKind、equipmentFlags 位、kOrbPercent=80、kAttackRingPercent=10 核对）。
+差异：无。

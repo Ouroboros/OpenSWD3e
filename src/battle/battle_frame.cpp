@@ -217,7 +217,7 @@ int Game::BattleFrame()
         const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
         hud.DrawPicturePalette(kCurrentPanelPicture, kCurrentPanelX[unit], kBottomBarY);
 
-        if (battle.grayBandShown == 0 && this->battleRoles[unit].Flag26B8() == 0)
+        if (battle.grayBandShown == 0 && this->battleRoles[unit].Flag2BC0() == 0)
         {
             hud.DrawCursorAnimation(kPanelCursor, battle.panelPlaces[2 * unit], battle.panelPlaces[2 * unit + 1]);
         }

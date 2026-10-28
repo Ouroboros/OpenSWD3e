@@ -187,10 +187,10 @@ int Game::DrainSpellFrame(BattleRole& role, BattleUnit& target)
 
 // swd3e.exe 0x004854B0: one frame of `role`'s magic attack (its magic act in slot act 8, drawn by DrawAction; the
 // act's colour darkens the field); 1 once it is over. The magic act's target bits play the effect in the recoil act
-// (holding the act), quake, raise flag 26B8 of the target, fade the field, start the follow-up (the cast act or the
+// (holding the act), quake, raise flag 2BC0 of the target, fade the field, start the follow-up (the cast act or the
 // effect, slot act 0; none: it waits at once) or strike. The follow-up flies to the target (TargetsUnit; the original
 // takes the start from the stand act and marks the stand act waiting) or is placed on it, and may quake, raise flag
-// 26B8 or strike; once it waits a placed one darkens by 8 a frame (not while held) before, with the afterimages done,
+// 2BC0 or strike; once it waits a placed one darkens by 8 a frame (not while held) before, with the afterimages done,
 // the acts, the trails and the targets are cleared.
 int Game::MagicAttackFrame(BattleRole& role, BattleUnit& target)
 {
@@ -202,11 +202,11 @@ int Game::MagicAttackFrame(BattleRole& role, BattleUnit& target)
 
 // swd3e.exe 0x00487FE0 (a method of the unit in the original): one frame of `enemy`'s attack on `target`; 1 once it
 // is over (its gauge then gains 10..129). An UnkFlag8 command fades the enemy out and in at the target first (turning
-// first with unk26B8 bit 28). The attack act (by unk2A8C) is drawn, an error box when it cannot run; under unk26B8
+// first with unk2BC0 bit 28). The attack act (by unk2A8C) is drawn, an error box when it cannot run; under unk2BC0
 // bit 16 the enemy then darkens away and falls. Its target bits play the effect in the recoil act, fade the field,
 // start the follow-up (queued at once when it flies to the unit), quake, slide the units to it or back, raise flag
-// 26B8 of the target or strike; the act's colour darkens the field. The follow-up flies (TargetsUnit, mirrored once
-// under unk26B8 bit 24) or is placed on the target, may add a hit picture and strike; once it waits and the hit
+// 2BC0 of the target or strike; the act's colour darkens the field. The follow-up flies (TargetsUnit, mirrored once
+// under unk2BC0 bit 24) or is placed on the target, may add a hit picture and strike; once it waits and the hit
 // pictures are done it darkens by 4 a frame (the original takes the palette from the shadow picture) before the acts,
 // the trails and the targets are cleared.
 int Game::EnemyAttackFrame(BattleUnit& enemy, BattleUnit& target)
@@ -219,7 +219,7 @@ int Game::EnemyAttackFrame(BattleUnit& enemy, BattleUnit& target)
 
 // swd3e.exe 0x00489490 (a method of the unit in the original): one frame of `enemy`'s skill act (its readyAction) on
 // `target`; 1 once the spell it starts is over. An UnkFlag8 command fades the enemy out and in at the target first
-// (turning first with unk26B8 bit 28). Its target bits play the effect in the recoil act and, with FollowsUp, fade the
+// (turning first with unk2BC0 bit 28). Its target bits play the effect in the recoil act and, with FollowsUp, fade the
 // field by the act's lights and cast the spell (SpellCast); once SpellOver the stage and the act are cleared.
 int Game::EnemySkillFrame(BattleUnit& enemy, BattleUnit& target)
 {

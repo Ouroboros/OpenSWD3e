@@ -756,7 +756,7 @@ int Game::RoleCommandFrame(BattleRole& unit, int role, int target, u16 command)
                 return 0;
             }
 
-            other.RaiseFlag26B8Bit17();
+            other.RaiseFlag2BC0Bit17();
             other.TakeObjectForm(this->database, battle.usedUpItem);
             battle.usedUpItem = 0;
             battle.darkenUnit = -1;
@@ -1396,7 +1396,7 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
 }
 
 // Command 0x16 of RoleActionFrame (inline in the original): the coin toss. Its first frame holds every enemy standing
-// (SetUnk26B8Bit19), darkens the field by role `role` and starts the coin (coinTossing; BattleFrame draws it and closes
+// (SetUnk2BC0Bit19), darkens the field by role `role` and starts the coin (coinTossing; BattleFrame draws it and closes
 // the grey band, grayBandState 2, once it lands, which marks the spell cast); the music sinks meanwhile. Once the
 // spell is over the music comes back, the enemies are let go and the command is over.
 int Game::CoinTossFrame(int role)
@@ -1410,7 +1410,7 @@ int Game::CoinTossFrame(int role)
         {
             if (!this->battleEnemies[index].IsDefeated())
             {
-                this->battleEnemies[index].SetUnk26B8Bit19(on);
+                this->battleEnemies[index].SetUnk2BC0Bit19(on);
             }
         }
     };
@@ -1524,7 +1524,7 @@ int Game::PoseSweepFrame(BattleRole& unit)
             }
 
             battle.hitDamage += battle.lastDamage;
-            enemy.RaiseFlag26B8(this->battleState);
+            enemy.RaiseFlag2BC0(this->battleState);
             enemy.SetDamageDigits(services, battle.hitDamage);
             enemy.StepTargetCount(services, 1);
 
@@ -1727,7 +1727,7 @@ int Game::AccessoryBuffFrame(BattleRole& unit, int target, int command)
 
         buff(kSlowAccessory, SkillScript::AttackDown);
         enemy.AddBuff(services, skill);
-        enemy.RaiseFlag26B8(this->battleState);
+        enemy.RaiseFlag2BC0(this->battleState);
         battle.darkenUnit = -1;
         return 1;
     }
@@ -1792,7 +1792,7 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
     battle.unk577088 = kTimerStarted;
     battle.unk57724C = 1;
     battle.hitDamage = unit.HitDamage(services, enemy, battle.spiritDamage, battle.staminaDamage);
-    enemy.RaiseFlag26B8(this->battleState);
+    enemy.RaiseFlag2BC0(this->battleState);
     enemy.SetDamageDigits(services, battle.hitDamage);
     enemy.StepTargetCount(services, 1);
 
@@ -1904,7 +1904,7 @@ int Game::RouletteFrame(BattleRole& unit, int target)
 
     BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(target)];
     enemy.PushTarget(kRouletteTarget);
-    enemy.RaiseFlag26B8(this->battleState);
+    enemy.RaiseFlag2BC0(this->battleState);
     enemy.SetDamageDigits(services, battle.hitDamage);
     enemy.StepTargetCount(services, 1);
 
@@ -1956,7 +1956,7 @@ int Game::MeterAttackFrame(BattleRole& unit, int target)
             battle.hitDamage = kMaxHitDamage;
         }
 
-        enemy.RaiseFlag26B8(this->battleState);
+        enemy.RaiseFlag2BC0(this->battleState);
         enemy.SetDamageDigits(services, battle.hitDamage);
         enemy.StepTargetCount(services, 1);
 

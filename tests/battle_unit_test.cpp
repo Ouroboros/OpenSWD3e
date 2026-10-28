@@ -128,8 +128,8 @@ constexpr swd3e::i16 kPlaceY = 40;
 constexpr swd3e::i16 kMoveStep = 5;
 constexpr swd3e::i16 kHitPoints = 99;
 constexpr swd3e::u8 kFallbackDefeatPose = 6;     // the pose of a unit defeated without one
-constexpr swd3e::u32 kRaiseBlocked = 0x2000000;  // status bit 25 blocks RaiseFlag26B8
-constexpr swd3e::u32 kFlag26B8Damage = 0x2000;   // set by RaiseFlag26B8 with damage pending (swd3e)
+constexpr swd3e::u32 kRaiseBlocked = 0x2000000;  // status bit 25 blocks RaiseFlag2BC0
+constexpr swd3e::u32 kFlag2BC0Damage = 0x2000;   // set by RaiseFlag2BC0 with damage pending (swd3e)
 constexpr swd3e::u8 kEvadeSkill = 9;
 constexpr swd3e::u8 kSureEvadeStreak = 0x1A;  // swd3e: the failed rolls after which a party role evades
 constexpr swd3e::u16 kSureChance = 10;        // a chance of ten in ten
@@ -248,13 +248,13 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     CHECK_EQ(role.hitPoints, 0);
     CHECK_EQ(unit.defeatPose, kFallbackDefeatPose);
     unit.status = kRaiseBlocked;
-    unit.RaiseFlag26B8(all.state);
-    CHECK_EQ(unit.Flag26B8(), 0);
+    unit.RaiseFlag2BC0(all.state);
+    CHECK_EQ(unit.Flag2BC0(), 0);
     unit.status = 0;
     unit.pendingDamage = 1;
-    unit.RaiseFlag26B8(all.state);
-    CHECK_EQ(unit.Flag26B8(), 1);
-    CHECK((unit.unk26B8 & kFlag26B8Damage) != 0);
+    unit.RaiseFlag2BC0(all.state);
+    CHECK_EQ(unit.Flag2BC0(), 1);
+    CHECK((unit.unk2BC0 & kFlag2BC0Damage) != 0);
 }
 
 TEST_CASE("battle unit: evasion, vitals and scaling")

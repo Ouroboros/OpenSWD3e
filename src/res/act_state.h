@@ -120,7 +120,7 @@ struct ActState
     {
         Strikes = 0x1,       // the act strikes the target (BattleRole::Strike)
         Recoils = 0x2,       // the unit's recoil act plays the act's effectA (action effectQ)
-        UnkTarget4 = 0x4,    // raises flag 26B8 of the target, then the bits are cleared
+        UnkTarget4 = 0x4,    // raises flag 2BC0 of the target, then the bits are cleared
         UnkTarget10 = 0x10,  // with Strikes: an enemy strikes without raising the flag (Game::EnemyAttackFrame)
         FollowsUp = 0x8,     // the follow-up action starts
         Dashes = 0x100,      // with FollowsUp: the role dashes (BattleRole::ChargeAttackFrame)

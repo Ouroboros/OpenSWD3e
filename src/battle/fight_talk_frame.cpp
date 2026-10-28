@@ -2455,7 +2455,7 @@ int Game::FightTalkDamage()
             static_cast<i16>(talk.unk578452),
             static_cast<i16>(talk.unk578454)
         );
-        role.RaiseFlag26B8(this->battleState);
+        role.RaiseFlag2BC0(this->battleState);
         role.PushTarget(BattleUnit::DamageTarget);
         role.SetDamageDigits(this->battleServices, static_cast<i16>(talk.unk578450));
         role.StepTargetCount(this->battleServices, 1);

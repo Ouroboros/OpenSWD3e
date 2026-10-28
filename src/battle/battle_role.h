@@ -174,27 +174,27 @@ public:
     void SpecialActFrame(BattleServices& services);
 
     std::unique_ptr<RoleRecord> ownedRecord;     // the 0x3C bytes at +0x00 (allocated cleared by the constructor)
-    ObjectRecord unk2B24;                        // +0x3074 (cleared by ClearExtras)
+    ObjectRecord unk3074;                        // +0x3074 (cleared by ClearExtras)
     std::array<ActState, ExtraActs> extraActs;   // +0x311C the sparks of an absorb (FlyExtraAct)
     ItemNode* skills = nullptr;                  // +0x3450 the first skill shown in the list
     ItemNode* skillsHead = nullptr;              // +0x3454 the start of the list (its "無" head)
     ItemLink* inventory = nullptr;               // +0x3458 the first item shown (the next of inventoryNode)
-    ItemNode* inventoryNode = nullptr;           // the item at +0x2EC8 itself; nullptr: the list head
+    ItemNode* inventoryNode = nullptr;           // the node +0x3458 is the next of; nullptr: the list head
     ItemLink* inventoryHead = nullptr;           // +0x345C the party's items
     ItemNode* selectedItem = nullptr;            // +0x3460 the item chosen to use
     std::array<i32, ExtraActs> extraSteps = {};  // +0x3488 the line steps of each extra act this frame
-    i32 unk2F0C = 0;
-    u16 unk2F10 = 0;
+    i32 unk349C = 0;
+    u16 unk34A0 = 0;
     u16 staminaCost = 0;  // +0x34A2 the stamina the command takes when it runs
     u16 usedItem = 0;     // +0x34A4 the id of the item used (UseSelectedItem; GlowAct plays it as its act)
-    u16 unk2F16 = 0;
-    u16 unk2F18 = 0;
+    u16 unk34A6 = 0;
+    u16 unk34A8 = 0;
     u16 weaponId = 0;  // +0x34AA
-    u16 unk2F1C = 0;
+    u16 unk34AC = 0;
     u16 bonusA = 0;  // +0x34AE the sum of the +0x34 words of the armour (slots 1..6 without kind)
     u16 bonusB = 0;  // +0x34B0 of their +0x36 words
     u16 bonusC = 0;  // +0x34B2 of their +0x38 words
-    u16 unk2F24 = 0;
+    u16 unk34B4 = 0;
     u16 ghostOrder = 0;  // +0x34B6 (swd3e) the order the player gave the talisman ghost (SetGhostOrder)
     u16 ghostSkill = 0;  // +0x34B8 (swd3e) the index of the fed skill chosen (bit 15 while choosing)
     // +0x34BA, +0x34BC (swd3e) the words +0x56 and +0x58 of the item used (UseSelectedItem, 0x004818E0): a target of
