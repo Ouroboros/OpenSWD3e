@@ -829,3 +829,45 @@
 汇编：当前=0 → 返回。大字体 SetShadow(0)、SetBackground(0xFFFE)；当前角色 +8 所指块首 dword=0x30 且 MarkBit1=0 → 启用[3]=1；BuildCommandMenu。五个固定指令（0x004BF0C4 表："攻擊""奇術""物品""絕技""防禦"）：位置 (x + 0x30×(i%3), y + 0x18×(i/3))，启用=1 用 0x0050EC74 否则 0x00537424，标志 4；i+1=光标 → SetBackground(0xF000)、同色在 (x−1, y−1) 标志 0x10 再画、SetBackground(0xFFFE)。四个列项（0x0050EBF0 名、0x0050D870 种）：名为空跳过；CanUseAccessory(种)=1 且启用=1 → 亮色，否则启用=0、暗色；光标同上。符鬼指令开：指令=7；FillBox(x−4, y−6, 0x94, 0x0057720A ≥2 ? 0x54 : 0x38, 1,1,1,0)；左 = DrawTallPanel(0x154, 0x6E)；8 项（0x004BF630）行顶 0x71 起每 0x18：(左+4, 顶+1) 亮色标志 4，行号=0x004BF0F8 → (左+3, 顶) 高亮。煉妖选项开：同遮罩，DrawSmallPanel(0x17C, 0xC8)，2 项（0x004BF650）行顶 0xCB，标记 0x00577990。五行开：同遮罩，DrawWidePanel(x, 0x10E)=1 时 5 项（0x004BF658）左 0x103 起每 0x18：(左+1, 0x112)，标记 0x0057798C → (左, 0x111) 高亮。最后 SetBackground(0xFFFE)。
 对照：DrawCommandMenu（平滑绘制 DrawCommandMenuAdvance，见 deviations 97、99）一致；坐标与颜色常量逐个核对，四个名称表与 exe 指针表所指字节一致。
 差异：无。
+
+## 0x00473880 Game::DrawListTabs — exact
+
+汇编：页签帧 2、1、0 依次画在 (x+0x54, y+0x20)、(x+0x2A, …)、(x, …)：DrawEffectAt(0x2394, 帧, x, y+0x20, 0)；打开页 DrawEffectAt(0x2394, 0x00576FEC+4, x + 0x2A×页, y+0x20, 0)。中字体 SetBackground(0xF000) 后 SetBackground(0xFFFE)。0x0050AF70 起 0x29 dword 清 0，0x0057706C=0xA，act=0x2396、动作=0，0x00436C80 运行；FillBox(x, y+0x24, 0xBE, 0x98, 0, 3, 3, 2)；DrawWindowFrame(帧 0x0050AFBA, x+6, y+0x28, x+0xBA, y+0xB8, 0, 0x80000008)；0x00577070+2，>7 → 7。
+对照：DrawListTabs（平滑绘制 DrawListTabsAdvance，见 deviations 97、99）一致（kTabEffect 0x2394、PanelAct 0x2396、kListFrameBorder Frame|8）。
+差异：无。
+
+## 0x004739B0 Game::DrawSpellList — exact
+
+汇编：当前=0 → 返回。中字体 SetShadow(0)、SetBackground(0xFFFE)、SetAdvance(0x10)；0x005770DC=0、CountSkills(0x00576FEC, 0, &0x005770DC)、ShowAllSkills。序 = top+1 起、行 0 起：ListSkill(页, 0, 序, 0x005774D4, &花费)；花费=0xFFFF → ShowAllSkills、结束。花费位 15 → GetStamina(&上限, &现有)、花费 &=0x7FFF，否则 GetSpirit。图标 di：1..5 → DrawPictureFrame(0x23AC, 图标−1, x−6, y+0x14×行+0x21)，>5 → (x−4, y+0x14×行+0x25)（有符号）。名 DrawText(x+0xE, 行顶, 0x005774D4, 现有 ≥ 花费（有符号字）? 0x0050EC74 : 0x00537424, 0x10)；wsprintf("%3d", (i16)花费) 画在 x+0x90。行+1=光标：名再画在 (x+0xD, 行顶−1)；FillBox(x−8, 行顶−4, 0xC0, 0x18, 0x1F, 0x14, 0, 5)；FillBox(0, 0x15E, 0x280, 0x28, 0, 5, 0x1F, 5)；描述 0x00441200(角色 +0x3450)，x = 0x140 − (((长>>1)<<4)>>1)、y 0x168、0xFFFF、0x10；SetBackground(0xFFFE)；B4=1、0x00576FE4=序。行+1 ≥7 → 结束（不再 ShowAllSkills）。最后 SetBackground(0xFFFE)。
+对照：DrawSpellList（平滑绘制 DrawSpellListAdvance）一致；常量逐个核对。0x00441200 对空节点返回空串，源码在调用处判空，结果相同。
+差异：无。
+
+## 0x00473E10 Game::DrawItemList — exact
+
+汇编：当前=0 → 返回。页签帧 3..0（x+0x7E 起每 −0x2A，y+0x20）DrawEffectAt(0x2394, …)，打开页 DrawEffectAt(0x2394, 0x004BF104+4, x+0x2A×类别, y+0x20, 0)；中字体 SetBackground(0xF000)、(0xFFFE)；0x0050AF70 清 0x29 dword、act 0x2396、动作 0、运行；FillBox(x, y+0x24, 0xCC, 0x98, 0, 4, 4, 2)；DrawWindowFrame(0x0050AFBA, x+6, y+0x28, x+0xC8, y+0xB8, 0, 0x80000008)；SetShadow(0)、SetBackground(0xFFFE)、SetAdvance(0x10)；0x005770DE=0、CountObjects(类别, &0x005770DE)、ShowAllItems；0x0050C920=条目、0x0050C924=0x00576FDC；条目 >7（无符号）→ DrawScrollBar(0x232A, 0x19E, 0x9E, 4, 0x00577040, 0x00577078)。序 = top+1 起：ListObject(类别, 序, 名, &旗, &数)=0 → ShowAllItems、结束。旗位 15 才画：wsprintf("%2d", (i16)数)；位 14 → 暗色否则亮色；位 13 → "+" 画在 (x+6, y+0x14×行+0x2C)；数在 x+0x90、名在 x+0x10；行+1=光标 → 名再画在 (x+0xF, 行顶−1)、SetBackground(0xFFFE)、FillBox(x, y+0x14×行+0x28, 0xCE, 0x18, 0x1F, 0x14, 0, 5)、0x00576FE8=序、B4=1，类别 3 → DrawObjectStats(0xA4, 0x18×0x004BF0EC+0x7E)，描述栏 FillBox(0, 0x15E, 0x280, 0x28, 0, 5, 0x1F, 5) 与 0x00441200(角色 +0x3458) 居中画在 y 0x168；SetBackground(0xFFFE)、行+1。行 ≥7 → 结束（不 ShowAllItems）。最后 SetBackground(0xFFFE)。
+对照：DrawItemList（平滑绘制 DrawItemListAdvance）一致；"+"（0x004BF740）、"%2d"（0x004BF744）与 exe 字节一致。+0x3458 在源码中由 inventory/inventoryNode 表示，画描述时 ListObject 刚移到该项，inventoryNode 不为空。
+差异：无。
+
+## 0x004743C0 Game::DrawThrowList — exact
+
+汇编：当前=0 → 返回。0x0050AF70 清 0x29 dword、act 0x2396、动作 0、运行；FillBox(x, y, 0xBE, 0xBC, 0, −8, −8, 1)；DrawWindowFrame(帧, x+6, y+8, x+0xBA, y+0x18, 0, 0x80000008)、(x+6, y+0x28, x+0xBA, y+0xB8)；标题 "投擲"（0x004BF270）DrawText(x+0x50, y+8, 0xFFC0, 0x10)；SetShadow(0)、SetBackground(0xFFFE)、SetAdvance(0x10)；0x005770DE=0、CountObjects(4, &…)、ShowAllItems。循环：下一 = 序+1，0x00481AB0(0, 下一, 名, &数)=0 → ShowAllItems、结束；行 ≥7 → 结束；名 (x+0x10, y+0x14×行+0x2C) 亮色、"%2d"(i16 数) 在 x+0x90；行+1=光标 → 名再画 (x+0xF, 行顶−1)、SetBackground(0xFFFE)、FillBox(x, y+0x14×行+0x28, 0xC2, 0x18, 0x1F, 0x14, 0, 5)、0x00576FE8=下一、B4=1；SetBackground(0xFFFE)、行+1、序=下一。最后 SetBackground(0xFFFE)。
+对照：DrawThrowList（平滑绘制 DrawThrowListAdvance）一致（kThrowShade −8、kThrowBoxHeight 0xBC、kListBarWidth 0xC2）。
+差异：无。
+
+## 0x00474710 Game::DrawTitledItemList — exact
+
+汇编：当前=0 → 返回。面板 act 同 0x004743C0；FillBox(x, y, 0xBE, 0xBC, 0, 4, 4, 2)；两个窗框同 0x004743C0；标题（参数 6）DrawText(x+0x50, y+8, 0xFFC0, 0x10)；SetShadow(0)、SetBackground(0xFFFE)、SetAdvance(0x10)；0x005770DE=0、CountObjects(类别, …)、ShowAllItems；0x0050C920/0x0050C924，条目 >7 → DrawScrollBar(0x232A, 0x192, 0x9E, 4, …)。序 = top+1 起：ListObject(类别, 序, 名, &旗, &数)=0 → ShowAllItems、结束；行 ≥7 → 结束；名 (x+0x10, 行顶+0x2C) 亮色、"%2d" 在 x+0x90（不看旗位）；行+1=光标 → 名再画、SetBackground(0xFFFE)、FillBox(x, y+0x14×行+0x28, 0xC2, 0x18, 0x1F, 0x14, 0, 5)、0x00576FE8=序、B4=1，类别 3 → DrawObjectStats(0x194, 0x18×0x004BF0EC+0x7E)；SetBackground(0xFFFE)、行+1、序+1。
+对照：DrawTitledItemList（平滑绘制 DrawTitledItemListAdvance）一致（kTitledBoxHeight 0xBC、kTitledScrollX 0x192、kTitledStatsX 0x194）。0x50 状态下 DrawBattleMenu 随后又画一次同位置滚动条，源码相同。
+差异：无。
+
+## 0x00474AF0 Game::DrawRefineList — exact
+
+汇编：当前=0 → 返回。面板 act 同前；FillBox(x, y, 0xF2, 0x9C, 0, −8, −8, 1)；DrawWindowFrame(帧, x+6, y+8, x+0xEE, y+0x18)、(x+6, y+0x28, x+0xEE, y+0x98)；标题 "煉符"（0x004BF258）在 (x+0x6A, y+8) 0xFFC0；SetShadow(0)、SetBackground(0xFFFE)、SetAdvance(0x10)；0x00481B20(0, 1, 名, &数) → 0x005770DE=数；ShowAllItems；0x00481BC0(0, &件)；ShowAllItems；数=0、0x00576FE8=1。格 1 起，两列（x+0x10 起每 0x70）各 5 行（y+0x2C 起每 0x14）：格 > 条目 → 格 ≤ 条目+件 时 0x00481B20(1, 物, 名, &数)，件序+1 = (i16)数 → 物+1、件序 0；否则名 = "無"（0x004AF630）；格 ≤ 条目时名不变。格=光标 → FillBox(列x−4, 行y−3, 0x6A, 0x18, 0x1F, 0x14, 0, 5)、名亮色画一次、SetBackground(0xFFFE)、B4=1、0x00576FE8 = 件序=1 ? 物+1 : 物，条目=0 时再 −1。名亮色画在 (列x, 行y)、SetBackground(0xFFFE)。最后 SetBackground(0xFFFE)、0x005770DE += 件。（第 4 个参数未读。）
+对照：DrawRefineList（平滑绘制 DrawRefineListAdvance）一致；标题即 AccessoryCommandNames[0x1E−0x15]。
+差异：无。
+
+## 0x00474E80 Game::DrawSpecialList — exact
+
+汇编：当前=0 → 返回。面板 act（不清 0x0050AF70，只写 act 0x2396、动作 0）运行；FillBox(x, y, 0xBE, 0xAC, 0, −8, −8, 1)；窗框 (x+6, y+8, x+0xBA, y+0x18)、(x+6, y+0x28, x+0xBA, y+0xA8)；标题 "絕技"（0x004BF1F0）在 (x+0x50, y+8) 0xFFC0；SetShadow(0)、SetBackground(0xFFFE)、SetAdvance(0x10)；0x005770DD=0、CountSkills(0, 1, &0x005770DD)、ShowAllSkills。序 1 起：ListSkill(0, 1, 序, 0x005774D4, &花费)；0xFFFF → ShowAllSkills、结束；花费=0 跳过；否则名在 (x+0x10, y+0x16×行+0x28) 亮色；行+1=光标 → 名再画 (x+0xF, 行顶−1)、FillBox(x, y+0x16×行+0x25, 0xC0, 0x18, 0x1F, 0x14, 0, 5)、描述栏与 0x00441200(角色 +0x3450) 居中、SetBackground(0xFFFE)、0x00576FE4=序、B4=1；行+1。每项后行 ≥7 → 结束。最后 SetBackground(0xFFFE)。
+对照：DrawSpecialList（平滑绘制 DrawSpecialListAdvance）一致。原程序 ListSkill 对花费为 0 的项也把名字写进 0x005774D4，源码只在画出时更新 listName；0x005774D4 只被这几个列表绘制写入后立即用来画字，另由 0x0045FA80、0x0046EAC0 清空，没有其他读取者，结果不受影响。
+差异：无。
