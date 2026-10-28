@@ -531,7 +531,7 @@ int HitFrame::HitTargetFrameAdvance(BattleUnit& target, BattleUnit& attacker, u3
         battle.darkBlue = static_cast<i16>(hit.blue);
         game.DarkenByTint();
         battle.unk577290 = 1;
-        battle.unk53BF98 = 1;
+        battle.unk577294 = 1;
     }
 
     this->AddAndDrawHitPictures(target, attacker, index, scene);
@@ -627,7 +627,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         battle.darkRed = static_cast<i16>(hit.red);
         battle.darkGreen = static_cast<i16>(hit.green);
         battle.unk577290 = 1;
-        battle.unk53BF98 = 1;
+        battle.unk577294 = 1;
         game.DarkenByTint();
     }
 

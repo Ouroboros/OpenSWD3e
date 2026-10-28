@@ -190,7 +190,7 @@ int Game::BattleFrame()
     this->SlideUnits(battle.slideUnit, battle.slideX, battle.slideTarget);
     this->DrawBattleBackground(battle.shake);
 
-    if (battle.unk53BF64 == 1 || battle.hitsAllRoles == 1)
+    if (battle.unk577260 == 1 || battle.hitsAllRoles == 1)
     {
         this->SortActingDrawOrder();
     }
@@ -450,7 +450,7 @@ void Game::EndBattle()
     battle.enemiesGone = 0;
     battle.unk53BF02 = 0;
     battle.unk53BF04 = 0;
-    battle.unk53BF08 = 0;
+    battle.unk5771F0 = 0;
     battle.lastRoleHit = kNoUnit;
     battle.lastEnemyHit = kNoUnit;
     battle.lastRoleDefeated = kNoUnit;
@@ -497,7 +497,7 @@ void Game::EndBattle()
     battle.hitFading.fill(0);
     battle.unk53BF5C = 0;
     battle.unk53BF60 = 0;
-    battle.unk53BF64 = 0;
+    battle.unk577260 = 0;
     battle.hitsAllRoles = 0;
     battle.unk53BF6C = 0;
     battle.unk53BF70 = 0;
@@ -509,7 +509,7 @@ void Game::EndBattle()
     battle.gatheringSweep = 0;
     battle.unk53BF90 = 0;
     battle.unk577290 = 0;
-    battle.unk53BF98 = 0;
+    battle.unk577294 = 0;
     battle.unk53BF9C = 0;
     battle.unk53BFA0 = 0;
     battle.unk53BFA4 = 0;
@@ -621,7 +621,7 @@ void Game::BattleIntro(u16 style)
     Surface& field = *battle.surfaces[0];
     Surface& shown = *battle.surfaces[1];
     CopySurface(*primary, shown);
-    battle.unk53BF08 = kIntroBufferBytes;
+    battle.unk5771F0 = kIntroBufferBytes;
     const std::vector<u8> oldScreen = this->PackSurface(shown);
     this->TargetFrame();
     this->DrawIntroField();

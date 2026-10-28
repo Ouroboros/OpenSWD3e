@@ -236,7 +236,7 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
     painter.SetSource(background);
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
 
-    if (battle.unk577290 == 0 && battle.unk53BF98 == 0)
+    if (battle.unk577290 == 0 && battle.unk577294 == 0)
     {
         if (shake != 0)
         {
@@ -298,7 +298,7 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
 
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
 
-    if ((battle.unk577290 == 1 || battle.unk53BF98 == 1) && battle.undarkening == 0)
+    if ((battle.unk577290 == 1 || battle.unk577294 == 1) && battle.undarkening == 0)
     {
         if (battle.darkenByTint != 0)
         {
@@ -404,7 +404,7 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
     battle.darkBlueShown = 0;
     battle.darkLevel = 0;
     battle.darkenUnit = -1;
-    battle.unk53BF98 = 0;
+    battle.unk577294 = 0;
     battle.unk577290 = 0;
     battle.darkenByTint = 0;
     battle.undarkening = 0;

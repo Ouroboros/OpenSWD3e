@@ -378,8 +378,8 @@ public:
     i32 shake = 0;       // 0x0057702C the shift of the background this frame, cleared once drawn
     i32 quaking = 0;     // 0x0057730C 1: the screen quakes (read by 0x00453200, shaken by 0x0045E7D0)
     i32 quakePhase = 0;  // 0x00577030 the step of the quake in its offset table (0x004A75EC)
-    i32 unk577290 = 0;   // 0x00577290 with unk53BF98 (0x00577294): the field is darkened
-    i32 unk53BF98 = 0;
+    i32 unk577290 = 0;   // 0x00577290 with unk577294 (0x00577294): the field is darkened
+    i32 unk577294 = 0;
     i16 darkenUnit = -1;  // 0x004BF1D4 the unit darkening the field
     u16 unk53BF2C = 0;
     u16 grayBandState = 0;       // 0x00577214 (swd3e) 1 opens the grey band, 2 closes it (0x0045BEA0, inferred)
@@ -432,8 +432,8 @@ public:
     i32 autoBattle = 0;                                // 0x0057731C
     i32 autoBoxX = 0;                                  // 0x005770AC the "自動攻擊" box slides in
     i32 autoBoxStep = 0;                               // 0x005770A8
-    // 0x00520FB8 frames; levels 0x004FDFA4, 0x00521394, 0x00525468; targets 0x004FDF8C, 0x00521388, 0x00525448;
-    // steps 0x0052151C, 0x00525430, 0x00520D58.
+    // 0x00536AF4 frames; levels 0x0050CEE0, 0x00536ED8, 0x005394D0; targets 0x0050CEC8, 0x00536ECC, 0x005394B0;
+    // steps 0x005373B0, 0x00539498, 0x00535B30 (StartFieldFade, 0x00467C40).
     ColorFade fieldFade;
 
     // The damage of the hit being dealt (0x0045BEA0, 0x0045D690).
@@ -465,7 +465,7 @@ public:
     // The turns (0x00464CC0, 0x0045ADF0, 0x0045AA00).
     i32 turnCommand = 0;  // 0x00576FA8 the order of the turn under way
     i32 unk53BF60 = 0;
-    i32 unk53BF64 = 0;
+    i32 unk577260 = 0;  // 0x00577260
     i32 unk577270 = 0;  // 0x00577270 set by talk command 0x4E
     // 0x00577314 set when a role turns to another enemy (RetargetRoles)
     i32 retargeted = 0;
@@ -642,7 +642,7 @@ public:
     i32 aiTarget = 1;  // 0x004BF0E4 the enemy (1-based) an AI role aims at
     u16 unk5240C4 = 0;
     // The frame of the battle (Game::BattleFrame).
-    u16 slotRecordFrames = 0;  // swd32 0x0053BF1A frames since the last slot record was taken
+    u16 slotRecordFrames = 0;  // 0x00577202 frames since the last slot record was taken
     u16 snapNumber = 0;        // 0x005777EE the number of the last snapshot
     // Cleared by Game::EndBattle (no other use found).
     std::array<i32, Enemies> unk524200 = {};  // 0x005375C8 (swd3e: 0x50 bytes) cleared by EndBattle only
@@ -663,7 +663,7 @@ public:
     i32 unk520FC0 = 0;
     u16 unk520FC4 = 0;
     i32 unk53BF04 = 0;
-    i32 unk53BF08 = 0;
+    i32 unk5771F0 = 0;  // 0x005771F0 the bytes of the intro's screen buffers (BattleIntro; only written)
     u16 unk5242F8 = 0;
     u16 unk4A7628 = 6;  // passed to DrawRolePanels, which takes no argument
     u8 unk53BDEE = 0;

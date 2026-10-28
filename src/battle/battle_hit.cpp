@@ -622,7 +622,7 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
 // side (kAllHitLeftX, kAllHitRightX, kAllHitY: an enemy attacker unmirrored keeps y 0; with unk5772F8 the middle of the
 // field), walking along y 0 for a moving attack; an act marked AddsPicture adds its effect as a second-tier picture.
 // The target bits work as in HitTargetFrame, on every unit of the side with `all`: the roles hit by a role while
-// unk53BF64 and unk53AE7C take the damage at once (Damage), as do all roles while hitsAllRoles; the spirit and stamina
+// unk577260 and unk53AE7C take the damage at once (Damage), as do all roles while hitsAllRoles; the spirit and stamina
 // of a hit are cleared after their digits (so the slots record 0 for them), and the digit delay of the enemies runs
 // on from the walk speed without a reset (kept).
 int Game::HitAllFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index, int all)
@@ -890,7 +890,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
         return;
     }
 
-    if ((battle.unk53BF64 == 1 && battle.unk53AE7C == 1) || battle.hitsAllRoles == 1)
+    if ((battle.unk577260 == 1 && battle.unk53AE7C == 1) || battle.hitsAllRoles == 1)
     {
         for (u32 slot = 0; slot < battle.roleCount; ++slot)
         {
@@ -929,7 +929,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
             battle.hitDamage = battle.slotDamage[slot];
             battle.lastStaminaDamage[slot] = stamina;
 
-            if (battle.unk53BF64 == 1 && battle.unk53AE7C == 1)
+            if (battle.unk577260 == 1 && battle.unk53AE7C == 1)
             {
                 role.Damage(
                     this->battleServices,
@@ -2094,7 +2094,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 
 // swd3e.exe 0x004612D0: one frame of enemy `enemy`. While the fight talk lets the battle run (battleRuns): with no
 // unit acting its effects tick and its gauge fills (a full gauge queues its slot record), and unless the battle waits
-// (unk53BF64, unk53BF1C) the acting enemy (actingUnit) takes its turn: a held or defeated one ends it; a sweep of the
+// (unk577260, unk53BF1C) the acting enemy (actingUnit) takes its turn: a held or defeated one ends it; a sweep of the
 // whole side aims at the first unit; otherwise it picks a target (EnemyPickTarget) and, once ready, a command
 // (EnemyChooseCommand). A chosen command waits for the second gauge (unk50CE6C) and is slotted again; then the enemy
 // acts (EnemyActionFrame) until the action is over (EnemyAfterAction). Every frame it is drawn at rest (its acts
@@ -2122,7 +2122,7 @@ int Game::EnemyFrame(int enemy)
             }
         }
 
-        if (battle.unk53BF64 == 0 && battle.unk53BF1C == 0)
+        if (battle.unk577260 == 0 && battle.unk53BF1C == 0)
         {
             if (battle.actingUnit == enemy)
             {
@@ -2184,7 +2184,7 @@ int Game::EnemyFrame(int enemy)
     }
 
     const bool holding =
-        (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk53BF98 == 1)) || battle.enraging == 1;
+        (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
     if (battle.unk575F38[at] != -1 && this->PlayHitAct(unit, static_cast<u32>(battle.enemiesHitAct), enemy) == 1)
@@ -2848,7 +2848,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         battle.unk577270 = 0;
         battle.unk5772BC = 0;
 
-        if (battle.unk53BF98 == 1)
+        if (battle.unk577294 == 1)
         {
             battle.undarkening = 1;
         }

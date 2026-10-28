@@ -508,7 +508,7 @@ void Game::RetargetRoles(int role, int enemy)
         unit.SetCommand(0);
         unit.SetTarget(0);
         unit.ResetTurn(services);
-        battle.unk53BF64 = 0;
+        battle.unk577260 = 0;
         battle.roleOrder = {};
         battle.turnUnit = 0;
         battle.currentUnit = 0;
@@ -3751,9 +3751,9 @@ int Game::BattleDebugKeys()
                 battle.unk53BFC4 = 0;
                 battle.actingUnit = -1;
 
-                if (battle.unk53BF64 == 1)
+                if (battle.unk577260 == 1)
                 {
-                    battle.unk53BF64 = 0;
+                    battle.unk577260 = 0;
                 }
 
                 if (battle.hitsAllRoles == 1)
@@ -3822,7 +3822,7 @@ int Game::BattleDebugKeys()
                 battle.unk4A7626 = kNoTalkRole;
                 battle.unk53BF80 = 1;
                 battle.unk53BD80 = 0;
-                battle.unk53BF64 = 0;
+                battle.unk577260 = 0;
                 battle.unk5772BC = 1;
                 battle.unk53BFC4 = 1;
                 battle.unk53BF5C = 0;
@@ -6347,7 +6347,7 @@ void Game::BattleKeys()
 
         if (controls.At(Button::KeyG).press != 0 && Game::KeyRepeats(controls.At(Button::KeyG)))
         {
-            if (battle.unk53BF1C != 0 || battle.hitsAllRoles == 1 || battle.unk53BF64 == 1 ||
+            if (battle.unk53BF1C != 0 || battle.hitsAllRoles == 1 || battle.unk577260 == 1 ||
                 battle.result == kTalkOrder || battle.result == kEndVictory || battle.result == kTargetState ||
                 this->scene.talkWindows != nullptr)
             {
@@ -6778,7 +6778,7 @@ void Game::DrawBattleMenu()
             return;
 
         case kLeaveState:
-            if (battle.unk53BF64 == 0 && battle.hitsAllRoles == 0)
+            if (battle.unk577260 == 0 && battle.hitsAllRoles == 0)
             {
                 battle.unk53BF1C |= kRetreatMark;
                 battle.result = 0;
@@ -7133,7 +7133,7 @@ void Game::BattleEndFrame()
             }
 
             this->DrawVictoryPanel();
-            battle.unk53BF64 = 0;
+            battle.unk577260 = 0;
             battle.unk5772BC = 1;
             battle.unk53BFC4 = 1;
             battle.unk577270 = 1;

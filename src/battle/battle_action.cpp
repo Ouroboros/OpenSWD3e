@@ -2010,7 +2010,7 @@ int Game::RoleFrame(int role)
 
     BattleRole& unit = this->battleRoles[static_cast<std::size_t>(role)];
     const bool holding =
-        (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk53BF98 == 1)) || battle.enraging == 1;
+        (unit.GetWord2A74() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
     if (this->fightTalk.battleRuns == 1 && battle.actingUnit == -1 && battle.unk5772BC == 0 && battle.unk53BFC4 == 0)
@@ -2681,7 +2681,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
 
     if (battle.retargeted != 0)
     {
-        battle.unk53BF64 = 1;
+        battle.unk577260 = 1;
         battle.unk5772BC = 1;
         battle.darkenUnit = static_cast<i16>(battle.actingUnit);
         unit.MarkAC8();
@@ -2782,7 +2782,7 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
 
     const auto target = static_cast<i16>(unit.GetWord29A2());
     battle.unk53BF03 = 0;
-    battle.unk53BF64 = 0;
+    battle.unk577260 = 0;
     battle.shake = 0;
     battle.unk5240C4 = 0;
 

@@ -750,7 +750,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {
-        battle.unk53BF98 = 1;
+        battle.unk577294 = 1;
     }
 
     if ((enemy.stage & BattleUnit::FollowingUp) == 0)
