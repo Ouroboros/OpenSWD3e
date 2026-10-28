@@ -442,7 +442,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     role.slotTint = 0;
     role.unk2FF0 = 0;
     role.stage = 0;
-    role.unk26D4 = 0;
+    role.unk2BDE = 0;
     battle.criticalAttack = 0;
     ++battle.attacksSinceCritical;
     return 1;

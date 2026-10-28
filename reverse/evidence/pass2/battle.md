@@ -1482,3 +1482,33 @@
 汇编：角色记录（+4）movsx 生命 ≤ movsx 上限/4（截断）→ 1。standAct id = 零扩展 +0x2F28、动作 0x36（不设 hold）；Run=0 → 0。图片 = GetPicture；+0x2EC0 = act +0x62、+0x2EBC = act anchorX；旗标 = act flags、原点 x = act x 字；+0x3050=1 → 旗标位 0 取反、原点 x = 图宽 − act x，anchorX 非 0 → +0x2EBC = 图宽 − anchorX。PlaySound(view)、声像 (阵位 x − 原点 x) ≥ 0x140 ? 0x30 : −0x30、view=0；缩放高 = 图高/3、着色 −6、剪切 = 图高>>2；+0x2BAC = (旗标 & 0x8000000F)|0xC；阴影画在 (左, 阵位 y − 缩放高)，本体画在 (左, 阵位 y − act y)。act +0x4E 与 +0x50 都非 0 → 叠加图 +0x2A4C = GetPicture(+0x4E, +0x50 − 1)，画在 (movsx +0x2EC0 − 原点 x + 阵位 x, 阵位 y − act y + movsx +0x64)、旗标|4；waiting=1 → 清 +0x4E、+0x50、+0x62、+0x64。waiting=1 → standAct 清零返回 1；否则 0。
 对照：Pose36Frame 一致（常量与 ActState 偏移核对）；图片缺失见偏差 211。
 差异：无。
+
+## 0x00483B70 BattleRole::CastAt — exact
+
+汇编：standAct id = 零扩展 +0x2F28、+0x2FEC=1、动作 0x34（不设 hold）；Run=0 → 0。图片 = GetPicture；+0x2EBC = act anchorX、旗标 = act flags、偏移 = act x 字；+0x3050=1 → 旗标位 0 取反、偏移 = 图宽 − act x，anchorX 非 0 → +0x2EBC = 图宽 − anchorX。缩放高 = 图高/3、剪切 = 图高>>2、着色 −6（+0x3044=1 时 −1）；PlaySound(view)、声像 (阵位 x − 偏移) ≥ 0x140 ? 0x30 : −0x30；+0x2BAC = (旗标 & 0x8000000F)|0xC、view=0；阴影与本体同 AttackPose。target 低字节 & 9 为 0 → 0；法术 ≤0 → 1。slotActs[0] 动作 0、id = 法术；Run=0 → 0；PlaySound(其 view)、view=0；图片 = GetPicture；+0x2EBC、旗标、偏移同上法（含镜像）；目标.GetDrawPosition，画在 (movsx(目标 x − 偏移), movsx(目标 y − 效果 y))；效果 waiting≠1 → 0；否则 slotActs[0] 与 standAct 清零，返回 1。
+对照：CastAt（平滑绘制 RoleFrame::CastAtAdvance）一致（kCastPose=0x34）；空图片见偏差 167。
+差异：无。
+
+## 0x00483ED0 BattleRole::MagicFrame — exact
+
+汇编：slotActs[8]（+0xBAC）动作 = 零扩展 +0x2FB4、+0x2FEC=1、id = 零扩展 +0x2F28；0x0049A220(目标, act)（结果不用）。target 位 2：effectA 非 0 → +0x2B84|=0x4000、recoilAct id = effectA、动作 = effectQ；位 0x200 → hold=1；清位 2、effectA、effectQ。+0x2B84 位 0x4000 且 0x0049ACC0(recoilAct, anchorY)=1 → act target=0、+0x2B84 清 0x4000、hold=0、recoilAct 清零。target 位 8：位 0x400 → 0x00577334=1、0x00467C40(七个光照值) 并清该位；0x00577378 无 0x8000 → 置位。0x00577378 位 0 → +0x2B84=0、slotActs[8] 清零、返回 1；否则 0。
+对照：MagicFrame（平滑绘制 RoleFrame::MagicFrameAdvance）一致（SpellCast=0x8000、SpellOver=1）。
+差异：无。
+
+## 0x004840A0 Game::DrainSpellFrame — exact
+
+汇编：slotActs[8] id = 零扩展 +0x2F28、动作 = 零扩展 +0x2FB4、+0x2FEC=1（不设 hold）；Run=0 → 0。图片 = GetPicture；+0x2EC6 = act x、旗标 = act flags、+0x2EBC = act anchorX；镜像同 AttackPose。缩放高/剪切/着色（−6，+0x3044=1 时 −1）；PlaySound(view)、声像 (阵位 x − movsx +0x2EC6) ≥ 0x140 ? 0x30 : −0x30；view=0；+0x2BAC = (旗标 & 0x8000000F)|0xC；阴影画在 (x−5, 阵位 y − 缩放高)，本体画在 (x, 阵位 y − act y)。0x0057722C/2E/30 = act +0x68/+0x6A/+0x6C，0x004655A0 DarkenByTint，三者任一非 0 → 0x00577290=1。target 低字节 & 9 为 0 → 0。目标.GetDrawPosition（结果不用）；+0x34BE+1；Fly(目标, slotActs[0], 0, 零扩展 castAct, movsx +0x2EBC − movsx +0x2EC6 + 阵位 x, movsx anchorY + 阵位 y − act y, movsx 命令 +0x26, 命令 +0x28, 1)≠1 → 0。目标.RaiseFlag2BC0；伤害 = movsx HitDamage，0x00575F34 = 伤害（≥9999 → 9999），0x005378F4 += 伤害；目标 SetDamageDigits、StepTargetCount(1)；0x00575F34 取负；自身 PushTarget(0x237D)、SetDamageDigits(0x00575F34)、PushTargetAlt(0)、StepTargetCount(1)、PushTarget(0x237F)、SetDamageDigits(0x005378F4)、PushTargetAlt(8)、StepTargetCount(1)；Damage(0x00575F34, 0, 0x005378F4 低字)；+0x34BE=0、slotActs[0] 与 [8] 清零，返回 1。
+对照：DrainSpellFrame（平滑绘制 DamageFrame::DrainSpellFrameAdvance）一致（常量与偏移核对）；空图片见偏差 168。
+差异：无。
+
+## 0x004844B0 BattleRole::BeamSpellFrame — exact
+
+汇编：+0x2FEC=1；slotActs[8] id = 零扩展 +0x2F28、动作 = 零扩展 +0x2FB4；Run=0 → 0。图片 = GetPicture；偏移 = act x 字、+0x2EBC = anchorX、旗标 = act flags，镜像同 CastAt。target 位 8 → +0x2E60 = −0x1F、+0x2B84 |= 3、target=0、+0x2E64=0。+0x2B84 为 0：PlaySound(view)、声像 (阵位 x − 偏移) ≥0x140 ? 0x30 : −0x30、view=0；缩放高/剪切/着色 −6；+0x2BAC = (旗标 & 0x8000000F)|0xC；阴影画在 (x−5, 阵位 y − 缩放高)，本体画在 (x, 阵位 y − act y)。位 1：+0x2E64（有符号字）> −0x1E → 以其着色、旗标|4 画本体、减 1；否则清位 1。位 2：slotActs[9] 动作 0、id 0x17FE；Run=0 → 0；图片 = GetPicture；+0x2EC8 = 其 x、+0x2EBE = 其 anchorX、旗标 = 其 flags（镜像同法）；PlaySound(其 view)、声像同上、view=0；+0x2E60 > 0 → +0x2B84 = 4、+0x2E64 = +0x2E60 = 0；否则以 +0x2E60 着色、画在 (movsx +0x2EBC − movsx +0x2EBE − 偏移 + 阵位 x, 阵位 y − movsx 其 anchorY + movsx 法术 anchorY − 法术 y)、旗标|4，+0x2E60+1。+0x2B84 = 4：Fly(目标, slotActs[0], 0, 0x17FE, 阵位 x − 偏移 + movsx +0x2EBC, 阵位 y + movsx anchorY − act y, −1, 命令 +0x28, 0)=1 → 目标.RaiseFlag2BC0、伤害同 DirectAttack 并记入 0x00575F34/0x005378F4、目标 SetDamageDigits 与 StepTargetCount(1)、+0x2B84 = 0x4000、+0x2E64 = −0x1F。位 0x4000：slotActs[1] id 0x1F88、动作 0，0x0049AF40(目标, 它, 0, 0)=1 → +0x2B84 = 0x2000。无位 0x2000 → 0。+0x2E64 > 0 → 清 +0x2E64、+0x2B84，slotActs[8]、[9]、[0]、[1] 清零，返回 1；否则以 +0x2E64 着色、当前图片画在 (阵位 x − 偏移, 阵位 y − act y)、旗标|4，+0x2E64 += 2，返回 0。
+对照：BeamSpellFrame（平滑绘制 RoleFrame::BeamSpellFrameAdvance）逐分支一致（常量核对）；空图片见偏差 170。
+差异：无。
+
+## 0x00484B20 BattleRole::ChargeAttackFrame — diff → exact
+
+汇编：+0x2F90 非 0 或 +0x3018=1 → 0。+0x2FEC=1；法术 act = slotActs[8+槽]：id = 零扩展 +0x2F28、动作 = 零扩展 +0x2FB4，0x0049A220(目标, 它)。target 位 8 且位 0x100（冲刺）：残影[0]（+0x1314）未开始 → 0x98 字节清零、开始=1、八张图 = 0xFFFF、蓝着色 0xC、+0x2B70=0；法术 hold=1；attackAct id = +0x2F28、动作 = +0x2FB4+0x28，图号 <2 时反复 Run（Run=0 → 0）；滑行：透明度 8、以 +0x2BA8|0x14 画在 (movsx +0x2ECA − +0x2B70, movsx +0x2ECC)，蓝着色 10、以 |0x10 再画；+0x2B70 += facing=0 ? 10 : −10；attackAct hold=1；其 target 位 1 → 目标.RaiseFlag2BC0、清 target；+0x2B70 % 150 ≠ 0 → 0；否则法术 target=0、+0x2E64=0、+0x2B80=0、+0x2FB8=0xFFFF、两个 hold=0、+0x3004=1。+0x3004=1：attackAct waiting 非 0 → 同样滑行、+0x2B70 += facing=0 ? −10 : 10、hold=1，为 0 → 同样收尾并 +0x2B70=0、+0x3004=0；否则冲到目标（Run、图片、音效、+0x2BAC = flags、+0x2EC6 = x 与镜像；目标绘制位置减偏移；残影[1] 初始化后方向 2、数 3、淡出 1，0x00498DF0 画残影，再画本体；target 位 8 → +0x2B84|=0x800、slotActs[1] 清零；无 0x800 → 继续；跟随 act[1] id = castAct（effectA 优先），waiting 非 0 → 继续；Run=0 → 0；图片、flags 与镜像、音效声像 facing=1 ? 0x30 : −0x30；再次镜像、+0x2EC8 = 图宽 − 它，锚点同法；两边锚点都有时画在 (冲刺 x − 跟随锚 x + 冲锋锚 x, 冲锋锚 y − 跟随锚 y + 冲刺 y)，否则 (0, 0)；target 位 1 → +0x2E60=0、清位、Strike(目标, 0)）。法术 target 位 8 → +0x2B84|=0x8000、清 target；位 1 → Strike(目标, 0)、清 target、|=0x8000、+0x2E60=0、0x005373B4=0、slotActs[0] 清零。无 0x8000 → 0。slotActs[0] 动作 0、id = castAct，AimAction(目标, 它, 法术 anchorX, anchorY)；其 target 位 1 → +0x2E60=0、清位、Strike(目标, 0)。waiting=1：两个 effectA 清 0，法术 waiting=1 且 +0x3004=0 → 清法术、attackAct、recoilAct、slotActs[0]、[1]、八个残影，+0x2F72 = −1×4，+0x2E60、+0x2FF0、+0x2B84、+0x2BDE 清 0，0x00578474=0、0x00578470+1、+0x3004=0，返回 1；否则 0。waiting≠1：无 0x4000 时以 +0x2BAC 和阴影图调色板画在 (aimX, aimY)；返回 0。
+对照：ChargeAttackFrame（平滑绘制 RoleFrame::ChargeAttackFrameAdvance 与 ChargeOnTargetAdvance）逐分支一致（常量与 AfterimageTrail 偏移核对）；图片缺失见偏差 172。
+差异：三个字段沿用正传偏移命名（unk2678、unk2A8E 与 kNoUnk2A8E、unk26D4）。修正：改名 unk2B80、unk2FB8/kNoUnk2FB8、unk2BDE（以相邻 unk2B7C/stage、unk2FB6/barrierTurns、guardPose 定位）。复核：完整函数重新对照一致。

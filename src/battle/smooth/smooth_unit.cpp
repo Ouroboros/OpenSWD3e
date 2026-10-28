@@ -561,9 +561,9 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
         return 1;
     }
 
-    if (unit.unk2A8E != act.picture && unit.kind == 1)
+    if (unit.unk2FB8 != act.picture && unit.kind == 1)
     {
-        unit.unk2A8E = act.picture;
+        unit.unk2FB8 = act.picture;
     }
 
     ++unit.throwSteps;
@@ -636,7 +636,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
         view.flags = invisible ? unit.frameFlags | Painter::SmearUnder : unit.frameFlags;
         unit.actAnchorX = 0;
         unit.throwSteps = 0;
-        unit.unk2A8E = 0;
+        unit.unk2FB8 = 0;
         unit.unk2EDE = 0;
         unit.unk2EDC = kArrivedMark;
         line = LineWalker{};

@@ -55,7 +55,7 @@ constexpr u16 kGlowRising = 0;
 constexpr i16 kGlowStep = 2;
 constexpr int kGlowTintBase = 0x1F;  // the tint is glowLevel / 2 - kGlowTintBase
 constexpr i32 kNoImpact = -1;        // a queued act without an impact act that lands no hit
-constexpr u16 kNoUnk2A8E = 0xFFFF;
+constexpr u16 kNoUnk2FB8 = 0xFFFF;
 constexpr i16 kStandBackEnd = 2;
 constexpr i32 kStepBackAction = 0x2F;        // swd3e (swd32: 0x2A)
 constexpr i32 kSecondStepBackAction = 0x2E;  // swd3e: the step back of the role of act 1
@@ -1611,8 +1611,8 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
     {
         magic.target = 0;
         role.glowLevel = 0;
-        role.unk2678 = 0;
-        role.unk2A8E = kNoUnk2A8E;
+        role.unk2B80 = 0;
+        role.unk2FB8 = kNoUnk2FB8;
         magic.hold = 0;
         charge.hold = 0;
     };
@@ -1745,7 +1745,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
         role.slotTint = 0;
         role.unk2FF0 = 0;
         role.stage = 0;
-        role.unk26D4 = 0;
+        role.unk2BDE = 0;
         battle.criticalAttack = 0;
         ++battle.attacksSinceCritical;
         role.charging = 0;

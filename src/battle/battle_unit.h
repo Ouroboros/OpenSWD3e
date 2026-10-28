@@ -793,7 +793,7 @@ public:
     i32 brightLevel = 1;     // +0x2B74
     i32 homePoseX = 0;       // +0x2B78 the x offset of the stand pose while walking home (ReturnHome)
     i32 unk2B7C = 0;
-    i32 unk2678 = 0;
+    i32 unk2B80 = 0;
     u32 stage = 0;       // +0x2B84 BattleUnit::Stage bits
     i32 throwSteps = 0;  // +0x2B88 the frames of the thrown act so far (ThrowAct)
     i32 unk2684 = 0;
@@ -816,7 +816,7 @@ public:
     u16 marks = 0;      // +0x2BD8 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
     u16 unk2BDA = 0;    // +0x2BDA (swd3e) bit 0: the weak stand pose (IdleFrame); bit 2 (0x00486540)
     i16 guardPose = 0;  // +0x2BDC the guard pose (1, 2, 4)
-    u16 unk26D4 = 0;
+    u16 unk2BDE = 0;
     u16 nudge = 0;                                  // swd32 +0x26D6
     u16 drawAtSaved = 0;                            // swd32 +0x26D8
     u16 proficiency = 0;                            // +0x2BE6 the proficiency of the accessory used
@@ -920,7 +920,7 @@ public:
     u16 restAction = 0;     // swd32 +0x2A88 the rest action of the frame (IdleFrame)
     u16 magicAction = 0;    // +0x2FB4 the action of its magic act
     u16 unk2FB6 = 0;
-    u16 unk2A8E = 0;
+    u16 unk2FB8 = 0;
     u16 barrierTurns = 0;  // +0x2FBA
     u8 unk2A92 = 0;
     u16 orbitStep = 0;     // +0x2FC0 (swd3e) the talisman ghost's step along its orbit segment (IdleFrame)
