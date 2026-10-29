@@ -266,51 +266,13 @@ void FieldView::Paint()
             static_cast<int>(crt::Ftol(fade.green)),
             static_cast<int>(crt::Ftol(fade.blue)),
         };
-
-        this->CaptureLayer(this->worldLayer);
-        this->StartRecord(this->talkRecord);
     }
 
     this->DrawLines();
     owner.talk.Draw();
-
-    if (capture)
-    {
-        this->CaptureLayer(this->talkLayer);
-        this->MarkChanges(this->worldLayer, this->talkSpans);
-        this->talkRedrawn = this->FinishRecord(this->talkRecord, this->talkLayer);
-    }
-
     this->DrawRoleHeads();
-
-    if (capture)
-    {
-        this->CaptureLayer(this->headsLayer);
-        this->StartRecord(this->interfaceRecord);
-    }
-
-    if ((state.leader.id == Role::NoId || state.leader.eventCursor < kLeaderCursorLimit) &&
-        !state.GameFlag(GameState::HideHud))
-    {
-        // The rebuild's map filling the window keeps the gold at the bottom right of the canvas (deviations.md).
-        if (field.screenX != 0 || field.screenY != 0)
-        {
-            painter.SetClipClamped(0, 0, Display::Width + field.screenX, Display::Height + field.screenY);
-        }
-
-        owner.actDrawer.DrawCounter(
-            ActDrawer::GoldX + field.screenX,
-            ActDrawer::GoldY + field.screenY,
-            static_cast<u32>(owner.party.variables[Party::Gold]),
-            owner.counterAlpha
-        );
-
-        if (field.screenX != 0 || field.screenY != 0)
-        {
-            painter.SetClipClamped(0, 0, Display::Width, Display::Height);
-        }
-    }
-
+    this->DrawGold();
+    owner.menuButtonShown = false;
     owner.NameBoxFrame();
     const bool pointer = !state.GameFlag(GameState::NoPointer) && !state.GameFlag(GameState::NoChoicePointer) &&
                          !state.GameFlag(GameState::HideHud);
@@ -350,9 +312,6 @@ void FieldView::Paint()
             owner.StepPointer();
         }
 
-        this->CaptureLayer(this->interfaceLayer);
-        this->MarkChanges(this->headsLayer, this->interfaceSpans);
-        this->interfaceRedrawn = this->FinishRecord(this->interfaceRecord, this->interfaceLayer);
         this->pointerShown = pointer;
 
         if (pointer)
@@ -374,13 +333,73 @@ void FieldView::Paint()
         }
     }
 
-    if (capture)
+    owner.notices.Draw(owner.smallFont, painter, state, owner.textColors);
+}
+
+// The gold at the bottom right of the screen (part of 0x00412F60), unless an event's leader hides it.
+void FieldView::DrawGold()
+{
+    Game& owner = this->game;
+    const GameState& state = owner.state;
+    const Field& field = owner.field;
+    Painter& painter = owner.painter;
+
+    if ((state.leader.id != Role::NoId && state.leader.eventCursor >= kLeaderCursorLimit) ||
+        state.GameFlag(GameState::HideHud))
     {
-        this->CaptureLayer(this->fadedLayer);
-        this->StartRecord(this->finalRecord);
+        return;
     }
 
-    owner.notices.Draw(owner.smallFont, painter, state, owner.textColors);
+    // The rebuild's map filling the window keeps the gold at the bottom right of the canvas (deviations.md).
+    if (field.screenX != 0 || field.screenY != 0)
+    {
+        painter.SetClipClamped(0, 0, Display::Width + field.screenX, Display::Height + field.screenY);
+    }
+
+    owner.actDrawer.DrawCounter(
+        ActDrawer::GoldX + field.screenX,
+        ActDrawer::GoldY + field.screenY,
+        static_cast<u32>(owner.party.variables[Party::Gold]),
+        owner.counterAlpha
+    );
+
+    if (field.screenX != 0 || field.screenY != 0)
+    {
+        painter.SetClipClamped(0, 0, Display::Width, Display::Height);
+    }
+}
+
+// The rebuild's smooth motion: what the map's last game frame drew after its pointer (the notices, the timer, the
+// talisman ghost, the cleared first pixels of the rows and the debug display) drawn again over the map painted between
+// game frames, nothing stepped (the timer's digits act kept; the ghost where it is, at the camera of this painting).
+void FieldView::DrawFinalAgain()
+{
+    Game& owner = this->game;
+    const Field& field = owner.field;
+    owner.notices.Draw(owner.smallFont, owner.painter, owner.state, owner.textColors, false);
+    const ActState digits = owner.scene.timerDigits;
+    this->DrawTimer(kTimerX, kTimerY, 0);
+    owner.scene.timerDigits = digits;
+    owner.ghostFollower.DrawShown(owner.archive, owner.painter, field.cameraLeft, field.cameraTop);
+    this->ClearRowStarts();
+
+    if (owner.config.debugMode == 1)
+    {
+        this->DrawDebug(field.ScreenLeft(), field.ScreenTop());
+    }
+}
+
+// swd3e: the first two pixels of every row of the screen cleared at the end of the map frame (part of 0x00412F60).
+void FieldView::ClearRowStarts()
+{
+    Pixel* screen = this->game.painter.Target();
+    const int pitch = this->game.painter.ScreenPitch();
+
+    for (int row = 0; row < Display::Height; ++row)
+    {
+        screen[static_cast<std::ptrdiff_t>(pitch) * row] = 0;
+        screen[static_cast<std::ptrdiff_t>(pitch) * row + 1] = 0;
+    }
 }
 
 // The spotlight's square of the screen as the clip (part of 0x00412F60).
@@ -805,14 +824,7 @@ void FieldView::Render()
         static_cast<float>(static_cast<double>(static_cast<u32>(player.y)) - kGhostOffsetUp)
     );
     owner.ghostFollower.Draw(owner.acts, owner.archive, owner.painter, field.cameraLeft, field.cameraTop);
-    Pixel* screen = owner.painter.Target();
-    const int pitch = owner.painter.ScreenPitch();
-
-    for (int row = 0; row < Display::Height; ++row)
-    {
-        screen[static_cast<std::ptrdiff_t>(pitch) * row] = 0;
-        screen[static_cast<std::ptrdiff_t>(pitch) * row + 1] = 0;
-    }
+    this->ClearRowStarts();
 
     if (owner.config.debugMode == 1)
     {
@@ -822,8 +834,6 @@ void FieldView::Render()
     if (owner.smoothMotion)
     {
         this->CaptureLayer(this->finalLayer);
-        this->MarkChanges(this->fadedLayer, this->finalSpans);
-        this->finalRedrawn = this->FinishRecord(this->finalRecord, this->finalLayer);
     }
 
     owner.EndMapCanvas();

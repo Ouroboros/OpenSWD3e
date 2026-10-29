@@ -138,6 +138,7 @@ constexpr u16 kOpeningEvent = 100;      // the leader's event of a new story
 constexpr i32 kButtonDelay = 0x10;
 constexpr u32 kButtonLeft = 0x262;
 constexpr u32 kButtonBottom = 0x18;
+constexpr int kButtonX = 0x282;        // StepPointer: where the system button lies in
 constexpr u16 kLeaderCursorLimit = 8;  // the leader's event this far along hides the system button and pointer
 constexpr i32 kCounterHidden = 0x400;
 constexpr i32 kCounterOpaque = 0x10;
@@ -1246,7 +1247,6 @@ void Game::RefreshCursor()
 void Game::StepPointer()
 {
     constexpr int kWaitKey = 0x2E;
-    constexpr int kButtonX = 0x282;
     constexpr int kButtonHidden = -0x20;
     Role& pointer = this->scene.pointerRole;
     Scene& view = this->scene;
@@ -1290,15 +1290,11 @@ void Game::StepPointer()
             button = false;
         }
 
-        if (button && this->field.screenX != 0)
+        if (button)
         {
-            this->painter.SetClipClamped(0, 0, Display::Width + this->field.screenX, Display::Height);
-            this->actDrawer.Draw(view.menuButtonAct, view.menuButtonSlide + kButtonX + this->field.screenX, 0);
-            this->painter.SetClipClamped(0, 0, Display::Width, Display::Height);
-        }
-        else if (button)
-        {
-            this->actDrawer.Draw(view.menuButtonAct, view.menuButtonSlide + kButtonX, 0);
+            this->menuButtonX = view.menuButtonSlide + kButtonX;
+            this->menuButtonShown = true;
+            this->DrawMenuButton(false);
         }
     }
 
@@ -1320,6 +1316,34 @@ void Game::StepPointer()
             pointer.act.action,
             pointer.act.direction
         );
+    }
+}
+
+// Part of 0x00414F70: the system button at the top right where the pointer's step slid it (StepPointer); `again`: the
+// rebuild's frames between game frames draw the picture it was last stepped to (deviations.md).
+void Game::DrawMenuButton(bool again)
+{
+    ActState& act = this->scene.menuButtonAct;
+    const int x = this->menuButtonX + this->field.screenX;
+
+    // The rebuild's map filling the window keeps the button at the right of the canvas (deviations.md).
+    if (this->field.screenX != 0)
+    {
+        this->painter.SetClipClamped(0, 0, Display::Width + this->field.screenX, Display::Height);
+    }
+
+    if (again)
+    {
+        this->actDrawer.DrawShown(act, x, 0);
+    }
+    else
+    {
+        this->actDrawer.Draw(act, x, 0);
+    }
+
+    if (this->field.screenX != 0)
+    {
+        this->painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     }
 }
 
@@ -1846,6 +1870,21 @@ void Game::DrawTextInput(const TextInput& box, bool current, bool withPicture)
     );
 }
 
+// Part of 0x004172A0: the three name boxes drawn (the current one with its cursor); the rebuild's frames between game
+// frames draw them again (deviations.md).
+void Game::DrawNameBoxes()
+{
+    for (std::size_t box = 0; box < NameBoxCount; ++box)
+    {
+        const TextInput* drawn = this->nameBoxes[box].get();
+
+        if (drawn != nullptr)
+        {
+            this->DrawTextInput(*drawn, this->currentNameBox == drawn, box == SurnameBox);
+        }
+    }
+}
+
 // swd3e.exe 0x004172A0: the name boxes of talk command 209 while NameBoxesOpen: a click in a box makes it the
 // current one, the key of button slot 2 goes on to the next; the three are drawn. Enter or a click on the confirm
 // button takes the name: the role's name becomes the one the texts write for it, each part then cleared for the
@@ -1903,16 +1942,7 @@ bool Game::NameBoxFrame()
         }
     }
 
-    for (std::size_t box = 0; box < NameBoxCount; ++box)
-    {
-        const TextInput* drawn = this->nameBoxes[box].get();
-
-        if (drawn != nullptr)
-        {
-            this->DrawTextInput(*drawn, this->currentNameBox == drawn, box == SurnameBox);
-        }
-    }
-
+    this->DrawNameBoxes();
     const int result = this->currentNameBox != nullptr ? this->currentNameBox->GetResult() : 0;
     const bool confirmed = clicked && pointerY < kConfirmBottom && pointerY > kConfirmTop && pointerX < kConfirmRight &&
                            pointerX > kConfirmLeft;

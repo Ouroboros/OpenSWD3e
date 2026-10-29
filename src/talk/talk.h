@@ -17,6 +17,7 @@ namespace swd3e::smooth
 {
 
 class TalkFrame;
+class Scene;
 
 }  // namespace swd3e::smooth
 
@@ -132,6 +133,7 @@ public:
     explicit Talk(Game& game);
 
     void Draw();
+    void DrawAgain();
     void HandlePointer();
     void DrawColoredText(u16* pixels, int x, int y, int color, int shade, std::string_view text, int style);
     static bool ParseNumber(std::string_view text, int& value);
@@ -214,6 +216,9 @@ private:
     bool RunSystemCommand(EventRun& run);
 
     Game& game;
+    // The rebuild's smooth motion: the talk windows the map's game frame drew (Draw), drawn again over the map painted
+    // between game frames (DrawAgain).
+    std::shared_ptr<smooth::Scene> shown;
 };
 
 }  // namespace swd3e

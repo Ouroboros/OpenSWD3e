@@ -91,6 +91,19 @@ void GhostFollower::Draw(ActArchive& acts, TswArchive& archive, Painter& painter
     }
 
     acts.Run(ghost->act);
+    this->DrawShown(archive, painter, cameraLeft, cameraTop);
+}
+
+// The rebuild's smooth motion: the ghost's picture its act last ran to drawn as Draw draws it, the act not stepped.
+void GhostFollower::DrawShown(TswArchive& archive, Painter& painter, i32 cameraLeft, i32 cameraTop) const
+{
+    const Body* ghost = this->body.get();
+
+    if (ghost == nullptr)
+    {
+        return;
+    }
+
     const Picture* picture = archive.GetPicture(ghost->act.frame, ghost->act.picture);
 
     // The original takes the picture without a check.

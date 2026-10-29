@@ -199,6 +199,7 @@ private:
     void NewGame();
     void RefreshCursor();
     void StepPointer();
+    void DrawMenuButton(bool again);
     void DrawPointer(int x, int y);
     void ShowFrame();
     // The rebuild's smooth motion (deviations.md): a map frame kept for the frames drawn until the next game frame
@@ -294,6 +295,7 @@ private:
     void DrawWrappedText(std::string_view text, int x, int y, int lines, int width);
     void DrawTextInput(const TextInput& box, bool current, bool withPicture);
     bool NameBoxFrame();
+    void DrawNameBoxes();
     void MainFrame();
     void EndMainFrame();
     void RunTimers();
@@ -720,6 +722,9 @@ private:
     // battleFrameShown of the game frame before: a frame whose battle talk runs no battle frame (BattleMainFrame)
     // shows that one on, as the original's screen stays.
     bool battleFrameKept = false;
+    // The system button StepPointer last drew (its x on the 640x480 screen), drawn again between game frames.
+    bool menuButtonShown = false;
+    i32 menuButtonX = 0;
     u32 battleFramesRun = 0;  // BattleFrame: the battle frames run so far
     // The rebuild's smooth battle checked: with smooth motion off, the battle frame's draws gathered into one scene
     // and drawn once the frame is decided, where they are (off: each drawn at once, in the original's order).

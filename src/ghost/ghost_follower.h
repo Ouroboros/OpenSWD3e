@@ -23,6 +23,7 @@ public:
     void RemoveUnused();
     void Follow(float x, float y);
     void Draw(ActArchive& acts, TswArchive& archive, Painter& painter, i32 cameraLeft, i32 cameraTop);
+    void DrawShown(TswArchive& archive, Painter& painter, i32 cameraLeft, i32 cameraTop) const;
 
     bool Active() const
     {
