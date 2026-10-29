@@ -394,8 +394,12 @@ std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) c
         case kSmoothRow:
         case kVSyncRow:
         case kWideMapRow:
+        case kItemHintsRow:
         {
-            const bool on = row == kSmoothRow ? owner.smoothMotion : row == kVSyncRow ? owner.vsync : owner.wideMap;
+            const bool on = row == kSmoothRow    ? owner.smoothMotion
+                            : row == kVSyncRow   ? owner.vsync
+                            : row == kWideMapRow ? owner.wideMap
+                                                 : owner.itemHints;
             choices = OnOffChoices();
             chosen = on ? 0 : 1;
             break;
@@ -468,6 +472,10 @@ void Menu::SetupChoose(Setup setup, i32 row, i32 choice)
 
         case kWideMapRow:
             owner.wideMap = choice == 0;
+            break;
+
+        case kItemHintsRow:
+            owner.itemHints = choice == 0;
             break;
 
         default:

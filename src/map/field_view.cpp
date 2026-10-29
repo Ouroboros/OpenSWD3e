@@ -469,6 +469,7 @@ void FieldView::PaintWorld()
 
         // swd3e reads story flag 0xB here and does nothing with it (swd32 drew the reflections without it).
         this->DrawRoles();
+        this->DrawItemHints();
         this->DrawAnimations(view.animationsA);
         this->DrawSprites();
 

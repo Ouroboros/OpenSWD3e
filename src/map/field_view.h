@@ -13,6 +13,7 @@
 #include "crt/msvc.h"
 #include "file/file.h"
 #include "platform/surface.h"
+#include "talk/event_scan.h"
 #include "text/big5.h"
 
 namespace swd3e
@@ -141,6 +142,7 @@ public:
     void DrawAnimations(std::unique_ptr<ScriptAnimation>& list);
     void DrawSprites();
     void DrawRoleHeads();
+    void DrawItemHints();
     void DrawLines();
     void BlendLines(std::span<Pixel> screen) const;
     void DrawGold();
@@ -399,6 +401,8 @@ private:
     };
 
     std::vector<LineBlend> lineBlends;
+    ActState itemHint;                    // DrawItemHints: the arrow, stepped once a game frame
+    EventScan eventScan;                  // DrawItemHints: the events that give items
     bool pointerShown = false;            // the frame drew the pointer
     std::array<i32, 2> pointerSway = {};  // the offset of the pointer's picture last drawn to (EffectKind::Pointer)
     std::vector<Surface> parts;           // the logical screens of a render scale above 1 (PaintBetween)

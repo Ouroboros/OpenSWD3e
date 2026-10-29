@@ -593,4 +593,81 @@ void FieldView::DrawRoleHeads()
     }
 }
 
+// The rebuild's hint of hidden items: while no event runs, over each invisible thing (act kHiddenItemAct) whose event
+// gives an item, the bobbing arrow of the battle's target cursor (act kItemHintAct): whether the pointer offers to
+// examine it (Talk::HandlePointer's hand) or it is found only by facing it and pressing the key (NoTalkPointer). The
+// thing is drawn in the map; the role is the box the pointer clicks (its picture), and the arrow's tip points at the
+// middle of that box. Taking the item removes the thing or its pointer, and so the arrow; an invisible thing its event
+// leaves as it is stands for a character out of reach (its talk may give an item) and has none. Each closed chest
+// (acts kChestAct and kWaterChestAct, swd3e's: their actions from kOpenedChest show them open) whose event gives an
+// item has the arrow too, until it is opened.
+void FieldView::DrawItemHints()
+{
+    constexpr i32 kHiddenItemAct = 622;
+    constexpr i32 kChestAct = 625;
+    constexpr i32 kWaterChestAct = 626;
+    constexpr i32 kOpenedChest = 8;
+    constexpr i32 kItemHintAct = 9105;
+    Game& owner = this->game;
+    const GameState& state = owner.state;
+    const Field& field = owner.field;
+
+    if (!owner.itemHints || state.leader.id != Role::NoId || state.GameFlag(GameState::HideActRoles))
+    {
+        return;
+    }
+
+    if (!this->replaying)
+    {
+        this->itemHint.id = kItemHintAct;
+        owner.acts.Run(this->itemHint);
+    }
+
+    Painter& painter = owner.painter;
+
+    for (int index = 1; index < state.roleCount && index < GameState::Roles; ++index)
+    {
+        const Role& role = state.roles[static_cast<std::size_t>(index)];
+        const bool hidden = role.act.id == kHiddenItemAct;
+        const bool closedChest =
+            (role.act.id == kChestAct || role.act.id == kWaterChestAct) && role.act.action < kOpenedChest;
+        const std::u8string& directory = owner.config.installDirectory;
+
+        if ((!hidden && !closedChest) || (role.flags & Role::Visible) == 0 || role.event == 0 ||
+            role.talkState != Role::NoTalk || !this->eventScan.GivesItem(directory, role.event) ||
+            (hidden && !this->eventScan.TakesItself(directory, role.event, role.id)))
+        {
+            continue;
+        }
+
+        const Picture* picture = owner.archive.GetPicture(role.act.frame, role.act.picture);
+
+        if (picture == nullptr)
+        {
+            continue;
+        }
+
+        const int middleX = role.x + role.drawOffsetX - role.act.x - field.cameraLeft + picture->width / 2;
+        const int middleY = role.y + role.drawOffsetY - role.act.y - field.cameraTop + picture->height / 2;
+        const Picture* arrow = owner.archive.GetPicture(this->itemHint.frame, this->itemHint.picture);
+
+        if (arrow == nullptr)
+        {
+            return;
+        }
+
+        painter.SetWave(0);
+        painter.Options().alpha = this->itemHint.signal;
+        painter.SetSource(arrow->data.data());
+        painter.DrawPicture(
+            middleX - arrow->width / 2,
+            middleY - arrow->height,
+            arrow->width,
+            arrow->height,
+            this->itemHint.flags,
+            PictureArgument(*arrow)
+        );
+    }
+}
+
 }  // namespace swd3e
