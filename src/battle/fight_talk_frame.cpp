@@ -403,7 +403,7 @@ int Game::FightTalkWindow()
 
             for (BattleEnemy& enemy : this->battleEnemies)
             {
-                enemy.SetAC0(0);
+                enemy.SetOutline(0);
             }
         }
         else
@@ -420,7 +420,7 @@ int Game::FightTalkWindow()
 
             for (BattleRole& other : this->battleRoles)
             {
-                other.SetAC0(0);
+                other.SetOutline(0);
             }
 
             if (role != nullptr)
@@ -457,13 +457,13 @@ int Game::FightTalkWindow()
 
     for (BattleRole& role : this->battleRoles)
     {
-        role.SetAC0(0);
+        role.SetOutline(0);
     }
 
     // The original walks the first ten enemies here.
     for (std::size_t index = 0; index < std::min(kTalkEnemies, this->battleEnemies.size()); ++index)
     {
-        this->battleEnemies[index].SetAC0(0);
+        this->battleEnemies[index].SetOutline(0);
     }
 
     int length = 0;
@@ -1921,11 +1921,11 @@ int Game::FightTalkTimedWindow()
     {
         BattleEnemy& enemy = this->battleEnemies[unit];
         enemy.GetDrawPosition(x, y);
-        enemy.SetAC0(1);
+        enemy.SetOutline(1);
 
         for (BattleEnemy& other : this->battleEnemies)
         {
-            other.SetAC0(0);
+            other.SetOutline(0);
         }
     }
     else
@@ -1942,7 +1942,7 @@ int Game::FightTalkTimedWindow()
 
         for (BattleRole& other : this->battleRoles)
         {
-            other.SetAC0(0);
+            other.SetOutline(0);
         }
 
         if (role != nullptr)
@@ -1965,12 +1965,12 @@ void Game::ClearTalkMarks()
 {
     for (BattleRole& role : this->battleRoles)
     {
-        role.SetAC0(0);
+        role.SetOutline(0);
     }
 
     for (std::size_t index = 0; index < std::min(kTalkEnemies, this->battleEnemies.size()); ++index)
     {
-        this->battleEnemies[index].SetAC0(0);
+        this->battleEnemies[index].SetOutline(0);
     }
 }
 
@@ -2170,14 +2170,14 @@ int Game::FightTalkLineWindow()
             {
                 for (BattleEnemy& enemy : this->battleEnemies)
                 {
-                    enemy.SetAC0(0);
+                    enemy.SetOutline(0);
                 }
             }
             else
             {
                 for (BattleRole& role : this->battleRoles)
                 {
-                    role.SetAC0(0);
+                    role.SetOutline(0);
                 }
 
                 speaker.SetAction(kTalkAction);

@@ -871,7 +871,7 @@ void Game::StartRoleCast(BattleRole& unit)
 {
     BattleState& battle = this->battleState;
     battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast);
-    battle.sweepGap = unit.GetWordDA6();
+    battle.sweepGap = unit.CommandUnk16();
     battle.slotTargets.fill(-1);
     battle.sweptUnits = 1;
     battle.slotDamage.fill(0);
@@ -2495,8 +2495,8 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
     {
         if (!automatic)
         {
-            this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
-            unit.SetAD4(0);
+            this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].SetOutline(0);
+            unit.SetUnk3014(0);
 
             if (unit.SetCommand(command) == 1)
             {
@@ -2513,13 +2513,13 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
     }
     else
     {
-        unit.SetAD4(0);
+        unit.SetUnk3014(0);
 
         if (!automatic)
         {
             if (unit.SetCommand(command) == 1)
             {
-                this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
+                this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetOutline(0);
                 unit.Retarget(static_cast<i16>(battle.aimTarget - 1));
                 unit.SetTarget(0);
                 unit.PrepareCommand(this->battleServices, this->database);
@@ -2533,7 +2533,7 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
     }
 
     // An AI role clears the enemy of its aim even when it aims at a role, as in the original.
-    this->battleEnemies[static_cast<std::size_t>(battle.aiTarget - 1)].SetAC0(0);
+    this->battleEnemies[static_cast<std::size_t>(battle.aiTarget - 1)].SetOutline(0);
     unit.Retarget(static_cast<i16>(battle.aiTarget - 1));
     unit.SetTarget(0);
     taken();
@@ -2558,7 +2558,7 @@ void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
             if (other.AutoControl() != 1 && other.GuestControl() != 1 && other.Ghost() != 1 &&
                 other.StatusBit13() != 1 && unit.GetValue2FF4() == 0)
             {
-                other.SetAC0(0);
+                other.SetOutline(0);
                 ++order.targetCount;
             }
         }
@@ -2594,7 +2594,7 @@ void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
                 continue;
             }
 
-            enemy.SetAC0(0);
+            enemy.SetOutline(0);
             ++order.targetCount;
         }
 
@@ -2651,7 +2651,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
         return;
     }
 
-    unit.SetAD4(0);
+    unit.SetUnk3014(0);
     battle.unk57725C = 0;
     unit.SetTarget(0);
 
@@ -2684,7 +2684,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
         battle.unk577260 = 1;
         battle.unk5772BC = 1;
         battle.darkenUnit = static_cast<i16>(battle.actingUnit);
-        unit.MarkAC8();
+        unit.RaiseUnk3008();
 
         if (this->RoleActionFrame(role, static_cast<i16>(unit.GetWord2EAE())) == 1)
         {

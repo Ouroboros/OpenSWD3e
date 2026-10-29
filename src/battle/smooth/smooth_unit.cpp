@@ -756,7 +756,7 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
     for (u16 slot = unit.damageSlot; slot < slotEnd(); ++slot)
     {
         std::array<i16, BattleUnit::DamageDigits>& digits = unit.damageDigits[slot];
-        std::array<i16, BattleUnit::DamageDigits>& hops = unit.unk283C[slot];
+        std::array<i16, BattleUnit::DamageDigits>& hops = unit.unk2D48[slot];
         i16& fade = unit.numberFades[slot];
         const auto font = static_cast<i16>(unit.pushedTargets[slot]);
 

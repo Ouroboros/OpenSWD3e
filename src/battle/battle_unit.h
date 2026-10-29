@@ -492,14 +492,14 @@ public:
     void ClearWord2EAE();
     void RaiseUnk2FE8();
     int Unk2FE8() const;
-    int SetAC0(int value);
+    int SetOutline(int value);
     bool IsAE4Clear() const;
-    u16 GetWordDA6() const;
-    void MarkAC8();
+    u16 CommandUnk16() const;
+    void RaiseUnk3008();
     int DrawFadeOut(BattleServices& services);
     int DrawFadeIn(BattleServices& services, const BattleUnit& anchor);
     int SetHeld(int value);
-    int SetAD4(int value);
+    int SetUnk3014(int value);
     int RollEvade(BattleServices& services, u16 chance);
     int Mirrored() const;
     bool IsDefeated() const;
@@ -821,7 +821,8 @@ public:
     u16 proficiency = 0;                            // +0x2BE6 the proficiency of the accessory used
     std::array<u16, MaxTargets> damageDelays = {};  // +0x2BEA (PushTargetAlt 0x004910AE)
     std::array<std::array<i16, DamageDigits>, MaxTargets> damageDigits = {};  // +0x2C30 the four digits per target slot
-    std::array<std::array<i16, DamageDigits>, MaxTargets> unk283C = {};       // swd32 +0x283C
+    std::array<std::array<i16, DamageDigits>, MaxTargets> unk2D48 =
+        {};                                          // +0x2D48 the hop step of each digit (DrawDamageNumbers)
     std::array<i16, GuardLetters> guardPhases = {};  // +0x2D90 the pop phases of the four letters of the guard text
     i16 slotTint = 0;    // +0x2E60 the tint of a waiting slot act, darkening to its end (AttackFrame)
     i16 recoilTint = 0;  // +0x2E62 the tint of a waiting recoil act, darkening to its end (DrawRecoil)

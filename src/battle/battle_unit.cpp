@@ -668,7 +668,7 @@ int BattleUnit::Unk2FE8() const
 }
 
 // swd3e.exe 0x004902D0
-int BattleUnit::SetAC0(int value)
+int BattleUnit::SetOutline(int value)
 {
     this->outline = value;
     return value;
@@ -681,13 +681,13 @@ bool BattleUnit::IsAE4Clear() const
 }
 
 // swd3e.exe 0x00490380
-u16 BattleUnit::GetWordDA6() const
+u16 BattleUnit::CommandUnk16() const
 {
     return this->command.unk16;
 }
 
 // swd3e.exe 0x00490390: unless flag 2 of +0x2FB1 is set
-void BattleUnit::MarkAC8()
+void BattleUnit::RaiseUnk3008()
 {
     if ((this->commandFlags & BattleUnit::UnkCommandFlag200) == 0)
     {
@@ -715,7 +715,8 @@ void BattleUnit::MirrorRecoil(u32 actFlags, bool forced)
 
     if (this->facing == 1 && !forced)
     {
-        this->drawFlags = (actFlags & 1) != 0 ? actFlags & ~1u : this->drawFlags | 1;
+        this->drawFlags =
+            (actFlags & Painter::Mirror) != 0 ? actFlags & ~Painter::Mirror : this->drawFlags | Painter::Mirror;
         this->originX = static_cast<u16>(width - static_cast<u16>(this->recoilAct.x));
     }
 }
@@ -749,7 +750,7 @@ int BattleUnit::SetHeld(int value)
 }
 
 // swd3e.exe 0x00490A40
-int BattleUnit::SetAD4(int value)
+int BattleUnit::SetUnk3014(int value)
 {
     this->unk3014 = value;
     return value;
@@ -890,7 +891,7 @@ int BattleUnit::RollEvade(BattleServices& services, u16 chance)
 // swd3e.exe 0x00490F90
 int BattleUnit::Mirrored() const
 {
-    return static_cast<int>(this->drawFlags & 1);
+    return static_cast<int>(this->drawFlags & Painter::Mirror);
 }
 
 // swd3e.exe 0x00490FA0
@@ -1946,7 +1947,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->numberFades = {};
     this->pushedTargets = {};
     this->trails = {};
-    this->unk283C = {};
+    this->unk2D48 = {};
     std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
     this->ExpireEffects(services, 1);
 

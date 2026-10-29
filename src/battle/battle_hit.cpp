@@ -1939,7 +1939,7 @@ int Game::EnemySpellAction(int enemy, BattleEnemy& unit, int target)
     if ((battle.spellStage & BattleState::SpellCast) == 0)
     {
         battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast);
-        battle.sweepGap = unit.GetWordDA6();
+        battle.sweepGap = unit.CommandUnk16();
         battle.slotTargets.fill(-1);
         battle.sweptUnits = 1;
         battle.slotDamage.fill(0);
@@ -2711,7 +2711,7 @@ void Game::EnemyActFrame(BattleEnemy& unit, int enemy)
     const auto at = static_cast<std::size_t>(enemy);
     battle.hitsAllRoles = 1;
     battle.unk5772BC = 1;
-    unit.MarkAC8();
+    unit.RaiseUnk3008();
     battle.darkenUnit = static_cast<i16>(enemy);
 
     if (battle.skillNamePending[at] == 1)

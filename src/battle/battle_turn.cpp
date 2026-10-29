@@ -724,12 +724,12 @@ int Game::RemoveDefeated(int index, int role)
     {
         for (u32 other = 0; other < battle.roleCount; ++other)
         {
-            this->battleRoles[other].SetAC0(0);
+            this->battleRoles[other].SetOutline(0);
         }
 
         for (u32 other = 0; other < battle.enemyCount; ++other)
         {
-            this->battleEnemies[other].SetAC0(0);
+            this->battleEnemies[other].SetOutline(0);
         }
 
         battle.currentUnit = 0;
@@ -1419,7 +1419,7 @@ void Game::ApplyHits()
 
 // swd3e.exe 0x00473150: the next enemy takes its turn: enemy actingEnemy (0 past the enemies); a defeated one passes
 // on through orderStep (1-based in enemyOrder, wrapping) for at most enemyCount tries, after which the battle state
-// is 1. The enemy is marked (SetAC0 1), aimed at (aimTarget, 1-based) and pointed at (kEnemyPointer, slot 0, the
+// is 1. The enemy is marked (SetOutline 1), aimed at (aimTarget, 1-based) and pointed at (kEnemyPointer, slot 0, the
 // middle of its shadow; a rectangle the unit leaves unset is 0 here, uninitialised in the original).
 void Game::NextEnemyTurn()
 {
@@ -1457,7 +1457,7 @@ void Game::NextEnemyTurn()
         }
     }
 
-    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].SetAC0(1);
+    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].SetOutline(1);
     battle.unk5772B4 = 1;
     battle.aimTarget = battle.actingEnemy + 1;
     UnitRect rect;
@@ -2338,7 +2338,7 @@ void Game::MenuCancel()
         battle.result = 0;
         battle.autoTarget = -1;
         battle.listedCommands = 0;
-        this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
+        this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetOutline(0);
 
         if (battle.currentUnit != 0)
         {
@@ -2404,12 +2404,12 @@ void Game::MenuCancel()
 
             for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
             {
-                this->battleEnemies[enemy].SetAC0(0);
+                this->battleEnemies[enemy].SetOutline(0);
             }
 
             for (std::size_t panel = 0; panel < static_cast<std::size_t>(Party::Roles); ++panel)
             {
-                this->battleRoles[panel].SetAC0(0);
+                this->battleRoles[panel].SetOutline(0);
                 this->battleHud.portraitHighlight[panel] = 0;
             }
 
@@ -2504,7 +2504,7 @@ void Game::MenuCancel()
         case kTurnState9:
             battle.ghostOrdersOpen = 1;
             battle.result = kMenuState;
-            this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
+            this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetOutline(0);
             break;
 
         case kWaitStateA:
@@ -3536,7 +3536,7 @@ void Game::AimStep(int step)
 
     for (std::size_t panel = 0; panel < static_cast<std::size_t>(Party::Roles); ++panel)
     {
-        this->battleRoles[panel].SetAC0(0);
+        this->battleRoles[panel].SetOutline(0);
         this->battleHud.portraitHighlight[panel] = 0;
     }
 
@@ -3544,7 +3544,7 @@ void Game::AimStep(int step)
     // role table (deviations.md).
     if (static_cast<u32>(battle.aimTarget - 1) < this->battleRoles.size())
     {
-        this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(1);
+        this->battleRoles[static_cast<std::size_t>(battle.aimTarget - 1)].SetOutline(1);
     }
 
     battle.unk5772B4 = 1;
@@ -3576,10 +3576,10 @@ void Game::AimEnemyStep(int step, UnitRect& rect)
 
     for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
     {
-        this->battleEnemies[enemy].SetAC0(0);
+        this->battleEnemies[enemy].SetOutline(0);
     }
 
-    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].SetAC0(1);
+    this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)].SetOutline(1);
     battle.unk5772B4 = 1;
     battle.unk5777F0 = 1;
     battle.aimTarget = battle.actingEnemy + 1;
@@ -4435,7 +4435,7 @@ int Game::HoverTarget()
     {
         for (u32 index = 0; index < battle.enemyCount; ++index)
         {
-            this->battleEnemies[index].SetAC0(0);
+            this->battleEnemies[index].SetOutline(0);
         }
 
         for (i32 index = static_cast<i32>(battle.enemyCount) - 1; index >= 0; --index)
@@ -4463,7 +4463,7 @@ int Game::HoverTarget()
             {
                 battle.aimTarget = index + 1;
                 battle.hoverUnit = index;
-                enemy.SetAC0(1);
+                enemy.SetOutline(1);
 
                 if ((battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50) &&
                     !enemy.IsSmallMachine())
@@ -4487,13 +4487,13 @@ int Game::HoverTarget()
 
     for (u32 index = 0; index < battle.roleCount; ++index)
     {
-        this->battleRoles[index].SetAC0(0);
+        this->battleRoles[index].SetOutline(0);
     }
 
     // An enemy aimed at before (hoverUnit up to 19) writes past the role table in the original (deviations.md).
     if (static_cast<u32>(battle.hoverUnit) < this->battleRoles.size())
     {
-        this->battleRoles[static_cast<std::size_t>(battle.hoverUnit)].SetAC0(0);
+        this->battleRoles[static_cast<std::size_t>(battle.hoverUnit)].SetOutline(0);
     }
 
     auto& portraits = this->battleHud.portraitHighlight;
@@ -4517,7 +4517,7 @@ int Game::HoverTarget()
 
             battle.aimTarget = role + 1;
             battle.hoverUnit = role;
-            checked.SetAC0(1);
+            checked.SetOutline(1);
             battle.unk5772B4 = 1;
             battle.unk5772B8 = 1;
             std::fill_n(portraits.begin(), Party::Roles, u8{0});
@@ -4587,7 +4587,7 @@ int Game::HoverGhostTarget()
 
     for (u32 index = 0; index < battle.enemyCount; ++index)
     {
-        this->battleEnemies[index].SetAC0(0);
+        this->battleEnemies[index].SetOutline(0);
     }
 
     for (i32 index = static_cast<i32>(battle.enemyCount) - 1; index >= 0; --index)
@@ -4624,7 +4624,7 @@ int Game::HoverGhostTarget()
                 battle.aimTarget = index + 1;
                 battle.aiTarget = index + 1;
                 battle.hoverUnit = index;
-                enemy.SetAC0(1);
+                enemy.SetOutline(1);
                 battle.unk5772B4 = 1;
                 battle.unk5772B8 = 1;
                 return 1;
@@ -4753,7 +4753,7 @@ void Game::AimAtParty()
     if (battle.unk5772B8 == 0)
     {
         BattleRole& role = this->battleRoles[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)];
-        role.SetAC0(1);
+        role.SetOutline(1);
         UnitRect rect;
         role.GetShadowRect(this->battleServices, rect);
         battle.unk5772B4 = 1;
@@ -5338,12 +5338,12 @@ void Game::ConfirmTarget()
 
     for (u32 index = 0; index < battle.enemyCount; ++index)
     {
-        this->battleEnemies[index].SetAC0(0);
+        this->battleEnemies[index].SetOutline(0);
     }
 
     for (std::size_t panel = 0; panel < static_cast<std::size_t>(Party::Roles); ++panel)
     {
-        this->battleRoles[panel].SetAC0(0);
+        this->battleRoles[panel].SetOutline(0);
         this->battleHud.portraitHighlight[panel] = 0;
     }
 
@@ -5820,7 +5820,7 @@ void Game::ConfirmGhostTarget()
     battle.menuCommand = kGhostMenuEntry;
     battle.ghostOrdersOpen = 0;
     this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetGhostOrder(battle.ghostOrderRow);
-    this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetAC0(0);
+    this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].SetOutline(0);
 }
 
 // Battle state 0xA of MenuConfirm (swd3e): the escort of row guardCursor takes the chosen 融合 object: refused without
@@ -6122,12 +6122,12 @@ void Game::ConfirmEnd()
 
             for (u32 index = 0; index < battle.enemyCount; ++index)
             {
-                this->battleEnemies[index].SetAC0(0);
+                this->battleEnemies[index].SetOutline(0);
             }
 
             for (u32 index = 0; index < battle.roleCount; ++index)
             {
-                this->battleRoles[index].SetAC0(0);
+                this->battleRoles[index].SetOutline(0);
             }
 
             battle.listPanelFrames = 0;
@@ -6868,7 +6868,7 @@ void Game::DrawGhostAimPointer()
         battle.unk577244 = 0;
         battle.unk577240 = 0;
         BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)];
-        enemy.SetAC0(1);
+        enemy.SetOutline(1);
         UnitRect rect;
         enemy.GetShadowRect(this->battleServices, rect);
         enemy.GetOffset(battle.unk577240, battle.unk577244);
@@ -6924,7 +6924,7 @@ void Game::DrawAimPointers()
                 if (role.AutoControl() != 1 && role.GuestControl() != 1 && role.Ghost() != 1 && role.StatusBit13() == 0)
                 {
                     role.GetShadowRect(this->battleServices, rect);
-                    role.SetAC0(1);
+                    role.SetOutline(1);
                     hud.DrawSlotAnimation(
                         kTurnPointer,
                         static_cast<int>(index),
@@ -6947,7 +6947,7 @@ void Game::DrawAimPointers()
             }
 
             enemy.GetShadowRect(this->battleServices, rect);
-            enemy.SetAC0(1);
+            enemy.SetOutline(1);
             enemy.GetOffset(battle.unk577240, battle.unk577244);
 
             if (battle.unk577240 != 0 || battle.unk577244 != 0)
@@ -7019,14 +7019,14 @@ void Game::DrawAimPointers()
                 BattleRole& role = this->battleRoles[aimed];
                 role.GetShadowRect(this->battleServices, rect);
                 role.GetOffset(battle.unk577240, battle.unk577244);
-                role.SetAC0(1);
+                role.SetOutline(1);
                 battle.unk577244 = static_cast<u16>(battle.unk577244 + kRoleAimDrop);
             }
         }
         else
         {
             BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(battle.actingEnemy)];
-            enemy.SetAC0(1);
+            enemy.SetOutline(1);
             enemy.GetShadowRect(this->battleServices, rect);
             enemy.GetOffset(battle.unk577240, battle.unk577244);
             battle.aimTarget = battle.actingEnemy + 1;
@@ -7318,7 +7318,7 @@ void Game::EndCheckFrame()
         for (u32 index = 0; index < battle.enemyCount; ++index)
         {
             BattleEnemy& enemy = this->battleEnemies[index];
-            enemy.SetAC0(0);
+            enemy.SetOutline(0);
 
             if (enemy.IsDefeated())
             {
@@ -7336,7 +7336,7 @@ void Game::EndCheckFrame()
     for (u32 index = 0; index < battle.roleCount; ++index)
     {
         BattleRole& role = this->battleRoles[index];
-        role.SetAC0(0);
+        role.SetOutline(0);
         role.ExpireEffects(this->battleServices, 1);
     }
 

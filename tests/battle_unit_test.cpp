@@ -1075,7 +1075,7 @@ TEST_CASE("battle unit: a damage number hops, rises and fades")
     unit.held = 1;
     unit.DrawDamageNumbers(all.services);
     unit.DrawDamageNumbers(all.services);
-    CHECK_EQ(unit.unk283C[0][0], 0);
+    CHECK_EQ(unit.unk2D48[0][0], 0);
     unit.held = 0;
     unit.damageDelays[0] = kDelay;
     int frame = 1;
@@ -1098,7 +1098,7 @@ TEST_CASE("battle unit: a damage number hops, rises and fades")
     unit.targetCount = 1;
     unit.damageSlot = 0;
     unit.damageDigits[0] = {0, 0, kTens, kOnes};
-    unit.unk283C[0] = {kHopFrames, kHopFrames, kHopFrames, kHopFrames};
+    unit.unk2D48[0] = {kHopFrames, kHopFrames, kHopFrames, kHopFrames};
     unit.extraNumber = 1;
     all.state.unk575FC4 = kExtraDigit;
     unit.DrawDamageNumbers(all.services);
