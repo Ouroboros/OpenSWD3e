@@ -2570,3 +2570,33 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：+0x2FA6=0 → 0。PushTarget(0x2389)；+0x2FA6 <0 → PushTarget(0x237D)；SetDamageDigits(movsx +0x2FA6)；StepTargetCount(1)；+0x2FA6 ≥0 → RaiseFlag2BC0；Damage(movsx +0x2FA6, 0, 0)；+0x2FA6=0；返回 Damage 结果 =1。
 对照：ApplyPendingDamage 一致（DamageTarget 0x2389、HealTarget 0x237D、Healing 位 15 即有符号负）。
 差异：无。
+
+## 0x00493EB0 BattleUnit::DrawEffects — exact
+
+汇编：+0x2BC0 位 20：+0x2FDB 加 1，涟漪对象 0x00536880 取屏、MoveTo(阵位X−0x50, 阵位Y−0x78)、折射、Step；+0x2FDB >0x1E → 析构释放涟漪、置空、+0x2FDB=0、0x005772C8/0x00577270/0x005772BC=0、+0x2BC0 &= ~0x100000、slotActs[10] 清零。状态表头 next 为空、+0x3030=1、标记 0x1000 或状态位 31 → 返回。表头 act id >0 → 用表头，否则沿链经过 id ≤0 的节点（bits 有 0x400 时记回合），停在第一个 id >0 的节点；有则 hold = (+0x3010=1)、Run 失败 → 返回、+0x2A44 = GetPicture、+0x2BC0 位 31 清 → 画于 (阵位X − act.x, 阵位Y − 图高/2 − mainAct.y)、act 旗标。状态 0 → 返回。状态 0x200 且 +0x2BC0 位 31 清且 slotActs[10] id≠0：Run 失败 → 返回，画于 (阵位 − act 位置)，waiting=1 → 标记|0x10、facing=1、+0x3070=1、该动作清零。状态 4：+0x2BAC = 旗标&0x8000002B|0x28；+0x2FA4 位 15 → +0x2FA4 += 8，行 = &0x7FFF，裁剪 (x, y+高−行, x+宽, y+高)、三色 (0,0xF,0x1E) 以阴影图片画、裁剪复原、行 ≥ 图高 → +0x2FA4=0；否则直接画；返回。状态 0x100：+0xD98 动作 id 0x1C96、动作 (+0x2FE0=0 ? 1 : 0)，Run 失败 → 返回，画，waiting=1 → 清零。状态 0x40：+0xE3C 动作 0x1C97 同。状态 0x1000：+0x2BAC = 旗标&0x80000003，三色 (−0xC,0,−0xC)，+0x2BC0 位 29 → (−1,−0x20,−1)，|0x10 画。状态 2：同擦入（|0x10），否则 绿 = 8×ftol(EffectShare(2))+7、蓝 = 20×ftol(EffectShare(2))+10、红 0，|0x10 画。状态 0x400：三色 = −0x14 − ftol(EffectShare(0x400)×−20.0f)，|0x10 画，0x00457E10(0x2377, 回合, 阵位X+0x14, 阵位Y − mainAct.y)。
+对照：DrawEffects 一致（kFlag2BC0Ripple、kRippleLeft/Up 0x50/0x78、kRippleFrames 0x1E、kRippleSlot 10、kWipeStep 8、kWipeLines 0x7FFF、kStoneTintGreen/Blue 0xF/0x1E、kStatus100Act 0x1C96、kSlowedEffectAct 0x1C97、kPoisonTint −12、kLastingPoisonGreen −32、kLastingPoisonTint −1、kFreezeGreenStep/Green/BlueStep/Blue 8/7/0x14/0xA、kStatus400Tint −20、kStatus400Scale −20.0f 即 0x004AAE40、kTurnsNumbers 0x2377、kTurnsLeft 0x14；旗标 &0x8000002B|0x28 与 kPictureBits|GrayUnder 结果相同）。空涟漪与空图片属偏差 396 同类；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x004946E0 BattleUnit::DrawEffectIcons — exact
+
+汇编：状态表头 next 为空 → 返回。从表头起逐个节点：图标≠0 → +0x2A44 = GetPicture(0x23B6, 图标−1)，画于 (x + 图宽×序号, y)、旗标 0，序号加 1。
+对照：DrawEffectIconsAdvance 一致（kEffectIcons 0x23B6，表头也看）；空图片属偏差 202；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x00494770 BattleUnit::CureEffects — exact
+
+汇编：参数=0x8000 且 +0x2FE0=1 且 +0x2FF8=1 → 记录 [+4] +0x24 &= 0x7FFF、ResetTurn、+0x2FF8=0、0x005771E7 减 1、0x00469FB0(0x18)，返回 1。表头 next 为空 → 0。逐个节点：bits & 参数 → 回合 0、计时 0、参数 &= ~bits、0x00494840(0)，参数为 0 → 返回 1，否则回到表头继续。返回 1。
+对照：CureEffects 一致（ReviveBit 0x8000、RoleRecord::Defeated、Cause18 0x18、defeatedRoles 即 0x005771E7）。
+差异：无。
+
+## 0x00494840 BattleUnit::ExpireEffects — exact
+
+汇编：表头 next 为空 → 返回。链接从表头起：节点回合≠0 且参数≠1 → 前进；否则按 bits：1 → 状态 &~1，状态无 0xE → 标记 &~0x40，0x0049BB50(0x15,0)，+0x3010=0；2 → 标记 &~2、状态 &~2，无 0xD → 标记 &~0x40；4 → 状态 &~4，无 0xB → 标记 &~0x40，+0x3010=0；8 → 状态 &~8，无 7 → 标记 &~0x40，+0x3010=0，0x0049BB50(0x14,0)；0x10 → 状态 &~0x10、标记 &~0x100；0x20/0x40/0x80/0x100 → 清对应状态位；0x200 → 标记 &~0x10、状态 &~0x200、+0x3070=0，队伍角色以 +0x2FA8..+0x2FAE 还原战斗记录攻防速智、+0x3050=0；0x400 → 状态 &~0x400、0x005761C8 双字与 0x005761CC 字清 0；0x1000 → 状态 &~0x1000、+0x2BC0 &~0x20000000、+0x2FA0=0；增益（+0x2BDC=0 时提示，0x41000002，木与金攻击上升为 0x81000002）：0x4000 土攻；0x20000 → +0x2ED8=0、状态 &~0x20000；0x40000 → +0x2ED8=0、&~0x40000；0x80000 → +0x2ED8=0、&~0x100000；0x100000 → +0x2EDA=0、&~0x8000000；0x200000/0x400000/0x800000/0x1000000 各属性攻击；0x2000000 → &~0x4000000；0x8000000 → &~0x1000000、+0x2BD4 &~0x100、+0x2ED6=0；0x10000000 → 标记|0x400、状态 &0x7FFFFFFF、+0x2E64=0，队伍角色且 +0x2BDC=0 才提示；0x20000000 → +0x2ED8=0、&~0x40000000；0x40000000 → +0x2EDA=0、&~0x20000000；0x80000000 → +0x2ED6=0、&~0x10000000。节点元素 1..5 → +0x2BDC=0 时“增加X象抗力解除”提示，队伍角色记录 [+4] +0x2D+i、敌人物品 +0x9C+i 减 0x32。释放节点、链接指向其后继；后继为空 → 链接清空、返回。之后（含未释放的情形）：链接处节点的 next 为空 → 返回，否则链接移到该节点（释放后紧接的后继本轮不再检查，原有行为）。
+对照：ExpireEffects 一致（Cause14/15 0x14/0x15、kEndFlags 0x41000002、kFramedEndFlags 0x81000002、kAttackDownIgnored 0x100、ailment400From 三个字即 0x005761C8..0x005761CD、kResistStep；伤害转移与强攻击结束清的是防御加成 +0x2ED8，原有行为）；20 条结束提示文字与 exe 0x004C01AC..0x004C038C 字节逐条一致；文字缓冲属偏差 394。
+差异：无。
+
+## 0x00495330 BattleUnit::Damage — exact
+
+汇编：血 >0 且（标记位 15 或状态位 25）→ 0；+0x2FF8=1 → 0。队伍角色：状态位 17：血 >0 且 +0x2FD6=0 且 +0x2FA6=0 → 屏幕缓冲 0x004EDA44 填 0x25800 个 −1 双字，返回 0；否则 +0x2FD6=0。装备旗标 0x100：熟练度 = +0x2BE6；血 >0 → 份 = 血×20/100 + (血×80/100)×熟/100，熟=100 → 份 = 血；否则 份 = (−80×+0x2EB4/100)×熟/100；0x00459170(95×熟+500)；0x00459180(份)=0 → +0x2EB4=0，否则 += 份、<0 → 0。+0x3060=1 且金钱 0x004C6370 >0（无符号）：血 >0：金 < 血 → 血 −= 金、金=0、记录 [+4] +0x4 −= 血（16 位）并封顶 +0xA；否则 金 −= 血；血 ≤0 → 血不变。否则 +0x4 −= 血，封顶。灵 +0x6 += 参数并封顶 +0xC，体 +0x8 += 参数并封顶 +0xE；灵、体 ≤0 → 0。+0x4 >0 → 0；否则 0、+0x2FFC=1，+0x3044=1 → +0x2FC6=6；返回 1。敌人：+0x2BBC≠0 → 血 ≥ 盾 → 0，否则 盾−血；> 物品 +0x50 → 封顶；>0 → 0；否则 +0x68=0、+0x2BBC=0。否则 +0x68 = 血 ≥ 现值 ? 0 : 现值−血，<0 → +0x50，>+0x50 → 封顶，>0 → 0x0049BB50(0,0) 返回 0，否则 0。倒下：+0x2FFC=1、+0x2E64=0，+0x2FC6=0 → rand(10)+1；返回 1。
+对照：Damage 一致（kWhiteFrame 0xFFFF 填满 640×480、kMeterArmed 0x100、kMeterBaseShare 20、kMeterHitShare 80、kMeterHealShare −80、kMeterLimitScale 95、kMeterLimitBase 500、kFallbackDefeatPose 6、kDefeatPoses 10）；金钱不足时源码以 血 − (u16)金 计算，写回 16 位血量的低位与原程序 血 − 金 相同。
+差异：无。
