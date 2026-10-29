@@ -782,7 +782,7 @@ public:
     std::unique_ptr<QueuedAction> actions;             // +0x2794
     const Picture* shadowPicture = nullptr;            // +0x2A40
     const Picture* picture = nullptr;                  // +0x2A44 the current picture
-    const Picture* unk2550 = nullptr;                  // swd32 +0x2550
+    const Picture* trailPicture = nullptr;             // +0x2A48 the picture of the afterimage drawn (DrawTrail)
     const Picture* overlayPicture = nullptr;           // +0x2A4C the overlay drawn on its picture
     const Picture* absorbSource = nullptr;             // +0x2A54 the picture StartAbsorb breaks up
     std::span<const char> displayName;      // +0x2A58 the name shown in the messages (read up to its NUL when used)

@@ -1598,7 +1598,7 @@ void UnitFrame::TrailAdvance(
             spacing = 0;
         }
 
-        unit.unk2550 = services.archive.GetPicture(frame, image.picture);
+        unit.trailPicture = services.archive.GetPicture(frame, image.picture);
         const PictureRef shown = {frame, image.picture, true};
 
         if (image.level > 0)
@@ -1613,7 +1613,7 @@ void UnitFrame::TrailAdvance(
         }
 
         // A missing picture is read through a null pointer in the original.
-        if (unit.unk2550 == nullptr)
+        if (unit.trailPicture == nullptr)
         {
             continue;
         }

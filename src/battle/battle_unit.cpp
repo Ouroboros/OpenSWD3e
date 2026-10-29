@@ -19,6 +19,7 @@
 #include "config/config.h"
 #include "core/assertion.h"
 #include "core/error_box.h"
+#include "core/fault.h"
 #include "core/format.h"
 #include "core/spline.h"
 #include "core/words.h"
@@ -1278,7 +1279,7 @@ constexpr u32 kLevelRollBase = 3;
 constexpr int kAttackBuffPercent = 30;
 constexpr int kEnragedPercent = 60;  // an enraged attack: 60% plus proficiency percent of 40%
 constexpr int kEnragedSharePercent = 40;
-constexpr double kBladeScale = 2.5;    // swd32.exe 0x00499D38 (unmatched in swd3e)
+constexpr double kBladeScale = 2.5;    // swd3e.exe 0x004AAE48
 constexpr u32 kSkillRollDivisors = 5;  // a skill rolls 1..(level + unk14) / (5..9)
 constexpr u16 kSkillRollBase = 5;
 constexpr int kHalf = 2;
@@ -3055,8 +3056,15 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
 
     if (kind == BattleUnit::UnkCommand1B)
     {
-        attack *= static_cast<u16>(this->battleRecord->strength) /
-                  static_cast<u32>(kChargeScaleTop - this->proficiency / kChargeScaleShare);
+        // A signed division (idiv): a proficiency of 300 and above makes the divisor zero or negative.
+        const int divisor = kChargeScaleTop - this->proficiency / kChargeScaleShare;
+
+        if (divisor == 0)
+        {
+            Fault(services.errors, u8"Integer divide by zero (0x00498214)");
+        }
+
+        attack *= static_cast<int>(static_cast<u16>(this->battleRecord->strength)) / divisor;
     }
 
     if (kind == BattleUnit::UnkCommand1F)
@@ -3145,7 +3153,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         spiritDamage = static_cast<i16>(healSpirit);
         target.PushTarget(BattleUnit::SpiritGainTarget);
 
-        if (healSpirit == 0)
+        if (static_cast<u16>(healSpirit) == 0)
         {
             attack = -1;
         }
@@ -3157,7 +3165,8 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         target.PushTarget(BattleUnit::StaminaGainTarget);
     }
 
-    if ((healSpirit != 0 || static_cast<u16>(healStamina) != 0) && static_cast<u16>(healHitPoints) == 0)
+    if ((static_cast<u16>(healSpirit) != 0 || static_cast<u16>(healStamina) != 0) &&
+        static_cast<u16>(healHitPoints) == 0)
     {
         attack = -1;
     }
@@ -3182,7 +3191,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         attack = 0;
         staminaDamage = 0;
 
-        if (healSpirit != 0)
+        if (static_cast<u16>(healSpirit) != 0)
         {
             target.PushTarget(BattleUnit::SpiritGainTarget);
         }

@@ -2696,3 +2696,119 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：队伍角色：基 = 战斗记录 +0x28（零扩展）；状态位 30 → 升 = 基×movsx +0x2ED8/100；位 20 → 降 = 同；位 26 → 护罩 = 基×70/100；值 = (u16)(基−降) + 护罩 + 升（eax 高位在各路径为 0）；+0x2EB2 >0（有符号）→ 值 = movsx 值 × +0x2EB2 × 10/100；值的低字为负 → 0，否则返回值。敌人：基 = 物品 +0x5C，升降同；返回 基 − 降 + 升。
 对照：Defense 一致（kBarrierPercent 70、kUnk2EB2Tenths 10、kSignBit16 0x8000）。
 差异：无。
+
+## 0x00497900 BattleUnit::HitDamage — diff → exact
+
+汇编：攻击 = +0x2EB0（字）、值 = 命令 +0x0E（字），两个输出清零，目标 PushTarget(0x2389)。命令 actionFlags 无 0x80 且目标 HasEffectBits(4)=1 → 0。目标 AddBuff(命令)=1 且三项恢复（+0x2EB6/8/A）皆 0 → −1；actionFlags 0x4000 → −1。目标为队伍角色：记录 = SelectEntry(0)、防御 = 记录 +0x28、抗性 = 记录 +0x2D 起 5 字节；rand(10) > 记录 +0x1C（无符号字）→ AddAilment；SetDefeatPose(命令 +0x1E 低字节)。敌人：物件 = Data()、防御 = Defense()、抗性 = 物件 +0x9C 起 5 字节；异常（+0x1E）非 0：值≠0 且 commandA∉{2,0x16,3} 且 commandFlags 无 0x200 且属性 1..9 且目标 +0x2BC0 位 23 为 0 且 ApplyElement(值)=1 → 抵抗；物件 +0x62 >0 → 加成 = (战斗记录 +0x14 − 物件 +0x60) >0 时 /20；rand(10) < +0x62 + 加成：物件 +0x20 位 5 → 异常含 0x24 或 0x200 → RollEvade(10)，否则 AddAilment=1 → RaiseFlag2BC0；非位 5 → 已抵抗跳过，否则 AddAilment=1 → RaiseFlag2BC0，异常 0x8000 → GetHitPoints、Damage(9999,0,0)、返回原生命，AddAilment≠1 → 落空（值或 +0x2EB0 非 0 → RaiseFlag2BC0，否则 RollEvade(10)）；未中：+0x3044=1 且 commandA≠2 且 +0x2FB6=0 → RaiseFlag2BC0，否则落空；各分支之后值与 +0x2EB0 皆 0 → −1；再 SetDefeatPose、EnrageCheck(0, 属性)。异常≠8 且无恢复且目标 HasStatus(8) → CureEffects(8)。+0x2FD0=1：有角色记录 → 三项 = movsx 恢复 × movsx 上限（+0x0A/+0x0C/+0x0E）/100，否则 0；否则三项取恢复字。actionFlags 0x80：CureEffects(异常)、输出精神与体力（字）、生命字为 0 → −1，否则 PushTarget(0x237D) 返回 −生命。commandA ∈{1,0x1A,0x18}：CountEnrageEvent(0)；+0x2BD4 & 9 → 攻击 = 记录 +0x26；AutoControl/GuestControl/+0x304C 为 1：值=0 → 攻击低字 = +0x26，+0x2BDA 位 1 → 70×+0x26/100；+0x2EB2 >0 → 攻击 ×= +0x2EB2+1、+0x2EB2=0；攻击 += rand(等级/3+3)+1；HasEffectKind(属性)=1 → 升 = 30×movsx 攻击/100；状态 0x10000000 → 升 += movsx +0x2ED6 × movsx 攻击/100；0x1000000 且 +0x2BD4 无 0x100 → 降 = 同；攻击 += 升 − 降；0x00578474=1 → CountEnrageEvent(1)，+0x3040=1 → 按放置 act（+0xFD8）：1 → 姿势 7；2 → +0x2BC0 无 0x10000000 且物件 +0x20 无位 5 → GetHitPoints，(u16)防御 + 生命 ≥ movsx 攻击 → 攻击 = 防御 + 生命，SetVitals(0,0,0)、姿势 2、姿势 8；3 → 85%、姿势 0xD；4 → 200%、姿势 1。movsx 攻击 > (u16)防御 → 攻击 −= 防御，否则 1。+0x2BD4 & 9 → 60%×攻击 + (u16)(40%×攻击)×+0x2BE6/100。+0x2BD0 位 2 → ftol(movsx 攻击 × 2.5（0x004AAE48）)。属性 1..9：值≠0 → +0x3044=0 且目标位 23 为 0 → ApplyElement(值)、攻击 += 值；值=0 → 目标位 23 为 0 → ApplyElement(攻击)=1 则抵抗。目标 HasEffectBits(2)=1 → ×2。commandA=0x28 → 攻击 = +0x2EB4、+0x2EB4=0、AddToMeter(−1)。0x1B → 攻击 ×= (u16)力量（+0x10）idiv (15 − 熟练度/20)。0x1F → 目标标记 0x8000 ? 0 : 攻击。法术（2、0x16、3 或 commandFlags 0x200；0x200 → CountEnrageEvent(3)）：攻击 = 值，HasEffectKind=1 → += 30%；commandFlags 无 0x4000：+0x304C=1 → ftol(((u16)智慧 × 0.005f + 1.0f) × movsx 攻击) 取低字作结果；0x200 → 半 = movsx 武器 +0x24 /2，加 = rand((u16)半) + 半；否则 rand(5)+5 为除数，加 = rand(((u8)等级 + (u16)智慧)/除数)+1，目标位 23 → 攻击 /2；movsx 攻击 >0 → 攻击 += 加。输出精神与体力字，属性 1..9 且目标位 23 为 0 且 ApplyElement(攻击)=1 → 抵抗。之后：生命字≠0 或 commandA=0x22 → PushTarget(0x237D)、攻击 = −生命；0x23 → 输出精神、PushTarget(0x237E)、精神字=0 → −1；0x24 → 输出体力、PushTarget(0x237F)；(精神字或体力字非 0) 且生命字=0 → −1；抵抗 → PushTarget(0x237D)；目标 GetGuard=1 且生命字=0 且属性≠0 → 攻击 −= 攻击/3（0x55555555）；目标为队伍角色且记录 +0x24 位 15 → 输出与攻击清零、精神字/体力字非 0 时 PushTarget(0x237E/0x237F)；目标标记 0x8000 → 0，否则攻击低字。
+对照：常量（0x2389/0x237D/0x237E/0x237F、kAilmentRoll 10、kWisdomShare 20、0x24/0x200/0x8000/0x270F、kAilment8、kAttackFromBonus 9、kGuardingGhostPercent 70、kLevelShare 3/kLevelRollBase 3、kAttackBuffPercent 30、各暴击 act/姿势/百分比、kEnraged 60/40、kBladeScale 2.5 与 0x004AAE48 一致、kMeterEmpties −1、kChargeScale 15/20、kSpellEnrageEvent 3、kWisdomFactor 10737418/2^31 与 0x004AAE44 的 0.005f 一致、0x004AA6A0 为 1.0f、kSkillRoll 5/5、kThirdMagic）、结构偏移与随机数次序一致。原程序攻击与防御、恢复量的高 16 位在部分路径未初始化（mov ax/bx 只写低字，队伍角色的防御写入参数槽低字），源码所有比较与返回均取低字或 movsx，结果相同。智慧路径的 x87 乘积在 (u16)智慧 ≤ 25400 时不超过 53 位，与整数计算精确相同。吸取的空物件读取属偏差 150。
+差异：① 指令 0x1B 原为有符号 idiv，源码为无符号除法，熟练度 ≥300 时结果不同，且除数为 0 时原程序崩溃未登记；② 指令 0x23、精神/体力回复判定与已倒下角色的精神提示，原程序按精神量低字判断，源码按 32 位判断（百分比恢复的低字为 0 时不同）；③ kBladeScale 注释仍为 swd32 地址。
+修正：① 改为有符号除法，除数为 0 时 Fault() 报告后结束，偏差表末尾新增一行；② 三处改为 static_cast<u16>(healSpirit)；③ 注释改为 swd3e.exe 0x004AAE48。复核：完整函数重新对照一致。
+
+## 0x00498560 BattleUnit::EnemyHitDamage — exact
+
+汇编：伤害 = +0x2EB0（字，高位 0）、值 = 命令 +0x0E；目标 PushTarget(0x2389)；目标 HasEffectBits(4)=1 → 0；AddBuff(命令)=1 → −1。目标为队伍角色：记录 = SelectEntry(1)、防御 = Defense()、抗性 = 记录 +0x2D 起 5 字节；异常非 0：目标 CanUseAccessory(0x39)=1 → StepAccessoryCounters(0x004D1F58, 0x39, 5)、AccessoryProficiency(0x39)（u16）/20：0..4 → 异常与 0x1088/0x10C9/0x31E9/0x31FF/0x37FF 有交集即挡下，5 → 挡下，>5 不挡；未挡：异常 0x40 或 0x100 且命令值=0 → 命令值 = +0x2EB0；AddAilment=1 → RaiseFlag2BC0，0x8000 → GetHitPoints、Damage(9999,0,0)、返回原生命；否则 (+0x2FB6=0 且 commandA≠2) 或值≠0 或 +0x2EB0≠0 → RaiseFlag2BC0，否则 RollEvade(10)；异常非 0 且值与 +0x2EB0 皆 0 → −1。敌人：防御 = 物件 +0x5C、抗性 +0x9C、SetDefeatPose(+0x1E 低字节)。异常≠8 且 +0x2EB6=0 且目标 HasStatus(8) → CureEffects(8)。HasActionFlags(0x80000) 且目标 PartyMember=1 且金钱≠0：音效 0x117；金钱 < movsx 命令值（无符号）→ 命令值 = 金钱低字、金钱 = 0，否则金钱 −= 值；物件 +0x90 += 值、+0x9B = 8、+0x2BC0|=0x4000；wsprintfA(+0xF84, 0x004C03A8「$1%s$0偷走了%d銀兩」, +0x2A58, movsx 值)；消息 (0x118, 10, 0x32, 文字, 0x40000002)；−1。HasActionFlags(0x100000) 且 PartyMember=1：0x00577255=0；rand(10) ≥ 命令 +0x24（无符号）→ 音效 0x116、消息 0x004BF398「偷竊失敗」，否则音效 0x117、+0x9B=8、0x00577255=1、+0x2BC0|=0x4000；−1。commandA=1：攻击 = 伤害 + rand(物件 +0x58/3+3)+1；升降 = movsx +0x2ED6 × movsx 攻击/100（状态 0x10000000/0x1000000）；攻击 += 升 − 降；movsx 攻击 > (u16)防御 → 伤害 = 攻击 − 防御；否则 裸 = 攻击高字|+0x2EB0，升/降按裸重算（未置位的保持 0），伤害 = 裸 + 升 − 防御 − 降，低字为负 → 1，+0x2FB6=0 → += rand(同上)+1；属性 1..9 → ApplyElement(伤害)=1 → 抵抗。其他：rand(5)+5 为除数，加 = rand((+0x60 + +0x58)/除数)+1，movsx 伤害 >0 → 加上；commandA=2 → 目标 CountEnrageEvent(2)、DamageTransferred=1 → 伤害/2、属性 1..9 → ApplyElement=1 → 抵抗。+0x2EB6≠0 → PushTarget(0x237D)、伤害 = −恢复；抵抗 → PushTarget(0x237D)；目标 GetGuard=1 → 伤害 += (rand(30)+10)×movsx 伤害/−100；目标为队伍角色且伤害字 >0 → AddFury。返回伤害低字。
+对照：EnemyHitDamage 与 FanGuards 一致（kSpiritFanKind 0x39、kFanStep 5、kFanShare 20、kFanGuards 五项、kAilment40/100、kStealsGold/Item、kStealSound 0x117/0x116、kStolenCatchChance 8、kFleeFlag 0x4000、kStealRoll 10、两条文字与 exe 字节一致、消息位置与帧数、kSpellEnrageEvent2 2、kHighWordMask、kSignBit 0x8000、kEnemySpread 5/5、kGuardCut 30/10），随机数次序相同；文字缓冲截断属偏差 71。
+差异：无。
+
+## 0x00498CB0 BattleUnit::MarkBit8Clear — exact
+
+汇编：返回 (~+0x2BD8 >> 8) & 1，即标记 0x100 未置时为 1。
+对照：MarkBit8Clear 一致（UnkMark100）。
+差异：无。
+
+## 0x00498CC0 BattleUnit::MarkBit1 — exact
+
+汇编：返回 (+0x2BD8 低字节 >> 1) & 1。
+对照：MarkBit1 一致。
+差异：无。
+
+## 0x00498CD0 BattleUnit::MarkBit4 — exact
+
+汇编：返回 (+0x2BD8 低字节 >> 4) & 1。
+对照：MarkBit4 一致（UnkMark10）。
+差异：无。
+
+## 0x00498CE0 BattleUnit::ClearMoveAxes — exact
+
+汇编：actionFlags 0x10 → *x=0；命令旗标字节位 0 → kind=1 且 facing=1 → *x=0x280；kind=0 → *x=0x280。actionFlags 0x20 → *y=0。
+对照：ClearMoveAxes 一致（StaysAcross、StaysDown、TargetsUnit、Display::Width 640）。
+差异：无。
+
+## 0x00498D40 BattleUnit::RestartMainAct — exact
+
+汇编：参数（字）=1 → +0x2FBA=0、状态清 0x2000000。mainAct.waiting（+0x34C）≠1 且第二参数≠1 → 返回 0。mainAct 清零（0x29 双字）、+0x2BDC = 参数、castAct.waiting（+0x494）=1，返回 1。
+对照：RestartMainAct 一致（ResistAll）。
+差异：无。
+
+## 0x00498DB0 BattleUnit::SetNudge — exact
+
+汇编：+0x2BE0 = 参数一、+0x2BE2 = 参数二；参数二=1 → +0x3058=1、+0x2BE2=0、+0x2BE0=0。
+对照：SetNudge 一致（kShaken 1）。
+差异：无。
+
+## 0x00498DF0 BattleUnit::DrawTrail — diff → exact
+
+汇编：间距 = 方向（+0x90）=1 ? −30 : 30。延迟（+0x96）=0：残影自第 (有符号 +0x94)−1 项起逐项后移；首项亮度 = 12（模式位 2 → 0x18）、图片、模式、x、y，延迟 = 1；否则延迟减 1。逐项（0..有符号数量−1）：图片=0xFFFF 跳过；偏移 = 12 − movsx x，方向=1 → movsx y − 12，方向=2 → 偏移与间距皆 0；单位 +0x2A48 = GetPicture(帧, 图片)（随即读其首双字）；亮度 >0 → 减 movsx 渐隐步（+0x95），≤0 → 图片=0xFFFF、亮度=0；模式位 2：色调 (亮度−0x1F, 亮度−0x1F, −16) 以模式画于 (x + 间距×序号 + 偏移, y)；否则 alpha = 亮度、模式|0x14 画同处，亮度 >1 → 色调取 +0x80/+0x84/+0x88、模式|0x10 再画。
+对照：DrawTrail → UnitFrame::TrailAdvance 一致（kTrailSpacing 0x1E、kTrailLevel 0xC、kAdditiveTrailLevel 0x18、kTrailDelay 1、kTrailCentre 0xC、kTrailTintBase 0x1F、kTrailBlue −16、Painter::Additive 4、Translucent 0x14、TintUnder 0x10）；空图片属偏差 171；绘制经 Scene，偏差 97/99。
+差异：图片指针成员沿用 swd32 名 unk2550（注释 swd32 +0x2550），原程序写在 +0x2A48（全 exe 只有本函数访问）。
+修正：改名 trailPicture，注释 +0x2A48。复核：完整函数重新对照一致。
+
+## 0x00499060 BattleUnit::WalkToTarget — exact
+
+汇编：+0x3018=1 → 0。MarkBit4=1，或 +0x3044=1 且命令旗标字节 0x18 → commandA = commandB，返回 1。状态 0x80000000 且 FadeInvisible(0)=1 → 1。+0x2BC0 0x80000000 → 0。+0x2FEC=1；attackAct id = actId、动作 0x2E（+0x2BC0 0x2000000 → 0x39；kind=0 → 0x24）、hold = held=1；Run 失败 → 0；+0x2A44 = GetPicture（随即读首双字）。目标 GetDrawPosition；HasFixedOrigin=1 → (0xF0, 0x12C)。recoilAct id = actId、动作 0x28（敌人 +0x2FB6=1 → 0x30、=2 → 0x31）；Run 失败 → 0。+0x2EC6 = attackAct.x、+0x2BA8 = 旗标、+0x2EBC = anchorX、+0x2B78 = recoilAct.x；facing=1 → 旗标翻转位 0、+0x2EC6 = 宽 − x（字）、+0x2B78 = 宽 − recoilAct.x、anchorX≠0 → 宽 − anchorX。0x2000000：画于 (目标X − movsx +0x2EC6, 目标Y − attackAct.y)，waiting≠1 → 0，否则清 0x2000000、飞行线与两 act 清零、commandA = commandB，返回 1。否则 +0x2FB8≠图片且队伍角色 → 记录图片；+0x2B88 加 1；线清零，起点 = savedPlacement（ghost → placement），终点 = (目标X + movsx +0x2EBC − movsx +0x2EC6, 目标Y + movsx anchorY − attackAct.y)；步数 0x18（ghost 0x10）；命令旗标 0x20 → 步数 0，attackAct target 位 3 → |终点X − 起点X|/16，否则 +0x2B88 减 1。步数×+0x2B88 >0 → 逐步 LineStep，到达终点X → −1 结束，计数达步数×+0x2B88 结束。播放 view、view=0；非 ghost → placement = 起点 + 位移（字）。到达：以旗标（隐身 |0x30）画于 (终点X − movsx +0x2EBC, 终点Y − movsx anchorY)，+0x2EBC、+0x2B88、+0x2FB8、+0x2EDE 清 0、+0x2EDC=6、线与两 act 清零，actId=1 → +0x2BC0|=0x2000000，否则 commandA = commandB，返回 1。未到：隐身 → 旗标|0x30 画于 (点X − movsx +0x2EBC, 点Y − movsx anchorY)，返回 0；否则影子：高 = 图高/3、斜 = 图高>>2、色调 −6（+0x3044=1 → −1）、+0x2BAC = (旗标 & 0x8000000F)|0xC 画于 (同X, 点Y − 高)，再以旗标画图，返回 0。
+对照：WalkToTarget → UnitFrame::WalkAdvance、DrawWalk 一致（常量 kWalkBlocked、kVanishWalk、kVanishAction 0x39、kRoleWalkAction 0x2E、kEnemyHomeAction 0x24、kFixedOrigin、kHomePose 0x28/0x30/0x31、kWalkSteps 0x18、kGhostWalkSteps 0x10、kWalkShare 16、kArrivedMark 6、kVanishingAct 1、SmearUnder 0x30、Shadow 0xC、kShadowShare 3、kShadowShearShift 2、kShadowTint −6、kInvisibleShadowTint −1；(旗标 & 0x80000003)|0xC 与原掩码 0x8000000F 再或 0xC 结果相同）；空图片属偏差 189；绘制经 Scene，偏差 99。
+差异：无。
+
+## 0x00499760 BattleUnit::ReturnHome — exact
+
+汇编：敌人：命令旗标字节无 0x10 → 1；角色：+0x2BD4 无位 2 且命令旗标无 0x28 → 1。+0x3044=1、+0x3048=1、(StatusBit5=1 且 +0x2BC0 0x10000000)、MarkBit4=1 → 1。+0x2FEC=1；attackAct hold = held=1、id = actId、动作 0x2F（敌人 0x24）；参数 id≠−1 → id；动作≠0 → 动作；Run 失败 → 0；+0x2A44 = GetPicture（随即读首双字）。recoilAct id = actId、动作 0x28（敌人 +0x2FB6=1 → 0x30、=2 → 0x31）；Run 失败 → 0。播放 view、view=0。+0x2EC6/+0x2BA8/+0x2EBC/+0x2B78 同 WalkToTarget，facing=1 或 ghost=1 → 翻转。目标 GetDrawPosition、HasFixedOrigin → (0xF0, 0x12C)。线清零，起点 = (movsx 目标X − movsx +0x2EC6 + movsx +0x2EBC, movsx anchorY − attackAct.y + movsx 目标Y)，终点 = savedPlacement（ghost → placement）。attackAct target 位 3 → stage|=0x8000；stage 0x8000 → +0x2B88 加 1。步数 0x1C（ghost 0x18），走线同 WalkToTarget。播放 view（已为 0）、view=0；非 ghost → placement 更新。到达：以旗标（隐身 |0x30）画于 (终点X − movsx +0x2EBC, 终点Y − movsx anchorY)，+0x2EBC=0、+0x2B88=0、stage=0、placement = savedPlacement、线与两 act 清零、+0x2BD4 清位 2，返回 1。未到：隐身 → |0x30 画于 (点X − movsx +0x2EBC, 点Y − movsx anchorY)；否则影子（高/3、高>>2、色调 −6 或 −1、+0x2BAC）再画图；两者之后以 attackAct 旋转/动作码与 (点X, 点Y)、偏移 (movsx +0x5A6, movsx +0x5A8) 调用 0x0049A830 叠加，返回 0。
+对照：ReturnHome → UnitFrame::HomeAdvance、DrawWalk 一致（kWalksHome 4、UnkFlag8|UnkFlag20、kStandsAside、kRoleHomeAction 0x2F、kHomeSteps 0x1C、kGhostHomeSteps 0x18；叠加在 DrawWalk 中于图之后绘制，次序相同）；空图片属偏差 181；绘制经 Scene，偏差 99。
+差异：无。
+
+## 0x00499DC0 BattleRole::AddFury — exact
+
+汇编：+0x3044、+0x3048、+0x304C 任一为 1 → 返回。参数 = −1 → 怒气（+0x8 指向块的首双字）= 0x30；=0 → 怒气 = 0。怒气 ≥0x30 或参数 ≤0 → 返回。上限 = movsx 角色记录（+0x4）+0x0A；参数 ≥ 上限 → 怒气 = 0x30；否则 +0x2BB8 >0 → 参数 += 它；x87：参数 ÷ 上限 × 41.0f（0x004AAE50），怒气 = 旧值 + ftol；结果 = 0.0（0x004AA5F0，NaN 不可能：上限 > 参数 > 0）→ +0x2BB8 += 参数（已含旧累计），否则 +0x2BB8 = 0。怒气 ≥0x30 → 0x30、音效 0x2FD。
+对照：AddFury 一致（kFillFury −1、kFuryFull 0x30、kFuryScale 41.0f、kFurySound 0x2FD；carried 与原累加量相同，累计翻倍的原 BUG 保留；double 除乘与 53 位精度的 x87 相同）。
+差异：无。
+
+## 0x00499EB0 BattleUnit::HasBlock30 — exact
+
+汇编：返回 +0x8 指向块的首双字 = 0x30。
+对照：HasBlock30 一致（kUnkBlock30 0x30）。
+差异：无。
+
+## 0x00499EC0 BattleUnit::DrainKind — exact
+
+汇编：actionFlags 0x100 → +0x2BD0 位 5 ? 8 : 1；0x200 → 2；否则 (actionFlags >> 8) & 4（字）。
+对照：DrainKind 一致（DrainsLife/Spirit/Stamina、LifeDrain 0x20、DrainedHitPoints 1/Spirit 2/Stamina 4/Life 8）。
+差异：无。
+
+## 0x00499EF0 BattleUnit::ShowsPicture — exact
+
+汇编：+0x2F2A=0 → 0。参数（字）=−1 → mainAct.waiting（+0x34C）=1 ? 1 : 0；否则零扩展 mainAct 图片（+0x300）= movsx 参数 − 1 ? 1 : 0。
+对照：ShowsPicture 一致。
+差异：无。
+
+## 0x00499F40 BattleUnit::AccessoryProficiency — exact
+
+汇编：两件饰品（+0x164 起，步长 0xA8）中 movsx +0x48 = 种类者：+0x2BE6 = 0x0048A770(0x004D1F58, 其 +0x54)，返回之；都不符 → 返回 +0x2BE6。
+对照：AccessoryProficiency 一致；全部调用处传入的都是 Fame::ProficiencyList（即 0x004D1F58）。
+差异：无。
+
+## 0x00499FA0 BattleUnit::AccessoryValue — exact
+
+汇编：首件 movsx +0x48 = 种类的饰品：种类字 = 0x28 且 +0x2BD0 位 8 → 0；否则 +0x40 & 0x3FFF。都不符 → 0。
+对照：AccessoryValue 一致（kUnkAccessory28、UnkEquipment100、kAccessoryValueMask）。
+差异：无。
+
+## 0x0049A000 BattleUnit::CanUseAccessory — exact
+
+汇编：AccessoryValue(种类)（零扩展）> movsx 角色记录 +0x08（体力）→ 0。种类 0x19 → +0x2BD4|=0x10，返回 1；0x1C → 状态 0x80000000 ? 0 : 1；0x1D → +0x2BD4 位 8 ? 0 : 1；0x20 → 状态 0x4000000 ? 0 : 1；0x39 → +0x2BD0 位 6 ? 1 : 0；其余 1。
+对照：CanUseAccessory 一致（kAccessory19/1C/1D/20、kAccessory19Bit 0x10、kAccessory1DBit 0x100、Invisible、Barrier、SpiritFan 0x40、kSpiritFanKind 0x39）。
+差异：无。
+
+## 0x0049A0E0 BattleUnit::StepAccessoryCounters — exact
+
+汇编：位置 = 表头 id≠0 ? 表头.next : 表头。两件饰品：act（+0x54）=0 或 movsx +0x48 ≠ 种类 → 跳过；结果 = 1；自当前位置找 id = act 的节点：找到 → done（+0xA）≠0 跳过，否则值（+6）+= 量，≥ 上限（+0x44，无符号）→ 上限，百分比（+8）= ftol(值 ÷ 上限 × 100.0f（0x004AAE10）)；找不到 → 尾部新建 0x14 字节清零节点，id = act、值 = 量、百分比 = ftol(量 ÷ 上限 × 100)，上限=0 → 值 0、百分比 100、done=1；表头 id 加 1。返回结果。
+对照：StepAccessoryCounters 一致（kCounterPercent 100.0、kCounterFull 100；第二件饰品自前一件停下的节点续找，相同）。
+差异：无。
