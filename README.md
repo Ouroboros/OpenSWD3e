@@ -90,6 +90,8 @@ wide_map = true
 launcher = true
 # 地图上默认跑步，false 是走路。游戏里按 R 切换时会记下来，下次启动照旧。
 running = true
+# 自动战斗时，戴着「連擊」饰品（武聖手鐲、姜公膽）且体力足够的角色自动使用「連擊」。游戏里在「設定」→「戰鬥設定」切换。
+auto_combo = false
 # 调试模式，见下面的「调试模式」。
 debug = false
 # [game] 里还有音量、文字速度、战斗速度和按键（[game.keys]），和原版「環境設定」里的一样，

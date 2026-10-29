@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "battle/battle_turn_constants.h"
 #include "battle/smooth/smooth_turn.h"
 #include "core/fault.h"
@@ -1688,9 +1690,33 @@ void Game::ScrollListForward()
     keepForRole(battle.roleListRow);
 }
 
+// The rebuild's auto combo (deviations.md): whether role unit `unit` attacks with 連擊 in the auto battle (the setting
+// on, the role wearing its accessory with the stamina for it), as when it is chosen from the menu.
+bool Game::AutoCombo(i32 unit)
+{
+    const i32 index = unit - BattleState::FirstRoleUnit;
+
+    if (!this->config.autoCombo || index < 0 || static_cast<std::size_t>(index) >= this->battleRoles.size())
+    {
+        return false;
+    }
+
+    BattleRole& role = this->battleRoles[static_cast<std::size_t>(index)];
+    const bool wears = std::any_of(
+        role.accessories.begin(),
+        role.accessories.end(),
+        [](const ObjectRecord& accessory)
+        {
+            return accessory.data.unk48 == static_cast<u16>(AccessoryKind::RepeatAttack);
+        }
+    );
+    return wears && role.CanUseAccessory(static_cast<u16>(AccessoryKind::RepeatAttack)) == 1;
+}
+
 // swd3e.exe 0x00467CF0: the auto battle takes the current role's turn (unless in battle state 3): with no remembered
 // enemy (autoTarget) the state becomes 3; otherwise the role acts on it (aimTarget); a defeated enemy gives way to the
-// first standing one, and with none the auto battle ends.
+// first standing one, and with none the auto battle ends. The rebuild's auto combo attacks with 連擊 instead when it
+// can (deviations.md).
 void Game::AutoBattleTurn()
 {
     BattleState& battle = this->battleState;
@@ -1705,6 +1731,15 @@ void Game::AutoBattleTurn()
 
     if (battle.autoTarget == -1)
     {
+        // The rebuild's auto combo (deviations.md): the attack aimed now with 連擊 when it can (the aim taken in
+        // battle state 3 takes the menu's command).
+        if (this->AutoCombo(battle.currentUnit))
+        {
+            battle.turnCommand = kAimedCommand15;
+            battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = kAimedCommand15;
+            battle.menuCommand = kAimedCommand15;
+        }
+
         battle.unk5772B4 = 1;
         battle.result = kTurnState;
         return;
@@ -1719,6 +1754,12 @@ void Game::AutoBattleTurn()
     battle.result = 0;
     battle.unk5772B8 = 0;
     battle.unk5772B4 = 0;
+
+    if (this->AutoCombo(battle.turnUnit))
+    {
+        battle.turnCommand = kAimedCommand15;
+        battle.turnTaken[static_cast<std::size_t>(battle.turnUnit)] = kAimedCommand15;
+    }
 
     if (!this->battleEnemies[static_cast<std::size_t>(battle.aimTarget - 1)].IsDefeated())
     {
@@ -5253,6 +5294,14 @@ void Game::ConfirmTarget()
     }
 
     battle.unk57735C = 0;
+
+    // The rebuild's auto combo (deviations.md): an attack aimed in the auto battle by a role that can use 連擊 (the
+    // aim may have been opened by the auto battle's key before the role's turn came).
+    if (battle.autoBattle == 1 && battle.menuCommand == 1 && this->AutoCombo(battle.currentUnit))
+    {
+        battle.menuCommand = kAimedCommand15;
+    }
+
     const i32 chooser = battle.currentUnit;
     battle.turnCommand = battle.menuCommand;
     battle.turnTaken[static_cast<std::size_t>(chooser)] = battle.menuCommand;
@@ -6442,12 +6491,14 @@ void Game::BattleKeys()
         if (battle.result == kMenuState && this->scene.talkWindows == nullptr &&
             (battle.startPoseRole & BattleState::StartPoseDone) != 0)
         {
+            // The rebuild's auto combo (deviations.md): the first aimed attack with 連擊 when it can.
+            const i32 command = this->AutoCombo(unit) ? kAimedCommand15 : 1;
             battle.unk5772B8 = 0;
             battle.autoBattle = 1;
-            battle.turnCommand = 1;
-            battle.turnTaken[static_cast<std::size_t>(unit)] = 1;
+            battle.turnCommand = command;
+            battle.turnTaken[static_cast<std::size_t>(unit)] = command;
             battle.unk5772B4 = 1;
-            battle.menuCommand = 1;
+            battle.menuCommand = command;
             battle.result = kTargetState;
             return;
         }

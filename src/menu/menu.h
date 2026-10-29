@@ -10,6 +10,7 @@
 #include "core/types.h"
 #include "item/item_list.h"
 #include "menu/menu_list.h"
+#include "menu/settings_constants.h"
 #include "org/object_record.h"
 #include "party/party.h"
 #include "res/act_state.h"
@@ -207,7 +208,7 @@ struct MenuTown
 struct OptionsPage
 {
     i32 entry = 0;     // 0x0050BE7C the tab: save, load, notes, settings, quit
-    i32 stage = 0;     // 0x0050BE64 0: the tabs, 1: a tab opened, 2: confirming, 5..7: the key setup, 8: display
+    i32 stage = 0;     // 0x0050BE64 0: the tabs, 1: a tab opened, 2: confirming, 5..7: the key setup, 8: a setup
     i32 row = 0;       // 0x0050BE78 the row of the settings or of the quit box
     i32 locked = 0;    // 0x0050BF14 the quit fade runs
     i32 choice = 0;    // 0x0050BF10 the confirmation's choice, then the fade's frames from 0x1E
@@ -227,7 +228,9 @@ struct OptionsPage
     i32 sampleLength = 0;    // 0x0050BE6C characters of the speed sample shown
     i32 textSpeedShown = 0;  // 0x0050BE70
     i32 sampleDelay = 0;     // 0x0050BE74
-    i32 displayRow = 0;      // the rebuild's display setup (stage 8): the row chosen
+    // The rebuild's setup opened from the settings (stage 8, deviations.md) and its row chosen.
+    Setup setup = Setup::Display;
+    i32 setupRow = 0;
 };
 
 // The items page (role page 0xB; 0x0050BBE0..0x0050BE04): the inventory of one category with its counts, used, sorted
@@ -645,7 +648,7 @@ public:
     void OptionsCancel();
     void OptionsDrawSettings(Pixel color);
     void OptionsDrawKeys(Pixel color);
-    void OptionsDrawDisplay(Pixel color);
+    void OptionsDrawSetup(Pixel color);
     // The rebuild's settings rows of choices (deviations.md): an on/off row's choices (Big5), and the left of
     // each of `choices` drawn with `font` from `left`, kChoiceGap apart, with the right of the last.
     static std::vector<std::string> OnOffChoices();
@@ -653,9 +656,10 @@ public:
     Config::Settings CurrentSettings() const;
     void StoreChangedSettings();
     void OptionsSetLauncher(bool shown);
-    std::vector<std::string> OptionsDisplayChoices(i32 row, i32& chosen) const;
-    void OptionsChooseDisplay(i32 row, i32 choice);
-    void OptionsStepDisplay(i32 row, bool up, bool wrap);
+    void OptionsSetAutoCombo(bool on);
+    std::vector<std::string> SetupChoices(Setup setup, i32 row, i32& chosen) const;
+    void SetupChoose(Setup setup, i32 row, i32 choice);
+    void SetupStep(Setup setup, i32 row, bool up, bool wrap);
     void OptionsDraw();
 
     // The items page (role page 0xB).
@@ -702,10 +706,10 @@ public:
     void DrawNameEntry();
     void ActOnEntry();
     void DrawSettings();
-    // The rebuild's display setup on the title page (deviations.md).
-    void DrawDisplaySettings();
+    // The rebuild's setups on the title page (deviations.md).
+    void DrawSetupSettings();
     void DrawSystemChoices(i32 row, const std::vector<std::string>& choices, i32 chosen, bool counts);
-    void DisplaySettingsMouse();
+    void SetupSettingsMouse();
     void SettingsMoveSound();
 
     // The system page (the title in mode 0, the settings).
@@ -798,7 +802,8 @@ public:
     // 0x0050BE24 by entry: -0x10 on entering; swd3e's page clears the first and sets the chosen one to 1 each frame
     // (no reader is known)
     std::array<i32, 4> glow = {};
-    i32 systemRow = 0;  // 0x0050BE34 the settings row, the fade and name entry steps otherwise
+    i32 systemRow = 0;                   // 0x0050BE34 the settings row, the fade and name entry steps otherwise
+    Setup systemSetup = Setup::Display;  // the rebuild's setup opened from the title page's settings
     std::optional<Config::Settings> storedSettings;  // StoreChangedSettings: what the settings page last wrote
     i32 sampleLength = 0;                            // 0x0050BE38 characters of the text speed sample shown
     std::vector<u8> enteredName;                     // 0x0050BE3C the name typed (a RoleName's 0x20 bytes)

@@ -29,7 +29,7 @@ namespace
 constexpr i32 kEntries = 1;
 constexpr i32 kChosen = 2;
 constexpr i32 kSettings = 5;
-constexpr i32 kDisplaySettings = 6;  // the rebuild's display setup, opened from the settings (deviations.md)
+constexpr i32 kSetupSettings = 6;  // the rebuild's setups, opened from the settings (deviations.md)
 constexpr i32 kInGame = 100;
 // Steps of Menu::systemRow while an entry is chosen.
 constexpr i32 kFadeOut = 0x64;
@@ -62,7 +62,7 @@ constexpr i32 kFadeOutStep = 8;
 constexpr int kWithMap = 1;  // Game::StartStory: the first map is entered
 
 // The settings: the rebuild's rows around the five of the original (deviations.md), which keep their places (the
-// sound volume at y 0xF0).
+// sound volume at y 0xF0): the launcher switch above them, the display and battle setups below (the box grows down).
 constexpr i32 kLauncherRow = 0;
 constexpr i32 kSoundRow = 1;
 constexpr i32 kMusicRow = 2;
@@ -70,6 +70,7 @@ constexpr i32 kCacheRow = 3;
 constexpr i32 kEffectsRow = 4;
 constexpr i32 kTextSpeedRow = 5;
 constexpr i32 kDisplayRow = 6;
+constexpr i32 kBattleRow = 7;
 constexpr u32 kRowsTop = 0xD0;
 constexpr u32 kRowHeight = 0x20;
 constexpr u32 kBarsLeft = 0xA8;  // a click between these x sets a bar
@@ -101,7 +102,7 @@ constexpr i32 kSampleDelayFactor = 2;
 constexpr int kBoxX = 0x98;
 constexpr int kBoxTop = 0xCC;  // a row above the original's first (0xEC)
 constexpr int kBoxWidth = 0x190;
-constexpr int kSettingsRows = 7;  // the box is as high as its rows (the original's five: 0xA0)
+constexpr int kSettingsRows = 8;  // the box is as high as its rows (the original's five: 0xA0)
 constexpr int kHighlightX = 0x93;
 constexpr int kHighlightWidth = 0x19A;
 constexpr int kHighlightRed = 0x14;
@@ -209,7 +210,7 @@ void Menu::SystemFrame()
     const auto x = static_cast<u32>(owner.state.pointerX);
     const auto y = static_cast<u32>(owner.state.pointerY);
 
-    if (this->systemState == kSettings || this->systemState == kDisplaySettings)
+    if (this->systemState == kSettings || this->systemState == kSetupSettings)
     {
         this->StoreChangedSettings();
     }
@@ -282,9 +283,9 @@ void Menu::SystemFrame()
         return;
     }
 
-    if (this->systemState == kDisplaySettings)
+    if (this->systemState == kSetupSettings)
     {
-        this->DisplaySettingsMouse();
+        this->SetupSettingsMouse();
         return;
     }
 
@@ -293,8 +294,7 @@ void Menu::SystemFrame()
         return;
     }
 
-    // The rebuild's rows (deviations.md): the launcher switch takes the choice clicked, a click on the display setup
-    // opens it.
+    // The rebuild's rows (deviations.md): the launcher switch takes the choice clicked, a click on a setup opens it.
     if (leftButton.press != 0 && x > kBarsLeft && x < static_cast<u32>(kBoxX + kBoxWidth))
     {
         if (InRow(y, kLauncherRow))
@@ -313,11 +313,14 @@ void Menu::SystemFrame()
             return;
         }
 
-        if (InRow(y, kDisplayRow))
+        for (const i32 row : {kDisplayRow, kBattleRow})
         {
-            this->systemRow = kDisplayRow;
-            this->SystemSelect();
-            return;
+            if (InRow(y, row))
+            {
+                this->systemRow = row;
+                this->SystemSelect();
+                return;
+            }
         }
     }
 
@@ -423,12 +426,12 @@ void Menu::SystemDown()
     }
     else if (this->systemState == kSettings)
     {
-        if (++this->systemRow > kDisplayRow)
+        if (++this->systemRow > kBattleRow)
         {
             this->systemRow = kLauncherRow;
         }
     }
-    else if (this->systemState == kDisplaySettings && ++this->systemRow > kDisplayBackRow)
+    else if (this->systemState == kSetupSettings && ++this->systemRow > SetupBackRow(this->systemSetup))
     {
         this->systemRow = 0;
     }
@@ -450,12 +453,12 @@ void Menu::SystemUp()
     {
         if (--this->systemRow < 0)
         {
-            this->systemRow = kDisplayRow;
+            this->systemRow = kBattleRow;
         }
     }
-    else if (this->systemState == kDisplaySettings && --this->systemRow < 0)
+    else if (this->systemState == kSetupSettings && --this->systemRow < 0)
     {
-        this->systemRow = kDisplayBackRow;
+        this->systemRow = SetupBackRow(this->systemSetup);
     }
 
     this->SettingsMoveSound();
@@ -465,7 +468,7 @@ void Menu::SystemUp()
 // title page is silent).
 void Menu::SettingsMoveSound()
 {
-    if (this->systemState == kSettings || this->systemState == kDisplaySettings)
+    if (this->systemState == kSettings || this->systemState == kSetupSettings)
     {
         this->game.audio.PlaySound(kVolumeSound, this->game.config.soundVolume);
     }
@@ -480,11 +483,11 @@ void Menu::SystemLast()
     }
     else if (this->systemState == kSettings)
     {
-        this->systemRow = kDisplayRow;
+        this->systemRow = kBattleRow;
     }
-    else if (this->systemState == kDisplaySettings)
+    else if (this->systemState == kSetupSettings)
     {
-        this->systemRow = kDisplayBackRow;
+        this->systemRow = SetupBackRow(this->systemSetup);
     }
 }
 
@@ -495,7 +498,7 @@ void Menu::SystemFirst()
     {
         this->systemCursor = 0;
     }
-    else if (this->systemState == kSettings || this->systemState == kDisplaySettings)
+    else if (this->systemState == kSettings || this->systemState == kSetupSettings)
     {
         this->systemRow = 0;
     }
@@ -518,9 +521,9 @@ void Menu::SystemLeft()
         return;
     }
 
-    if (this->systemState == kDisplaySettings)
+    if (this->systemState == kSetupSettings)
     {
-        this->OptionsStepDisplay(this->systemRow, false, false);
+        this->SetupStep(this->systemSetup, this->systemRow, false, false);
         return;
     }
 
@@ -613,9 +616,9 @@ void Menu::SystemRight()
         return;
     }
 
-    if (this->systemState == kDisplaySettings)
+    if (this->systemState == kSetupSettings)
     {
-        this->OptionsStepDisplay(this->systemRow, true, false);
+        this->SetupStep(this->systemSetup, this->systemRow, true, false);
         return;
     }
 
@@ -738,31 +741,32 @@ void Menu::SystemSelect()
 {
     Game& owner = this->game;
 
-    // The rebuild's rows (deviations.md): Enter switches the launcher, opens the display setup; there it steps a row's
-    // choice round, or goes back.
+    // The rebuild's rows (deviations.md): Enter switches the launcher, opens a setup; there it steps a row's choice
+    // round, or goes back.
     if (this->systemState == kSettings && this->systemRow == kLauncherRow)
     {
         this->OptionsSetLauncher(!owner.config.showLauncher);
         return;
     }
 
-    if (this->systemState == kSettings && this->systemRow == kDisplayRow)
+    if (this->systemState == kSettings && (this->systemRow == kDisplayRow || this->systemRow == kBattleRow))
     {
-        this->systemState = kDisplaySettings;
+        this->systemSetup = this->systemRow == kDisplayRow ? Setup::Display : Setup::Battle;
+        this->systemState = kSetupSettings;
         this->systemRow = 0;
         owner.audio.PlaySound(kVolumeSound, owner.config.soundVolume);
         return;
     }
 
-    if (this->systemState == kDisplaySettings)
+    if (this->systemState == kSetupSettings)
     {
-        if (this->systemRow == kDisplayBackRow)
+        if (this->systemRow == SetupBackRow(this->systemSetup))
         {
             this->SystemCancel();
             return;
         }
 
-        this->OptionsStepDisplay(this->systemRow, true, true);
+        this->SetupStep(this->systemSetup, this->systemRow, true, true);
         return;
     }
 
@@ -820,10 +824,10 @@ void Menu::SystemCancel()
         return;
     }
 
-    if (this->systemState == kDisplaySettings)
+    if (this->systemState == kSetupSettings)
     {
         this->systemState = kSettings;
-        this->systemRow = kDisplayRow;
+        this->systemRow = this->systemSetup == Setup::Display ? kDisplayRow : kBattleRow;
         owner.audio.PlaySound(kVolumeSound, owner.config.soundVolume);
         return;
     }
@@ -892,9 +896,9 @@ void Menu::SystemDraw()
     {
         this->DrawSettings();
     }
-    else if (this->systemState == kDisplaySettings)
+    else if (this->systemState == kSetupSettings)
     {
-        this->DrawDisplaySettings();
+        this->DrawSetupSettings();
     }
 
     if (this->systemState != kInGame)
@@ -1180,10 +1184,11 @@ void Menu::DrawSettings()
     TextFont& medium = owner.mediumFont;
     u16* pixels = painter.Target();
     // The rebuild's rows (deviations.md): the launcher switch with its choices (the one in use bright), the display
-    // setup.
+    // and battle setups.
     large.DrawText(pixels, kLabelX, RowY(kLauncherRow), kLauncherSetup, color, kTextStyle);
     this->DrawSystemChoices(kLauncherRow, Menu::OnOffChoices(), owner.config.showLauncher ? 0 : 1, true);
     large.DrawText(pixels, kLabelX, RowY(kDisplayRow), kDisplaySetup, color, kTextStyle);
+    large.DrawText(pixels, kLabelX, RowY(kBattleRow), kBattleSetup, color, kTextStyle);
     large.DrawText(pixels, kVolumeLabelX, RowY(kSoundRow), menu_text::kSoundVolume, color, kTextStyle);
     large.DrawText(pixels, kVolumeLabelX, RowY(kMusicRow), menu_text::kMusicVolume, color, kTextStyle);
     large.DrawText(pixels, kLabelX, RowY(kCacheRow), menu_text::kCacheSize, color, kTextStyle);
@@ -1294,15 +1299,17 @@ void Menu::DrawSettings()
     );
 }
 
-// The rebuild's display setup on the title page (deviations.md): its rows in the settings box, each with its choices
-// (the one in use bright; a row without effect all dim), and the row highlight.
-void Menu::DrawDisplaySettings()
+// The rebuild's setups on the title page (deviations.md): the rows of the setup opened in the settings box, each with
+// its choices (the one in use bright; a row without effect all dim), and the row highlight.
+void Menu::DrawSetupSettings()
 {
     Game& owner = this->game;
     Painter& painter = owner.painter;
     const auto color = static_cast<Pixel>(painter.MakeColor(kLabelRed, kLabelGreen, kLabelBlue));
     owner.actDrawer.Draw(this->background, 0, 0);
-    const auto rows = static_cast<int>(kDisplayLabels.size());
+    const Setup setup = this->systemSetup;
+    const std::span<const std::u8string_view> labels = SetupLabels(setup);
+    const auto rows = static_cast<int>(labels.size());
     this->DrawBox(
         kBoxX,
         kBoxTop,
@@ -1316,20 +1323,14 @@ void Menu::DrawDisplaySettings()
 
     for (i32 row = 0; row < rows; ++row)
     {
-        owner.largeFont.DrawText(
-            painter.Target(),
-            kLabelX,
-            RowY(row),
-            kDisplayLabels[static_cast<std::size_t>(row)],
-            color,
-            kTextStyle
-        );
+        owner.largeFont
+            .DrawText(painter.Target(), kLabelX, RowY(row), labels[static_cast<std::size_t>(row)], color, kTextStyle);
 
-        if (row != kDisplayBackRow)
+        if (row != SetupBackRow(setup))
         {
             i32 chosen = -1;
-            const std::vector<std::string> choices = this->OptionsDisplayChoices(row, chosen);
-            this->DrawSystemChoices(row, choices, chosen, DisplayRowCounts(row, owner.smoothMotion));
+            const std::vector<std::string> choices = this->SetupChoices(setup, row, chosen);
+            this->DrawSystemChoices(row, choices, chosen, SetupRowCounts(setup, row, owner.smoothMotion));
         }
     }
 
@@ -1365,11 +1366,13 @@ void Menu::DrawSystemChoices(i32 row, const std::vector<std::string>& choices, i
     }
 }
 
-// The mouse on the title page's display setup (deviations.md): a click on a row's choice takes it, on its last row
-// goes back; a right click goes back.
-void Menu::DisplaySettingsMouse()
+// The mouse on the title page's setups (deviations.md): a click on a row's choice takes it, on its last row goes back;
+// a right click goes back.
+void Menu::SetupSettingsMouse()
 {
     Game& owner = this->game;
+    const Setup setup = this->systemSetup;
+    const i32 backRow = SetupBackRow(setup);
     const ButtonState& leftButton = owner.controls.At(Button::MouseLeft);
     const auto x = static_cast<u32>(owner.state.pointerX);
     const auto y = static_cast<u32>(owner.state.pointerY);
@@ -1385,7 +1388,7 @@ void Menu::DisplaySettingsMouse()
         return;
     }
 
-    for (i32 row = 0; row <= kDisplayBackRow; ++row)
+    for (i32 row = 0; row <= backRow; ++row)
     {
         if (!InRow(y, row))
         {
@@ -1394,14 +1397,14 @@ void Menu::DisplaySettingsMouse()
 
         this->systemRow = row;
 
-        if (row == kDisplayBackRow)
+        if (row == backRow)
         {
             this->SystemCancel();
             return;
         }
 
         i32 chosen = -1;
-        const std::vector<std::string> choices = this->OptionsDisplayChoices(row, chosen);
+        const std::vector<std::string> choices = this->SetupChoices(setup, row, chosen);
         const std::vector<int> lefts = Menu::ChoiceLefts(choices, owner.largeFont, kStepsLeft);
 
         for (std::size_t at = 0; at + 1 < lefts.size(); ++at)
@@ -1409,7 +1412,7 @@ void Menu::DisplaySettingsMouse()
             if (x >= static_cast<u32>(lefts[at]) && x < static_cast<u32>(lefts[at + 1]) &&
                 static_cast<i32>(at) != chosen)
             {
-                this->OptionsChooseDisplay(row, static_cast<i32>(at));
+                this->SetupChoose(setup, row, static_cast<i32>(at));
             }
         }
 
