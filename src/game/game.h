@@ -565,6 +565,7 @@ private:
     void BattleIntro(u16 style);
     void StartBattleMusic();
     int FightTalkFrame();
+    bool FightTalkPasses() const;
     void FightTalkEnd();
     int FightTalkWait();
     int FightTalkWindow();
