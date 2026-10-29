@@ -176,6 +176,29 @@ constexpr std::array<std::u8string_view, 5> kResistances = {
     u8"[土]  %d%%",  // 0x004BE6D0
 };
 
+// The rebuild (deviations.md): the attributes the original keeps but does not show, in a column beside the
+// resistances (whose widest, -100%, ends at 0x70), then the progress towards the next special skill.
+constexpr int kHiddenX = 0x70;
+constexpr std::array<std::u8string_view, 4> kHiddenAttributes = {
+    u8"閃躲 %d",  // RoleRecord::evasion
+    u8"異常 %d",  // RoleRecord::ailmentChance
+    u8"默契 %d",  // RoleRecord::rapport
+    u8"反應 %d",  // RoleRecord::reaction
+};
+
+constexpr std::u8string_view kSpecialProgress = u8"絕技 %d%%";
+constexpr std::u8string_view kNoSpecialProgress = u8"絕技 --";
+// RoleBattleBlock::values as Game::LearnSpecials reads them (battle_turn.cpp): the special points, the points the next
+// special needs and the next special (bit 31 once set from the role's first special skill; -1: none).
+constexpr std::size_t kSpecialPointsAt = 1;
+constexpr std::size_t kNeededPointsAt = 2;
+constexpr std::size_t kNextSpecialAt = 3;
+constexpr i32 kNoSpecial = -1;
+constexpr u32 kSpecialMark = 0x80000000u;
+constexpr u32 kSpecialIdMask = 0x7FFFFFFF;
+constexpr u16 kSpecialCategory = 0x14;  // ObjectData::category of a special skill
+constexpr int kFullPercent = 100;
+
 constexpr std::u8string_view kGhostStrength = u8"力量   %d";  // 0x004BE6B4
 constexpr std::u8string_view kGhostSpirit = u8"靈力   %d";    // 0x004BE6A4
 constexpr std::u8string_view kGhostEssence = u8"精魄   %d";   // 0x004BE698
@@ -215,6 +238,65 @@ bool Repeating(const ButtonState& button, i32 parity)
 int BarLength(i32 value, i32 maximum)
 {
     return maximum != 0 ? kBarLength * value / maximum : 0;
+}
+
+// The rebuild (deviations.md): how far party role `role` is towards its next special skill, in percent of the points
+// it needs, as Game::LearnSpecials counts them (at least the points needed: 100); -1 when it learns none (all
+// learned, or its special skill leads to none). Before the end of its first battle the points needed are not yet set:
+// they are taken from its first special skill, as LearnSpecials then takes them.
+int SpecialPercent(const Party& party, std::size_t role)
+{
+    const RoleBattleBlock& block = party.battleBlocks[role];
+    i32 needed = block.values[kNeededPointsAt];
+    i32 next = block.values[kNextSpecialAt];
+
+    if (next == kNoSpecial)
+    {
+        return -1;
+    }
+
+    if (next >= 0)
+    {
+        const std::unique_ptr<ItemNode>& list = party.skills[role];
+        const ItemNode* special = nullptr;
+
+        for (const ItemNode* node = list != nullptr ? list->next.get() : nullptr; node != nullptr;
+             node = node->next.get())
+        {
+            if (node->record.data.category == kSpecialCategory)
+            {
+                special = node;
+                break;
+            }
+        }
+
+        if (special == nullptr)
+        {
+            return -1;
+        }
+
+        needed = special->record.data.counterMax;
+        next = static_cast<i32>(special->record.data.masteryValue | kSpecialMark);
+    }
+
+    if ((static_cast<u32>(next) & kSpecialIdMask) == 0)
+    {
+        return -1;
+    }
+
+    const i32 points = block.values[kSpecialPointsAt];
+
+    if (points >= needed)
+    {
+        return kFullPercent;
+    }
+
+    if (points <= 0)
+    {
+        return 0;
+    }
+
+    return static_cast<int>(static_cast<i64>(points) * kFullPercent / needed);
 }
 
 }  // namespace
@@ -1140,6 +1222,20 @@ void Menu::DrawRoleTabs(int offset, int mode)
             y += kAttributeStep;
         }
 
+        // The rebuild (deviations.md): the hidden attributes and the special skill's progress beside them.
+        const std::array<i32, 4> hidden = {record.evasion, record.ailmentChance, record.rapport, record.reaction};
+        const int hiddenX = kHiddenX - offset;
+        y = kResistancesY;
+
+        for (std::size_t at = 0; at < hidden.size(); ++at)
+        {
+            text(hiddenX, y, WinFormat(kHiddenAttributes[at], {hidden[at]}), owner.mediumFont);
+            y += kAttributeStep;
+        }
+
+        const int percent = SpecialPercent(owner.party, static_cast<std::size_t>(role));
+        const std::string special = percent < 0 ? Big5(kNoSpecialProgress) : WinFormat(kSpecialProgress, {percent});
+        text(hiddenX, y, special, owner.mediumFont);
         painter.SetClipClamped(0, 0, Display::Width, Display::Height);
         return;
     }
