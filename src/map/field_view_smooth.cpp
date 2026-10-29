@@ -36,6 +36,7 @@ void FieldView::CapturePlaces()
 
     this->placesValid = true;
     this->placesFrame = frame;
+    this->placesLayer = owner.scene.layerOffset;
     this->placesMap = owner.currentMap;
     this->cameraWidth = field.cameraRight - field.cameraLeft;
     this->cameraHeight = field.cameraBottom - field.cameraTop;
@@ -313,9 +314,11 @@ void FieldView::PaintBetween(Surface& out)
     this->paintedTarget = out.Pixels();
     this->paintedValid = true;
 
-    // What the map part changes is kept and put back after each painting: the camera, the roles' places, the random
-    // numbers, the particles and acts of the screen effects, the spotlight, the tile grid's origin, and the painter's
-    // options and target.
+    // What the map part changes is kept and put back after each painting: the camera, the roles' places, the tile layer
+    // (the game frame's, as the next one is already chosen), the random numbers, the particles and acts of the screen
+    // effects, the spotlight, the tile grid's origin, and the painter's options and target.
+    const i32 layerOffset = view.layerOffset;
+    view.layerOffset = this->placesLayer;
     const i32 cameraLeft = field.cameraLeft;
     const i32 cameraTop = field.cameraTop;
     const i32 cameraRight = field.cameraRight;
@@ -555,6 +558,7 @@ void FieldView::PaintBetween(Surface& out)
     }
 
     this->replaying = false;
+    view.layerOffset = layerOffset;
     field.cameraLeft = cameraLeft;
     field.cameraTop = cameraTop;
     field.cameraRight = cameraRight;
