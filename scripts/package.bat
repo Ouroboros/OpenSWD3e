@@ -1,7 +1,7 @@
 @echo off
 rem Builds the Windows program natively and packs what a player needs into build\OpenSWD3e-<date>-<commit>.zip:
-rem swd3er.exe, the asset folder (the font and the resources extracted from swd3e.exe) and the settings template
-rem swd3er.toml, all in one OpenSWD3e folder.
+rem swd3er.exe, its symbols swd3er.pdb (a crash log names the functions and lines with it), the asset folder (the
+rem font and the resources extracted from swd3e.exe) and the settings template swd3er.toml, all in one OpenSWD3e folder.
 rem Needs LLVM (clang-cl, lld-link, llvm-lib, llvm-rc, llvm-mt; SWD3_LLVM, by default D:\Dev\Compiler\LLVM\x64\bin),
 rem Visual Studio 2022 with the C++ tools and its CMake and Ninja (the Windows SDK and the MSVC libraries), the
 rem dependencies of scripts\deps and third_party\asset (docs\building.md). Git, when found, adds the commit to the name.
@@ -55,6 +55,7 @@ set "NAME=OpenSWD3e-%DAY%%COMMIT%"
 if exist "%STAGE%" rmdir /s /q "%STAGE%"
 mkdir "%STAGE%\OpenSWD3e" || exit /b 1
 copy /y "%BUILD%\swd3er.exe" "%STAGE%\OpenSWD3e\" >nul || exit /b 1
+copy /y "%BUILD%\swd3er.pdb" "%STAGE%\OpenSWD3e\" >nul || exit /b 1
 copy /y "%ROOT%\swd3er.toml" "%STAGE%\OpenSWD3e\" >nul || exit /b 1
 xcopy /e /i /q /y "%BUILD%\asset" "%STAGE%\OpenSWD3e\asset" >nul || exit /b 1
 if exist "%ROOT%\build\%NAME%.zip" del "%ROOT%\build\%NAME%.zip"

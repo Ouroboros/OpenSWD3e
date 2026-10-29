@@ -50,8 +50,8 @@
 - [x] 道具提示箭头一组：54deae3、af00f9e、7ac4af8、01f657f、7741d89（事件扫描按外传剧本重写）
 - [x] b8ab7bb、383c5d2 按 Tab 打开全景大地图，再次打开保持缩放
 - [x] 83004ed 错误弹窗时在日志里记录调用栈
-- [ ] 677a78d release.bat 编译打包并更新 GitHub Release
-- [ ] 084d27e 发布包带上调试符号 pdb
+- [x] 677a78d release.bat 编译打包并更新 GitHub Release
+- [x] 084d27e 发布包带上调试符号 pdb
 - [ ] 6b1780f Linux 一键编译脚本 build_linux.sh
 
 ## 四、命名同步（可选，与 swd3-rebuild 平行）

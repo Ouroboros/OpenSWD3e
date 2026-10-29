@@ -94,7 +94,15 @@ cmake --build --preset linux
 scripts\package.bat
 ```
 
-需要 LLVM（`clang-cl`、`lld-link`、`llvm-lib`、`llvm-rc`、`llvm-mt`，默认在 `D:\Dev\Compiler\LLVM\x64\bin`，可用环境变量 `SWD3_LLVM` 指定），以及装有 C++ 工具的 Visual Studio 2022（提供 Windows SDK、MSVC 库和自带的 CMake、Ninja）。第 2、3 步的依赖和资源文件要先准备好。脚本在 `build\windows-native` 编译 `swd3er.exe`，再把 `swd3er.exe`、`asset` 文件夹和设置模板 `swd3er.toml` 放进一个 `OpenSWD3e` 文件夹，打成 `build\OpenSWD3e-<日期>-<提交>.zip`。
+需要 LLVM（`clang-cl`、`lld-link`、`llvm-lib`、`llvm-rc`、`llvm-mt`，默认在 `D:\Dev\Compiler\LLVM\x64\bin`，可用环境变量 `SWD3_LLVM` 指定），以及装有 C++ 工具的 Visual Studio 2022（提供 Windows SDK、MSVC 库和自带的 CMake、Ninja）。第 2、3 步的依赖和资源文件要先准备好。脚本在 `build\windows-native` 编译 `swd3er.exe`，再把 `swd3er.exe`、调试符号 `swd3er.pdb`（崩溃记录据此显示函数名与行号）、`asset` 文件夹和设置模板 `swd3er.toml` 放进一个 `OpenSWD3e` 文件夹，打成 `build\OpenSWD3e-<日期>-<提交>.zip`。
+
+编译、打包并更新 GitHub Release 的下载：
+
+```bat
+scripts\release.bat
+```
+
+先运行 `package.bat`，再用 GitHub CLI（`gh`，需先 `gh auth login`）把压缩包上传到 Release，然后删掉 Release 里其他名字的压缩包。Release 的 tag、标题和说明不变。默认上传到仓库最新的 Release，可用环境变量 `SWD3_RELEASE` 指定它的 tag。
 
 ## 5. 单元测试
 
