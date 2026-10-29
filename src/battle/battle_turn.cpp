@@ -6894,8 +6894,8 @@ void Game::DrawCommandPanel(i32 nameIndex)
 }
 
 // Battle state 3 of DrawBattleMenu (inline in the original). Aiming at every unit (unk577284), a pointer over each
-// role standing that is not the ghost (for a command at the party) or each enemy standing (at its anchor when it has
-// one). Otherwise a defeated aimed enemy passes the aim on through enemyOrder (state 1 when none stands), and the
+// role standing that is not the ghost (for a command at the party) or each enemy standing (the rebuild: at its
+// middle). Otherwise a defeated aimed enemy passes the aim on through enemyOrder (state 1 when none stands), and the
 // pointer marks the aimed role or enemy (turnPointer 0: the refusing pointer; 煉妖 and 誘餌 refuse an enemy not a small
 // machine), with the name tag while unk5772B4.
 void Game::DrawAimPointers()
@@ -6949,25 +6949,14 @@ void Game::DrawAimPointers()
             enemy.GetShadowRect(this->battleServices, rect);
             enemy.SetOutline(1);
             enemy.GetOffset(battle.unk577240, battle.unk577244);
-
-            if (battle.unk577240 != 0 || battle.unk577244 != 0)
-            {
-                hud.DrawSlotAnimation(
-                    kTurnPointer,
-                    static_cast<int>(index),
-                    rect.x + static_cast<i16>(battle.unk577240),
-                    rect.y + static_cast<i16>(battle.unk577244)
-                );
-            }
-            else
-            {
-                hud.DrawSlotAnimation(
-                    kTurnPointer,
-                    static_cast<int>(index),
-                    rect.x + (rect.width >> 1),
-                    rect.y + (rect.height >> 1)
-                );
-            }
+            // The original draws the pointer at the enemy's anchor when it has one, off the enemy for some (below a
+            // floating one); the rebuild draws it at the middle as for a single enemy (deviations.md).
+            hud.DrawSlotAnimation(
+                kTurnPointer,
+                static_cast<int>(index),
+                rect.x + (rect.width >> 1),
+                rect.y + (rect.height >> 1)
+            );
         }
 
         return;
