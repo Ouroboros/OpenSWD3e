@@ -1371,6 +1371,23 @@ int RolePath::HoldRole(int index)
 
     if (move != nullptr)
     {
+        // The rebuild (deviations.md): a role between tiles on its path is put on the tile its step goes to, arriving
+        // there as the step would (FieldView::ArriveMoving), and stops there; the smooth drawing shows it stopping
+        // where it is drawn. The original steps it back to its last tile below.
+        const u8 ahead = move->CurrentDirection();
+
+        if (index != state.playerRole && move->Kind() == MoveKind::Path && move->step < MoveRecord::StepMask &&
+            ahead < RolePath::Directions && ((role.x | role.y) & MapHeader::TileFraction) != 0)
+        {
+            role.x = RolePath::TileStart(role.x, -RolePath::StepX[ahead]);
+            role.y = RolePath::TileStart(role.y, -RolePath::StepY[ahead]);
+            owner.fieldView.ArriveMoving(
+                static_cast<std::size_t>(index),
+                static_cast<std::size_t>(move - state.moves.data()),
+                ahead
+            );
+        }
+
         if (move->Kind() == MoveKind::Path)
         {
             move->step |= MoveRecord::Done;
