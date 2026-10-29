@@ -1,14 +1,19 @@
-"""scripts/bestiary/build.py <monsters.jsonl> <portraits.raw> <out.html>: the swd3e bestiary as one HTML page.
+"""scripts/bestiary/build.py <monsters.jsonl> <portraits.raw> <formations.jsonl> <FIGTALK.dat> <out.html> [move.wav]: the
+swd3e bestiary as one HTML page.
 
 The rules the page states come from the rebuild's verified code: Menu::BestiaryEnter/List/Choose/Lines
 (0x00441990..0x00442920), ApplyElement (the element rules of src/battle/battle_unit.cpp), BattleRole::Steal,
 BattleUnit::RollDrop (0x00488D40), BattleUnit::CatchRoll (the enemy's flight), HitDamage's ailment roll
 (0x00497900), BattleUnit::EnrageCheck (0x0049BB50) and Enrage (0x0049BE20), Game::RemoveDefeated's rewards.
+
+The values the battle talk (FIGTALK.dat, FightTalkFrame 0x00479860) gives an enemy in place of its mon.dat ones come
+from the battle scripts: the commands that change an enemy slot, found in each battle's script.
 """
 
 import base64
 import io
 import json
+import struct
 import sys
 
 from PIL import Image
@@ -18,7 +23,8 @@ CATEGORIES = [
     (0, '天神'), (1, '魔神'), (2, '仙靈'), (3, '神獸'), (4, '魔獸'), (5, '妖靈'),
     (6, '精怪'), (7, '鬼魂'), (8, '活屍'), (10, '生物'), (18, '人族'),
 ]
-# The rebuild's page only: the fought records the game's bestiary leaves out (story opponents of category 15).
+# The rebuild's page only: the fought records the game's bestiary leaves out (story opponents of category 15: those
+# with a bestiary picture, and those a battle formation holds).
 OTHER_NAME = '其他'
 OTHER_CATEGORIES = {15}
 CARD_SIZE = (120, 220)  # a bestiary picture; other sizes are battle poses or story pictures
@@ -27,6 +33,22 @@ ELEMENTS = ['金', '木', '水', '火', '土']
 # absorbs it (indices into the monster's five resistance bytes, signed percents).
 ELEMENT_RULES = [(3, 1, 2), (0, 4, 3), (4, 3, 1), (2, 0, 4), (1, 2, 0)]
 BOSS_KIND = 0x20
+
+# FightTalk::Load (0x0047E270): a battle's script starts at HEADER + the dword at HEADER + 4 * battle.
+TALK_HEADER = 0x200
+LAST_ENEMY_SLOT = 0x13  # the talk's units below 0x14 are enemy slots
+# The talk commands that change an enemy (FightTalkFrame), their word counts with the command.
+TALK_VITALS = 0x1C  # SetVitals: an enemy's hit points and their maximum (its spirit and stamina words unused)
+TALK_ATTRIBUTES = 0x34  # SetAttributes: the positive ones of attack, defence, agility
+TALK_LEVEL = 0x46  # SetLevel
+TALK_RESISTANCES = 0x4A  # SetResistances: the five element bytes
+TALK_SKILLS = 0x4B  # SetEnemySkills: skill A, its count, skill B, a count that goes to skill A (an original bug)
+TALK_RELOAD = 0x50  # BattleEnemy::Reload: the enemy turned into another object
+TALK_WORDS = {TALK_VITALS: 5, TALK_ATTRIBUTES: 5, TALK_LEVEL: 3, TALK_RESISTANCES: 7, TALK_SKILLS: 6, TALK_RELOAD: 3}
+MAX_VALUE = 9999
+MAX_LEVEL = 99
+MAX_RESISTANCE = 0xFF
+MAX_SKILL = 0xFFF
 
 # EnrageCheck: what sets an enrage off (the conditions the data uses that the code makes clear).
 ENRAGE_CONDITIONS = {
@@ -135,6 +157,14 @@ def read_portraits(path):
             ident, width, height = (int(part) for part in header.split())
             pixels = raw.read(width * height * 3)
             image = Image.frombytes('RGB', (width, height), pixels)
+
+            if (width, height) != CARD_SIZE:
+                # A battle pose (a story opponent without a card): the colour its frame leaves at the corner is the
+                # pose's empty ground, made clear.
+                key = image.getpixel((0, 0))
+                image = image.convert('RGBA')
+                image.putdata([(0, 0, 0, 0) if pixel[:3] == key else pixel for pixel in image.getdata()])
+
             out = io.BytesIO()
             image.save(out, 'PNG', optimize=True)
             portraits[ident] = ('data:image/png;base64,' + base64.b64encode(out.getvalue()).decode('ascii'), (width, height))
@@ -142,8 +172,130 @@ def read_portraits(path):
     return portraits
 
 
+def signed(word):
+    return word - 0x10000 if word & 0x8000 else word
+
+
+def talk_change(command, words, names):
+    """The text of an enemy-changing talk command (its argument words after the slot); None when the words cannot be
+    one (the scan reads every word as a possible command, so text and arguments are told apart by their values)."""
+    values = [signed(word) for word in words]
+
+    if command == TALK_VITALS:
+        hit_points, spirit, stamina = values
+        return f'生命 {hit_points}' if 0 < hit_points and spirit == 0 and stamina == 0 else None
+
+    if command == TALK_ATTRIBUTES:
+        if not all(0 <= value <= MAX_VALUE for value in values) or not any(values):
+            return None
+
+        return '　'.join(f'{label} {value}' for label, value in zip(('攻擊', '防禦', '敏捷'), values) if value > 0)
+
+    if command == TALK_LEVEL:
+        return f'等級 {values[0]}' if 0 < values[0] <= MAX_LEVEL else None
+
+    if command == TALK_RESISTANCES:
+        if not all(-0x80 <= value <= MAX_RESISTANCE for value in values):
+            return None
+
+        # The low bytes, read as signed percents (as the dump gives mon.dat's).
+        resistances = [(value & 0xFF) - 0x100 if value & 0x80 else value & 0xFF for value in values]
+        taken = [f'{element}{text}' for element, (_, text) in zip(ELEMENTS, element_taken(resistances))
+                 if text != '100%']
+        return '承受傷害改為 ' + ('、'.join(taken) if taken else '五行皆 100%')
+
+    if command == TALK_SKILLS:
+        first, first_count, second, count = values
+
+        if not all(0 <= value <= MAX_SKILL for value in values) or not (first or second):
+            return None
+
+        count = count or first_count
+        moves = [f'#{first}' + (f'（{count} 次）' if count else '')] if first else []
+        moves += [f'#{second}'] if second else []
+        return '招式改為 ' + '、'.join(moves)
+
+    if command == TALK_RELOAD:
+        return f'變為{names[values[0]]}' if values[0] in names else None
+
+    return None
+
+
+def read_formations(path):
+    """{battle: [the mon.dat object of each enemy slot]} (scripts/bestiary/dump formations)."""
+    formations = {}
+
+    with open(path, encoding='utf-8') as lines:
+        for line in lines:
+            if line.strip():
+                record = json.loads(line)
+                formations[record['battle']] = record['enemies']
+
+    return formations
+
+
+def script_changes(talk_path, formations, names):
+    """{monster id: [[battle, [change, ...]], ...]}: the enemy changes found in each battle's script (from its start
+    to the next script's), at even and odd places (a window's text can leave the commands after it at odd bytes),
+    for slots the battle's formation fills. A change met again in the same battle is listed once."""
+    with open(talk_path, 'rb') as file:
+        talk = file.read()
+
+    starts = {}
+
+    for battle in formations:
+        at = TALK_HEADER + 4 * battle
+
+        if at + 4 <= len(talk):
+            starts[battle] = TALK_HEADER + struct.unpack_from('<I', talk, at)[0]
+
+    bounds = sorted(set(starts.values())) + [len(talk)]
+    found = {}
+
+    for battle, start in sorted(starts.items()):
+        end = next(bound for bound in bounds if bound > start)
+        enemies = formations[battle]
+        changes = []
+
+        for at in range(start, end - 1):
+            command = struct.unpack_from('<H', talk, at)[0]
+            size = TALK_WORDS.get(command)
+
+            if size is None or at + 2 * size > end:
+                continue
+
+            slot, *words = struct.unpack_from(f'<{size - 1}H', talk, at + 2)
+
+            if slot > LAST_ENEMY_SLOT or slot >= len(enemies):
+                continue
+
+            text = talk_change(command, words, names)
+
+            if text and (enemies[slot], text) not in changes:
+                changes.append((enemies[slot], text))
+
+        for monster, text in changes:
+            battles = found.setdefault(monster, [])
+
+            if not battles or battles[-1][0] != battle:
+                battles.append([battle, []])
+
+            battles[-1][1].append(text)
+
+    return found
+
+
+def sound_url(path):
+    """The cursor sound (scripts/sound/extract.py all.snd 0x2E) as a data address; none without one."""
+    if not path:
+        return None
+    with open(path, 'rb') as sound:
+        return 'data:audio/wav;base64,' + base64.b64encode(sound.read()).decode('ascii')
+
+
 def main():
-    monsters_path, portraits_path, out_path = sys.argv[1:4]
+    monsters_path, portraits_path, formations_path, talk_path, out_path = sys.argv[1:6]
+    sound_path = sys.argv[6] if len(sys.argv) > 6 else ''
     portraits = read_portraits(portraits_path)
     tabs = {value: at for at, (value, _) in enumerate(CATEGORIES)}
     monsters = []
@@ -151,13 +303,28 @@ def main():
     with open(monsters_path, encoding='utf-8') as lines:
         records = [json.loads(line) for line in lines if line.strip()]
 
+    formations = read_formations(formations_path)
+    fought = {enemy for enemies in formations.values() for enemy in enemies}
+    scripted = script_changes(talk_path, formations, {r['id']: r['name'] for r in records if r['name']})
+
+    # The bestiary cards by name: a story opponent whose act has no card (a battle pose at its action 0x3B) shows the
+    # card of the monster of its name (the story 刑天 #29, the 魔神 刑天's).
+    cards = {}
+
+    for r in records:
+        if r['name'] and portraits.get(r['id'], ('', None))[1] == CARD_SIZE:
+            cards.setdefault(r['name'], portraits[r['id']][0])
+
     for r in records:
         picture, size = portraits.get(r['id'], ('', None))
 
         if r['category'] in tabs:
             tab = tabs[r['category']]
-        elif r['category'] in OTHER_CATEGORIES and r['hp'] > 0 and size == CARD_SIZE:
+        elif r['category'] in OTHER_CATEGORIES and r['hp'] > 0 and (size == CARD_SIZE or r['id'] in fought):
             tab = len(CATEGORIES)
+
+            if size != CARD_SIZE and r['name'] in cards:
+                picture = cards[r['name']]
         else:
             continue
 
@@ -193,6 +360,7 @@ def main():
                 'heals': r['heals'],
                 'healCounts': r['healCounts'],
                 'enrage': enrage_text(r),
+                'scripted': scripted.get(r['id'], []),
             },
         })
 
@@ -201,6 +369,7 @@ def main():
         'monsters': monsters,
     }
     page = TEMPLATE.replace('/*DATA*/null', json.dumps(data, ensure_ascii=False, separators=(',', ':')))
+    page = page.replace('/*SOUND*/null', json.dumps(sound_url(sound_path)))
     page = page.replace('/*ELEMENTS*/null', json.dumps(ELEMENTS, ensure_ascii=False))
 
     with open(out_path, 'w', encoding='utf-8') as out:
@@ -296,6 +465,25 @@ h1 {
 }
 
 .search::placeholder { color: var(--dim); }
+.tools { display: flex; align-items: flex-end; gap: 10px; }
+
+.sound {
+  height: 34px;
+  margin: 0 0 6px;
+  padding: 0 12px;
+  font-family: var(--kai);
+  font-size: 18px;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sound:hover { border-color: var(--gold-light); }
+.sound.off { color: var(--dim); }
+
 .search:focus { border-color: var(--gold-light); }
 
 .empty { font-family: var(--kai); font-size: 20px; color: var(--dim); padding: 8px 6px; }
@@ -383,8 +571,8 @@ h1 {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-gutter: stable;
-  padding: 12px 6px 12px 10px;
+  scrollbar-gutter: stable both-edges;
+  padding: 12px 0;
   --fill: var(--panel-list);
   scrollbar-color: var(--gold) #000;
 }
@@ -424,7 +612,8 @@ h1 {
   overflow: hidden;
 }
 
-.stats .kind { font-family: var(--kai); font-size: 24px; }
+.stats .kind { font-family: var(--kai); font-size: 24px; white-space: nowrap; }
+.stats .kind .boss { margin-left: 10px; }
 .stats .main, .stats .side { min-width: 0; }
 .stats .name {
   font-family: var(--kai);
@@ -434,9 +623,13 @@ h1 {
   line-height: 40px;
   margin-bottom: 4px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
 }
+
+.stats .name .text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.stats .name .boss { flex: none; }
+.stats .boss.scripted { color: var(--gold-light); border-color: var(--gold-light); cursor: pointer; }
 .stats .boss { vertical-align: middle; line-height: 18px; font-size: 15px; color: var(--weak); border: 1px solid var(--weak); padding: 0 4px; margin-left: 6px; }
 
 .stats table { border-collapse: collapse; table-layout: fixed; }
@@ -495,7 +688,7 @@ h1 {
   display: grid;
   grid-template-columns: 104px minmax(0, 1fr);
   align-content: start;
-  grid-auto-rows: 30px;
+  grid-auto-rows: minmax(30px, auto);
   padding: 8px 24px;
   font-size: 18px;
   line-height: 28px;
@@ -507,6 +700,8 @@ h1 {
 
 .loot .note { color: var(--dim); font-size: 15px; }
 .loot > div { line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loot > div.scripted { white-space: normal; line-height: 26px; padding: 2px 0; }
+.loot .battle { color: var(--dim); margin-right: 8px; }
 
 .description {
   grid-column: 3 / span 2;
@@ -529,7 +724,10 @@ h1 {
 <body>
 <div class="book">
   <div class="top">
-    <input class="search" id="search" type="search" placeholder="搜尋名稱、法術、物品、說明" autocomplete="off">
+    <div class="tools">
+      <input class="search" id="search" type="search" placeholder="搜尋名稱、法術、物品、說明" autocomplete="off">
+      <button class="sound" id="sound" type="button"></button>
+    </div>
     <h1>神魔異事錄</h1>
   </div>
   <div class="layout">
@@ -541,10 +739,27 @@ h1 {
     <div class="frame loot" id="loot"></div>
     <div class="frame description" id="description"></div>
   </div>
-  <div class="hint">↑↓ 選擇　←→ 切換分類　PageUp / PageDown 翻頁　搜尋可空格分隔多個關鍵字，Esc 清除　「其他」為遊戲圖鑑未收錄的對手　中異常機率：施術者智慧每比怪物高 20 點加 10%</div>
+  <div class="hint">↑↓ 選擇　Home / End 首尾　←→ 分類　PgUp / PgDn 翻頁　搜尋可空格分隔關鍵字，Esc 清除　「其他」：圖鑑未收錄的對手　中異常機率：智慧每比怪物高 20 點加 10%</div>
 </div>
 <script>
 const DATA = /*DATA*/null;
+
+// The game's cursor sound (all.snd 0x2E, which the menus play as the cursor moves).
+const MOVE_SOUND = /*SOUND*/null;
+
+// The sound is on unless the address says ?sound=off; the switch keeps it there (and, shown in the home page, tells
+// the home page, which keeps it in its own address and passes it to the other pages).
+const SOUND_PARAMETER = 'sound';
+const SOUND_OFF = 'off';
+let soundOn = new URLSearchParams(location.search).get(SOUND_PARAMETER) !== SOUND_OFF;
+
+function beep() {
+  if (MOVE_SOUND && soundOn) {
+    const sound = new Audio(MOVE_SOUND);
+    sound.volume = 0.6;
+    sound.play().catch(() => {});
+  }
+}
 const ELEMENTS = /*ELEMENTS*/null;
 const tabName = m => DATA.categories[m.tab].name;
 let category = 0;
@@ -613,12 +828,26 @@ function counted(name, count) {
   return `${escape(name)}<span class="note"> ×${count}</span>`;
 }
 
+// The chosen row scrolled into the list; the first and the last take the list to its very top and bottom, so that its
+// margins show too.
+function keepInView(row) {
+  const list = $('list');
+
+  if (chosen === 0) {
+    list.scrollTop = 0;
+  } else if (chosen === shown.length - 1) {
+    list.scrollTop = list.scrollHeight;
+  } else {
+    row.scrollIntoView({ block: 'nearest' });
+  }
+}
+
 function show() {
   document.querySelectorAll('.row').forEach((row, at) => row.classList.toggle('chosen', at === chosen));
   const row = document.querySelector('.row.chosen');
 
   if (row) {
-    row.scrollIntoView({ block: 'nearest' });
+    keepInView(row);
   }
 
   const m = shown[chosen];
@@ -634,6 +863,8 @@ function show() {
     return;
   }
 
+  keepPlace(`${m.name}@${m.id}`);
+
   const h = m.hidden;
   const values = [['生命', m.hp], ['靈力', m.spirit], ['體力', m.stamina], ['攻擊', m.attack], ['防禦', m.defense],
     ['敏捷', m.agility]];
@@ -642,8 +873,11 @@ function show() {
   const table = rows => `<table>${rows.map(([label, value]) =>
     `<tr><td>${label}</td><td class="value">${value}</td></tr>`).join('')}</table>`;
   $('stats').innerHTML =
-    `<div class="main"><div class="kind">${tabName(m)}　${m.level}級</div>` +
-    `<div class="name">${escape(m.name)}${h.boss ? '<span class="boss">BOSS</span>' : ''}</div>${table(values)}</div>` +
+    `<div class="main"><div class="kind">${tabName(m)}　${m.level}級` +
+    `${h.scripted.length ? '<span class="boss scripted" title="劇情戰鬥中的數值見下方「劇情戰鬥」">劇情改寫</span>' : ''}` +
+    `</div><div class="name"><span class="text">${escape(m.name)}</span>` +
+    `${h.boss ? '<span class="boss">BOSS</span>' : ''}</div>` +
+    `${table(values)}</div>` +
     `<div class="side">${table(side)}</div>`;
   $('portrait').innerHTML = m.portrait ? `<img src="${m.portrait}" alt="${escape(m.name)}">` : '';
   $('resist').innerHTML = '<div class="label">承受傷害</div>' + ELEMENTS.map((element, at) => {
@@ -659,7 +893,11 @@ function show() {
   const lines = [['法術', moves.join('　') || '無'], ['回復', heals.join('　') || '無'], ['偷竊', steal],
     ['掉落', drop], ['逃跑', `<span class="note">${flee(h.fleeChance)}</span>`],
     ['狂暴', h.enrage ? escape(h.enrage) : '無']];
-  $('loot').innerHTML = lines.map(([label, text]) => `<div class="label">${label}</div><div>${text}</div>`).join('');
+  // The battle scripts' values for this monster, which replace the ones above in those battles.
+  const scripted = h.scripted.map(([battle, changes], at) => [at === 0 ? '劇情戰鬥' : '',
+    `<span class="battle">第 ${battle} 場</span>${changes.map(escape).join('；')}`, 'scripted']);
+  $('loot').innerHTML = [...lines, ...scripted].map(([label, text, kind]) =>
+    `<div class="label">${label}</div><div${kind ? ` class="${kind}"` : ''}>${text}</div>`).join('');
   $('description').textContent = m.description;
 }
 
@@ -668,11 +906,18 @@ function move(by) {
     return;
   }
 
+  const before = chosen;
   chosen = Math.max(0, Math.min(shown.length - 1, chosen + by));
+
+  if (chosen !== before) {
+    beep();
+  }
+
   show();
 }
 
 function turn(by) {
+  beep();
   category = (category + by + DATA.categories.length) % DATA.categories.length;
   chosen = 0;
   $('search').value = '';
@@ -694,10 +939,21 @@ $('tabs').addEventListener('click', event => {
   }
 });
 
+// The 劇情改寫 mark scrolls the loot panel down to the battles that change the monster.
+$('stats').addEventListener('click', event => {
+  if (event.target.closest('.scripted')) {
+    $('loot').scrollTop = $('loot').scrollHeight;
+  }
+});
+
 $('list').addEventListener('click', event => {
   const row = event.target.closest('.row');
 
   if (row) {
+    if (Number(row.dataset.at) !== chosen) {
+      beep();
+    }
+
     chosen = Number(row.dataset.at);
     show();
   }
@@ -712,11 +968,12 @@ document.addEventListener('keydown', event => {
     return;
   }
 
-  if (typing && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+  if (typing && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
     return;
   }
 
-  const keys = { ArrowUp: () => move(-1), ArrowDown: () => move(1), PageUp: () => move(-15), PageDown: () => move(15),
+  const keys = { ArrowUp: () => move(-1), ArrowDown: () => move(1), PageUp: () => move(-15),
+    PageDown: () => move(15), Home: () => move(-shown.length), End: () => move(shown.length),
     ArrowLeft: () => turn(-1), ArrowRight: () => turn(1) };
 
   if (keys[event.key]) {
@@ -734,10 +991,93 @@ function fit() {
   book.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
 }
 
+// The monster shown kept in the address (and in the home page's, which shows this page beside its menu) in place, so
+// that going back to it returns here.
+function keepPlace(detail) {
+  history.replaceState(null, '', `#${encodeURIComponent(detail)}`);
+
+  if (window.parent !== window) {
+    window.parent.postMessage({ shown: 'bestiary', detail }, '*');
+  }
+}
+
+function addressed() {
+  try {
+    return decodeURIComponent(location.hash.slice(1));
+  } catch {
+    return '';
+  }
+}
+
+// A monster named in the address (bestiary.html#name@id, from the other pages; the record's number tells apart those
+// of one name) is chosen in its category.
+function chooseNamed(text = addressed()) {
+  const at = text.lastIndexOf('@');
+  const numbered = at > 0 && /^\d+$/.test(text.slice(at + 1));
+  const name = numbered ? text.slice(0, at) : text;
+  const id = numbered ? Number(text.slice(at + 1)) : null;
+  const monster = DATA.monsters.find(each => each.name === name && (id === null || each.id === id));
+
+  if (!monster) {
+    return;
+  }
+
+  category = monster.tab;
+  $('search').value = '';
+  drawTabs();
+  list();
+  chosen = shown.indexOf(monster);
+  show();
+}
+
+function drawSound() {
+  const button = document.getElementById('sound');
+  button.textContent = soundOn ? '音效 開' : '音效 關';
+  button.classList.toggle('off', !soundOn);
+}
+
+function setSound(on, fromHome = false) {
+  soundOn = on;
+  const query = new URLSearchParams(location.search);
+
+  if (soundOn) {
+    query.delete(SOUND_PARAMETER);
+  } else {
+    query.set(SOUND_PARAMETER, SOUND_OFF);
+  }
+
+  const text = query.toString();
+  history.replaceState(null, '', `${location.pathname}${text ? `?${text}` : ''}${location.hash}`);
+  drawSound();
+
+  if (!fromHome && window.parent !== window) {
+    window.parent.postMessage({ sound: soundOn }, '*');
+  }
+}
+
+document.getElementById('sound').addEventListener('click', event => {
+  setSound(!soundOn);
+  beep();
+  event.currentTarget.blur();
+});
+
+addEventListener('message', event => {
+  const { sound } = event.data || {};
+
+  if (typeof sound === 'boolean' && event.source === window.parent) {
+    setSound(sound, true);
+  }
+});
+
+drawSound();
 addEventListener('resize', fit);
+addEventListener('hashchange', () => chooseNamed());
+// The place read before the first list shows (and keeps) its first monster.
+const place = addressed();
 fit();
 drawTabs();
 list();
+chooseNamed(place);
 </script>
 </body>
 </html>

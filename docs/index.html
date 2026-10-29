@@ -3,16 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenSWD3e — 軒轅劍參外傳 天之痕 重制执行程序</title>
+<title>OpenSWD3e — 軒轅劍參外傳 天之痕 重製執行程序</title>
 <style>
 :root {
-  --ink: #7a1f12;
-  --text: #2e2214;
-  --dim: #6d5a3c;
-  --line: rgba(122, 60, 20, 0.35);
-  --panel: rgba(255, 250, 236, 0.72);
-  --gold: #c9a24a;
-  --gold-dark: #7a5a1c;
+  --gold: #a89048;
+  --gold-dark: #6a5420;
+  --gold-light: #f0e848;
+  --text: #c8b888;
+  --dim: #988a62;
+  --title: #f0e0a8;
+  --panel: #100f08;
+  --ink: #3a2008;
   --kai: "BiauKai", "DFKai-SB", "標楷體", "KaiTi", "STKaiti", "Kaiti TC", serif;
   --body: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
 }
@@ -26,13 +27,16 @@ body {
   line-height: 1.75;
   color: var(--text);
   background:
-    radial-gradient(ellipse at 20% 10%, rgba(255, 250, 230, 0.55), transparent 55%),
-    radial-gradient(ellipse at 80% 85%, rgba(120, 90, 50, 0.35), transparent 60%),
-    repeating-linear-gradient(90deg, rgba(110, 60, 20, 0.06) 0 1px, transparent 1px 72px),
-    linear-gradient(160deg, #e8dcc0 0%, #d6c39c 45%, #c4ab7d 100%);
+    radial-gradient(ellipse at 15% 20%, rgba(255, 220, 150, 0.45), transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(110, 50, 10, 0.4), transparent 55%),
+    radial-gradient(ellipse at 50% 55%, rgba(150, 80, 20, 0.25), transparent 45%),
+    radial-gradient(ellipse at 5% 90%, rgba(90, 40, 10, 0.35), transparent 40%),
+    repeating-linear-gradient(90deg, rgba(90, 40, 10, 0.12) 0 1px, transparent 1px 80px),
+    linear-gradient(160deg, #e0b070 0%, #cc9450 45%, #b07834 100%);
   background-attachment: fixed;
 }
 
+/* The menu as the game's page tabs: green with a gold edge, the page shown bright. */
 nav {
   position: fixed;
   top: 32px;
@@ -40,26 +44,8 @@ nav {
   width: 160px;
   display: flex;
   flex-direction: column;
-  padding: 6px 0;
-  background: linear-gradient(90deg, #b9a274 0%, #e9dcb4 18%, #f4ead0 50%, #e9dcb4 82%, #b9a274 100%);
-  border-left: 3px double #8a6a2a;
-  border-right: 3px double #8a6a2a;
-  box-shadow: inset 0 0 0 1px #d8bf7a, 0 0 0 1px #3a2a10, 2px 3px 8px rgba(40, 25, 5, 0.45);
+  gap: 6px;
 }
-
-nav::before, nav::after {
-  content: "";
-  position: absolute;
-  left: -6px;
-  right: -6px;
-  height: 5px;
-  background: linear-gradient(#f2d27a, #a07a2a);
-  border: 1px solid #5a4012;
-  border-radius: 2px;
-}
-
-nav::before { top: -4px; }
-nav::after { bottom: -4px; }
 
 nav a {
   font-family: var(--kai);
@@ -69,28 +55,41 @@ nav a {
   padding: 4px 0;
   text-align: center;
   text-decoration: none;
-  color: #8a7350;
-  text-shadow: 1px 1px 0 rgba(255, 248, 228, 0.7);
+  color: #2c3410;
+  background: linear-gradient(90deg, #5c7034, #889c58);
+  --edge: #b89838;
+  border: 1px solid #000;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 2px var(--edge);
 }
 
-nav a:hover { color: #4a3618; }
+nav a:hover { color: #181800; background: linear-gradient(90deg, #7c9444, #a8bc68); }
 
 nav a.chosen {
-  color: #120c04;
+  color: #181800;
   font-weight: bold;
-  background: linear-gradient(90deg, transparent, rgba(255, 252, 238, 0.95) 25%, rgba(255, 252, 238, 0.95) 75%, transparent);
+  background: linear-gradient(90deg, #b8d050, #eef488);
+  --edge: #b07818;
 }
 
 .page { max-width: 1040px; margin: 0 auto; padding: 32px 20px 64px; }
 
+.viewer { display: none; position: fixed; left: 200px; top: 0; right: 200px; bottom: 0; }
+
 @media (max-width: 1480px) {
   .page { margin-left: 200px; margin-right: 0; }
+  .viewer { right: 0; }
 }
 
+.viewer iframe { display: none; width: 100%; height: 100%; border: 0; }
+.viewer iframe.shown { display: block; }
+body.viewing .page { display: none; }
+body.viewing .viewer { display: block; }
+
 header {
-  border-top: 2px solid var(--line);
-  border-bottom: 2px solid var(--line);
-  background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 54px);
+  border-top: 2px solid rgba(255, 230, 180, 0.5);
+  border-bottom: 2px solid rgba(255, 230, 180, 0.5);
+  background: repeating-linear-gradient(90deg, rgba(255, 230, 180, 0.3) 0 1px, transparent 1px 80px);
   padding: 28px 24px 22px;
   display: flex;
   flex-wrap: wrap;
@@ -106,111 +105,114 @@ h1 {
   line-height: 1.1;
   letter-spacing: 6px;
   color: var(--ink);
-  text-shadow: 2px 2px 0 rgba(255, 240, 210, 0.6);
+  text-shadow: 2px 2px 0 rgba(255, 230, 180, 0.45), 0 0 8px rgba(255, 230, 180, 0.35);
 }
 
-h1 small { display: block; margin-top: 8px; font-size: 22px; letter-spacing: 2px; color: var(--dim); }
+h1 small { display: block; margin-top: 8px; font-size: 22px; letter-spacing: 2px; color: #5a3410; }
 
-.button {
-  font-family: var(--kai);
-  font-size: 19px;
-  color: #1e1406;
-  text-decoration: none;
-  padding: 6px 16px;
-  border: 1px solid var(--gold-dark);
-  border-radius: 4px;
-  background: linear-gradient(#f6e3a6, #d6b45e);
-  box-shadow: 1px 2px 4px rgba(40, 25, 5, 0.3);
-  text-align: center;
-}
-
-.button:hover { background: linear-gradient(#fff0c0, #e2c06a); }
-
-.intro { margin: 28px 0 8px; font-size: 18px; }
-
+/* The introduction in the game's frame, as the sections. */
 .intro p { margin: 0 0 10px; }
+
+.intro p:last-child { margin-bottom: 0; }
 
 .note { color: var(--dim); }
 
-section {
-  margin-top: 36px;
+/* The game's frames: a gold line with bright corner marks inside it on the dark panel. */
+.intro, section {
+  --corner: linear-gradient(var(--gold-light), var(--gold-light));
+  margin-top: 28px;
   padding: 22px 26px 18px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  box-shadow: 1px 2px 8px rgba(40, 25, 5, 0.15);
+  background:
+    var(--corner) left top / 9px 3px no-repeat,
+    var(--corner) left top / 3px 9px no-repeat,
+    var(--corner) right top / 9px 3px no-repeat,
+    var(--corner) right top / 3px 9px no-repeat,
+    var(--corner) left bottom / 9px 3px no-repeat,
+    var(--corner) left bottom / 3px 9px no-repeat,
+    var(--corner) right bottom / 9px 3px no-repeat,
+    var(--corner) right bottom / 3px 9px no-repeat,
+    var(--panel);
+  background-origin: padding-box;
+  border: 2px solid var(--gold);
+  box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 2px 3px 8px rgba(40, 20, 5, 0.45);
 }
+
+.intro { font-size: 18px; }
+
+section { margin-top: 36px; }
 
 h2 {
   margin: 0 0 14px;
   font-family: var(--kai);
   font-size: 30px;
-  color: var(--ink);
-  border-bottom: 1px solid var(--line);
+  color: var(--title);
+  border-bottom: 1px solid var(--gold-dark);
   padding-bottom: 6px;
 }
 
-h3 { margin: 22px 0 8px; font-family: var(--kai); font-size: 22px; color: var(--ink); }
+h3 { margin: 22px 0 8px; font-family: var(--kai); font-size: 22px; color: var(--title); }
 
 table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 15px; }
 
-th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid rgba(168, 144, 72, 0.35); }
 
-th { font-family: var(--kai); font-size: 17px; color: var(--ink); background: rgba(201, 162, 74, 0.18); }
+th { font-family: var(--kai); font-size: 17px; color: var(--title); background: rgba(168, 144, 72, 0.18); }
 
-td:first-child { white-space: nowrap; font-weight: bold; }
+td:first-child { white-space: nowrap; font-weight: bold; color: var(--title); }
+
+th:first-child { white-space: nowrap; }
 
 code {
   font-family: Consolas, "Courier New", monospace;
   font-size: 0.92em;
   padding: 1px 5px;
-  background: rgba(122, 60, 20, 0.1);
+  color: #e8dcb0;
+  background: rgba(168, 144, 72, 0.18);
   border-radius: 3px;
 }
 
 pre {
   margin: 10px 0;
   padding: 12px 16px;
-  background: #1e1710;
-  color: #f2e7c9;
-  border-radius: 4px;
+  background: #060503;
+  color: #e8dcb0;
+  border: 1px solid var(--gold-dark);
   overflow-x: auto;
 }
 
 pre code { padding: 0; background: none; color: inherit; }
 
+pre .c { color: #8a7c58; }
+
+pre .c a { color: var(--gold-light); }
+
 ol, ul { padding-left: 24px; }
 
 li { margin-bottom: 6px; }
 
-a { color: var(--ink); }
+a { color: #f0d060; }
 
-.feature {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
+footer { margin-top: 40px; text-align: center; font-size: 14px; color: var(--ink); }
 
-.feature p { margin: 0; flex: 1 1 520px; }
-
-footer { margin-top: 40px; text-align: center; font-size: 14px; color: var(--dim); }
+footer a { color: var(--ink); }
 </style>
 </head>
 <body>
 <nav>
   <a href="#top">OpenSWD3e</a>
-  <a href="#compare">和原版相比</a>
-  <a href="#install">安装与运行</a>
-  <a href="#settings">设置</a>
-  <a href="#secrets">隐藏功能</a>
-  <a href="bestiary.html">神魔異事錄</a>
+  <a href="#compare">與原版相比</a>
+  <a href="#install">安裝與運行</a>
+  <a href="#settings">設置</a>
+  <a href="#secrets">隱藏秘籍</a>
+  <a href="#attributes">角色屬性</a>
+  <a href="#bestiary">神魔異事錄</a>
+  <a href="#items">物品大全</a>
+  <a href="#altar">煉妖大全</a>
   <a href="https://github.com/Ouroboros/OpenSWD3e">GitHub</a>
 </nav>
 <div class="page" id="top">
   <header>
-    <h1>OpenSWD3e<small>軒轅劍參外傳 天之痕 · 重制执行程序</small></h1>
+    <h1>OpenSWD3e<small>軒轅劍參外傳 天之痕 · 重製執行程序</small></h1>
   </header>
 
   <div class="intro">
@@ -219,15 +221,8 @@ footer { margin-top: 40px; text-align: center; font-size: 14px; color: var(--dim
     <p class="note">本项目不含任何游戏资料，需要你已有原版游戏。</p>
   </div>
 
-  <section>
-    <div class="feature">
-      <p><strong>神魔異事錄</strong>：仿游戏图鉴的网页，列出全部怪物的数值、五行承受伤害、法术、可偷的物品、掉落物品、狂暴条件和说明，也收录了游戏图鉴里没有的剧情对手，可以搜索。</p>
-      <a class="button" href="bestiary.html">打开神魔異事錄</a>
-    </div>
-  </section>
-
   <section id="compare">
-    <h2>和原版相比</h2>
+    <h2>與原版相比</h2>
     <table>
       <tr><th>方面</th><th>原版</th><th>重制版</th></tr>
       <tr><td>游戏目录</td><td>由安装程序写入的目录</td><td>游戏资料和存档可以放在任意目录，目录名可以有中文</td></tr>
@@ -235,8 +230,8 @@ footer { margin-top: 40px; text-align: center; font-size: 14px; color: var(--dim
       <tr><td>字体</td><td>需要系统装有細明體</td><td>自带字体</td></tr>
       <tr><td>窗口</td><td>640×480 独占全屏</td><td>窗口运行，任意缩放，<code>Alt+Enter</code> 切换全屏，记住窗口大小</td></tr>
       <tr><td>切到其他程序</td><td>游戏暂停</td><td>继续运行，只有最小化时暂停</td></tr>
-      <tr><td>画面</td><td>每 35 毫秒画一帧，固定 640×480</td><td>可按显示器刷新率平滑显示，地图可填满宽屏（见「设置」）</td></tr>
-      <tr><td>启动画面</td><td>每次都显示</td><td>可以跳过，直接进入标题画面（见「设置」）</td></tr>
+      <tr><td>画面</td><td>每 35 毫秒画一帧，固定 640×480</td><td>可按显示器刷新率平滑显示，地图可填满宽屏（见「設置」）</td></tr>
+      <tr><td>启动画面</td><td>每次都显示</td><td>可以跳过，直接进入标题画面（见「設置」）</td></tr>
       <tr><td>走路与跑步</td><td>每次启动都是走路；按 R 切换时整个游戏停顿 0.2 秒</td><td>按 R 即时切换，下次启动时保持上次的选择</td></tr>
       <tr><td>设定</td><td>离开设定页才保存</td><td>改了立即保存</td></tr>
       <tr><td>战斗截图</td><td>按 P 存到 <code>C:\snap</code>，文件夹不存在时不存</td><td>和地图截图一样存到游戏目录的 <code>ScrnShot</code> 文件夹</td></tr>
@@ -244,37 +239,82 @@ footer { margin-top: 40px; text-align: center; font-size: 14px; color: var(--dim
   </section>
 
   <section id="install">
-    <h2>安装与运行</h2>
+    <h2>安裝與運行</h2>
     <ol>
       <li>准备好原版游戏目录，例如 <code>E:\Game\swd3e</code>。</li>
-      <li>解压后得到 <code>OpenSWD3e</code> 文件夹，里面有 <code>swd3er.exe</code>、<code>asset</code> 文件夹和设置文件 <code>swd3er.toml</code>。可以整个放在任意位置，也可以把里面的东西放进游戏目录。</li>
+      <li>从 <a href="https://github.com/Ouroboros/OpenSWD3e/releases/latest">Releases</a> 下载最新版的压缩包，解压后得到 <code>OpenSWD3e</code> 文件夹，里面有 <code>swd3er.exe</code>、<code>asset</code> 文件夹和设置文件 <code>swd3er.toml</code>。可以整个放在任意位置，也可以把里面的东西放进游戏目录。</li>
       <li>如果没有放进游戏目录，用记事本打开 <code>swd3er.toml</code>，在 <code>[paths]</code> 里写上游戏目录：
 <pre><code>[paths]
 data_dir = 'E:\Game\swd3e'</code></pre>
       </li>
       <li>运行 <code>swd3er.exe</code>。</li>
     </ol>
-    <p class="note">第一次启动时，原版保存在游戏目录 <code>Env.dat</code> 里的音量、按键等设定会自动导入一次。</p>
   </section>
 
   <section id="settings">
-    <h2>设置</h2>
-    <p>下面这些是重制版新增的设置。在标题画面的「環境設定」或游戏中按 Esc →「設定」里都能调整，改了立即生效并保存。画面相关的几项在「顯示設定」子页里。</p>
-    <table>
-      <tr><th>设置</th><th>默认</th><th>作用</th></tr>
-      <tr><td>啟動畫面</td><td>开</td><td>关闭后启动时跳过启动画面，直接进入标题画面</td></tr>
-      <tr><td>平滑畫面</td><td>开</td><td>按显示器刷新率画出移动、淡入淡出等动态，高刷新率显示器更流畅；关闭后和原版一样每 35 毫秒画一次</td></tr>
-      <tr><td>垂直同步</td><td>开</td><td>等显示器刷新再显示，消除画面撕裂</td></tr>
-      <tr><td>幀率上限</td><td>自動</td><td>每秒最多画几帧；只在平滑畫面开启时有效</td></tr>
-      <tr><td>繪製倍率</td><td>自動</td><td>平滑畫面按几倍精度绘制，倍数越高移动越细，也越耗 CPU；只在平滑畫面开启时有效</td></tr>
-      <tr><td>地圖填滿</td><td>开</td><td>地图填满宽屏窗口，能看到更大范围；菜单、战斗等画面仍是 640×480</td></tr>
-    </table>
-    <p>exe 旁边有两个设置文件：<code>swd3er.toml</code> 是你自己的设置，程序不会改动它；<code>swd3er.default.toml</code> 是游戏自动保存的设置。两个文件写了同一项时，以 <code>swd3er.toml</code> 为准。</p>
+    <h2>設置</h2>
+    <p>exe 旁边有两个设置文件：</p>
+    <ul>
+      <li><code>swd3er.toml</code>：你自己的设置。程序只读不改，注释和顺序都保留。</li>
+      <li><code>swd3er.default.toml</code>：程序自动保存的设置，包括游戏里改的设置、按键和退出时的窗口大小。</li>
+    </ul>
+    <p>同一项两个文件都写了时，以 <code>swd3er.toml</code> 为准，这时在游戏里再改只在当次有效。<code>swd3er.toml</code> 里每一项都带着说明，默认被 <code>#</code> 注释掉，删掉行首的 <code>#</code> 就会生效。值写错或没写时取默认值，写错的会在日志里记一条警告。</p>
+    <p>下面是 <code>swd3er.toml</code> 的例子，除了游戏目录，写的都是默认值：</p>
+<pre class="toml"><code>[paths]
+<span class="c"># 原版游戏目录。不写时用当前目录，所以把 exe 放进游戏目录就不用写。</span>
+<span class="c"># 相对路径以 exe 所在的目录为准。路径用单引号时反斜杠照写，用双引号时要写成 \\。</span>
+data_dir = &#x27;E:\Game\swd3e&#x27;
+<span class="c"># 存档目录。不写时和原版一样存在游戏目录的 save 里。</span>
+save_dir = &#x27;E:\Game\swd3e\save&#x27;
+
+[window]
+<span class="c"># 窗口的宽和高，至少 640×480。画面保持原来的比例尽量填满窗口，比例不同时留黑边。</span>
+<span class="c"># 这三项不写时，用上次退出时的窗口大小。游戏里按 Alt+Enter 切换全屏。</span>
+width = 1280
+height = 960
+<span class="c"># 启动时是否最大化。</span>
+maximized = false
+
+[display]
+<span class="c"># 以下五项也能在游戏里改：标题画面的「環境設定」，或游戏中按 Esc →「設定」→「顯示設定」。</span>
+
+<span class="c"># 平滑畫面。游戏逻辑仍和原版一样每 35 毫秒走一步，移动、淡入淡出等动态在两步之间</span>
+<span class="c"># 按显示器刷新率连续画出，高刷新率显示器更流畅。false 时和原版一样每 35 毫秒画一次。</span>
+smooth_motion = true
+<span class="c"># 垂直同步。等显示器刷新再显示，消除画面撕裂。</span>
+vsync = true
+<span class="c"># 每秒最多画几帧，可写 30～1000；0 表示不限，开着垂直同步时就跟随显示器刷新率。</span>
+<span class="c"># 只在平滑畫面开启时有效。</span>
+frame_rate = 0
+<span class="c"># 平滑畫面按几倍精度绘制，可写 1～8。倍数越高，镜头和人物移动越细，也越耗 CPU</span>
+<span class="c"># （2 倍约为 1 倍的 3～4 倍）。&quot;auto&quot; 按窗口大小取能完整显示的最大倍数，最多 4 倍。</span>
+<span class="c"># 只在平滑畫面开启时有效。</span>
+render_scale = &quot;auto&quot;
+<span class="c"># 地图填满宽屏窗口，能看到更大范围，对话框仍在中间。</span>
+<span class="c"># 菜单、战斗、存档等画面仍是 640×480，两边留黑边。</span>
+wide_map = true
+
+[game]
+<span class="c"># 启动时先显示启动画面；false 时直接进入标题画面。游戏里在「設定」第一行切换。</span>
+launcher = true
+<span class="c"># 地图上默认跑步，false 是走路。游戏里按 R 切换时会记下来，下次启动照旧。</span>
+running = true
+<span class="c"># 调试模式，见「隱藏秘籍」的「调试模式」。</span>
+debug = false
+<span class="c"># [game] 里还有音量、文字速度、战斗速度和按键（[game.keys]），和原版「環境設定」里的一样，</span>
+<span class="c"># 在游戏里改就行。第一次启动时，这些设置会从游戏目录的 Env.dat 导入一次。</span>
+
+[logging]
+<span class="c"># 日志的位置和文件名。每次启动写一个新文件，文件名后面加上启动时间和进程号，</span>
+<span class="c"># 例如 logs/swd3er-2026-10-29_14-32-05-127840.log。相对路径以 exe 所在的目录为准。</span>
+path = &quot;logs/swd3er.log&quot;
+<span class="c"># 记录多详细，从多到少是 trace、debug、info、warning、error、critical。</span>
+level = &quot;debug&quot;</code></pre>
   </section>
 
   <section id="secrets">
-    <h2>隐藏功能</h2>
-    <p>以下都是原版就有的功能。</p>
+    <h2>隱藏秘籍</h2>
+    <p>以下都是原版就有的隐藏功能。</p>
 
     <h3>随时可用的按键</h3>
     <table>
@@ -285,20 +325,67 @@ data_dir = 'E:\Game\swd3e'</code></pre>
     </table>
 
     <h3>调试模式</h3>
-    <p>在 <code>swd3er.toml</code> 的 <code>[game]</code> 里写上 <code>debug = true</code>，进入游戏后在地图上同时按住右 Ctrl、右 Shift、Home、End，即可打开下面这些按键。</p>
+    <p>在 <code>swd3er.toml</code> 的 <code>[game]</code> 里写上 <code>debug = true</code> 打开调试模式。之后：</p>
+    <ul>
+      <li>战斗中的调试键直接可用。</li>
+      <li>地图上同时按住 右Ctrl + 右Shift + Home + End，才会开启地图的调试键。开启状态记在剧情旗标里，会随存档保存：之后读这个存档或它后来的存档，不用再按就能用，也没有办法关掉（和原版一样）。</li>
+    </ul>
+    <p>地图上：</p>
     <table>
       <tr><th>按键</th><th>作用</th></tr>
-      <tr><td>F12 或 Ctrl+S</td><td>打开存档画面</td></tr>
-      <tr><td>Ctrl+L</td><td>打开读档画面</td></tr>
-      <tr><td>Ctrl+F</td><td>立即进入一场战斗（遇敌开启时）</td></tr>
-      <tr><td>Ctrl+F9</td><td>快速跳过剧情文字（再按一次关闭）</td></tr>
-      <tr><td>Ctrl+F1／Ctrl+F2</td><td>显示调试信息／地图格子</td></tr>
-      <tr><td>Ctrl+F3</td><td>穿墙（再按一次关闭）</td></tr>
-      <tr><td>Ctrl+Tab 加小键盘 <code>+</code> <code>-</code></td><td>调整地图动画速度</td></tr>
-      <tr><td>F4</td><td>打开秘技对话框</td></tr>
-      <tr><td>F6</td><td>大部分物品各得 10 个</td></tr>
+      <tr><td>F12</td><td>打开剧情旗标查看画面（只在没有对话时）</td></tr>
+      <tr><td>Ctrl+S／Ctrl+L</td><td>随时打开存档／读档画面（只在没有对话时）</td></tr>
+      <tr><td>Ctrl+F</td><td>立即进入一场战斗（当前地图会遇敌时）</td></tr>
+      <tr><td>Ctrl+F9</td><td>快速模式（对话自动跳过），再按一次关闭</td></tr>
+      <tr><td>Ctrl+F1／Ctrl+F2</td><td>显示／隐藏调试文字与地图格子标记</td></tr>
+      <tr><td>Ctrl+F3</td><td>可以穿过障碍物，再按一次恢复</td></tr>
+      <tr><td>Ctrl+Tab+小键盘 +／-</td><td>调整地图动画的速度</td></tr>
+      <tr><td>Ctrl+Q</td><td>立刻退出游戏</td></tr>
+      <tr><td>F4</td><td>作弊对话框（只限 Windows）</td></tr>
+      <tr><td>F6</td><td>大部分物品与装备各增加 10 个</td></tr>
       <tr><td>F7</td><td>进入升天小游戏</td></tr>
-      <tr><td>Ctrl+Q</td><td>结束游戏</td></tr>
+    </table>
+    <p>战斗中（按住 Ctrl）：</p>
+    <table>
+      <tr><th>按键</th><th>作用</th></tr>
+      <tr><td>Ctrl+F1</td><td>显示／隐藏战斗的调试信息</td></tr>
+      <tr><td>Ctrl+F4</td><td>调试信息里另显示我方四人的战斗数值</td></tr>
+      <tr><td>Ctrl+X</td><td>攻击不扣敌人的生命，再按一次恢复</td></tr>
+      <tr><td>Ctrl+Z</td><td>我方全员生命、灵力、体力补满，怒气补满，攻击 6500、防御 155、敏捷 100</td></tr>
+      <tr><td>Ctrl+W</td><td>敌人全灭</td></tr>
+      <tr><td>Ctrl+E</td><td>立即结束战斗</td></tr>
+      <tr><td>Ctrl+K</td><td>下一击为「強攻擊」</td></tr>
+      <tr><td>Ctrl+D</td><td>我方全员受到 50 点伤害</td></tr>
+      <tr><td>Ctrl+R</td><td>我方全员受到 500 点伤害，灵力、体力各减 5</td></tr>
+      <tr><td>Ctrl+V</td><td>敌人全员受到 10 点伤害</td></tr>
+      <tr><td>Ctrl+T</td><td>敌人的行动条重新随机</td></tr>
+      <tr><td>Ctrl+F2</td><td>切换「絕對靈契」／「正常靈契」</td></tr>
+      <tr><td>Ctrl+F9</td><td>快速模式（对话自动跳过）</td></tr>
+      <tr><td>Ctrl+C</td><td>中止正在施放的法术</td></tr>
+      <tr><td>Ctrl+F3</td><td>停止战斗音乐</td></tr>
+      <tr><td>Ctrl+F5</td><td>战斗放慢（每帧 0.1 秒），再按一次恢复</td></tr>
+      <tr><td>H／J（不按 Ctrl）</td><td>所有角色和敌人向右／向左移动 10 像素</td></tr>
+    </table>
+  </section>
+
+  <section id="attributes">
+    <h2>角色屬性</h2>
+    <p>各项属性在原版里的实际作用（重制版的计算与原版相同）。属性都存成 16 位整数，最大 32767；表中的「上限」是超过后会被截掉、或再高也没有用的值。</p>
+    <table>
+      <tr><th>属性</th><th>作用</th><th>上限</th></tr>
+      <tr><td>生命</td><td>降到 0 就倒下</td><td>9999。每场战斗开始时，参战角色的生命和生命上限超过 9999 的部分会被永久截掉</td></tr>
+      <tr><td>靈力</td><td>施放法术和部分招式时消耗</td><td>9999，同生命</td></tr>
+      <tr><td>體力</td><td>使用部分招式和饰品指令时消耗</td><td>9999，同生命</td></tr>
+      <tr><td>力量</td><td>战斗中的攻擊 = 力量 + 装备的攻击力（装备加的力量同时加到攻擊）。普通攻击的伤害 = 攻擊 + 随机 1～（等級 ÷ 3 + 3）− 敌人防禦，不超过敌人防禦时伤害为 1；攻擊提升状态加 200%，和招式同属性的五行攻擊提升再加 30%，攻擊下降按状态的回合数减少一定比例</td><td>攻擊按 16 位有符号数计算，超过 32767 时溢出，伤害反而只剩 1</td></tr>
+      <tr><td>耐力</td><td>战斗中的防禦 = 耐力 + 装备的防御力；防禦提升状态加 200%。只减少敌人普通攻击的伤害：伤害 = 敌人攻擊 + 随机 1～（敌人等級 ÷ 3 + 3）− 防禦；不超过防禦时只受 0～1 加随机 1～（敌人等級 ÷ 3 + 3）的伤害。法术伤害不看防禦</td><td>没有截断；高过敌人的攻擊后再高也没用</td></tr>
+      <tr><td>智慧</td><td>法术等按招式数值计算的伤害，额外加随机 1～（等級 + 智慧）÷（5～9）。用带异常状态的招式攻击敌人时，智慧每高出敌人的智慧 20 点，中异常的机率加一成</td><td>没有截断</td></tr>
+      <tr><td>敏捷</td><td>战斗中行动条每帧增加「敏捷 ÷ 4」（加速状态时敏捷先加 40，減速时减 30），满了就轮到行动。行动条的满值 = 100 ×（20 − 戰鬥速度），戰鬥速度在「環境設定」里设定，0～11</td><td>达到满值的 4 倍后一帧就满，再高也没用：戰鬥速度 11 时为 3600，0 时为 8000</td></tr>
+      <tr><td>閃躲</td><td>不显示在状态页。敌人攻击时，我方连续 13 次没闪开之后，每次掷 0～9，小于閃躲值就闪开；连续 26 次没闪开时下一次必闪；有人刚闪开后的下一次一定不闪。隐身状态时九成闪开。我方四人共用这个连续次数</td><td>10，10 以上在可以掷时必闪。战斗中只取 0～255，超过 255 会绕回</td></tr>
+      <tr><td>異常</td><td>不显示在状态页。敌人攻击时掷 0～9，大于異常值才可能中异常状态，所以越高越好：中招机率为（9 − 異常）成</td><td>9 以上不会中异常。变成负数时按很大的数比较，同样不会中</td></tr>
+      <tr><td>默契</td><td>没有作用：战斗和其他计算都不读取，只在升级时显示增加了多少</td><td>—</td></tr>
+      <tr><td>反應</td><td>没有作用，同默契</td><td>—</td></tr>
+      <tr><td>五行抗性</td><td>状态页的 [金] [木] [水] [火] [土] 五个百分比。受到某个属性的攻击时，按五行生剋各取一项：一项按百分比减少伤害，一项按百分比增加伤害，一项不为 0 时把伤害变成按该百分比的回复。金：減 [火]、加 [木]、回復 [水]；木：減 [金]、加 [土]、回復 [火]；水：減 [土]、加 [火]、回復 [木]；火：減 [水]、加 [金]、回復 [土]；土：減 [木]、加 [水]、回復 [金]</td><td>每项 −128～127</td></tr>
+      <tr><td>等級</td><td>普通攻击的随机加成是 1～（等級 ÷ 3 + 3），法术的随机加成也计入等級</td><td>战斗胜利升级只到 60 级</td></tr>
     </table>
   </section>
 
@@ -308,12 +395,78 @@ data_dir = 'E:\Game\swd3e'</code></pre>
     <a href="https://github.com/Ouroboros/OpenSWD3e/blob/master/reverse/analysis/deviations.md">和原版的全部差异</a>
   </footer>
 </div>
+<div class="viewer" id="viewer"></div>
 <script>
+// The bestiary and the items open in place of the page, beside the menu; each is loaded the first time it is shown.
+const VIEWS = { bestiary: 'bestiary.html', items: 'items.html', altar: 'altar.html' };
+const frames = {};
+const details = {};  // by page: what it shows (as its address names it)
+// The pages' sound switch, kept in the address (?sound=off) and passed on to every page loaded.
+const SOUND_PARAMETER = 'sound';
+const SOUND_OFF = 'off';
+let soundOn = new URLSearchParams(location.search).get(SOUND_PARAMETER) !== SOUND_OFF;
+
+function soundQuery() {
+  return soundOn ? '' : `?${SOUND_PARAMETER}=${SOUND_OFF}`;
+}
+
+function decoded(text) {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return text;
+  }
+}
 // The section on screen is chosen in the menu, as the game marks the page shown.
-const links = [...document.querySelectorAll('nav a[href^="#"]')];
+const links = [...document.querySelectorAll('nav a[href^="#"]')].filter(link => !VIEWS[link.hash.slice(1)]);
 const targets = links.map(link => document.getElementById(link.getAttribute('href').slice(1)));
 
+// The address names a page and, after a slash, what it opens on (#items/藥草: that item in the items page). A page
+// already showing it is left as it is, so that going back to an address returns to the page as it was.
+function route() {
+  const [name, ...rest] = location.hash.slice(1).split('/');
+  const detail = decoded(rest.join('/'));
+  const view = VIEWS[name];
+  document.body.classList.toggle('viewing', view !== undefined);
+
+  if (view === undefined) {
+    document.querySelectorAll('nav a').forEach(link => link.classList.remove('chosen'));
+    const target = document.getElementById(name);
+
+    if (target) {
+      target.scrollIntoView();
+    }
+
+    choose();
+    return;
+  }
+
+  const source = `${view}${soundQuery()}${detail ? `#${encodeURIComponent(detail)}` : ''}`;
+
+  if (!frames[name]) {
+    const frame = document.createElement('iframe');
+    frame.src = source;
+    details[name] = detail;
+    frame.title = document.querySelector(`nav a[href="#${name}"]`).textContent;
+    frame.addEventListener('load', () => frame.classList.contains('shown') && frame.focus());
+    document.getElementById('viewer').append(frame);
+    frames[name] = frame;
+  } else if (detail && details[name] !== detail) {
+    // Replaced in place: the page's step adds no entry to the history.
+    frames[name].contentWindow.location.replace(source);
+    details[name] = detail;
+  }
+
+  Object.entries(frames).forEach(([key, frame]) => frame.classList.toggle('shown', key === name));
+  frames[name].focus();
+  document.querySelectorAll('nav a').forEach(link => link.classList.toggle('chosen', link.hash === `#${name}`));
+}
+
 function choose() {
+  if (document.body.classList.contains('viewing')) {
+    return;
+  }
+
   let shown = 0;
 
   targets.forEach((target, at) => {
@@ -331,7 +484,52 @@ function choose() {
 
 addEventListener('scroll', choose);
 addEventListener('resize', choose);
-choose();
+addEventListener('hashchange', route);
+// A page shown here tells what it shows (kept in the address in place) or asks for another (a new address: going
+// back returns to the first).
+addEventListener('message', event => {
+  const { open, shown, detail, sound } = event.data || {};
+
+  // A page's sound switch: kept in this address, the other pages told.
+  if (typeof sound === 'boolean') {
+    soundOn = sound;
+    const query = new URLSearchParams(location.search);
+
+    if (soundOn) {
+      query.delete(SOUND_PARAMETER);
+    } else {
+      query.set(SOUND_PARAMETER, SOUND_OFF);
+    }
+
+    const text = query.toString();
+    history.replaceState(null, '', `${location.pathname}${text ? `?${text}` : ''}${location.hash}`);
+    Object.values(frames).forEach(frame => {
+      if (frame.contentWindow !== event.source) {
+        frame.contentWindow.postMessage({ sound }, '*');
+      }
+    });
+    return;
+  }
+
+  if (typeof detail !== 'string') {
+    return;
+  }
+
+  if (VIEWS[shown]) {
+    details[shown] = detail;
+
+    if (location.hash.slice(1).split('/')[0] === shown) {
+      history.replaceState(null, '', `#${shown}/${encodeURIComponent(detail)}`);
+    }
+
+    return;
+  }
+
+  if (VIEWS[open]) {
+    location.hash = `${open}/${encodeURIComponent(detail)}`;
+  }
+});
+route();
 </script>
 </body>
 </html>

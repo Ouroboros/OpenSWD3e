@@ -1,10 +1,15 @@
-// scripts/bestiary/dump <game dir> data | portrait <action> <first> <last>
+// scripts/bestiary/dump <game dir> data | portrait <action> <first> <last> | formations
 // data: one JSON line per mon.dat object 1..500 (the bestiary's range) with the fields the page shows.
 // portrait: each act's action at its first frame as "id width height" and its RGB rows.
+// formations: one JSON line per battle of battle.ffd, the mon.dat objects of its enemy slots (formation 0, the one
+// StartBattle reads).
 // Build after `cmake --build --preset linux`, linking build/linux/libswd3e_core.a and the libraries of swd3e_tests
 // (third_party/install/linux/lib: SDL3, avformat, avcodec, swscale, swresample, avutil) with -static -pthread.
 // The page: dump <dir> data > monsters.jsonl; dump <dir> portrait 59 1 500 > portraits.raw;
-// python3 scripts/bestiary/build.py monsters.jsonl portraits.raw docs/bestiary.html
+// dump <dir> formations > formations.jsonl; python3 scripts/sound/extract.py <dir>all.snd 0x2E move.wav;
+// python3 scripts/bestiary/build.py monsters.jsonl portraits.raw formations.jsonl <dir>FIGTALK.dat \
+//     docs/bestiary.html move.wav
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -12,6 +17,8 @@
 #include <string>
 #include <vector>
 
+#include "battle/battle_file.h"
+#include "core/format.h"
 #include "draw/painter.h"
 #include "org/database.h"
 #include "org/object_record.h"
@@ -247,13 +254,51 @@ int Portrait(const std::u8string& directory, int action, int first, int last)
     return 0;
 }
 
+// StartBattle (0x00459BD0): a battle's enemies are the mon.dat objects of formation 0 (the low words), slot by slot;
+// FIGTALK.dat's commands name them by slot.
+int Formations(const std::u8string& directory)
+{
+    const std::u8string path = swd3e::Concat({directory, u8"battle.ffd"});
+    swd3e::BattleFile file;
+
+    if (!file.ReadHeader(path))
+    {
+        std::fprintf(stderr, "no battle.ffd\n");
+        return 1;
+    }
+
+    const std::size_t battles = file.Counts().size();
+
+    for (std::size_t battle = 0; battle < battles; ++battle)
+    {
+        swd3e::BattleFormation formation;
+
+        if (!file.ReadFormation(path, formation, static_cast<swd3e::u16>(battle), 0))
+        {
+            continue;
+        }
+
+        std::string enemies;
+        const std::size_t count = std::min<std::size_t>(formation.enemyCount, formation.enemies.size());
+
+        for (std::size_t slot = 0; slot < count; ++slot)
+        {
+            enemies += (slot == 0 ? "" : ",") + std::to_string(formation.enemies[slot] & 0xFFFF);
+        }
+
+        std::printf("{\"battle\":%zu,\"enemies\":[%s]}\n", battle, enemies.c_str());
+    }
+
+    return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv)
 {
     if (argc < 3)
     {
-        std::fprintf(stderr, "usage: dump <game dir> data | portrait <action> <first> <last>\n");
+        std::fprintf(stderr, "usage: dump <game dir> data | portrait <action> <first> <last> | formations\n");
         return 2;
     }
 
@@ -268,6 +313,11 @@ int main(int argc, char** argv)
     if (std::strcmp(argv[2], "portrait") == 0 && argc >= 6)
     {
         return Portrait(directory, std::atoi(argv[3]), std::atoi(argv[4]), std::atoi(argv[5]));
+    }
+
+    if (std::strcmp(argv[2], "formations") == 0)
+    {
+        return Formations(directory);
     }
 
     return 2;
