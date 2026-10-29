@@ -436,13 +436,13 @@ void Game::EndBattle()
     battle.unk536AF8 = 0;
     battle.unk536AFC = 0;
     battle.unk536B00 = 0;
-    battle.unk577078 = 0;
+    battle.pressedScrollPart = 0;
     battle.hoverScrollPart = 0;
     battle.battleGold = 0;
     battle.battleExperience = 0;
     battle.battleProficiency = 0;
     battle.unk577204 = 0;
-    battle.unk577088 = 0;
+    battle.timerAttack = 0;
     battle.pendingActionRow = 0;
     battle.pendingAction = 0;
     battle.flashLevel = BattleState::FlashStart;
@@ -517,8 +517,8 @@ void Game::EndBattle()
     battle.unk5772A8 = 0;
     battle.unk5772AC = 0;
     battle.unk5772B0 = 0;
-    battle.unk5772B4 = 0;
-    battle.unk5772B8 = 0;
+    battle.choiceReady = 0;
+    battle.mouseMode = 0;
     battle.unk5772BC = 0;
     battle.unk5772C0 = 0;
     battle.flashing = 0;

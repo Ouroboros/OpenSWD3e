@@ -731,7 +731,7 @@ void TurnFrame::DrawThrowListAdvance(int x, int y, int cursor, int top, Scene& s
                 FillMode::Gradient,
                 scene);
             battle.listCursor = next;
-            battle.unk5772B4 = 1;
+            battle.choiceReady = 1;
         }
 
         font.SetBackground(TextFont::NoBackground);
@@ -846,7 +846,7 @@ void TurnFrame::DrawRefineListAdvance(int x, int y, int cursor, Scene& scene)
                     scene);
                 font.DrawText(game.drawSurface, columnX, rowY, name, battle.lightColor, TextFont::BoldOutline);
                 font.SetBackground(TextFont::NoBackground);
-                battle.unk5772B4 = 1;
+                battle.choiceReady = 1;
                 battle.listCursor = piece == 1 ? object + 1 : object;
 
                 if (battle.roleListEntries == 0)
@@ -993,7 +993,7 @@ void TurnFrame::DrawSpecialListAdvance(int x, int y, int cursor, Scene& scene)
                 );
                 font.SetBackground(TextFont::NoBackground);
                 battle.specialCursor = index;
-                battle.unk5772B4 = 1;
+                battle.choiceReady = 1;
             }
 
             ++row;
@@ -1431,7 +1431,7 @@ void TurnFrame::DrawSpellListAdvance(int x, int y, int cursor, int top, Scene& s
                 TextFont::BoldOutline
             );
             font.SetBackground(TextFont::NoBackground);
-            battle.unk5772B4 = 1;
+            battle.choiceReady = 1;
             battle.specialCursor = index;
         }
 
@@ -1525,8 +1525,8 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
                 kItemScrollX,
                 kItemScrollY,
                 kItemScrollRows,
-                battle.unk577040,
-                battle.unk577078,
+                battle.thumbDragOffset,
+                battle.pressedScrollPart,
                 scene
             );
     }
@@ -1587,7 +1587,7 @@ void TurnFrame::DrawItemListAdvance(int x, int y, int cursor, int top, Scene& sc
                     FillMode::Gradient,
                     scene);
                 battle.listCursor = index;
-                battle.unk5772B4 = 1;
+                battle.choiceReady = 1;
 
                 if (battle.listRole == kObjectStatsCategory)
                 {
@@ -2096,8 +2096,8 @@ void TurnFrame::DrawTitledItemListAdvance(
                 kTitledScrollX,
                 kItemScrollY,
                 kItemScrollRows,
-                battle.unk577040,
-                battle.unk577078,
+                battle.thumbDragOffset,
+                battle.pressedScrollPart,
                 scene
             );
     }
@@ -2163,7 +2163,7 @@ void TurnFrame::DrawTitledItemListAdvance(
                 FillMode::Gradient,
                 scene);
             battle.listCursor = index;
-            battle.unk5772B4 = 1;
+            battle.choiceReady = 1;
 
             if (category == kObjectStatsCategory)
             {
@@ -2851,7 +2851,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
         text(
             kDebugStateX,
             kDebugMenuY,
-            WinFormat(kMenuDebugLine, {battle.result, battle.unk5772B8, battle.menuCommand})
+            WinFormat(kMenuDebugLine, {battle.result, battle.mouseMode, battle.menuCommand})
         );
         text(kDebugStateX, kDebugCountsY, WinFormat(kCommandDebugLine, {battle.unk577270}));
         text(
@@ -2866,7 +2866,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
         text(
             kDebugRightX,
             kDebugCountsY,
-            WinFormat(kTalkDebugLine, {static_cast<i32>(battle.unk5774E9), battle.unk5772B4})
+            WinFormat(kTalkDebugLine, {static_cast<i32>(battle.unk5774E9), battle.choiceReady})
         );
 
         // The frames per second divide (idiv) by the milliseconds between the last two frames: none faults.

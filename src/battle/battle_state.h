@@ -506,10 +506,10 @@ public:
     // The turns of the units and the lists (NextEnemyTurn, NextRoleTurn, ScrollListBack).
     i32 actingEnemy = 0;  // 0x00576FB4 the enemy taking the turn
     i32 orderStep = 1;    // 0x004BF0E0 1-based step through enemyOrder or RoleCycle
-    i32 unk5772B4 = 0;
+    i32 choiceReady = 0;  // 0x005772B4 1: a choice is marked (by a key or under the pointer); the confirm takes it
     i32 damageShown = 0;  // 0x005772D8 set when a unit's damage numbers are done (ApplyHits)
-    i32 unk577078 = 0;
-    i32 pageListRow = 1;  // 0x004BF0E8 the row marked in the list of state 2 (1-based)
+    i32 pressedScrollPart = 0;  // 0x00577078 the scroll part pressed this frame (the arrow keys press up and down)
+    i32 pageListRow = 1;        // 0x004BF0E8 the row marked in the list of state 2 (1-based)
     // 0x004BF0EC the row marked in the lists of states 4 and 0x1B (1-based)
     i32 roleListRow = 1;                      // 0x004BF0EC
     i32 listScroll = 0;                       // 0x00576FD8 the scroll of a list
@@ -562,20 +562,20 @@ public:
     i32 menuY = 0;                       // 0x00576FFC
     i32 hoverPageTab = -1;               // 0x004BF10C the page tab under the pointer (list of state 2)
     i32 hoverRoleTab = -1;               // 0x004BF110 the role tab under the pointer (list of state 4)
-    i32 unk57703C = 0;                   // 0x0057703C the pointer y when the scroll thumb is pressed
-    i32 unk577040 = 0;                   // 0x00577040 the list scroll bar position
-    i32 unk5772FC = 0;                   // 0x005772FC 1: the scroll thumb is dragged
+    i32 thumbPressY = 0;                 // 0x0057703C the pointer's y when the thumb was pressed (only written)
+    i32 thumbDragOffset = 0;             // 0x00577040 the thumb drawn off its place by this (always 0)
+    i32 thumbDragged = 0;                // 0x005772FC 1: the thumb is dragged (never set, as in the original)
     i32 hoverUnit = 0;                   // 0x00577988 the unit aimed at under the pointer
     u16 unk577212 = 0;
     // The confirm key of the menu (Game::MenuConfirm).
-    i32 unk577080 = 0;
+    i32 timingPress = 0;  // 0x00577080 the press of the timing bar (bit 0: Space down, bit 15: taken)
     i32 unk576F9C = 0;
     i32 unk577320 = 0;  // 0x00577320 set to 1 when a thrown object lands (MenuConfirm; never read)
     std::array<u16, Units> escortCalled = {};  // 0x00536EA8 per unit: the escort place it called
     u16 callingEscort = 0;                     // 0x0057720C the escort being called (its low word)
     i32 levelUpPending = 0;                    // 0x0057733C a level-up to show at the end
     u16 unk577204 = 0;
-    i32 unk577328 = 0;
+    i32 timingBarShown = 0;       // 0x00577328 1: the timing bar of command 0x1A runs (the confirm key waits)
     i32 victoryWithoutPanel = 0;  // 0x00577308 1: the victory ends without its panel (BattleEndFrame; inferred)
     // The hit act of a slot (Game::HitTargetFrame).
     i32 rippleHits = 0;                        // 0x00577340 1: hits run the ripple instead of their pictures
@@ -714,8 +714,8 @@ public:
     i32 frameResult = 0;  // 0x005770A4 the result of the battle frame (1 runs on; the end CheckBattleEnd set)
     std::array<u16, 3> givenBack = {};  // 0x0050EFCA [1], [2]: objects given back at the end (set by 0x0045EC60)
     i32 promptFrames = 0;               // 0x00577084 frames of the prompt
-    i32 unk577088 = 0;
-    i32 unk5772B8 = 0;
+    i32 timerAttack = 0;  // 0x00577088 the timer attack of command 0x1F (bit 31: running, bit 0: a press to hit)
+    i32 mouseMode = 0;    // 0x005772B8 1: the mouse is in use (MouseHover): the menus follow the pointer, the aim waits
     i32 turnPointer = 1;  // 0x004BF1E8 1: the pointer shows the turn mark
     i32 unk57724C = 0;
     i16 unk577246 = 0;

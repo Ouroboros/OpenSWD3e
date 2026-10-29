@@ -70,7 +70,7 @@ constexpr int kRouletteY = 0x64;
 constexpr u16 kRouletteTarget = 0x2389;
 constexpr u16 kRouletteTreasure = 0x25;  // the treasure kind of the roulette (AddTreasureExperience)
 constexpr u16 kRoulettePoints = 5;
-constexpr i32 kRouletteSetUp = 0x40000000;  // BattleState::unk577088 while the roulette runs
+constexpr i32 kRouletteSetUp = 0x40000000;  // BattleState::timerAttack while the roulette runs
 constexpr i32 kRouletteStopped = 0x20000000;
 constexpr u32 kRouletteFrames = 0xFFFFFF;
 constexpr u32 kRouletteRest = 0xF;
@@ -146,7 +146,7 @@ constexpr u16 kOrderPrepared = 0x8000;  // BattleState::enemyOrders
 constexpr u16 kOrderSpell = 0x4000;
 constexpr int kTimingX = 0x140;  // RoleActionFrame command 0x1A: the timing bar
 constexpr int kTimingY = 0xC8;
-constexpr i32 kTimingPressed = 1;  // BattleState::unk577080
+constexpr i32 kTimingPressed = 1;  // BattleState::timingPress
 constexpr i32 kTimingTaken = 0x8000;
 constexpr i32 kTimingKept = 0xFFF;
 constexpr u16 kTimingDone = 0x8000;
@@ -154,7 +154,7 @@ constexpr u16 kTimingSound = 0x2C;
 constexpr u32 kLowWord = 0xFFFF;
 constexpr u32 kHighWord = 0xFFFF0000;
 constexpr u16 kTimingStart = 1;
-constexpr i32 kTimerStarted = static_cast<i32>(0x80000000u);  // BattleState::unk577088
+constexpr i32 kTimerStarted = static_cast<i32>(0x80000000u);  // BattleState::timerAttack
 constexpr i32 kTimerPressed = 1;
 constexpr int kTimerSeconds = 5;
 constexpr int kTimerFlag = 0x4B;
@@ -1609,7 +1609,7 @@ int Game::ControlFrame(BattleRole& unit, int role, int target)
 }
 
 // Command 0x1A of RoleActionFrame (inline in the original): the timing bar runs while the role holds still
-// (kComboStill once the needle starts); a press (unk577080) takes the timing: a hit with the needle on the mark
+// (kComboStill once the needle starts); a press (timingPress) takes the timing: a hit with the needle on the mark
 // (timingHit) sounds and frees the role, otherwise the next attack repeats (numberFont's low word). Each attack that
 // lands holds the role again; a defeat holds the enemy and ends the bar (kTimingDone), as does the bar's end without a
 // press.
@@ -1631,27 +1631,27 @@ int Game::TimingAttackFrame(BattleRole& unit, int target)
         unit.ClearStatus(kComboStill);
         unit.SetCommand(kAfterAction);
         hud.timingHit = 0;
-        battle.unk577328 = 0;
+        battle.timingBarShown = 0;
         setLow(hud.numberFont, 0);
         setLow(hud.timingCounter, 0);
     };
 
-    battle.unk577328 = 1;
+    battle.timingBarShown = 1;
 
     if ((static_cast<u32>(hud.timingCounter) & kLowWord) == kTimingStart)
     {
         unit.SetStatus(kComboStill);
     }
 
-    if (hud.DrawTimingBar(kTimingX, kTimingY) == 1 && (battle.unk577080 & kTimingTaken) == 0)
+    if (hud.DrawTimingBar(kTimingX, kTimingY) == 1 && (battle.timingPress & kTimingTaken) == 0)
     {
         end();
         return 0;
     }
 
-    if ((battle.unk577080 & kTimingPressed) != 0)
+    if ((battle.timingPress & kTimingPressed) != 0)
     {
-        battle.unk577080 = kTimingTaken;
+        battle.timingPress = kTimingTaken;
 
         if ((hud.numberFont & kLowWord) == 0)
         {
@@ -1674,9 +1674,9 @@ int Game::TimingAttackFrame(BattleRole& unit, int target)
         return 0;
     }
 
-    battle.unk577080 &= kTimingKept;
+    battle.timingPress &= kTimingKept;
     this->RoleHitLanded(target);
-    battle.unk577328 = 0;
+    battle.timingBarShown = 0;
 
     if (battle.unk576084 == 0 && enemy.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
@@ -1752,7 +1752,7 @@ int Game::AccessoryBuffFrame(BattleRole& unit, int target, int command)
 }
 
 // Command 0x1F of RoleActionFrame (inline in the original): a five-second timer (StartTimer) runs over the enemy
-// (its place in unk577246); game flag 0x4B (the timer's end) ends the command; each press (unk577088) hits the enemy
+// (its place in unk577246); game flag 0x4B (the timer's end) ends the command; each press (timerAttack) hits the enemy
 // with the role's hit (its digits) and a defeat clears game flag 0x4A and ends it.
 int Game::TimerAttackFrame(BattleRole& unit, int target)
 {
@@ -1761,9 +1761,9 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
     BattleEnemy& enemy = this->battleEnemies[static_cast<std::size_t>(target)];
     battle.result = 0;
 
-    if (battle.unk577088 == 0)
+    if (battle.timerAttack == 0)
     {
-        battle.unk577088 = kTimerStarted;
+        battle.timerAttack = kTimerStarted;
         this->StartTimer(0, kTimerSeconds, 0, 1);
         u16 x = 0;
         u16 y = 0;
@@ -1776,20 +1776,20 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
     if (this->state.GameFlag(kTimerFlag))
     {
         this->state.ClearGameFlag(kTimerFlag);
-        battle.unk577088 = 0;
+        battle.timerAttack = 0;
         battle.unk57724C = 0;
         battle.darkenUnit = -1;
         return 1;
     }
 
-    if ((battle.unk577088 & kTimerPressed) == 0)
+    if ((battle.timerAttack & kTimerPressed) == 0)
     {
         return 0;
     }
 
     this->audio.PlaySound(kTimerSound, this->config.soundVolume);
     this->battleHud.ResetEffectAt();
-    battle.unk577088 = kTimerStarted;
+    battle.timerAttack = kTimerStarted;
     battle.unk57724C = 1;
     battle.hitDamage = unit.HitDamage(services, enemy, battle.spiritDamage, battle.staminaDamage);
     enemy.RaiseFlag2BC0(this->battleState);
@@ -1801,7 +1801,7 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
         this->state.ClearGameFlag(kTimerDefeatFlag);
         this->RoleDefeated(target);
         battle.hitDamage = 0;
-        battle.unk577088 = 0;
+        battle.timerAttack = 0;
         battle.darkenUnit = -1;
         return 1;
     }
@@ -1869,22 +1869,22 @@ int Game::RouletteFrame(BattleRole& unit, int target)
         return 0;
     }
 
-    if ((battle.unk577088 & kRouletteSetUp) == 0)
+    if ((battle.timerAttack & kRouletteSetUp) == 0)
     {
         hud.SetupRoulette(static_cast<i16>(unit.TreasureLevel(this->ProficiencyList())));
-        battle.unk577088 |= kRouletteSetUp;
+        battle.timerAttack |= kRouletteSetUp;
     }
 
-    if ((battle.unk577088 & kRouletteStopped) == 0)
+    if ((battle.timerAttack & kRouletteStopped) == 0)
     {
-        if ((battle.unk577088 & kTimerPressed) != 0)
+        if ((battle.timerAttack & kTimerPressed) != 0)
         {
             this->audio.PlaySound(kRouletteSound, this->config.soundVolume);
-            battle.unk577088 = kRouletteSetUp;
+            battle.timerAttack = kRouletteSetUp;
 
             if (hud.DrawRoulette(kRouletteX, kRouletteY, battle.hitDamage, 1) == 1)
             {
-                battle.unk577088 |= kRouletteStopped;
+                battle.timerAttack |= kRouletteStopped;
             }
         }
         else
@@ -1897,7 +1897,7 @@ int Game::RouletteFrame(BattleRole& unit, int target)
 
     hud.DrawRoulette(kRouletteX, kRouletteY, battle.hitDamage, 0);
 
-    if ((static_cast<u32>(++battle.unk577088) & kRouletteFrames) < kRouletteRest)
+    if ((static_cast<u32>(++battle.timerAttack) & kRouletteFrames) < kRouletteRest)
     {
         return 0;
     }
@@ -1926,7 +1926,7 @@ int Game::RouletteFrame(BattleRole& unit, int target)
     }
 
     hud.ResetRoulette();
-    battle.unk577088 = 0;
+    battle.timerAttack = 0;
     battle.hitDamage = 0;
     return 1;
 }
