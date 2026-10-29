@@ -463,3 +463,9 @@
 汇编：0x0049C8E0 调用 0x0049C8F0（以 0x00578628 跳入共用构造片段 0x0049E090：+0 = 0、+8 = 0、+0xC = 0、+4 = 0x1E、+0x424 = 0、+0x43C = 0）再跳 0x0049C900（atexit(0x0049C910) 注册析构）。
 对照：AudioManager::midi（MidiPlayer）随 Game 构造：未打开、未启用、unknown4 = 0x1E、两表空；随 Game 析构。
 差异：无。
+
+## 0x0049D3C0 全局初始化片段（音效）— exact
+
+汇编：调用 0x0049D3D0 构造 0x00578F40，再 atexit(0x0049D3F0 → 0x0049D430 析构)。
+对照：AudioManager::effects（SoundEffects）随 Game 构造与析构。
+差异：无。
