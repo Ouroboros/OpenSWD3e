@@ -52,10 +52,11 @@ void Talk::RunEvent(Role& context)
         return;
     }
 
+    Role& player = state.roles[static_cast<std::size_t>(state.playerRole)];
+    bool loaded = false;
+
     if (context.eventOffset == 0)
     {
-        Role& player = state.roles[static_cast<std::size_t>(state.playerRole)];
-
         if (((player.x | player.y) & MapHeader::TileFraction) != 0)
         {
             return;
@@ -94,11 +95,7 @@ void Talk::RunEvent(Role& context)
         u32 bytes = static_cast<u32>(owner.databases.script.size());
         story.Read(owner.databases.script.data(), bytes);
         owner.scene.playerHold |= Scene::HoldLocked;
-
-        if (owner.acts.Run(player.act) == 0)
-        {
-            ReportActError(owner.errors, u8"Act Err(Talk:LoadTalk)", player);
-        }
+        loaded = true;
     }
 
     EventRun run{context, context.eventCursor};
@@ -109,8 +106,21 @@ void Talk::RunEvent(Role& context)
         const bool next = this->RunCommand(run);
         this->lastCommand = static_cast<u16>(run.code);
 
-        if ((owner.systemFlags & Game::QuitRequested) != 0 || (!next && !run.running))
+        if ((owner.systemFlags & Game::QuitRequested) != 0)
         {
+            return;
+        }
+
+        if (!next && !run.running)
+        {
+            // The rebuild (deviations.md): the original steps the controlled role's act on loading, before the
+            // script's conditions; an event that ends on its first frame would step it twice that frame. Here it
+            // steps once the event goes on.
+            if (loaded && context.id != Role::NoId && owner.acts.Run(player.act) == 0)
+            {
+                ReportActError(owner.errors, u8"Act Err(Talk:LoadTalk)", player);
+            }
+
             return;
         }
     }
