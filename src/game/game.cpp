@@ -1611,16 +1611,6 @@ bool Game::PresentBetween()
         }
     }
 
-    const u64 interval = static_cast<u64>(std::max(this->state.frameInterval, 0)) * kNanosecondsPerMillisecond;
-    double alpha = 1.0;
-
-    if (interval != 0)
-    {
-        alpha = now <= this->frameDueNs
-                    ? 0.0
-                    : std::min(1.0, static_cast<double>(now - this->frameDueNs) / static_cast<double>(interval));
-    }
-
     const u64 paintStart = SDL_GetTicksNS();
 
     if (this->menuFrameShown && !this->battleFrameShown)
@@ -1660,7 +1650,7 @@ bool Game::PresentBetween()
         int mouseX = 0;
         int mouseY = 0;
         this->input.PeekMouse(mouseX, mouseY);
-        this->battleStage.PaintBetween(alpha, *this->smoothScreen, mouseX, mouseY);
+        this->battleStage.PaintBetween(now, *this->smoothScreen, mouseX, mouseY);
     }
     else
     {
@@ -2025,6 +2015,7 @@ void Game::MainFrame()
     this->frameDueNs = SDL_GetTicksNS() - static_cast<u64>(now - this->lastFrame) * kNanosecondsPerMillisecond;
     this->fieldView.AdvanceMotion(this->lastFrame);
     this->mapFrameShown = false;
+    this->battleFrameKept = this->battleFrameShown;
     this->battleFrameShown = false;
     this->menuFrameShown = false;
     ++this->gameFrames;
@@ -2269,7 +2260,15 @@ void Game::EnterBattle()
 void Game::BattleMainFrame()
 {
     MapCache& cache = this->mapCache;
+    const u32 framesRun = this->battleFramesRun;
     const int result = this->FightTalkFrame();
+
+    // The rebuild's smooth battle (deviations.md): a talk command that runs no battle frame (as the pan 0x16) while the
+    // battle goes on shows the frame before on, so the frames between are drawn as ever.
+    if (result == 1 && this->battleFramesRun == framesRun)
+    {
+        this->battleFrameShown = this->battleFrameKept;
+    }
 
     // The lost battle maps the view again without checking it (0x0040AC44); the others log a failure (0x004B0BD0).
     auto remap = [&cache](bool report)

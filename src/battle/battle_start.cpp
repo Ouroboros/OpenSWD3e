@@ -170,6 +170,7 @@ void Game::StartBattle(u16 number)
     this->battleMessages.Clear();
     SetGaugeFull(battle, this->config.battleSpeed);
     this->battleStage.Clear();
+    this->backgroundShifted = 0;
     this->mapBehind = false;
     battle.unk5394E8 = ActState{};
     battle.unk50ED68.fill(0);

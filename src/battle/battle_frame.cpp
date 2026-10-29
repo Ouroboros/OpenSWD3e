@@ -118,6 +118,7 @@ int Game::BattleFrame()
     BattleState& battle = this->battleState;
     BattleHud& hud = this->battleHud;
     battle.frameResult = 1;
+    ++this->battleFramesRun;
     battle.frameNow = static_cast<i32>(SystemUptime());
     battle.frameMilliseconds = battle.frameNow - battle.frameLast;
     battle.frameLast = battle.frameNow;
@@ -267,7 +268,7 @@ int Game::BattleFrame()
 
     if (this->smoothMotion)
     {
-        this->battleStage.Draw(std::move(frameScene), this->state.pointerX, this->state.pointerY);
+        this->battleStage.Draw(std::move(frameScene), this->state.pointerX, this->state.pointerY, SDL_GetTicksNS());
     }
     else
     {
