@@ -1,6 +1,7 @@
 #include "map/field.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <span>
 #include <string>
@@ -157,6 +158,20 @@ std::vector<u8> ReadBlock(File& file, u32 bytes)
     u32 read = bytes;
     file.Read(block.data(), read);
     return block;
+}
+
+// A camera's place on an axis held inside the map as the original holds it: not before the start, and at the end where
+// the view would pass it (before the start on a map smaller than the view). The rebuild's view wider (higher) than
+// 640x480 (`wide`) shows a map smaller than it in its middle instead.
+i32 HoldPlace(i32 place, i32 extent, i32 view, bool wide)
+{
+    if (wide && extent < view)
+    {
+        return (extent - view) / 2;
+    }
+
+    place = std::max(place, 0);
+    return place + view >= extent ? extent - view : place;
 }
 
 }  // namespace
@@ -426,6 +441,9 @@ void Field::CenterCamera()
     this->cameraTop = place[1];
     this->cameraRight = this->cameraLeft + this->viewWidth;
     this->cameraBottom = this->cameraTop + this->viewHeight;
+    this->original =
+        this->HoldScreen({player.x - (Display::Width / 2 - MapHeader::TileSize), player.y - Display::Height / 2});
+    this->originalPan = this->original;
 }
 
 std::array<i32, 2> Field::CameraCentredOn(i32 x, i32 y, int scale) const
@@ -434,45 +452,104 @@ std::array<i32, 2> Field::CameraCentredOn(i32 x, i32 y, int scale) const
         ->HoldCamera(x - (this->viewWidth / 2 - MapHeader::TileSize) * scale, y - this->viewHeight / 2 * scale, scale);
 }
 
-// The camera at (left, top) (in 1/scale pixels) held inside the map as the original holds it: not before its start,
-// and at its end where the view would pass it (before the start on a map smaller than the view). The rebuild's view
-// wider (higher) than 640x480 shows a map smaller than it in its middle instead (deviations.md).
+// The camera at (left, top) (in 1/scale pixels) held inside the map (HoldPlace; the rebuild's wider view, see
+// deviations.md).
 std::array<i32, 2> Field::HoldCamera(i32 left, i32 top, int scale) const
 {
-    auto hold = [](i32 place, i32 extent, i32 view, bool wide)
-    {
-        if (wide && extent < view)
-        {
-            return (extent - view) / 2;
-        }
-
-        place = std::max(place, 0);
-        return place + view >= extent ? extent - view : place;
-    };
-
+    const i32 width = MapHeader::TileSize * this->state.map.width;
+    const i32 height = MapHeader::TileSize * this->state.map.height;
     return {
-        hold(
-            left,
-            MapHeader::TileSize * this->state.map.width * scale,
-            this->viewWidth * scale,
-            this->viewWidth > Display::Width
-        ),
-        hold(
-            top,
-            MapHeader::TileSize * this->state.map.height * scale,
-            this->viewHeight * scale,
-            this->viewHeight > Display::Height
-        ),
+        HoldPlace(left, width * scale, this->viewWidth * scale, this->viewWidth > Display::Width),
+        HoldPlace(top, height * scale, this->viewHeight * scale, this->viewHeight > Display::Height),
     };
 }
 
 std::array<bool, 2> Field::MapInsideView() const
 {
+    const bool wide = this->viewWidth > Display::Width;
+    const bool high = this->viewHeight > Display::Height;
     return {
-        this->viewWidth > Display::Width &&
-            MapHeader::TileSize * this->state.map.width<this->viewWidth, this->viewHeight> Display::Height &&
-            MapHeader::TileSize * this->state.map.height < this->viewHeight,
+        wide && MapHeader::TileSize * this->state.map.width < this->viewWidth,
+        high && MapHeader::TileSize * this->state.map.height < this->viewHeight,
     };
+}
+
+bool Field::WiderView() const
+{
+    return this->viewWidth != Display::Width || this->viewHeight != Display::Height;
+}
+
+Point Field::HoldScreen(Point place) const
+{
+    return {
+        HoldPlace(place.x, MapHeader::TileSize * this->state.map.width, Display::Width, false),
+        HoldPlace(place.y, MapHeader::TileSize * this->state.map.height, Display::Height, false),
+    };
+}
+
+void Field::MoveOriginal(Point by)
+{
+    this->original = this->HoldScreen({this->original.x + by.x, this->original.y + by.y});
+    this->originalPan = this->HoldScreen({this->originalPan.x + by.x, this->originalPan.y + by.y});
+}
+
+Field::ScrollSides Field::ScrollSidesOf(const CameraRect& camera, i32 width, i32 height, i32 x, i32 y) const
+{
+    const auto screenX = static_cast<u32>(x - camera.left);
+    const auto screenY = static_cast<u32>(y - camera.top);
+    const auto scrollX = static_cast<u32>(width / 2 - MapHeader::TileSize);
+    const auto scrollY = static_cast<u32>(height / 2);
+    return ScrollSides{
+        camera.left > 0 && screenX <= scrollX,
+        screenX >= scrollX && camera.right < MapHeader::TileSize * this->state.map.width,
+        camera.top > 0 && screenY <= scrollY,
+        screenY >= scrollY && camera.bottom < MapHeader::TileSize * this->state.map.height,
+    };
+}
+
+void Field::DecideOriginalScroll(i32 x, i32 y, int stepX, int stepY)
+{
+    const CameraRect screen{
+        this->original.x,
+        this->original.y,
+        this->original.x + Display::Width,
+        this->original.y + Display::Height,
+    };
+
+    const ScrollSides sides = this->ScrollSidesOf(screen, Display::Width, Display::Height, x, y);
+    this->originalScrolls = {
+        (stepX < 0 && sides.left) || (stepX > 0 && sides.right),
+        (stepY < 0 && sides.up) || (stepY > 0 && sides.down),
+    };
+}
+
+void Field::FollowOriginal(Point by)
+{
+    this->MoveOriginal({this->originalScrolls[0] ? by.x : 0, this->originalScrolls[1] ? by.y : 0});
+}
+
+void Field::PanOriginal(Point to, Point step)
+{
+    this->originalPan = this->HoldScreen(to);
+    this->originalPanStep = {std::abs(step.x), std::abs(step.y)};
+}
+
+// The original's pan steps until it is where it goes (a step that does not divide the distance stops there).
+void Field::StepOriginalPan()
+{
+    auto approach = [](i32 place, i32 target, i32 step)
+    {
+        step = std::max(step, 1);
+        return place + std::clamp(target - place, -step, step);
+    };
+
+    this->original.x = approach(this->original.x, this->originalPan.x, this->originalPanStep.x);
+    this->original.y = approach(this->original.y, this->originalPan.y, this->originalPanStep.y);
+}
+
+bool Field::OriginalPanning() const
+{
+    return this->original != this->originalPan;
 }
 
 i32 Field::ScreenLeft() const

@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 
+#include "core/point.h"
 #include "core/types.h"
 #include "map/map_scale.h"
 #include "platform/display.h"
@@ -118,6 +119,35 @@ public:
     // Whether the rebuild's wider (higher) view holds the camera in its middle across (down): the map is narrower
     // (lower) than the view, so the camera does not move on that axis (HoldCamera).
     std::array<bool, 2> MapInsideView() const;
+    // Whether the rebuild's view is other than the 640x480 screen (the map fills the window).
+    bool WiderView() const;
+    // The original's camera at (left, top), held inside the map as it holds it (HoldCamera on a 640x480 view).
+    Point HoldScreen(Point place) const;
+    // The original's camera moved by `by` and held.
+    void MoveOriginal(Point by);
+
+    // The sides a camera `camera` showing `width` x `height` can follow a step of the controlled role at (x, y) to: the
+    // role at the middle of the view or past it that way (its place on the view taken unsigned, as the original does)
+    // and the camera not at the map's edge (part of RoleControl::ControlPlayer, 0x00402AA0).
+    struct ScrollSides
+    {
+        bool left = false;
+        bool right = false;
+        bool up = false;
+        bool down = false;
+    };
+
+    ScrollSides ScrollSidesOf(const CameraRect& camera, i32 width, i32 height, i32 x, i32 y) const;
+    // A step of the controlled role at (x, y) starting by (stepX, stepY) (-1, 0 or 1 on each axis): whether the
+    // original's camera scrolls with it on each axis, as the original decides it for its 640x480 camera
+    // (ScrollSidesOf).
+    void DecideOriginalScroll(i32 x, i32 y, int stepX, int stepY);
+    // The controlled role moved by `by`: the original's camera follows it on the axes it scrolls on.
+    void FollowOriginal(Point by);
+    // A pan of the original's camera to `to` (held) by `step` pixels a frame on each axis; a frame of it.
+    void PanOriginal(Point to, Point step);
+    void StepOriginalPan();
+    bool OriginalPanning() const;
     // Where the game's 640x480 screen starts on the map (the camera when the map does not fill the window): the
     // interface places what it shows of the map from here.
     i32 ScreenLeft() const;
@@ -147,7 +177,14 @@ public:
     i32 viewHeight = Display::Height;
     i32 screenX = 0;
     i32 screenY = 0;
-    std::vector<u16> palette;  // 0x004D0D58 the colours of an 8-bit map
+    // The rebuild (deviations.md): where the original's 640x480 camera would be (its left and top) for what the story
+    // places on that screen (its animations, the spotlight, the pans to a tile): set and moved as the camera is, held
+    // inside the map as the original holds its camera; a pan takes it to `originalPan` by `originalPanStep` a frame.
+    Point original;
+    Point originalPan;
+    Point originalPanStep;
+    std::array<bool, 2> originalScrolls = {};  // DecideOriginalScroll: across and down
+    std::vector<u16> palette;                  // 0x004D0D58 the colours of an 8-bit map
 
 private:
     GameState& state;

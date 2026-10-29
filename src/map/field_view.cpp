@@ -119,6 +119,7 @@ void FieldView::PanCamera()
 {
     Field& field = this->game.field;
     Scene& view = this->game.scene;
+    field.StepOriginalPan();
 
     if (view.panAcross == 0 && view.panDown == 0)
     {
@@ -384,9 +385,8 @@ void FieldView::Paint()
 void FieldView::ClipToSpotlight()
 {
     const Scene& view = this->game.scene;
-    const Field& field = this->game.field;
-    const int lightX = view.spotlightX + field.screenX;
-    const int lightY = view.spotlightY + field.screenY;
+    const int lightX = view.spotlightX + this->originalShift.x;
+    const int lightY = view.spotlightY + this->originalShift.y;
     this->game.painter.SetClipClamped(
         lightX - Scene::SpotlightRadius,
         lightY - Scene::SpotlightRadius,
@@ -630,6 +630,10 @@ void FieldView::Render()
         field.cameraTop += owner.scrollStepY * scroll;
         field.cameraRight += owner.scrollStepX * scroll;
         field.cameraBottom += owner.scrollStepY * scroll;
+        field.FollowOriginal({
+            scroll * (owner.scrollStepX + owner.walkStepX),
+            scroll * (owner.scrollStepY + owner.walkStepY),
+        });
     }
 
     for (MoveRecord& move : state.moves)
@@ -780,6 +784,15 @@ void FieldView::Render()
     }
 
     this->PanCamera();
+    // The rebuild (deviations.md): where the original's screen lies on the canvas in this frame (before the quake,
+    // which the original's screen places do not follow), for what the story places on it.
+    this->originalShift = {};
+
+    if (field.WiderView())
+    {
+        this->originalShift = {field.original.x - field.cameraLeft, field.original.y - field.cameraTop};
+    }
+
     this->ShakeCamera();
     owner.BeginMapCanvas();
     this->CapturePlaces();
@@ -859,8 +872,9 @@ void FieldView::Render()
     {
         field.cameraLeft = view.quakeCameraLeft;
         field.cameraTop = view.quakeCameraTop;
-        field.cameraRight = view.quakeCameraLeft + Display::Width;
-        field.cameraBottom = view.quakeCameraTop + Display::Height;
+        // The original's screen is the view; the rebuild's wider view spans its own size (deviations.md).
+        field.cameraRight = view.quakeCameraLeft + field.viewWidth;
+        field.cameraBottom = view.quakeCameraTop + field.viewHeight;
     }
 }
 

@@ -181,8 +181,10 @@ void FieldView::MotionTick()
     field.cameraBottom += cameraY - field.cameraTop;
     field.cameraLeft = cameraX;
     field.cameraTop = cameraY;
+    const Point from{player.x, player.y};
     player.x = motion.startX + motion.across * pixels;
     player.y = motion.startY + motion.down * pixels;
+    field.FollowOriginal({player.x - from.x, player.y - from.y});
     motion.leftX = player.x;
     motion.leftY = player.y;
     motion.leftCameraX = field.cameraLeft;
@@ -244,8 +246,10 @@ void FieldView::EndPlayerMotion(bool atFrame)
     field.cameraBottom += cameraY - field.cameraTop;
     field.cameraLeft = cameraX;
     field.cameraTop = cameraY;
+    const Point from{player.x, player.y};
     player.x = motion.startX + motion.across * pixels;
     player.y = motion.startY + motion.down * pixels;
+    field.FollowOriginal({player.x - from.x, player.y - from.y});
 }
 
 // The distance of the step under way in 1/scale pixels.
