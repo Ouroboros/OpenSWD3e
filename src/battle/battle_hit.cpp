@@ -1721,7 +1721,7 @@ int Game::EnemyActionFrame(int enemy, int target)
 
             unit.ClearStatus(BattleUnit::GuardingMark);
             unit.SetGuarding(0);
-            unit.SetWord2A0A(kFadedWord);
+            unit.SetFadeStep(kFadedWord);
             battle.enemyFaded = 1;
             return 1;
 
@@ -1733,7 +1733,7 @@ int Game::EnemyActionFrame(int enemy, int target)
 
             unit.SetGuarding(1);
             unit.SetStatus(BattleUnit::GuardingMark);
-            unit.SetWord2A0A(kFadedWord);
+            unit.SetFadeStep(kFadedWord);
             battle.enemyFaded = 1;
 
             if (battle.enemiesGone >= battle.enemyCount)
@@ -1754,7 +1754,7 @@ int Game::EnemyActionFrame(int enemy, int target)
             }
 
             unit.SetGuarding(1);
-            unit.SetWord2A0A(kFadedWord);
+            unit.SetFadeStep(kFadedWord);
             unit.StartDefeat(1);
             unit.SetDefeatPose(0);
             battle.escapedEnemies[static_cast<std::size_t>(enemy)] = 1;
@@ -2484,7 +2484,7 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     {
         unit.Retarget(0);
         unit.SetCommand(kRunCommand);
-        unit.SetWord2A0A(kRunWord);
+        unit.SetFadeStep(kRunWord);
         return;
     }
 

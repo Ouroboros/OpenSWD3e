@@ -431,7 +431,10 @@ public:
     static constexpr u16 FlashStart = 2;
     static constexpr std::size_t DamageDigits = 4;  // the decimal digits of a damage number
     static constexpr std::size_t GuardLetters = 4;  // the letters of the guard text
-    static constexpr u16 DefaultFadeStep = 4;       // fadeStep: the alpha step of a fade
+    // The damage number slot whose digit hops (+0x2D90) are the pop phases of the guard text letters in the original.
+    static constexpr std::size_t GuardSlot = 9;
+    static_assert(GuardLetters == DamageDigits);
+    static constexpr u16 DefaultFadeStep = 4;  // fadeStep: the alpha step of a fade
     static constexpr u32 DefaultColorPair = 0x062B062B;
     static constexpr u32 OutlineColorPair = 0x07E007E0;  // the outline of DrawAction
 
@@ -502,6 +505,7 @@ public:
     int SetUnk3014(int value);
     int RollEvade(BattleServices& services, u16 chance);
     int Mirrored() const;
+    std::array<i16, GuardLetters>& GuardPhases();
     bool IsDefeated() const;
     int StatusBit13() const;
     bool IsDefeatedOrDying() const;
@@ -513,7 +517,7 @@ public:
     int GetGuard() const;
     int SetStatus(int bits);
     int ClearStatus(int bits);
-    i16 SetWord2A0A(i16 value);
+    i16 SetFadeStep(i16 value);
     int SetGuarding(int value);
     int ActFlag1() const;
     int ActFlag11() const;
@@ -758,7 +762,7 @@ public:
     ActState castAct;                           // +0x3FC
     ActState recoilAct;                         // +0x4A0
     ActState attackAct;                         // +0x544
-    ActState unk598;                            // swd32 +0x598
+    ActState unk5E8;                            // +0x5E8 (only cleared, by Reset)
     std::array<ActState, SlotActs> slotActs;    // +0x68C
     ActState status100Act;                      // +0xD98 (swd3e) the act over a unit of status 0x100 (DrawEffects)
     ActState slowedAct;                         // +0xE3C (swd3e) the act over a slowed unit (DrawEffects)
@@ -821,9 +825,8 @@ public:
     u16 proficiency = 0;                            // +0x2BE6 the proficiency of the accessory used
     std::array<u16, MaxTargets> damageDelays = {};  // +0x2BEA (PushTargetAlt 0x004910AE)
     std::array<std::array<i16, DamageDigits>, MaxTargets> damageDigits = {};  // +0x2C30 the four digits per target slot
-    std::array<std::array<i16, DamageDigits>, MaxTargets> unk2D48 =
-        {};                                          // +0x2D48 the hop step of each digit (DrawDamageNumbers)
-    std::array<i16, GuardLetters> guardPhases = {};  // +0x2D90 the pop phases of the four letters of the guard text
+    std::array<std::array<i16, DamageDigits>, MaxTargets> digitHops =
+        {};              // +0x2D48 the hop step of each digit (DrawDamageNumbers)
     i16 slotTint = 0;    // +0x2E60 the tint of a waiting slot act, darkening to its end (AttackFrame)
     i16 recoilTint = 0;  // +0x2E62 the tint of a waiting recoil act, darkening to its end (DrawRecoil)
     i16 glowLevel = 0;   // +0x2E64 the brightness of a glow act (GlowAct)
@@ -893,12 +896,12 @@ public:
     u16 actY = 0;        // +0x2ECC
     u16 aimX = 0;        // +0x2ECE where AimAction places the act
     u16 aimY = 0;        // +0x2ED0
-    std::array<u16, MaxTargets> pushedTargets = {};  // +0x2EE0
-    u16 fadeStep = DefaultFadeStep;                  // +0x2F26 the alpha step of its fades
-    u16 actId = 0;                                   // +0x2F28 the unit's act
-    u16 action = 0;                                  // +0x2F2A
-    u16 gauge = 0;                                   // +0x2F2E the action gauge
-    u16 unk2A14 = 0;
+    std::array<u16, MaxTargets> pushedTargets = {};                         // +0x2EE0
+    u16 fadeStep = DefaultFadeStep;                                         // +0x2F26 the alpha step of its fades
+    u16 actId = 0;                                                          // +0x2F28 the unit's act
+    u16 action = 0;                                                         // +0x2F2A
+    u16 gauge = 0;                                                          // +0x2F2E the action gauge
+    u16 unk2F30 = 0;                                                        // +0x2F30 (only cleared, by Reset)
     std::array<u32, 4> targets = {NoTarget, NoTarget, NoTarget, NoTarget};  // +0x2F72
     u16 glowPhase = 0;            // +0x2F82 0: brightening, 1: dimming, 2: over (GlowAct)
     u16 flashPhase = FlashStart;  // +0x2F84 the rise of its turn flash

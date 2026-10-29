@@ -826,7 +826,7 @@ int Game::FightTalkCommand(int command)
     }
 
     actor.SetCommand(command);
-    actor.SetWord2A0A(talk.Word(2));
+    actor.SetFadeStep(talk.Word(2));
 
     if (command == kEscapeCommand)
     {

@@ -2360,3 +2360,123 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：+0x2BEA[+0x2F98] = 参数字，返回下标。
 对照：PushTargetAlt 一致；越界保护属偏差 205。
 差异：无。
+
+## 0x004910C0 BattleUnit::DrawGuardText — diff → exact
+
+汇编：标记位 0 清 → 0。上 = 阵位Y − 0x14、x = 阵位X。四个字母的弹跳步取 +0x2D90/+0x2D92/+0x2D94/+0x2D96（即伤害数字跳步表 +0x2D48 的第 9 槽）。四个皆为 9：+0x2EAC ≥0x18 → 四步清 0、+0x2EAC=0、0x0050C31C=0、标记 &= ~1、+0x2F2A=0、+0x2BB0=0、+0x2BB4=0，返回 1；否则 +0x3010=0 → +0x2EAC += 4；每个字母前设三色 −上升、缩放高 上升+0x1A，0x004582C0(0, 字母, x−0x14/x−2/x+0xA/x+0x1A, 上 − 上升)，返回 0。未全落：0x0050C31C=0；字母 0 画于 (x−0x14, 上 − 0x004BFB40[步0])；步0>0 → 字母 1（x−2），+0x3010=0 时步1 加 1，封顶 9；步0>0 → 字母 2（x+0xA），步2 同；步0>0 → 字母 3（x+0x1A），步3 同；步0 加 1（不看 +0x3010），封顶 9；返回 0（两处调用者都不用返回值）。
+对照：GuardAdvance/DrawGuard 逻辑一致（kGuardTextOffset 0x14、kGuardPhaseEnd 9、kGuardTextRise 0x18、kGuardTextStep 4、kGuardTextHeight 0x1A、kGuardLetterX {0,0x12,0x1E,0x2E}、PopOffsets 即 0x004BFB40 表）。
+差异：源码把字母弹跳步设为独立成员 guardPhases，原程序它们就是伤害数字第 9 槽的跳步，单位挨到 10 个以上目标的伤害数字且同时显示闪避文字时两者互相影响。修正：删去 guardPhases，GuardPhases() 返回 digitHops[GuardSlot]（GuardSlot=9，static_assert 字母数等于数字位数）；跳步表成员按用途改名 digitHops。复核：完整函数重新对照一致。
+
+## 0x00491450 ApplyElement — exact
+
+汇编：属性（movsx）1..5 分派，其他 → 0。各属性取抗性字节（有符号）：减成 → 值 −= 抗×值/100；增成 → 值 += 值×抗/100；吸收非 0 → 值 = 值×抗/−100，返回 1，否则 0。属性 1：减 [3]、增 [1]、吸 [2]；2：[0]/[4]/[3]；3：[4]/[3]/[1]；4：[2]/[0]/[4]；5：[1]/[2]/[0]。
+对照：ApplyElement 与 kElementRules 一致（kPercent 100）。
+差异：无。
+
+## 0x00491690 BattleUnit::Reset — diff → exact
+
+汇编：清 mainAct、standAct、castAct、recoilAct、attackAct、+0x5E8 动作、slotActs[10]（+0xCF4）、slotActs 前 8 个、阵位 0x20 字节、命令 0x2C 字节、+0x2E66 起 0x46 字节、+0x2EE0 起 0x46 字节、拖尾 0x130 双字、+0x2D48 跳步表 0x118 字节、+0x2B38 起 16 字节；0x00494840(1)；+0x2FE0=1 且 +0xC 非空 → 释放、置 0；0x005785EE=0；四目标 −1、+0x2EAE=0xFFFF、+0x2B70=0xF、+0x2B74=1、+0x2F84=2、+0x2F86=0x18；其余逐个清零：+0x2E60、+0x2B68、+0x2B6C、+0x2BD8、+0x2BC8、+0x2BDC、+0x2E64、+0x2F2A、+0x2EB0、+0x2F28、+0x2F2E、+0x2F30、+0x2F82、+0x2F88、+0x2F8A、+0x2F8E、+0x2F90、+0x2F94、+0x2F96、+0x2F98、+0x2F9C、+0x2F9A、+0x2F9E、+0x2BC0、+0x2FCE、+0x2FC4..+0x2FC7、+0x2FB0、+0x2FC9..+0x2FCC、+0x2FA6、+0x2BD0、+0x2BD4、+0x2BE8、+0x2FD3、+0x2FD5..+0x2FD8、+0x2FDC、+0x2FD4、+0x2FA0、+0x2EB4、+0x2FD9、+0x2FDA、+0x2FE0..+0x3008、+0x2B84、+0x3010..+0x3024、+0x2FB6、+0x3028、+0x3038、+0x302C、+0x3030、+0x3034、+0x2FFC、+0x300C、+0x303C..+0x304C、+0x2BDA、+0x3050、+0x3054、+0x3068、+0x3060、+0x3070。
+对照：Reset 逐项一致（kSlotActsPerTurn 8、SlotActs−1 即第 10 个、kClearedNameBytes 0x10；成员偏移经此前改名核实）；清零先后次序不同，全部写 0，无可观察差异。
+差异：+0x2F30 与 +0x5E8 两个成员沿用正传偏移名 unk2A14、unk598。修正：改名 unk2F30、unk5E8（两者在外传中只由本函数清零），注释改为外传偏移。复核：完整函数重新对照一致。
+
+## 0x00491A00 BattleUnit::SetDamageDigits — exact
+
+汇编：标记位 15 → 返回。槽 = +0x2F98；+0x2EE0[槽]=0x2389 且状态位 25：数值位 15 清 → +0x2FBA 减 1，非 0 → 返回；为 0 → wsprintfA(+0xF84, "$1%s$0抵抗所有攻擊解除", 名 +0x2A58)、0x00479220(0x118, 0xA, 0x32, 文字, 0x41000002)、播放 0x117、状态 &= ~0x2000000，返回。数值位 15 → 数值取负。+0x2C30[槽]：千位 = 数/1000，百位 = (数−千位×1000)/100，十位 = (余−百位×100)/10，个位 = 余 − (u16)(十位×10)。
+对照：SetDamageDigits 与 Announce 一致（UnkMark8000、DamageTarget、ResistAll、Healing 0x8000、kResistAllEnd 与 exe 0x004BFC7C 字节一致、kEffectMessageX/Y/Frames 0x118/0xA/0x32、kAnnounceFlags 0x41000002、kEffectSound 0x117、kThousands/kHundreds/kTens）；文字缓冲截断属偏差 71，槽越界属偏差 205。
+差异：无。
+
+## 0x00491B90 BattleUnit::ResetAfterGuard — exact
+
+汇编：+0x302C=1、+0x2F2E=0、+0x2B78=0，返回 0。
+对照：一致。
+差异：无。
+
+## 0x00491BB0 BattleUnit::GetGuard — exact
+
+汇编：标记 &0x42 → 0，否则返回 +0x302C。
+对照：一致（UnkMark2|Held）。
+差异：无。
+
+## 0x00491BD0 BattleUnit::SetStatus — exact
+
+汇编：参数低字 =0x200 → +0x2B74=−0x20；标记 |= 参数低字；返回参数。
+对照：一致（UnkMark200、DelayedFadeIn）。
+差异：无。
+
+## 0x00491BF0 BattleUnit::ClearStatus — exact
+
+汇编：标记 &= ~参数；参数位 12 → +0x3030=0；返回参数。
+对照：一致（GuardingMark 0x1000）。
+差异：无。
+
+## 0x00491C20 BattleUnit::SetFadeStep — diff → exact
+
+汇编：+0x2F26 = 参数字。
+对照：逻辑一致（fadeStep +0x2F26）。
+差异：函数名 SetWord2A0A 沿用正传偏移。修正：改名 SetFadeStep（调用处与函数表）。复核：一致。
+
+## 0x00491C30 BattleUnit::SetGuarding — exact
+
+汇编：+0x3030 = 参数，返回参数。
+对照：一致。
+差异：无。
+
+## 0x00491C40 BattleUnit::ActFlag1 — diff → exact
+
+汇编：返回 (命令 actionFlags 低字节 >> 1) & 1。
+对照：逻辑一致。
+差异：以数字移位取位。修正：改用 UnitCommand::UnkAction2。复核：一致。
+
+## 0x00491C60 BattleUnit::ActFlag11 — exact
+
+汇编：返回 (actionFlags >> 11) & 1。
+对照：一致（UnkAction800）。
+差异：无。
+
+## 0x00491C70 BattleUnit::ActSpeed — exact
+
+汇编：命令 +0x20 字位 15 → 返回 &0x7FFF，否则 0。
+对照：一致（kSpeedMask 0x7FFF）。
+差异：无。
+
+## 0x00491C90 BattleUnit::ActFlag0 — exact
+
+汇编：返回 actionFlags & 1。
+对照：一致（UnkAction1）。
+差异：无。
+
+## 0x00491CA0 BattleUnit::ActFlag13 — exact
+
+汇编：返回 (actionFlags >> 13) & 1。
+对照：一致（UnkAction2000）。
+差异：无。
+
+## 0x00491CB0 BattleUnit::ActFlag14 — exact
+
+汇编：返回 (actionFlags >> 14) & 1。
+对照：一致（UnkAction4000）。
+差异：无。
+
+## 0x00491CC0 BattleUnit::ActFlag15 — exact
+
+汇编：返回 (actionFlags >> 15) & 1。
+对照：一致（UnkAction8000）。
+差异：无。
+
+## 0x00491CD0 BattleUnit::ActFlag17 — exact
+
+汇编：返回 (actionFlags >> 17) & 1。
+对照：一致（UnkAction20000）。
+差异：无。
+
+## 0x00491CE0 BattleUnit::HasFixedOrigin — exact
+
+汇编：返回 (actionFlags >> 18) & 1。
+对照：一致（FixedOrigin 0x40000）。
+差异：无。
+
+## 0x00491CF0 BattleUnit::HasActionFlags — exact
+
+汇编：返回 (actionFlags & 参数) ≠ 0。
+对照：一致。
+差异：无。

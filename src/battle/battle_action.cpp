@@ -619,7 +619,7 @@ int Game::RoleCommandFrame(BattleRole& unit, int role, int target, u16 command)
             }
 
             unit.SetGuarding(fadeIn ? 0 : 1);
-            unit.SetWord2A0A(kFadeWord);
+            unit.SetFadeStep(kFadeWord);
             battle.enemyFaded = 1;
             battle.darkenUnit = -1;
             return 1;

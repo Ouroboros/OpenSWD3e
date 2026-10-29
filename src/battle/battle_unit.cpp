@@ -894,6 +894,13 @@ int BattleUnit::Mirrored() const
     return static_cast<int>(this->drawFlags & Painter::Mirror);
 }
 
+// The pop phases of the guard text letters (DrawGuardText 0x004910C0 reads +0x2D90..+0x2D96): the digit hops of
+// damage number slot GuardSlot, which the original shares with them.
+std::array<i16, BattleUnit::GuardLetters>& BattleUnit::GuardPhases()
+{
+    return this->digitHops[BattleUnit::GuardSlot];
+}
+
 // swd3e.exe 0x00490FA0
 bool BattleUnit::IsDefeated() const
 {
@@ -1055,7 +1062,7 @@ int BattleUnit::ClearStatus(int bits)
 }
 
 // swd3e.exe 0x00491C20
-i16 BattleUnit::SetWord2A0A(i16 value)
+i16 BattleUnit::SetFadeStep(i16 value)
 {
     this->fadeStep = static_cast<u16>(value);
     return value;
@@ -1071,7 +1078,7 @@ int BattleUnit::SetGuarding(int value)
 // swd3e.exe 0x00491C40
 int BattleUnit::ActFlag1() const
 {
-    return static_cast<int>((this->command.actionFlags >> 1) & 1);
+    return (this->command.actionFlags & UnitCommand::UnkAction2) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00491C60
@@ -1934,7 +1941,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->castAct = ActState{};
     this->recoilAct = ActState{};
     this->attackAct = ActState{};
-    this->unk598 = ActState{};
+    this->unk5E8 = ActState{};
     this->slotActs[BattleUnit::SlotActs - 1] = ActState{};
 
     for (int slot = 0; slot < kSlotActsPerTurn; ++slot)
@@ -1947,7 +1954,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->numberFades = {};
     this->pushedTargets = {};
     this->trails = {};
-    this->unk2D48 = {};
+    this->digitHops = {};
     std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
     this->ExpireEffects(services, 1);
 
@@ -1976,7 +1983,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2EB0 = 0;
     this->actId = 0;
     this->gauge = 0;
-    this->unk2A14 = 0;
+    this->unk2F30 = 0;
     this->glowPhase = 0;
     this->commandA = 0;
     this->unk2F8A = 0;

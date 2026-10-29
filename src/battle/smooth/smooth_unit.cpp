@@ -756,7 +756,7 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
     for (u16 slot = unit.damageSlot; slot < slotEnd(); ++slot)
     {
         std::array<i16, BattleUnit::DamageDigits>& digits = unit.damageDigits[slot];
-        std::array<i16, BattleUnit::DamageDigits>& hops = unit.unk2D48[slot];
+        std::array<i16, BattleUnit::DamageDigits>& hops = unit.digitHops[slot];
         i16& fade = unit.numberFades[slot];
         const auto font = static_cast<i16>(unit.pushedTargets[slot]);
 
@@ -935,7 +935,7 @@ void UnitFrame::GuardAdvance(GuardView& view)
 
     const int top = unit.placement.y - kGuardTextOffset;
     view.left = unit.placement.x - kGuardTextOffset;
-    auto& phases = unit.guardPhases;
+    auto& phases = unit.GuardPhases();
 
     if (std::all_of(
             phases.begin(),
