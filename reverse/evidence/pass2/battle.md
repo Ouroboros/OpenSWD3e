@@ -3108,3 +3108,9 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：返回 (状态 & 参数) ≠ 0。
 对照：HasStatus 一致。
 差异：无。
+
+## 0x0049D3B0 BattleUnit::Data — exact
+
+汇编：返回 +0xC（与 MusicQueue::Mode 共用同一段代码）。
+对照：BattleUnit::Data 返回 data（+0xC）。
+差异：无。
