@@ -595,7 +595,7 @@ TEST_CASE("battle unit: accessory commands")
     CHECK_EQ(role.CanUseAccessory(kSpiritFan), 0);
     role.equipmentFlags = BattleUnit::SpiritFan;
     CHECK_EQ(role.CanUseAccessory(kSpiritFan), 1);
-    role.accessories[0].data.unk48 = kSpiritFan;
+    role.accessories[0].data.actionKind = kSpiritFan;
     role.accessories[0].data.costBits = kAccessoryCost;
     record.stamina = kLowStamina;
     CHECK_EQ(role.CanUseAccessory(kSpiritFan), 0);
@@ -961,7 +961,7 @@ TEST_CASE("battle unit: element orbs gain proficiency from hits of an element")
     constexpr swd3e::u16 kFireElement = 1;
     constexpr swd3e::i16 kOtherCounter = 5;
     swd3e::BattleUnit role;
-    role.accessories[0].data.unk48 = kElementOrb;
+    role.accessories[0].data.actionKind = kElementOrb;
     role.accessories[0].data.act = static_cast<swd3e::u16>(kOrbCounter);
     role.accessories[0].data.counterMax = kOrbMaximum;
     role.accessories[0].data.resistances[kFireElement - 1] = 1;  // swd3e: the orb counts only elements it resists

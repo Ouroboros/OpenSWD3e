@@ -222,9 +222,9 @@ i16 FindCounterPercent(CounterList& list, i16 id)
     return node != nullptr ? static_cast<i16>(node->percent) : i16{0};
 }
 
-// swd3e.exe 0x0048A7A0: the percent of counter `id` and its share of the object's unk42 (percent times unk42, as a
-// word, over 100); every node of the id from the head on is looked at, the last one counting; both are left as they
-// are without one
+// swd3e.exe 0x0048A7A0: the percent of counter `id` and its share of the object's masteryValue (percent times
+// masteryValue, as a word, over 100); every node of the id from the head on is looked at, the last one counting; both
+// are left as they are without one
 void FindCounterShare(CounterList& list, u16 id, u16& percent, u16& share, Database& database)
 {
     constexpr u16 kHundred = 100;
@@ -239,7 +239,7 @@ void FindCounterShare(CounterList& list, u16 id, u16& percent, u16& share, Datab
         percent = node->percent;
         database.LoadObject(database.scratch, id);
         Database::FreeDescription(database.scratch);
-        share = static_cast<u16>(static_cast<u16>(node->percent * database.scratch.data.unk42) / kHundred);
+        share = static_cast<u16>(static_cast<u16>(node->percent * database.scratch.data.masteryValue) / kHundred);
     }
 }
 

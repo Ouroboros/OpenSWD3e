@@ -112,7 +112,7 @@ int Data(const std::u8string& directory)
             "{\"id\":%u,\"name\":%s,\"kind\":%u,\"category\":%u,\"level\":%u,\"act\":%u,\"price\":%u,"
             "\"usableBy\":%u,\"useKind\":%u,\"attackBonusUp\":%u,\"defenseBonusUp\":%u,\"strengthUp\":%u,"
             "\"enduranceUp\":%u,\"agilityUp\":%u,\"wisdomUp\":%u,\"rapportUp\":%u,\"evasionUp\":%u,"
-            "\"hitPointsUp\":%u,\"spiritUp\":%u,\"staminaUp\":%u,\"costBits\":%u,\"counterMax\":%u,\"unk42\":%u,\"unk48\":%u,"
+            "\"hitPointsUp\":%u,\"spiritUp\":%u,\"staminaUp\":%u,\"costBits\":%u,\"counterMax\":%u,\"masteryValue\":%u,\"actionKind\":%u,"
             "\"skillScript\":%u,\"skillFlags\":%u,\"skillAilment\":%u,\"altar\":%u,\"unkA2\":%u,\"resistances\":[%s],\"description\":%s}\n",
             id,
             Json(name).c_str(),
@@ -136,8 +136,8 @@ int Data(const std::u8string& directory)
             d.staminaUp,
             d.costBits,
             d.counterMax,
-            d.unk42,
-            d.unk48,
+            d.masteryValue,
+            d.actionKind,
             d.skillScript,
             skill.flags,
             skill.ailment,

@@ -109,19 +109,19 @@ def worn(item, slots, names):
             notes['五行抗性'] = '只加穿戴者本身五行的那一項，加後保持在 0～100'
     if '武器' in slots and item['counterMax']:
         # BattleRole::Strike (0x00485F30) and StepCounterProgress (0x0048A5B0): each strike steps the weapon's counter
-        # up to counterMax; a hit that does damage gains value / counterMax * unk42 (the equipment page's 熟練).
+        # up to counterMax; a hit that does damage gains value / counterMax * masteryValue (the equipment page's 熟練).
         for label in ('每回合回復', '五行抗性'):
             if not lines[label]:
                 del lines[label]
         lines['熟練'] = f'命中 {item["counterMax"]} 次練滿'
-        lines['熟練加成'] = f'練滿時每擊傷害 +{item["unk42"]}'
+        lines['熟練加成'] = f'練滿時每擊傷害 +{item["masteryValue"]}'
         notes['熟練加成'] = '按命中次數的比例增加，有傷害時才加'
     if '法寶' in slots and item['counterMax']:
-        # The equipment page's 成長 (value / counterMax of the proficiency list); a full one with unk42 turns into
+        # The equipment page's 成長 (value / counterMax of the proficiency list); a full one with masteryValue turns into
         # that object (Game::AnnounceMastery, 0x00477EE0).
         lines['成長'] = f'上限 {item["counterMax"]}'
-        if item['unk42']:
-            lines['成長'] += f'，練滿後變為{names.get(item["unk42"], "")}'
+        if item['masteryValue']:
+            lines['成長'] += f'，練滿後變為{names.get(item["masteryValue"], "")}'
     return lines, notes
 
 

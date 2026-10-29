@@ -1707,7 +1707,7 @@ bool Game::AutoCombo(i32 unit)
         role.accessories.end(),
         [](const ObjectRecord& accessory)
         {
-            return accessory.data.unk48 == static_cast<u16>(AccessoryKind::RepeatAttack);
+            return accessory.data.actionKind == static_cast<u16>(AccessoryKind::RepeatAttack);
         }
     );
     return wears && role.CanUseAccessory(static_cast<u16>(AccessoryKind::RepeatAttack)) == 1;
@@ -2165,7 +2165,7 @@ void Game::BuildCommandMenu()
                 this->party.equipment[partyRole * Party::SlotsPerRole + kFirstAccessorySlot + slot];
 
             // An empty slot holds the empty entry; a missing one is read through a null pointer in the original.
-            const u16 kind = node != nullptr ? node->record.data.unk48 : u16{0};
+            const u16 kind = node != nullptr ? node->record.data.actionKind : u16{0};
 
             if (kind < kFirstAccessoryCommand || kind > kLastAccessoryCommand)
             {
@@ -2264,9 +2264,9 @@ void Game::DrawCommandMenu(int x, int y, int cursor)
 
 // swd3e.exe 0x00477EE0: the first party role (not auto, guest, ghost or defeated) whose accessory proficiency has just
 // filled (FinishProficiency): its object read into lastObject (the description freed), its name kept in lastLearned
-// for the message, learnedPending set and levelUpRole the role. An object that turns into another (unk42) empties the
-// worn accessory of that id (its name 無 over four cleared bytes, the rest of its record kept), adds the new
-// object to the inventory and keeps its name in evolvedName (cleared first).
+// for the message, learnedPending set and levelUpRole the role. An object that turns into another (masteryValue)
+// empties the worn accessory of that id (its name 無 over four cleared bytes, the rest of its record kept), adds the
+// new object to the inventory and keeps its name in evolvedName (cleared first).
 void Game::AnnounceMastery()
 {
     BattleState& battle = this->battleState;
@@ -2293,7 +2293,7 @@ void Game::AnnounceMastery()
         battle.learnedPending = 1;
         battle.lastLearned.name = ObjectName(battle.lastObject);
         battle.levelUpRole = static_cast<u8>(index);
-        const u16 evolved = battle.lastObject.data.unk42;
+        const u16 evolved = battle.lastObject.data.masteryValue;
 
         if (evolved == 0)
         {
@@ -2935,9 +2935,9 @@ void Game::DrawLearnedBox(std::u8string_view line, bool sound)
 // swd3e.exe 0x00477A00: the first battle role (not auto, guest, ghost or defeated) whose next special skill is not
 // exhausted (battle block [3] not -1) and has fought enough battles learns it: its first type 0x14 skill (from
 // Party::skills by party role) sets, while [3] is not yet marked, the battle block's needed battles ([2], the skill's
-// counterMax) and next special ([3], its unk42 with bit 31). With [1] battles at least [2] and a next special, the
-// special is appended to the list, its name kept for the message (learnedPending, levelUpRole the role) and the block
-// restarted from it (-1 without a further one); no other role learns in the same call.
+// counterMax) and next special ([3], its masteryValue with bit 31). With [1] battles at least [2] and a next special,
+// the special is appended to the list, its name kept for the message (learnedPending, levelUpRole the role) and the
+// block restarted from it (-1 without a further one); no other role learns in the same call.
 void Game::LearnSpecials()
 {
     BattleState& battle = this->battleState;
@@ -2966,7 +2966,7 @@ void Game::LearnSpecials()
             this->database.LoadObject(battle.lastObject, node->id);
             Database::FreeDescription(battle.lastObject);
             block.values[kNeededBattles] = battle.lastObject.data.counterMax;
-            block.values[kNextSpecial] = static_cast<i32>(battle.lastObject.data.unk42 | kSpecialMark);
+            block.values[kNextSpecial] = static_cast<i32>(battle.lastObject.data.masteryValue | kSpecialMark);
         }
 
         if (block.values[kBattlesFought] < block.values[kNeededBattles] ||
@@ -2994,9 +2994,9 @@ void Game::LearnSpecials()
         battle.levelUpRole = static_cast<u8>(index);
         block.values[kBattlesFought] = 0;
         block.values[kNeededBattles] = battle.lastObject.data.counterMax;
-        block.values[kNextSpecial] = static_cast<i32>(battle.lastObject.data.unk42 | kSpecialMark);
+        block.values[kNextSpecial] = static_cast<i32>(battle.lastObject.data.masteryValue | kSpecialMark);
 
-        if (battle.lastObject.data.unk42 == 0)
+        if (battle.lastObject.data.masteryValue == 0)
         {
             block.values[kNextSpecial] = kNoSpecial;
         }

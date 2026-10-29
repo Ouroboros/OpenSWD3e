@@ -584,7 +584,7 @@ void BattleRole::ApplyEquipment(
             this->weapon = item.record;
             this->weaponId = item.id;
 
-            if (this->weapon.data.unk48 == 0)
+            if (this->weapon.data.actionKind == 0)
             {
                 MaintenanceAssert(reporter, kNoWeaponAct, item.id, kManroleFile, kNoWeaponActLine);
             }
@@ -668,7 +668,7 @@ void BattleRole::ApplyAccessory(const ObjectRecord& accessory, CounterList& prof
 {
     RoleRecord& record = *this->battleRecord;
 
-    switch (static_cast<AccessoryKind>(accessory.data.unk48))
+    switch (static_cast<AccessoryKind>(accessory.data.actionKind))
     {
         case AccessoryKind::Unk32:
             this->equipmentFlags |= BattleUnit::Unk32;
@@ -809,7 +809,7 @@ void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadab
             services.party.fame.lists[Fame::UnkList0],
             static_cast<i16>(this->weaponId),
             this->weapon.data.counterMax,
-            this->weapon.data.unk42
+            this->weapon.data.masteryValue
         ));
     }
 
@@ -2519,9 +2519,9 @@ int BattleRole::StepWornCounters(BattleServices& services, CounterList& list, u1
             continue;
         }
 
-        if (static_cast<AccessoryKind>(data.unk48) == AccessoryKind::Unk25)
+        if (static_cast<AccessoryKind>(data.actionKind) == AccessoryKind::Unk25)
         {
-            if (this->AddTreasureExperience(list, data.unk48, amount) == 1)
+            if (this->AddTreasureExperience(list, data.actionKind, amount) == 1)
             {
                 services.messages.Add(
                     kTreasureLevelX,
@@ -2588,8 +2588,8 @@ int BattleRole::StepWornCounters(BattleServices& services, CounterList& list, u1
 // category kSkillType0 and sets UnkCommandFlag8000, type 1 counts kSkillType1 and sets
 // UnkCommandFlag200, other types count kSkillType1. `act` takes its unk50, the command its skill script (cleared
 // first; swd3e: its unk18 raised by the share of the role's wisdom over 50 in percent), the skill name its name;
-// with UnkCommandFlag200 magicAction, unk34A6 and unk34A8 take its unk48, unk50 and unk40. Its unk34..unk38 are the
-// heals when unk3C is 0, and percentages with bit kHealPercentBit. The result is 1 for a skill of category 0 or a
+// with UnkCommandFlag200 magicAction, unk34A6 and unk34A8 take its actionKind, unk50 and unk40. Its unk34..unk38 are
+// the heals when unk3C is 0, and percentages with bit kHealPercentBit. The result is 1 for a skill of category 0 or a
 // category with kind bit 8 the skill also has; 0xFFFF without one (or index 0).
 u16 BattleRole::SelectSkill(Database& database, int category, int type, int index, u32& act)
 {
@@ -2655,7 +2655,7 @@ u16 BattleRole::SelectSkill(Database& database, int category, int type, int inde
 
         if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
         {
-            this->magicAction = data.unk48;
+            this->magicAction = data.actionKind;
             this->unk34A6 = data.act;
             this->unk34A8 = data.costBits;
         }
@@ -2805,12 +2805,12 @@ int BattleRole::CanPaySkill(BattleServices& services, int category, int index)
 // swd3e.exe 0x00481540: the `index`th object of `category` (0..6) usable by roles bit 0 or 2 with some left (category
 // 6 whoever may use it; category 4 also counts every object with kListedObject) taken as the role's command: the
 // command and the first bytes of the skill name cleared, the used item 0; UnkCommandFlag4000 set and the object
-// chosen. A listed object of category 4 loads its unk3E script, unk2EB0 its unk24 (1). An object with an unk48 script
-// loads it (not for category 6), else its unk3E script; a spirit or stamina cost (unk34A0, staminaCost; the stamina
-// cost doubled from the object's third use in the battle when it has no unk48 script) above the role's gives 0. The
-// heals as SelectSkill; `act` the cast act; an object of kind kSeparateKind sets UnkCommandFlag1000 with its act as
-// the used item. `kind` 1 for category 0 or a shared kind bit 8. The object's taken count rises unless it is of kind
-// bit kReusableKind (without kind bit kCountedKind) or of category 3. 0 past the end or for index 0.
+// chosen. A listed object of category 4 loads its unk3E script, unk2EB0 its unk24 (1). An object with an actionKind
+// script loads it (not for category 6), else its unk3E script; a spirit or stamina cost (unk34A0, staminaCost; the
+// stamina cost doubled from the object's third use in the battle when it has no actionKind script) above the role's
+// gives 0. The heals as SelectSkill; `act` the cast act; an object of kind kSeparateKind sets UnkCommandFlag1000 with
+// its act as the used item. `kind` 1 for category 0 or a shared kind bit 8. The object's taken count rises unless it is
+// of kind bit kReusableKind (without kind bit kCountedKind) or of category 3. 0 past the end or for index 0.
 int BattleRole::SelectObject(
     Database& database,
     const BattleState& battle,
@@ -2881,11 +2881,11 @@ int BattleRole::SelectObject(
         return 1;
     }
 
-    if (data.unk48 != 0)
+    if (data.actionKind != 0)
     {
         if (kinds != kCategory6)
         {
-            this->LoadCommand(database, data.unk48);
+            this->LoadCommand(database, data.actionKind);
 
             if ((data.costBits & kCostFlag) != 0)
             {

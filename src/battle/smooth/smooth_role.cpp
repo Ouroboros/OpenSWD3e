@@ -170,7 +170,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
 
             if (!forced)
             {
-                role.command.castAct = role.weapon.data.unk48;
+                role.command.castAct = role.weapon.data.actionKind;
             }
             else
             {

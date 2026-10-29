@@ -2450,9 +2450,10 @@ u16 BattleUnit::AccessoryValue(u16 kind) const
 {
     for (const ObjectRecord& accessory : this->accessories)
     {
-        if (static_cast<i32>(static_cast<i16>(accessory.data.unk48)) == static_cast<i32>(kind))
+        if (static_cast<i32>(static_cast<i16>(accessory.data.actionKind)) == static_cast<i32>(kind))
         {
-            if (accessory.data.unk48 == kUnkAccessory28 && (this->equipmentFlags & BattleUnit::UnkEquipment100) != 0)
+            if (accessory.data.actionKind == kUnkAccessory28 &&
+                (this->equipmentFlags & BattleUnit::UnkEquipment100) != 0)
             {
                 return 0;
             }
@@ -2470,7 +2471,7 @@ i16 BattleUnit::AccessoryProficiency(u16 kind, CounterList& proficiency)
 {
     for (const ObjectRecord& accessory : this->accessories)
     {
-        if (static_cast<i32>(static_cast<i16>(accessory.data.unk48)) == static_cast<i32>(kind))
+        if (static_cast<i32>(static_cast<i16>(accessory.data.actionKind)) == static_cast<i32>(kind))
         {
             this->proficiency = static_cast<u16>(FindCounterPercent(proficiency, static_cast<i16>(accessory.data.act)));
             return static_cast<i16>(this->proficiency);
@@ -3528,9 +3529,9 @@ int BattleUnit::FadeInvisible(BattleServices& services, int mode)
     return result;
 }
 
-// swd3e.exe 0x0049A0E0: the proficiency counters of the worn accessories of `kind` (their unk48; the counter is their
-// act word) stepped by `amount` up to their counterMax in `list`, a missing one appended (a counterMax of 0 makes it
-// full and done at once); 1 when either accessory counts. The search goes on from where the first accessory's ended
+// swd3e.exe 0x0049A0E0: the proficiency counters of the worn accessories of `kind` (their actionKind; the counter is
+// their act word) stepped by `amount` up to their counterMax in `list`, a missing one appended (a counterMax of 0 makes
+// it full and done at once); 1 when either accessory counts. The search goes on from where the first accessory's ended
 // (the original keeps its node), so the second may be appended again.
 int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
 {
@@ -3542,7 +3543,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
         const ObjectData& data = accessory.data;
         const auto id = static_cast<i16>(data.act);
 
-        if (id == 0 || static_cast<i32>(static_cast<i16>(data.unk48)) != static_cast<i32>(kind))
+        if (id == 0 || static_cast<i32>(static_cast<i16>(data.actionKind)) != static_cast<i32>(kind))
         {
             continue;
         }
@@ -6298,7 +6299,7 @@ int BattleUnit::StepOrbCounters(CounterList& list, const UnitCommand& command)
         const ObjectData& data = accessory.data;
         const auto id = static_cast<i16>(data.act);
 
-        if (id == 0 || data.unk48 != static_cast<u16>(AccessoryKind::ElementOrb) || command.resistance == 0 ||
+        if (id == 0 || data.actionKind != static_cast<u16>(AccessoryKind::ElementOrb) || command.resistance == 0 ||
             command.resistance > data.resistances.size() || data.resistances[command.resistance - 1] == 0)
         {
             continue;
@@ -6478,7 +6479,7 @@ u16 BattleUnit::FinishProficiency(CounterList& list)
 // `level` with the
 // talisman brush proficiency `proficiency`: below 50 its first object, 50..79 one of the first two, 80..100 one of
 // three at random; a roll of 0..99 below 60 (90 when `level` is at least the enemy's) loads it into `object` and ends
-// the mark. The object's unk48 when it is of kind bit kRefinedKind; 0 otherwise.
+// the mark. The object's actionKind when it is of kind bit kRefinedKind; 0 otherwise.
 u16 BattleUnit::RefineTalisman(BattleServices& services, Database& database, u16 proficiency, u8 level)
 {
     if ((this->marks & BattleUnit::MissedMark) == 0)
@@ -6522,7 +6523,7 @@ u16 BattleUnit::RefineTalisman(BattleServices& services, Database& database, u16
         return 0;
     }
 
-    return this->object.data.unk48;
+    return this->object.data.actionKind;
 }
 
 // swd32.exe 0x0046E090 (unmatched in swd3e): autoControl (only its address is used: battle talk command 0x3A tests it)
@@ -7269,7 +7270,7 @@ u16 BattleUnit::TreasureLevel(const CounterList& list) const
 
     for (const ObjectRecord& accessory : this->accessories)
     {
-        if (accessory.data.unk48 == kTreasureKind)
+        if (accessory.data.actionKind == kTreasureKind)
         {
             id = static_cast<i16>(accessory.data.act);
             break;
@@ -7287,7 +7288,7 @@ u16 BattleUnit::TreasureLevel(const CounterList& list) const
     return 0;
 }
 
-// swd3e.exe 0x0047FD20: the worn treasures of `kind` (their unk48) gain `amount` experience in `list` (a missing
+// swd3e.exe 0x0047FD20: the worn treasures of `kind` (their actionKind) gain `amount` experience in `list` (a missing
 // counter appended, needing 50 less the amount): the counter rises to its counterMax, the amount is taken from what its
 // next level needs (all of it when it is less; then nothing is left for the second treasure), and reaching the level
 // raises it (the next needing 50 below level 4, 0x78 below 8, 0x12C below 16, then 0x201, less what was left over: 1)
@@ -7302,7 +7303,7 @@ int BattleUnit::AddTreasureExperience(CounterList& list, u16 kind, u16 amount)
         const ObjectData& data = accessory.data;
         const auto id = static_cast<i16>(data.act);
 
-        if (id == 0 || static_cast<i32>(static_cast<i16>(data.unk48)) != static_cast<i32>(kind))
+        if (id == 0 || static_cast<i32>(static_cast<i16>(data.actionKind)) != static_cast<i32>(kind))
         {
             continue;
         }
