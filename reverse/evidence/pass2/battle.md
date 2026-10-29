@@ -3000,3 +3000,111 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：返回 +0x304C。
 对照：Ghost 一致。
 差异：无。
+
+## 0x0049B9D0 BattleUnit::StartRipple — exact
+
+汇编：0x005772C8 = 0x005772BC = 1；+0x2BC0|=0x100000；new 0x2C 字节对象，构造 (0x280, 0x1E0, 0, 0, 0xC8, 0xC8)（分配失败为空）→ 0x00536880；0x00435EF0(0x64, 0x32, 0x20, 0xC8)；0x00435C10(movsx 阵位X − 0x50, movsx 阵位Y − 0x78)；slotActs[10].id（+0xCF4）= 0x17E7；+0x2FDB = 0。
+对照：StartRipple 一致（kFlag2BC0Ripple、kRippleGrid 0xC8、kRippleSplash 0x64/0x32、kRippleRadius 0x20、kRippleDepth 0xC8、kRippleLeft 0x50、kRippleUp 0x78、kRippleSlot 10、kRippleAct 0x17E7；原程序不释放旧波纹对象，unique_ptr 替换时释放，泄漏不可观察）。
+差异：无。
+
+## 0x0049BAB0 BattleUnit::CountEnrageEvent — exact
+
+汇编：kind=1：事件=2 → +0x2FD6 = 1；返回 1。敌人：事件 0 → 物件 +0x94 = 4 时 +0x2FD5 加 1；1 → =5 时 +0x2FD5 = −1；2 → =6 时 +0x2FD6 加 1；3 → =7 时 +0x2FD6 = −1；>3 不变。返回 eax：事件 0、2 的分支为物件指针，其余为事件值。
+对照：CountEnrageEvent 一致（kEnrageEvent0..3、kCounter2FD5Condition 4、kSpent2FD5Condition 5、kCounter2FD6Condition 6、kSpent2FD6Condition 7、kCounterSpent −1）。源码一律返回事件值；原程序全部 7 处调用之后 eax 或被覆盖，或只流入 HitDamage 攻击值的高 16 位（其后只取低字），行为相同。
+差异：无。
+
+## 0x0049BB50 BattleUnit::EnrageCheck — exact
+
+汇编：+0x2BC0 有 0x200000、kind=1、标记字节 0x40、物件 +0x94=0、+0x2FFC=1、+0x2FF8=1 → 0。按 movsx 条件 1..30：1 → 物件 +0x68 < +0x50/3（有符号）；3 → (u8)+0x2FD3 ≥5；4 → (i8)+0x2FD5 ≥15；5 → +0x2FD5 = −1；6 → (i8)+0x2FD6 ≥5；7 → +0x2FD6 = −1；10..14 → 属性参数（字）= 1..5；16/17/18 → 状态 0x20/0x10/0x80；28 → (i8)+0x2FD8 ≥2；2、8、9、15、19..27、29、30 → 原因参数 = 条件；其余不成立。成立 → +0x2BC0|=0x200000。调用 Enrage，返回 1。
+对照：EnrageCheck 一致（kEnraged、Held 0x40、kLowShare 3、各计数上限与类型、ElementMetal 10 起对应 SkillScript::Metal 1、Status20/10/80、Counter2FD8Two 0x1C、Cause1E；原程序以双字比较原因参数，全部 15 处调用传入的都是 16 位以内的常数或 0，与源码的 i16 比较相同）。
+差异：无。
+
+## 0x0049BE20 BattleUnit::Enrage — exact
+
+汇编：+0x2BC0 无 0x200000 → 0。效果 = 物件 +0x96（有符号字）在 0x3E9..0x1770：0x3E9/0x3EA/0x3EB → 攻击 +0x5A/防御 +0x5C/敏捷 +0x5E += 70×值/100（零扩展）；0x3EC/0x3ED → 攻击×2 后防御/敏捷减半（值 − 值>>1）；0x3EE/0x3EF → 防御×2 后攻击/敏捷减半；0x3F0/0x3F1 → 敏捷×2 后攻击/防御减半；0x3F2 → +0x2BC0|=0x800000；0x3F4 → 0x005770C4 = ftol(物件 +0x50 × 1.4（0x004AAE58）)、+0x2BC0|=0x10000；0x3F5..0x3FA → +0x2FDC = 1..6；其余无。效果（有符号）<0x3E9 → 物件 +0x78 = 效果、+0x7A = 0x2710、+0x99 = 8。0x0057722C/2E/30 = −12；0x004655A0（0x005777F4 = 1）；0x005772EC = 0；0x00577290、0x00577270、0x005772BC、0x005772C8、0x00577310 = 1；slotActs[10].id = 0x1C98；返回 0。
+对照：Enrage 一致（kEnraged、各效果枚举、kEnrageRise 70、kEnrage3F2、kEnrage3F4、kBurstScale 1.4 与 exe 一致、FirstElement/LastElement、FirstSkill、kEnrageSkillCount 10000、kEnrageSkillChance 8、kEnrageDark −12、kEffectSlot 10、kEnrageAct 0x1C98；Game::DarkenByTint 的单条赋值写为 darkenByTint = 1，效果相同）。
+差异：无。
+
+## 0x0049C0D0 BattleUnit::EnrageFrame — exact
+
+汇编：+0x2BC0 无 0x200000 或 +0x2FEC=1 → 0；有 0x400000 → 1；slotActs[10].id=0 → 0。+0x2FF8=1 → 0x005772BC、0x005772C8、0x00577270 = 0、0x005772EC = 1、0x00577310 = 0，+0x2BC0 清 0x200000，act 清零，返回 1。Run 失败 → 0。播放 view、声像 −0x30、view=0；+0x2A44 = GetPicture，以 act 旗标画于 (movsx 阵位X − act.x, movsx 阵位Y − act.y)。waiting=1：物件 +0x96 = 0x3F3 → 以清零的 0x2C 字节技能脚本（+0x08 = 0x10000000、+0x2A = 0xFF）调用 AddBuff；同上清全局，+0x2BC0|=0x400000，act 清零。返回 1。
+对照：EnrageFrame 一致（kEnraged、kEnrageDone、kEffectSlot 10、kFadePan、InvisibleEnrage 0x3F3、SkillScript::Invisible 0x10000000 于 +0x08、kEnrageInvisibleTurns 0xFF 于 +0x2A）；空图片不绘制属偏差 69 同类；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x0049C290 BattleUnit::EnrageElement — exact
+
+汇编：返回 +0x2FDC 字节。
+对照：EnrageElement 一致。
+差异：无。
+
+## 0x0049C2A0 BattleUnit::SlideHook — exact
+
+汇编：空函数，retn 4。
+对照：SlideHook 空函数一致。
+差异：无。
+
+## 0x0049C2B0 BattleUnit::CommandTurns — exact
+
+汇编：返回命令 +0x2A 字节（+0x102E）。
+对照：CommandTurns 一致。
+差异：无。
+
+## 0x0049C2C0 BattleUnit::Unk2EB2Shown — exact
+
+汇编：ax = +0x2EB2，eax 加 1（高字未定）。唯一调用处以 movsx ax 取用。
+对照：Unk2EB2Shown 返回 (i16)(+0x2EB2 + 1)，与调用处取低字有符号扩展相同。
+差异：无。
+
+## 0x0049C2D0 BattleUnit::Unk2EB2BelowProficiency — exact
+
+汇编：AccessoryProficiency(0x27)；返回 movsx +0x2EB2 < (u16)+0x2BE6 / 10。
+对照：Unk2EB2BelowProficiency 一致（kUnk2EB2Accessory 0x27、kUnk2EB2Share 10）。
+差异：无。
+
+## 0x0049C310 BattleUnit::SetUnk2BC0Bit19 — exact
+
+汇编：参数=1 → +0x2BC0|=0x80000，否则清该位。
+对照：SetUnk2BC0Bit19 一致。
+差异：无。
+
+## 0x0049C340 BattleUnit::Unk2BC0Bit23 — exact
+
+汇编：返回 (+0x2BC0 >> 23) & 1。
+对照：Unk2BC0Bit23 一致（kFlag2BC0Bit23 0x800000）。
+差异：无。
+
+## 0x0049C350 BattleUnit::RaiseUnk2BC0 — exact
+
+汇编：+0x2BC0|=参数，返回参数。
+对照：RaiseUnk2BC0 一致。
+差异：无。
+
+## 0x0049C370 BattleUnit::ClearUnk2BC0 — exact
+
+汇编：+0x2BC0 &= ~参数，返回 ~参数。
+对照：ClearUnk2BC0 一致。
+差异：无。
+
+## 0x0049C390 BattleUnit::DamageTransferred — exact
+
+汇编：返回 (状态 >> 17) & 1。
+对照：DamageTransferred 一致（DamageTransfer 0x20000）。
+差异：无。
+
+## 0x0049C3A0 BattleUnit::CommandSupports — exact
+
+汇编：命令 +0x08 有 0x10000000、0x80000000、0x40000000、0x20000000、0x2000000 之一 → 1；actionFlags 0x1000 → 1；否则 (+0x34 低字节 >> 2) & 1。
+对照：CommandSupports 一致（kSupportBuffs = Invisible|AttackUp|DefenseUp|SpeedUp|Barrier = 0xF2000000、UnkAction1000、kSupportKind 4 于自身物件 +0x20）。
+差异：无。
+
+## 0x0049C410 BattleUnit::CommandRefreshOnly — exact
+
+汇编：返回 (命令 +0x1A 字 >> 15) & 1。
+对照：CommandRefreshOnly 一致（RefreshOnly 0x8000）。
+差异：无。
+
+## 0x0049C420 BattleUnit::HasStatus — exact
+
+汇编：返回 (状态 & 参数) ≠ 0。
+对照：HasStatus 一致。
+差异：无。
