@@ -955,8 +955,8 @@ void UnitFrame::GuardAdvance(GuardView& view)
             view.clearMode = true;
             unit.marks = static_cast<u16>(unit.marks & ~BattleUnit::UnkMark1);
             unit.action = 0;
-            unit.unk26A8 = 0;
-            unit.unk26AC = 0;
+            unit.unk2BB0 = 0;
+            unit.unk2BB4 = 0;
             return;
         }
 

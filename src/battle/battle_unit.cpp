@@ -5228,8 +5228,8 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
     smooth::ScenePainter painter(services, scene);
     painter.SetSource(picture.data.data());
     const int left = this->placement.x - static_cast<i16>(this->originX);
-    const int x = this->unk26A8 + left;
-    const int y = this->placement.y - this->unk26AC - act.y;
+    const int x = this->unk2BB0 + left;
+    const int y = this->placement.y - this->unk2BB4 - act.y;
 
     if (this->guarding == 0 && (marks & BattleUnit::GuardingMark) == 0)
     {
@@ -5414,7 +5414,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
             painter.SetSource(overlay.data.data());
             painter.DrawPicture(
                 this->overlayOffsetX + left,
-                this->placement.y + static_cast<i16>(act.offsetY) - this->unk26AC - act.y,
+                this->placement.y + static_cast<i16>(act.offsetY) - this->unk2BB4 - act.y,
                 overlay.width,
                 overlay.height,
                 this->drawFlags | Painter::Additive

@@ -800,11 +800,11 @@ public:
     i32 glowOffsetX = 0;     // +0x2B94
     i32 readyAction = 0;     // +0x2B98 the action of its ready pose (kReadyAct)
     u32 drawFlags = 0;       // +0x2B9C bit 0: mirrored
-    i32 overlayOffsetX = 0;  // swd32 +0x2698 the x offset of the overlay (IdleFrame)
+    i32 overlayOffsetX = 0;  // +0x2BA0 the x offset of the overlay (IdleFrame)
     u32 frameFlags = 0;      // +0x2BA8 flag 1 toggled for mirrored frames
     u32 shadowMode = 0;      // +0x2BAC the mode its shadow is drawn with
-    i32 unk26A8 = 0;
-    i32 unk26AC = 0;
+    i32 unk2BB0 = 0;
+    i32 unk2BB4 = 0;
     i32 damageCarry = 0;               // +0x2BB8
     i32 hitPointsOverride = 0;         // +0x2BBC an enemy's current hit points when set
     u32 unk2BC0 = 0;                   // +0x2BC0 bit 31
