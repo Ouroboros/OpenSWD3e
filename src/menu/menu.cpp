@@ -223,8 +223,8 @@ bool Repeating(const ButtonState& button, i32 parity)
     return button.press != 0 && (button.heldFrames == 1 || ((parity & 1) == 0 && button.heldFrames > kRepeatAfter));
 }
 
-// The length of a role tab's bar of `value` out of `maximum`. The rebuild (deviations.md): a maximum of 0 (the name
-// code 燕赤霞 sets the stamina's) gives an empty bar; the original divides by it and fails.
+// The length of a role tab's bar of `value` out of `maximum`. The rebuild (deviations.md): a maximum of 0 gives an
+// empty bar; the original divides by it and fails.
 int BarLength(i32 value, i32 maximum)
 {
     return maximum != 0 ? kBarLength * value / maximum : 0;

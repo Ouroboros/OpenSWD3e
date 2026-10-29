@@ -66,8 +66,6 @@ constexpr u16 kMaximaObject = 0x100;
 constexpr u16 kPercentObject = 0x200;
 constexpr int kPercent = 100;
 
-// The values the name codes set.
-
 }  // namespace
 
 // The text from the part at `offset` up to its NUL, within the record
