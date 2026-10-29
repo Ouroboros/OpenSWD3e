@@ -41,6 +41,16 @@ REVIVES = 0x8000         # SkillScript::ailment bit 15: a defeated role stands u
 NOT_SPENT = 0x80         # ObjectData::kind: not used up
 PLAIN_LIMIT = 0x1B       # ApplyObject: a category above it restores the vitals only
 VITALS_USE, MAXIMA_USE, PERCENT_USE = 0, 0x100, 0x200
+# BattleRole::SelectObject: the kinds of the battle's item lists 0..5 (CategoryKinds) taken by a role with usableBy bit 0
+# or 2; list 6 (kind bit 1) whoever may use it, loading only the skill script; list 4 also every object with costBits
+# 0x2000, also by its skill script. Elsewhere an object with an actionKind script loads that one.
+BATTLE_KINDS = 0x10 | 0xC | 0x1001 | 0x800 | 0x2000 | 0x8000000
+ANY_USER_KIND = 2
+BATTLE_USERS = 5
+LISTED_OBJECT = 0x2000
+TARGETS_ALL = 1          # UnitCommand::TargetsAll: every enemy is hit
+RESTORES = 0x80          # UnitCommand::Restores: the hit heals
+ELEMENT_BUFF = 30        # HitDamage: the attack buff of the command's element (HasEffectKind) adds 30 percent
 SELL_RATE = 60
 # Database::LoadObject: the items' ids 0xBB8..0xD48 read the records 0x9C4 lower (the inventory, the shops and the
 # altar use those ids, e.g. 0xC13 the bestiary book of record 591); the monsters keep their record numbers.
@@ -154,6 +164,39 @@ def used(item):
     return lines, notes
 
 
+def battle_script(item):
+    """The skill script an object chosen in battle loads (BattleRole::SelectObject): its value, element and flags."""
+    skill = (item['skillValue'], item['skillElement'], item['skillFlags'])
+    if item['costBits'] & LISTED_OBJECT:
+        return skill
+    if item['kind'] & BATTLE_KINDS and item['usableBy'] & BATTLE_USERS:
+        return (item['actionValue'], item['actionElement'], item['actionFlags']) if item['actionKind'] else skill
+    if item['kind'] & ANY_USER_KIND and not item['actionKind']:
+        return skill
+    return None
+
+
+def damage(item):
+    """The rows of an object used in battle that deals damage (its script's value, no Restores flag): the battle's item
+    command takes the value as the damage (BattleUnit::HitDamage, command 3), turned by the target's resistance of the
+    element against the command's (ApplyElement); no defence is taken off and no roll is added (selecting the object
+    sets UnkCommandFlag4000). Bit 0 of its action flags hits every enemy."""
+    script = battle_script(item)
+    if not script:
+        return {}, {}
+    value, element, flags = script
+    if value <= 0 or flags & RESTORES:
+        return {}, {}
+    lines = {'傷害': f'{value}　無屬性', '對象': '敵方全體' if flags & TARGETS_ALL else '敵方單體'}
+    notes = {'傷害': '不受五行抗性影響，不扣防禦，無隨機值'}
+    if 1 <= element <= len(ELEMENTS):
+        name = ELEMENTS[element - 1]
+        lines['傷害'] = f'{value}　{name}屬性'
+        notes['傷害'] = '依敵人的五行抗性增減，不扣防禦，無隨機值'
+        lines['加成'] = f'使用者有{name}屬性攻擊提升時 +{ELEMENT_BUFF}%'
+    return lines, notes
+
+
 def details(item, names):
     kind = item['kind']
     slots = [name for name, bits in SLOTS if kind & bits == bits]
@@ -161,6 +204,11 @@ def details(item, names):
         lines, notes = worn(item, slots, names)
     else:
         lines, notes = used(item)
+        hurt, hurt_notes = damage(item)
+        if hurt and lines:
+            print(f'{item["id"]} {item["name"]}: used in the menu and dealing damage', file=sys.stderr)
+        lines = {**lines, **hurt}
+        notes = {**notes, **hurt_notes}
     return slots, lines, notes
 
 

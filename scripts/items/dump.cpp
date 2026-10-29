@@ -31,6 +31,8 @@ namespace
 {
 
 constexpr swd3e::u32 kLastObject = 0x4AF;
+constexpr unsigned kWordBits = 16;
+constexpr swd3e::u32 kWordMask = 0xFFFF;
 
 class QuietReporter : public swd3e::ErrorReporter
 {
@@ -100,12 +102,31 @@ int Data(const std::u8string& directory)
             resist += (at != 0 ? "," : "") + std::to_string(static_cast<int>(static_cast<swd3e::i8>(d.resistances[at])));
         }
 
-        swd3e::SkillScript skill;
-
-        if (d.skillScript == 0 || !database.LoadSkill(skill, d.skillScript))
+        // A skill script as BattleUnit::LoadCommand reads it: the flags, the value (unk0C high word) and the element
+        // (unk10 low word); all 0 without a script.
+        const auto load = [&database](swd3e::u16 id)
         {
-            skill = swd3e::SkillScript{};
-        }
+            swd3e::SkillScript loaded;
+
+            if (id == 0 || !database.LoadSkill(loaded, id))
+            {
+                loaded = swd3e::SkillScript{};
+            }
+
+            return loaded;
+        };
+
+        const swd3e::SkillScript skill = load(d.skillScript);
+        const swd3e::SkillScript action = load(d.actionKind);
+        const auto value = [](const swd3e::SkillScript& script)
+        {
+            return static_cast<int>(static_cast<swd3e::i16>(script.unk0C >> kWordBits));
+        };
+
+        const auto element = [](const swd3e::SkillScript& script)
+        {
+            return static_cast<unsigned>(script.unk10 & kWordMask);
+        };
 
         const std::string description = swd3e::Utf8FromBig5(record.description.value_or(std::string()));
         std::printf(
@@ -113,7 +134,8 @@ int Data(const std::u8string& directory)
             "\"usableBy\":%u,\"useKind\":%u,\"attackBonusUp\":%u,\"defenseBonusUp\":%u,\"strengthUp\":%u,"
             "\"enduranceUp\":%u,\"agilityUp\":%u,\"wisdomUp\":%u,\"rapportUp\":%u,\"evasionUp\":%u,"
             "\"hitPointsUp\":%u,\"spiritUp\":%u,\"staminaUp\":%u,\"costBits\":%u,\"counterMax\":%u,\"masteryValue\":%u,\"actionKind\":%u,"
-            "\"skillScript\":%u,\"skillFlags\":%u,\"skillAilment\":%u,\"altar\":%u,\"unkA2\":%u,\"resistances\":[%s],\"description\":%s}\n",
+            "\"skillScript\":%u,\"skillFlags\":%u,\"skillAilment\":%u,\"skillValue\":%d,\"skillElement\":%u,"
+            "\"actionFlags\":%u,\"actionValue\":%d,\"actionElement\":%u,\"altar\":%u,\"unkA2\":%u,\"resistances\":[%s],\"description\":%s}\n",
             id,
             Json(name).c_str(),
             d.kind,
@@ -141,6 +163,11 @@ int Data(const std::u8string& directory)
             d.skillScript,
             skill.flags,
             skill.ailment,
+            value(skill),
+            element(skill),
+            action.flags,
+            value(action),
+            element(action),
             d.altar,
             d.unkA2,
             resist.c_str(),
