@@ -26,6 +26,8 @@ public:
     // pointer (0x67) or changes its action (0xA), the role named by its id or as Talk::Current. A role whose event
     // gives an item without it is a talk standing for someone (the role of a character out of reach).
     bool TakesItself(const std::u8string& directory, u32 event, u16 role);
+    // The map overview: the maps the script changes to (command 0x1B), each once, in the order read.
+    const std::vector<u16>& EnteredMaps(const std::u8string& directory, u32 event);
 
 private:
     static constexpr std::size_t Files = 4;  // Talk1.dat..Talk4.dat
@@ -41,6 +43,7 @@ private:
     std::array<bool, Files> loaded = {};
     std::unordered_map<u32, bool> items;
     std::unordered_map<u64, bool> taken;
+    std::unordered_map<u32, std::vector<u16>> maps;
 };
 
 }  // namespace swd3e

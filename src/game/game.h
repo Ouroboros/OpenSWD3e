@@ -23,6 +23,7 @@
 #include "font/text_font.h"
 #include "game/databases.h"
 #include "game/game_state.h"
+#include "game/map_overview.h"
 #include "game/notices.h"
 #include "game/scene.h"
 #include "gfx/graphics.h"
@@ -94,6 +95,7 @@ class Game
     friend class smooth::DamageFrame;
     friend class smooth::BattleFrame;
     friend class smooth::TalkFrame;
+    friend class MapOverview;
 
 public:
     static constexpr std::u8string_view WindowTitle = u8"軒轅劍參 外傳";                   // swd3e 0x004B0BAC
@@ -656,6 +658,7 @@ private:
     MapCache mapCache;
     Field field;
     FieldView fieldView;
+    MapOverview mapOverview{*this};  // the rebuild's map overview (Tab)
     Talk talk;
     RoleControl roleControl;
     RolePath rolePath;

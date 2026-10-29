@@ -28,6 +28,12 @@ void FieldView::DrawRoles()
 
             for (Role* role = rows[static_cast<std::size_t>(index)]; role != nullptr; role = role->next)
             {
+                // The rebuild's map overview draws the map file's roles alone (the story's people are left out).
+                if (this->overview && role->id != Role::NoId)
+                {
+                    continue;
+                }
+
                 this->DrawRole(*role);
 
                 if (role->sound != 0 && !this->replaying)

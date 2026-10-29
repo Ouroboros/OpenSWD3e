@@ -176,6 +176,36 @@ bool EventScan::TakesItself(const std::u8string& directory, u32 event, u16 role)
     return takes;
 }
 
+const std::vector<u16>& EventScan::EnteredMaps(const std::u8string& directory, u32 event)
+{
+    if (const auto found = this->maps.find(event); found != this->maps.end())
+    {
+        return found->second;
+    }
+
+    std::vector<u16> entered;
+    this->Scan(
+        directory,
+        event,
+        0,
+        [&entered](EventCommand code, std::span<const u8> command)
+        {
+            if (code == EventCommand::ChangeMap)
+            {
+                const u16 map = TextWord(command, kOpcodeBytes);
+
+                if (std::find(entered.begin(), entered.end(), map) == entered.end())
+                {
+                    entered.push_back(map);
+                }
+            }
+
+            return false;
+        }
+    );
+    return this->maps.emplace(event, std::move(entered)).first->second;
+}
+
 bool EventScan::Scan(const std::u8string& directory, u32 event, int depth, const Found& found)
 {
     const std::size_t file = event / Talk::EventsPerFile;
