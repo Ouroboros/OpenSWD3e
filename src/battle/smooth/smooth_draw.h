@@ -60,7 +60,8 @@ struct PictureStep
     bool palette = false;  // drawn with the picture's palette (PaletteArgument)
     bool blended = false;
     int alpha = 0;
-    bool held = false;  // what stands at `stand` (DrawPlacer::Holding): it moves with it
+    bool clearsAlpha = false;  // the translucency (DrawOptions::alpha) is cleared after the draw
+    bool held = false;         // what stands at `stand` (DrawPlacer::Holding): it moves with it
     std::array<int, 2> stand = {};
     const void* who = nullptr;  // what is held (a flight)
 };

@@ -1509,6 +1509,7 @@ int UnitFrame::RecoilAdvance(BattleServices& services, ActState& act, i16 y, Pic
     {
         step.blended = (unit.shadowMode & ActState::Signal) != 0;
         step.alpha = act.signal;
+        step.clearsAlpha = true;
         steps.push_back(step);
         return 0;
     }

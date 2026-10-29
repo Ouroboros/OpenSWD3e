@@ -85,6 +85,11 @@ void DrawSteps(BattleServices& services, const PictureSteps& steps)
             step.mode,
             step.palette ? PaletteArgument(*picture) : DrawArgument{}
         );
+
+        if (step.clearsAlpha)
+        {
+            painter.Options().alpha = 0;
+        }
     }
 }
 

@@ -2297,7 +2297,7 @@ bool BattleUnit::Unk2EB2BelowProficiency(CounterList& proficiency)
 }
 
 // swd3e.exe 0x0049B160
-int BattleUnit::SetValueAAC(int value)
+int BattleUnit::SetValue2FEC(int value)
 {
     this->unk2FEC = value;
     return value;

@@ -705,7 +705,7 @@ public:
     int MarkBit4() const;
     i32 Unk2EB2Shown() const;
     bool Unk2EB2BelowProficiency(CounterList& proficiency);
-    int SetValueAAC(int value);
+    int SetValue2FEC(int value);
     int SetFacingIfAble(int value);
     void SetNudge(u16 nudge, u16 saved);
     bool CommandTarget(u16& target, u16& second) const;

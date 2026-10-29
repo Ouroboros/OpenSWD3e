@@ -2812,3 +2812,191 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：位置 = 表头 id≠0 ? 表头.next : 表头。两件饰品：act（+0x54）=0 或 movsx +0x48 ≠ 种类 → 跳过；结果 = 1；自当前位置找 id = act 的节点：找到 → done（+0xA）≠0 跳过，否则值（+6）+= 量，≥ 上限（+0x44，无符号）→ 上限，百分比（+8）= ftol(值 ÷ 上限 × 100.0f（0x004AAE10）)；找不到 → 尾部新建 0x14 字节清零节点，id = act、值 = 量、百分比 = ftol(量 ÷ 上限 × 100)，上限=0 → 值 0、百分比 100、done=1；表头 id 加 1。返回结果。
 对照：StepAccessoryCounters 一致（kCounterPercent 100.0、kCounterFull 100；第二件饰品自前一件停下的节点续找，相同）。
 差异：无。
+
+## 0x0049A220 BattleUnit::DrawAction — exact
+
+汇编：Run(act) 失败 → 0。+0x2A44 = GetPicture(act 帧, 图片)；+0x2BA8 = act 旗标、+0x2EC6 = act.x、+0x2EBC = anchorX（+0x7A）、+0x2EC0 = offsetX（+0x62）。+0x3044=1 或 +0x3048=1：facing=1 → 旗标位 0 翻转、+0x2EC6 = 宽 − x、anchorX≠0 → +0x2EBC = 宽 − anchorX；+0x3044=1 且旗标无 0x2C → |4。facing=1 且两者皆 0 → 同样翻转。act target 0x1000 → 目标 SetNudge(0x28, 0)、清该位。目标 GetDrawPosition。命令旗标字节 0x38：HasFixedOrigin=1 → (0xF0, 0x12C)，敌人 (0x1A4, 0x118)；+0x2ECA = X − +0x2EC6、+0x2ECC = Y − act.y（字）。否则 +0x2ECA/+0x2ECC 取 placement；+0x3000=1 → +0x2BC4 = 0x7E007E0，以 (旗标 & 0x80000003) 在 (movsx +0x2ECA, movsx +0x2ECC) 画描边，再置 0x7E007E0。播放 act view，声像 (movsx +0x2EC6 + movsx +0x2ECA ≥0x140 ? 0x30 : −0x30)，view=0。act target 位 3 且 0x100 → +0x3044=0 时 +0x2BC0|=0x40000，target=0。+0x2BC0 0x40000：waiting=0 → 残影表加一项（x、y、旗标、帧、图片、计数高字节、旗标 1、蓝 0xA、亮度 0xE、步 1），再画残影表。影子：高/3、高>>2、色调 −6（隐身 −1）、+0x2BAC = (旗标 & 0x8000000F)|0xC 画于 (actX, actY + act.y − 高/3)。旗标 & 0x14 → alpha = act +0x92；mainAct +0x90 ≠0 → 波纹；以旗标画于 (actX, actY)；波纹清 0。旋转（+0x4E）与动作码（+0x50）皆非 0：+0x2A4C = GetPicture(旋转, 动作码−1)；朝向镜像且 offsetX≠0 → +0x2EC0 = 宽 − offsetX − 叠加宽（两种控制状态各判一次）；以旗标|4 画于 (actX + movsx +0x2EC0, actY + movsx offsetY)；waiting=1 → 旋转、动作码、offsetX、offsetY 清 0。返回 1。
+对照：DrawAction → UnitFrame::ActionAdvance、DrawActionView 一致（NoBlend 0x2C、kNudgesTarget 0x1000、kActNudge 0x28、AtTarget 0x38、kEnemyFixed 0x1A4/0x118、OutlineColorPair、kPanCentre、kFadePan、kAfterImageTarget 0x100、kAfterImages 0x40000、残影项字段 +0xA8..+0xC4 与 kAfterImageTintBlue 0xA/Level 0xE/Fade 1、kRoundShift 8、Signal 0x14；(旗标 & 0x80000003)|0xC 与原掩码结果相同）；空图片属偏差 153，描边图源属偏差 154；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x0049A830 UnitFrame::ChooseOverlay — exact
+
+汇编：帧或图片（双字）为 0 → 1。+0x2EC0 = offsetX（参数五）；+0x2A4C = GetPicture(帧, 图片−1)（随即读首双字）。+0x3044=1 或 +0x3048=1：facing=1 且 offsetX≠0 → +0x2EC0 = 当前图宽（+0x2A44）− offsetX − 叠加宽。facing=1 且两者皆 0 且 offsetX≠0 → 同。以 +0x2BA8|4 画叠加于 (x + movsx +0x2EC0, y + offsetY)，返回 1。
+对照：ChooseOverlay 一致（view.x/y 在 HomeAdvance 中先置为点坐标，叠加画于图之后）；叠加图与当前图缺失属偏差 178。
+差异：无。
+
+## 0x0049A950 BattleUnit::StatusBit5 — exact
+
+汇编：返回 (状态低字节 >> 5) & 1。
+对照：StatusBit5 一致（UnkStatus20）。
+差异：无。
+
+## 0x0049A970 BattleUnit::CommandTarget — exact
+
+汇编：命令旗标字节位 0 → *一 = 命令 +0x26、*二 = 命令 +0x28，返回 1；否则 0。
+对照：CommandTarget 一致（TargetsUnit）。
+差异：无。
+
+## 0x0049A9B0 BattleUnit::FollowAct — exact
+
+汇编：返回零扩展命令 +0x12。
+对照：FollowAct 一致。
+差异：无。
+
+## 0x0049A9C0 BattleUnit::GetStamina — exact
+
+汇编：kind=1 → *一 = 角色记录 +0x0E、*二 = +0x08。
+对照：GetStamina 一致。
+差异：无。
+
+## 0x0049A9F0 BattleUnit::GetSpirit — exact
+
+汇编：kind=1 → *一 = 角色记录 +0x0C、*二 = +0x06。
+对照：GetSpirit 一致。
+差异：无。
+
+## 0x0049AA20 BattleUnit::RoleAgility — exact
+
+汇编：kind=1 → 角色记录 +0x16，否则 0。
+对照：RoleAgility 一致。
+差异：无。
+
+## 0x0049AA40 BattleUnit::RoleAttackBonus — exact
+
+汇编：kind=1 → 角色记录 +0x26，否则 0。
+对照：RoleAttackBonus 一致。
+差异：无。
+
+## 0x0049AA60 BattleUnit::AimAction — exact
+
+汇编：act hold = held=1；Run 失败 → 返回 0。+0x2A44 = GetPicture（随即读首双字作图源）；+0x2BAC = act 旗标、+0x2EC8 = act.x、+0x2EBE = anchorX。+0x3044=1 或 +0x3048=1：facing=1 → 旗标位 0 翻转、act.x（双字）≠0 → +0x2EC8 = 宽 − x、anchorX≠0 → +0x2EBE = 宽 − anchorX。facing=1 且两者皆 0 → 同。目标 GetDrawPosition；+0x2ECE = X − +0x2EC8、+0x2ED0 = Y − act.y（字）；(anchorX 或 anchorY 非 0) 且 (参数 shiftX 或 shiftY 非 0) → +0x2ECE = +0x2ECA + +0x2EBC − +0x2EBE、+0x2ED0 = +0x2ECC − anchorY + shiftY（shiftX 不参与）。ClearMoveAxes(+0x2ECE, +0x2ED0)。播放 view，声像 (目标X 字 ≥0x140 ? 0x30 : −0x30)，view=0。target 0x8000 → 0x0057730C=1、0x00577030=0。target 位 2 → target=0、目标 RaiseFlag2BC0。返回 waiting=1。
+对照：AimAction 一致（Quakes、UnkTarget4、kPanCentre、kFadePan；shiftX 未用的原写法保留）。原程序返回 waiting=1，源码为 void：5 处调用（0x00480xxx、0x00483xxx、0x004854B0 两处、0x00488xxx）均不读 eax，行为相同。空图片属偏差 155。
+差异：无。
+
+## 0x0049ACC0 BattleUnit::DrawRecoil — diff → exact
+
+汇编：Run(act) 失败 → 0。+0x2A44 = GetPicture；播放 view，声像 (movsx +0x2ECA ≥0x140 ? 0x30 : −0x30)，view=0。+0x2BAC = act 旗标、+0x2EC8 = act.x；+0x3044=1 或 +0x3048=1：facing=1 → 旗标位 0 翻转、act.x≠0 → +0x2EC8 = 宽 − x；facing=1 且两者皆 0 → 同。图源 = 图片首双字。waiting=1：+0x2E62（有符号字）≤ −0x20 → 清 0，返回 1；否则色调三色 = movsx +0x2E62，以 +0x2BAC 画于 (movsx +0x2EBC − movsx +0x2EC8 + movsx +0x2ECA, movsx +0x2ECC − act.y + movsx 参数 y)（不设透明度），+0x2E62 −= 2，held=1 → 加回 2，返回 0。waiting≠1：+0x2BAC & 0x14 → 透明度（0x004E6D58）= act +0x92；同处以 +0x2BAC 画，透明度清 0，返回 0。
+对照：DrawRecoil → UnitFrame::RecoilAdvance、DrawSteps（kRecoilFadeEnd −0x20、kRecoilFadeStep 2、Signal 0x14、kPanCentre、kFadePan）；空图片属偏差 156；绘制经 Scene，偏差 97/99。
+差异：原程序画完未等待的受击帧后把透明度 0x004E6D58 清 0，源码未清；等待阶段（不设透明度的色调帧）画透明模式的图时会读到不同的旧透明度。
+修正：PictureStep 增加 clearsAlpha（DrawSteps 在绘制后把 DrawOptions::alpha 清 0），未等待的受击帧置该标记。复核：完整函数重新对照一致。
+
+## 0x0049AF40 BattleUnit::DrawAimed — exact
+
+汇编：act hold = held=1；Run 失败 → 0。+0x2A44 = GetPicture；+0x2BAC = act 旗标、+0x2EC8 = act.x、+0x2EBE = anchorX；facing=1（不分控制状态）→ 旗标位 0 翻转、+0x2EC8 = 宽 − x（不判 0）、anchorX≠0 → +0x2EBE = 宽 − anchorX。目标 GetDrawPosition、+0x2ECE/+0x2ED0 与偏移重算、ClearMoveAxes、声像、view=0、0x8000 → 地震、位 2 → target=0 与 RaiseFlag2BC0，均同 AimAction。图源 = 图片首双字，以 +0x2BAC 与 +0x2A40 图片的 +4 为参数画于 (movsx +0x2ECE, movsx +0x2ED0)。返回 waiting=1。
+对照：DrawAimed → UnitFrame::DrawAimedAdvance 一致；空图片与无 +0x2A40 图片属偏差 169；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x0049B160 BattleUnit::SetValue2FEC — diff → exact
+
+汇编：+0x2FEC = 参数，返回参数。
+对照：函数体一致。
+差异：函数名沿用 swd32 偏移 SetValueAAC。
+修正：改名 SetValue2FEC（与 GetValue2FEC 对应），函数表同步。复核：完整函数重新对照一致。
+
+## 0x0049B170 BattleUnit::SetDisplayName — exact
+
+汇编：+0x2A58 = 参数（名字指针）。
+对照：SetDisplayName 一致（displayName 以 span 保存同一名字）。
+差异：无。
+
+## 0x0049B180 BattleUnit::SetFacingIfAble — exact
+
+汇编：kind=1 且 +0x2FF8=1 → 返回 1；否则 +0x3068 = +0x3050 = 参数，返回参数。
+对照：SetFacingIfAble 一致。
+差异：无。
+
+## 0x0049B1B0 BattleUnit::StartDrainEffect — exact
+
+汇编：+0x2A54 = 来源 StepIdleAction；来源 GetOrigin(x, y)。槽（+0x10E4 + 槽×0x58）清 0x58 字节；像素 = 0x004014B0 解出 +0x2A54 的 RLE；宽、高 = 图宽高；x = movsx 来源X − 1、y = movsx 来源Y；+0x10 = movsx +0x2EBC − movsx +0x2EC2 + movsx 阵位X − 0x32；+0x18 = movsx 阵位Y − mainAct.y + 0x28；+0x14 = +0x1C = 1；+0x22 = 0x28、+0x20 = 0x14、+0x24 = 图高 >> 1、+0x26 = 0x3C、三色 = 5、旗标 = 0x56；来源 Mirrored=1 → 旗标|1。+0x2FB0|=0x800；投影器 SetScreen(屏幕宽, 屏幕高)。
+对照：StartDrainEffect 一致（kDrainLeft 0x32、kDrainDown 0x28、kDrainSpeed 0x28、kDrainLife 0x14、kDrainDivisor 0x3C、kDrainTint 5、kStripFlags 0x40|0x16、UnkCommandFlag800）；无图片属偏差 191，屏幕宽高属偏差 192（平台替换）。
+差异：无。
+
+## 0x0049B330 BattleUnit::DrainEffectFrame — exact
+
+汇编：槽三色 = 5；+0x303C = 1；0x00439250(0x004EDA44 画面, 槽) = 1 → 释放像素、槽清零，返回 1；否则 0。
+对照：DrainEffectFrame → UnitFrame::DrainEffectFrameAdvance 一致；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x0049B3B0 BattleUnit::DrawActionAt — exact
+
+汇编：Run(act) 失败 → 返回。+0x2A44 = GetPicture；+0x2BA8 = act 旗标、+0x2EC6 = act.x、+0x2EBC = anchorX。+0x3044=1 或 +0x3048=1：facing=1 → 旗标位 0 翻转、+0x2EC6 = 宽 − x、anchorX≠0 → +0x2EBC = 宽 − anchorX；+0x3044=1 → 旗标|4（不判 0x2C）。facing=1 且两者皆 0 → 同样翻转。+0x2ECA = 参数 x − +0x2EC6、+0x2ECC = 参数 y − act.y（字）。播放 view，声像 (movsx +0x2EC6 + movsx +0x2ECA ≥0x140 ? 0x30 : −0x30)，view=0。影子：高/3、高>>2、色调 −6（状态 0x80000000 → −1）、+0x2BAC = (旗标 & 0x8000000F)|0xC 画于 (actX, actY + act.y − 高/3)。隐身 → 旗标|0x30 画于 (actX, actY)；否则 (旗标 & 0x14) = 0x14 → 透明度 = mainAct +0x92，以旗标画于 (actX, actY)。
+对照：DrawActionAt → UnitFrame::DrawActionAtAdvance 一致（Additive、SmearUnder、Signal 0x14、kShadowShare、kShadowShearShift、kShadowTint、kInvisibleShadowTint）；空图片属偏差 69 同类返回；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x0049B680 BattleUnit::GetHitPoints — exact
+
+汇编：kind=1 → *上限 = movsx 角色记录 +0x0A、*值 = movsx +0x04；否则 *值 = 物件 +0x68，+0x2BBC≠0 → *值 = 它，*上限 = 物件 +0x50。
+对照：GetHitPoints 一致。
+差异：无。
+
+## 0x0049B6D0 BattleUnit::HitPointShare — exact
+
+汇编：x87：movsx 生命（+0x04）÷ movsx 上限（+0x0A）× 参数（整数），ftol。
+对照：HitPointShare 一致（double 除乘与 53 位精度的 x87 相同；上限为 0 时同为 IEEE 结果再经 Ftol）。
+差异：无。
+
+## 0x0049B700 BattleUnit::CancelHitNumber — exact
+
+汇编：0x00576D3C 位 11 或 +0x2FD1（有符号字节）<0 → 0。+0x306C=1 → 1。+0x2BD0 无位 3 → 0。+0x306C=0；+0x2FD1 ≤0 → +0x2FD1 = −1，返回 0。否则槽 = +0x2C28 + 目标计数×8 的四个字（千、百、十、个）：0x005378F4 −= 个 + 10×(十 + 10×(百 + 10×千))，槽清零，+0x2FD1 = −2、+0x306C = 1，返回 1。
+对照：CancelHitNumber 一致（UnkPanel800、Unk36 8、kNumberSpent −1、kNumberTaken −2、kTens 10）；计数为 0 或越过表尾属偏差 180。
+差异：无。
+
+## 0x0049B7D0 BattleUnit::ClearUnk2FD1 — exact
+
+汇编：+0x2FD1 = 0。
+对照：ClearUnk2FD1 一致。
+差异：无。
+
+## 0x0049B7E0 BattleUnit::PoisonLasted — exact
+
+汇编：+0x2BC0 无 0x20000000 → 0；否则 3 < +0x2FA0（无符号字）? 1 : 0。
+对照：PoisonLasted 一致（kFlag2BC0Poison、kLastedTurns 3、unk2FA0 为 u16）。
+差异：无。
+
+## 0x0049B800 BattleUnit::PoisonBase — exact
+
+汇编：返回 +0x2FA2（字）。
+对照：PoisonBase 一致。
+差异：无。
+
+## 0x0049B810 BattleUnit::AddPoison — exact
+
+汇编：+0x2BC0 有 0x20000000 → 0。（先沿效果链走到尾，结果不用。）+0x2FD2 = 等级+1（字节）、+0x2FA2 = 基值；新建 0xBC 字节清零节点插在链首；回合 = 0xFFFF、位 = 0x1000、值 = 基值 − (u8)+0x2FD2 × (20×movsx 基值/100)（字）、强度 = 50.0f、计时 = 0x004BEFF8 − 1；+0x2FD2 >4 → 值 = 基值 − 4×(20×基值/100)。敌人且物件 +0x20 位 5 → 回合 = 10。+0x2BC0|=0x20000000、状态|=0x1000、图标 = 7，返回 1。
+对照：AddPoison 一致（kFlag2BC0Poison、kLastingTurns 0xFFFF、PoisonAilment 0x1000、kPoisonFifth 20、kPoisonStart 50.0f、kPoisonLevels 4、kNamedPoisonTurns 10、Poisoned、LastingPoisonIcon 7、gaugeFull）。
+差异：无。
+
+## 0x0049B960 BattleUnit::CountPoisonTurn — exact
+
+汇编：+0x2BC0 有 0x20000000 → +0x2FA0 加 1。
+对照：CountPoisonTurn 一致。
+差异：无。
+
+## 0x0049B980 BattleUnit::RaiseUnk2BC0Bit28 — exact
+
+汇编：+0x2BC0|=0x10000000。
+对照：RaiseUnk2BC0Bit28 一致。
+差异：无。
+
+## 0x0049B990 BattleUnit::PartyMember — exact
+
+汇编：返回 +0x3040。
+对照：PartyMember 一致。
+差异：无。
+
+## 0x0049B9A0 BattleUnit::AutoControl — exact
+
+汇编：返回 +0x3044。
+对照：AutoControl 一致。
+差异：无。
+
+## 0x0049B9B0 BattleUnit::GuestControl — exact
+
+汇编：返回 +0x3048。
+对照：GuestControl 一致。
+差异：无。
+
+## 0x0049B9C0 BattleUnit::Ghost — exact
+
+汇编：返回 +0x304C。
+对照：Ghost 一致。
+差异：无。

@@ -1140,7 +1140,7 @@ int Game::AbsorbFrame(BattleRole& unit, int target, bool sealed)
 
         unit.StartAbsorb(services, enemy);
         battle.absorbSucceeded = 1;
-        enemy.SetValueAAC(1);
+        enemy.SetValue2FEC(1);
         this->DarkenForCommand();
         battle.pushFrames = 1;
         this->DarkenByTint();
@@ -2935,7 +2935,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
 
             if (this->battleRoles[0].BeatsLevel(services, level) == 1)
             {
-                unit.SetValueAAC(1);
+                unit.SetValue2FEC(1);
                 battle.unk577258 = 0;
                 battle.currentUnit = 0;
                 battle.levelUpFrames = 0;
@@ -2946,7 +2946,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
             {
                 for (u32 index = 0; index < battle.roleCount; ++index)
                 {
-                    this->battleRoles[index].SetValueAAC(0);
+                    this->battleRoles[index].SetValue2FEC(0);
                 }
 
                 if (this->battleMessages.messages == nullptr)
