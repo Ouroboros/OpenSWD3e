@@ -530,7 +530,7 @@ public:
     void SetVitals(i16 hitPoints, i16 spirit, i16 stamina);
     i16 SetAttributes(i16 attack, i16 defense, i16 agility);
     void SetLevel(i16 level);
-    int SetB00(int value);
+    int SetAutoControl(int value);
     int SetB04(int value);
     void Reset(BattleServices& services);
     void DrawGuardText(BattleServices& services);

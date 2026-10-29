@@ -2480,3 +2480,93 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：返回 (actionFlags & 参数) ≠ 0。
 对照：一致。
 差异：无。
+
+## 0x00491D10 BattleUnit::SetAction — exact
+
+汇编：+0x2F2A = 参数字；+0x2F96≠0 → 返回（eax 低字为参数）；否则 mainAct 清零，返回 0。
+对照：SetAction 一致。
+差异：无。
+
+## 0x00491D40 BattleUnit::IsGuarding — exact
+
+汇编：+0x3030=1 或标记位 12 → 1，否则 0。
+对照：一致（GuardingMark）。
+差异：无。
+
+## 0x00491D60 BattleUnit::SetVitals — exact
+
+汇编：+0x2FE0=1：记录 [+4] 为空 → 返回；血 >0（有符号）→ +0xA 与 +0x4 = 血，=−1 → +0x4 = +0xA；灵 +0xC/+0x6、体 +0xE/+0x8 同。否则 [+0xC] 非空 → +0x50 与 +0x68 = movsx 血。
+对照：SetVitals 一致。
+差异：无。
+
+## 0x00491E10 BattleUnit::SetAttributes — diff → exact
+
+汇编：+0x2FE0=1：攻 >0 → [+0]+0x26 = 攻；防 >0 → +0x28；速 >0 → +0x16；返回速（不判断 [+0] 为空）。否则 [+0xC] 为空 → 0；攻/防/速 >0 → +0x5A/+0x5C/+0x5E，返回速。
+对照：逻辑一致。
+差异：队伍角色分支源码判断战斗记录为空，未登记。修正：偏差表末尾新增一行（空指针），代码不变。复核：完整函数重新对照一致。
+
+## 0x00491E90 BattleUnit::SetLevel — exact
+
+汇编：+0x2FE0≠1 且 [+0xC] 非空 → +0x58 = 参数字。
+对照：一致。
+差异：无。
+
+## 0x00491EB0 BattleUnit::SetAutoControl — diff → exact
+
+汇编：+0x3044 = 参数，返回参数。
+对照：逻辑一致（autoControl +0x3044）。
+差异：函数名 SetB00 沿用正传偏移。修正：改名 SetAutoControl（调用处与函数表）。复核：一致。
+
+## 0x00491EC0 BattleUnit::TickEffects — diff → exact
+
+汇编：状态表头 next 为空或 +0x3010≠0 → 返回。逐个节点：位 6 或位 8 → 计时 += 0x20，否则 += 0xE；零扩展计时 < 0x004BEFF8 → 下一个；计时清 0。位 12 且 +0x2FA6=0 → 强度 += 7.0f，+0x2FA6 = ftol(值×强度)/100。位 6 → 步 = 15.0f/最大回合（留在 FPU），+0x2FA6 = ftol(值×强度)/100，强度 < 20.0f（test ah,1）→ 强度 += 步。位 8 → 步 = 20.0f/最大回合，+0x2FA6 同上，强度 > 0（test ah,41h 反向）→ 强度 −= 步。位 9 且强度 < 80.0f → 削 = rand(10)+10，战斗记录 [+0] 的 +0x26/+0x28/+0x16/+0x14 各 −= 零扩展值×削/100，强度 += 削。位 31 → 强度 −= 200.0f/最大回合、+0x2ED6 = ftol(强度)；位 29 → 同、+0x2ED8；位 30 → 40.0f、+0x2EDA；位 27 → +0x2ED6 += ftol(强度)；位 19 → +0x2ED8 += ftol(强度)；位 20 → 30.0f、+0x2EDA = ftol(强度)。状态位 2 → +0x2FA6=0。回合 =0 → 下一个；位 2 清 → 回合减 1；位 =0x2000000 且 +0x3040=1：记录 [+4] 体力 <10 → 回合 0，否则 Damage(0, 0, −10)；状态位 10 且回合 0 → +0x2FA6=9999。循环后 0x00494840(0)。
+对照：TickEffects 一致（kTick 0xE、kFastTick 0x20、kPoisonRise 7.0f、kSlowedTotal 15、kSlowedMost 20.0f、kAilment100Total 20、kStatsCutMost 80.0f、kStatsCutRoll 10、kStatsCutLeast 10、kAttackUpTotal/kDefenseUpTotal 200、kSpeedUpTotal 40、kSpeedDownTotal 30、kBarrierStamina 10、kBlockedDamage 9999 均与 exe 0x004AADDC、0x004AAE20..0x004AAE34、0x004AA5F0 的浮点常量一致）；强度只由有限值累加，不会出现 NaN，C++ 比较与 x87 标志语义相同。
+差异：敌人没有战斗记录，属性削减异常落在敌人身上时原程序经空指针写，源码同样解引用空指针且未登记。修正：战斗记录为空时不削减（掷骰与强度累加照常），偏差表末尾新增一行。复核：完整函数重新对照一致。
+
+## 0x00492380 BattleUnit::AddAilment — exact
+
+汇编：+0x3044=1、标记 0x20、技能异常 +0x1A=0、技能旗标 0x80、状态位 17 → 0。0x00493AD0=0 → 0。掷 = rand(10)+1。异常低字节含 4 时：队伍角色以战斗记录 +0x2F（水）/+0x2E（木）/+0x1C（机率），敌人以物品 +0x9E/+0x9D/+0x62：水≠0 → 掷>0 时掷 += 水/−20，掷 > 机率 → 0；木≠0 且 掷 + 水/20 > 机率 → 0（第二项仍用水抗，原有 BUG）；不含 4 → 掷 > 机率 → 0。从表头起找 bits = 异常的节点：找到且状态无 0x700、0x23 → 状态位 12 → 回合 += 技能回合/3，否则 回合 = 技能回合、值 = 技能 +0xE、计时 0。异常位 15 → 返回 1。未找到 → 分配 0xBC 清零插在表头后：回合与最大回合 = 技能回合字节、bits = 异常、值 = 技能 +0xE；按异常：1 → act 0x2AF8/1、图标 8、标记|0x40、状态|1；2 → 图标 2、标记|0x42、+0x2FA4|=0x8000、状态|2，土抗（+0x31/+0xA0）≠0 → 削 = 回合×土/100，回合 < 削 → 0 否则减，金抗（+0x2D/+0x9C）≠0 → 回合 += 回合×金/100；4 → 状态|4、图标 4、标记|0x40、+0x2FA4|=0x8000；8 → act 0、图标 0xC、标记|0x40、状态|8；0x10 → act 5、图标 9、标记|0x100、状态|0x10；0x20 → act 4、图标 6、状态|0x20；0x40 → 图标 5、强度 5.0f、状态|0x40；0x80 → act 2、图标 0xB、状态|0x80；0x100 → 图标 3、强度 20.0f、状态|0x100；0x200 → act 6、slotActs[10] id 0x1B8B、状态|0x200、图标 0xA、强度 20.0f、+0x2BE8/+0x2EB2/+0x3024=0、ResetTurn、+0x2FA8..+0x2FAE 保存战斗记录攻防速智，队伍角色再各减 20%；0x400 → 状态|0x400、图标 0xD；0x1000 → +0x2FA2 = 值、+0x2FD2=0、最大回合 = 回合、强度 = 回合、状态|0x1000、图标 1；0x2000 → +0x2BC0|=0x20000000、+0x2FA2 = 值、+0x2FD2=0、bits=0x1000、最大回合 = 回合、强度 50.0f、回合 0xFFFF、状态|0x1000、图标 7。之后（含找到的情形）0x0049BB50(0,0)，返回 1。
+对照：AddAilment 与 StartAilment 一致（kAilmentRoll 10、kResistanceShare 20、kWater/Wood/Earth/MetalResistance 2/1/4/0、kSoftenedTurns 3、kRefreshBlockingStatus 0x700、kRefreshBlockingStatus2 0x23、kAilmentAct 0x2AF8、各异常动作与 EffectIcon 图标号、kEffectSlot 10、kAilment200SlotAct 0x1B8B、kStatsCut 20、kAilment40Start 5.0f、kAilment100Start 20.0f、kPoisonStart 50.0f、kLastingTurns 0xFFFF、kOverlayWiping 0x8000、kFlag2BC0Poison）；敌人无战斗记录属偏差 393。
+差异：无。
+
+## 0x00492BC0 BattleUnit::AddBuff — exact
+
+汇编：技能 statusBits=0 且旗标无 8 → 0；+0x3044=1 → 0。位 26 → 状态|=0x2000000、+0x2FBA = 回合字节、wsprintfA "$1%s$0抵抗所有攻擊啟動"、0x00479220(0x118, 0xA, 0x32, 文字, 0x42000002)、播放 0x117，返回 1。0x00493AD0=0 → 0。从表头起：bits≠0 且 = 增益 → 回合 = 技能回合；元素≠0 且 = 技能旗标（双字）→ 同；到尾且增益无 0x10000 → 分配 0xBC 接在尾（记下前一节点）、回合/最大回合/值、增益≠0 → bits、旗标 8 → 元素 = 技能 +0x1C。技能元素 1..5：提示（0x00575F2C=1 时队伍角色用“我方所有角色”、敌人用“敵方所有角色”，否则“%s”）写入，队伍角色记录 [+4] +0x2D+i、敌人物品 +0x9C+i 加 0x32，有符号 >0x64 → 0x64，0x42000002 消息、播放 0x117。按增益：0x4000/0x200000/0x400000/0x800000/0x1000000 → 各属性攻击上升提示（0x40000002）；0x10000 → 从表头后第一个起，bits & 0xFFFF4000 → 0x00494770(bits) 并重新从头，结束后“所有的輔助效果被消除了”；0x20000/0x40000/0x2000000/0x10000000 → act 动作 0，状态 |0x20000/0x40000/0x4000000、标记|0x80，敌人不提示，队伍角色提示（0x40000002）；0x80000 → 状态有 0x40000000 → 释放该节点、[前一节点]=0、0x00494770(0x20000000) 返回 1，否则动作 0、队伍角色图标 0x12、状态|0x100000、强度 = (i16)(rand(3)+2)×5.0f、+0x2ED8 = ftol；0x100000 → 有 0x20000000 → 取消治 0x40000000，否则图标 0x13、状态|0x8000000、强度 30.0f、+0x2EDA=30；0x8000000 → 有 0x10000000 → 取消治 0x80000000，否则图标 0x11、状态|0x1000000、掷 rand(3) 先写 +0x2ED6，强度 = {1.0,1.5,2.0}[掷]×60.0f/回合、+0x2ED6 = ftol；0x20000000 → 有 0x100000 → 取消治 0x80000，否则图标 0xF、状态|0x40000000、强度 200.0f、+0x2ED8=200；0x40000000 → 有 0x8000000 → 取消治 0x100000，否则图标 0x10、状态|0x20000000、强度 40.0f、+0x2EDA=40；0x80000000 → 有 0x1000000 → 取消治 0x8000000，否则图标 0xE、状态|0x10000000、强度 200.0f、+0x2ED6=200；各项上升/下降提示用 0x42000002；其他 → 1。
+对照：AddBuff 一致；全部 43 条提示文字与 exe 0x004BFC94..0x004C0194 字节逐条一致；kStartFlags 0x42000002、kPlainFlags 0x40000002、kResistStep 50、kResistMost 100、kAnyBuff 0xFFFF4000、各强度与加成常量、kAttackDownScale、kAttackDownBase 60（0x004AAE38）、kDefenseDownStep 5（0x004AAE3C）、kDefenseDownRoll 3、kDefenseDownLeast 2、EffectIcon 0xE..0x13。取消已有节点属偏差 392，文字缓冲属偏差 394。
+差异：无。
+
+## 0x00493AD0 BattleUnit::CanTakeEffect — exact
+
+汇编：状态 0x40：异常 0x100 → 0x00494770(0x40) 返回 0；异常 0x1000 或增益 0x10000000 → 0。状态 0x1000：异常 0x40 → 治 0x1000 返回 0；异常 4、增益 0x10000000 或 +0x2BC0 位 29 → 0。状态 2：异常 4 → 治 2 返回 0；异常 &0x700、&0x21 或增益 &0x14000000 → 0。状态 0x100：异常 2 → 治 0x100 返回 0；异常 0x40 或增益 0x10000000 → 0。状态 4：异常 0x1000 → 治 4；返回 0。状态 8：异常低字节 &0x27 或增益 0x10000000 → 0。状态 0x200：异常 &0xC0、&0x1500 或 +0x2BC0 位 29 → 1，否则 0。状态 1：异常 &0x26 或 &0x200 → 0。状态 0x20：增益 &0x14000000 → 0。状态 0x2000000：增益 &0xE8180000 → 1 否则 0。标记 0x80：异常 &0x60 或 &0x1700 → 0。+0x2BC0 位 29 且异常 0x1000 → 0。标记 0x400：异常低字节 &6 或增益 &0x14000000 → 0。其余 → 1。
+对照：CanTakeEffect 一致（kInvisibleOrResistAll 0x14000000、kAilment2Blocked/2 0x700/0x21、kAilment8Blocked 0x27、kStatsScaledOpen/2 0xC0/0x1500、kAilment1Blocked 0x26、kResistAllOpen 0xE8180000、kInvisibleBlocked/2 0x60/0x1700、kAilment400Blocked 6、kFlag2BC0Poison）。
+差异：无。
+
+## 0x00493CD0 BattleUnit::HasEffectKind — exact
+
+汇编：表头 next 为空 → 0。参数字 1..5 → 0x1000000/0x800000/0x400000/0x200000/0x4000，其他取参数本身；从第一个节点起比较 bits，相等 → 1，否则 0。
+对照：HasEffectKind 一致（SkillScript::Metal..Earth 对应各属性攻击上升位）。
+差异：无。
+
+## 0x00493D50 BattleUnit::HasEffectBits — exact
+
+汇编：从第一个节点起，bits & 参数 ≠0 → 1，否则 0。
+对照：一致。
+差异：无。
+
+## 0x00493D90 BattleUnit::HasAnyBuff — exact
+
+汇编：从第一个节点起，bits & 0xFFFF4000 ≠0 → 1，否则 0。
+对照：一致（kAnyBuff）。
+差异：无。
+
+## 0x00493DC0 BattleUnit::EffectShare — exact
+
+汇编：从第一个节点起找 bits = 参数低字（零扩展），返回 回合/最大回合（x87 fild/fidiv），无则 0.0f。
+对照：一致。
+差异：无。
+
+## 0x00493E20 BattleUnit::ApplyPendingDamage — exact
+
+汇编：+0x2FA6=0 → 0。PushTarget(0x2389)；+0x2FA6 <0 → PushTarget(0x237D)；SetDamageDigits(movsx +0x2FA6)；StepTargetCount(1)；+0x2FA6 ≥0 → RaiseFlag2BC0；Damage(movsx +0x2FA6, 0, 0)；+0x2FA6=0；返回 Damage 结果 =1。
+对照：ApplyPendingDamage 一致（DamageTarget 0x2389、HealTarget 0x237D、Healing 位 15 即有符号负）。
+差异：无。

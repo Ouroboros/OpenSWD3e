@@ -1235,7 +1235,7 @@ int Game::SummonEscortFrame(BattleRole& unit, int role)
         battle.callingEscort = escortOf;
         BattleRole& escort = this->battleRoles[battle.callingEscort];
         escort.Reset(services);
-        escort.SetB00(1);
+        escort.SetAutoControl(1);
         escort.ClearIdleAction();
 
         if (battle.mirrored == 0)

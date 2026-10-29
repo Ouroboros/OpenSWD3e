@@ -1250,7 +1250,7 @@ void BattleUnit::SetLevel(i16 level)
 }
 
 // swd3e.exe 0x00491EB0
-int BattleUnit::SetB00(int value)
+int BattleUnit::SetAutoControl(int value)
 {
     this->autoControl = value;
     return value;

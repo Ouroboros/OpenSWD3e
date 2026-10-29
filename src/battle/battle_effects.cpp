@@ -1191,12 +1191,18 @@ void BattleUnit::TickEffects(BattleServices& services)
         if ((node->bits & SkillScript::StatsScaledAilment) != 0 && node->level < kStatsCutMost)
         {
             const u16 cut = static_cast<u16>(services.random.Below(kStatsCutRoll) + kStatsCutLeast);
-            RoleRecord& record = *this->battleRecord;
-            // 0x004920E0: each product is taken in 32 bits before the division.
-            record.attackBonus = static_cast<u16>(record.attackBonus - cut * record.attackBonus / kPercent);
-            record.defenseBonus = static_cast<u16>(record.defenseBonus - cut * record.defenseBonus / kPercent);
-            record.agility = static_cast<i16>(record.agility - cut * static_cast<u16>(record.agility) / kPercent);
-            record.wisdom = static_cast<i16>(record.wisdom - cut * static_cast<u16>(record.wisdom) / kPercent);
+
+            // An enemy has no battle record: the original writes through a null pointer.
+            if (this->battleRecord != nullptr)
+            {
+                RoleRecord& record = *this->battleRecord;
+                // 0x004920E0: each product is taken in 32 bits before the division.
+                record.attackBonus = static_cast<u16>(record.attackBonus - cut * record.attackBonus / kPercent);
+                record.defenseBonus = static_cast<u16>(record.defenseBonus - cut * record.defenseBonus / kPercent);
+                record.agility = static_cast<i16>(record.agility - cut * static_cast<u16>(record.agility) / kPercent);
+                record.wisdom = static_cast<i16>(record.wisdom - cut * static_cast<u16>(record.wisdom) / kPercent);
+            }
+
             node->level = static_cast<float>(static_cast<double>(cut) + static_cast<double>(node->level));
         }
 
