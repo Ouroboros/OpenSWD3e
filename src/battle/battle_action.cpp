@@ -281,7 +281,7 @@ void Game::RoleHitLanded(int target)
     battle.hitLanded = 1;
     battle.lastEnemyHit = static_cast<u16>(target);
     battle.slotTargets[static_cast<std::size_t>(target)] = target;
-    battle.unk5772BC = 0;
+    battle.battleBusy = 0;
 }
 
 // Unit `target` defeated by a role (inline in 0x0045BEA0): recorded for the removal, the frame flashed white.
@@ -1997,11 +1997,11 @@ int Game::RoleFrame(int role)
 
     if ((battle.startPoseRole & BattleState::StartPoseDone) == 0 && battle.startPoseRole == role)
     {
-        battle.unk5772BC = 1;
+        battle.battleBusy = 1;
 
         if (this->battleRoles[battle.startPoseRole].Pose36Frame(services) == 1)
         {
-            battle.unk5772BC = 0;
+            battle.battleBusy = 0;
             battle.startPoseRole = static_cast<u8>(battle.startPoseRole | BattleState::StartPoseDone);
         }
 
@@ -2013,7 +2013,7 @@ int Game::RoleFrame(int role)
         (unit.GetWord2F90() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
-    if (this->fightTalk.battleRuns == 1 && battle.actingUnit == -1 && battle.unk5772BC == 0 && battle.unk5772C0 == 0)
+    if (this->fightTalk.battleRuns == 1 && battle.actingUnit == -1 && battle.battleBusy == 0 && battle.turnPending == 0)
     {
         unit.TickEffects(services);
 
@@ -2069,13 +2069,13 @@ void Game::RoleGaugeFull(BattleRole& unit, int role)
     if (unit.AutoControl() != 1 && unit.GuestControl() != 1 && unit.Ghost() != 1)
     {
         this->audio.PlaySound(kGaugeFullSound, this->config.soundVolume);
-        battle.unk5772C0 = 1;
+        battle.turnPending = 1;
         battle.currentUnit = role + BattleState::FirstRoleUnit;
-        battle.unk5772BC = 1;
+        battle.battleBusy = 1;
 
         if (battle.autoBattle == 0)
         {
-            battle.unk577258 = 1;
+            battle.panelWaiting = 1;
             this->ConfirmKey();
         }
 
@@ -2101,8 +2101,8 @@ void Game::RoleGaugeFull(BattleRole& unit, int role)
     }
 
     this->RoleAutoCommand(unit, role);
-    battle.unk5772C0 = 1;
-    battle.unk5772BC = 1;
+    battle.turnPending = 1;
+    battle.battleBusy = 1;
 }
 
 // The command of an AI role with a full gauge (inline in RoleFrame): it aims (aiTarget, 1-based) at the enemy the
@@ -2431,8 +2431,8 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     }
 
     const i32 taken = battle.turnTaken[static_cast<std::size_t>(self)];
-    battle.unk5772BC = 1;
-    battle.unk5772C0 = 1;
+    battle.battleBusy = 1;
+    battle.turnPending = 1;
     battle.unk5376B8[at] = 1;
     battle.turnUnit = self;
 
@@ -2451,7 +2451,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     PendingOrder& order = battle.pendingOrders[at];
     battle.actingUnit = self;
     battle.unk575F20 = 1;
-    battle.unk577270 = 1;
+    battle.turnPlaying = 1;
     battle.targetsAll = order.targetsAll;
     battle.atParty = order.atParty;
     battle.allAtOnce = order.allAtOnce;
@@ -2475,7 +2475,7 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
     auto taken = [&battle]
     {
         battle.unk57725C = 0;
-        battle.unk577258 = 0;
+        battle.panelWaiting = 0;
         battle.turnUnit = 0;
     };
 
@@ -2641,7 +2641,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
     {
         battle.unk57725C = 0;
         unit.SetTarget(0);
-        battle.unk577258 = 0;
+        battle.panelWaiting = 0;
         battle.unk577284 = 0;
         battle.unk57727C = 0;
         return;
@@ -2664,7 +2664,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
     }
 
     unit.PrepareCommand(this->battleServices, this->database);
-    battle.unk577258 = 0;
+    battle.panelWaiting = 0;
     battle.unk577284 = 0;
     battle.unk57727C = 0;
     battle.turnUnit = 0;
@@ -2685,7 +2685,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
     if (battle.retargeted != 0)
     {
         battle.roleActing = 1;
-        battle.unk5772BC = 1;
+        battle.battleBusy = 1;
         battle.darkenUnit = static_cast<i16>(battle.actingUnit);
         unit.RaiseUnk3008();
 
@@ -2791,8 +2791,8 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
 
     if (battle.unk5772C8 == 0)
     {
-        battle.unk577270 = 0;
-        battle.unk5772BC = 0;
+        battle.turnPlaying = 0;
+        battle.battleBusy = 0;
 
         if (battle.unk577290 == 1)
         {
@@ -2800,7 +2800,7 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
         }
     }
 
-    battle.unk5772C0 = 0;
+    battle.turnPending = 0;
     battle.gathersParty = 0;
     battle.retargeted = 0;
 
@@ -2894,8 +2894,8 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
 
     if ((battle.unk577204 & kRetreatAsked) != 0)
     {
-        battle.unk5772BC = 1;
-        battle.unk5772C0 = 1;
+        battle.battleBusy = 1;
+        battle.turnPending = 1;
 
         if (unit.StepBack(services, 0) == 1 && ++battle.sweptUnits >= static_cast<u32>(standing()))
         {
@@ -2932,14 +2932,14 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
                 battle.unk577204 = 0;
                 battle.sweptUnits = 1;
                 battle.levelUpFrames = 0;
-                battle.unk5772BC = 0;
-                battle.unk5772C0 = 0;
+                battle.battleBusy = 0;
+                battle.turnPending = 0;
             }
 
             if (this->battleRoles[0].BeatsLevel(services, level) == 1)
             {
                 unit.SetValue2FEC(1);
-                battle.unk577258 = 0;
+                battle.panelWaiting = 0;
                 battle.currentUnit = 0;
                 battle.levelUpFrames = 0;
                 battle.unk577204 = kRetreating;
@@ -2964,8 +2964,8 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
                 battle.unk577204 = 0;
                 battle.sweptUnits = 1;
                 battle.levelUpFrames = 0;
-                battle.unk5772BC = 0;
-                battle.unk5772C0 = 0;
+                battle.battleBusy = 0;
+                battle.turnPending = 0;
                 EnrageEnemies(services, kRetreatFailedCause);
             }
         }
@@ -2976,9 +2976,9 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
         return;
     }
 
-    battle.unk5772BC = 1;
-    battle.unk5772C0 = 1;
-    battle.unk577258 = 0;
+    battle.battleBusy = 1;
+    battle.turnPending = 1;
+    battle.panelWaiting = 0;
     battle.currentUnit = 0;
 
     if (role == 0)

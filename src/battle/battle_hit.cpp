@@ -1703,7 +1703,7 @@ int Game::EnemyActionFrame(int enemy, int target)
             if (battle.actingUnit == removed)
             {
                 battle.actingUnit = -1;
-                battle.unk577270 = 0;
+                battle.turnPlaying = 0;
             }
 
             return 1;
@@ -1865,7 +1865,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
         }
 
         battle.hitLanded = 1;
-        battle.unk5772BC = 0;
+        battle.battleBusy = 0;
         battle.lastRoleHit = static_cast<u16>(target);
         this->ApplyDrain(battle.hitDamage, unit, role);
 
@@ -1907,7 +1907,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
 
     battle.hitLanded = 1;
     battle.lastRoleHit = static_cast<u16>(target);
-    battle.unk5772BC = 0;
+    battle.battleBusy = 0;
 
     if (battle.unk576084 == 0 && aimed.Damage(services, battle.hitDamage, 0, 0) == 1)
     {
@@ -2110,15 +2110,15 @@ int Game::EnemyFrame(int enemy)
 
     if (this->fightTalk.battleRuns == 1)
     {
-        if (battle.actingUnit == -1 && !unit.IsDefeated() && battle.unk5772BC == 0 && battle.unk5772C0 == 0)
+        if (battle.actingUnit == -1 && !unit.IsDefeated() && battle.battleBusy == 0 && battle.turnPending == 0)
         {
             unit.TickEffects(services);
 
             if (unit.unk2FF0 == 0 && unit.AdvanceGauge(services, battle.enemyGaugeBoost) == 1)
             {
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
-                battle.unk5772C0 = 1;
-                battle.unk5772BC = 1;
+                battle.turnPending = 1;
+                battle.battleBusy = 1;
             }
         }
 
@@ -2129,10 +2129,10 @@ int Game::EnemyFrame(int enemy)
                 if (unit.IsHeld() == 1 || unit.IsDefeated())
                 {
                     const bool held = unit.IsHeld() == 1;
-                    battle.unk577258 = 0;
-                    battle.unk577270 = 0;
+                    battle.panelWaiting = 0;
+                    battle.turnPlaying = 0;
                     battle.hitsAllRoles = 0;
-                    battle.unk5772BC = 0;
+                    battle.battleBusy = 0;
                     battle.actingUnit = -1;
 
                     if (held)
@@ -2170,8 +2170,8 @@ int Game::EnemyFrame(int enemy)
             if (battle.unk50CE6C[at] == 1 && battle.actingUnit == -1 && battle.result == 0 &&
                 this->fightTalk.battleRuns == 1 && unit.DrainSecondGauge() == 1)
             {
-                battle.unk5772BC = 1;
-                battle.unk5772C0 = 1;
+                battle.battleBusy = 1;
+                battle.turnPending = 1;
                 battle.unk50CE6C[at] = 0;
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
             }
@@ -2233,7 +2233,7 @@ void Game::EnemyAimSide(BattleEnemy& unit)
 
     unit.Retarget(0);
     battle.enemySweeps = 1;
-    battle.unk5772BC = 1;
+    battle.battleBusy = 1;
 }
 
 // A role an enemy may aim at in EnemyPickTarget (inline in the original): standing, not stepped away (unk3038), not the
@@ -2499,9 +2499,9 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     {
         battle.actingUnit = -1;
         battle.unk50CE6C[at] = 1;
-        battle.unk577270 = 0;
-        battle.unk5772C0 = 0;
-        battle.unk5772BC = 0;
+        battle.turnPlaying = 0;
+        battle.turnPending = 0;
+        battle.battleBusy = 0;
         unit.FillSecondGauge();
     };
 
@@ -2710,7 +2710,7 @@ void Game::EnemyActFrame(BattleEnemy& unit, int enemy)
     BattleState& battle = this->battleState;
     const auto at = static_cast<std::size_t>(enemy);
     battle.hitsAllRoles = 1;
-    battle.unk5772BC = 1;
+    battle.battleBusy = 1;
     unit.RaiseUnk3008();
     battle.darkenUnit = static_cast<i16>(enemy);
 
@@ -2784,8 +2784,8 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         ghost.Retarget(static_cast<i16>(battle.actingUnit));
         ghost.GhostAttackCommand(this->database);
         battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
-        battle.unk5772BC = 1;
-        battle.unk5772C0 = 1;
+        battle.battleBusy = 1;
+        battle.turnPending = 1;
     }
 
     // A target outside the roles (an enemy, or none) is read past the roles in the original (deviations.md): taken as
@@ -2845,8 +2845,8 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
 
     if (battle.unk5772C8 == 0)
     {
-        battle.unk577270 = 0;
-        battle.unk5772BC = 0;
+        battle.turnPlaying = 0;
+        battle.battleBusy = 0;
 
         if (battle.unk577294 == 1)
         {
@@ -2856,7 +2856,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
 
     battle.enemyTargetPicked = 0;
     battle.hitsAllRoles = 0;
-    battle.unk5772C0 = 0;
+    battle.turnPending = 0;
     battle.enemyFaded = 1;
 
     if (battle.actingUnit < BattleState::FirstRoleUnit)

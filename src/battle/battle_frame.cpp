@@ -152,7 +152,7 @@ int Game::BattleFrame()
     this->painter.SetTarget(this->drawSurface);
     this->painter.UnlockSurface(*this->offscreen);
 
-    if (battle.slotRecords[0].unit != -1 && battle.unk577270 == 0 && this->fightTalk.battleRuns == 1 &&
+    if (battle.slotRecords[0].unit != -1 && battle.turnPlaying == 0 && this->fightTalk.battleRuns == 1 &&
         battle.result == 0 && battle.unk5772C8 == 0)
     {
         BattleSlotRecord acting{
@@ -179,7 +179,7 @@ int Game::BattleFrame()
         if (battle.actingUnit != -1)
         {
             battle.slotRecordFrames = 0;
-            battle.unk577270 = 1;
+            battle.turnPlaying = 1;
             this->fightTalk.battleActingUnit = battle.actingUnit;
         }
     }
@@ -495,13 +495,13 @@ void Game::EndBattle()
     messages.lootCounts = {};
     battle.unk5376B8.fill(0);
     battle.hitFading.fill(0);
-    battle.unk577258 = 0;
+    battle.panelWaiting = 0;
     battle.unk57725C = 0;
     battle.roleActing = 0;
     battle.hitsAllRoles = 0;
     battle.unk577268 = 0;
     battle.unk57726C = 0;
-    battle.unk577270 = 0;
+    battle.turnPlaying = 0;
     battle.unk577274 = 0;
     battle.sweepHit = 0;
     battle.unk57727C = 0;
@@ -519,8 +519,8 @@ void Game::EndBattle()
     battle.unk5772B0 = 0;
     battle.choiceReady = 0;
     battle.mouseMode = 0;
-    battle.unk5772BC = 0;
-    battle.unk5772C0 = 0;
+    battle.battleBusy = 0;
+    battle.turnPending = 0;
     battle.flashing = 0;
     battle.gathersParty = 0;
     battle.enemyAimsAtEnemies = 0;
@@ -616,7 +616,7 @@ void Game::BattleIntro(u16 style)
     DrawOptions& options = painter.Options();
     int swing = 0;
     this->audio.PlaySound(kIntroSound, this->config.soundVolume);
-    battle.unk5772BC = 1;
+    battle.battleBusy = 1;
     Surface* primary = this->graphics.GetSurface(Graphics::SurfaceId::Primary);
     Surface& field = *battle.surfaces[0];
     Surface& shown = *battle.surfaces[1];
@@ -745,7 +745,7 @@ void Game::BattleIntro(u16 style)
         }
     }
 
-    battle.unk5772BC = 0;
+    battle.battleBusy = 0;
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     this->StartBattleMusic();
     battle.musicLevel = this->config.musicVolume;

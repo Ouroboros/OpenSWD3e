@@ -2853,11 +2853,11 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             kDebugMenuY,
             WinFormat(kMenuDebugLine, {battle.result, battle.mouseMode, battle.menuCommand})
         );
-        text(kDebugStateX, kDebugCountsY, WinFormat(kCommandDebugLine, {battle.unk577270}));
+        text(kDebugStateX, kDebugCountsY, WinFormat(kCommandDebugLine, {battle.turnPlaying}));
         text(
             kDebugStateX,
             kDebugAimY,
-            WinFormat(kAimDebugLine, {battle.aimTarget, battle.unk5772BC, battle.unk5772C0})
+            WinFormat(kAimDebugLine, {battle.aimTarget, battle.battleBusy, battle.turnPending})
         );
         text(kDebugLocksX, kDebugTop, WinFormat(kLockDebugLine, {battle.sweepTotal, battle.sweepTargets}));
         text(kDebugLocksX, kDebugFlagsY, WinFormat(kAllHitDebugLine, {battle.unk577050}));

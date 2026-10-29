@@ -670,7 +670,7 @@ bool BattleRole::LowStamina() const
     return this->roleRecord->stamina < this->roleRecord->maxStamina / kQuarterShare;
 }
 
-// swd3e.exe 0x004871C0: with equipment flag 0x80 slot act 10 takes act 0x17BF and the battle marks unk5772BC (1)
+// swd3e.exe 0x004871C0: with equipment flag 0x80 slot act 10 takes act 0x17BF and the battle marks battleBusy (1)
 int BattleRole::StartSpecialAct(BattleState& battle)
 {
     if ((this->equipmentFlags & BattleUnit::SpecialActEquipment) == 0)
@@ -681,15 +681,15 @@ int BattleRole::StartSpecialAct(BattleState& battle)
     ActState& act = this->slotActs[kSpecialSlot];
     act.id = kSpecialAct;
     act.action = 0;
-    battle.unk5772BC = 1;
+    battle.battleBusy = 1;
     this->unk34D0 = 1;
     return 1;
 }
 
 // swd3e.exe 0x00487200: one frame of the special act (StartSpecialAct) while equipment flag 0x80 and unk34D0 are set:
-// the battle marks unk5772BC and slot act 10 runs, its sound played (panned right) and its picture drawn at the unit's
+// the battle marks battleBusy and slot act 10 runs, its sound played (panned right) and its picture drawn at the unit's
 // place (the stand act's sound cleared instead of the slot act's, as in the original). Once it ends the role stands up
-// again: unk34D0 and unk5772BC cleared, the turn reset, the effects ended, the flag and `defeated` cleared, the
+// again: unk34D0 and battleBusy cleared, the turn reset, the effects ended, the flag and `defeated` cleared, the
 // accessory's proficiency read, the party record's hit points set to 40 percent of the maximum plus the proficiency
 // percent of 90 percent of it and its Defeated bit cleared, the healing shown (HealTarget) and the act cleared.
 void BattleRole::SpecialActFrame(BattleServices& services)
@@ -700,7 +700,7 @@ void BattleRole::SpecialActFrame(BattleServices& services)
     }
 
     ActState& act = this->slotActs[kSpecialSlot];
-    services.state.unk5772BC = 1;
+    services.state.battleBusy = 1;
 
     if (services.acts.Run(act) == 0)
     {
@@ -734,7 +734,7 @@ void BattleRole::SpecialActFrame(BattleServices& services)
     }
 
     this->unk34D0 = 0;
-    services.state.unk5772BC = 0;
+    services.state.battleBusy = 0;
     this->ResetTurn(services);
     this->ExpireEffects(services, 1);
     this->equipmentFlags &= ~BattleUnit::SpecialActEquipment;

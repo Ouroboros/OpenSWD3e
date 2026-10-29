@@ -394,8 +394,8 @@ void Game::RandomRoleAct(int unit)
         battle.unk57725C = 1;
         battle.turnTaken[static_cast<std::size_t>(unit)] = command;
         role.SetTarget(1);
-        battle.unk5772C0 = 1;
-        battle.unk5772BC = 1;
+        battle.turnPending = 1;
+        battle.battleBusy = 1;
     };
 
     if (choice == kRandomGuard)
@@ -635,8 +635,8 @@ int Game::RemoveDefeated(int index, int role)
         {
             battle.result = kBattleWon;
             battle.autoBattle = 0;
-            battle.unk5772C0 = 1;
-            battle.unk5772BC = 1;
+            battle.turnPending = 1;
+            battle.battleBusy = 1;
         }
 
         if (count + battle.unk5771EA - battle.enemiesGone == 1)
@@ -738,15 +738,15 @@ int Game::RemoveDefeated(int index, int role)
         battle.turnCommand = 0;
         battle.aimTarget = 1;
         battle.result = kTurnsRunning;
-        battle.unk5772C0 = 0;
-        battle.unk5772BC = 0;
-        battle.unk577270 = 0;
+        battle.turnPending = 0;
+        battle.battleBusy = 0;
+        battle.turnPlaying = 0;
     }
 
     if (battle.actingUnit == unitId)
     {
         battle.actingUnit = -1;
-        battle.unk577270 = 0;
+        battle.turnPlaying = 0;
     }
 
     for (std::size_t at = 0; static_cast<i32>(at) < static_cast<i32>(battle.roleCount); ++at)
@@ -864,7 +864,7 @@ void Game::ReturnBattleItems()
     battle.givenBack[2] = 0;
 }
 
-// swd3e.exe 0x004692E0: with every party role down (unk577258 set; besides the escorts and guests, unk5770D4 more
+// swd3e.exe 0x004692E0: with every party role down (panelWaiting set; besides the escorts and guests, unk5770D4 more
 // roles are left out) the field fades out (endFade), then the objects return and frameResult becomes 2 (0, with the
 // music before the battle back, for a battle state of 0x68 or UnkPanel8); with every enemy down or wonByTalk set it
 // fades out too, the battle music stops, the music before the battle comes back, the objects return and frameResult
@@ -876,7 +876,7 @@ void Game::CheckBattleEnd()
 
     if (battle.defeatedRoles >= battle.roleCount - battle.unk5770D4 - battle.escortCount - battle.guestCount)
     {
-        battle.unk577258 = 1;
+        battle.panelWaiting = 1;
 
         if (battle.endFade == 1 && this->FadeFieldOut() == 1)
         {
@@ -899,7 +899,7 @@ void Game::CheckBattleEnd()
 
     if (battle.enemiesGone - battle.unk5771EA >= static_cast<i32>(battle.enemyCount) || this->fightTalk.wonByTalk == 1)
     {
-        battle.unk577258 = 1;
+        battle.panelWaiting = 1;
 
         if (battle.endFade == 1 && this->FadeFieldOut() == 1)
         {
@@ -1413,8 +1413,8 @@ void Game::ApplyHits()
         battle.pendingOrders[ghostAt].atParty = 1;
         ghost.Retarget(0);
         battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
-        battle.unk5772BC = 1;
-        battle.unk5772C0 = 1;
+        battle.battleBusy = 1;
+        battle.turnPending = 1;
         battle.ghostRescued = 1;
     }
 }
@@ -2372,9 +2372,9 @@ void Game::MenuCancel()
     {
         battle.commandNames = {};
         battle.choiceReady = 0;
-        battle.unk577258 = 1;
-        battle.unk5772C0 = 0;
-        battle.unk5772BC = 0;
+        battle.panelWaiting = 1;
+        battle.turnPending = 0;
+        battle.battleBusy = 0;
         battle.autoBattle = 0;
         battle.result = 0;
         battle.autoTarget = -1;
@@ -2384,8 +2384,8 @@ void Game::MenuCancel()
         if (battle.currentUnit != 0)
         {
             battle.result = kMenuState;
-            battle.unk5772C0 = 1;
-            battle.unk5772BC = 1;
+            battle.turnPending = 1;
+            battle.battleBusy = 1;
         }
 
         return;
@@ -3778,10 +3778,10 @@ int Game::BattleDebugKeys()
             if (pressed(Input::C))
             {
                 battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellOver);
-                battle.unk577270 = 0;
+                battle.turnPlaying = 0;
                 battle.ClearActing();
-                battle.unk5772BC = 0;
-                battle.unk5772C0 = 0;
+                battle.battleBusy = 0;
+                battle.turnPending = 0;
                 battle.actingUnit = -1;
 
                 if (battle.roleActing == 1)
@@ -3856,9 +3856,9 @@ int Game::BattleDebugKeys()
                 battle.unk57727C = 1;
                 battle.unk577050 = 0;
                 battle.roleActing = 0;
-                battle.unk5772BC = 1;
-                battle.unk5772C0 = 1;
-                battle.unk577258 = 0;
+                battle.battleBusy = 1;
+                battle.turnPending = 1;
+                battle.panelWaiting = 0;
                 battle.turnUnit = 0;
                 battle.currentUnit = 0;
                 battle.actingUnit = -1;
@@ -4687,7 +4687,7 @@ int Game::HoverGhostTarget()
     return 0;
 }
 
-// swd3e.exe 0x0046F920: the confirm key of the battle menu (while unk577258), by battle state: 1 takes the menu
+// swd3e.exe 0x0046F920: the confirm key of the battle menu (while panelWaiting), by battle state: 1 takes the menu
 // command or an open choice; 2, 4, 8, 0x1B, 0x1E, 0x29 (融合) and 0x50 (誘餌) take a list entry; 3 takes the aimed
 // unit and ends the role's choice; 5 places an escort, 0xA fuses with one; 7 answers the talk; 9 locks the ghost on
 // the aimed enemy; 0x62..0x71 step the end of the battle (the messages wait out endFrames frames); 0xC8 closes the
@@ -4696,7 +4696,7 @@ void Game::MenuConfirm()
 {
     BattleState& battle = this->battleState;
 
-    if (battle.unk577258 != 1)
+    if (battle.panelWaiting != 1)
     {
         return;
     }
@@ -5415,8 +5415,8 @@ void Game::ConfirmTarget()
 
     if (battle.menuCommand == kSpellCommand)
     {
-        battle.unk5772BC = 0;
-        battle.unk5772C0 = 0;
+        battle.battleBusy = 0;
+        battle.turnPending = 0;
 
         if (role != nullptr)
         {
@@ -5429,8 +5429,8 @@ void Game::ConfirmTarget()
 
     if (battle.autoBattle == 1)
     {
-        battle.unk5772BC = 0;
-        battle.unk5772C0 = 0;
+        battle.battleBusy = 0;
+        battle.turnPending = 0;
         battle.autoTarget = battle.aimTarget;
     }
 
@@ -6075,7 +6075,7 @@ void Game::ConfirmEnd()
                     }
 
                     battle.endFrames = 0;
-                    battle.unk577258 = 0;
+                    battle.panelWaiting = 0;
                     battle.levelUpPending = 0;
                     battle.result = kEndLoot;
                 }
@@ -6096,7 +6096,7 @@ void Game::ConfirmEnd()
                 battle.endFade = 1;
                 battle.result = 0;
                 battle.endFrames = 0;
-                battle.unk577258 = 0;
+                battle.panelWaiting = 0;
                 messages.panelHeight = 0;
             }
 
@@ -6194,9 +6194,9 @@ void Game::ConfirmEnd()
 
             battle.listPanelFrames = 0;
             battle.menuGrow = 0;
-            battle.unk5772BC = 0;
-            battle.unk5772C0 = 0;
-            battle.unk577258 = 0;
+            battle.battleBusy = 0;
+            battle.turnPending = 0;
+            battle.panelWaiting = 0;
             this->controls.PressConfirm();
 
             if (battle.autoBattle == 1)
@@ -6266,7 +6266,8 @@ void Game::ConfirmKey()
         return;
     }
 
-    if (battle.unk577258 != 1 || battle.currentUnit == 0 || (battle.result != 0 && battle.anyStateRole == kNoPanelRole))
+    if (battle.panelWaiting != 1 || battle.currentUnit == 0 ||
+        (battle.result != 0 && battle.anyStateRole == kNoPanelRole))
     {
         this->MenuConfirm();
         return;
@@ -6441,8 +6442,8 @@ void Game::BattleKeys()
             battle.unk577204 |= kRetreatMark;
             battle.currentUnit = 0;
             battle.choiceReady = 0;
-            battle.unk5772BC = 1;
-            battle.unk5772C0 = 1;
+            battle.battleBusy = 1;
+            battle.turnPending = 1;
             battle.listPanelFrames = 0;
             battle.menuGrow = 0;
             battle.listRows = kOpenListRows;
@@ -6762,12 +6763,12 @@ void Game::DrawBattleMenu()
         }
     }
 
-    battle.unk577258 = 1;
+    battle.panelWaiting = 1;
 
     auto listDrawn = [&battle]
     {
-        battle.unk5772C0 = 1;
-        battle.unk5772BC = 1;
+        battle.turnPending = 1;
+        battle.battleBusy = 1;
     };
 
     auto scrollBar = [&battle, &hud](i32 count, i32 first, int x)
@@ -6846,8 +6847,8 @@ void Game::DrawBattleMenu()
                 battle.unk577204 |= kRetreatMark;
                 battle.result = 0;
                 battle.currentUnit = 0;
-                battle.unk5772BC = 1;
-                battle.unk5772C0 = 1;
+                battle.battleBusy = 1;
+                battle.turnPending = 1;
             }
 
             return;
@@ -6921,8 +6922,8 @@ void Game::DrawBattleMenu()
 void Game::DrawGhostAimPointer()
 {
     BattleState& battle = this->battleState;
-    battle.unk5772BC = 1;
-    battle.unk5772C0 = 1;
+    battle.battleBusy = 1;
+    battle.turnPending = 1;
     this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
     battle.actingEnemy = 0;
 
@@ -6973,8 +6974,8 @@ void Game::DrawAimPointers()
 {
     BattleState& battle = this->battleState;
     BattleHud& hud = this->battleHud;
-    battle.unk5772C0 = 1;
-    battle.unk5772BC = 1;
+    battle.turnPending = 1;
+    battle.battleBusy = 1;
     this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
 
     // Without a current unit (the auto battle) the original reads the order before the first: taken as aiming at
@@ -7140,7 +7141,7 @@ void Game::BattleEndFrame()
     switch (battle.result)
     {
         case kEndBack:
-            battle.unk5772C0 = 0;
+            battle.turnPending = 0;
             battle.choiceReady = 0;
             battle.result = 0;
             return;
@@ -7164,7 +7165,7 @@ void Game::BattleEndFrame()
         }
 
         case kEndCraft:
-            battle.unk5772BC = 1;
+            battle.battleBusy = 1;
             messages.DrawCraftResultPanel();
             return;
 
@@ -7186,9 +7187,9 @@ void Game::BattleEndFrame()
 
             this->DrawVictoryPanel();
             battle.roleActing = 0;
-            battle.unk5772BC = 1;
-            battle.unk5772C0 = 1;
-            battle.unk577270 = 1;
+            battle.battleBusy = 1;
+            battle.turnPending = 1;
+            battle.turnPlaying = 1;
             battle.currentUnit = 0;
 
             if (++battle.endFrames >= kEndPanelFrames)
@@ -7253,8 +7254,8 @@ void Game::BattleEndFrame()
             return;
 
         case kBattleLost:
-            battle.unk5772BC = 1;
-            battle.unk5772C0 = 1;
+            battle.battleBusy = 1;
+            battle.turnPending = 1;
 
             if ((battle.panelFlags & BattleState::UnkPanel8) != 0)
             {
@@ -7277,8 +7278,8 @@ void Game::BattleEndFrame()
             return;
 
         case kLostQuietly:
-            battle.unk5772BC = 1;
-            battle.unk5772C0 = 1;
+            battle.battleBusy = 1;
+            battle.turnPending = 1;
 
             if (++battle.endFrames > kEndMessageFrames)
             {

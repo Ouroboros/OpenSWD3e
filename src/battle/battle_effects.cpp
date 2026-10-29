@@ -1826,8 +1826,8 @@ int BattleUnit::Enrage(BattleServices& services)
     battle.darkenByTint = 1;
     battle.undarkening = 0;
     battle.unk577290 = 1;
-    battle.unk577270 = 1;
-    battle.unk5772BC = 1;
+    battle.turnPlaying = 1;
+    battle.battleBusy = 1;
     battle.unk5772C8 = 1;
     battle.enraging = 1;
     this->slotActs[kEffectSlot].id = kEnrageAct;
@@ -1861,9 +1861,9 @@ int BattleUnit::EnrageFrame(BattleServices& services)
 
     auto release = [&battle]
     {
-        battle.unk5772BC = 0;
+        battle.battleBusy = 0;
         battle.unk5772C8 = 0;
-        battle.unk577270 = 0;
+        battle.turnPlaying = 0;
         battle.undarkening = 1;
         battle.enraging = 0;
     };

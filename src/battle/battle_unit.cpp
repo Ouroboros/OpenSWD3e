@@ -4208,14 +4208,14 @@ int BattleUnit::DefeatFlight(BattleServices& services, const Picture& picture)
 // Pose 0x65 (swd3e): a boss. It first wobbles brighter and dimmer like kParticlePose (sound 0x31 when done), then
 // sinks into the ground, shaking, under act 0x1CB6 (sound 0x229 every 30 frames, a field flash with sound 0x233 every
 // 35 and 45), while the battle music fades down a step a frame to 2; once sunk the music returns to its volume. An
-// UnkKind20 object sets unk5772BC meanwhile.
+// UnkKind20 object sets battleBusy meanwhile.
 int BattleUnit::DefeatBoss(BattleServices& services, const Picture& picture)
 {
     BattleState& battle = services.state;
 
     if (this->glowLevel == kDefeatedAtOnce)
     {
-        battle.unk5772BC = 0;
+        battle.battleBusy = 0;
         battle.musicLevel = services.config.musicVolume;
         services.audio.Queue().SetVolume(MusicQueue::MaxVolume * services.config.musicVolume / Config::MaxVolume);
         this->glowLevel = 0;
@@ -4232,7 +4232,7 @@ int BattleUnit::DefeatBoss(BattleServices& services, const Picture& picture)
 
     if ((this->data->data.kind & ObjectData::UnkKind20) != 0)
     {
-        battle.unk5772BC = 1;
+        battle.battleBusy = 1;
     }
 
     if (this->glowLevel == 0)
@@ -6667,7 +6667,7 @@ i32 BattleUnit::Ghost() const
 void BattleUnit::StartRipple(BattleServices& services)
 {
     services.state.unk5772C8 = 1;
-    services.state.unk5772BC = 1;
+    services.state.battleBusy = 1;
     this->unk2BC0 |= kFlag2BC0Ripple;
     services.state.ripple =
         std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
@@ -6708,8 +6708,8 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
             battle.ripple.reset();
             this->rippleFrames = 0;
             battle.unk5772C8 = 0;
-            battle.unk577270 = 0;
-            battle.unk5772BC = 0;
+            battle.turnPlaying = 0;
+            battle.battleBusy = 0;
             this->unk2BC0 &= ~kFlag2BC0Ripple;
             this->slotActs[kRippleSlot] = ActState{};
         }

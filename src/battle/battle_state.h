@@ -453,9 +453,15 @@ public:
     i16 proficiencyBonus = 0;  // 0x005373B4 the weapon proficiency step of the last strike
 
     // The state of the turns (0x0045BEA0, 0x00456680 and the commands).
-    i32 unk5772BC = 0;  // 0x005772BC (StartRipple sets it with 0x005772C8)
-    i32 unk5772C0 = 0;
-    i32 unk577258 = 0;
+    // 0x005772BC 1: something plays on the field (an action, an enrage, a ripple, a talk window, a special act, a boss
+    // falling): the gauges and effects hold (RoleFrame, EnemyFrame). StartRipple sets it with 0x005772C8.
+    i32 battleBusy = 0;
+    // 0x005772C0 1: a unit's turn is under way (its gauge filled, its menu or command, its action, a retreat), cleared
+    // once it is taken or over (ConfirmTarget, MenuCancel, the after-action): the gauges and effects hold.
+    i32 turnPending = 0;
+    // 0x00577258 1: the role on the panel waits for its menu (its gauge filled, a command cancelled): the confirm key
+    // opens it (ConfirmKey, MenuConfirm); cleared once it takes an order.
+    i32 panelWaiting = 0;
     i32 turnUnit = 0;    // 0x00577020 the role unit taking the turn
     i32 endFade = 0;     // 0x005772E4 1: the field fades out once the battle is decided (CheckBattleEnd)
     u8 enemiesGone = 0;  // 0x005771E8 set to enemyCount by a retreat
@@ -466,7 +472,9 @@ public:
     i32 turnCommand = 0;  // 0x00576FA8 the order of the turn under way
     i32 unk57725C = 0;
     i32 roleActing = 0;  // 0x00577260 1: a party role is acting (RoleActFrame)
-    i32 unk577270 = 0;   // 0x00577270 set by talk command 0x4E
+    // 0x00577270 1: a turn plays (the acting unit taken from the slot records, an enrage, talk command 0x4E), cleared
+    // after the action: no next slot record is taken (BattleFrame)
+    i32 turnPlaying = 0;
     // 0x00577314 set when a role turns to another enemy (RetargetRoles)
     i32 retargeted = 0;  // 0x00577314 1 once the acting role checked (and retargeted) its aim this command
     std::array<i32, Units> turnTaken = {};      // 0x00576024 per unit, set when it takes the turn
