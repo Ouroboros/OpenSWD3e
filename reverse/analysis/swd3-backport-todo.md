@@ -58,7 +58,7 @@
 
 - [ ] 6abbeaf 特殊名字改为按角色查表
 - [x] bd0df8b ObjectData::unk42 改名 masteryValue（网页生成脚本同步）
-- [ ] e10e1dc 战斗剧本数值改名 commandValue
+- [x] e10e1dc 战斗剧本数值改名 commandValue
 - [x] dbfaa9d 物品字段 unk48 改名 actionKind
 - [x] cd90ee1 战斗单位 +0x26CC 命名为 accessoryCommands
 - [ ] be7f6a3 战斗下单与出手的全体、对我方等标记命名

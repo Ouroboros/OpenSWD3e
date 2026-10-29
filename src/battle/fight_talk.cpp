@@ -72,7 +72,7 @@ void FightTalk::Close()
     this->unk5782A8 = 0;
     this->savedUnit = 0;
     this->battleActingUnit = 0;
-    this->unk57842C = 0;
+    this->commandValue = 0;
     this->unk57842E = 0;
     this->unk578430 = 0;
     this->windowFlags = 0;

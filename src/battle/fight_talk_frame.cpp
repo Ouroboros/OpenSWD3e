@@ -519,20 +519,20 @@ int Game::FightTalkMove()
     FightTalk& talk = this->fightTalk;
     talk.battleRuns = 0;
     const i16 unit = talk.Word(1);
-    talk.unk57842C = talk.UnsignedWord(2);
+    talk.commandValue = talk.UnsignedWord(2);
     talk.unk57842E = talk.UnsignedWord(3);
     BattleUnit& moved = this->TalkUnit(unit);
     u16 x = 0;
     u16 y = 0;
     moved.GetPosition(x, y);
-    talk.unk5782A0 = x + static_cast<i16>(talk.unk57842C);
+    talk.unk5782A0 = x + static_cast<i16>(talk.commandValue);
     talk.unk5782A4 = y + static_cast<i16>(talk.unk57842E);
     moved.SetPosition(static_cast<i16>(talk.unk5782A0), static_cast<i16>(talk.unk5782A4));
     talk.unk578430 = 0;
     talk.cursor += 4 * sizeof(u16);
     talk.unk5782A0 = 0;
     talk.unk5782A4 = 0;
-    talk.unk57842C = 1;
+    talk.commandValue = 1;
     this->MeasureUnits();
     battle.SortDrawOrder();
     battle.ListEnemyOrder();
@@ -927,19 +927,19 @@ int Game::FightTalkWin()
 int Game::FightTalkLift()
 {
     FightTalk& talk = this->fightTalk;
-    talk.unk57842C = talk.UnsignedWord(2);
+    talk.commandValue = talk.UnsignedWord(2);
     BattleUnit& moved = this->TalkUnit(talk.Word(1));
     u16 x = 0;
     u16 y = 0;
     moved.GetPosition(x, y);
     talk.unk5782A0 = x;
-    talk.unk5782A4 = y + static_cast<i16>(talk.unk57842C);
+    talk.unk5782A4 = y + static_cast<i16>(talk.commandValue);
     moved.SetPosition(static_cast<i16>(talk.unk5782A0), static_cast<i16>(talk.unk5782A4));
     talk.cursor += 3 * sizeof(u16);
     talk.unk578430 = 0;
     talk.unk5782A0 = 0;
     talk.unk5782A4 = 0;
-    talk.unk57842C = 0;
+    talk.commandValue = 0;
     this->MeasureUnits();
     this->BattleFrame();
     return 1;
@@ -1085,9 +1085,9 @@ int Game::FightTalkRandomJump()
 
         while (true)
         {
-            talk.unk57842C = talk.UnsignedWord(at);
+            talk.commandValue = talk.UnsignedWord(at);
 
-            if (talk.unk57842C == kListEnd)
+            if (talk.commandValue == kListEnd)
             {
                 break;
             }
@@ -1104,11 +1104,11 @@ int Game::FightTalkRandomJump()
     }
     else
     {
-        talk.unk57842C = static_cast<u16>(2 * this->random.Below(static_cast<u16>(talk.unk57844C)));
-        talk.Seek(talk.Word(talk.unk57842C));
+        talk.commandValue = static_cast<u16>(2 * this->random.Below(static_cast<u16>(talk.unk57844C)));
+        talk.Seek(talk.Word(talk.commandValue));
     }
 
-    talk.unk57842C = 0;
+    talk.commandValue = 0;
     talk.unk57844C = 0;
     talk.battleRuns = 1;
     return 1;
@@ -1120,8 +1120,8 @@ int Game::FightTalkShift()
 {
     BattleState& battle = this->battleState;
     FightTalk& talk = this->fightTalk;
-    talk.unk57842C = talk.UnsignedWord(1);
-    battle.shake = static_cast<i16>(talk.unk57842C);
+    talk.commandValue = talk.UnsignedWord(1);
+    battle.shake = static_cast<i16>(talk.commandValue);
 
     // The position is read into the low words of the two dwords, which keep their high words (0x0048B500); they are
     // left set.
@@ -1143,7 +1143,7 @@ int Game::FightTalkShift()
     }
 
     talk.cursor += 2 * sizeof(u16);
-    talk.unk57842C = 0;
+    talk.commandValue = 0;
     return 1;
 }
 
@@ -1500,9 +1500,9 @@ int Game::FightTalkChoice()
 
     while (true)
     {
-        talk.unk57842C = talk.UnsignedWord(at);
+        talk.commandValue = talk.UnsignedWord(at);
 
-        if (talk.unk57842C == kListEnd)
+        if (talk.commandValue == kListEnd)
         {
             break;
         }
@@ -1719,7 +1719,7 @@ int Game::FightTalkCurve()
         {
             talk.cursor += kCurveBytes;
             this->SetTalkCommandUnit(0);
-            talk.unk57842C = 0;
+            talk.commandValue = 0;
             talk.unk57842E = 0;
             talk.unk5782A0 = 0;
             talk.unk5782A4 = 0;
@@ -1748,7 +1748,7 @@ int Game::FightTalkCurve()
         talk.curve[kCurveOffsets + 2] = talk.curve[kCurveOffsets + 1];
         talk.curve[kCurveOffsets + 3] = talk.curve[kCurveOffsets + 1];
         span = 0;
-        talk.unk57842C = 1;
+        talk.commandValue = 1;
         talk.unk57842E = 0;
     }
 
@@ -1765,14 +1765,14 @@ int Game::FightTalkCurve()
     };
 
     const std::array<std::array<i16, 2>, 4> points = {point(span), point(span + 1), point(span + 2), point(span + 3)};
-    TalkCurvePoint(static_cast<float>(static_cast<i16>(talk.unk57842C)), talk.unk5782A0, talk.unk5782A4, points);
+    TalkCurvePoint(static_cast<float>(static_cast<i16>(talk.commandValue)), talk.unk5782A0, talk.unk5782A4, points);
     this->TalkUnit(this->TalkCommandUnit() & kCountMask)
         .SetPosition(static_cast<i16>(talk.unk5782A0), static_cast<i16>(talk.unk5782A4));
 
-    if (static_cast<i16>(++talk.unk57842C) > kCurveSteps)  // 0x0047C606: a signed compare
+    if (static_cast<i16>(++talk.commandValue) > kCurveSteps)  // 0x0047C606: a signed compare
     {
         ++talk.unk57842E;
-        talk.unk57842C = 0;
+        talk.commandValue = 0;
     }
 
     this->MeasureUnits();
@@ -1787,14 +1787,14 @@ int Game::FightTalkSlide()
 {
     BattleState& battle = this->battleState;
     FightTalk& talk = this->fightTalk;
-    i16 left = static_cast<i16>(talk.unk57842C);
+    i16 left = static_cast<i16>(talk.commandValue);
     const u16 value = talk.UnsignedWord(1);
     talk.unk57842E = value;
 
-    if (talk.unk57842C == 0)
+    if (talk.commandValue == 0)
     {
         left = static_cast<i16>(value);
-        talk.unk57842C = value;
+        talk.commandValue = value;
     }
 
     i32 slide = 0;
@@ -1802,7 +1802,7 @@ int Game::FightTalkSlide()
     if (value > kSlideByThirds)
     {
         slide = left / kSlideThirdNegative;
-        talk.unk57842C = static_cast<u16>(left / kSlideThird);
+        talk.commandValue = static_cast<u16>(left / kSlideThird);
     }
     else
     {
@@ -1810,8 +1810,8 @@ int Game::FightTalkSlide()
         u16 y = 0;
         this->TalkUnit(static_cast<i16>(value)).GetPosition(x, y);
         talk.unk578430 = static_cast<i32>(x | (static_cast<u32>(y) << kHighWordShift));
-        talk.unk57842C = static_cast<u16>((static_cast<i16>(x) + Display::Width / 2) / 2);
-        slide = Display::Width / 2 - static_cast<i16>(talk.unk57842C);
+        talk.commandValue = static_cast<u16>((static_cast<i16>(x) + Display::Width / 2) / 2);
+        slide = Display::Width / 2 - static_cast<i16>(talk.commandValue);
     }
 
     battle.shake = slide;
@@ -1821,7 +1821,7 @@ int Game::FightTalkSlide()
     {
         talk.cursor += 2 * sizeof(u16);
         talk.unk578430 = 0;
-        talk.unk57842C = 0;
+        talk.commandValue = 0;
         talk.unk578448 = static_cast<i32>(static_cast<u32>(talk.unk578448) & kLowWordMask);
         talk.unk578450 = 0;
         talk.unk57842E = 0;
@@ -2185,7 +2185,7 @@ int Game::FightTalkLineWindow()
             speaker.GetDrawPosition(x, y);
             u16 originX = 0;
             speaker.GetOrigin(originX, y);
-            talk.unk57842C = originX;
+            talk.commandValue = originX;
 
             if (unit <= kLastEnemy)
             {
@@ -2341,7 +2341,7 @@ int Game::FightTalkObjects(bool take)
 }
 
 // Command 0x49 of FightTalkFrame (inline in the original): every unit slides across in the steps of the third word
-// until the slide (unk57842C) reaches the second word; then the talk goes on.
+// until the slide (commandValue) reaches the second word; then the talk goes on.
 int Game::FightTalkSlideTo()
 {
     BattleState& battle = this->battleState;
@@ -2355,16 +2355,16 @@ int Game::FightTalkSlideTo()
     }
 
     const i32 slide =
-        (static_cast<i16>(talk.unk578430) - static_cast<i16>(talk.unk57842C)) / static_cast<i16>(talk.unk578450);
+        (static_cast<i16>(talk.unk578430) - static_cast<i16>(talk.commandValue)) / static_cast<i16>(talk.unk578450);
     talk.battleRuns = 0;
     battle.shake = slide;
-    talk.unk57842C = static_cast<u16>(talk.unk57842C + slide);
+    talk.commandValue = static_cast<u16>(talk.commandValue + slide);
 
     if (slide == 0)
     {
         talk.cursor += 3 * sizeof(u16);
         talk.unk578430 = 0;
-        talk.unk57842C = 0;
+        talk.commandValue = 0;
         talk.unk578448 = static_cast<i32>(static_cast<u32>(talk.unk578448) & kLowWordMask);
         talk.unk578450 = 0;
         talk.unk57842E = 0;

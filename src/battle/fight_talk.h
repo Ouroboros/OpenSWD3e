@@ -46,7 +46,7 @@ public:
     i32 unk578420 = 0;         // 0x00578420
     i32 savedUnit = 0;         // 0x00578424 the unit to give the turn back to
     i32 battleActingUnit = 0;  // 0x00578428 BattleState::actingUnit as the battle frame copied it
-    u16 unk57842C = 0;         // 0x0057842C a word of the command run (a step, a shift)
+    u16 commandValue = 0;      // 0x0057842C the running command's working value (slide, curve step, list entry)
     u16 unk57842E = 0;         // 0x0057842E
     i32 unk578430 = 0;         // 0x00578430 the x (low word) and y (high word) of a unit or window
     i32 windowFlags = 0;       // 0x00578444 the flags of the next window, kWindowShown in the high word
