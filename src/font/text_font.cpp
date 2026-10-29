@@ -4,7 +4,6 @@
 #include <cstring>
 
 #include "draw/draw_placer.h"
-#include "draw/paint_record.h"
 #include "gfx/graphics.h"
 #include "platform/display.h"
 #include "platform/glyph_rasterizer.h"
@@ -678,13 +677,6 @@ void TextFont::DrawText(Pixel* target, int x, int y, std::string_view text, Pixe
         placer->Place(x, y, __builtin_return_address(0), nullptr);
     }
 
-    if (PaintRecord* record = PaintRecord::Active(); record != nullptr)
-    {
-        record->Text(*this, target, x, y, text, color, style);
-    }
-
-    const PaintRecord::Pause inner;
-
     int offset = 0;
     const int last = static_cast<int>(text.size()) - 1;
 
@@ -781,11 +773,6 @@ void TextFont::DrawText(Pixel* target, int x, int y, std::string_view text, Pixe
 // swd3e.exe 0x0043B960: a rectangle clamped to the target; the bottom clamp is tested on the unclamped top
 void TextFont::FillRect(Pixel* target, int x, int y, int width, int height, Pixel color)
 {
-    if (PaintRecord* record = PaintRecord::Active(); record != nullptr)
-    {
-        record->Fill(*this, target, x, y, width, height, color);
-    }
-
     int left = x;
     int right = x + width;
     const int unclampedBottom = y + height;

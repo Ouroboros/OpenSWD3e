@@ -24,7 +24,6 @@
 #include "core/spline.h"
 #include "core/words.h"
 #include "crt/msvc.h"
-#include "draw/paint_record.h"
 #include "draw/painter.h"
 #include "game/scene.h"
 #include "ghost/talisman_ghost.h"
