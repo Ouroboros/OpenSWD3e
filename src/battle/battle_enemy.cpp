@@ -58,7 +58,7 @@ void BattleEnemy::Setup(const UnitPlacement& at, u16 id, Database& database, Act
         this->actId = at.actId;
     }
 
-    this->unk2684 = 0;
+    this->unk2B8C = 0;
     this->LoadCommand(database, object.skill);
     Database::FreeDescription(*this->data);
     this->ProbeAct(acts);

@@ -215,6 +215,8 @@ struct UnitCommand
     u8 unk2B = 0;         // +0x2B
 };
 
+static_assert(sizeof(UnitCommand) == 0x2C);
+
 class Database;
 class Random;
 class TswArchive;
@@ -715,11 +717,11 @@ public:
     int CommandStatusBit() const;
     void CommandValues(u16& value, u16& turns) const;
     bool IsSmallMachine() const;
-    void Unk62And8A(u16& first, u16& second) const;
+    void Unk66And90(u16& first, u16& second) const;
     u16 AccessoryValue(u16 kind) const;
     i16 AccessoryProficiency(u16 kind, CounterList& proficiency);
-    void SetWords72(i16 first, i16 second, i16 third, i16 fourth);
-    void SetWords66(i16 a, i16 b, i16 c, i16 d, i16 e, i16 f);
+    void SetEnemySkills(i16 first, i16 second, i16 third, i16 fourth);
+    void SetEnemyItems(i16 a, i16 b, i16 c, i16 d, i16 e, i16 f);
     void SetResistances(std::span<const i16, 5> values);
     bool ShowsPicture(i16 picture) const;
     void LoadSkillAction(Database& database, u16 id, i32& act);
@@ -796,7 +798,7 @@ public:
     i32 unk2B80 = 0;
     u32 stage = 0;       // +0x2B84 BattleUnit::Stage bits
     i32 throwSteps = 0;  // +0x2B88 the frames of the thrown act so far (ThrowAct)
-    i32 unk2684 = 0;
+    i32 unk2B8C = 0;
     u32 glowFlags = 0;       // +0x2B90 the draw mode of the glow act
     i32 glowOffsetX = 0;     // +0x2B94
     i32 readyAction = 0;     // swd32 +0x2690 the action of its ready pose (kReadyAct)

@@ -549,7 +549,7 @@ int Game::RemoveDefeated(int index, int role)
 
         u16 first = 0;
         u16 second = 0;
-        enemy.Unk62And8A(first, second);
+        enemy.Unk66And90(first, second);
         battle.lastDefeatedObject = enemy.Data();
         const bool boss = (battle.lastDefeatedObject->data.kind & ObjectData::UnkKind20) != 0;
         u16 third = boss ? kBossReward : kEnemyReward;

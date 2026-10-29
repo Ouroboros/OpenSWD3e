@@ -2630,7 +2630,7 @@ int Game::FightTalkMisc(u16 command)
             if (this->TalkCommandUnit() < this->battleEnemies.size())
             {
                 this->battleEnemies[this->TalkCommandUnit()]
-                    .SetWords66(talk.Word(2), talk.Word(3), talk.Word(4), talk.Word(5), talk.Word(6), talk.Word(7));
+                    .SetEnemyItems(talk.Word(2), talk.Word(3), talk.Word(4), talk.Word(5), talk.Word(6), talk.Word(7));
             }
 
             talk.cursor += 8 * sizeof(u16);
@@ -2791,7 +2791,7 @@ int Game::FightTalkMisc(u16 command)
             if (this->TalkCommandUnit() < this->battleEnemies.size())
             {
                 this->battleEnemies[this->TalkCommandUnit()]
-                    .SetWords72(talk.Word(2), talk.Word(3), talk.Word(4), talk.Word(5));
+                    .SetEnemySkills(talk.Word(2), talk.Word(3), talk.Word(4), talk.Word(5));
             }
 
             talk.cursor += 6 * sizeof(u16);

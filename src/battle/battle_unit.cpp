@@ -2455,7 +2455,7 @@ bool BattleUnit::IsSmallMachine() const
 }
 
 // swd3e.exe 0x00487F80: the object's unk66 (30% more under flag 2BC0 bit 21) and unk90
-void BattleUnit::Unk62And8A(u16& first, u16& second) const
+void BattleUnit::Unk66And90(u16& first, u16& second) const
 {
     first = this->data->data.unk66;
     second = this->data->data.unk90;
@@ -2502,8 +2502,9 @@ i16 BattleUnit::AccessoryProficiency(u16 kind, CounterList& proficiency)
     return static_cast<i16>(this->proficiency);
 }
 
-// swd3e.exe 0x004893C0: the object's words +0x78..+0x7C set where non-zero (the fourth value goes to +0x7A as well)
-void BattleUnit::SetWords72(i16 first, i16 second, i16 third, i16 fourth)
+// swd3e.exe 0x004893C0: the enemy skills (+0x78..+0x7C) set where non-zero; the fourth value goes to the first
+// skill count +0x7A as well (an original bug, kept)
+void BattleUnit::SetEnemySkills(i16 first, i16 second, i16 third, i16 fourth)
 {
     ObjectData& object = this->data->data;
 
@@ -2529,7 +2530,7 @@ void BattleUnit::SetWords72(i16 first, i16 second, i16 third, i16 fourth)
 }
 
 // swd3e.exe 0x00489350: the object's words +0x6C..+0x76 (the three items and their counts) set where non-zero
-void BattleUnit::SetWords66(i16 a, i16 b, i16 c, i16 d, i16 e, i16 f)
+void BattleUnit::SetEnemyItems(i16 a, i16 b, i16 c, i16 d, i16 e, i16 f)
 {
     ObjectData& object = this->data->data;
     const std::array<std::pair<i16, u16*>, 6> words = {{
@@ -2612,7 +2613,7 @@ u16 BattleUnit::PrepareCommand(Database& database)
     this->command = UnitCommand{};
     this->LoadCommand(database, this->data->data.skill);
     this->unk2EB0 = static_cast<u16>(this->unk2EB0 + this->data->data.attack);
-    this->SetCommand(1);
+    this->SetCommand(BattleUnit::UnkCommand1);
     return 0;
 }
 
@@ -4890,7 +4891,7 @@ int BattleUnit::HurtStep(BattleServices& services)
 
 // swd3e.exe 0x0048BA60: one frame of the unit at rest (`paused`: its act holds). A staggering unit (flag 2BC0) runs
 // HurtFrame (a gold guard's gold shown by it), a knocked back one KnockBackFrame. Otherwise, unless busy, the main act
-// takes its pose: the stand pose (an enemy's plus unk2684; a weak one for unk2BDA bit 0 or a party member at a
+// takes its pose: the stand pose (an enemy's plus unk2B8C; a weak one for unk2BDA bit 0 or a party member at a
 // quarter of its hit points), the drain pose, the defeated pose of a party member, unk2F2A, the pose of a chosen
 // command (nothing drawn for command flag 0x200), a guard pose by guardPose. The talisman ghost circles its saved
 // place. The unit is drawn over its shadow (mirrored by the facing; a unit acting by itself adds Additive and is
@@ -4999,7 +5000,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
     // 0x0048BB5F calls nullsub_1 without arguments for a party role: nothing to log.
     if (this->kind != 1)
     {
-        act.action += this->unk2684;
+        act.action += this->unk2B8C;
     }
 
     const RoleRecord* record = this->roleRecord;

@@ -1794,3 +1794,134 @@
 汇编：+0x2BD8 位 0x40 或 0x4000、+0x2BC0 位 31 → 0。槽 +0x2F2E（零扩展）≥ 0x004BEFF8：+0x2FF0=1、+0x302C=0，+0x3068=1 → 清它与 +0x3050，返回 1。否则 速度 = (物品 +0x5E 零扩展 + 加 − 减)/4（状态位 29/27 取 movsx +0x2EDA），参数=1 → += 速度/4+1；位 31 → 减速 = 零扩展 +0x2BE6×速度/100/2+4；+0x2FF0=0、槽 = 槽 − 减速 + 速度；返回 0。
 对照：AdvanceGauge 一致（kAgilityDivisor=4、kBoostDivisor=4、kInvisibleLoss=4）。
 差异：无。
+
+## 0x00487D60 BattleEnemy::Setup — diff → exact
+
+汇编：阵位拷到 +0xFC4、+0xFE4；+0x2BBC=0；0x00489B00 载入物品到 [+0xC]；0x0049B170 SetDisplayName；+0x2FE0 = 阵位 +0x1C；物品 +0x50 = +0x68；+0x2FC5 = +0x9A 字节；+0x2F28 = +0x54，为 0 → 阵位 +0x14；+0x2B8C=0；0x00489750(命令, +0x64)；0x0048B010 释放说明；（ProbeAct）+0x3070=0、attackAct id = 零扩展 +0x2F28、动作 0x26，Run=0 → +0x3070=1，attackAct 清零；+0x2FDD=0，物品 +0x6E/+0x72/+0x76 皆 0 → 1，+0x7A/+0x7E 皆 0 → 2。
+对照：Setup 与 ProbeAct 一致（kProbedAction=0x26、NoObjects=1、NoSkills=2）。
+差异：+0x2B8C 字段沿用正传偏移命名 unk2684。修正：改名 unk2B8C（相邻 throwSteps +0x2B88）。复核：完整函数重新对照一致。
+
+## 0x00487E90 BattleEnemy::Reload — exact
+
+汇编：0x00489B00 载入参数物品；+0x50 = +0x68；+0x2FC5 = +0x9A 字节；0x00489750(命令, +0x64)；释放说明；+0x2F28 = +0x54，为 0 → 参数；其后同 ProbeAct。
+对照：Reload 一致。
+差异：无。
+
+## 0x00487F80 BattleUnit::Unk66And90 — diff → exact
+
+汇编：第一输出 = 物品 +0x66 字、第二输出 = +0x90 字；+0x2BC0 位 21 → 第一输出 += 零扩展 +0x66×30/100。
+对照：逻辑一致（kPulseRaise=30、kFlag2BC0Pulse=0x200000）。
+差异：函数名沿用正传的物品字段偏移（Unk62And8A）。修正：改名 Unk66And90（源码与函数表）。复核：完整函数重新对照一致。
+
+## 0x00487FE0 Game::EnemyAttackFrame — exact
+
+汇编：局部机率 var_8=0；+0x2F90≠0 → 0。+0x2FEC=1；standAct.hold = (+0x3010==1 或 target 位 0x200)。命令旗标 bit3 且 +0x3064=0：0x004903B0 淡出未完 → 0，+0x2BC0 位 28 → SetFacing(1)，0x004906F0 淡入≠1 → 0，+0x3064=1。standAct id = 零扩展 +0x2F28、动作 0x28（+0x2FB6≠0 → 0x30，=2 → 0x31）；0x0049A220 失败 → 错误框 "Attack Act" / 0x004BFA5C（名 +0x2A58、动作）返回 0。
++0x2BC0 位 16：standAct 清零，以 +0x2E64 为红（≥0xF 时绿蓝 = 值−0xF）、旗标 (+0x2B9C&0x80000003)|0x10 画当前图片于 +0x2ECA/+0x2ECC；+0x2E64 自增，≤0x1F → 0；否则目标绘制位置写 +0x2ECE/+0x2ED0、0x0048B4C0 移位、+0x2E64=0、+0x2FFC=1、+0x2FC7=2、血量 0、0x00577360=1，清 standAct/castAct/recoilAct/attackAct/slotActs[1]、拖尾 0x130 双字、四目标 −1、+0x2B84/+0x2FF0/+0x3064/+0x2BE0=0，槽 += rand(0x78)+10，返回 1。
+target 位 2（Recoils）→ effectA≠0 时 recoilAct 清零、stage|=0x4000、id/动作取 effectA/effectQ；位 0x200 → hold；清位 2 与 effectA/Q。stage 0x4000 且 0x0049ACC0(recoilAct, anchorY)=1 → target=0、hold=0、清 0x4000。位 8：位 0x400 → 0x00577334=1、0x00467C40(七个灯光值转浮点)、清 0x400；清 8、stage|=0x8000；命令旗标 bit0 → 目标位置、0x00496510(castAct, 0, x+锚−偏, 锚Y+阵位Y−act.y, 瞄准, 命令 +0x102A/+0x102C, 0, 1)；castAct 清零。位 0x8000 → 0x0057730C=1、0x00577030=0。位 0x800 → 0x00468440(0)、清位、stage&=~0x8000。位 0x40 → 0x00468460(0) 同。位 4 → stage|=0x8000、target=0、目标 0x0048B690。
+位 0x11 → stage|=0x8000、+0x2E60=0、castAct 清零、0x00575F34=0；状态 +0x2BC8 位 7 → 机率 8；+0x305C=0 → 0x00490D20(机率)；位 1 → 目标 0x0048B690；闪避 → 0x0049BB50(0x1B,0)；否则 0x00498560 伤害 movsx、≥9999 截断写 0x00575F34，累加 0x005378F4，−1 跳过，否则 0x00491A00 显示、0x00499EC0 存入机率，≤1 → 目标 0x00490FF0(1)；各路径 +0x305C=1、target=0。
+0x004655A0 以 +0x3C0/+0x3C2/+0x3C4 变暗，任一非零 → 0x00577294=1。stage 无 0x8000 → 0。castAct.waiting=1 且 0x0046AFE0=1：id≠0、命令 bit0 清、+0x2E60>−0x20（有符号）→ 以 +0x2E60 为三色（+0x2BAC&0x2C → 三色 0、+0x2E60=−0x20）以阴影图片调色盘画图，+0x2E60−=4，+0x3010≠1 → 0，否则加回 4 → 0；否则 standAct.waiting=1 且 0x0046B200=1 → 同上清除，返回 1，否则 0。
+castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → waiting=1 → 0。命令 bit0：+0x2BC0 位 24 → facing=1、0x00495FF0、facing=0，≠1 → 0，waiting=1、清位 24；否则 0x00495FF0≠1 → 0，waiting=1；否则 0x0049AA60(目标, castAct, anchorX, anchorY)。画当前图片；castAct target 位 0x20 → 清位、0x0046AD90(effectA, effectQ, 瞄准+锚, 0)；0x0046AE10；0x0046AFF0 非零则 或入；无 0x11 → 0；否则同上命中（无存回机率，之后不再使用）、+0x305C=1、target=0，返回 0。
+对照：EnemyAttackFrameAdvance 一致：clearAttack 与两处内联清除相同；strike lambda 覆盖两处命中（第二处存回 chance 后即返回，无可观察差异）；常量 kEnemyAttackAction 0x28/0x30/0x31、kStepAwayTintFrom 0xF、kStepAwayFrames 0x1F、kStepAwayPose 2、kGaugeRestRoll 0x78、kGaugeRestBase 10、kStatusEvade 8、kEvadedEnrageCause 0x1B、kEnemyFadeEnd −0x20、kEnemyFadeStep 4、kEnemyStrikeBits 0x11、kFliesMirrored 0x1000000、kStandsAsideFlag 0x10000000、kStepsAway 0x10000；错误文字与 exe 字节一致。绘制经 Scene，偏差 97/99；空图片偏差 199。
+差异：无。
+
+## 0x00488AB0 BattleUnit::CanHeal — exact
+
+汇编：+0x2BC0 位 21 → 0；物品 +0x82≠0 → 1；否则 +0x86≠0。
+对照：CanHeal 一致（kFlag2BC0Pulse=0x200000）。
+差异：无。
+
+## 0x00488AF0 BattleUnit::IsWeakEnemy — exact
+
+汇编：(+0x2BC0 & 0x200000) == 1 → 0（恒不成立，原程序无效判断）；血量 = +0x2BBC 非零则取它，否则物品 +0x68；返回 血量 < +0x50/3（有符号）。
+对照：IsWeakEnemy 一致（kWeakEnemyShare=3）；恒假分支无可观察行为，源码不写。
+差异：无。
+
+## 0x00488B30 BattleUnit::ChooseHeal — exact
+
+汇编：+0x2BD8 位 8 或物品 +0x98=0 → 0；rand(10) 取字；≤4 → +0x82≠0 时 +0x2FCE=1 返回 1；5..9 → +0x86≠0 时 +0x2FCE=2 返回 1；其余（含不可达的 0/1 再判）→ 0。
+对照：ChooseHeal 一致（kHealRoll=10、kFirstHeal=1、kSecondHeal=2），随机数消费一次。
+差异：无。
+
+## 0x00488BB0 BattleUnit::LoadSkillAction — exact
+
+汇编：0x00489B00 载入技能到 +0x14 物品；输出 = 零扩展 +0x68（物品 act）；lstrcpyA(+0x2B38, 物品名)；0x00489750(命令, +0x52 技能脚本)；+0x2EB0 += 命令 +0x1012；0x0048B610(2)；+0x2FB1 |= 0x80。
+对照：LoadSkillAction 一致；技能名截断属偏差 151。
+差异：无。
+
+## 0x00488C20 BattleUnit::PrepareCommand — diff → exact
+
+汇编：+0x2FB6≠0：命令旗标 bit1 清 → 0；否则 +0x2FB1|=0x80、0x0048B610(2)、返回零扩展命令 castAct。否则 +0x2EB0=0、命令 0x2C 字节清零、0x00489750(命令, 物品 +0x64)、+0x2EB0 += 物品 +0x5A、0x0048B610(1)、返回 0。
+对照：逻辑一致。
+差异：SetCommand(1) 以数字写出命令编号，UnitCommand 也未锁定大小。修正：改用 BattleUnit::UnkCommand1；加 static_assert(sizeof(UnitCommand) == 0x2C)（与汇编清零 0xB 双字一致）。复核：完整函数重新对照一致。
+
+## 0x00488CA0 BattleUnit::LoadEnemyCommand — exact
+
+汇编：命令 0x2C 字节清零、+0x2EB0=0；0x00489750(命令, 参数=1 ? 物品 +0x78 : +0x7C)；+0x2EB0 = 命令 +0x1012；命令旗标 bit1 → 输出 = 零扩展 castAct、+0x2FB1|=0x80、0x0048B610(2)、返回 0；否则 +0x2FB6 = 参数低字、0x0048B610(1)、返回 1。
+对照：LoadEnemyCommand 一致。
+差异：无。
+
+## 0x00488D40 BattleUnit::RollDrop — exact
+
+汇编：物品 +0x88=0 → 0；rand(20) 字 ≥ +0x8A（无符号）→ 0；否则返回 +0x88。
+对照：RollDrop 一致（kDropRoll=20），随机数只在有掉落物时消费。
+差异：无。
+
+## 0x00488D80 BattleUnit::CatchRoll — exact
+
+汇编：+0x2BD8 位 11 → −1；rand(12)（结果不用）；物品 +0x9B=0 → −1。StatusBit5=1：rand(2)=0 → −1；rand(10)<3 → 1；否则显示名字。+0x2BC0 位 14：rand(10)<8 → 清位返回 1，否则 −1。差 = (参数&0xFF) − 零扩展 +0x58：>10 → rand(100)<0x50 → 1；>5 → rand(100)<0x32 → 1；两者失败 → 0x0049BB50(0x13,0)，StatusBit5=1 → 显示名字，否则 −1；<5 → −1；=5：+0x9B=0 → 激怒检查 −1；rand(10)，StatusBit5=1 → 显示名字；掷值 < +0x9B → 1；否则激怒检查 −1。显示名字：wsprintfA(+0xF84, "%s", 0x0049D3B0 记录名)，0x00479220(0x118, 0xA, 0x28, 文字, 0x40000002)，返回 0。
+对照：CatchRoll 一致（kUnusedCatchRoll 12、kCoin 2、kCatchRoll 10、kMarkedFlight 3、kFleeFlag 0x4000、kFleeFlagFlight 8、kFarAbove 10、kNearAbove 5、kPercentRoll 100、kFarFlight 0x50、kNearFlight 0x32、kFleeEnrageCause 0x13、kFleeNameX/Y/Frames 0x118/0xA/0x28、BlackBar|Centered），随机数消费次序相同。缓冲区截断属偏差 71；先清空缓冲区只影响终止符之后的字节，文字只按终止符读取，无可观察差异。
+差异：无。
+
+## 0x00488F50 BattleUnit::RunAway — exact
+
+汇编：+0x2B70 ≤ 6 → +0x2FF8=1、recoilAct 清零、返回 1。recoilAct 图号 =1 → 0x00427040(0x10F, 音量)。id = 零扩展 +0x2F28、+0x2FEC=1、动作 0x24、hold = (+0x3010==1)；0x00436C80 失败 → 1。图片 = 0x00436720(帧, 图号) 写 +0x2A44，+0x2BA8 = act 旗标，+0x2EC6 = act.x 字。+0x2B70=0xF → view=0x2F、播放、facing=1 → 声像 0x30 否则 −0x30、view=0。+0x2BA8 ^= 1；facing=1 → 再 ^= 1、act.x≠0 → +0x2EC6 = 图宽 − act.x。0x0048B500 取位置，facing=1 → x+0x19 否则 x−0x19，0x0048B4C0 设位置。画图于 (阵位X − movsx +0x2EC6, 阵位Y − act.y)、旗标 +0x2BA8、图片调色盘。+0x2B70 减 1，返回 0。
+对照：RunAwayAdvance 一致（kRunEnd 6、kStepPicture 1、kStepSound 0x10F、kShadowAction 0x24、kRunSoundAt 0xF、kRunSound 0x2F、kFadePan 0x30、kRunStep 0x19、Mirror 1）。绘制经 Scene，偏差 97/99；空图片偏差 195。
+差异：无。
+
+## 0x00489180 BattleUnit::ItemName — exact
+
+汇编：参数 0/1/2 取物品 +0x6C/+0x70/+0x74，其他或为 0 → 0；0x00489B00 载入到 +0x14；输出编号 = 零扩展 +0x6C（三种选择都取第一项，原程序 BUG）；lstrcpyA(输出, 记录名)；返回 1。
+对照：ItemName 一致，保留 id 恒取 itemA 的原有 BUG；输出缓冲改为 std::string。
+差异：无。
+
+## 0x00489260 BattleUnit::SkillName — exact
+
+汇编：参数 0/1 取 +0x78/+0x7C，其他或为 0 → 0；载入到 +0x14；lstrcpyA(输出, 记录名)；返回 1。
+对照：SkillName 一致。
+差异：无。
+
+## 0x004892D0 BattleUnit::IsSmallMachine — exact
+
+汇编：物品 +0x20 位 5 → 0；位 11 清 → 0；否则 (10 < +0x56) ? 0 : 1。
+对照：IsSmallMachine 一致（NamedKind 0x20、MachineKind 0x800、SmallMachineTypes 10）。
+差异：无。
+
+## 0x00489300 BattleUnit::CommandValues — exact
+
+汇编：第一输出 = 命令 +0x22 字（+0x1026），第二输出 = 零扩展命令 +0x2A 字节（+0x102E）。
+对照：CommandValues 一致。
+差异：无。
+
+## 0x00489320 BattleUnit::SetResistances — exact
+
+汇编：五次循环，取参数字数组各项低字节写物品 +0x9C+i。
+对照：SetResistances 一致（span<const i16,5>，取低字节）。
+差异：无。
+
+## 0x00489350 BattleUnit::SetEnemyItems — diff → exact
+
+汇编：六个字参数依次非零时写物品 +0x6C/+0x6E/+0x70/+0x72/+0x74/+0x76。
+对照：逻辑一致。
+差异：函数名 SetWords66 沿用正传物品字段偏移。修正：按字段改名 SetEnemyItems（源码、对话命令调用处、函数表）。复核：完整函数重新对照一致。
+
+## 0x004893C0 BattleUnit::SetEnemySkills — diff → exact
+
+汇编：四个字参数非零时依次写 +0x78、+0x7A、+0x7C，第四个仍写 +0x7A（原程序 BUG，+0x7E 不写）。
+对照：逻辑一致，保留第四值写第一技能次数的 BUG。
+差异：函数名 SetWords72 沿用正传偏移。修正：改名 SetEnemySkills，注释写明保留的 BUG。复核：完整函数重新对照一致。
+
+## 0x00489410 BattleEnemy::Release — exact
+
+汇编：+0xC 非空 → 0x0043DAB0 释放、+0xC=0。
+对照：Release 释放 ownedData、data=nullptr，一致。
+差异：无。
