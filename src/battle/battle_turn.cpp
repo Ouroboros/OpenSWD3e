@@ -3895,7 +3895,18 @@ int Game::MouseHover()
     const int x = this->state.pointerX;
     const int y = this->state.pointerY;
 
-    if (battle.pointerX == x && battle.pointerY == y)
+    // The rebuild (deviations.md): the keyboard taken up (Input::KeyboardInUse) leaves the mouse mode, the pointer out
+    // of play letting go once of what was under it.
+    if (this->input.KeyboardInUse())
+    {
+        if (battle.unk5772B8 == 0)
+        {
+            return 0;
+        }
+
+        battle.unk5772B8 = 0;
+    }
+    else if (battle.pointerX == x && battle.pointerY == y)
     {
         if (battle.unk5772B8 == 0)
         {

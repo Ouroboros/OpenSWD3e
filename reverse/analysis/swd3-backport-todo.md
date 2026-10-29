@@ -27,7 +27,7 @@
 
 战斗输入：
 
-- [ ] 58d8bbb 键盘在用时离开战斗鼠标模式（Input::KeyboardInUse），数字键选指令不再打向不存在的敌人
+- [x] 58d8bbb 键盘在用时离开战斗鼠标模式（Input::KeyboardInUse），数字键选指令不再打向不存在的敌人
 
 ## 二、原版 BUG 的修正：外传同样存在，按 bug-for-bug 规则待用户决定
 
