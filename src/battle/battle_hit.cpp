@@ -622,7 +622,7 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
 // side (kAllHitLeftX, kAllHitRightX, kAllHitY: an enemy attacker unmirrored keeps y 0; with unk5772F8 the middle of the
 // field), walking along y 0 for a moving attack; an act marked AddsPicture adds its effect as a second-tier picture.
 // The target bits work as in HitTargetFrame, on every unit of the side with `all`: the roles hit by a role while
-// unk577260 and unk575F24 take the damage at once (Damage), as do all roles while hitsAllRoles; the spirit and stamina
+// roleActing and atParty take the damage at once (Damage), as do all roles while hitsAllRoles; the spirit and stamina
 // of a hit are cleared after their digits (so the slots record 0 for them), and the digit delay of the enemies runs
 // on from the walk speed without a reset (kept).
 int Game::HitAllFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index, int all)
@@ -890,7 +890,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
         return;
     }
 
-    if ((battle.unk577260 == 1 && battle.unk575F24 == 1) || battle.hitsAllRoles == 1)
+    if ((battle.roleActing == 1 && battle.atParty == 1) || battle.hitsAllRoles == 1)
     {
         for (u32 slot = 0; slot < battle.roleCount; ++slot)
         {
@@ -929,7 +929,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
             battle.hitDamage = battle.slotDamage[slot];
             battle.lastStaminaDamage[slot] = stamina;
 
-            if (battle.unk577260 == 1 && battle.unk575F24 == 1)
+            if (battle.roleActing == 1 && battle.atParty == 1)
             {
                 role.Damage(
                     this->battleServices,
@@ -1050,10 +1050,10 @@ void Game::DrainToSpirit(BattleRole& role, i32& damage)
     role.Damage(this->battleServices, 0, static_cast<i16>(damage), 0);
 }
 
-// A role attacking in HitFrame (inline in the original): its act is its unk50D88C. With wholeSide its hit sweeps a
-// side (hitsAtOnce 1: the whole side at once, the hits taken by the enemies; otherwise one unit after another as the
-// sweep reaches them, until sweepTotal are hit), else one target is hit (hitsAtOnce 1: HitAllFrame on the target
-// alone). unk575F24 makes the party the target side.
+// A role attacking in HitFrame (inline in the original): its act is its unk50D88C. With targetsAll its hit sweeps a
+// side (allAtOnce 1: the whole side at once, the hits taken by the enemies; otherwise one unit after another as the
+// sweep reaches them, until sweepTotal are hit), else one target is hit (allAtOnce 1: HitAllFrame on the target
+// alone). atParty makes the party the target side.
 int Game::RoleHitFrame(int role)
 {
     BattleState& battle = this->battleState;
@@ -1062,16 +1062,16 @@ int Game::RoleHitFrame(int role)
     const auto at = static_cast<std::size_t>(target);
     const u32 act = static_cast<u32>(battle.unk50D88C[static_cast<std::size_t>(role)]);
 
-    if (battle.wholeSide != 0)
+    if (battle.targetsAll != 0)
     {
-        if (battle.hitsAtOnce == 1)
+        if (battle.allAtOnce == 1)
         {
             if (this->HitAllFrame(this->battleEnemies[at], attacker, act, 0, 1) != 1)
             {
                 return 0;
             }
 
-            if (battle.unk575F24 == 0)
+            if (battle.atParty == 0)
             {
                 for (u32 index = 0; index < battle.enemyCount; ++index)
                 {
@@ -1127,9 +1127,9 @@ int Game::RoleHitFrame(int role)
         return 1;
     }
 
-    if (battle.hitsAtOnce == 1)
+    if (battle.allAtOnce == 1)
     {
-        if (battle.unk575F24 == 0)
+        if (battle.atParty == 0)
         {
             BattleEnemy& enemy = this->battleEnemies[at];
 
@@ -1170,7 +1170,7 @@ int Game::RoleHitFrame(int role)
         return 1;
     }
 
-    if (battle.unk575F24 == 0)
+    if (battle.atParty == 0)
     {
         BattleEnemy& enemy = this->battleEnemies[at];
 
@@ -1223,7 +1223,7 @@ int Game::RoleHitFrame(int role)
 }
 
 // The sweep of a role's hit in RoleHitFrame (inline in the original): over the enemies (a defeated one widens the
-// sweep at once) or the roles in battle (unk575F24; not escorts, guests or the ghost; the sweep widens up to the
+// sweep at once) or the roles in battle (atParty; not escorts, guests or the ghost; the sweep widens up to the
 // roles less the ghost) the sweep has reached, each hit once (slotTargets) takes its slot totals; true once sweepTotal
 // are hit.
 bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
@@ -1259,7 +1259,7 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
         return ++battle.unk577050 >= battle.sweepTotal;
     };
 
-    if (battle.unk575F24 == 0)
+    if (battle.atParty == 0)
     {
         for (u32 slot = 0; slot < battle.sweptUnits; ++slot)
         {
@@ -1304,10 +1304,10 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
     return false;
 }
 
-// An enemy attacking in HitFrame (inline in the original): its act is its enemyHitActs. Without wholeSide one target
-// is hit: a role (hitsAtOnce 1: HitAllFrame on it alone) steps its orb counters by the enemy's command, takes the drain
+// An enemy attacking in HitFrame (inline in the original): its act is its enemyHitActs. Without targetsAll one target
+// is hit: a role (allAtOnce 1: HitAllFrame on it alone) steps its orb counters by the enemy's command, takes the drain
 // before the damage and its DrainShare as spirit, a held aimed role ends the menu; an enemy (unk575F28) takes the hit.
-// With wholeSide the hit sweeps: hitsAtOnce 1 all roles at once, otherwise the enemies (unk575F28) or the roles the
+// With targetsAll the hit sweeps: allAtOnce 1 all roles at once, otherwise the enemies (unk575F28) or the roles the
 // sweep has reached, until sweepTargets are hit (counting the defeats in sweepDefeated); the drains of the roles are
 // summed and given to the enemy at the end (ApplyDrainSums).
 int Game::EnemyHitFrame(int enemy)
@@ -1319,9 +1319,9 @@ int Game::EnemyHitFrame(int enemy)
     const auto at = static_cast<std::size_t>(target);
     const u32 act = static_cast<u32>(battle.enemyHitActs[static_cast<std::size_t>(enemy)]);
 
-    if (battle.wholeSide == 0)
+    if (battle.targetsAll == 0)
     {
-        if (battle.hitsAtOnce == 1)
+        if (battle.allAtOnce == 1)
         {
             BattleRole& role = this->battleRoles[at];
 
@@ -1423,7 +1423,7 @@ int Game::EnemyHitFrame(int enemy)
         return 0;
     }
 
-    if (battle.hitsAtOnce != 1)
+    if (battle.allAtOnce != 1)
     {
         battle.sweptUnits = 1;
     }
@@ -1483,7 +1483,7 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
         this->DrainToSpirit(role, battle.slotDamage[slot]);
     };
 
-    if (battle.hitsAtOnce == 1)
+    if (battle.allAtOnce == 1)
     {
         if (this->HitAllFrame(this->battleRoles[static_cast<std::size_t>(target)], attacker, act, 0, 1) != 1)
         {
@@ -1958,7 +1958,7 @@ int Game::EnemySpellAction(int enemy, BattleEnemy& unit, int target)
         this->acts.Run(hit);
         battle.unk575FD0 = static_cast<u8>(LowByte(hit.counter) >> 1);
 
-        if (battle.wholeSide == 1)
+        if (battle.targetsAll == 1)
         {
             battle.sweepTargets = 0;
 
@@ -2094,7 +2094,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 
 // swd3e.exe 0x004612D0: one frame of enemy `enemy`. While the fight talk lets the battle run (battleRuns): with no
 // unit acting its effects tick and its gauge fills (a full gauge queues its slot record), and unless the battle waits
-// (unk577260, unk577204) the acting enemy (actingUnit) takes its turn: a held or defeated one ends it; a sweep of the
+// (roleActing, unk577204) the acting enemy (actingUnit) takes its turn: a held or defeated one ends it; a sweep of the
 // whole side aims at the first unit; otherwise it picks a target (EnemyPickTarget) and, once ready, a command
 // (EnemyChooseCommand). A chosen command waits for the second gauge (unk50CE6C) and is slotted again; then the enemy
 // acts (EnemyActionFrame) until the action is over (EnemyAfterAction). Every frame it is drawn at rest (its acts
@@ -2122,7 +2122,7 @@ int Game::EnemyFrame(int enemy)
             }
         }
 
-        if (battle.unk577260 == 0 && battle.unk577204 == 0)
+        if (battle.roleActing == 0 && battle.unk577204 == 0)
         {
             if (battle.actingUnit == enemy)
             {
@@ -2143,7 +2143,7 @@ int Game::EnemyFrame(int enemy)
                     return unit.ResetTurn(services);
                 }
 
-                if (battle.wholeSide == 1)
+                if (battle.targetsAll == 1)
                 {
                     this->EnemyAimSide(unit);
                 }
@@ -2160,7 +2160,7 @@ int Game::EnemyFrame(int enemy)
                         battle.enemyTargetPicked = 1;
                     }
 
-                    if (unit.GetValue2FF4() == 0)
+                    if (unit.IsAimed() == 0)
                     {
                         this->EnemyChooseCommand(unit, enemy);
                     }
@@ -2176,7 +2176,7 @@ int Game::EnemyFrame(int enemy)
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
             }
 
-            if (battle.actingUnit == enemy && battle.unk50CE6C[at] == 0 && unit.GetValue2FF4() == 1)
+            if (battle.actingUnit == enemy && battle.unk50CE6C[at] == 0 && unit.IsAimed() == 1)
             {
                 this->EnemyActFrame(unit, enemy);
             }
@@ -2319,7 +2319,7 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
         return true;
     }
 
-    if (battle.enemyPendingOrders[static_cast<std::size_t>(enemy)].unk00 != 0)
+    if (battle.enemyPendingOrders[static_cast<std::size_t>(enemy)].atParty != 0)
     {
         return true;
     }
@@ -2459,9 +2459,9 @@ bool Game::AimedDown(i32 index) const
 // The command of an acting enemy in EnemyFrame (inline in the original): the order's low byte aims it when its bits
 // are set; the catch roll (the first party role's level) makes it run (0x11) or step home (0x12C, its name shown).
 // With an order from the fight talk (enemyOrders) the order's bits give the command: 0x8000 a prepared command, 0x4000
-// the spell (it waits for its second gauge), 0x2000 the drain; ActFlag1 hits at once, ActFlag0 sweeps; the aim passes
-// on from a downed target to the next standing unit (up to unit 0x14). Otherwise a healer may aim at itself or at the
-// weakest enemy, and it chooses its command (then it waits for its second gauge with the skill name to show); a
+// the spell (it waits for its second gauge), 0x2000 the drain; AllAtOnce hits at once, TargetsAll sweeps; the aim
+// passes on from a downed target to the next standing unit (up to unit 0x14). Otherwise a healer may aim at itself or
+// at the weakest enemy, and it chooses its command (then it waits for its second gauge with the skill name to show); a
 // supporting command aims at itself, a sweep starts, and the target is aimed at when it stands.
 void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
 {
@@ -2470,7 +2470,7 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     const auto at = static_cast<std::size_t>(enemy);
     PendingOrder& pending = battle.enemyPendingOrders[at];
     const u16 order = battle.enemyOrders[at];
-    pending.unk04 = 0;
+    pending.targetsAll = 0;
 
     if ((order >> kOrderTargetShift) != 0)
     {
@@ -2505,13 +2505,13 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
         unit.FillSecondGauge();
     };
 
-    auto hitsAtOnce = [&battle, &unit, &pending]
+    auto allAtOnce = [&battle, &unit, &pending]
     {
-        pending.unk08 = 0;
+        pending.allAtOnce = 0;
 
-        if (unit.ActFlag1() == 1)
+        if (unit.AllAtOnce() == 1)
         {
-            pending.unk08 = 1;
+            pending.allAtOnce = 1;
             battle.enemyHitsAll = 1;
         }
     };
@@ -2544,11 +2544,11 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
             battle.darkenUnit = static_cast<i16>(enemy);
         }
 
-        hitsAtOnce();
+        allAtOnce();
 
-        if (unit.ActFlag0() == 1)
+        if (unit.TargetsAll() == 1)
         {
-            pending.unk04 = 1;
+            pending.targetsAll = 1;
             battle.sweepTargets = 0;
         }
 
@@ -2583,26 +2583,26 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
         battle.darkenUnit = static_cast<i16>(enemy);
         battle.unk576FE0 = 0;
         waitSecondGauge();
-        hitsAtOnce();
+        allAtOnce();
         battle.skillNamePending[at] = 1;
     }
 
     if (unit.CommandSupports() == 1)
     {
-        pending.unk00 = 1;
+        pending.atParty = 1;
         battle.unk575F28 = 1;
         battle.enemyTarget = enemy;
     }
 
     battle.darkenUnit = static_cast<i16>(enemy);
 
-    if (unit.ActFlag0() == 1)
+    if (unit.TargetsAll() == 1)
     {
-        pending.unk04 = 1;
+        pending.targetsAll = 1;
         battle.sweepTargets = 0;
     }
 
-    if (pending.unk04 == 0 && !this->AimedDown(battle.enemyTarget))
+    if (pending.targetsAll == 0 && !this->AimedDown(battle.enemyTarget))
     {
         unit.Retarget(static_cast<i16>(battle.enemyTarget));
     }
@@ -2619,10 +2619,10 @@ void Game::EnemyAimHeal(BattleEnemy& unit, int enemy)
 
     auto heal = [this, &battle, &unit, &pending](i32 target)
     {
-        if (pending.unk00 == 0 && unit.ChooseHeal(this->battleServices))
+        if (pending.atParty == 0 && unit.ChooseHeal(this->battleServices))
         {
             battle.unk575F28 = 1;
-            pending.unk00 = 1;
+            pending.atParty = 1;
             battle.enemyTarget = target;
         }
     };
@@ -2748,7 +2748,7 @@ void Game::ReturnHeldEscort(BattleRole& role, std::size_t index, bool dropComman
 
     escort = 0;
     battle.callingEscort = 0;
-    battle.pendingOrders[index].unk00 = 0;
+    battle.pendingOrders[index].atParty = 0;
 
     if (dropCommand)
     {
@@ -2872,7 +2872,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
     battle.enemySweeps = 0;
     battle.enemyHitsAll = 0;
     battle.gatheringSweep = 0;
-    battle.enemyPendingOrders[static_cast<std::size_t>(enemy)].unk04 = 0;
+    battle.enemyPendingOrders[static_cast<std::size_t>(enemy)].targetsAll = 0;
     battle.sweepTargets = 0;
     battle.spellStage = 0;
     battle.enemyOrders[static_cast<std::size_t>(enemy)] = 0;

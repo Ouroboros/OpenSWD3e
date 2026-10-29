@@ -864,11 +864,11 @@ int BattleUnit::AddBuff(BattleServices& services, const SkillScript& skill)
     }
 
     const bool party = this->kind == BattleUnit::PartyRole;
-    const bool wholeSide = services.state.wholeSide == 1;
+    const bool targetsAll = services.state.targetsAll == 1;
 
     auto announce = [&](const ElementTexts& texts)
     {
-        this->Announce(services, wholeSide ? (party ? texts.party : texts.enemies) : texts.one, kStartFlags);
+        this->Announce(services, targetsAll ? (party ? texts.party : texts.enemies) : texts.one, kStartFlags);
     };
 
     if (skill.element >= SkillScript::Metal && skill.element <= SkillScript::Earth)

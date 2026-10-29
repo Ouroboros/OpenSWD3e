@@ -35,19 +35,19 @@ struct BattleSlotRecord
     i32 targetCount = 0;  // +0x04 the units its order hits (BattleState::sweepTotal)
     u16 kind = 0;         // +0x08
     u16 unk0A = 0;        // +0x0A
-    i32 unk0C = 0;        // +0x0C
+    i32 atParty = 0;      // +0x0C 1: its order is at the party (PendingOrder::atParty)
     i32 unk10 = 0;        // +0x10
-    i32 unk14 = 0;        // +0x14
-    i32 unk18 = 0;        // +0x18
+    i32 targetsAll = 0;   // +0x14 1: its order hits every unit of its side (PendingOrder::targetsAll)
+    i32 allAtOnce = 0;    // +0x18 1: all of them at once (PendingOrder::allAtOnce)
 };
 
 // The order a party unit chose (0x14 bytes, ten at 0x005369C8), taken into its slot record by InsertSlotRecord.
 struct PendingOrder
 {
-    i32 unk00 = 0;  // +0x00 to the record's unk0C
-    i32 unk04 = 0;  // +0x04 to unk14
-    i32 unk08 = 0;  // +0x08 to unk18
-    u16 unk0C = 0;  // +0x0C to unk0A
+    i32 atParty = 0;     // +0x00 1: at the party (the role aimed at, or every role with targetsAll), else the enemies
+    i32 targetsAll = 0;  // +0x04 1: every unit of the side (BattleUnit::TargetsAll)
+    i32 allAtOnce = 0;   // +0x08 1: hit at once, not one after another (BattleUnit::AllAtOnce)
+    u16 unk0C = 0;       // +0x0C to unk0A
     u16 unk0E = 0;
     i32 targetCount = 0;  // +0x10 the units it hits, counted as they are gathered (to targetCount)
 };
@@ -341,8 +341,8 @@ public:
     std::array<PendingOrder, RoleUnits> pendingOrders = {};  // 0x005369C8
     // 0x00536EE0 (swd3e) per enemy: its chosen order, taken into its slot record by AddSlotRecord (kind 2)
     std::array<PendingOrder, Enemies> enemyPendingOrders = {};  // 0x00536EE0
-    i32 unk57727C = 0;  // cleared when a party unit's order is taken (InsertSlotRecord)
-    i32 unk5772D0 = 0;  // 0x005772D0 set when a talk role order aims at a role (command 9)
+    i32 unk57727C = 0;     // cleared when a party unit's order is taken (InsertSlotRecord)
+    i32 gathersParty = 0;  // 0x005772D0 1: a sweep order chosen at the party (cleared by any queued order or action)
     // 0x0057735C (swd3e) 1: the skill chosen (ActFlag17) is turned on the role itself once its enemy is aimed at, the
     // enemy kept in the role's unk34C0 (MenuConfirm states 2 and 3)
     i32 unk57735C = 0;
@@ -465,8 +465,8 @@ public:
     // The turns (0x00464CC0, 0x0045ADF0, 0x0045AA00).
     i32 turnCommand = 0;  // 0x00576FA8 the order of the turn under way
     i32 unk57725C = 0;
-    i32 unk577260 = 0;  // 0x00577260
-    i32 unk577270 = 0;  // 0x00577270 set by talk command 0x4E
+    i32 roleActing = 0;  // 0x00577260 1: a party role is acting (RoleActFrame)
+    i32 unk577270 = 0;   // 0x00577270 set by talk command 0x4E
     // 0x00577314 set when a role turns to another enemy (RetargetRoles)
     i32 retargeted = 0;  // 0x00577314 1 once the acting role checked (and retargeted) its aim this command
     std::array<i32, Units> turnTaken = {};      // 0x00576024 per unit, set when it takes the turn
@@ -492,7 +492,7 @@ public:
     std::array<u16, Units> walkModes = {};
     // The draw order around the acting unit (SortDrawOrderAround).
     u8 unk577A50 = 0;
-    i32 unk575F24 = 0;
+    i32 atParty = 0;  // 0x00575F24 the acting unit's slot record: atParty
     i32 unk575F28 = 0;
     i32 orderSorted = 0;  // 0x00577344 set once the order is sorted around the acting unit
     // The push of a hit (Game::PushUnits).
@@ -547,8 +547,8 @@ public:
     i32 unk53AF34 = 0;
     i32 sweepTotal = 0;  // 0x00575F1C the units a sweep is to hit
     u16 unk575F20 = 0;
-    i32 hitsAtOnce = 0;  // 0x00575F30 1: a sweep of the whole side hits it at once (HitFrame)
-    i32 wholeSide = 0;   // 0x00575F2C 1: the hit or effect falls on a whole side (the effect messages name the side)
+    i32 allAtOnce = 0;   // 0x00575F30 the acting unit's slot record: allAtOnce (a sweep hits at once, HitFrame)
+    i32 targetsAll = 0;  // 0x00575F2C the acting unit's slot record: targetsAll (the effect messages name the side)
     u16 unk577240 = 0;   // a unit's place read for the debug gauge and the menu
     u16 unk577244 = 0;
     i32 hoverScrollPart = 0;    // 0x0057707C the part of the scroll bar under the pointer (1..4)

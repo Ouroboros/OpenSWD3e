@@ -160,10 +160,10 @@ int Game::BattleFrame()
             battle.sweepTotal,
             battle.unk575F20,
             static_cast<u16>(battle.slideBackPicture),
-            battle.unk575F24,
+            battle.atParty,
             battle.unk575F28,
-            battle.wholeSide,
-            battle.hitsAtOnce
+            battle.targetsAll,
+            battle.allAtOnce
         };
 
         this->TakeSlotRecord(acting);
@@ -171,10 +171,10 @@ int Game::BattleFrame()
         battle.sweepTotal = acting.targetCount;
         battle.unk575F20 = acting.kind;
         battle.slideBackPicture = static_cast<i16>(acting.unk0A);
-        battle.unk575F24 = acting.unk0C;
+        battle.atParty = acting.atParty;
         battle.unk575F28 = acting.unk10;
-        battle.wholeSide = acting.unk14;
-        battle.hitsAtOnce = acting.unk18;
+        battle.targetsAll = acting.targetsAll;
+        battle.allAtOnce = acting.allAtOnce;
 
         if (battle.actingUnit != -1)
         {
@@ -190,7 +190,7 @@ int Game::BattleFrame()
     this->SlideUnits(battle.slideUnit, battle.slideX, battle.slideTarget);
     this->DrawBattleBackground(battle.shake);
 
-    if (battle.unk577260 == 1 || battle.hitsAllRoles == 1)
+    if (battle.roleActing == 1 || battle.hitsAllRoles == 1)
     {
         this->SortActingDrawOrder();
     }
@@ -497,7 +497,7 @@ void Game::EndBattle()
     battle.hitFading.fill(0);
     battle.unk577258 = 0;
     battle.unk57725C = 0;
-    battle.unk577260 = 0;
+    battle.roleActing = 0;
     battle.hitsAllRoles = 0;
     battle.unk577268 = 0;
     battle.unk57726C = 0;
@@ -522,7 +522,7 @@ void Game::EndBattle()
     battle.unk5772BC = 0;
     battle.unk5772C0 = 0;
     battle.flashing = 0;
-    battle.unk5772D0 = 0;
+    battle.gathersParty = 0;
     battle.enemyAimsAtEnemies = 0;
     battle.enemyFaded = 0;
     battle.damageShown = 0;

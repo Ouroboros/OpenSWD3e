@@ -200,7 +200,7 @@ constexpr u16 kTalkCountdown = 0x7FFF;
 }  // namespace
 
 // swd3e.exe 0x0045BEA0: one frame of the command of role `role` on unit `target` (an enemy, or a role while
-// unk575F24); 1 once the command is over (at once for a defeated role, for an enemy target past the enemies unless
+// atParty); 1 once the command is over (at once for a defeated role, for an enemy target past the enemies unless
 // the hit falls on a whole side, and for a role without commands). Command A 0xC8 walks to the target, the larger
 // ones are the special attacks (RoleSpecialFrame); the others, and command B, run RoleCommandFrame (command B alone
 // takes none of them: 0).
@@ -217,7 +217,7 @@ int Game::RoleActionFrame(int role, int target)
         return 1;
     }
 
-    if (battle.unk575F24 == 0 && battle.wholeSide == 0 && target >= static_cast<i32>(battle.enemyCount))
+    if (battle.atParty == 0 && battle.targetsAll == 0 && target >= static_cast<i32>(battle.enemyCount))
     {
         return 1;
     }
@@ -242,12 +242,12 @@ int Game::RoleActionFrame(int role, int target)
     return this->RoleCommandFrame(unit, role, target, command);
 }
 
-// The unit a role's command aims at (inline in 0x0045BEA0): role `target` while unk575F24, otherwise enemy `target`.
+// The unit a role's command aims at (inline in 0x0045BEA0): role `target` while atParty, otherwise enemy `target`.
 BattleUnit& Game::AimedUnit(int target)
 {
     const auto at = static_cast<std::size_t>(target);
 
-    if (this->battleState.unk575F24 != 0)
+    if (this->battleState.atParty != 0)
     {
         return this->battleRoles[at];
     }
@@ -793,7 +793,7 @@ CounterList& Game::ProficiencyList()
 }
 
 // Command 1 of RoleActionFrame (inline in the original): the attack lands on its target (an enemy, or a role while
-// unk575F24). The attacker drains after the hit (on the enemy of the target's index even for a role target, kept); a
+// atParty). The attacker drains after the hit (on the enemy of the target's index even for a role target, kept); a
 // vampire ring (DrainKind 8) turns a tenth plus its proficiency of the rest into healing of the attacker (on an enemy
 // target, with its digits; on a role target the share is only computed); its counters step by 5. An enemy target
 // slides the units back (SlideBack). The command goes on with 0x12C.
@@ -812,7 +812,7 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
 
     this->RoleHitLanded(target);
 
-    if (battle.unk575F24 == 0)
+    if (battle.atParty == 0)
     {
         battle.slideMode = BattleState::SlideBack;
     }
@@ -824,7 +824,7 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
         unit.SetCommand(kAfterAction);
     }
 
-    if (battle.unk575F24 != 0)
+    if (battle.atParty != 0)
     {
         this->ApplyDrain(battle.hitDamage, unit, enemy);
     }
@@ -834,7 +834,7 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
         const i32 share = static_cast<u16>(unit.AccessoryProficiency(kVampireRing, this->ProficiencyList()));
         const i32 tenth = battle.hitDamage * kTenthPercent / kPercent;
 
-        if (battle.unk575F24 != 0)
+        if (battle.atParty != 0)
         {
             battle.hitDamage = tenth + battle.hitDamage * share / kPercent;
             battle.lastDamage = 0;
@@ -854,7 +854,7 @@ int Game::RoleAttackFrame(BattleRole& unit, int target)
         unit.StepAccessoryCounters(this->ProficiencyList(), kVampireKind, kVampireStep);
     }
 
-    if (battle.unk575F24 == 0)
+    if (battle.atParty == 0)
     {
         this->ApplyDrain(battle.hitDamage, unit, enemy);
     }
@@ -915,7 +915,7 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, int target)
 
     if ((battle.spellStage & BattleState::SpellCast) == 0)
     {
-        if (battle.unk575F24 == 0)
+        if (battle.atParty == 0)
         {
             battle.slideMode = BattleState::SlideToUnit;
             battle.slideUnit = target;
@@ -930,9 +930,9 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, int target)
                 std::make_unique<ScriptObject>(Display::Width, Display::Height, 0, 0, kRippleGrid, kRippleGrid);
         }
 
-        if (battle.unk575F24 != 0)
+        if (battle.atParty != 0)
         {
-            if (battle.wholeSide == 1)
+            if (battle.targetsAll == 1)
             {
                 if (battle.sweepTotal > static_cast<i32>(battle.roleCount))
                 {
@@ -954,7 +954,7 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, int target)
             this->battleEnemies[static_cast<std::size_t>(target)].CountEnrageEvent(kSpellEnrageEvent);
             battle.enemyCommandTurns[0] = unit.CommandTurns();
 
-            if (battle.wholeSide == 1)
+            if (battle.targetsAll == 1)
             {
                 battle.sweepTotal = 0;
 
@@ -1024,7 +1024,7 @@ int Game::RoleItemFrame(BattleRole& unit, int role, int target)
         this->StartRoleCast(unit);
         i32 units = static_cast<i32>(battle.roleCount);
 
-        if (battle.unk575F24 == 0)
+        if (battle.atParty == 0)
         {
             units = static_cast<i32>(battle.enemyCount);
             battle.slideMode = BattleState::SlideToUnit;
@@ -2290,7 +2290,7 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
             if (unit.SpendGhostSpirit(hitPoints, maximum, kGhostHealSpirit) == 1)
             {
                 battle.unk50D88C[at] = kGhostHealCast;
-                order.unk00 = 1;
+                order.atParty = 1;
             }
             else
             {
@@ -2324,21 +2324,21 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
 
         if (chosen == 1)
         {
-            if (unit.ActFlag1() == 1)
+            if (unit.AllAtOnce() == 1)
             {
-                order.unk08 = 1;
+                order.allAtOnce = 1;
             }
 
-            if (unit.ActFlag0() == 1)
+            if (unit.TargetsAll() == 1)
             {
-                order.unk04 = 1;
+                order.targetsAll = 1;
             }
 
-            order.unk00 = 0;
+            order.atParty = 0;
 
             if (kind == kGhostRoleSkill)
             {
-                order.unk00 = 1;
+                order.atParty = 1;
 
                 if (aim >= 0)
                 {
@@ -2384,24 +2384,24 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
         return;
     }
 
-    if (unit.ActFlag1() == 1)
+    if (unit.AllAtOnce() == 1)
     {
-        order.unk08 = 1;
+        order.allAtOnce = 1;
     }
 
-    if (unit.ActFlag0() == 1)
+    if (unit.TargetsAll() == 1)
     {
-        order.unk04 = 1;
+        order.targetsAll = 1;
     }
 
     if (unit.CommandSupports() == 1)
     {
         aim = role + 1;
-        order.unk00 = 1;
+        order.atParty = 1;
     }
 }
 
-// The turn of a role in RoleFrame (inline in the original): a role not slotted, not held, ready (GetValue2FF4) while no
+// The turn of a role in RoleFrame (inline in the original): a role not slotted, not held, ready (IsAimed) while no
 // unit acts, the battle goes on, no role has the panel and the fight talk lets it run, once its second gauge drains,
 // takes the turn (its turn resets when the enemy being taken is the last one or the battle is to end with nothing
 // pending). A role ordered to act (turnTaken 2) acts at once when no slot record waits (its pending order becomes the
@@ -2413,7 +2413,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     const auto at = static_cast<std::size_t>(role);
     const int self = role + BattleState::FirstRoleUnit;
 
-    if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.GetValue2FF4() != 1 || battle.actingUnit != -1 ||
+    if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.IsAimed() != 1 || battle.actingUnit != -1 ||
         battle.result != 0 || battle.currentUnit != 0 || this->fightTalk.battleRuns != 1 ||
         unit.DrainSecondGauge() != 1)
     {
@@ -2452,9 +2452,9 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     battle.actingUnit = self;
     battle.unk575F20 = 1;
     battle.unk577270 = 1;
-    battle.wholeSide = order.unk04;
-    battle.unk575F24 = order.unk00;
-    battle.hitsAtOnce = order.unk08;
+    battle.targetsAll = order.targetsAll;
+    battle.atParty = order.atParty;
+    battle.allAtOnce = order.allAtOnce;
     battle.slideBackPicture = static_cast<i16>(order.unk0C);
     battle.sweepTotal = order.targetCount;
     order = PendingOrder{};
@@ -2479,19 +2479,19 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
         battle.turnUnit = 0;
     };
 
-    if (order.unk04 == 1)
+    if (order.targetsAll == 1)
     {
         this->RoleGatherSweep(unit, order);
         this->RoleTakeOrder(unit, role);
         return;
     }
 
-    if (unit.GetValue2FF4() != 0)
+    if (unit.IsAimed() != 0)
     {
         return;
     }
 
-    if (order.unk00 != 0)
+    if (order.atParty != 0)
     {
         if (!automatic)
         {
@@ -2541,7 +2541,7 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
 }
 
 // The targets of a sweep order of RoleOrderFrame (inline in the original): on the roles (an order at the party, unk00;
-// the original reads unk5772D0, see below) every role in
+// the original reads gathersParty, see below) every role in
 // battle not an escort, a guest, the ghost or StatusBit13 while the acting role is not ready, and with every role
 // standing gathered the last role standing is aimed at; on the enemies every enemy standing without a pending removal
 // (the count in targetCount), and with every one gathered the first one standing (unk57727C).
@@ -2550,16 +2550,16 @@ void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
     BattleState& battle = this->battleState;
     i32 aim = -1;
 
-    // The rebuild (deviations.md): the side is the order's own, as it hits; the original reads unk5772D0, cleared when
-    // another role's action ends or its order is queued while this one aims.
-    if (order.unk00 != 0)
+    // The rebuild (deviations.md): the side is the order's own, as it hits; the original reads gathersParty, cleared
+    // when another role's action ends or its order is queued while this one aims.
+    if (order.atParty != 0)
     {
         for (u32 index = 0; index < battle.roleCount; ++index)
         {
             BattleRole& other = this->battleRoles[index];
 
             if (other.AutoControl() != 1 && other.GuestControl() != 1 && other.Ghost() != 1 &&
-                other.StatusBit13() != 1 && unit.GetValue2FF4() == 0)
+                other.StatusBit13() != 1 && unit.IsAimed() == 0)
             {
                 other.SetOutline(0);
                 ++order.targetCount;
@@ -2684,7 +2684,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
 
     if (battle.retargeted != 0)
     {
-        battle.unk577260 = 1;
+        battle.roleActing = 1;
         battle.unk5772BC = 1;
         battle.darkenUnit = static_cast<i16>(battle.actingUnit);
         unit.RaiseUnk3008();
@@ -2714,7 +2714,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
 
     if (unit.Unk2FE8() != 0)
     {
-        if (battle.unk575F24 == 0)
+        if (battle.atParty == 0)
         {
             bool standing = false;
 
@@ -2733,7 +2733,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
             }
         }
     }
-    else if (battle.unk575F24 == 0 && battle.pendingAction == 0 && aimed.IsDefeated() && battle.unk577330 == 0)
+    else if (battle.atParty == 0 && battle.pendingAction == 0 && aimed.IsDefeated() && battle.unk577330 == 0)
     {
         u32 first = 0;
 
@@ -2785,7 +2785,7 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
 
     const auto target = static_cast<i16>(unit.GetWord2EAE());
     battle.unk5771EB = 0;
-    battle.unk577260 = 0;
+    battle.roleActing = 0;
     battle.shake = 0;
     battle.unk53742C = 0;
 
@@ -2801,7 +2801,7 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
     }
 
     battle.unk5772C0 = 0;
-    battle.unk5772D0 = 0;
+    battle.gathersParty = 0;
     battle.retargeted = 0;
 
     if (target != -1)

@@ -1948,7 +1948,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
     {
         target.GetDrawPosition(targetX, targetY);
 
-        if ((role.command.actionFlags & UnitCommand::UnkAction2) != 0)
+        if ((role.command.actionFlags & UnitCommand::AllAtOnce) != 0)
         {
             targetX = 0;
             targetY = 0;

@@ -631,12 +631,12 @@ int Game::FightTalkOrder()
 
             if (battle.aimTarget > kLastEnemy)
             {
-                battle.unk5772D0 = 1;
+                battle.gathersParty = 1;
                 battle.aimTarget -= BattleState::FirstRoleUnit;
 
                 if (role < battle.pendingOrders.size())
                 {
-                    battle.pendingOrders[role].unk00 = 1;
+                    battle.pendingOrders[role].atParty = 1;
                 }
             }
 
@@ -866,7 +866,7 @@ int Game::FightTalkCommand(int command)
 
             if (role < battle.pendingOrders.size())
             {
-                battle.pendingOrders[role].unk00 = 1;
+                battle.pendingOrders[role].atParty = 1;
             }
 
             battle.InsertSlotRecord(1, unit, 0);
@@ -1216,12 +1216,12 @@ int Game::FightTalkSkill()
 
             if (target > kLastEnemy)
             {
-                battle.unk5772D0 = 1;
+                battle.gathersParty = 1;
                 target -= BattleState::FirstRoleUnit;
 
                 if (listed)
                 {
-                    battle.pendingOrders[role].unk00 = 1;
+                    battle.pendingOrders[role].atParty = 1;
                 }
             }
 
@@ -1238,13 +1238,13 @@ int Game::FightTalkSkill()
                 battle.pendingOrders[role].unk0C = static_cast<u16>(actor.ActSpeed());
                 battle.pendingOrders[role].unk0E = 0;
 
-                if (actor.ActFlag1() == 1)
+                if (actor.AllAtOnce() == 1)
                 {
                     battle.unk5772F0 = 1;
-                    battle.pendingOrders[role].unk08 = 1;
+                    battle.pendingOrders[role].allAtOnce = 1;
                 }
 
-                if (actor.ActFlag0() == 1)
+                if (actor.TargetsAll() == 1)
                 {
                     battle.unk577284 = 1;
                 }
@@ -2681,12 +2681,12 @@ int Game::FightTalkMisc(u16 command)
 
                 if (battle.aimTarget > kLastEnemy)
                 {
-                    battle.unk5772D0 = 1;
+                    battle.gathersParty = 1;
                     battle.aimTarget -= BattleState::FirstRoleUnit;
 
                     if (role < battle.pendingOrders.size())
                     {
-                        battle.pendingOrders[role].unk00 = 1;
+                        battle.pendingOrders[role].atParty = 1;
                     }
                 }
 

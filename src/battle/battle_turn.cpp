@@ -427,7 +427,7 @@ void Game::RandomRoleAct(int unit)
     // An unsigned compare (0x00472AEA).
     if (standing > 1 && aimsAtRole != 0)
     {
-        battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
+        battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].atParty = 1;
         battle.aimTarget = static_cast<i32>(this->random.Below(battle.roleCount)) + 1;
         this->battleRoles[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].RaiseUnk2BC0Bit28();
 
@@ -513,7 +513,7 @@ void Game::RetargetRoles(int role, int enemy)
         unit.SetCommand(0);
         unit.SetTarget(0);
         unit.ResetTurn(services);
-        battle.unk577260 = 0;
+        battle.roleActing = 0;
         battle.roleOrder = {};
         battle.turnUnit = 0;
         battle.currentUnit = 0;
@@ -792,12 +792,12 @@ int Game::RemoveDefeated(int index, int role)
 }
 
 // swd3e.exe 0x00465750: the draw order with the acting unit (actingUnit) drawn right after the unit it aims at (none
-// while unk577A50, unk575F24 or unk575F28 is set or no unit acts): a role aims at an enemy, an enemy at a role.
+// while unk577A50, atParty or unk575F28 is set or no unit acts): a role aims at an enemy, an enemy at a role.
 void Game::SortActingDrawOrder()
 {
     BattleState& battle = this->battleState;
 
-    if (battle.unk577A50 == 1 || battle.unk575F24 == 1 || battle.unk575F28 == 1 || battle.actingUnit == -1)
+    if (battle.unk577A50 == 1 || battle.atParty == 1 || battle.unk575F28 == 1 || battle.actingUnit == -1)
     {
         return;
     }
@@ -811,7 +811,7 @@ void Game::SortActingDrawOrder()
         target = static_cast<i16>(this->battleRoles[role].GetWord2EAE());
 
         // Never so here (the original returned above).
-        if (battle.unk575F24 == 1)
+        if (battle.atParty == 1)
         {
             target += BattleState::FirstRoleUnit;
         }
@@ -1410,7 +1410,7 @@ void Game::ApplyHits()
 
         battle.unk50D88C[ghostAt] = static_cast<i32>(kGhostRescueAct);
         battle.aimTarget = 1;
-        battle.pendingOrders[ghostAt].unk00 = 1;
+        battle.pendingOrders[ghostAt].atParty = 1;
         ghost.Retarget(0);
         battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
         battle.unk5772BC = 1;
@@ -2503,12 +2503,12 @@ void Game::MenuCancel()
             battle.result = list;
             battle.unk577284 = 0;
             battle.unk5772F0 = 0;
-            battle.unk5772D0 = 0;
+            battle.gathersParty = 0;
             const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
             battle.unk50D88C[unit] = 0;
             closePanels();
-            battle.pendingOrders[unit].unk08 = 0;
-            battle.pendingOrders[unit].unk00 = 0;
+            battle.pendingOrders[unit].allAtOnce = 0;
+            battle.pendingOrders[unit].atParty = 0;
             return;
         }
 
@@ -2576,8 +2576,8 @@ void Game::MenuCancel()
             battle.roleListRow = 1;
             clearList();
             cancelCommand();
-            battle.unk5772D0 = 1;
-            battle.pendingOrders[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].unk00 = 0;
+            battle.gathersParty = 1;
+            battle.pendingOrders[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].atParty = 0;
             break;
 
         case kWaitState50:
@@ -3483,7 +3483,7 @@ void Game::AimStep(int step)
     BattleServices& services = this->battleServices;
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
 
-    if (battle.pendingOrders[unit].unk00 == 0)
+    if (battle.pendingOrders[unit].atParty == 0)
     {
         UnitRect rect;
         this->AimEnemyStep(step, rect);
@@ -3784,9 +3784,9 @@ int Game::BattleDebugKeys()
                 battle.unk5772C0 = 0;
                 battle.actingUnit = -1;
 
-                if (battle.unk577260 == 1)
+                if (battle.roleActing == 1)
                 {
-                    battle.unk577260 = 0;
+                    battle.roleActing = 0;
                 }
 
                 if (battle.hitsAllRoles == 1)
@@ -3855,7 +3855,7 @@ int Game::BattleDebugKeys()
                 battle.unk4BF1CA = kNoTalkRole;
                 battle.unk57727C = 1;
                 battle.unk577050 = 0;
-                battle.unk577260 = 0;
+                battle.roleActing = 0;
                 battle.unk5772BC = 1;
                 battle.unk5772C0 = 1;
                 battle.unk577258 = 0;
@@ -4483,7 +4483,7 @@ int Game::HoverTarget()
 
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
 
-    if (battle.pendingOrders[unit].unk00 == 0)
+    if (battle.pendingOrders[unit].atParty == 0)
     {
         for (u32 index = 0; index < battle.enemyCount; ++index)
         {
@@ -4775,14 +4775,14 @@ bool Game::PrepareOrder()
     order.unk0E = 0;
     battle.unk5772F0 = 0;
 
-    if (role.ActFlag1() == 1)
+    if (role.AllAtOnce() == 1)
     {
         battle.unk5772F0 = 1;
-        order.unk08 = 1;
+        order.allAtOnce = 1;
     }
 
     battle.unk577284 = 0;
-    return role.ActFlag0() == 1;
+    return role.TargetsAll() == 1;
 }
 
 // The aim at the party of a chosen command (inline in states 2 and 4 of MenuConfirm, 0x0046F920): fewer than
@@ -4899,7 +4899,7 @@ void Game::ConfirmCommand()
         battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
         battle.currentUnit = 0;
         battle.commandNames = {};
-        battle.pendingOrders[unit].unk00 = 1;
+        battle.pendingOrders[unit].atParty = 1;
         battle.result = 0;
         battle.elementsOpen = 0;
         battle.unk5772B4 = 0;
@@ -4973,7 +4973,7 @@ void Game::ConfirmCommand()
         battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = order;
         role.SetTarget(1);
         battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
-        battle.pendingOrders[unit].unk00 = 1;
+        battle.pendingOrders[unit].atParty = 1;
         this->EndChoice();
     };
 
@@ -5009,7 +5009,7 @@ void Game::ConfirmCommand()
             role.ResetAfterGuard();
             role.SetTarget(1);
             battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
-            battle.pendingOrders[unit].unk00 = 1;
+            battle.pendingOrders[unit].atParty = 1;
             this->EndChoice();
             break;
 
@@ -5106,7 +5106,7 @@ void Game::ConfirmCommand()
                 battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
                 battle.currentUnit = 0;
                 battle.unk57725C = 1;
-                battle.pendingOrders[unit].unk00 = 1;
+                battle.pendingOrders[unit].atParty = 1;
                 battle.result = 0;
                 battle.unk5772B4 = 0;
             }
@@ -5194,8 +5194,8 @@ void Game::ConfirmSpell()
 
         if (battle.listPage == kHealPage || kind == 0)
         {
-            battle.unk5772D0 = 1;
-            order.unk00 = 1;
+            battle.gathersParty = 1;
+            order.atParty = 1;
         }
 
         this->OpenTargets();
@@ -5204,14 +5204,14 @@ void Game::ConfirmSpell()
 
     if (battle.listPage != 0)
     {
-        order.unk00 = kind == 0 ? 1 : 0;
+        order.atParty = kind == 0 ? 1 : 0;
 
         if (battle.unk57735C == 1)
         {
-            order.unk00 = 0;
+            order.atParty = 0;
         }
 
-        if (order.unk00 == 1)
+        if (order.atParty == 1)
         {
             this->AimAtParty();
             this->OpenTargets();
@@ -5261,7 +5261,7 @@ void Game::ConfirmTarget()
     battle.aiTarget = battle.aimTarget;
     PendingOrder* order = orderOf(battle.currentUnit);
 
-    if (order != nullptr && order->unk00 == 1)
+    if (order != nullptr && order->atParty == 1)
     {
         battle.orderStep = 1;
     }
@@ -5282,7 +5282,7 @@ void Game::ConfirmTarget()
     {
         if (order != nullptr)
         {
-            order->unk00 = 1;
+            order->atParty = 1;
         }
 
         if (BattleRole* aiming = roleOf(battle.currentUnit); aiming != nullptr)
@@ -5327,25 +5327,25 @@ void Game::ConfirmTarget()
         role->SetTarget(1);
     }
 
-    const i32 wholeSide = battle.unk577284;
+    const i32 targetsAll = battle.unk577284;
     battle.result = 0;
     battle.unk5772B8 = 0;
     battle.unk5772B4 = 0;
 
-    if (wholeSide == 1)
+    if (targetsAll == 1)
     {
         if (order != nullptr)
         {
-            order->unk04 = 1;
+            order->targetsAll = 1;
             order->targetCount = 0;
         }
 
         battle.turnTaken[static_cast<std::size_t>(battle.turnUnit)] = battle.turnCommand;
     }
 
-    if (order != nullptr && order->unk00 == 0)
+    if (order != nullptr && order->atParty == 0)
     {
-        if (wholeSide == 1)
+        if (targetsAll == 1)
         {
             for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
             {
@@ -5508,17 +5508,17 @@ void Game::ConfirmItem()
         battle.aimTarget = static_cast<i32>(battle.enemyCount);
         battle.unk577284 = 1;
         battle.unk5772B4 = 1;
-        order.unk00 = 0;
+        order.atParty = 0;
 
         if (battle.listRole == kHealPage)
         {
-            order.unk00 = 1;
-            battle.unk5772D0 = 1;
+            order.atParty = 1;
+            battle.gathersParty = 1;
         }
 
         if (kind == 0)
         {
-            order.unk00 = 1;
+            order.atParty = 1;
         }
 
         battle.result = kTargetState;
@@ -5528,9 +5528,9 @@ void Game::ConfirmItem()
 
     if (battle.listRole != 0)
     {
-        order.unk00 = kind == 0 ? 1 : 0;
+        order.atParty = kind == 0 ? 1 : 0;
 
-        if (order.unk00 == 1)
+        if (order.atParty == 1)
         {
             this->AimAtParty();
             battle.result = kTargetState;
@@ -5573,7 +5573,7 @@ void Game::CallEscort(BattleRole& role)
     battle.unk5772B4 = 0;
     battle.listPanelFrames = 0;
     battle.menuGrow = 0;
-    battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
+    battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].atParty = 1;
     this->controls.PressConfirm();
 
     if (battle.autoBattle == 1)
@@ -5636,7 +5636,7 @@ void Game::ConfirmEscort()
     battle.unk5772B4 = 0;
     battle.listPanelFrames = 0;
     battle.menuGrow = 0;
-    battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
+    battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].atParty = 1;
     this->controls.PressConfirm();
     const auto row =
         static_cast<std::size_t>(battle.guardCursor - battle.escortCount + static_cast<i32>(battle.roleCount) - 1);
@@ -5927,7 +5927,7 @@ void Game::ConfirmFusePlace()
     battle.unk5772B4 = 0;
     battle.listPanelFrames = 0;
     battle.menuGrow = 0;
-    battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].unk00 = 1;
+    battle.pendingOrders[static_cast<std::size_t>(battle.turnUnit - BattleState::FirstRoleUnit)].atParty = 1;
     this->controls.PressConfirm();
 }
 
@@ -5979,11 +5979,11 @@ void Game::ConfirmFuse()
     }
 
     battle.aimTarget = escort + 1;
-    battle.unk5772D0 = 1;
+    battle.gathersParty = 1;
     battle.menuCommand = kFuseCommand;
     battle.result = kWaitStateA;
     battle.guardCursor = 1;
-    battle.pendingOrders[unit].unk00 = 1;
+    battle.pendingOrders[unit].atParty = 1;
     this->controls.PressConfirm();
 }
 
@@ -6399,7 +6399,7 @@ void Game::BattleKeys()
 
         if (controls.At(Button::KeyG).press != 0 && Game::KeyRepeats(controls.At(Button::KeyG)))
         {
-            if (battle.unk577204 != 0 || battle.hitsAllRoles == 1 || battle.unk577260 == 1 ||
+            if (battle.unk577204 != 0 || battle.hitsAllRoles == 1 || battle.roleActing == 1 ||
                 battle.result == kTalkOrder || battle.result == kEndVictory || battle.result == kTargetState ||
                 this->scene.talkWindows != nullptr)
             {
@@ -6832,7 +6832,7 @@ void Game::DrawBattleMenu()
             return;
 
         case kLeaveState:
-            if (battle.unk577260 == 0 && battle.hitsAllRoles == 0)
+            if (battle.roleActing == 0 && battle.hitsAllRoles == 0)
             {
                 battle.unk577204 |= kRetreatMark;
                 battle.result = 0;
@@ -6972,7 +6972,7 @@ void Game::DrawAimPointers()
     // the enemies.
     const bool atParty =
         battle.currentUnit >= BattleState::FirstRoleUnit &&
-        battle.pendingOrders[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].unk00 != 0;
+        battle.pendingOrders[static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit)].atParty != 0;
     UnitRect rect;
 
     if (battle.unk577284 == 1)
@@ -7176,7 +7176,7 @@ void Game::BattleEndFrame()
             }
 
             this->DrawVictoryPanel();
-            battle.unk577260 = 0;
+            battle.roleActing = 0;
             battle.unk5772BC = 1;
             battle.unk5772C0 = 1;
             battle.unk577270 = 1;

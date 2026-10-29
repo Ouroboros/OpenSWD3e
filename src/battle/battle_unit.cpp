@@ -402,9 +402,9 @@ int BattleUnit::GetValue2FEC() const
 }
 
 // swd3e.exe 0x0048B5A0
-int BattleUnit::GetValue2FF4() const
+int BattleUnit::IsAimed() const
 {
-    return this->unk2FF4;
+    return this->aimed;
 }
 
 // swd3e.exe 0x0048B5B0
@@ -548,7 +548,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->unk2FEC = 0;
     const i32 wasDefeated = this->defeated;
     this->unk2FF0 = 0;
-    this->unk2FF4 = 0;
+    this->aimed = 0;
     this->unk2FE8 = 0;
     this->unk3020 = 0;
     this->evadeRolled = 0;
@@ -631,7 +631,7 @@ int BattleUnit::Retarget(i16 value)
 {
     this->gauge = 0;
     this->unk2EAE = static_cast<u16>(value);
-    this->unk2FF4 = 1;
+    this->aimed = 1;
     this->unk3020 = 1;
     return 1;
 }
@@ -1076,9 +1076,9 @@ int BattleUnit::SetGuarding(int value)
 }
 
 // swd3e.exe 0x00491C40
-int BattleUnit::ActFlag1() const
+int BattleUnit::AllAtOnce() const
 {
-    return (this->command.actionFlags & UnitCommand::UnkAction2) != 0 ? 1 : 0;
+    return (this->command.actionFlags & UnitCommand::AllAtOnce) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00491C60
@@ -1095,9 +1095,9 @@ i16 BattleUnit::ActSpeed() const
 }
 
 // swd3e.exe 0x00491C90
-int BattleUnit::ActFlag0() const
+int BattleUnit::TargetsAll() const
 {
-    return static_cast<int>(this->command.actionFlags & UnitCommand::UnkAction1);
+    return static_cast<int>(this->command.actionFlags & UnitCommand::TargetsAll);
 }
 
 // swd3e.exe 0x00491CA0
@@ -2028,7 +2028,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2FE8 = 0;
     this->unk2FEC = 0;
     this->unk2FF0 = 0;
-    this->unk2FF4 = 0;
+    this->aimed = 0;
     this->defeated = 0;
     this->outline = 0;
     this->charging = 0;
@@ -5013,7 +5013,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         act.action = this->action;
     }
 
-    if (this->commandFlags != 0 && this->unk2FF4 == 1 && this->unk3008 == 1)
+    if (this->commandFlags != 0 && this->aimed == 1 && this->unk3008 == 1)
     {
         if (this->autoControl == 1)
         {
@@ -7156,14 +7156,14 @@ int BattleUnit::Named() const
     return (LowByte(this->data->data.kind) & ObjectData::UnkKind20) != 0 ? 1 : 0;
 }
 
-// swd3e.exe 0x00489710: the turn's command cleared: command word +0x18, the second gauge, the ready action, unk2FF4,
+// swd3e.exe 0x00489710: the turn's command cleared: command word +0x18, the second gauge, the ready action, aimed,
 // the target and the start of the skill name
 void BattleUnit::ClearTurnCommand()
 {
     this->command.unk18 = 0;
     this->unk2BE8 = 0;
     this->readyAction = 0;
-    this->unk2FF4 = 0;
+    this->aimed = 0;
     this->target = 0;
     std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
 }

@@ -56,12 +56,12 @@
 
 ## 四、命名同步（可选，与 swd3-rebuild 平行）
 
-- [ ] 6abbeaf 特殊名字改为按角色查表
+- [x] 不适用 6abbeaf 特殊名字改为按角色查表（外传没有特殊名字作弊）
 - [x] bd0df8b ObjectData::unk42 改名 masteryValue（网页生成脚本同步）
 - [x] e10e1dc 战斗剧本数值改名 commandValue
 - [x] dbfaa9d 物品字段 unk48 改名 actionKind
 - [x] cd90ee1 战斗单位 +0x26CC 命名为 accessoryCommands
-- [ ] be7f6a3 战斗下单与出手的全体、对我方等标记命名
+- [x] be7f6a3 战斗下单与出手的全体、对我方等标记命名
 - [ ] 7f46f37 战斗菜单的鼠标模式、确认与滚动条等标记命名
 
 ## 五、网页
