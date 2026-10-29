@@ -596,6 +596,71 @@ void Game::ShopLess()
     }
 }
 
+// The rebuild (deviations.md): Shift with Left on the list: none of the row chosen.
+void Game::ShopFewest()
+{
+    ItemNode* item = this->ShopChosenItem();
+
+    if (item == nullptr)
+    {
+        return;
+    }
+
+    if (item->workCount > 0)
+    {
+        item->workCount = 0;
+        this->audio.PlaySound(kCountSound, this->config.soundVolume);
+    }
+
+    this->battleState.lessPressed = kPressFrames;
+}
+
+// The rebuild (deviations.md): Shift with Right on the list: as many of the row chosen as ShopMore would reach one by
+// one: selling all carried, buying while the gold lasts up to 99 carried in all. When not even one more can be had it
+// is a press of Right (the too little money page, or nothing at the limit).
+void Game::ShopMost()
+{
+    BattleState& shop = this->battleState;
+    ItemNode* item = this->ShopChosenItem();
+
+    if (item == nullptr)
+    {
+        return;
+    }
+
+    const i16 before = item->workCount;
+
+    if ((shop.mode & kSellChoice) != 0)
+    {
+        const int carried = item->count + item->pending;
+        item->workCount = static_cast<i16>(std::max<int>(carried, item->workCount));
+    }
+    else
+    {
+        const int have = CountItemTotal(shop, this->party, this->state, item->id);
+
+        while (item->workCount < kMaxCount - have)
+        {
+            ++item->workCount;
+
+            if (static_cast<u32>(TotalItemValue(shop)) > static_cast<u32>(this->party.variables[0]))
+            {
+                --item->workCount;
+                break;
+            }
+        }
+    }
+
+    if (item->workCount == before)
+    {
+        this->ShopMore();
+        return;
+    }
+
+    this->audio.PlaySound(kCountSound, this->config.soundVolume);
+    shop.morePressed = kPressFrames;
+}
+
 // swd3e.exe 0x004559B0: right or plus: the next choice; on the list one more of the row chosen: selling up to the count
 // carried, buying while the gold lasts (then the too little money page) up to 99 carried in all; "放棄" on the total
 // and on the equip prompt
@@ -942,9 +1007,22 @@ void Game::ShopKeys()
         return state.press != 0 && (state.heldFrames == 1 || ((held & 1) == 0 && state.heldFrames > kShopRepeatDelay));
     };
 
+    // The rebuild (deviations.md): with Shift held, Left and Right on the list take the count of the row chosen to its
+    // least or most at once.
+    const bool shift = this->input.IsKeyDown(Input::LeftShift) != 0 || this->input.IsKeyDown(Input::RightShift) != 0;
+    const bool onList = this->battleState.shopStage == kShopList;
+
     if (pressedOnce(Button::Escape) || pressedOnce(Button::RightControl))
     {
         this->ShopBack();
+    }
+    else if (shift && onList && pressedOnce(Button::Left))
+    {
+        this->ShopFewest();
+    }
+    else if (shift && onList && pressedOnce(Button::Right))
+    {
+        this->ShopMost();
     }
     else if (repeating(Button::Down, Button::Down))
     {
