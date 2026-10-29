@@ -390,12 +390,21 @@ void FieldView::DrawFinalAgain()
 }
 
 // swd3e: the first two pixels of every row of the screen cleared at the end of the map frame (part of 0x00412F60).
+// The rebuild's map filling the window (deviations.md) clears them on every row of the canvas, at the window's left
+// edge: the screen lies inside the canvas, where they made a black line down the map.
 void FieldView::ClearRowStarts()
 {
     Pixel* screen = this->game.painter.Target();
     const int pitch = this->game.painter.ScreenPitch();
+    int rows = Display::Height;
 
-    for (int row = 0; row < Display::Height; ++row)
+    if (this->FillsWindow())
+    {
+        screen -= this->ScreenAt();
+        rows = this->game.field.viewHeight;
+    }
+
+    for (int row = 0; row < rows; ++row)
     {
         screen[static_cast<std::ptrdiff_t>(pitch) * row] = 0;
         screen[static_cast<std::ptrdiff_t>(pitch) * row + 1] = 0;
