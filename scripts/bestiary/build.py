@@ -1,5 +1,5 @@
-"""scripts/bestiary/build.py <monsters.jsonl> <portraits.raw> <formations.jsonl> <FIGTALK.dat> <out.html> [move.wav]: the
-swd3e bestiary as one HTML page.
+"""scripts/bestiary/build.py <monsters.jsonl> <portraits.raw> <formations.jsonl> <skills.jsonl> <FIGTALK.dat> <out.html>
+[move.wav]: the swd3e bestiary as one HTML page.
 
 The rules the page states come from the rebuild's verified code: Menu::BestiaryEnter/List/Choose/Lines
 (0x00441990..0x00442920), ApplyElement (the element rules of src/battle/battle_unit.cpp), BattleRole::Steal,
@@ -176,7 +176,49 @@ def signed(word):
     return word - 0x10000 if word & 0x8000 else word
 
 
-def talk_change(command, words, names):
+# An enemy's skill script (mon.dat's skill table; BattleUnit::LoadCommand, LoadEnemyCommand 0x00488CA0 and
+# EnemyHitDamage): the high word of `values` is its power; with bit 1 of the low word (UnitCommand::UnkFlag2) it is
+# cast, the power plus a roll (scaled by the elements); otherwise the power is the attack, less the defence. Flag 1
+# (opcode 3) has one move hit every target; elements 1..5 go through the resistances, others change nothing.
+SKILL_CAST = 2
+SKILL_ALL = 1
+
+
+def skill_traits(script):
+    """The named traits of a skill script, and the rest of it (compared as a whole)."""
+    element = script['element']
+    named = {
+        '威力': signed(script['values'] >> 16),
+        '類型': '法術型' if script['values'] & SKILL_CAST else '武技型',
+        '對象': '全體' if script['flags'] & SKILL_ALL else '單體',
+        '五行': ELEMENTS[element - 1] if 1 <= element <= len(ELEMENTS) else '無',
+        '持續回合': script['turns'],
+    }
+    rest = {key: value for key, value in script.items() if key not in ('id', 'element', 'turns')}
+    rest['values'] &= SKILL_CAST ^ 0xFFFF
+    rest['flags'] &= ~SKILL_ALL
+    return named, rest
+
+
+def skill_change(old_id, new_id, skills):
+    """How a special changes from script old_id to new_id ('' when they are alike; None without the new one)."""
+    if new_id not in skills:
+        return None
+
+    new, new_rest = skill_traits(skills[new_id])
+
+    if old_id not in skills:
+        traits = [f'{new["類型"]}', f'威力 {new["威力"]}', new['對象']]
+        traits += [f'{new["五行"]}屬性'] if new['五行'] != '無' else []
+        return '新增：' + '、'.join(traits)
+
+    old, old_rest = skill_traits(skills[old_id])
+    changed = [f'{key} {old[key]}→{new[key]}' for key in new if old[key] != new[key]]
+    changed += ['其他效果不同'] if old_rest != new_rest else []
+    return '、'.join(changed)
+
+
+def talk_change(command, words, names, monster, skills):
     """The text of an enemy-changing talk command (its argument words after the slot); None when the words cannot be
     one (the scan reads every word as a possible command, so text and arguments are told apart by their values)."""
     values = [signed(word) for word in words]
@@ -210,10 +252,29 @@ def talk_change(command, words, names):
         if not all(0 <= value <= MAX_SKILL for value in values) or not (first or second):
             return None
 
+        # The skills have no names (the scripts of mon.dat's skill table); the battle lists an enemy's two as 特殊1 and
+        # 特殊2 (kSpecialFormat, 0x004BF76C). Each is told against the monster's own; the fourth word goes to the first
+        # skill's count as well (SetEnemySkills, an original bug).
+        old_ids = monster['skillIds']
+        slots = {1: [], 2: []}
+
+        for slot, new_id, old_id in ((1, first, old_ids[0]), (2, second, old_ids[1])):
+            if new_id:
+                text = skill_change(old_id, new_id, skills)
+
+                if text is None:
+                    return None
+
+                if text:
+                    slots[slot].append(text)
+
         count = count or first_count
-        moves = [f'#{first}' + (f'（{count} 次）' if count else '')] if first else []
-        moves += [f'#{second}'] if second else []
-        return '招式改為 ' + '、'.join(moves)
+
+        if count and count != monster['skillCounts'][0]:
+            slots[1].append(f'可用次數 {monster["skillCounts"][0]}→{count}')
+
+        moves = [f'特殊 {slot} ' + '、'.join(parts) for slot, parts in slots.items() if parts]
+        return '；'.join(moves) if moves else None
 
     if command == TALK_RELOAD:
         return f'變為{names[values[0]]}' if values[0] in names else None
@@ -234,13 +295,14 @@ def read_formations(path):
     return formations
 
 
-def script_changes(talk_path, formations, names):
+def script_changes(talk_path, formations, records, skills):
     """{monster id: [[battle, [change, ...]], ...]}: the enemy changes found in each battle's script (from its start
     to the next script's), at even and odd places (a window's text can leave the commands after it at odd bytes),
     for slots the battle's formation fills. A change met again in the same battle is listed once."""
     with open(talk_path, 'rb') as file:
         talk = file.read()
 
+    names = {r['id']: r['name'] for r in records.values() if r['name']}
     starts = {}
 
     for battle in formations:
@@ -266,10 +328,10 @@ def script_changes(talk_path, formations, names):
 
             slot, *words = struct.unpack_from(f'<{size - 1}H', talk, at + 2)
 
-            if slot > LAST_ENEMY_SLOT or slot >= len(enemies):
+            if slot > LAST_ENEMY_SLOT or slot >= len(enemies) or enemies[slot] not in records:
                 continue
 
-            text = talk_change(command, words, names)
+            text = talk_change(command, words, names, records[enemies[slot]], skills)
 
             if text and (enemies[slot], text) not in changes:
                 changes.append((enemies[slot], text))
@@ -294,8 +356,8 @@ def sound_url(path):
 
 
 def main():
-    monsters_path, portraits_path, formations_path, talk_path, out_path = sys.argv[1:6]
-    sound_path = sys.argv[6] if len(sys.argv) > 6 else ''
+    monsters_path, portraits_path, formations_path, skills_path, talk_path, out_path = sys.argv[1:7]
+    sound_path = sys.argv[7] if len(sys.argv) > 7 else ''
     portraits = read_portraits(portraits_path)
     tabs = {value: at for at, (value, _) in enumerate(CATEGORIES)}
     monsters = []
@@ -305,7 +367,10 @@ def main():
 
     formations = read_formations(formations_path)
     fought = {enemy for enemies in formations.values() for enemy in enemies}
-    scripted = script_changes(talk_path, formations, {r['id']: r['name'] for r in records if r['name']})
+    with open(skills_path, encoding='utf-8') as lines:
+        skills = {script['id']: script for script in (json.loads(line) for line in lines if line.strip())}
+
+    scripted = script_changes(talk_path, formations, {r['id']: r for r in records}, skills)
 
     # The bestiary cards by name: a story opponent whose act has no card (a battle pose at its action 0x3B) shows the
     # card of the monster of its name (the story 刑天 #29, the 魔神 刑天's).
@@ -688,7 +753,7 @@ h1 {
   display: grid;
   grid-template-columns: 104px minmax(0, 1fr);
   align-content: start;
-  grid-auto-rows: minmax(30px, auto);
+  grid-auto-rows: auto;
   padding: 8px 24px;
   font-size: 18px;
   line-height: 28px;
@@ -699,9 +764,10 @@ h1 {
 }
 
 .loot .note { color: var(--dim); font-size: 15px; }
-.loot > div { line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.loot > div.scripted { white-space: normal; line-height: 26px; padding: 2px 0; }
-.loot .battle { color: var(--dim); margin-right: 8px; }
+/* The rows size to their content even when the panel is full (a minmax row stays at its minimum without free space). */
+.loot > div { min-height: 30px; line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loot > div.scripted { display: flex; white-space: normal; overflow: visible; line-height: 26px; padding: 2px 0; }
+.loot .battle { flex: none; width: 88px; color: var(--dim); }
 
 .description {
   grid-column: 3 / span 2;
@@ -894,8 +960,10 @@ function show() {
     ['掉落', drop], ['逃跑', `<span class="note">${flee(h.fleeChance)}</span>`],
     ['狂暴', h.enrage ? escape(h.enrage) : '無']];
   // The battle scripts' values for this monster, which replace the ones above in those battles.
-  const scripted = h.scripted.map(([battle, changes], at) => [at === 0 ? '劇情戰鬥' : '',
-    `<span class="battle">第 ${battle} 場</span>${changes.map(escape).join('；')}`, 'scripted']);
+  // One line a change; the battle's number on its first.
+  const scripted = h.scripted.flatMap(([battle, changes], at) => changes.map((change, line) => [
+    at === 0 && line === 0 ? '劇情戰鬥' : '',
+    `<span class="battle">${line === 0 ? `第 ${battle} 場` : ''}</span><span>${escape(change)}</span>`, 'scripted']));
   $('loot').innerHTML = [...lines, ...scripted].map(([label, text, kind]) =>
     `<div class="label">${label}</div><div${kind ? ` class="${kind}"` : ''}>${text}</div>`).join('');
   $('description').textContent = m.description;

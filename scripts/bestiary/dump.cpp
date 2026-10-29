@@ -1,13 +1,15 @@
-// scripts/bestiary/dump <game dir> data | portrait <action> <first> <last> | formations
+// scripts/bestiary/dump <game dir> data | portrait <action> <first> <last> | formations | skills <first> <last>
 // data: one JSON line per mon.dat object 1..500 (the bestiary's range) with the fields the page shows.
 // portrait: each act's action at its first frame as "id width height" and its RGB rows.
+// skills: one JSON line per skill script of mon.dat's skill table (an enemy's skillA and skillB) in the range.
 // formations: one JSON line per battle of battle.ffd, the mon.dat objects of its enemy slots (formation 0, the one
 // StartBattle reads).
 // Build after `cmake --build --preset linux`, linking build/linux/libswd3e_core.a and the libraries of swd3e_tests
 // (third_party/install/linux/lib: SDL3, avformat, avcodec, swscale, swresample, avutil) with -static -pthread.
 // The page: dump <dir> data > monsters.jsonl; dump <dir> portrait 59 1 500 > portraits.raw;
-// dump <dir> formations > formations.jsonl; python3 scripts/sound/extract.py <dir>all.snd 0x2E move.wav;
-// python3 scripts/bestiary/build.py monsters.jsonl portraits.raw formations.jsonl <dir>FIGTALK.dat \
+// dump <dir> formations > formations.jsonl; dump <dir> skills 1 1200 > skills.jsonl;
+// python3 scripts/sound/extract.py <dir>all.snd 0x2E move.wav;
+// python3 scripts/bestiary/build.py monsters.jsonl portraits.raw formations.jsonl skills.jsonl <dir>FIGTALK.dat \
 //     docs/bestiary.html move.wav
 #include <algorithm>
 #include <cstdio>
@@ -127,7 +129,7 @@ int Data(const std::u8string& directory)
         std::printf(
             "{\"id\":%u,\"name\":%s,\"category\":%u,\"kind\":%u,\"level\":%d,\"hp\":%d,\"spirit\":%d,\"stamina\":%d,"
             "\"attack\":%u,\"defense\":%u,\"agility\":%u,\"act\":%u,"
-            "\"items\":[%s,%s,%s],\"itemCounts\":[%u,%u,%u],\"skills\":[%s,%s],\"skillCounts\":[%u,%u],"
+            "\"items\":[%s,%s,%s],\"itemCounts\":[%u,%u,%u],\"skills\":[%s,%s],\"skillIds\":[%u,%u],\"skillCounts\":[%u,%u],"
             "\"heals\":[%s,%s],\"healCounts\":[%u,%u],\"itemChance\":%u,\"skillChance\":%u,"
             "\"experience\":%u,\"gold\":%u,\"resistances\":[%s],\"ailmentChance\":%u,\"fleeChance\":%u,"
             "\"steal\":%s,\"stealDifficulty\":%u,\"drop\":%s,\"dropChance\":%u,"
@@ -153,6 +155,8 @@ int Data(const std::u8string& directory)
             d.itemCCount,
             Json(Name(database, d.skillA)).c_str(),
             Json(Name(database, d.skillB)).c_str(),
+            d.skillA,
+            d.skillB,
             d.skillACount,
             d.skillBCount,
             Json(Name(database, d.healItemA)).c_str(),
@@ -256,6 +260,42 @@ int Portrait(const std::u8string& directory, int action, int first, int last)
 
 // StartBattle (0x00459BD0): a battle's enemies are the mon.dat objects of formation 0 (the low words), slot by slot;
 // FIGTALK.dat's commands name them by slot.
+// Database::LoadSkill (0x00489750): the skill scripts first..last of mon.dat's skill table (an enemy's skillA and
+// skillB, which have no names), the fields the battle reads from them (BattleUnit::LoadCommand, 0x0049D3B0..).
+int Skills(const std::u8string& directory, int first, int last)
+{
+    swd3e::Database database(directory);
+
+    for (int id = first; id <= last; ++id)
+    {
+        swd3e::SkillScript skill;
+
+        if (!database.LoadSkill(skill, static_cast<swd3e::u16>(id)))
+        {
+            continue;
+        }
+
+        std::printf(
+            "{\"id\":%d,\"flags\":%u,\"statusBits\":%u,\"values\":%u,\"element\":%u,\"ailment\":%u,"
+            "\"buffElement\":%u,\"turns\":%u,\"castAct\":%u,\"target\":%u,\"unk28\":%u,\"unk24\":%u}\n",
+            id,
+            skill.flags,
+            skill.statusBits,
+            skill.unk0C,
+            skill.unk10 & 0xFFFF,
+            skill.ailment,
+            skill.element,
+            skill.turns,
+            skill.unk14,
+            skill.unk26,
+            skill.unk28,
+            skill.unk24
+        );
+    }
+
+    return 0;
+}
+
 int Formations(const std::u8string& directory)
 {
     const std::u8string path = swd3e::Concat({directory, u8"battle.ffd"});
@@ -318,6 +358,11 @@ int main(int argc, char** argv)
     if (std::strcmp(argv[2], "formations") == 0)
     {
         return Formations(directory);
+    }
+
+    if (std::strcmp(argv[2], "skills") == 0 && argc >= 5)
+    {
+        return Skills(directory, std::atoi(argv[3]), std::atoi(argv[4]));
     }
 
     return 2;

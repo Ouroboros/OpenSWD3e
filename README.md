@@ -166,7 +166,7 @@ level = "debug"
 ## 网页的生成
 
 - `docs/index.html`：手写的主页。神魔異事錄、物品大全与煉妖大全在主页里打开（地址 `#bestiary`、`#items`、`#altar`，斜线后可接名称，例如 `#items/藥草`），也可以单独打开对应的 HTML 文件。
-- `docs/bestiary.html`：由 `scripts/bestiary/` 生成。`dump.cpp` 链接 `swd3e_core`，从游戏目录读出 mon.dat 的怪物资料、图鉴立绘（动作 0x3B 的第一帧）和 battle.ffd 各场战斗的敌人阵形；`build.py`（需要 Pillow）再扫描 FIGTALK.dat 的战斗剧本，找出剧情战斗中改写敌人数值的命令（生命、攻防敏、等级、五行抗性、招式、变身），把它们一起做成单个 HTML 文件，图片内嵌。用法见两个文件开头的说明。
+- `docs/bestiary.html`：由 `scripts/bestiary/` 生成。`dump.cpp` 链接 `swd3e_core`，从游戏目录读出 mon.dat 的怪物资料、图鉴立绘（动作 0x3B 的第一帧）、mon.dat 招式表的各招式脚本和 battle.ffd 各场战斗的敌人阵形；`build.py`（需要 Pillow）再扫描 FIGTALK.dat 的战斗剧本，找出剧情战斗中改写敌人数值的命令（生命、攻防敏、等级、五行抗性、招式、变身；招式没有名字，按游戏的叫法写成特殊 1／特殊 2，并与怪物原有的招式比较威力等差别），把它们一起做成单个 HTML 文件，图片内嵌。用法见两个文件开头的说明。
 - `docs/items.html`：由 `scripts/items/` 生成。`dump.cpp` 读出物品资料与图片，`build.py` 按物品菜单的分类生成页面，效果、装备加成、熟练与成长按重建代码的规则换算。
 - `docs/altar.html`：由 `scripts/altar/build.py` 生成，读物品与怪物资料和 MAPS.dat 的炼妖矩阵与固定配方，按炼妖祭坛的合成规则列出每个结果的配方。
 - 三个数据页的光标音效是 all.snd 的 0x2E 号音效，由 `scripts/sound/extract.py` 按游戏载入音效的方式还原成 WAV，作为最后一个参数交给各 `build.py` 内嵌。
