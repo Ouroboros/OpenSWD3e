@@ -23,8 +23,9 @@ public:
 };
 
 // The game's glyph library (asset/font.bin, made by scripts/make_font_library.py from the embedded 1-bit bitmaps of
-// MingLiU): for each size the original uses (12, 16, 20 pixels) the cell GDI draws for every Big5 code and ASCII byte.
-// It replaces the system font, so text looks the same on every system.
+// MingLiU): for each size MingLiU has embedded bitmaps for (11, 12, 13, 15, 16, 20 pixels: the original uses 12, 16 and
+// 20, the others kept for the rebuild's own screens) the cell GDI draws for every Big5 code and ASCII byte. It replaces
+// the system font, so text looks the same on every system.
 class GlyphLibrary
 {
 public:

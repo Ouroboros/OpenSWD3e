@@ -46,7 +46,7 @@ Windows 版的依赖与程序本身都使用静态 CRT（`/MT`），编出的 ex
 
 字库和启动画面等资源放在 `third_party/asset`，不放进仓库，需要自行生成。构建时整个文件夹复制到 exe 旁边的 `asset`；不存在时程序仍能编译，但运行时缺少文字、图标、启动画面和这些音效。
 
-字库 `font.bin` 由細明體（`mingliu.ttc`）生成。字体属于微软，需要从 Windows 的 `C:\Windows\Fonts\mingliu.ttc` 自行取得：
+字库 `font.bin` 由細明體（`mingliu.ttc`）生成，含細明體内嵌点阵的全部字号（11、12、13、15、16、20 像素；原版用 12、16、20，其余留给重制版自己的界面）。旧字库只有三种字号，需要重新生成。字体属于微软，需要从 Windows 的 `C:\Windows\Fonts\mingliu.ttc` 自行取得：
 
 ```sh
 mkdir -p third_party/asset

@@ -17,7 +17,9 @@ glyph u16 code (first byte in the low byte, as the game stores characters) and s
 import struct
 import sys
 
-SIZES = (12, 16, 20)
+# Every size MingLiU carries embedded bitmaps for: the original uses 12, 16 and 20; the others are kept for the
+# rebuild's own screens.
+SIZES = (11, 12, 13, 15, 16, 20)
 
 
 def u8(data, offset):

@@ -14,7 +14,7 @@ using swd3e::u8;
 namespace
 {
 
-constexpr std::array<int, 3> kSizes = {12, 16, 20};
+constexpr std::array<int, 6> kSizes = {11, 12, 13, 15, 16, 20};  // every size of font.bin
 constexpr int kMissingSize = 14;
 constexpr swd3e::u16 kEtenLetter = 0xB1C7;  // Big5 C7 B1: an ETen extension letter drawn from the outline
 constexpr int kSurfaceSide = 64;
@@ -23,7 +23,7 @@ constexpr swd3e::u32 kWhiteRef = 0xFFFFFF;
 
 }  // namespace
 
-TEST_CASE("glyph library: MingLiU cells of the three sizes")
+TEST_CASE("glyph library: MingLiU cells of the sizes the game draws")
 {
     swd3e::GlyphLibrary library;
 
