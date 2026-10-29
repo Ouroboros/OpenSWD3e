@@ -180,7 +180,7 @@ constexpr u16 kFurySound = 0x2FD;
 // Regenerate: the gains show 6 frames apart.
 constexpr u16 kRegenerateDelay = 6;
 
-// UseAccessorySkill: the unk2BD4 bit of each accessory kind (RepeatAttack is kRepeatAttack).
+// UseAccessorySkill: the accessoryCommands bit of each accessory kind (RepeatAttack is kRepeatAttack).
 constexpr u32 kAccessoryBit16 = 0x2;
 constexpr u32 kAccessoryBit17 = 0x4;
 constexpr u32 kAccessoryBit18 = 0x8;
@@ -1523,10 +1523,11 @@ void BattleRole::Regenerate(BattleServices& services)
 }
 
 // swd3e.exe 0x0047F5C0: the command of an accessory of `kind` (the stamina it costs taken first when none is owed):
-// the kind sets its unk2BD4 bit and becomes command A (some take command B with UnkCommandFlag400, command A 0) and
-// most read the accessory's proficiency into proficiency; Unk1F scales unk2EB0, Unk22 / Unk23 / Unk24 a heal of the
-// hit points / spirit / stamina of the battle record; swd3e adds Unk25 (command A only, no step), Unk27 (unk2EB2 up),
-// Unk28 (armed by one use, taken as command A by the next) and Unk29. The proficiencies then step by kAccessoryStep.
+// the kind sets its accessoryCommands bit and becomes command A (some take command B with UnkCommandFlag400, command A
+// 0) and most read the accessory's proficiency into proficiency; Unk1F scales unk2EB0, Unk22 / Unk23 / Unk24 a heal of
+// the hit points / spirit / stamina of the battle record; swd3e adds Unk25 (command A only, no step), Unk27 (unk2EB2
+// up), Unk28 (armed by one use, taken as command A by the next) and Unk29. The proficiencies then step by
+// kAccessoryStep.
 void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 {
     CounterList& proficiency = services.party.fame.lists[Fame::ProficiencyList];
@@ -1546,7 +1547,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
     switch (static_cast<AccessoryKind>(kind))
     {
         case AccessoryKind::RepeatAttack:
-            this->unk2BD4 |= kRepeatAttack;
+            this->accessoryCommands |= kRepeatAttack;
             this->commandA = 1;
             this->AccessoryProficiency(kind, proficiency);
             this->StepAccessoryCounters(proficiency, kind, kAccessoryStep);
@@ -1555,36 +1556,36 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 
         case AccessoryKind::Unk16:
             this->commandA = 0;
-            this->unk2BD4 |= kAccessoryBit16;
+            this->accessoryCommands |= kAccessoryBit16;
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
             this->commandB = kind;
             break;
 
         case AccessoryKind::Steal:
             this->commandA = kind;
-            this->unk2BD4 |= kAccessoryBit17;
+            this->accessoryCommands |= kAccessoryBit17;
             break;
 
         case AccessoryKind::Unk18:
-            this->unk2BD4 |= kAccessoryBit18;
+            this->accessoryCommands |= kAccessoryBit18;
             this->commandA = kind;
             this->AccessoryProficiency(kind, proficiency);
             break;
 
         case AccessoryKind::Unk19:
             this->commandA = 0;
-            this->unk2BD4 |= kAccessoryBit19;
+            this->accessoryCommands |= kAccessoryBit19;
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
             this->commandB = kind;
             break;
 
         case AccessoryKind::Unk1A:
             this->commandA = kind;
-            this->unk2BD4 |= kAccessoryBit1A;
+            this->accessoryCommands |= kAccessoryBit1A;
             break;
 
         case AccessoryKind::Unk1B:
-            this->unk2BD4 |= kAccessoryBit1B;
+            this->accessoryCommands |= kAccessoryBit1B;
             this->commandA = kind;
             this->AccessoryProficiency(kind, proficiency);
             break;
@@ -1596,12 +1597,12 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 
         case AccessoryKind::Unk1D:
             this->commandA = kind;
-            this->unk2BD4 |= kAccessoryBit1D;
+            this->accessoryCommands |= kAccessoryBit1D;
             break;
 
         case AccessoryKind::Unk1E:
             this->commandA = kind;
-            this->unk2BD4 |= kAccessoryBit1E;
+            this->accessoryCommands |= kAccessoryBit1E;
             break;
 
         case AccessoryKind::Unk1F:
@@ -1649,7 +1650,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             {
                 this->equipmentFlags &= ~kUnk28Armed;
                 this->commandA = kind;
-                this->unk2BD4 |= kAccessoryBit28;
+                this->accessoryCommands |= kAccessoryBit28;
             }
             else
             {
@@ -1677,7 +1678,7 @@ int BattleRole::RollCritical(BattleServices& services)
 {
     BattleState& battle = services.state;
 
-    if (this->autoControl == 1 || this->guestControl == 1 || this->unk2BD4 != 0 || this->unk2EB2 > 0 ||
+    if (this->autoControl == 1 || this->guestControl == 1 || this->accessoryCommands != 0 || this->unk2EB2 > 0 ||
         this->MarkBit4() == 1 || battle.lastCriticalRole == this->placement.actId)
     {
         return 0;

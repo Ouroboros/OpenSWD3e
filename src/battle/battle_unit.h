@@ -815,7 +815,8 @@ public:
     u32 colorPair = DefaultColorPair;  // +0x2BC4
     u32 status = 0;                    // +0x2BC8 status bits (2: stone, 12: frozen, ...)
     u32 equipmentFlags = 0;            // +0x2BD0 bits 0, 2..6 from the equipment
-    u32 unk2BD4 = 0;
+    // +0x2BD4 the accessory commands of the turn: bit (kind - 0x15) of AccessoryKind for 0x15..0x1E, 0x400 for Unk28
+    u32 accessoryCommands = 0;
     u16 marks = 0;      // +0x2BD8 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
     u16 unk2BDA = 0;    // +0x2BDA (swd3e) bit 0: the weak stand pose (IdleFrame); bit 2 (0x00486540)
     i16 guardPose = 0;  // +0x2BDC the guard pose (1, 2, 4)

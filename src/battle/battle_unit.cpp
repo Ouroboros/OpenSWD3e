@@ -579,7 +579,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->restoreStamina = 0;
     this->mainAct.anchorX = 0;
     this->mainAct.anchorY = 0;
-    this->unk2BD4 = 0;
+    this->accessoryCommands = 0;
 
     if (wasDefeated == 0 && this->unk3038 == 0 && (this->command.flags & kResetClearsGuard) != 0)
     {
@@ -1272,7 +1272,7 @@ constexpr std::u8string_view kResistAllEnd = u8"$1%s$0抵抗所有攻擊解除";
 constexpr u32 kAilmentRoll = 10;  // an ailment lands on a roll of 1..kAilmentRoll up to the ailment chance
 
 // The damage of a hit (HitDamage).
-constexpr u32 kAttackFromBonus = 9;  // unk2BD4 bits: the attack is the bonus of the battle record (enraged)
+constexpr u32 kAttackFromBonus = 9;  // accessoryCommands bits: the attack is the bonus of the battle record (enraged)
 constexpr u32 kLevelShare = 3;       // the attack roll is 1..level / kLevelShare + kLevelRollBase
 constexpr u32 kLevelRollBase = 3;
 constexpr int kAttackBuffPercent = 30;
@@ -2010,7 +2010,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->extraAttacks = 0;
     this->pendingDamage = 0;
     this->equipmentFlags = 0;
-    this->unk2BD4 = 0;
+    this->accessoryCommands = 0;
     this->unk2BE8 = 0;
     this->enrageCounter2FD3 = 0;
     this->enrageCounter2FD5 = 0;
@@ -2900,7 +2900,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
     {
         target.CountEnrageEvent(0);
 
-        if ((this->unk2BD4 & kAttackFromBonus) != 0)
+        if ((this->accessoryCommands & kAttackFromBonus) != 0)
         {
             attack = this->battleRecord->attackBonus;
         }
@@ -2940,7 +2940,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
             raise += static_cast<i16>(attack) * this->attackShift / kPercent;
         }
 
-        if ((this->status & BattleUnit::AttackDown) != 0 && (this->unk2BD4 & kAttackDownIgnored) == 0)
+        if ((this->status & BattleUnit::AttackDown) != 0 && (this->accessoryCommands & kAttackDownIgnored) == 0)
         {
             cut = static_cast<i16>(attack) * this->attackShift / kPercent;
         }
@@ -3008,7 +3008,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
             attack = 1;
         }
 
-        if ((this->unk2BD4 & kAttackFromBonus) != 0)
+        if ((this->accessoryCommands & kAttackFromBonus) != 0)
         {
             // 0x00498090: 40 times the attack word in 32 bits, divided, then kept to 16 bits.
             const auto share = static_cast<u16>(kEnragedSharePercent * static_cast<i16>(attack) / kPercent);
@@ -4385,7 +4385,7 @@ int BattleUnit::WalkToTarget(BattleServices& services, const BattleUnit& target)
 
 // swd3e.exe 0x0049A000: whether the accessory command of `kind` can be taken: not when it costs more stamina than the
 // role has; Unk1C not while Invisible, Unk1D not with its bit, Unk20 not under a Barrier, SpiritFan only with the
-// equipment; Unk19 sets its unk2BD4 bit.
+// equipment; Unk19 sets its accessoryCommands bit.
 int BattleUnit::CanUseAccessory(u16 kind)
 {
     if (static_cast<i32>(this->AccessoryValue(kind)) > this->roleRecord->stamina)
@@ -4396,14 +4396,14 @@ int BattleUnit::CanUseAccessory(u16 kind)
     switch (kind)
     {
         case kAccessory19:
-            this->unk2BD4 |= kAccessory19Bit;
+            this->accessoryCommands |= kAccessory19Bit;
             return 1;
 
         case kAccessory1C:
             return (this->status & BattleUnit::Invisible) != 0 ? 0 : 1;
 
         case kAccessory1D:
-            return (this->unk2BD4 & kAccessory1DBit) != 0 ? 0 : 1;
+            return (this->accessoryCommands & kAccessory1DBit) != 0 ? 0 : 1;
 
         case kAccessory20:
             return (this->status & BattleUnit::Barrier) != 0 ? 0 : 1;
