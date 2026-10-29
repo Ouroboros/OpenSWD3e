@@ -113,10 +113,10 @@ struct QueuedAction
         UnkFlag4 = 4,  // given by BoomerangFrame (0x00486110), read by RunQueuedActions
     };
 
-    std::unique_ptr<QueuedAction> next;  // swd32 +0x0
-    ActState act;                        // swd32 +0x4 the flying act
-    ActState impact;                     // swd32 +0x9C the act at the end (id 0: none; a negative id lands no hit)
-    AfterimageTrail trail;               // swd32 +0x134 drawn while `trailed`
+    std::unique_ptr<QueuedAction> next;  // +0x0
+    ActState act;                        // +0x4 the flying act
+    ActState impact;                     // +0xA8 the act at the end (id 0: none; a negative id lands no hit)
+    AfterimageTrail trail;               // +0x14C drawn while `trailed`
     i16 toX = 0;                         // +0x1E4
     i16 toY = 0;                         // +0x1E6 0: the line stays level
     i16 fromX = 0;                       // +0x1E8

@@ -1821,7 +1821,7 @@ int UnitFrame::Fly(
         ScenePainter painter(services, scene);
         painter.SetSource(picture.data.data());
         const int zoom = kZoomUnit - kFlightShrink * count;
-        painter.SetZoomSheared(offsetX, act.y, zoom, zoom, 0);
+        painter.SetZoomSheared(static_cast<i16>(offsetX), act.y, zoom, zoom, 0);
         painter.DrawPicture(
             line.fromX + line.x,
             line.fromY + line.y,

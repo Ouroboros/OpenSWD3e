@@ -2600,3 +2600,75 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：血 >0 且（标记位 15 或状态位 25）→ 0；+0x2FF8=1 → 0。队伍角色：状态位 17：血 >0 且 +0x2FD6=0 且 +0x2FA6=0 → 屏幕缓冲 0x004EDA44 填 0x25800 个 −1 双字，返回 0；否则 +0x2FD6=0。装备旗标 0x100：熟练度 = +0x2BE6；血 >0 → 份 = 血×20/100 + (血×80/100)×熟/100，熟=100 → 份 = 血；否则 份 = (−80×+0x2EB4/100)×熟/100；0x00459170(95×熟+500)；0x00459180(份)=0 → +0x2EB4=0，否则 += 份、<0 → 0。+0x3060=1 且金钱 0x004C6370 >0（无符号）：血 >0：金 < 血 → 血 −= 金、金=0、记录 [+4] +0x4 −= 血（16 位）并封顶 +0xA；否则 金 −= 血；血 ≤0 → 血不变。否则 +0x4 −= 血，封顶。灵 +0x6 += 参数并封顶 +0xC，体 +0x8 += 参数并封顶 +0xE；灵、体 ≤0 → 0。+0x4 >0 → 0；否则 0、+0x2FFC=1，+0x3044=1 → +0x2FC6=6；返回 1。敌人：+0x2BBC≠0 → 血 ≥ 盾 → 0，否则 盾−血；> 物品 +0x50 → 封顶；>0 → 0；否则 +0x68=0、+0x2BBC=0。否则 +0x68 = 血 ≥ 现值 ? 0 : 现值−血，<0 → +0x50，>+0x50 → 封顶，>0 → 0x0049BB50(0,0) 返回 0，否则 0。倒下：+0x2FFC=1、+0x2E64=0，+0x2FC6=0 → rand(10)+1；返回 1。
 对照：Damage 一致（kWhiteFrame 0xFFFF 填满 640×480、kMeterArmed 0x100、kMeterBaseShare 20、kMeterHitShare 80、kMeterHealShare −80、kMeterLimitScale 95、kMeterLimitBase 500、kFallbackDefeatPose 6、kDefeatPoses 10）；金钱不足时源码以 血 − (u16)金 计算，写回 16 位血量的低位与原程序 血 − 金 相同。
 差异：无。
+
+## 0x00495670 BattleUnit::SetDefeatPose — exact
+
+汇编：+0x2FC6 = 参数字节；+0x2FC7≠0 → +0x2FC6 = +0x2FC7。
+对照：一致。
+差异：无。
+
+## 0x00495690 BattleUnit::SetDefeatPoseFixed — exact
+
+汇编：+0x2FC7 = +0x2FC6 = 参数字节。
+对照：一致。
+差异：无。
+
+## 0x00495BF0 BattleUnit::SetFacing — exact
+
+汇编：+0x3050 = 参数，返回参数。
+对照：一致。
+差异：无。
+
+## 0x00495C00 BattleUnit::ActId — exact
+
+汇编：返回 +0x2F28 字。
+对照：一致。
+差异：无。
+
+## 0x00495C10 BattleUnit::IsHeld — exact
+
+汇编：返回 (标记低字节 >> 6) & 1。
+对照：一致（Held 0x40）。
+差异：无。
+
+## 0x004956B0 BattleUnit::FadeMainOut — exact
+
+汇编：（栈参数不读）mainAct.hold = (+0x3010=1)；+0x2A44 = GetPicture(mainAct 帧, 图号)；三色 = movsx +0x2E64，|4 画于 (阵位X − +0x2EC2, 阵位Y − mainAct.y)；mainAct +0x302/+0x304 皆非 0 → 再设三色、+0x2A4C = GetPicture(+0x302, +0x304−1)，|4 画于 (movsx +0x316 − +0x2EC2 + 阵位X, movsx +0x318 − mainAct.y + 阵位Y)。+0x3010=0 → +0x2E64 −= 2；>−0x20 → 0；否则 = −0x20、recoilAct 清零，返回 1。
+对照：FadeMainOutAdvance 与 DrawMainFadedAdvance 一致（kFadeOutStep 2、kFadedOut −0x20）；空图片属偏差 186；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x00495870 BattleUnit::FadeMainIn — exact
+
+汇编：同上绘制，三色 = +0x2B74；+0x3010=0 → +0x2B74 加 1；<0 → 0；否则标记 &~0x200、+0x2B74=1，返回 1。
+对照：FadeMainInAdvance 一致（UnkMark200）。
+差异：无。
+
+## 0x00495A00 BattleUnit::FadeInvisible — exact
+
+汇编：mainAct.hold = (+0x3010=1)；+0x2A44 = GetPicture(mainAct)；+0x2E64 加 1，>0x18 → =0x18：参数=1 → 标记 &= ~0x480、+0x2E64=0，返回 0；参数=0 → 状态 |= 0x80000000；标记 &= ~0x480，返回 0。否则 影子：缩放高 = +0x2A40 高/3、斜 = 高>>2、三色 −1，+0x2BAC = 旗标&0x8000000F|0xC，以 +0x2A44 的像素、+0x2A40 的宽高画于 (阵位X − +0x2EC2 − 5, 阵位Y − 高/3)；参数=0 → 透明度 = 0xF − +0x2E64/2，=1 → +0x2E64/2；+0x2BAC = 旗标&0x80000003，|0x14 以 +0x2A44 画于 (阵位X − +0x2EC2, 阵位Y − mainAct.y)；返回 1。
+对照：FadeInvisibleAdvance 一致（kInvisibleFadeFrames 0x18、InvisibleMark|UnkMark400 0x480、kInvisibleShadowTint −1、kShadowShare 3、kShadowShearShift 2、kShadowLeftShift 5、MaxAlpha 0xF；影子以本图像素配阴影图宽高，原有行为）；空图片属偏差 184；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x00495C20 BattleUnit::FlyAct — diff → exact
+
+汇编：act id = 参数、动作 0、hold = (+0x3010=1)；Run 失败 → 0。+0x2A44 = GetPicture；偏移 = act.x 低字、锚 = movsx act 锚点 x、旗标 = act 旗标。(+0x3044=1 或 +0x3048=1) 且 facing=1 → 旗标位 0 翻转，act.x≠0 → 偏移 = 图宽−act.x，锚点≠0 → 锚 = 图宽 − 锚点；facing=1 且二者皆 0 → 翻转、偏移 = 图宽−act.x（不判 0）、锚点≠0 → 锚 = 图宽 − 锚点。取目标绘制位置；终点 = (movsx(位置X−偏移), movsx(位置Y−act.y))；+0x106C 线段清零、起点 = (参数X − 锚, 参数Y − movsx act 锚点 y)；参数“反向”=1 → 起终互换；参数Y=0 → 起终 y 皆 0。+0x2FBE ≠ 延迟字 → 加 1；否则 步参数为 0 或 −1 → 步=1、+0x2B48[槽] 为 0 → 1，≤0x20 → ×2 否则 +0x30；其他 → 加 1。计数×步 >0 → 循环 0x00438E10 走线，到终点 X → 结果 −1，否则 走数加 1 至 ≥ 计数×步。播放 act.view、view=0。命令 actionFlags 0x10000 → 0x00423670(movsx 偏移, act.y, 0x400−10×计数 两次, 0)，|0x80 画于 (起点X+线.x, 起点Y+线.y)；否则以 act 旗标画于同处。结果 −1 → +0x2EDE=0、+0x2FBE=0、计数 0、线段清零，返回 1；否则 0。
+对照：Fly 逻辑一致（kSpeeding −1、kFlightDoubling 0x20、kFlightGrowth 0x30、kArrived −1、kFlightShrink 10、kZoomUnit 0x400）；空图片属偏差 152；绘制经 Scene，偏差 97/99。
+差异：缩放原点 x 原程序按有符号字（movsx）传入，源码直接传 u16 偏移，偏移为负时不同。修正：改为 static_cast<i16>(offsetX)。复核：完整函数重新对照一致。
+
+## 0x00495FF0 BattleUnit::RunQueuedActions — diff → exact
+
+汇编：队列头 +0x2794 为空 → +0x2F9C=0，返回 1。逐个节点：参数动作≠0 → act（节点 +4）动作 = 它；Run 失败 → 0；+0x2A44 = GetPicture；旗标 = act 旗标、偏移 = act.x 字；facing=1 → 旗标位 0 翻转、偏移 = 图宽−act.x。+0x106C 线段清零：起 = (movsx +0x1E8 − movsx 偏移, movsx +0x1EA − act.y)、终 = (movsx +0x1E4 − 偏移, movsx +0x1E6 − act.y)；锚点 x/y 非 0 → 起点改为节点起点 − movsx 锚点；节点起/终 y 为 0 → 线段起/终 y 为 0。+0x1EC≠0 → 减 1（到达标记保持上一节点的值）；否则 +0x1EE >0 → +0x1F2 加 1、每帧步 = +0x1EE；否则 +0x1F2 为 0 → 1，>0x20 → +0x30 否则 ×2，每帧步 1；结果 0；步×帧 >0 → 循环 0x00438E10，起+走 = 终（x、y 皆同）→ 结果 −1、+0x1F6|=2，否则结果加 1 至 ≥ 步×帧。播放 act.view、view=0。+0x1F5=1 → +0x1E1 = 旗标含 4 ? 3 : 1，0x00498DF0(+0x14C 拖尾, 帧, 图号, 旗标, x, y)。+0x1F6 无 2 → 以旗标画于 (起点X+走.x, 起点Y+走.y)。结果≠−1 → 下一节点。冲击 act（+0xA8）id >0：Run 失败 → 0；+0x2A44 = GetPicture；facing=1 → 旗标翻转；播放 view、声像 (终点X ≥0x140 ? 0x30 : −0x30)、view=0；画于同处；waiting=0 → 下一节点。完成：+0x1F4=1、+0x2F9E 加 1、线段清零；+0x1F6 有 4 → 下一节点；机率 = 状态位 7 ? 8 : 0；+0x305C≠0 或 RollEvade(目标, 机率)=0 → 目标 RaiseFlag2BC0，+0x2FE0=0 → EnemyHitDamage，否则 HitDamage（两个输出局部跨节点保留，之后不用），movsx 后写 0x00575F34，≥9999 → 9999，累加 0x005378F4，目标 SetDamageDigits、StepTargetCount(1)。循环后从头逐个释放 +0x1F4=1 的节点；返回 0。
+对照：QueuedAdvance 一致（kSpeedingTop 0x20、kSpeedingStep 0x30、kAdditiveTrailFade 3、kEvadeChanceStatus 0x80、kStatusEvadeChance 8、kQueuedMaxDamage 9999、kPanCentre 0x140、kFadePan 0x30；QueuedAction 字段 +0x1E4..+0x1F6）。到达标记的初值属偏差 175，空图片属偏差 174；绘制经 Scene，偏差 97/99。
+差异：QueuedAction 的 next/act/impact/trail 注释写正传偏移（+0x0/+0x4/+0x9C/+0x134）。修正：改为外传偏移 +0x0/+0x4/+0xA8/+0x14C（汇编以 +0xA8、+0x14C 访问）。复核：完整函数重新对照一致。
+
+## 0x00496510 BattleUnit::AddQueuedAction — exact
+
+汇编：走到队列尾，分配 0x1F8 清零接上：act id/动作 = 参数 1/2、冲击 id（+0xA8）= 参数 9、+0x1E8/+0x1EA = 起点、+0x1E4/+0x1E6 = 终点、+0x1EC = 参数 8（抖动帧）、+0x1EE = 参数 7（步）、+0x1F4=0、+0x1F6 = 参数 10 字节；+0x2F9C 加 1。
+对照：AddQueuedAction 一致（参数次序 id、动作、起 x/y、终 x/y、步、抖动帧、冲击、旗标）。
+差异：无。
+
+## 0x004965D0 BattleUnit::TrailLastQueuedAction — exact
+
+汇编：取队列最后节点，+0x1F5=1；拖尾 started（+0x1DE）≠0 → 返回；否则 =1、8 个残影图号 0xFFFF、三色 = 参数、direction=2、count=3。
+对照：TrailLastQueuedAction 一致（NoPicture、InPlace 2、kQueuedTrailImages 3）；空队列时原程序把队列头当节点写属偏差 176。
+差异：无。
