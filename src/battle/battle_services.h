@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
 #include "core/types.h"
 
 namespace swd3e
@@ -15,6 +18,7 @@ class BattleState;
 class Config;
 class Database;
 class ErrorReporter;
+struct ItemNode;
 class Painter;
 class Party;
 class Random;
@@ -55,6 +59,8 @@ struct BattleServices
     BattleEnemy* enemies = nullptr;  // Game::battleEnemies (BattleState::Enemies of them), set with the services
     BattleRole* roles = nullptr;     // Game::battleRoles (BattleState::RoleUnits of them), set with the services
     Database* database = nullptr;    // Game::database (swd3e: the talisman ghost loads its fed skills in StepGauge)
+    // Game::detachedItems: the inventory nodes unlinked by a battle object take (kept as the original leaks them)
+    std::vector<std::unique_ptr<ItemNode>>* detachedItems = nullptr;
 };
 
 bool AnyRoleBuffed(const BattleServices& services);

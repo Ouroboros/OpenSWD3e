@@ -1704,3 +1704,93 @@
 汇编：返回 movsx +0x34C0。
 对照：一致。
 差异：无。
+
+## 0x00487180 BattleRole::LowSpirit — exact
+
+汇编：角色记录（+4）movsx 灵力 < movsx 上限/4（截断）。
+对照：一致（kQuarterShare=4）。
+差异：无。
+
+## 0x004871A0 BattleRole::LowStamina — exact
+
+汇编：movsx 体力 < movsx 上限/4。
+对照：一致。
+差异：无。
+
+## 0x004871C0 BattleRole::StartSpecialAct — exact
+
+汇编：+0x2BD0 位 0x80 无 → 0；slotActs[10]（+0xCF4）id 0x17BF、动作 0；0x005772BC=1；+0x34D0=1；返回 1。
+对照：一致（kSpecialAct=0x17BF、kSpecialSlot=10）。
+差异：无。
+
+## 0x00487200 BattleRole::SpecialActFrame — exact
+
+汇编：+0x2BD0 位 0x80 无或 +0x34D0≠1 → 返回。slotActs[10]；0x005772BC=1；Run=0 → 返回。PlaySound(其 view)、声像 0x30；standAct 的 view（+0x3B0）清 0（原 BUG：清的不是本动作）；图片 = GetPicture；以 act flags 画在 (阵位 x − act x, 阵位 y − act y)。waiting=1：+0x34D0=0、0x005772BC=0、ResetTurn、ExpireEffects(1)、+0x2BD0 清 0x80、+0x2FF8=0、熟练度(0x3A)；角色记录生命 = movsx 上限×40/100，再 += (上限×90/100)×零扩展熟练度/100；+0x24 &= 0x7FFF；PushTarget(0x237D)、SetDamageDigits(movsx 生命)、StepTargetCount(1)；slotActs[10] 清零。
+对照：SpecialActFrame 一致（常量核对）；空图片见偏差 196。
+差异：无。
+
+## 0x004873C0 BattleUnit::ZoomEntranceFrame — exact
+
+汇编：0x0057722C/2E/30 = −0xC、0x00577290=1、0x004655A0（只置 0x005777F4=1）；standAct 动作 0x24、id = 零扩展参数。+0x2B84=0：Run=0 → 0；图片 = GetPicture；锚点单位.GetDrawPosition(x, y)；0x00423630 SetZoom(act x, act y, 0xC18 − movsx +0x2E64 两次)；以 act flags|0x81 画在 (movsx x − 图宽 + act x, movsx y − act y)；+0x2E64 += 0x28，≥0x800 → 清 0、+0x2B84=1、standAct 清零，返回 0。+0x2B84=1：id 0x1C98、动作 0；Run=0 → 0；图片、位置，以 act flags 画在 (movsx x − act x, movsx y − act y)；waiting=1 → +0x2E64=0、+0x2B84=0、清零、返回 1；否则 0。
+对照：ZoomEntranceFrame 一致（直接置 darkenByTint 与 0x004655A0 相同；常量核对）；空图片见偏差 197。
+差异：无。
+
+## 0x004875E0 BattleUnit::RaiseFlag2BC0Bit17 — exact
+
+汇编：+0x2BC0 |= 0x20000。
+对照：一致。
+差异：无。
+
+## 0x004875F0 BattleUnit::Flag2BC0Bit17 — exact
+
+汇编：返回 (+0x2BC0 >> 17) & 1。
+对照：一致。
+差异：无。
+
+## 0x00487600 BattleRole::SelectedItemId — diff → exact
+
+汇编：返回 [+0x3460]+4 的字（不判空）。
+对照：返回 selectedItem->id。
+差异：选中物品为空时原程序经空指针读，源码同样直接解引用且未登记。修正：为空时返回 0，登记偏差。复核：完整函数重新对照一致。
+
+## 0x00487610 BattleRole::LevelInReach — exact
+
+汇编：+0x3074 清 0xA8 字节、载入物品、释放说明。高 = 物品等级（+0x30CC 字）− 记录等级字节，低 = −高。熟练度 ≤20：高 1..5 → 1，否则仅低 = 5 → 1（原 BUG：只在恰好等于 5 时成立）。21..40：高 1..10 或低 1..10 → 1；41..60：1..20；61..80：1..35；81..100：1..50。否则 0。
+对照：LevelInReach 一致（kReachSpans 五段核对）。
+差异：无。
+
+## 0x004877A0 BattleUnit::CastPoseFrame — exact
+
+汇编：standAct id = 零扩展 +0x2F28、+0x2FEC=1、动作 0x34（不设 hold）；Run=0 → 0。图片、原点 x、+0x2EBC 与镜像同 Pose36Frame；缩放高/剪切/着色 −6（+0x3044=1 时 −1）；PlaySound(view)、声像 阵位 x（有符号字）≥0x140 ? 0x30 : −0x30；+0x2BAC = (旗标 & 0x8000000F)|0xC、view=0；阴影画在 (阵位 x − 原点 x, 阵位 y − 缩放高)，本体画在 (阵位 x − 原点 x, 阵位 y − act y)。target 低字节 & 9 为 0 → 0；参数 ≤0 → 1。slotActs[0] 动作 0、id = 参数；Run=0 → 0；PlaySound(其 view)、view=0；图片 = GetPicture，以其 flags 画在 (0, 0)；waiting=1 → slotActs[0] 与 standAct 清零、返回 1；否则 0。
+对照：CastPoseFrame 一致（常量核对）；图片缺失见偏差 198。
+差异：无。
+
+## 0x00487A70 BattleUnit::HitPointsAtMost — exact
+
+汇编：角色记录（+4）movsx 生命 ≤ movsx 上限 / 参数（有符号）。唯一调用方 0x004612D0 传常量 5。
+对照：一致（调用方 kMarkedShare 核对，无除零）。
+差异：无。
+
+## 0x00487A90 BattleRole::TakeRandomItem — diff → exact
+
+汇编：ShowAllItems；逐个物品计数，类别（+0x56 字）在 0xB..0xE 者存在则标记；无 → 0。roll = rand%(计数低字)+1；ShowAllItems；逐个：到尾 → 步=0、重掷、ShowAllItems；步+1，步（字）≥ roll 且类别在范围内即停。数量非 0 → −1，否则待入非 0 → −1；两者都为 0 → 0x00454CC0(+0x345C, id) 摘下（返回值丢弃，节点泄漏，+0x3458 仍指向它）；返回 [+0x3458]+4（摘下的节点的 id）。
+对照：随机与查找逻辑一致，id 先读出与原程序读到的值相同。
+差异：源码丢弃 UnlinkItem 的返回值会立即释放节点，列表游标 inventory 随即悬空；原程序节点泄漏仍可读（pass2-method 第 37 行延后核对项）。修正：摘下的节点经 BattleServices::detachedItems 交 Game::detachedItems 保管，偏差 404 与 pass2-method 同步。复核：完整函数重新对照一致。
+
+## 0x00487B90 BattleEnemy::BattleEnemy — exact
+
+汇编：基类构造 0x0048B040；分配 0xA8 字节清零块存 +0xC（物品记录）；展开尾 0x004A9760 调基类析构。
+对照：ownedData = make_unique<ObjectRecord>()、data 指向它，一致。
+差异：无。
+
+## 0x00487BF0 BattleEnemy::~BattleEnemy — exact
+
+汇编：0x00489410 Release，再基类析构 0x0048B100。
+对照：~BattleEnemy 调 Release，基类析构随后，一致。
+差异：无。
+
+## 0x00487C40 BattleUnit::AdvanceGauge — exact
+
+汇编：+0x2BD8 位 0x40 或 0x4000、+0x2BC0 位 31 → 0。槽 +0x2F2E（零扩展）≥ 0x004BEFF8：+0x2FF0=1、+0x302C=0，+0x3068=1 → 清它与 +0x3050，返回 1。否则 速度 = (物品 +0x5E 零扩展 + 加 − 减)/4（状态位 29/27 取 movsx +0x2EDA），参数=1 → += 速度/4+1；位 31 → 减速 = 零扩展 +0x2BE6×速度/100/2+4；+0x2FF0=0、槽 = 槽 − 减速 + 速度；返回 0。
+对照：AdvanceGauge 一致（kAgilityDivisor=4、kBoostDivisor=4、kInvisibleLoss=4）。
+差异：无。

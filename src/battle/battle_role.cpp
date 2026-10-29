@@ -64,6 +64,12 @@ void BattleRole::SetSkills(ItemNode* list)
 // swd3e.exe 0x00487600: the id of the item chosen to use
 u16 BattleRole::SelectedItemId() const
 {
+    // Without a selected item the original reads through a null pointer (deviations.md): 0 here.
+    if (this->selectedItem == nullptr)
+    {
+        return 0;
+    }
+
     return this->selectedItem->id;
 }
 
@@ -2130,10 +2136,16 @@ u16 BattleRole::TakeRandomItem(BattleServices& services)
 
     const u16 id = node->id;
 
-    // The original reads the id from the freed node.
+    // The original leaks the unlinked node, the list cursor (+0x3458) still on it and its id read from it afterwards;
+    // it is kept alive with the game's detached items (deviations.md).
     if (node->count == 0 && node->pending == 0)
     {
-        UnlinkItem(*this->inventoryHead, static_cast<i16>(id));
+        std::unique_ptr<ItemNode> unlinked = UnlinkItem(*this->inventoryHead, static_cast<i16>(id));
+
+        if (services.detachedItems != nullptr)
+        {
+            services.detachedItems->push_back(std::move(unlinked));
+        }
     }
 
     return id;

@@ -34,5 +34,5 @@
 
 核对到下列函数时一并确认，确认后从本节删去并记入该函数的证据。
 
-- 0x00479860 FightTalkFrame、0x00487A90 TakeRandomItem：0x00454CC0 摘下的背包节点在原程序中泄漏且保持可读，重建版随即释放；须确认摘下后不再经 0x00578434、单位选中物品（+0x3460）、战斗物品列表首项（0x0050C034）等指针读取该节点（deviations 0x00454CC0 行）。 0x00479860 已处理：命令 0x42 摘下的节点改由 Game::detachedItems 保管不释放（第二遍证据）；0x00487A90 待其第二遍同样处理。
+- 0x00479860 FightTalkFrame、0x00487A90 TakeRandomItem：0x00454CC0 摘下的背包节点在原程序中泄漏且保持可读，重建版随即释放；须确认摘下后不再经 0x00578434、单位选中物品（+0x3460）、战斗物品列表首项（0x0050C034）等指针读取该节点（deviations 0x00454CC0 行）。 0x00479860 已处理：命令 0x42 摘下的节点改由 Game::detachedItems 保管不释放（第二遍证据）；0x00487A90 已同样处理（经 BattleServices::detachedItems）。
 - 0x0046BFB0（battle_turn.cpp 指针悬停）：头像高亮表已按原程序改为 4 字节，离开头像区时以 hoverUnit 清字节的写入已加下标不小于 4 不写的判断（deviations 0x0046BFB0 行）；核对该函数时确认其余对 portraitHighlight 的写入（含 0x0046BFB0 末尾清 4 字节、下标 = partyRoles 时置 1）都在 0..3。 已于第二遍 0x0046BFB0 核对完毕（见 evidence/pass2/battle.md）。

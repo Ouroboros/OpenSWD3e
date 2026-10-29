@@ -349,6 +349,7 @@ Game::Game(std::u8string installDirectory)
     this->battleServices.enemies = this->battleEnemies.data();
     this->battleServices.roles = this->battleRoles.data();
     this->battleServices.database = &this->database;
+    this->battleServices.detachedItems = &this->detachedItems;
     this->acts.SetZoomStart(
         [this](i32 x, i32 y, i32 zoomX, i32 zoomY)
         {
