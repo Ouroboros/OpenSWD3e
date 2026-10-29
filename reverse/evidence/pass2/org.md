@@ -119,3 +119,11 @@
 汇编：记录 +0xA4 非空 → 0x0043DAB0 释放、置 0（不改 0x00578508 计数）。
 对照：FreeDescription 只 reset 说明，一致。
 差异：无。
+
+## 0x00489B00 Database::LoadObject（复核）— diff → exact
+
+缘由：第二遍核对 CRT 段时确认 0x004A207E 是 _msize（经 __sbh_find_block 取块头 [p−4] − 9，否则 HeapSize），不是 strlen；本函数先前的证据与修正据此失效，恢复为待复核后重新对照。
+汇编：说明（+0xA4）非空 → 0x00578508 −= _msize(说明)；说明由 0x0043DA70(长度+1) 分配，即 malloc(n)，n = (长度+1+0xF) & ~3；n ≤ 0x3F8（0x004C0534）走小块堆（0x004A1B1C → 0x004A3E17），块头存 ((n+0x17) & ~0xF)+1，_msize = ((n+0x17) & ~0xF) − 8；说明最长 0xFE 字节，n ≤ 0x10C，必走小块堆。读到说明时 0x00578508 += 长度+1。其余流程同先前证据。
+对照：0x00578508 全程序只有本函数读写（descriptionBytes），数值不影响行为；源码改为减去 HeapBlock::ReportedSize(长度+1)，与原程序的 _msize 相同（含加减不对称的原有 BUG）。
+差异：源码只减去字符串长度，与原程序减去的 _msize 不同；注释称原程序用 strlen，有误。
+修正：HeapBlock 新增 ReportedSize（0x004A207E 对 0x0043DA70 所分配块的 _msize：小块堆 ((n+0x17) & ~0xF) − 8，超过 0x3F8 时 HeapSize 的 (n+0xF) & ~0xF），LoadObject 改用它，注释更正。复核：完整函数重新对照一致。

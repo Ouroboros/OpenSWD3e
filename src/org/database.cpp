@@ -8,6 +8,7 @@
 #include "core/byte_reader.h"
 #include "core/format.h"
 #include "core/words.h"
+#include "memmgr/heap_block.h"
 
 namespace swd3e
 {
@@ -362,9 +363,9 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
 {
     if (record.description.has_value())
     {
-        // The original takes back only the string length (strlen), not the terminator it counted.
+        // The original takes back the heap block's _msize, more than the length and terminator it counted.
         const std::string& text = *record.description;
-        this->descriptionBytes -= static_cast<i32>(std::min(text.find('\0'), text.size()));
+        this->descriptionBytes -= static_cast<i32>(HeapBlock::ReportedSize(static_cast<u32>(text.size()) + 1));
         record.description.reset();
     }
 

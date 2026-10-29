@@ -22,6 +22,8 @@ public:
     static bool Allocate(std::vector<u8>& block, u32 size);
     // Frees the block (a missing one is ignored).
     static void Free(std::vector<u8>& block);
+    // The size the original's _msize reports for a block Allocate made for `size` bytes.
+    static u32 ReportedSize(u32 size);
 };
 
 }  // namespace swd3e

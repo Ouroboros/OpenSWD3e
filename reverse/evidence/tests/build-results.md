@@ -5,7 +5,7 @@
 ## Linux（x86_64 静态，WSL）
 
 - 入口：`cmake --preset linux`、`cmake --build --preset linux`（构建目录 build/linux/，工具链 cmake/toolchain-linux-x64-clang.cmake）；单元测试 `ctest --preset linux` 或直接运行 `build/linux/swd3e_tests`。
-- 结果（提交 185678c 之后的工作树，2026-10-25）：构建成功；单元测试 172 项全部通过（`172 test cases, 0 failures, 0 pending swd3e`）。正传黄金结果的处理见 legacy-goldens.md。
+- 结果（第二遍 1710／1710 完成时的工作树，2026-10-29）：构建成功；单元测试 172 项全部通过（`172 test cases, 0 failures, 0 pending swd3e`）。正传黄金结果的处理见 legacy-goldens.md。
 
 ## Windows（x64，WSL 中以 clang-cl／lld-link 交叉构建）
 

@@ -251,7 +251,7 @@
 | 0x00479860 | 越界 | 指令 0x24 位置超出屏幕时先释放新建的效果块，再从已释放的块读出坐标与宽高报错（释放后读取） | 以释放前的值报错 | asm/00479860.asm（0x0047C26F） |
 | 0x004A1B81 | 平台替换 | floor 以 FPU 舍入模式取整，无穷大与 NaN 经数学错误处理链（设 errno、查 0x004A85E0 函数名表、调用 _matherr）原样返回 | std::floor（结果相同，不设 errno） | 平台层替换（AGENTS.md 平台层与第三方依赖）；原行为 asm/004A1B81.asm（第一遍已按此核对） |
 | 0x004A19E5、0x004A2461 | 平台替换（用户要求） | vsprintf 的 %f 经 _cftof／_fltout2／_fptostr：取 17 位有效数字后中点进位（2.25 取一位为 2.3） | std::snprintf，舍入按当前 CRT；只影响 F1 调试显示 0x004302F0 | asm/004A19E5.asm、asm/004A2461.asm（_fltout2 → $I10_OUTPUT 17 位） |
-| 0x004A14E2、0x004A14EC | 平台替换（用户要求） | srand／rand 为 MSVC LCG（状态 0x004A833C，乘 0x343FD 加 0x269EC3，取 16..30 位） | std::srand／std::rand（取低 15 位，即 Windows 的 RAND_MAX）：Windows UCRT 为同一 LCG；Linux glibc 序列不同。使用者：爆炸与粒子（Projector 0x00438FA0 等）、水花 ScriptObject::Splash、RolePath 0x00406770 的一次消耗 | 用户要求（见类别列）；原行为 asm/004A14E2.asm、asm/004A14EC.asm（第一遍已按此核对） |
+| 0x004A14E2、0x004A14EC | 平台替换（用户要求） | srand／rand 为 MSVC LCG（状态 0x004C04E4，乘 0x343FD 加 0x269EC3，取 16..30 位） | std::srand／std::rand（取低 15 位，即 Windows 的 RAND_MAX）：Windows UCRT 为同一 LCG；Linux glibc 序列不同。使用者：爆炸与粒子（Projector 0x00438FA0 等）、水花 ScriptObject::Splash、RolePath 0x00406770 的一次消耗 | 用户要求（见类别列）；原行为 asm/004A14E2.asm、asm/004A14EC.asm（第一遍已按此核对） |
 | 0x004A150A | 平台替换（用户要求） | difftime 为 32 位相减 | std::difftime；仅相隔 68 年以上时不同 | 用户要求（见类别列）；原行为 asm/004A150A.asm（第一遍已按此核对） |
 | 0x004411C0 | 越界 | 跳过的项数超过链表长度时经空节点读下一项 | 到链表尾即停（结果为空） | asm/004411C0.asm（与 swd32 同码：reverse/evidence/pass1/menu_identity.txt） |
 | 0x004411E0 | 越界 | 同上 | 返回空 | asm/004411E0.asm（与 swd32 同码：reverse/evidence/pass1/menu_identity.txt） |
