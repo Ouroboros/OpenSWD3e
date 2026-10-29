@@ -137,9 +137,6 @@ constexpr int kDefeatedShadeHeight = 0x189;
 constexpr int kAttributesX = 0x18;
 constexpr int kAttributeStep = 0x14;
 constexpr int kElementY = 0xBE;
-constexpr int kChangeX = 0x8C;
-constexpr int kResistancesY = 0x14E;
-constexpr std::size_t kRoleElementAt = 8;   // the element's character in kRoleElement
 constexpr std::size_t kGhostElementAt = 7;  // in kGhostElement
 constexpr int kGhostChangeX = 0x7E;
 constexpr int kGhostChangeDown = 5;
@@ -155,39 +152,33 @@ constexpr std::u8string_view kLevelFormat = u8"%2d 級/%d";        // 0x004BE76C
 constexpr std::string_view kRatioFormat = "%4d/%4d";              // 0x004BE764
 constexpr std::string_view kChangeFormat = "+%d";                 // 0x004BE70C
 constexpr std::string_view kGhostChangeFormat = " %d";            // 0x004BE6B0
-constexpr std::u8string_view kRoleElement = u8"屬性       ";      // 0x004BE758
 constexpr std::u8string_view kGhostElement = u8"屬性          ";  // 0x004BE6C0
 // 0x004BE650: the elements' names (a role's by RoleRecord::resistances[10], the ghost's by its kind)
 constexpr std::array<std::u8string_view, 5> kElements = {u8"金", u8"木", u8"水", u8"火", u8"土"};
-constexpr std::array<std::u8string_view, 4> kRoleAttributes = {
-    u8"力量    %d",  // 0x004BE74C
-    u8"耐力    %d",  // 0x004BE740
-    u8"智慧    %d",  // 0x004BE734
-    u8"敏捷    %d",  // 0x004BE728
-};
-
-constexpr std::u8string_view kNextLevel = u8"下一級  %d";   // 0x004BE71C
-constexpr std::u8string_view kExperience = u8"經驗值  %d";  // 0x004BE710
-constexpr std::array<std::u8string_view, 5> kResistances = {
-    u8"[金]  %d%%",  // 0x004BE700
-    u8"[木]  %d%%",  // 0x004BE6F4
-    u8"[水]  %d%%",  // 0x004BE6E8
-    u8"[火]  %d%%",  // 0x004BE6DC
-    u8"[土]  %d%%",  // 0x004BE6D0
-};
-
-// The rebuild (deviations.md): the attributes the original keeps but does not show, in a column beside the
-// resistances (whose widest, -100%, ends at 0x70), then the progress towards the next special skill.
-constexpr int kHiddenX = 0x70;
-constexpr std::array<std::u8string_view, 4> kHiddenAttributes = {
-    u8"閃躲 %d",  // RoleRecord::evasion
-    u8"異常 %d",  // RoleRecord::ailmentChance
-    u8"默契 %d",  // RoleRecord::rapport
-    u8"反應 %d",  // RoleRecord::reaction
-};
-
-constexpr std::u8string_view kSpecialProgress = u8"絕技 %d%%";
-constexpr std::u8string_view kNoSpecialProgress = u8"絕技 --";
+// The rebuild (deviations.md): the role panel's attributes in the original's 16-pixel font (a character 18 pixels
+// wide, 9 for ASCII), its rows closer, each label and its value drawn apart so that the values line up: first the
+// experience with the next level's, then the element and the attributes, the special skill's progress below them;
+// the attributes the original keeps but does not show in a column beside the resistances. The original's rows, in the
+// 16-pixel font 0x14 apart (the resistances from y 0x14E, the equipment changes at x 0x8C): "屬性       " (0x004BE758,
+// the element in bytes 8 and 9), "力量    %d" (0x004BE74C) to "敏捷    %d" (0x004BE728), "下一級  %d" (0x004BE71C),
+// "經驗值  %d" (0x004BE710), "[金]  %d%%" (0x004BE700) to "[土]  %d%%" (0x004BE6D0).
+constexpr std::u8string_view kElementLabel = u8"屬性";
+constexpr std::array<std::u8string_view, 4> kAttributeLabels = {u8"力量", u8"耐力", u8"智慧", u8"敏捷"};
+constexpr std::u8string_view kExperienceLabel = u8"經驗";
+constexpr std::u8string_view kSpecialLabel = u8"絕技";
+constexpr std::array<std::u8string_view, 5> kResistanceLabels = {u8"[金]", u8"[木]", u8"[水]", u8"[火]", u8"[土]"};
+// RoleRecord::evasion, ailmentChance, rapport and reaction.
+constexpr std::array<std::u8string_view, 4> kHiddenLabels = {u8"閃躲", u8"異常", u8"默契", u8"反應"};
+constexpr std::string_view kValueFormat = "%d";
+constexpr std::string_view kPercentFormat = "%d%%";
+constexpr std::string_view kProgressFormat = "%d/%d";
+constexpr std::string_view kNoNeededFormat = "%d/--";
+constexpr int kPanelStep = 0x11;
+constexpr int kPanelGap = 6;         // more between the attributes and the resistances
+constexpr int kPanelValueX = 0x36;   // the values after the label: two characters and two spaces
+constexpr int kPanelChangeX = 0x24;  // the equipment changes after the value: three digits and a space
+constexpr int kHiddenX = 0x78;       // beside the resistances (a five-character one, -100%, to 0x7B)
+constexpr int kHiddenValueX = 0x2D;  // two characters and a space
 // RoleBattleBlock::values as Game::LearnSpecials reads them (battle_turn.cpp): the special points, the points the next
 // special needs and the next special (bit 31 once set from the role's first special skill; -1: none).
 constexpr std::size_t kSpecialPointsAt = 1;
@@ -197,7 +188,6 @@ constexpr i32 kNoSpecial = -1;
 constexpr u32 kSpecialMark = 0x80000000u;
 constexpr u32 kSpecialIdMask = 0x7FFFFFFF;
 constexpr u16 kSpecialCategory = 0x14;  // ObjectData::category of a special skill
-constexpr int kFullPercent = 100;
 
 constexpr std::u8string_view kGhostStrength = u8"力量   %d";  // 0x004BE6B4
 constexpr std::u8string_view kGhostSpirit = u8"靈力   %d";    // 0x004BE6A4
@@ -240,11 +230,10 @@ int BarLength(i32 value, i32 maximum)
     return maximum != 0 ? kBarLength * value / maximum : 0;
 }
 
-// The rebuild (deviations.md): how far party role `role` is towards its next special skill, in percent of the points
-// it needs, as Game::LearnSpecials counts them (at least the points needed: 100); -1 when it learns none (all
-// learned, or its special skill leads to none). Before the end of its first battle the points needed are not yet set:
-// they are taken from its first special skill, as LearnSpecials then takes them.
-int SpecialPercent(const Party& party, std::size_t role)
+// The rebuild (deviations.md): the points party role `role` needs for its next special skill, as Game::LearnSpecials
+// counts them; -1 when it learns none (all learned, or its special skill leads to none). Before the end of its first
+// battle they are not yet set: they are taken from its first special skill, as LearnSpecials then takes them.
+i32 SpecialNeeded(const Party& party, std::size_t role)
 {
     const RoleBattleBlock& block = party.battleBlocks[role];
     i32 needed = block.values[kNeededPointsAt];
@@ -284,19 +273,7 @@ int SpecialPercent(const Party& party, std::size_t role)
         return -1;
     }
 
-    const i32 points = block.values[kSpecialPointsAt];
-
-    if (points >= needed)
-    {
-        return kFullPercent;
-    }
-
-    if (points <= 0)
-    {
-        return 0;
-    }
-
-    return static_cast<int>(static_cast<i64>(points) * kFullPercent / needed);
+    return needed;
 }
 
 }  // namespace
@@ -1152,19 +1129,26 @@ void Menu::DrawRoleTabs(int offset, int mode)
         bars(record, top, kTabGlowMaximum, 0.0);
         u32 needed = 0;
         figures(chosen, record, top, needed);
-        // The element's name goes into bytes 8 and 9 of the label (the original reads past the names for an element
-        // beyond them; nothing is put in then).
-        std::string element = Big5(kRoleElement);
+        // The element's name (the original reads past the names for an element beyond them; nothing is put in then).
         const auto elementAt = static_cast<std::size_t>(static_cast<i8>(record.resistances[RoleRecord::ElementAt]));
-
-        if (elementAt < kElements.size())
-        {
-            element.replace(kRoleElementAt, 2, Big5(kElements[elementAt]));
-        }
-
         const int x = kAttributesX - offset;
+        const int valueX = x + kPanelValueX;
         int y = kElementY;
-        text(x, y, element, owner.mediumFont);
+        TextFont& font = owner.mediumFont;
+
+        auto row = [&text, &font](int labelX, int at, int rowY, std::u8string_view label, std::string_view value)
+        {
+            text(labelX, rowY, Big5(label), font);
+            text(at, rowY, value, font);
+        };
+
+        row(x,
+            valueX,
+            y,
+            kExperienceLabel,
+            WinFormat(kProgressFormat, {record.totalExperience, static_cast<i32>(needed)}));
+        y += kPanelStep;
+        row(x, valueX, y, kElementLabel, elementAt < kElements.size() ? Big5(kElements[elementAt]) : std::string());
         // The attributes are read as unsigned words: a negative one shows as 65536 more.
         const std::array<i32, 4> attributes = {
             static_cast<u16>(record.strength),
@@ -1175,24 +1159,31 @@ void Menu::DrawRoleTabs(int offset, int mode)
 
         for (std::size_t at = 0; at < attributes.size(); ++at)
         {
-            y += kAttributeStep;
-            text(x, y, WinFormat(kRoleAttributes[at], {attributes[at]}), owner.mediumFont);
+            y += kPanelStep;
+            row(x, valueX, y, kAttributeLabels[at], WinFormat(kValueFormat, {attributes[at]}));
         }
 
-        y += kAttributeStep;
-        text(x, y, WinFormat(kNextLevel, {static_cast<i32>(needed)}), owner.mediumFont);
-        y += kAttributeStep;
-        text(x, y, WinFormat(kExperience, {record.totalExperience}), owner.mediumFont);
+        y += kPanelStep;
+        const i32 points = owner.party.battleBlocks[static_cast<std::size_t>(role)].values[kSpecialPointsAt];
+        const i32 neededPoints = SpecialNeeded(owner.party, static_cast<std::size_t>(role));
+        row(x,
+            valueX,
+            y,
+            kSpecialLabel,
+            neededPoints < 0 ? WinFormat(kNoNeededFormat, {points})
+                             : WinFormat(kProgressFormat, {points, neededPoints}));
+        const int resistancesY = y + kPanelStep + kPanelGap;
 
         if (this->page == Menu::EquipmentPage)
         {
-            // The changes of the equipment (the strength's and the endurance's at the same place, as in the original).
+            // The changes of the equipment (the strength's and the endurance's at the same place, as in the original),
+            // on the rows of the attributes.
             const RoleRecord& changes = this->equip.bonuses;
             const std::array<std::pair<i16, int>, 4> shown = {{
-                {changes.strength, kElementY + 0x18},
-                {changes.endurance, kElementY + 0x18},
-                {changes.wisdom, kElementY + 0x40},
-                {changes.agility, kElementY + 0x54},
+                {changes.strength, kElementY + 2 * kPanelStep},
+                {changes.endurance, kElementY + 2 * kPanelStep},
+                {changes.wisdom, kElementY + 4 * kPanelStep},
+                {changes.agility, kElementY + 5 * kPanelStep},
             }};
 
             for (const auto& [change, changeY] : shown)
@@ -1209,33 +1200,30 @@ void Menu::DrawRoleTabs(int offset, int mode)
                     line[0] = '-';
                 }
 
-                text(kChangeX, changeY, line, owner.smallFont);
+                text(valueX + kPanelChangeX, changeY, line, font);
             }
         }
 
         const std::array<i8, 5>& resistances = this->roleResistances[static_cast<std::size_t>(role)];
-        y = kResistancesY;
+        y = resistancesY;
 
-        for (std::size_t at = 0; at < kResistances.size(); ++at)
+        for (std::size_t at = 0; at < kResistanceLabels.size(); ++at)
         {
-            text(x, y, WinFormat(kResistances[at], {static_cast<i32>(resistances[at])}), owner.mediumFont);
-            y += kAttributeStep;
+            row(x, valueX, y, kResistanceLabels[at], WinFormat(kPercentFormat, {static_cast<i32>(resistances[at])}));
+            y += kPanelStep;
         }
 
-        // The rebuild (deviations.md): the hidden attributes and the special skill's progress beside them.
+        // The rebuild (deviations.md): the hidden attributes beside them.
         const std::array<i32, 4> hidden = {record.evasion, record.ailmentChance, record.rapport, record.reaction};
-        const int hiddenX = kHiddenX - offset;
-        y = kResistancesY;
+        y = resistancesY;
 
         for (std::size_t at = 0; at < hidden.size(); ++at)
         {
-            text(hiddenX, y, WinFormat(kHiddenAttributes[at], {hidden[at]}), owner.mediumFont);
-            y += kAttributeStep;
+            const int hiddenX = kHiddenX - offset;
+            row(hiddenX, hiddenX + kHiddenValueX, y, kHiddenLabels[at], WinFormat(kValueFormat, {hidden[at]}));
+            y += kPanelStep;
         }
 
-        const int percent = SpecialPercent(owner.party, static_cast<std::size_t>(role));
-        const std::string special = percent < 0 ? Big5(kNoSpecialProgress) : WinFormat(kSpecialProgress, {percent});
-        text(hiddenX, y, special, owner.mediumFont);
         painter.SetClipClamped(0, 0, Display::Width, Display::Height);
         return;
     }
