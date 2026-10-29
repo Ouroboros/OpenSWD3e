@@ -2033,3 +2033,165 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：输出 = 阵位 − (+0x2EC2, +0x2EC4)；命令旗标 0x200：0x00491CE0=1 → (0xF0, 0x12C) − slotActs[8] (x, y)（+0xBBC/+0xBC0），否则 阵位 − slotActs[8] (x, y)。
 对照：GetOrigin 一致（kFixedOriginX 0xF0、kFixedOriginY 0x12C）。
 差异：无。
+
+## 0x0048B3A0 BattleUnit::GetShadowRect — exact
+
+汇编：栈上 0xA4 字节 act 清零；+0x2FF8=1 且 +0x2FE0=0 → 返回；+0x2F28=0 → 返回；id = +0x2F28、动作 0x24，mainAct 动作（+0x2BC）非零则取它，+0x2FF8=1 → 0x27；0x00436C80（结果不用）；图片 = 0x00436720(帧, 图号) 写 +0x2A44；facing=1 → act.x = 图宽 − act.x；矩形 = (movsx 阵位X − act.x, movsx 阵位Y − act.y, 图宽, 图高)。
+对照：GetShadowRect 一致（kShadowAction 0x24、kDefeatedShadowAction 0x27）；空图片属偏差 201。
+差异：无。
+
+## 0x0048B4A0 BattleUnit::Move — exact
+
+汇编：阵位 x/y 各加参数（16 位），返回第一参数。
+对照：Move 一致。
+差异：无。
+
+## 0x0048B4C0 BattleUnit::SetPosition — exact
+
+汇编：阵位 x/y = 参数，阵位 0x20 字节复制到保存阵位 +0xFE4，返回 x。
+对照：SetPosition 一致。
+差异：无。
+
+## 0x0048B500 BattleUnit::GetPosition — exact
+
+汇编：输出阵位 x、y，返回 y 字。
+对照：GetPosition 一致。
+差异：无。
+
+## 0x0048B520 BattleUnit::StepIdleAction — exact
+
+汇编：mainAct（+0x2B4）0xA4 字节复制到 +0xEE0；0x00436C80 失败 → 返回 0；否则图片 = 0x00436720(+0xF2A, +0xF2C) 写 +0x2A44 并返回。
+对照：StepIdleAction 一致。
+差异：无。
+
+## 0x0048B570 BattleUnit::SelectEntry — diff → exact
+
+汇编：参数≠0 → 返回 [+0]，否则 [+4]（为空则 0）。
+对照：逻辑一致（battleRecord +0x0、roleRecord +0x4）。
+差异：两个成员注释写“swd32 +0x0/+0x4”。修正：外传偏移相同，改为 +0x0、+0x4。复核：完整函数重新对照一致。
+
+## 0x0048B590 BattleUnit::GetValue2FEC — diff → exact
+
+汇编：返回 +0x2FEC 双字。
+对照：逻辑一致。
+差异：函数名 GetValueAAC 沿用正传偏移。修正：改名 GetValue2FEC（源码与函数表）。复核：一致。
+
+## 0x0048B5A0 BattleUnit::GetValue2FF4 — diff → exact
+
+汇编：返回 +0x2FF4 双字。
+对照：逻辑一致。
+差异：函数名 GetValueAB4 沿用正传偏移。修正：改名 GetValue2FF4（源码与函数表）。复核：一致。
+
+## 0x0048B5B0 BattleUnit::GetCommandA — exact
+
+汇编：返回 +0x2F88 字。
+对照：一致。
+差异：无。
+
+## 0x0048B5C0 BattleUnit::GetCommandB — exact
+
+汇编：返回 +0x2F8C 字。
+对照：一致。
+差异：无。
+
+## 0x0048B5D0 BattleUnit::GetWord2F90 — exact
+
+汇编：返回 +0x2F90 字。
+对照：一致。
+差异：无。
+
+## 0x0048B5E0 BattleUnit::GetWord2EAE — exact
+
+汇编：返回 +0x2EAE 字。
+对照：一致。
+差异：无。
+
+## 0x0048B5F0 BattleUnit::ClearIdleAction — exact
+
+汇编：mainAct（+0x2B4）0xA4 字节清零，返回 0。
+对照：ClearIdleAction 一致。
+差异：无。
+
+## 0x0048B610 BattleUnit::SetCommand — diff → exact
+
+汇编：参数为 2、0xD、3、0x29 → +0x2F8C = 参数、+0x2F88 = 0；为 0xE、0xF → +0x2FB1 |= 0x40（旗标 0x4000）后同上；为 6、0x50 → +0x2FB1 |= 8（旗标 0x800）后同上；其他 → +0x2F88 = 参数；均返回 1。
+对照：逻辑一致（UnkCommandFlag4000、UnkCommandFlag800）。
+差异：命令枚举中值 0xD/0xE/0xF 以十进制写名（UnkCommand13/14/15），与其余按十六进制取名不一致，commandB 注释所列命令也不全。修正：改名 UnkCommandD/E/F，注释按汇编列全。复核：完整函数重新对照一致。
+
+## 0x0048B680 BattleUnit::ClearFlag2BC0 — exact
+
+汇编：+0x2BC0 &= 0x7FFFFFFF。
+对照：ClearFlag2BC0 一致（kFlag2BC0 0x80000000）。
+差异：无。
+
+## 0x0048B690 BattleUnit::RaiseFlag2BC0 — exact
+
+汇编：状态 +0x2BC8 位 25 → 返回；0x00493D50(2)=1 → 返回；状态位 2 或 +0x2BC0 位 26 → 返回；状态位 17 且 0x00577378 无 0x8000 → +0x2BC0 |= 0x8000000 返回；+0x2FA6≠0 → +0x2BC0 |= 0x2000；+0x2F94=0；+0x2BC0 |= 0x80000000。
+对照：RaiseFlag2BC0 一致（ResistAll 0x2000000、kStaggerBlockingEffect 2、UnkStatus4、kFlag2BC0Blocked 0x4000000、DamageTransfer 0x20000、SpellCast、kFlag2BC0Spell 0x8000000、kFlag2BC0Damage 0x2000、kFlag2BC0）。
+差异：无。
+
+## 0x0048B720 BattleUnit::Flag2BC0 — exact
+
+汇编：返回 +0x2BC0 >> 31。
+对照：一致。
+差异：无。
+
+## 0x0048B730 BattleUnit::PushTarget — exact
+
+汇编：+0x2EE0[零扩展 +0x2F98] = 参数字，返回下标。
+对照：PushTarget 一致；越界保护属偏差 204。
+差异：无。
+
+## 0x0048B750 BattleUnit::StartDefeat — exact
+
+汇编：+0x2FF8 = 参数、+0x2FFC = 1；+0x2FC6=0 → 6；+0x2FE0=1 且 [+4] 非空 → 其 +4 字 = 0；返回 1。
+对照：StartDefeat 一致（kFallbackDefeatPose 6，roleRecord 的 hitPoints +0x4）。
+差异：无。
+
+## 0x0048B790 BattleUnit::SetUnk3038 — diff → exact
+
+汇编：+0x3038 = 参数，返回参数。
+对照：逻辑一致。
+差异：函数名 SetAF8 沿用正传偏移。修正：改名 SetUnk3038（源码三处调用与函数表）。复核：一致。
+
+## 0x0048B7A0 BattleUnit::ResetTurn — diff → exact
+
+汇编：清 +0x2F2E、+0x2FEC、+0x2FF0、+0x2FF4、+0x2FE8、+0x3020、+0x305C、+0x2FB6、+0x2FB0、+0x3008、+0x3014、+0x300C、+0x3054、+0x3034、+0x2F88、+0x2F8C、+0x2F8E、+0x2F96、+0x2EB0；+0x2B70=0xF、+0x2B74=1、+0x2E60=0、+0x2F84=2、+0x2F86=0x18；清 +0x2B7C、+0x2F2A、+0x2B98、+0x2B78、+0x2FB4、+0x2EB6/+0x2EB8/+0x2EBA、mainAct 锚点 +0x32E/+0x330、+0x2BD4。原 +0x2FF8=0 且 +0x3038=0 且命令旗标 bit3 → +0x3030=0；命令 actionFlags bit2 → +0x3030=0、+0x2B74=−0x20、+0x2BD8 = (& ~8) | 0x200。+0x2BC0 &= ~0x40000；清 standAct、castAct、recoilAct、attackAct、slotActs 前 8 个（0x148 双字，两遍）、+0x14 物品记录 0xA8 字节（说明指针不释放）、命令 0x2C 字节；四目标 −1。+0x2FE0=1 且 +0x306C=0 → +0x2F2E = rand(0x8C)+0x32。+0x306C=0；StatusBit5=1 → SetFacing(0)、+0x2BC0 &= ~0x10000000，返回 SetFacing 结果，否则返回 StatusBit5 结果。
+对照：ResetTurn 一致（kResetClearsGuard 8、DelayedFadeIn −0x20、UnkMark8、UnkMark200、kFlag2BC0Bit18 0x40000、kSlotActsPerTurn 8、kRoleGaugeSpread 0x8C、kRoleGaugeBase 0x32、kFlag2BC0Bit28）。说明指针丢弃不释放与释放无可观察差异（之后载入时原程序说明为空、不扣计数，源码说明已释放、同样不扣）。
+差异：+0x3034 成员沿用正传偏移名 unk2AF4。修正：改名 unk3034。复核：完整函数重新对照一致。
+
+## 0x0048B9D0 BattleUnit::Retarget — exact
+
+汇编：+0x2F2E=0、+0x2EAE=参数字、+0x2FF4=1、+0x3020=1，返回 1。
+对照：Retarget 一致。
+差异：无。
+
+## 0x0048BA00 BattleUnit::Counter2F92 — exact
+
+汇编：返回 +0x2F92 字（外传中无写入者，恒为 0）。
+对照：Counter2F92 一致（改名见 0x0048B040 条）。
+差异：无。
+
+## 0x0048BA10 BattleUnit::IncreaseHits — exact
+
+汇编：+0x2F90 字加 1，+0x3020=1。
+对照：IncreaseHits 一致。
+差异：无。
+
+## 0x0048BA30 BattleUnit::ClearWord2EAE — exact
+
+汇编：+0x2EAE=0xFFFF。
+对照：一致（NoUnk2EAE）。
+差异：无。
+
+## 0x0048BA40 BattleUnit::RaiseUnk2FE8 — exact
+
+汇编：+0x2FE8=1。
+对照：一致（改名见 0x0048B040 条）。
+差异：无。
+
+## 0x0048BA50 BattleUnit::Unk2FE8 — exact
+
+汇编：返回 +0x2FE8。
+对照：一致。
+差异：无。

@@ -1372,7 +1372,7 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
         return 0;
     }
 
-    unit.SetAF8(1);
+    unit.SetUnk3038(1);
     unit.SetStatus(kRetreatedStatus);
     unit.SetGuarding(1);
 
@@ -2401,7 +2401,7 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
     }
 }
 
-// The turn of a role in RoleFrame (inline in the original): a role not slotted, not held, ready (GetValueAB4) while no
+// The turn of a role in RoleFrame (inline in the original): a role not slotted, not held, ready (GetValue2FF4) while no
 // unit acts, the battle goes on, no role has the panel and the fight talk lets it run, once its second gauge drains,
 // takes the turn (its turn resets when the enemy being taken is the last one or the battle is to end with nothing
 // pending). A role ordered to act (turnTaken 2) acts at once when no slot record waits (its pending order becomes the
@@ -2413,7 +2413,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     const auto at = static_cast<std::size_t>(role);
     const int self = role + BattleState::FirstRoleUnit;
 
-    if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.GetValueAB4() != 1 || battle.actingUnit != -1 ||
+    if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.GetValue2FF4() != 1 || battle.actingUnit != -1 ||
         battle.result != 0 || battle.currentUnit != 0 || this->fightTalk.battleRuns != 1 ||
         unit.DrainSecondGauge() != 1)
     {
@@ -2486,7 +2486,7 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
         return;
     }
 
-    if (unit.GetValueAB4() != 0)
+    if (unit.GetValue2FF4() != 0)
     {
         return;
     }
@@ -2556,7 +2556,7 @@ void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
             BattleRole& other = this->battleRoles[index];
 
             if (other.AutoControl() != 1 && other.GuestControl() != 1 && other.Ghost() != 1 &&
-                other.StatusBit13() != 1 && unit.GetValueAB4() == 0)
+                other.StatusBit13() != 1 && unit.GetValue2FF4() == 0)
             {
                 other.SetAC0(0);
                 ++order.targetCount;
@@ -2701,7 +2701,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
 
     BattleEnemy& aimed = this->battleEnemies[static_cast<std::size_t>(static_cast<i16>(unit.GetWord2EAE()))];
 
-    if (aimed.GetValueAAC() != 0)
+    if (aimed.GetValue2FEC() != 0)
     {
         return;
     }
@@ -2981,7 +2981,7 @@ void Game::RoleRetreatFrame(BattleRole& unit, int role)
     if (role == 0)
     {
         BattleRole& ghost = this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)];
-        ghost.SetAF8(1);
+        ghost.SetUnk3038(1);
         ghost.SetGuarding(1);
     }
 

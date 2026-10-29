@@ -1384,7 +1384,7 @@ int Game::FightTalkUnits(u16 command)
         {
             const u16 unit = talk.UnsignedWord(1);
             this->SetTalkCommandUnit(unit);
-            this->TalkUnit(unit).SetAF8(1);
+            this->TalkUnit(unit).SetUnk3038(1);
 
             if (unit <= kLastEnemy)
             {

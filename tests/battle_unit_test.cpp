@@ -201,8 +201,8 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
         )
     );
     CHECK_EQ(unit.colorPair, BattleUnit::DefaultColorPair);
-    CHECK_EQ(unit.SetCommand(BattleUnit::UnkCommand14), 1);
-    CHECK_EQ(unit.commandB, BattleUnit::UnkCommand14);
+    CHECK_EQ(unit.SetCommand(BattleUnit::UnkCommandE), 1);
+    CHECK_EQ(unit.commandB, BattleUnit::UnkCommandE);
     CHECK_EQ(unit.commandFlags, BattleUnit::UnkCommandFlag4000);
     unit.SetCommand(kOtherCommand);
     CHECK_EQ(unit.commandA, kOtherCommand);

@@ -2160,7 +2160,7 @@ int Game::EnemyFrame(int enemy)
                         battle.enemyTargetPicked = 1;
                     }
 
-                    if (unit.GetValueAB4() == 0)
+                    if (unit.GetValue2FF4() == 0)
                     {
                         this->EnemyChooseCommand(unit, enemy);
                     }
@@ -2176,7 +2176,7 @@ int Game::EnemyFrame(int enemy)
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
             }
 
-            if (battle.actingUnit == enemy && battle.unk50CE6C[at] == 0 && unit.GetValueAB4() == 1)
+            if (battle.actingUnit == enemy && battle.unk50CE6C[at] == 0 && unit.GetValue2FF4() == 1)
             {
                 this->EnemyActFrame(unit, enemy);
             }

@@ -396,13 +396,13 @@ const void* BattleUnit::SelectEntry(int second) const
 }
 
 // swd3e.exe 0x0048B590
-int BattleUnit::GetValueAAC() const
+int BattleUnit::GetValue2FEC() const
 {
     return this->unk2FEC;
 }
 
 // swd3e.exe 0x0048B5A0
-int BattleUnit::GetValueAB4() const
+int BattleUnit::GetValue2FF4() const
 {
     return this->unk2FF4;
 }
@@ -442,7 +442,7 @@ int BattleUnit::ClearIdleAction()
 // UnkCommandFlag800, 14 and 15 UnkCommandFlag4000), any other to commandA
 int BattleUnit::SetCommand(int command)
 {
-    if (command == BattleUnit::UnkCommand14 || command == BattleUnit::UnkCommand15)
+    if (command == BattleUnit::UnkCommandE || command == BattleUnit::UnkCommandF)
     {
         this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag4000);
     }
@@ -451,7 +451,7 @@ int BattleUnit::SetCommand(int command)
         this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag800);
     }
     else if (
-        command != BattleUnit::UnkCommand2 && command != BattleUnit::UnkCommand13 &&
+        command != BattleUnit::UnkCommand2 && command != BattleUnit::UnkCommandD &&
         command != BattleUnit::UnkCommand3 && command != BattleUnit::UnkCommand29
     )
     {
@@ -558,7 +558,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->unk3014 = 0;
     this->unk300C = 0;
     this->unk3054 = 0;
-    this->unk2AF4 = 0;
+    this->unk3034 = 0;
     this->commandA = 0;
     this->commandB = 0;
     this->unk2F8E = 0;
@@ -2034,7 +2034,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->extraNumber = 0;
     this->unk302C = 0;
     this->guarding = 0;
-    this->unk2AF4 = 0;
+    this->unk3034 = 0;
     this->dying = 0;
     this->unk300C = 0;
     this->unk3038 = 0;
@@ -4876,7 +4876,7 @@ void BattleUnit::IdleFrame(BattleServices& services, int paused)
         --this->unk2FD1;
     }
 
-    this->unk2AF4 = paused;
+    this->unk3034 = paused;
     act.hold = 0;
 
     if (paused == 1 || (this->marks & BattleUnit::Held) != 0)
@@ -5784,7 +5784,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
         if ((this->command.actionFlags & UnitCommand::UnkAction1000) != 0)
         {
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
-            this->SetCommand(BattleUnit::UnkCommand15);
+            this->SetCommand(BattleUnit::UnkCommandF);
             return 1;
         }
 
@@ -5921,7 +5921,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
     }
 
     const bool special = (this->command.actionFlags & UnitCommand::UnkAction1000) != 0;
-    this->SetCommand(special ? BattleUnit::UnkCommand15 : BattleUnit::UnkCommand2);
+    this->SetCommand(special ? BattleUnit::UnkCommandF : BattleUnit::UnkCommand2);
     this->unk2FD9 = 1;
     this->idleTurns = 0;
     ++this->itemWait;
@@ -7174,7 +7174,7 @@ bool BattleUnit::HasActionFlags(u32 flags) const
 }
 
 // swd3e.exe 0x0048B790
-int BattleUnit::SetAF8(int value)
+int BattleUnit::SetUnk3038(int value)
 {
     this->unk3038 = value;
     return value;

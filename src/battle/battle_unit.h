@@ -326,9 +326,9 @@ public:
         UnkCommand3 = 3,
         UnkCommand4 = 4,  // swd3e: an enemy takes the anchor of its stand act (GetOffset)
         UnkCommand6 = 6,
-        UnkCommand13 = 0xD,
-        UnkCommand14 = 0xE,
-        UnkCommand15 = 0xF,
+        UnkCommandD = 0xD,
+        UnkCommandE = 0xE,
+        UnkCommandF = 0xF,
         UnkCommand29 = 0x29,  // swd3e: goes to commandB (SetCommand)
         UnkCommand16 = 0x16,
         UnkCommand18 = 0x18,
@@ -360,7 +360,7 @@ public:
         UnkCommandFlag800 = 0x800,  // set by command 6
         UnkCommandFlag1000 = 0x1000,
         UnkCommandFlag2000 = 0x2000,
-        UnkCommandFlag4000 = 0x4000,  // set by commands 14 and 15
+        UnkCommandFlag4000 = 0x4000,  // set by commands 0xE and 0xF
         UnkCommandFlag8000 = 0x8000,  // set when the skill action is loaded
     };
 
@@ -454,8 +454,8 @@ public:
     i16 GetPosition(u16& x, u16& y) const;
     const Picture* StepIdleAction(BattleServices& services);
     const void* SelectEntry(int second) const;
-    int GetValueAAC() const;
-    int GetValueAB4() const;
+    int GetValue2FEC() const;
+    int GetValue2FF4() const;
     u16 GetCommandA() const;
     u16 GetCommandB() const;
     u16 GetWord2F90() const;
@@ -473,7 +473,7 @@ public:
     int ActFlag15() const;
     int ActFlag17() const;
     bool HasActionFlags(u32 flags) const;
-    int SetAF8(int value);
+    int SetUnk3038(int value);
     void RaiseFlag2BC0Bit17();
     int Flag2BC0Bit17() const;
     bool HitPointsAtMost(int share) const;
@@ -741,10 +741,10 @@ private:
     void StartAilment(BattleServices& services, EffectNode& node);
 
 public:
-    // swd32 +0x0..+0x0F: what the unit is.
+    // +0x0..+0x0F: what the unit is.
     RoleRecord* battleRecord =
-        nullptr;  // swd32 +0x0 the battle copy of a party role's record (+0x26, +0x28: attack, defence)
-    RoleRecord* roleRecord = nullptr;  // swd32 +0x4 the role's party record
+        nullptr;                       // +0x0 the battle copy of a party role's record (+0x26, +0x28: attack, defence)
+    RoleRecord* roleRecord = nullptr;  // +0x4 the role's party record
     i32* roleBlock = nullptr;          // +0x8 the role's 0x60-byte block at 0x004C6700 ([0]: the fury gauge, inferred)
     ObjectRecord* data = nullptr;      // +0xC an enemy's mon.dat object (usually `object`)
     TalismanGhost* ghostRecord = nullptr;     // +0x10 (swd3e) the talisman ghost's record (SetupGhost)
@@ -904,7 +904,7 @@ public:
     u16 flashFall = FlashPeak;    // +0x2F86 and its fall
     u16 commandA = 0;             // +0x2F88
     u16 unk2F8A = 0;
-    u16 commandB = 0;  // +0x2F8C commands 2, 3, 6, 13, 14 and 15
+    u16 commandB = 0;  // +0x2F8C commands 2, 3, 6, 0xD, 0xE, 0xF, 0x29 and 0x50
     u16 unk2F8E = 0;
     u16 unk2F90 = 0;
     u16 hurtStep = 0;  // +0x2F94 the step of the stagger (HurtFrame)
@@ -955,7 +955,7 @@ public:
     i32 extraNumber = 0;  // +0x3028
     i32 unk302C = 0;
     i32 guarding = 0;  // +0x3030
-    i32 unk2AF4 = 0;
+    i32 unk3034 = 0;
     i32 unk3038 = 0;    // +0x3038 1: the gauge tick (0x0047E720) and the poison spread (0x00469D80) skip the unit
     i32 absorbing = 0;  // +0x303C 1 while an absorb runs (AbsorbFrame)
     // +0x3040 (swd3e) 1: a party role set up from its record (Setup), 0: the talisman ghost (0x0047ED60); read by
