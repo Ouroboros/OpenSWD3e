@@ -121,6 +121,21 @@ void FieldView::PanCamera()
     Scene& view = this->game.scene;
     field.StepOriginalPan();
 
+    // The rebuild (deviations.md): with the wider view the story command may hold a pan to 0 inside the map with its
+    // step still set (it clears the step by the pan asked for); the wait for the pan (all four 0) would never end.
+    if (field.WiderView())
+    {
+        if (view.panAcross == 0)
+        {
+            view.panStepX = 0;
+        }
+
+        if (view.panDown == 0)
+        {
+            view.panStepY = 0;
+        }
+    }
+
     if (view.panAcross == 0 && view.panDown == 0)
     {
         return;
