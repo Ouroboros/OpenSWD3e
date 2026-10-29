@@ -52,7 +52,7 @@
 - [x] 83004ed 错误弹窗时在日志里记录调用栈
 - [x] 677a78d release.bat 编译打包并更新 GitHub Release
 - [x] 084d27e 发布包带上调试符号 pdb
-- [ ] 6b1780f Linux 一键编译脚本 build_linux.sh
+- [x] 6b1780f Linux 一键编译脚本 build_linux.sh
 
 ## 四、命名同步（可选，与 swd3-rebuild 平行）
 
