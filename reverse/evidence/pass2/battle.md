@@ -2672,3 +2672,27 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：取队列最后节点，+0x1F5=1；拖尾 started（+0x1DE）≠0 → 返回；否则 =1、8 个残影图号 0xFFFF、三色 = 参数、direction=2、count=3。
 对照：TrailLastQueuedAction 一致（NoPicture、InPlace 2、kQueuedTrailImages 3）；空队列时原程序把队列头当节点写属偏差 176。
 差异：无。
+
+## 0x00496650 BattleUnit::ChooseCommand — exact
+
+汇编：+0x2FB1 位 7 → 1。命令清零、+0x2B38 起 16 字节清零。选择 = 0xFFFF；+0x2FCE>0 → 2；否则 +0x2BC0 位 21：物品 +0x96（有符号字）<0x3E9 → 1，≥0x1771 → 0，二者之间 → rand(2)；否则 +0x2FDD=2 → 0，=1 → 1，=0 → +0x2FCC=1 时选 1 并置 2，否则选 0 并置 1。StatusBit5=1 → 4。(+0x2FCA 或 +0x2FCB 非 0) 且选择≠2 且无狂暴位且 +0x2FC9=0 → 1。加成 = 物品 +0x20 位 5 且血 ≤ 最大/2 → 3。按选择（字）：2 → 标记 0x100 → 普通攻击；+0x2FCE=1/2 → 载入 +0x80/+0x84 物品到 +0x14、释放说明、输出 = act、命令载入其技能脚本、+0x2EB6 = 其 +0x34、+0x2FCE=0、+0x82/+0x86 减 1、+0x2FB1|=0x80、SetCommand(2)、+0x2FD8 加 1，返回 1；其他 → 普通攻击。1 → +0x99=0 → 普通攻击；掷 rand(10)：≤6 → 0，7..10 → 1；+0x2FCB ≥5 → 第二技能与次数皆非 0 时选 1，+0x2FCB=0；+0x96≠0 → 0；选 1：+0x7C/+0x7E 为 0 或 rand(10) ≥ +0x2FC9 + +0x99 + 加成 → 普通攻击；+0x2FCA、+0x2FCB 加 1、+0x2FDA=1、载入 +0x7C 命令、+0x2FCB=0；选 0 同（+0x78/+0x7A，不清 +0x2FCB）；可用判定（物品 +0x20 位 5 且命令 unk08≠0：0x10000 且 0x0046A9A0=0、HasEffectBits=1、+0x2BC0 位 12 → 不可用；+0x3044=1 且 unk08 位 28 或 0x0049C3A0=1 → 不可用；actionFlags 0x1000 且 0x00577210≠0 → 不可用）→ 普通攻击；+0x2EB0 = 命令值、次数减 1；actionFlags 0x1000 → +0x2FB1|=0x80、SetCommand(0xF)，返回 1；命令旗标位 1 → 输出 = castAct、+0x2FB1|=0x80、SetCommand(2)、+0x2B98 = 0x30/0x31，返回 1；否则 +0x2FB6 = 技能+1、SetCommand(1)、命令旗标 0x10 且 +0x2F88=1 → +0x2F8C=1、+0x2F88=0xC8，返回 0。0 → 标记 0x100 或 +0x98=0 → 普通攻击；狂暴且 +0x96 ≥0x1771 且 rand(10) ≥2 → 3，否则 rand(10)：≤4 → 0、5..7 → 1、8..10 → 2；+0x2FCA ≥7 → 第三物品与次数非 0 时 2，+0x2FCA=0；+0x14 物品记录清零；0/1/2：物品与次数非 0 且 rand(10) < +0x2FC9 + +0x98 + 加成 → 载入物品与其命令，可用判定（物品版：位 12、0x10000、0x8180000 且 0x0046A930=1、HasEffectBits 顺序）→ 选中、输出 act、次数减 1、+0x2B98 = 0x2C/0x2E/0x2F（第三个还清 +0x2FCA）；3 → 载入 +0x96 物品与命令，+0x3044=1 且 unk08 位 28 或 actionFlags 0x1000 且 0x00577210≠0 → 未选，否则选中、输出 act、+0x2B98=0x2C。释放说明、+0x2B38 清 16 字节；未选 → 普通攻击；选中 → lstrcpyA 名称、+0x2EB0 += 命令值、+0x2FB1|=0x80，+0x60 ≥0x32 → 命令 +0x18 += (+0x60−0x32)×+0x18/100，SetCommand(actionFlags 0x1000 ? 0xF : 2)，+0x2FCA/+0x2FCB 加 1、+0x2FD9=1、+0x2FC9=0，返回 1。普通攻击：命令清零、载入 +0x64、SetCommand(1)、+0x2FC9/+0x2FCA/+0x2FCB/+0x2FD3 加 1，+0x2EB0 += 敌人 +0x5A 或角色战斗记录 +0x26，命令旗标 0x10 且 +0x2F88=1 → +0x2F8C=1、+0x2F88=0xC8，+0x2BC0 位 16 → 命令旗标字 = 8，返回 0。
+对照：ChooseCommand、ChooseAttack、MarkDelayedAttack 一致（kNoChoice 0xFFFF、各选择值、kEnragedFlag、kEnrageSkillTop 0x3E9、kEnrageObjectFrom 0x1771、kCoinChoices 2、kItemsChosen/kSkillsChosen、kLowLifeBonus 3、kChoiceRoll 10、kFirstSkillRoll 6、kSkillWaitTurns 5、kFirstItemRoll 4、kSecondItemRoll 7、kItemWaitTurns 7、kEnrageObjectMiss 2、kEnrageObject 3、kChoiceBlocked 0x1000、kPartyBuff 0x10000、kAllPartyBuffs 0x8180000、kNoForcedStatus 0x10000000、kFirst/Second/ThirdItemAction 0x2C/0x2E/0x2F、kFirst/SecondSkillAction 0x30/0x31、kWiseEnemy 0x32、kDelayedCommand 0xC8、kAttackStepsIn 0x10000；UnitCommand::flags 为字），随机数消费次序相同；名称越界属偏差 194。
+差异：无。
+
+## 0x00497350 UnitFrame::IdleEffectAdvance — exact
+
+汇编：mainAct target 位 1：effectA≠0 → stage|=0x4000；命令 followAct≠0 → stage|=0x8000；target 0x200 → mainAct.hold=1；target 清位 1；castAct 清零。stage 无 0x4000 → 返回。effectA=0 → stage 清 0x4000、castAct 清零，返回。castAct 动作 = effectQ、id = effectA；Run 失败 → 返回。播放 view，非 0 → 声像 (阵位X ≥0x140 ? 0x30 : −0x30)；view=0。+0x2A44 = GetPicture；旗标 = castAct 旗标、偏移 = castAct.x；facing=1 → 旗标翻转、偏移非 0 → 图宽−偏移。画于 (movsx +0x2EBC + 阵位X − movsx +0x2EC2 − 偏移, movsx mainAct 锚点Y + 阵位Y − castAct.y − mainAct.y)。waiting=1 → mainAct target 清 0x200、stage 清 0x4000、+0x2E60=0、+0x2EBC=0、+0x300C=0、mainAct.hold=0、effectA=0、castAct 清零。
+对照：IdleEffectAdvance 一致（kPanCentre 0x140、kFadePan 0x30）；空图片属偏差 396 同类；绘制经 Scene，偏差 97/99。
+差异：无。
+
+## 0x004975E0 UnitFrame::FollowUpAdvance — exact
+
+汇编：stage 无 0x8000 → 返回。attackAct id = 零扩展 followAct、动作 0；Run 失败 → 返回。播放 view、非 0 → 声像同上、view=0。+0x2A44 = GetPicture；旗标 = act 旗标、偏移 = act.x；facing=1 → 翻转、偏移 = 图宽−偏移（不判 0）。画于 (阵位X − 偏移, 阵位Y − act.y)。waiting=1 → stage=0、+0x2E60=0、mainAct target=0、+0x2EBC=0、+0x300C=0、mainAct.hold=0、effectA=0、attackAct 清零。
+对照：FollowUpAdvance 一致。
+差异：无。
+
+## 0x00497790 BattleUnit::Defense — exact
+
+汇编：队伍角色：基 = 战斗记录 +0x28（零扩展）；状态位 30 → 升 = 基×movsx +0x2ED8/100；位 20 → 降 = 同；位 26 → 护罩 = 基×70/100；值 = (u16)(基−降) + 护罩 + 升（eax 高位在各路径为 0）；+0x2EB2 >0（有符号）→ 值 = movsx 值 × +0x2EB2 × 10/100；值的低字为负 → 0，否则返回值。敌人：基 = 物品 +0x5C，升降同；返回 基 − 降 + 升。
+对照：Defense 一致（kBarrierPercent 70、kUnk2EB2Tenths 10、kSignBit16 0x8000）。
+差异：无。
