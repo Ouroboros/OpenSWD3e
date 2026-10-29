@@ -315,3 +315,81 @@
 对照：LoadSound 一致（kBareFmtKind 0、kBareFmtPad 0x18、kWholeRiffKind 1、kRiffTemplate 与 exe 一致、kFmtAt 0x14、kMovedFmtBytes 0x12、kFmtSizeAt 0x10、kFmtBytes 0x10、kRiffSizeAt 4、kDataTagEnd 0x26、kDataSizeAt 0x28）；图像至少 0x2C 字节与 id 范围属偏差 40。
 差异：索引表已释放时返回空、图像缓冲清零两处保护未登记。
 修正：偏差表第 40 行补入这两种情形；代码不变。复核：完整函数重新对照一致。
+
+## 0x0049E080 StreamPlayer::~StreamPlayer（atexit 回调）— exact
+
+汇编：ecx = 0x005795C0，跳 0x0049E0B0。
+对照：~StreamPlayer 调用 Close。
+差异：无。
+
+## 0x0049E0B0 StreamPlayer::~StreamPlayer — exact
+
+汇编：跳 0x0049E120（Close）。
+对照：~StreamPlayer 调用 Close。
+差异：无。
+
+## 0x0049E0C0 StreamPlayer::Open — exact
+
+汇编：+0 = 驱动参数；+8 = +0xC = 1；两次分配 0x18 字节清零节点挂到空闲链头；返回 1（不检查是否已打开）。
+对照：StreamPlayer::Open 一致（kStreamNodes 2）；驱动由平台层持有，属偏差 486。
+差异：无。
+
+## 0x0049E120 StreamPlayer::Close — exact
+
+汇编：未打开 → 0。播放链与空闲链逐节点：释放名字（+4，非 0 时）、AIL_close_stream(句柄)、释放节点；+8 = +0xC = 0，返回 1。
+对照：StreamPlayer::Close 一致（播放中的流结束、两表清空、标志清零；Miles 句柄关闭属偏差 486）。
+差异：无。
+
+## 0x0049E1B0 StreamPlayer::SetVolume — exact
+
+汇编：未打开 → 0。Find(编号) 为空 → −1。+0xC = ClampVolume(音量) << 4；AIL_set_stream_volume(ClampVolume(音量))；返回 AIL_stream_volume(句柄)。
+对照：SetVolume 一致（VolumeScale 0x10）。
+差异：无。
+
+## 0x0049E220 StreamPlayer::Play — exact
+
+汇编：编号=0 或 Find(编号) 非空 → 0。AllocNode 为空 → 0。+4 = +8 = 0；AIL_open_stream(驱动, 名, 0)，失败 → 记错误、FreeNode，返回 0；复制名字；+0xC = ClampVolume << 4；用户数据 = 编号；音量 = ClampVolume；循环次数；开始；PushActive；返回编号（不检查打开与启用）。
+对照：StreamPlayer::Play 一致。
+差异：无。
+
+## 0x0049E350 StreamPlayer::FadeOut — exact
+
+汇编：未打开、未启用、编号=0 或 Find 为空 → 0。AIL_stream_ms_position（结果不用）；+0x10 |= 0x80000000；SetFadeStep(节点, 步数)；返回编号。
+对照：FadeOut 一致。
+差异：无。
+
+## 0x0049E3D0 SetFadeStep — exact
+
+汇编：步数=0 → 1；+8 = +0xC / 步数（有符号），为 0 → +8 = 1；返回商（唯一调用处不用）。
+对照：SetFadeStep 一致。
+差异：无。
+
+## 0x0049E400 StreamPlayer::Update — exact
+
+汇编：播放链空 → 0。逐节点：+0x10 位 31（淡出）→ +0xC −= +8，ClampVolume(+0xC/16 有符号) = 0 → 退役，否则设音量、标志 = 0、前进；否则 AIL_stream_status：2 → 退役；4、8、16 → 标志 = 0、前进；其余 → 标志为 1 时退役，否则前进（标志不变）。退役：AIL_close_stream、释放名字、+0/+4/+8/+0x10 清零、摘下挂到空闲链头（标志保持 1）。返回 0。跳转表 0x0049E4D4 与字节表 0x0049E4E0 已按 exe 字节核对。
+对照：StreamPlayer::Update 一致；标志初值来自未初始化栈值，属偏差 39。
+差异：无。
+
+## 0x0049E4F0 StreamPlayer::IsStopped — exact
+
+汇编：返回 Find(编号) 为空。
+对照：IsStopped 一致。
+差异：无。
+
+## 0x0049E510 StreamPlayer::FirstId — exact
+
+汇编：播放链头为空 → 0；否则 AIL_stream_user_data(句柄, 0)。
+对照：FirstId 一致。
+差异：无。
+
+## 0x0049E530 SequencePlayer::PushActive — exact
+
+汇编：节点为空 → 0；否则挂到播放链头（+0x424），返回节点。
+对照：PushActive 一致。
+差异：无。
+
+## 0x0049E550 StreamPlayer::Find — exact
+
+汇编：沿播放链比较 AIL_stream_user_data(句柄, 0) 与编号，相等返回节点，否则 0。
+对照：Find 一致。
+差异：无。

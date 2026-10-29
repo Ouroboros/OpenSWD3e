@@ -469,3 +469,9 @@
 汇编：调用 0x0049D3D0 构造 0x00578F40，再 atexit(0x0049D3F0 → 0x0049D430 析构)。
 对照：AudioManager::effects（SoundEffects）随 Game 构造与析构。
 差异：无。
+
+## 0x0049E050、0x0049E060、0x0049E070 全局初始化片段（音乐流播放器）— exact
+
+汇编：0x0049E050 调用 0x0049E060（以 0x005795C0 跳入共用构造片段 0x0049E090：+0 = +8 = +0xC = 0、+4 = 0x1E、+0x424 = +0x43C = 0），再 0x0049E070（atexit(0x0049E080) 注册析构）。
+对照：AudioManager::streams（StreamPlayer）随 Game 构造与析构。
+差异：无。
