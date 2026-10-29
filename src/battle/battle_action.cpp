@@ -2540,7 +2540,8 @@ void Game::RoleOrderFrame(BattleRole& unit, int role)
     battle.aiTarget = 1;
 }
 
-// The targets of a sweep order of RoleOrderFrame (inline in the original): on the roles (unk5772D0) every role in
+// The targets of a sweep order of RoleOrderFrame (inline in the original): on the roles (an order at the party, unk00;
+// the original reads unk5772D0, see below) every role in
 // battle not an escort, a guest, the ghost or StatusBit13 while the acting role is not ready, and with every role
 // standing gathered the last role standing is aimed at; on the enemies every enemy standing without a pending removal
 // (the count in targetCount), and with every one gathered the first one standing (unk57727C).
@@ -2549,7 +2550,9 @@ void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
     BattleState& battle = this->battleState;
     i32 aim = -1;
 
-    if (battle.unk5772D0 != 0)
+    // The rebuild (deviations.md): the side is the order's own, as it hits; the original reads unk5772D0, cleared when
+    // another role's action ends or its order is queued while this one aims.
+    if (order.unk00 != 0)
     {
         for (u32 index = 0; index < battle.roleCount; ++index)
         {
