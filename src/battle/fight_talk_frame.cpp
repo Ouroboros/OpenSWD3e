@@ -3124,7 +3124,7 @@ int Game::FightTalkMusic()
 }
 
 // Command 0x3D of FightTalkFrame (inline in the original): the units listed after it (ended by 0xFFFF) are checked in
-// turn; once as many have no counter (Counter2A76) as are listed, the talk jumps to the place after the list;
+// turn; once as many have no counter (Counter2F92) as are listed, the talk jumps to the place after the list;
 // otherwise it goes on two words past that place. An empty list keeps the talk on the command.
 int Game::FightTalkCounters()
 {
@@ -3149,7 +3149,7 @@ int Game::FightTalkCounters()
             talk.battleRuns = 0;
             this->SetTalkCommandUnit(unit);
 
-            if (this->TalkUnit(unit).Counter2A76() == 0 && ++cleared == count)
+            if (this->TalkUnit(unit).Counter2F92() == 0 && ++cleared == count)
             {
                 talk.cursor += (static_cast<std::size_t>(count) + 2) * sizeof(u16);
                 talk.Seek(talk.Word(0));

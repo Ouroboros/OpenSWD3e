@@ -240,7 +240,7 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
             case SkillOpcode::Unk20:
                 skill.unk20 = code.WordAt(at);
                 code.position += sizeof(u16);
-                skill.unk20 |= SkillScript::Unk1EMark;
+                skill.unk20 |= SkillScript::Unk20Mark;
                 break;
 
             case SkillOpcode::SetUnkFlag4:
@@ -362,7 +362,9 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
 {
     if (record.description.has_value())
     {
-        this->descriptionBytes -= static_cast<i32>(record.description->size() + 1);
+        // The original takes back only the string length (strlen), not the terminator it counted.
+        const std::string& text = *record.description;
+        this->descriptionBytes -= static_cast<i32>(std::min(text.find('\0'), text.size()));
         record.description.reset();
     }
 

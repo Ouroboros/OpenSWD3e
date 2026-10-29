@@ -227,10 +227,7 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     CHECK_EQ(unit.slotActs[BattleUnit::UnkSlot9].id, kSlotAct);
     CHECK_EQ(unit.command.flags, 0);
     unit.IncreaseHits();
-    unit.IncreaseCounter2A76();
-    CHECK_EQ(unit.GetAE0(), 1);
-    CHECK_EQ(unit.DecreaseHits(), 0);
-    CHECK_EQ(unit.GetAE0(), 0);
+    CHECK_EQ(unit.unk3020, 1);
     CHECK_EQ(unit.SetPosition(kPlaceX, kPlaceY), kPlaceX);
     unit.Move(kMoveStep, -kMoveStep);
     swd3e::u16 x = 0;

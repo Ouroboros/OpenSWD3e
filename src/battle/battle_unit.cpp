@@ -50,7 +50,7 @@ constexpr int kGaugeBase = 0x32;  // a random gauge: kGaugeBase + kGaugeSpread /
 constexpr int kGaugeSpread = 0x168;
 constexpr i32 kRoleGaugeShort = 0x12C;
 constexpr u32 kGaugeDivisors = 0xA;
-constexpr std::size_t kClearedNameBytes = 0x10;  // ResetTurn clears only the start of the skill name
+constexpr std::size_t kClearedNameBytes = 0x10;  // ClearTurnCommand clears only the start of the skill name
 constexpr int kRoleGaugeBase = 0x32;             // a party role starts a turn at kRoleGaugeBase + 0..kRoleGaugeSpread-1
 constexpr u32 kRoleGaugeSpread = 0x8C;
 
@@ -404,7 +404,7 @@ int BattleUnit::GetValueAAC() const
 // swd3e.exe 0x0048B5A0
 int BattleUnit::GetValueAB4() const
 {
-    return this->unk2AB4;
+    return this->unk2FF4;
 }
 
 // swd3e.exe 0x0048B5B0
@@ -548,20 +548,20 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->unk2FEC = 0;
     const i32 wasDefeated = this->defeated;
     this->unk2FF0 = 0;
-    this->unk2AB4 = 0;
-    this->unk2AA8 = 0;
-    this->unk2AE0 = 0;
+    this->unk2FF4 = 0;
+    this->unk2FE8 = 0;
+    this->unk3020 = 0;
     this->evadeRolled = 0;
     this->unk2FB6 = 0;
     this->commandFlags = 0;
-    this->unk2AC8 = 0;
-    this->unk2AD4 = 0;
-    this->unk2ACC = 0;
+    this->unk3008 = 0;
+    this->unk3014 = 0;
+    this->unk300C = 0;
     this->unk3054 = 0;
     this->unk2AF4 = 0;
     this->commandA = 0;
     this->commandB = 0;
-    this->unk2A72 = 0;
+    this->unk2F8E = 0;
     this->drainingGauge = 0;
     this->unk2EB0 = 0;
     this->fadeLevel = BattleUnit::Opaque;
@@ -626,53 +626,27 @@ int BattleUnit::ResetTurn(BattleServices& services)
     return result;
 }
 
-// swd3e.exe 0x0048B9D0: also marks unk2AE0
+// swd3e.exe 0x0048B9D0: also marks unk3020
 int BattleUnit::Retarget(i16 value)
 {
     this->gauge = 0;
     this->unk2EAE = static_cast<u16>(value);
-    this->unk2AB4 = 1;
-    this->unk2AE0 = 1;
+    this->unk2FF4 = 1;
+    this->unk3020 = 1;
     return 1;
 }
 
-// swd32.exe 0x00478AA0 (unmatched in swd3e)
-void BattleUnit::IncreaseCounter2A76()
+// swd3e.exe 0x0048BA00: nothing in swd3e writes the word
+u16 BattleUnit::Counter2F92() const
 {
-    ++this->unk2A76;
-}
-
-// swd3e.exe 0x0048BA00
-u16 BattleUnit::Counter2A76() const
-{
-    return this->unk2A76;
+    return this->unk2F92;
 }
 
 // swd3e.exe 0x0048BA10
 void BattleUnit::IncreaseHits()
 {
     ++this->unk2F90;
-    this->unk2AE0 = 1;
-}
-
-// swd32.exe 0x00478AE0 (unmatched in swd3e)
-i16 BattleUnit::DecreaseHits()
-{
-    if (this->unk2F90 != 0)
-    {
-        --this->unk2F90;
-    }
-
-    auto result = static_cast<i16>(this->unk2A76);
-
-    if (result != 0)
-    {
-        --result;
-        this->unk2A76 = static_cast<u16>(result);
-    }
-
-    this->unk2AE0 = 0;
-    return result;
+    this->unk3020 = 1;
 }
 
 // swd3e.exe 0x0048BA30
@@ -682,21 +656,15 @@ void BattleUnit::ClearWord2EAE()
 }
 
 // swd3e.exe 0x0048BA40
-void BattleUnit::SetAA8()
+void BattleUnit::RaiseUnk2FE8()
 {
-    this->unk2AA8 = 1;
+    this->unk2FE8 = 1;
 }
 
 // swd3e.exe 0x0048BA50
-int BattleUnit::GetAA8() const
+int BattleUnit::Unk2FE8() const
 {
-    return this->unk2AA8;
-}
-
-// swd32.exe 0x00478B50 (unmatched in swd3e)
-int BattleUnit::GetAE0() const
-{
-    return this->unk2AE0;
+    return this->unk2FE8;
 }
 
 // swd3e.exe 0x004902D0
@@ -723,7 +691,7 @@ void BattleUnit::MarkAC8()
 {
     if ((this->commandFlags & BattleUnit::UnkCommandFlag200) == 0)
     {
-        this->unk2AC8 = 1;
+        this->unk3008 = 1;
     }
 }
 
@@ -783,7 +751,7 @@ int BattleUnit::SetHeld(int value)
 // swd3e.exe 0x00490A40
 int BattleUnit::SetAD4(int value)
 {
-    this->unk2AD4 = value;
+    this->unk3014 = value;
     return value;
 }
 
@@ -2010,8 +1978,8 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2A14 = 0;
     this->glowPhase = 0;
     this->commandA = 0;
-    this->unk2A6E = 0;
-    this->unk2A72 = 0;
+    this->unk2F8A = 0;
+    this->unk2F8E = 0;
     this->unk2F90 = 0;
     this->hurtStep = 0;
     this->drainingGauge = 0;
@@ -2021,7 +1989,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->landedActions = 0;
     this->unk2BC0 = 0;
     this->healChoice = 0;
-    this->unk2A92 = 0;
+    this->unk2FC4 = 0;
     this->evadeSkill = 0;
     this->defeatPose = 0;
     this->fixedPose = 0;
@@ -2046,21 +2014,21 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2FD9 = 0;
     this->unk2FDA = 0;
     this->kind = 0;
-    this->unk2AA4 = 0;
-    this->unk2AA8 = 0;
+    this->unk2FE4 = 0;
+    this->unk2FE8 = 0;
     this->unk2FEC = 0;
     this->unk2FF0 = 0;
-    this->unk2AB4 = 0;
+    this->unk2FF4 = 0;
     this->defeated = 0;
     this->outline = 0;
     this->charging = 0;
-    this->unk2AC8 = 0;
+    this->unk3008 = 0;
     this->stage = 0;
     this->held = 0;
-    this->unk2AD4 = 0;
+    this->unk3014 = 0;
     this->unk3018 = 0;
-    this->unk2ADC = 0;
-    this->unk2AE0 = 0;
+    this->unk301C = 0;
+    this->unk3020 = 0;
     this->unk2FB6 = 0;
     this->target = 0;
     this->extraNumber = 0;
@@ -2068,7 +2036,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->guarding = 0;
     this->unk2AF4 = 0;
     this->dying = 0;
-    this->unk2ACC = 0;
+    this->unk300C = 0;
     this->unk3038 = 0;
     this->absorbing = 0;
     this->partyMember = 0;
@@ -5026,7 +4994,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         act.action = this->action;
     }
 
-    if (this->commandFlags != 0 && this->unk2AB4 == 1 && this->unk2AC8 == 1)
+    if (this->commandFlags != 0 && this->unk2FF4 == 1 && this->unk3008 == 1)
     {
         if (this->autoControl == 1)
         {
@@ -5085,7 +5053,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
     {
         if (this->guardPose == kGuardPose1)
         {
-            this->unk2AD4 = 0;
+            this->unk3014 = 0;
             act.action = kGuardAction1;
 
             if (this->MarkBit4() == 1)
@@ -5173,7 +5141,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         }
     };
 
-    if (this->ghost == 1 && (this->unk2BDA & BattleUnit::WeakStand) == 0 && this->unk2AC8 == 0)
+    if (this->ghost == 1 && (this->unk2BDA & BattleUnit::WeakStand) == 0 && this->unk3008 == 0)
     {
         std::array<std::array<i16, 2>, 4> points = {};
 
@@ -7169,14 +7137,14 @@ int BattleUnit::Named() const
     return (LowByte(this->data->data.kind) & ObjectData::UnkKind20) != 0 ? 1 : 0;
 }
 
-// swd3e.exe 0x00489710: the turn's command cleared: command word +0x18, the second gauge, the ready action, unk2AB4,
+// swd3e.exe 0x00489710: the turn's command cleared: command word +0x18, the second gauge, the ready action, unk2FF4,
 // the target and the start of the skill name
 void BattleUnit::ClearTurnCommand()
 {
     this->command.unk18 = 0;
     this->unk2BE8 = 0;
     this->readyAction = 0;
-    this->unk2AB4 = 0;
+    this->unk2FF4 = 0;
     this->target = 0;
     std::fill_n(this->skillName.begin(), kClearedNameBytes, '\0');
 }
@@ -7421,7 +7389,7 @@ bool BattleUnit::IsWeakEnemy() const
 }
 
 // swd3e.exe 0x004902E0: a frame of the second gauge running down by the command's unk18 (not while held or marked
-// UnkMark2; then unk2AC8 is cleared): 1 once it is empty or without unk18. Nothing with a target; a fallen unit other
+// UnkMark2; then unk3008 is cleared): 1 once it is empty or without unk18. Nothing with a target; a fallen unit other
 // than the talisman ghost loses its gauge (0).
 int BattleUnit::DrainSecondGauge()
 {
@@ -7459,7 +7427,7 @@ int BattleUnit::DrainSecondGauge()
         return 1;
     }
 
-    this->unk2AC8 = 0;
+    this->unk3008 = 0;
     return 0;
 }
 }  // namespace swd3e

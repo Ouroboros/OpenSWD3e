@@ -1925,3 +1925,111 @@ castAct 动作 0、id = 命令 castAct，effectA≠0 → effectA；id=0 → wait
 汇编：+0xC 非空 → 0x0043DAB0 释放、+0xC=0。
 对照：Release 释放 ownedData、data=nullptr，一致。
 差异：无。
+
+## 0x00489430 BattleUnit::HitPointsAndAttack — exact
+
+汇编：零扩展物品 +0x5A 加 +0x68 双字。
+对照：HitPointsAndAttack 一致。
+差异：无。
+
+## 0x00489440 BattleUnit::OutOfChoices — exact
+
+汇编：+0x2FD9=1 且物品 +0x6E/+0x72/+0x76 皆 0 → 1；+0x2FDA=1 且 +0x7A/+0x7E 皆 0 → 1；否则 0。
+对照：OutOfChoices 一致。
+差异：无。
+
+## 0x00489490 Game::EnemySkillFrame — diff → exact
+
+汇编：+0x2FEC=1；命令旗标 bit3 且 +0x3064=0：0x004903B0 淡出未完 → 0，+0x2BC0 位 28 → SetFacing(1)，0x004906F0≠1 → 0，+0x3064=1。standAct 动作 = +0x2B98、id = 零扩展 +0x2F28，0x0049A220（结果不用）。target 位 2：effectA≠0 → recoilAct id/动作 = effectA/effectQ、stage|=0x4000（recoilAct 不清零）；位 0x200 → hold=1；清位 2、effectA/Q=0。stage 0x4000 且 0x0049ACC0(recoilAct, anchorY)=1 → target=0、stage&=~0x4000、hold=0、recoilAct 清零。位 8：位 0x400 → 0x00577334=1、0x00467C40(七灯光)、清位；0x00577378 无 0x8000 → 或入。0x00577378 位 0 → stage=0、standAct 清零、返回 1；否则 0。
+对照：EnemySkillFrameAdvance 一致（SpellCast 0x8000、SpellOver 1）。绘制经 Scene，偏差 97/99。
+差异：readyAction 注释写正传偏移 +0x2690。修正：改为 +0x2B98（汇编 0x004894F0 读取）。复核：完整函数重新对照一致。
+
+## 0x004896C0 BattleUnit::ObjectUnkA2 — exact
+
+汇编：返回物品 +0xA2 字节。
+对照：ObjectUnkA2 一致。
+差异：无。
+
+## 0x004896D0 BattleUnit::FirstResistance — exact
+
+汇编：依次查物品 +0x9C..+0xA0 五个字节，第一个非零返回下标+1，全零返回 0。
+对照：FirstResistance 一致。
+差异：无。
+
+## 0x004896F0 BattleUnit::Named — exact
+
+汇编：(物品 +0x20 低字节 >> 5) & 1。
+对照：Named 一致（UnkKind20 0x20）。
+差异：无。
+
+## 0x00489710 BattleUnit::ClearTurnCommand — diff → exact
+
+汇编：命令 +0x18（+0x101C）字=0、+0x2BE8 字=0、+0x2B98=0、+0x2FF4=0、+0x3024=0、+0x2B38 起 16 字节清零。
+对照：逻辑一致（kClearedNameBytes 0x10）。
+差异：+0x2FF4 成员沿用正传偏移名 unk2AB4；同段的 +0x2FE4、+0x2FE8、+0x3008、+0x300C、+0x3014、+0x301C、+0x3020 也是正传偏移名（unk2AA4、unk2AA8、unk2AC8、unk2ACC、unk2AD4、unk2ADC、unk2AE0）。修正：以相邻已知偏移（kind +0x2FE0、unk2FEC、unk2FF0、defeated +0x2FF8、held +0x3010、unk3018、target +0x3024）定位，改名 unk2FE4、unk2FE8、unk2FF4、unk3008、unk300C、unk3014、unk301C、unk3020；Retarget 0x0048B9D0 写 +0x3020 印证。复核：完整函数重新对照一致。
+
+## 0x0048B040 BattleUnit::BattleUnit — diff → exact
+
+汇编：+0x2F72 四个双字 −1；+0x2FBC 字 0；+0x2EAE=0xFFFF；+0x2B70=0xF；+0x2B74=1；+0x2E64=0；+0x2F26=4；+0x2F84=2；+0x2F86=0x18；+0x2E60、+0x2E62、+0x2F82、+0x2F2A、+0x2F88 字 0；+0x2FC6 字节 0；+0x2BC4=0x062B062B；+0x2A7C（状态表头 next）=0；+0x2B38 起 16 字节清零；+0x14 起 0xA8 字节（单位自身物品记录）清零。
+对照：成员默认值一致（targets NoTarget、unk2EAE NoUnk2EAE 0xFFFF、fadeLevel Opaque 0xF、brightLevel 1、fadeStep DefaultFadeStep 4、flashPhase FlashStart 2、flashFall FlashPeak 0x18、colorPair DefaultColorPair 0x062B062B，其余 0）。单位位于全局数组，未经构造写入的成员原程序也是 0。
+差异：头文件中一批成员与注释沿用正传偏移。修正：由复位函数 0x00491690 的写入次序与 GetDrawPosition 0x0048B230、Counter 0x0048BA00 确认后改名 unk2A6E→unk2F8A、unk2A72→unk2F8E、unk2A76→unk2F92（Counter2A76→Counter2F92）、unk2A92→unk2FC4，注释改为 nudge +0x2BE0、drawAtSaved +0x2BE2、landedActions +0x2F9E、restAction +0x2FB2、idleTurns +0x2FC9、itemWait +0x2FCA、状态表头 act +0x2A80/bits +0x2B28；删除外传不存在、只被测试调用的正传函数 IncreaseCounter2A76、DecreaseHits、GetAE0（+0x2F92 在外传中无写入者），测试改为直接检查 IncreaseHits；0x0048BA40/0x0048BA50 改名 RaiseUnk2FE8/Unk2FE8（函数表同步）。复核：完整函数重新对照一致。
+
+## 0x0048B100 BattleUnit::~BattleUnit — exact
+
+汇编：+0xB8（单位物品记录 +0x14 的说明指针）非空 → 释放、置 0。
+对照：默认析构释放 object 的说明，一致。
+差异：无。
+
+## 0x0048B130 BattleUnit::SetTarget — exact
+
+汇编：+0x3024 = 参数，返回参数。
+对照：SetTarget 一致。
+差异：无。
+
+## 0x0048B140 BattleUnit::GaugeLength — exact
+
+汇编：ftol(零扩展 +0x2F2E / 0x004BEFF8 × 0x004AAE18)。
+对照：GaugeLength 一致（0x004AAE18 = 62.0f，kGaugePixels 62.0；gaugeFull 即 0x004BEFF8）。
+差异：无。
+
+## 0x0048B170 BattleUnit::FillSecondGauge — exact
+
+汇编：+0x2BE8 = 命令 +0x18 非零 ? 0x960 : 0。
+对照：FillSecondGauge 一致（kSecondGaugeFull 0x960）。
+差异：无。
+
+## 0x0048B190 BattleUnit::SecondGaugeLength — exact
+
+汇编：ftol(movsx +0x2BE8 × 0x004AAE1C × 0x004AAE18)。
+对照：SecondGaugeLength 一致（0x004AAE1C = 0x39DA740E 即 kSecondGaugeStep 0.00041666668f，kSecondGaugePixels 62.0f，unk2BE8 为 i16）。
+差异：无。
+
+## 0x0048B1C0 BattleUnit::ResetGauge — exact
+
+汇编：+0x2F2E = 0x004BEFF8 低字，返回该字。
+对照：ResetGauge 一致。
+差异：无。
+
+## 0x0048B1D0 BattleUnit::RandomizeGauge — exact
+
+汇编：+0x2F2E = 360/(rand(10)+1) + 50；参数≠1 → 返回参数；+0x2FE0=0 → +0x2F2E = 0x004BEFF8−1，返回 0；否则 +0x2F2E = 0x004BEFF8−300，返回该值。
+对照：RandomizeGauge 一致（kGaugeSpread 0x168、kGaugeBase 0x32、kGaugeDivisors 10、kRoleGaugeShort 0x12C）。
+差异：无。
+
+## 0x0048B230 BattleUnit::GetDrawPosition — exact
+
+汇编：+0x2BE2≠0 → 输出 +0xFFA/+0xFFC（保存的阵位），否则 +0xFDA/+0xFDC。
+对照：GetDrawPosition 一致。
+差异：无。
+
+## 0x0048B280 BattleUnit::GetOffset — exact
+
+汇编：输出 = mainAct 锚点 +0x32E/+0x330；+0x2FB1 位 1（命令旗标 0x200）→ slotActs[8] 锚点 +0xC26/+0xC28；facing=1 且 mainAct 锚点 x≠0 → x = 阴影图片宽 − 锚点 x；+0x2FE0=0 且 +0x2F88=4 → standAct 锚点 +0x3D2/+0x3D4。
+对照：GetOffset 一致（UnkCommandFlag200、UnkSlot8、UnkCommand4）；空阴影图片属偏差 200。
+差异：无。
+
+## 0x0048B310 BattleUnit::GetOrigin — exact
+
+汇编：输出 = 阵位 − (+0x2EC2, +0x2EC4)；命令旗标 0x200：0x00491CE0=1 → (0xF0, 0x12C) − slotActs[8] (x, y)（+0xBBC/+0xBC0），否则 阵位 − slotActs[8] (x, y)。
+对照：GetOrigin 一致（kFixedOriginX 0xF0、kFixedOriginY 0x12C）。
+差异：无。

@@ -2619,7 +2619,7 @@ void Game::RoleGatherSweep(BattleRole& unit, PendingOrder& order)
     }
 
     battle.unk57727C = 1;
-    unit.SetAA8();
+    unit.RaiseUnk2FE8();
     unit.Retarget(static_cast<i16>(aim));
 }
 
@@ -2629,7 +2629,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
 {
     BattleState& battle = this->battleState;
 
-    if (unit.GetAA8() != 1)
+    if (unit.Unk2FE8() != 1)
     {
         return;
     }
@@ -2709,7 +2709,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
     battle.retargeted = 1;
     battle.darkenUnit = static_cast<i16>(battle.actingUnit);
 
-    if (unit.GetAA8() != 0)
+    if (unit.Unk2FE8() != 0)
     {
         if (battle.unk575F24 == 0)
         {

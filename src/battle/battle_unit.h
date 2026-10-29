@@ -487,14 +487,11 @@ public:
     int AddTreasureExperience(CounterList& list, u16 kind, u16 amount);
     bool IsWeakEnemy() const;
     int DrainSecondGauge();
-    void IncreaseCounter2A76();
-    u16 Counter2A76() const;
+    u16 Counter2F92() const;
     void IncreaseHits();
-    i16 DecreaseHits();
     void ClearWord2EAE();
-    void SetAA8();
-    int GetAA8() const;
-    int GetAE0() const;
+    void RaiseUnk2FE8();
+    int Unk2FE8() const;
     int SetAC0(int value);
     bool IsAE4Clear() const;
     u16 GetWordDA6() const;
@@ -785,7 +782,7 @@ public:
     const Picture* overlayPicture = nullptr;           // +0x2A4C the overlay drawn on its picture
     const Picture* absorbSource = nullptr;             // +0x2A54 the picture StartAbsorb breaks up
     std::span<const char> displayName;      // +0x2A58 the name shown in the messages (read up to its NUL when used)
-    EffectNode effects;                     // +0x2A7C (the head is a node: +0x2588 its act, +0x2620 its bits)
+    EffectNode effects;                     // +0x2A7C (the head is a node: +0x2A80 its act, +0x2B28 its bits)
     std::array<char, 0x30> skillName = {};  // +0x2B38 the name of the skill used
     std::array<i32, 8> flightSteps =
         {};                  // +0x2B48 the steps per frame of FlyAct by its slot (0x00495E39; callers use 0)
@@ -801,7 +798,7 @@ public:
     i32 unk2B8C = 0;
     u32 glowFlags = 0;       // +0x2B90 the draw mode of the glow act
     i32 glowOffsetX = 0;     // +0x2B94
-    i32 readyAction = 0;     // swd32 +0x2690 the action of its ready pose (kReadyAct)
+    i32 readyAction = 0;     // +0x2B98 the action of its ready pose (kReadyAct)
     u32 drawFlags = 0;       // +0x2B9C bit 0: mirrored
     i32 overlayOffsetX = 0;  // swd32 +0x2698 the x offset of the overlay (IdleFrame)
     u32 frameFlags = 0;      // +0x2BA8 flag 1 toggled for mirrored frames
@@ -819,8 +816,8 @@ public:
     u16 unk2BDA = 0;    // +0x2BDA (swd3e) bit 0: the weak stand pose (IdleFrame); bit 2 (0x00486540)
     i16 guardPose = 0;  // +0x2BDC the guard pose (1, 2, 4)
     u16 unk2BDE = 0;
-    u16 nudge = 0;                                  // swd32 +0x26D6
-    u16 drawAtSaved = 0;                            // swd32 +0x26D8
+    u16 nudge = 0;                                  // +0x2BE0
+    u16 drawAtSaved = 0;                            // +0x2BE2
     u16 proficiency = 0;                            // +0x2BE6 the proficiency of the accessory used
     std::array<u16, MaxTargets> damageDelays = {};  // +0x2BEA (PushTargetAlt 0x004910AE)
     std::array<std::array<i16, DamageDigits>, MaxTargets> damageDigits = {};  // +0x2C30 the four digits per target slot
@@ -906,54 +903,54 @@ public:
     u16 flashPhase = FlashStart;  // +0x2F84 the rise of its turn flash
     u16 flashFall = FlashPeak;    // +0x2F86 and its fall
     u16 commandA = 0;             // +0x2F88
-    u16 unk2A6E = 0;
+    u16 unk2F8A = 0;
     u16 commandB = 0;  // +0x2F8C commands 2, 3, 6, 13, 14 and 15
-    u16 unk2A72 = 0;
+    u16 unk2F8E = 0;
     u16 unk2F90 = 0;
     u16 hurtStep = 0;  // +0x2F94 the step of the stagger (HurtFrame)
-    u16 unk2A76 = 0;
+    u16 unk2F92 = 0;
     u16 drainingGauge = 0;  // +0x2F96 (swd3e) 1 while the second gauge (unk2BE8) runs down (0x004902E0)
     u16 targetCount = 0;    // +0x2F98
     u16 damageSlot = 0;     // +0x2F9A
     u16 queuedActions = 0;  // +0x2F9C the acts AddQueuedAction appended
-    u16 landedActions = 0;  // swd32 +0x2A82 the queued acts that reached their end
+    u16 landedActions = 0;  // +0x2F9E the queued acts that reached their end
     u16 pendingDamage = 0;  // +0x2FA6 bit 15: healing
     u16 commandFlags = 0;   // +0x2FB0 CommandFlag bits (high byte at +0x2FB1)
-    u16 restAction = 0;     // swd32 +0x2A88 the rest action of the frame (IdleFrame)
+    u16 restAction = 0;     // +0x2FB2 the rest action of the frame (IdleFrame)
     u16 magicAction = 0;    // +0x2FB4 the action of its magic act
     u16 unk2FB6 = 0;
     u16 unk2FB8 = 0;
     u16 barrierTurns = 0;  // +0x2FBA
-    u8 unk2A92 = 0;
+    u8 unk2FC4 = 0;        // +0x2FC4 (cleared by ResetUnit 0x00491690)
     u16 orbitStep = 0;     // +0x2FC0 (swd3e) the talisman ghost's step along its orbit segment (IdleFrame)
     u16 orbitSegment = 0;  // +0x2FC2 (swd3e) and the segment
     u8 evadeSkill = 0;     // +0x2FC5 an evade roll of 0..kEvadeRoll below it evades
     u8 defeatPose = 0;     // +0x2FC6 the pose of the defeat (a fixed pose overrides it)
     u8 fixedPose = 0;      // +0x2FC7
-    u8 idleTurns = 0;      // swd32 +0x2A97 the turns since the enemy chose an object or a skill (ChooseCommand)
-    u8 itemWait = 0;       // swd32 +0x2A98 the turns since the third object was forced
+    u8 idleTurns = 0;      // +0x2FC9 the turns since the enemy chose an object or a skill (ChooseCommand)
+    u8 itemWait = 0;       // +0x2FCA the turns since the third object was forced
     u8 skillWait = 0;      // +0x2FCB the turns since the second skill was forced
     u8 choicePhase = 0;    // +0x2FCC 1: objects were last chosen, 2: skills
     u8 extraAttacks = 0;   // +0x2FCD the attacks the unit repeats (set by skill 0x15)
     u8 healChoice = 0;     // +0x2FCE
     u8 healPercent = 0;    // +0x2FD0 1: restoreHitPoints..restoreStamina are percentages of the target's maxima
     i32 kind = 0;          // +0x2FE0 1: a party role
-    i32 unk2AA4 = 0;
-    i32 unk2AA8 = 0;
+    i32 unk2FE4 = 0;
+    i32 unk2FE8 = 0;
     i32 unk2FEC = 0;
     i32 unk2FF0 = 0;
-    i32 unk2AB4 = 0;
+    i32 unk2FF4 = 0;
     i32 defeated = 0;  // +0x2FF8
     i32 dying = 0;     // +0x2FFC 1 while the defeat runs (DefeatFrame)
     i32 outline = 0;   // +0x3000
     i32 charging = 0;  // +0x3004 1: ChargeAttackFrame is in its charge (also set when a stagger ends)
-    i32 unk2AC8 = 0;
-    i32 unk2ACC = 0;
+    i32 unk3008 = 0;
+    i32 unk300C = 0;
     i32 held = 0;  // +0x3010
-    i32 unk2AD4 = 0;
+    i32 unk3014 = 0;
     i32 unk3018 = 0;
-    i32 unk2ADC = 0;
-    i32 unk2AE0 = 0;
+    i32 unk301C = 0;
+    i32 unk3020 = 0;
     i32 target = 0;       // +0x3024
     i32 extraNumber = 0;  // +0x3028
     i32 unk302C = 0;

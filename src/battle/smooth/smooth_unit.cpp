@@ -1375,7 +1375,7 @@ void UnitFrame::IdleEffectAdvance(BattleServices& services, PictureSteps& steps)
     unit.stage &= ~BattleUnit::Recoiling;
     unit.slotTint = 0;
     unit.actAnchorX = 0;
-    unit.unk2ACC = 0;
+    unit.unk300C = 0;
     main.hold = 0;
     main.effectA = 0;
     effect = ActState{};
@@ -1445,7 +1445,7 @@ void UnitFrame::FollowUpAdvance(BattleServices& services, PictureSteps& steps)
     unit.slotTint = 0;
     unit.mainAct.target = 0;
     unit.actAnchorX = 0;
-    unit.unk2ACC = 0;
+    unit.unk300C = 0;
     unit.mainAct.hold = 0;
     unit.mainAct.effectA = 0;
     act = ActState{};

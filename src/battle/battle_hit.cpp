@@ -2814,7 +2814,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         other.Damage(services, battle.hitDamage, 0, 0);
     }
 
-    if (unit.GetAA8() == 1)
+    if (unit.Unk2FE8() == 1)
     {
         for (u32 index = 0; index < battle.roleCount; ++index)
         {

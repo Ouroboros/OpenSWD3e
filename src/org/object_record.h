@@ -178,7 +178,7 @@ struct SkillScript
         UnkFlag100000 = 0x100000,  // opcode 0x1F, with unk24
     };
 
-    static constexpr u16 Unk1EMark = 0x8000;        // set in unk20 by opcode 0xA
+    static constexpr u16 Unk20Mark = 0x8000;        // set in unk20 by opcode 0xA
     static constexpr u32 StatusUnk20000 = 0x20000;  // in statusBits: opcode 0xC also sets UnkFlag20000
 
     // The values of `element` (names from the battle messages of each resistance).
@@ -231,6 +231,8 @@ struct SkillScript
     u16 unk28 = 0;       // +0x28 opcode 0x17, second value
     u8 turns = 0;        // +0x2A opcodes 2, 0x16: the turns of an effect
 };
+
+static_assert(sizeof(SkillScript) == 0x2C);
 
 // The opcodes of a skill script of mon.dat (Database::LoadSkill); 5 ends the script.
 enum class SkillOpcode : u16

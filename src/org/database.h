@@ -34,7 +34,7 @@ public:
     // Frees the description without uncounting it.
     static void FreeDescription(ObjectRecord& record);
 
-    i32 descriptionBytes = 0;  // swd32 0x0053CF48 bytes held by object descriptions
+    i32 descriptionBytes = 0;  // 0x00578508 bytes held by object descriptions (only LoadObject uses it)
     ObjectRecord scratch;      // 0x00578510 an object looked up for its limits
 
 private:

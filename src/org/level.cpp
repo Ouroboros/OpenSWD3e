@@ -162,7 +162,15 @@ int LearnSkill(int role, i16 id, Party& party, Database& database, LearnedSkill&
         MaintenanceAssert(reporter, kSkillZero, 0, kOrgFile, kSkillLine);
     }
 
-    ItemNode& head = *party.skills[static_cast<std::size_t>(role)];
+    const auto slot = static_cast<u16>(role);
+
+    // A role past the skill table reads the pointers after it in the original.
+    if (slot >= party.skills.size())
+    {
+        return 0;
+    }
+
+    ItemNode& head = *party.skills[slot];
     ItemNode* node = &head;
 
     if (static_cast<i16>(node->id) == id)
