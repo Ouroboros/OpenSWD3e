@@ -244,6 +244,18 @@ bool Talk::PanCamera(EventRun& run)
         view.panStepY = 0;
     }
 
+    // The rebuild (deviations.md): with the wider view the limits above hold its camera, wider than the original's; the
+    // error box only shows when the original's 640x480 camera (Field::original) would pass the map's edges.
+    if (clamped && field.WiderView())
+    {
+        const i32 mapWidth = MapHeader::TileSize * state.map.width;
+        const i32 mapHeight = MapHeader::TileSize * state.map.height;
+        const i32 byX = MapHeader::TileSize * originalBy.x;
+        const i32 byY = MapHeader::TileSize * originalBy.y;
+        clamped = field.original.x + byX < 0 || field.original.x + Display::Width + byX > mapWidth ||
+                  field.original.y + byY < 0 || field.original.y + Display::Height + byY > mapHeight;
+    }
+
     if (clamped)
     {
         // 0x0042D5B2: the four operand words as they stand (sign-extended) and the camera in tiles
