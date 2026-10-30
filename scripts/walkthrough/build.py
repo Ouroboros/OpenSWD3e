@@ -3,7 +3,7 @@ walkthrough page (docs/walkthrough.html).
 objects.jsonl is written by scripts/items/dump.cpp, monsters.jsonl by scripts/bestiary/dump.cpp.
 
 Markup: "@ 篇章 | 標題" starts a section, "# 小標" a heading, "- " a list line, "1. " a step, other lines paragraphs;
-"   1. " or "   - " (indented) a line of a list inside the list line or step above it.
+"   1. " (indented) a line of a numbered list inside the list line or step above it.
 {名} names an item (物品大全), 〔名〕 a monster (神魔異事錄); [標籤] marks a tag; «標題» goes to a section;
 【文字｜網址】 is a link out. Unknown names, shop prices the item data does not confirm ("{名} 價" in a 商店 heading)
 and steals the monster data does not confirm ("〔怪〕可偷{物}") are reported.
@@ -133,8 +133,10 @@ def main():
             return ''.join(out)
 
         inner = re.match(r'\s+(?:(\d+)\.|-) (.*)', line)
-        if inner and section['blocks'] and section['blocks'][-1][0] in ('li', 'step', 'sub-li', 'sub-step'):
-            section['blocks'].append(['sub-step' if inner.group(1) else 'sub-li', render(inner.group(2))])
+        if inner and not inner.group(1):
+            problems.append(f'{number}: an indented line not numbered')
+        if inner and section['blocks'] and section['blocks'][-1][0] in ('li', 'step', 'sub-step'):
+            section['blocks'].append(['sub-step', render(inner.group(2))])
         elif inner:
             problems.append(f'{number}: an indented line under no list line')
         elif line.startswith('# '):
@@ -173,7 +175,7 @@ def main():
 
 def blocks(rows):
     """The blocks as HTML: list lines and steps in their lists, indented lines in a list inside the line above."""
-    lists = {'li': 'ul', 'step': 'ol', 'sub-li': 'ul', 'sub-step': 'ol'}
+    lists = {'li': 'ul', 'step': 'ol', 'sub-step': 'ol'}
     out = []
     open_list = None
     open_item = False
