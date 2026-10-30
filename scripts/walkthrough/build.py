@@ -2,7 +2,8 @@
 walkthrough page (docs/walkthrough.html).
 objects.jsonl is written by scripts/items/dump.cpp, monsters.jsonl by scripts/bestiary/dump.cpp.
 
-Markup: "@ 篇章 | 標題" starts a section, "# 小標" a heading, "- " a list line, "1. " a step, other lines paragraphs.
+Markup: "@ 篇章 | 標題" starts a section, "# 小標" a heading, "- " a list line, "1. " a step, other lines paragraphs;
+"   1. " or "   - " (indented) a line of a list inside the list line or step above it.
 {名} names an item (物品大全), 〔名〕 a monster (神魔異事錄); [標籤] marks a tag; «標題» goes to a section;
 【文字｜網址】 is a link out. Unknown names, shop prices the item data does not confirm ("{名} 價" in a 商店 heading)
 and steals the monster data does not confirm ("〔怪〕可偷{物}") are reported.
@@ -131,7 +132,12 @@ def main():
                     out.append(html.escape(part))
             return ''.join(out)
 
-        if line.startswith('# '):
+        inner = re.match(r'\s+(?:(\d+)\.|-) (.*)', line)
+        if inner and section['blocks'] and section['blocks'][-1][0] in ('li', 'step', 'sub-li', 'sub-step'):
+            section['blocks'].append(['sub-step' if inner.group(1) else 'sub-li', render(inner.group(2))])
+        elif inner:
+            problems.append(f'{number}: an indented line under no list line')
+        elif line.startswith('# '):
             section['blocks'].append(['h', render(line[2:])])
         elif line.startswith('- '):
             section['blocks'].append(['li', render(line[2:])])
@@ -166,17 +172,41 @@ def main():
 
 
 def blocks(rows):
-    lists = {'li': 'ul', 'step': 'ol'}
+    """The blocks as HTML: list lines and steps in their lists, indented lines in a list inside the line above."""
+    lists = {'li': 'ul', 'step': 'ol', 'sub-li': 'ul', 'sub-step': 'ol'}
     out = []
     open_list = None
+    open_item = False
+    open_inner = None
     for kind, text in rows:
+        inner = kind.startswith('sub-')
+        if open_inner and (not inner or lists[kind] != open_inner):
+            out.append(f'</{open_inner}>')
+            open_inner = None
+        if inner:
+            if open_inner is None:
+                open_inner = lists[kind]
+                out.append(f'<{open_inner}>')
+            out.append(f'<li>{text}</li>')
+            continue
+        if open_item:
+            out.append('</li>')
+            open_item = False
         if open_list and lists.get(kind) != open_list:
             out.append(f'</{open_list}>')
             open_list = None
         if kind in lists and open_list is None:
             open_list = lists[kind]
             out.append(f'<{open_list}>')
-        out.append(f'<h3>{text}</h3>' if kind == 'h' else f'<p>{text}</p>' if kind == 'p' else f'<li>{text}</li>')
+        if kind in lists:
+            out.append(f'<li>{text}')
+            open_item = True
+        else:
+            out.append(f'<h3>{text}</h3>' if kind == 'h' else f'<p>{text}</p>')
+    if open_inner:
+        out.append(f'</{open_inner}>')
+    if open_item:
+        out.append('</li>')
     if open_list:
         out.append(f'</{open_list}>')
     return ''.join(out)
@@ -405,6 +435,7 @@ h1 {
 .page h3 { font-family: var(--kai); font-size: 23px; font-weight: normal; color: var(--gold-light); margin: 14px 0 2px; }
 .page p { margin: 2px 0 6px; }
 .page ul, .page ol { margin: 0 0 6px; padding-left: 26px; }
+.page li > ul, .page li > ol { margin: 0 0 2px; padding-left: 24px; }
 .page ol li::marker { font-size: 16px; }
 .page li::marker { color: var(--gold); }
 
