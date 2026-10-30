@@ -658,6 +658,7 @@ public:
     void OptionsSetLauncher(bool shown);
     void OptionsSetAutoCombo(bool on);
     void OptionsSetActiveTime(bool on);
+    void OptionsSetStartPose(bool shown);
     std::vector<std::string> SetupChoices(Setup setup, i32 row, i32& chosen) const;
     void SetupChoose(Setup setup, i32 row, i32 choice);
     void SetupStep(Setup setup, i32 row, bool up, bool wrap);

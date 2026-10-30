@@ -435,6 +435,13 @@ void Game::StartBattle(u16 number)
         } while (this->battleRoles[battle.startPoseRole].IsDefeated());
     }
 
+    // The rebuild (deviations.md): without the start pose the role is still chosen (the same random draws, its gauge
+    // nearly full below) but its pose is taken as over at once.
+    if (!this->config.startPose)
+    {
+        battle.startPoseRole |= BattleState::StartPoseDone;
+    }
+
     battle.unk5770D4 = 0;
 
     if (state.GameFlag(GameState::Unk5A))

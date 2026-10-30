@@ -44,10 +44,12 @@ constexpr std::array<std::u8string_view, 7> kDisplayLabels = {
 // The rows of the battle setup, and their labels.
 constexpr i32 kAutoComboRow = 0;
 constexpr i32 kActiveTimeRow = 1;
-constexpr i32 kBattleBackRow = 2;
-constexpr std::array<std::u8string_view, 3> kBattleLabels = {
+constexpr i32 kStartPoseRow = 2;
+constexpr i32 kBattleBackRow = 3;
+constexpr std::array<std::u8string_view, 4> kBattleLabels = {
     u8"自動連擊",
     u8"即時行動",
+    u8"開場動作",
     u8"返回",
 };
 
