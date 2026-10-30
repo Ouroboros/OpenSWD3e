@@ -365,6 +365,21 @@ void Menu::OptionsSetAutoCombo(bool on)
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
+// The rebuild's active time battle (deviations.md): a full gauge does not stop the battle, or does, written at once.
+void Menu::OptionsSetActiveTime(bool on)
+{
+    Game& owner = this->game;
+
+    if (owner.config.activeTime == on)
+    {
+        return;
+    }
+
+    owner.config.activeTime = on;
+    owner.config.StoreActiveTime(on);
+    owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
+}
+
 // The choices of row `row` of `setup` (Big5), and the one in use in `chosen` (-1 for none).
 std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) const
 {
@@ -380,10 +395,11 @@ std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) c
 
     if (setup == Setup::Battle)
     {
-        if (row == kAutoComboRow)
+        if (row == kAutoComboRow || row == kActiveTimeRow)
         {
             choices = OnOffChoices();
-            chosen = owner.config.autoCombo ? 0 : 1;
+            const bool on = row == kAutoComboRow ? owner.config.autoCombo : owner.config.activeTime;
+            chosen = on ? 0 : 1;
         }
 
         return choices;
@@ -447,6 +463,10 @@ void Menu::SetupChoose(Setup setup, i32 row, i32 choice)
         if (row == kAutoComboRow)
         {
             this->OptionsSetAutoCombo(choice == 0);
+        }
+        else if (row == kActiveTimeRow)
+        {
+            this->OptionsSetActiveTime(choice == 0);
         }
 
         return;

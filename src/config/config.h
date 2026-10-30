@@ -90,6 +90,8 @@ public:
     void StoreLauncher(bool shown) const;
     // The rebuild's auto combo kept in [game] auto_combo (deviations.md).
     void StoreAutoCombo(bool on) const;
+    // The rebuild's active time battle kept in [game] active_time (deviations.md).
+    void StoreActiveTime(bool on) const;
 
 private:
     void StoreKeys(GameSettings& game) const;
@@ -105,6 +107,7 @@ public:
     i32 debugMode = 0;               // 0x004AF7A0 debug hot keys
     bool showLauncher = true;        // the rebuild's [game] launcher: the launcher at the start (else the title)
     bool autoCombo = false;          // the rebuild's [game] auto_combo: the auto battle attacks with 連擊 when it can
+    bool activeTime = false;         // the rebuild's [game] active_time: a full gauge does not stop the battle
     std::array<u16, Channels> channelMasks = Config::DefaultChannelMasks;
     std::array<i32, Keys> keys = {};  // 0x004D0B90 DirectInput scan codes of the key slots
 

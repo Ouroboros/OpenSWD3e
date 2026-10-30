@@ -152,8 +152,17 @@ int Game::BattleFrame()
     this->painter.SetTarget(this->drawSurface);
     this->painter.UnlockSurface(*this->offscreen);
 
+    // The rebuild (deviations.md): with the active time battle the rules of swd32's BattleFrame: with no unit acting
+    // the field is no longer busy (swd3e's own plays, the start pose, a turn playing or a ripple, still hold it), and
+    // the next unit acts whatever the menu shows (a list holds it by battleBusy).
+    if (battle.activeTime && battle.battleBusy == 1 && battle.actingUnit == -1 && battle.turnPlaying == 0 &&
+        battle.unk5772C8 == 0 && (battle.startPoseRole & BattleState::StartPoseDone) != 0)
+    {
+        battle.battleBusy = 0;
+    }
+
     if (battle.slotRecords[0].unit != -1 && battle.turnPlaying == 0 && this->fightTalk.battleRuns == 1 &&
-        battle.result == 0 && battle.unk5772C8 == 0)
+        (battle.result == 0 || (battle.activeTime && battle.battleBusy == 0)) && battle.unk5772C8 == 0)
     {
         BattleSlotRecord acting{
             battle.actingUnit,

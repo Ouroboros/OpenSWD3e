@@ -2013,7 +2013,10 @@ int Game::RoleFrame(int role)
         (unit.GetWord2F90() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
-    if (this->fightTalk.battleRuns == 1 && battle.actingUnit == -1 && battle.battleBusy == 0 && battle.turnPending == 0)
+    // The rebuild (deviations.md): with the active time battle the gauges step as swd32's RoleFrame steps them, while
+    // a unit acts too (the action holds them by battleBusy).
+    if (this->fightTalk.battleRuns == 1 && (battle.actingUnit == -1 || battle.activeTime) && battle.battleBusy == 0 &&
+        battle.turnPending == 0)
     {
         unit.TickEffects(services);
 
@@ -2023,6 +2026,7 @@ int Game::RoleFrame(int role)
         }
     }
 
+    this->ActiveTimePanel();
     this->RoleTakeTurn(unit, role);
 
     if (unit.target == 1)
@@ -2069,6 +2073,15 @@ void Game::RoleGaugeFull(BattleRole& unit, int role)
     if (unit.AutoControl() != 1 && unit.GuestControl() != 1 && unit.Ghost() != 1)
     {
         this->audio.PlaySound(kGaugeFullSound, this->config.soundVolume);
+
+        // The rebuild (deviations.md): with the active time battle the role queues for the panel and the battle goes
+        // on (ActiveTimePanel).
+        if (battle.activeTime)
+        {
+            this->QueueRoleTurn(role + BattleState::FirstRoleUnit);
+            return;
+        }
+
         battle.turnPending = 1;
         battle.currentUnit = role + BattleState::FirstRoleUnit;
         battle.battleBusy = 1;
@@ -2103,6 +2116,57 @@ void Game::RoleGaugeFull(BattleRole& unit, int role)
     this->RoleAutoCommand(unit, role);
     battle.turnPending = 1;
     battle.battleBusy = 1;
+}
+
+// The rebuild's active time battle (deviations.md): role unit `unit` with a full gauge joins roleOrder (the queue the
+// original keeps from swd32 for the panel, CanSelectRole and SelectRoleUnit, which swd3e never fills), once.
+void Game::QueueRoleTurn(int unit)
+{
+    BattleState& battle = this->battleState;
+
+    if (std::find(battle.roleOrder.begin(), battle.roleOrder.end(), unit) != battle.roleOrder.end())
+    {
+        return;
+    }
+
+    const auto free = std::find(battle.roleOrder.begin(), battle.roleOrder.end(), 0);
+
+    if (free != battle.roleOrder.end())
+    {
+        *free = unit;
+    }
+}
+
+// The rebuild's active time battle (deviations.md): with no role on the panel and no menu open, the first queued role
+// not held takes the panel, its menu opened by the confirm key (panelWaiting), as swd32's RoleFrame hands it on.
+void Game::ActiveTimePanel()
+{
+    BattleState& battle = this->battleState;
+
+    if (!battle.activeTime || battle.currentUnit != 0 || battle.result != 0)
+    {
+        return;
+    }
+
+    for (std::size_t at = 0; at < battle.roleOrder.size() && battle.roleOrder[at] != 0; ++at)
+    {
+        const i32 unit = battle.roleOrder[at];
+
+        if (this->battleRoles[static_cast<std::size_t>(unit - BattleState::FirstRoleUnit)].IsHeld() == 1)
+        {
+            continue;
+        }
+
+        battle.currentUnit = unit;
+        battle.panelWaiting = 1;
+        std::copy(
+            battle.roleOrder.begin() + static_cast<std::ptrdiff_t>(at) + 1,
+            battle.roleOrder.end(),
+            battle.roleOrder.begin() + static_cast<std::ptrdiff_t>(at)
+        );
+        battle.roleOrder.back() = 0;
+        return;
+    }
 }
 
 // The command of an AI role with a full gauge (inline in RoleFrame): it aims (aiTarget, 1-based) at the enemy the
@@ -2413,9 +2477,13 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     const auto at = static_cast<std::size_t>(role);
     const int self = role + BattleState::FirstRoleUnit;
 
-    if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.IsAimed() != 1 || battle.actingUnit != -1 ||
-        battle.result != 0 || battle.currentUnit != 0 || this->fightTalk.battleRuns != 1 ||
-        unit.DrainSecondGauge() != 1)
+    // The rebuild (deviations.md): with the active time battle a role with its order is slotted as swd32's RoleFrame
+    // slots it, whatever the menu shows and whoever acts (not while every role is hit or a role acts).
+    const bool waits = battle.activeTime ? battle.hitsAllRoles != 0 || battle.roleActing != 0
+                                         : battle.actingUnit != -1 || battle.result != 0 || battle.currentUnit != 0;
+
+    if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.IsAimed() != 1 || waits ||
+        this->fightTalk.battleRuns != 1 || unit.DrainSecondGauge() != 1)
     {
         return;
     }
@@ -2431,8 +2499,14 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     }
 
     const i32 taken = battle.turnTaken[static_cast<std::size_t>(self)];
-    battle.battleBusy = 1;
-    battle.turnPending = 1;
+
+    // The rebuild (deviations.md): with the active time battle a turn taken does not stop the battle, as in swd32.
+    if (!battle.activeTime)
+    {
+        battle.battleBusy = 1;
+        battle.turnPending = 1;
+    }
+
     battle.unk5376B8[at] = 1;
     battle.turnUnit = self;
 
@@ -2442,7 +2516,9 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
         return;
     }
 
-    if (battle.slotRecords[0].unit != -1)
+    // A role ordered to act acts at once; with the active time battle (deviations.md) only when no unit acts, else it
+    // is slotted first.
+    if (battle.slotRecords[0].unit != -1 || battle.actingUnit != -1)
     {
         battle.InsertSlotRecord(1, self, 0);
         return;

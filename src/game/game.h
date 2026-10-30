@@ -408,7 +408,8 @@ private:
     void AutoBattleTurn();
     bool AutoCombo(i32 unit);
     bool CanSelectRole(int unit);
-    static std::size_t PanelPlace(int unit);
+    std::array<i32, 4> PanelUnitsInUse() const;
+    std::size_t PanelPlace(int unit) const;
     int NextSelectableRole(int unit);
     int PreviousSelectableRole(int unit);
     void SelectRoleUnit(int unit);
@@ -572,6 +573,8 @@ private:
     void StartBattleMusic();
     int FightTalkFrame();
     bool FightTalkPasses() const;
+    void QueueRoleTurn(int unit);
+    void ActiveTimePanel();
     void FightTalkEnd();
     int FightTalkWait();
     int FightTalkWindow();

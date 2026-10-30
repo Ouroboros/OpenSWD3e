@@ -394,7 +394,8 @@ void Game::RandomRoleAct(int unit)
         battle.unk57725C = 1;
         battle.turnTaken[static_cast<std::size_t>(unit)] = command;
         role.SetTarget(1);
-        battle.turnPending = 1;
+        // The rebuild (deviations.md): with the active time battle a turn taken does not stop the battle, as in swd32.
+        battle.turnPending = battle.activeTime ? battle.turnPending : 1;
         battle.battleBusy = 1;
     };
 
@@ -737,7 +738,8 @@ int Game::RemoveDefeated(int index, int role)
         battle.currentUnit = 0;
         battle.turnCommand = 0;
         battle.aimTarget = 1;
-        battle.result = kTurnsRunning;
+        // The rebuild (deviations.md): with the active time battle the menu closes (state 0), so that the turns go on.
+        battle.result = battle.activeTime ? 0 : kTurnsRunning;
         battle.turnPending = 0;
         battle.battleBusy = 0;
         battle.turnPlaying = 0;
@@ -1414,7 +1416,8 @@ void Game::ApplyHits()
         ghost.Retarget(0);
         battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
         battle.battleBusy = 1;
-        battle.turnPending = 1;
+        // The rebuild (deviations.md): with the active time battle a turn taken does not stop the battle, as in swd32.
+        battle.turnPending = battle.activeTime ? battle.turnPending : 1;
         battle.ghostRescued = 1;
     }
 }
@@ -1800,12 +1803,31 @@ bool Game::CanSelectRole(int unit)
     return false;
 }
 
-// The place of `unit` in PanelUnits for 0x00464DD0 and 0x00464E40 (inline in the original; past the end when absent).
-std::size_t Game::PanelPlace(int unit)
+// The panel units the role keys step through: the original's PanelUnits (8..11, never a role unit in swd3e, so the
+// keys never move the panel); the rebuild's active time battle (deviations.md) takes the role units they stand for
+// in swd32 (FirstRoleUnit on), so that the keys go between the roles queued for the panel.
+std::array<i32, 4> Game::PanelUnitsInUse() const
 {
+    std::array<i32, 4> units = BattleState::PanelUnits;
+
+    if (this->battleState.activeTime)
+    {
+        for (i32& unit : units)
+        {
+            unit += BattleState::FirstRoleUnit - kFirstPanelUnit;
+        }
+    }
+
+    return units;
+}
+
+// The place of `unit` in PanelUnits for 0x00464DD0 and 0x00464E40 (inline in the original; past the end when absent).
+std::size_t Game::PanelPlace(int unit) const
+{
+    const std::array<i32, 4> units = this->PanelUnitsInUse();
     std::size_t place = 0;
 
-    while (place < BattleState::PanelUnits.size() && BattleState::PanelUnits[place] != unit)
+    while (place < units.size() && units[place] != unit)
     {
         ++place;
     }
@@ -1818,8 +1840,9 @@ std::size_t Game::PanelPlace(int unit)
 int Game::NextSelectableRole(int unit)
 {
     // The callers pass panel units (8..11): `unit` is always in PanelUnits.
-    std::size_t place = Game::PanelPlace(unit);
-    int candidate = BattleState::PanelUnits[place];
+    const std::array<i32, 4> units = this->PanelUnitsInUse();
+    std::size_t place = this->PanelPlace(unit);
+    int candidate = units[place];
 
     if (this->CanSelectRole(candidate))
     {
@@ -1828,14 +1851,14 @@ int Game::NextSelectableRole(int unit)
 
     ++place;
 
-    for (int tries = 1; tries < static_cast<int>(BattleState::PanelUnits.size()); ++tries)
+    for (int tries = 1; tries < static_cast<int>(units.size()); ++tries)
     {
-        if (place == BattleState::PanelUnits.size())
+        if (place == units.size())
         {
             place = 0;
         }
 
-        candidate = BattleState::PanelUnits[place];
+        candidate = units[place];
         ++place;
 
         if (this->CanSelectRole(candidate))
@@ -1852,15 +1875,16 @@ int Game::NextSelectableRole(int unit)
 int Game::PreviousSelectableRole(int unit)
 {
     // The callers pass panel units (8..11): `unit` is always in PanelUnits.
-    auto place = static_cast<int>(Game::PanelPlace(unit));
+    const std::array<i32, 4> units = this->PanelUnitsInUse();
+    auto place = static_cast<int>(this->PanelPlace(unit));
 
-    for (int tries = 0; tries < static_cast<int>(BattleState::PanelUnits.size()); ++tries)
+    for (int tries = 0; tries < static_cast<int>(units.size()); ++tries)
     {
-        const int candidate = BattleState::PanelUnits[static_cast<std::size_t>(place)];
+        const int candidate = units[static_cast<std::size_t>(place)];
 
         if (--place < 0)
         {
-            place = static_cast<int>(BattleState::PanelUnits.size()) - 1;
+            place = static_cast<int>(units.size()) - 1;
         }
 
         if (this->CanSelectRole(candidate))
@@ -1911,13 +1935,17 @@ void Game::SelectPreviousRole()
     BattleState& battle = this->battleState;
     battle.mouseMode = 0;
     const i32 unit = battle.currentUnit;
+    // The rebuild's active time battle (deviations.md) shifts the panel units onto the role units.
+    const i32 shift = battle.activeTime ? BattleState::FirstRoleUnit - kFirstPanelUnit : 0;
+    const i32 first = kFirstPanelUnit + shift;
+    const i32 last = kLastPanelUnit + shift;
 
-    if (unit < kFirstPanelUnit || unit > kLastPanelUnit)
+    if (unit < first || unit > last)
     {
         return;
     }
 
-    this->SelectRoleUnit(this->NextSelectableRole(unit == kFirstPanelUnit ? kLastPanelUnit : unit - 1));
+    this->SelectRoleUnit(this->NextSelectableRole(unit == first ? last : unit - 1));
 }
 
 // swd3e.exe 0x0046F400: the panel goes from the current role unit (8..11) to the one numbered after it (8 after 11)
@@ -1927,13 +1955,17 @@ void Game::SelectNextRole()
     BattleState& battle = this->battleState;
     battle.mouseMode = 0;
     const i32 unit = battle.currentUnit;
+    // The rebuild's active time battle (deviations.md) shifts the panel units onto the role units.
+    const i32 shift = battle.activeTime ? BattleState::FirstRoleUnit - kFirstPanelUnit : 0;
+    const i32 first = kFirstPanelUnit + shift;
+    const i32 last = kLastPanelUnit + shift;
 
-    if (unit < kFirstPanelUnit || unit > kLastPanelUnit)
+    if (unit < first || unit > last)
     {
         return;
     }
 
-    this->SelectRoleUnit(this->PreviousSelectableRole(unit == kLastPanelUnit ? kFirstPanelUnit : unit + 1));
+    this->SelectRoleUnit(this->PreviousSelectableRole(unit == last ? first : unit + 1));
 }
 
 // swd3e.exe 0x0046F590: the right key of the battle menu. State 1: the 符鬼 and 煉妖 choices take no key; the elements
@@ -2361,6 +2393,14 @@ void Game::MenuCancel()
 
     auto clearList = [&battle]
     {
+        // The rebuild (deviations.md): with the active time battle a list left lets the battle go on, as swd32's
+        // MenuCancel does (swd3e keeps it stopped until the order).
+        if (battle.activeTime)
+        {
+            battle.turnPending = 0;
+            battle.battleBusy = 0;
+        }
+
         battle.listName = {};
         battle.unk5772C4 = 0;
         battle.unk5772AC = 0;
@@ -2384,8 +2424,9 @@ void Game::MenuCancel()
         if (battle.currentUnit != 0)
         {
             battle.result = kMenuState;
-            battle.turnPending = 1;
-            battle.battleBusy = 1;
+            // The rebuild (deviations.md): with the active time battle the menu does not stop the battle, as in swd32.
+            battle.turnPending = battle.activeTime ? battle.turnPending : 1;
+            battle.battleBusy = battle.activeTime ? battle.battleBusy : 1;
         }
 
         return;
@@ -2394,6 +2435,9 @@ void Game::MenuCancel()
     switch (battle.result)
     {
         case kMenuState:
+        {
+            const i32 choiceOpen = battle.ghostOrdersOpen | battle.refineOptionsOpen;
+
             if (battle.ghostOrdersOpen == 1)
             {
                 battle.ghostOrdersOpen = 0;
@@ -2414,8 +2458,20 @@ void Game::MenuCancel()
                 battle.elementRow = 1;
                 battle.menuCommand = battle.listReturnCommand;
             }
+            else if (battle.activeTime && choiceOpen == 0)
+            {
+                // The rebuild (deviations.md): with the active time battle the menu closes as in swd32, the role
+                // left on the panel (the confirm key opens it again), the battle going on.
+                battle.result = 0;
+                battle.commandNames = {};
+                battle.listedCommands = 0;
+                battle.choiceReady = 0;
+                battle.panelWaiting = 1;
+                closePanels();
+            }
 
             break;
+        }
 
         case kListState2:
             battle.result = kMenuState;
@@ -6491,8 +6547,12 @@ void Game::BattleKeys()
 
     if (controls.At(Button::KeyA).press != 0 && Game::KeyRepeats(controls.At(Button::KeyA)))
     {
-        if (battle.result == kMenuState && this->scene.talkWindows == nullptr &&
-            (battle.startPoseRole & BattleState::StartPoseDone) != 0)
+        // The rebuild (deviations.md): with the active time battle A starts the auto battle as in swd32, with or
+        // without a role on the panel (battle state 0 or 1, a party role in the battle).
+        const bool menuShown =
+            battle.activeTime ? battle.result <= kMenuState && battle.roleCount != 0 : battle.result == kMenuState;
+
+        if (menuShown && this->scene.talkWindows == nullptr && (battle.startPoseRole & BattleState::StartPoseDone) != 0)
         {
             // The rebuild's auto combo (deviations.md): the first aimed attack with 連擊 when it can.
             const i32 command = this->AutoCombo(unit) ? kAimedCommand15 : 1;
@@ -6757,8 +6817,10 @@ void Game::DrawBattleMenu()
             unit = 0;
             battle.currentUnit = 0;
         }
-        else if (battle.result == 0)
+        else if (battle.result == 0 && !battle.activeTime)
         {
+            // The rebuild (deviations.md): with the active time battle the role waits on the panel until the confirm
+            // key opens its menu (ConfirmKey), the battle going on meanwhile.
             battle.result = kMenuState;
         }
     }
@@ -6922,8 +6984,14 @@ void Game::DrawBattleMenu()
 void Game::DrawGhostAimPointer()
 {
     BattleState& battle = this->battleState;
-    battle.battleBusy = 1;
-    battle.turnPending = 1;
+
+    // The rebuild (deviations.md): with the active time battle the aim does not stop the battle, as in swd32.
+    if (!battle.activeTime)
+    {
+        battle.battleBusy = 1;
+        battle.turnPending = 1;
+    }
+
     this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
     battle.actingEnemy = 0;
 
@@ -6974,8 +7042,14 @@ void Game::DrawAimPointers()
 {
     BattleState& battle = this->battleState;
     BattleHud& hud = this->battleHud;
-    battle.turnPending = 1;
-    battle.battleBusy = 1;
+
+    // The rebuild (deviations.md): with the active time battle the aim does not stop the battle, as in swd32.
+    if (!battle.activeTime)
+    {
+        battle.turnPending = 1;
+        battle.battleBusy = 1;
+    }
+
     this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
 
     // Without a current unit (the auto battle) the original reads the order before the first: taken as aiming at

@@ -292,6 +292,7 @@ void Game::StartBattle(u16 number)
     ReleaseBattleSurfaces(battle);
     CreateBattleSurfaces(battle, this->graphics);
     this->fightTalk.Load(this->config.installDirectory, number);
+    battle.activeTime = this->config.activeTime;
     const std::u8string path = Concat({this->config.installDirectory, u8"battle.ffd"});
     battle.file.ReadHeader(path);
     battle.file.ReadFormation(path, battle.formation, number, 0);

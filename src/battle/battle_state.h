@@ -462,6 +462,9 @@ public:
     // 0x00577258 1: the role on the panel waits for its menu (its gauge filled, a command cancelled): the confirm key
     // opens it (ConfirmKey, MenuConfirm); cleared once it takes an order.
     i32 panelWaiting = 0;
+    // The rebuild (deviations.md): the battle goes on while a role waits for its menu (Config::activeTime, taken as
+    // the battle starts).
+    bool activeTime = false;
     i32 turnUnit = 0;    // 0x00577020 the role unit taking the turn
     i32 endFade = 0;     // 0x005772E4 1: the field fades out once the battle is decided (CheckBattleEnd)
     u8 enemiesGone = 0;  // 0x005771E8 set to enemyCount by a retreat

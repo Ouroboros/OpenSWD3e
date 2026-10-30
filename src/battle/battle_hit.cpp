@@ -2110,15 +2110,23 @@ int Game::EnemyFrame(int enemy)
 
     if (this->fightTalk.battleRuns == 1)
     {
-        if (battle.actingUnit == -1 && !unit.IsDefeated() && battle.battleBusy == 0 && battle.turnPending == 0)
+        // The rebuild (deviations.md): with the active time battle as swd32's EnemyFrame, while a unit acts too.
+        if ((battle.actingUnit == -1 || battle.activeTime) && !unit.IsDefeated() && battle.battleBusy == 0 &&
+            battle.turnPending == 0)
         {
             unit.TickEffects(services);
 
             if (unit.unk2FF0 == 0 && unit.AdvanceGauge(services, battle.enemyGaugeBoost) == 1)
             {
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
-                battle.turnPending = 1;
-                battle.battleBusy = 1;
+
+                // The rebuild (deviations.md): with the active time battle the enemy only takes its place in the
+                // order, as swd32's EnemyFrame does; the battle goes on until it acts.
+                if (!battle.activeTime)
+                {
+                    battle.turnPending = 1;
+                    battle.battleBusy = 1;
+                }
             }
         }
 
@@ -2167,11 +2175,17 @@ int Game::EnemyFrame(int enemy)
                 }
             }
 
-            if (battle.unk50CE6C[at] == 1 && battle.actingUnit == -1 && battle.result == 0 &&
+            // The rebuild (deviations.md): with the active time battle the enemy is slotted again whatever the menu
+            // shows, the battle going on, as swd32 slots its enemies.
+            if (battle.unk50CE6C[at] == 1 && battle.actingUnit == -1 && (battle.result == 0 || battle.activeTime) &&
                 this->fightTalk.battleRuns == 1 && unit.DrainSecondGauge() == 1)
             {
-                battle.battleBusy = 1;
-                battle.turnPending = 1;
+                if (!battle.activeTime)
+                {
+                    battle.battleBusy = 1;
+                    battle.turnPending = 1;
+                }
+
                 battle.unk50CE6C[at] = 0;
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
             }
@@ -2785,7 +2799,8 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         ghost.GhostAttackCommand(this->database);
         battle.InsertSlotRecord(1, battle.ghostSlot + BattleState::FirstRoleUnit, 0);
         battle.battleBusy = 1;
-        battle.turnPending = 1;
+        // The rebuild (deviations.md): with the active time battle a turn taken does not stop the battle, as in swd32.
+        battle.turnPending = battle.activeTime ? battle.turnPending : 1;
     }
 
     // A target outside the roles (an enemy, or none) is read past the roles in the original (deviations.md): taken as
