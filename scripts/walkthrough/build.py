@@ -3,7 +3,10 @@ walkthrough page (docs/walkthrough.html).
 objects.jsonl is written by scripts/items/dump.cpp, monsters.jsonl by scripts/bestiary/dump.cpp.
 
 Markup: "@ 篇章 | 標題" starts a section, "# 小標" a heading, "- " a list line, "1. " a step, other lines paragraphs;
-"   1. " (indented) a line of a numbered list inside the list line or step above it.
+"   1. " or "   - " (indented) a line of a list inside the list line or step above it.
+Lists follow one rule everywhere, at every depth: numbered for steps done in order and for choices of which only one
+is taken (ways, cases, sources); "- " for the rest (items, shops, conditions, rewards, notes). The report names a list
+of one line, a numbered item or gold place, and a step after a "- " line under the same heading.
 {名} names an item (物品大全), 〔名〕 a monster (神魔異事錄); [標籤] marks a tag; «標題» goes to a section;
 【文字｜網址】 is a link out. Unknown names, shop prices the item data does not confirm ("{名} 價" in a 商店 heading)
 and steals the monster data does not confirm ("〔怪〕可偷{物}") are reported.
@@ -72,11 +75,13 @@ def main():
             chapter, title = [part.strip() for part in line[2:].split('|')]
             sections.append(dict(chapter=chapter, title=title, blocks=[], text=[]))
             heading = ''
+            listed = False
             continue
         section = sections[-1]
         section['text'].append(re.sub(r'[{}〔〕\[\]«»]', '', line))
         if line.startswith('# '):
             heading = line[2:]
+            listed = False
 
         for monster, item in re.findall(r'〔([^〕]+)〕可偷\{([^}]+)\}', line):
             if monster in steals and item not in steals[monster]:
@@ -133,10 +138,14 @@ def main():
             return ''.join(out)
 
         inner = re.match(r'\s+(?:(\d+)\.|-) (.*)', line)
-        if inner and not inner.group(1):
-            problems.append(f'{number}: an indented line not numbered')
-        if inner and section['blocks'] and section['blocks'][-1][0] in ('li', 'step', 'sub-step'):
-            section['blocks'].append(['sub-step', render(inner.group(2))])
+        if re.match(r'\d+\. (\{[^}]+\}|\d+ 兩)：', line):
+            problems.append(f'{number}: an item numbered (items are listed with "- ")')
+        if re.match(r'\d+\. ', line) and listed:
+            problems.append(f'{number}: a step after a "- " line under the same heading')
+        if line.startswith('- '):
+            listed = True
+        if inner and section['blocks'] and section['blocks'][-1][0] in ('li', 'step', 'sub-li', 'sub-step'):
+            section['blocks'].append(['sub-step' if inner.group(1) else 'sub-li', render(inner.group(2))])
         elif inner:
             problems.append(f'{number}: an indented line under no list line')
         elif line.startswith('# '):
@@ -147,6 +156,26 @@ def main():
             section['blocks'].append(['step', render(line.split('. ', 1)[1])])
         else:
             section['blocks'].append(['p', render(line)])
+
+    # A list of one line: a run of steps (their inner lines between them) or of inner lines of one kind.
+    for section in sections:
+        steps = 0
+        inner = (None, 0)
+        for kind, _ in section['blocks'] + [('end', '')]:
+            if kind.startswith('sub-') and inner[0] in (kind, None):
+                inner = (kind, inner[1] + 1)
+                continue
+            if inner[1] == 1:
+                problems.append(f'{section["title"]}: a list of one line ({inner[0]})')
+            inner = (kind, 1) if kind.startswith('sub-') else (None, 0)
+            if kind.startswith('sub-'):
+                continue
+            if kind == 'step':
+                steps += 1
+                continue
+            if steps == 1:
+                problems.append(f'{section["title"]}: a list of one step')
+            steps = 0
 
     titles = {section['title'] for section in sections}
     for number, title in goes:
@@ -175,7 +204,7 @@ def main():
 
 def blocks(rows):
     """The blocks as HTML: list lines and steps in their lists, indented lines in a list inside the line above."""
-    lists = {'li': 'ul', 'step': 'ol', 'sub-step': 'ol'}
+    lists = {'li': 'ul', 'step': 'ol', 'sub-li': 'ul', 'sub-step': 'ol'}
     out = []
     open_list = None
     open_item = False
