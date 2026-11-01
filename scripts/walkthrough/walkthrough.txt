@@ -1,6 +1,7 @@
 @ 說明 | 攻略說明
 # 適用版本
-- 《軒轅劍參外傳 天之痕》2000 年的 DVD 版，也就是 OpenSWD3e 對應的版本。
+- 《軒轅劍參外傳 天之痕》2000 年 12 月的 CD 版 V2.03，也就是 OpenSWD3e 對應的版本。
+- CD 版和 DVD 版打上 V2.03 更新後，遊戲資料完全相同，攻略兩版都適用。
 - 原版 swd3e.exe 和 OpenSWD3e 的流程、物品完全一樣。
 # 攻略來源
 - 【青衫《軒轅劍3外傳天之痕攻略》｜https://chiuinan.github.io/game/game/intro/ch/c11/swd3e/swd3e/swd3e.htm】：流程、支線、物品位置、商店。本攻略按它的順序重新整理。
