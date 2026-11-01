@@ -111,7 +111,13 @@ h1 {
 h1 small { display: block; margin-top: 8px; font-size: 22px; letter-spacing: 2px; color: #5a3410; }
 
 /* The introduction in the game's frame, as the sections. */
-.intro p { margin: 0 0 10px; }
+.intro { line-height: 1.8; }
+
+.intro p { margin: 0 0 16px; }
+
+.intro ul { margin: 0 0 18px; padding-left: 24px; }
+
+.intro li { margin: 4px 0; }
 
 .intro p:last-child { margin-bottom: 0; }
 
@@ -217,8 +223,14 @@ footer a { color: var(--ink); }
   </header>
 
   <div class="intro">
-    <p>《軒轅劍參外傳 天之痕》的重制执行程序，基于 2000 年 12 月的天之痕 CD 版 V2.03 主程序。CD 版和 DVD 版打上 V2.03 更新后，游戏资料完全相同，两版都可以用。Steam 版的游戏资料文件也通用，但存档不通用，Steam 版的存档不能读取。它取代原版的 <code>swd3e.exe</code>，读取你已安装的原版游戏资料，在现在的 Windows 上直接运行。</p>
+    <p>《軒轅劍參外傳 天之痕》的重制执行程序。它取代原版的 <code>swd3e.exe</code>，读取你已安装的原版游戏资料，在现在的 Windows 上直接运行。</p>
     <p>剧情、战斗、数值与各种规则都和原版一样，连原版的小 BUG 也保留；会让游戏崩溃的问题则已修正。</p>
+    <h3>对应的原版</h3>
+    <ul>
+      <li>基于 2000 年 12 月的天之痕 CD 版 V2.03 主程序。</li>
+      <li>DVD 版打上 V2.03 更新后，游戏资料和 CD 版完全相同，可以直接用。</li>
+      <li>Steam 版的游戏资料也通用，但存档不通用，Steam 版的存档不能读取。</li>
+    </ul>
     <p class="note">本项目不含任何游戏资料，需要你已有原版游戏。</p>
   </div>
 
