@@ -35,7 +35,8 @@ def main():
             days[-1]['blocks'].append(['p', html.escape(line.strip())])
 
     body = ''.join(
-        f'<section id="{html.escape(day["date"])}"><h2>{html.escape(day["date"])}</h2>{blocks(day["blocks"])}</section>'
+        f'<section id="{html.escape(day["date"])}"><h2><a class="date" href="#{html.escape(day["date"])}" '
+        f'title="連到這一天">{html.escape(day["date"])}</a></h2>{blocks(day["blocks"])}</section>'
         for day in days
     )
     page = TEMPLATE.replace('<!--BODY-->', body)
@@ -225,6 +226,10 @@ h1 {
 
 .page section:first-child h2 { margin-top: 4px; }
 
+.page h2 .date { color: inherit; text-decoration: none; cursor: pointer; }
+.page h2 .date:hover { color: var(--gold-light); }
+.page h2 .date:hover::after { content: " #"; color: var(--gold); }
+
 .page h3 { font-family: var(--kai); font-size: 23px; font-weight: normal; color: var(--gold-light); margin: 14px 0 2px; }
 .page p { margin: 2px 0 6px; }
 .page ul, .page ol { margin: 0 0 6px; padding-left: 26px; }
@@ -312,6 +317,29 @@ function showNamed(text = addressed()) {
   const section = text ? document.getElementById(text) : null;
   $('body').scrollTop = section ? section.offsetTop - $('body').offsetTop : 0;
 }
+
+// The day clicked kept in the address (and in the home page's, which opens it there), so that its link can be copied.
+function keepPlace(detail) {
+  history.replaceState(null, '', `${location.search}#${encodeURIComponent(detail)}`);
+
+  if (window.parent !== window) {
+    window.parent.postMessage({ shown: 'changelog', detail }, '*');
+  }
+}
+
+$('body').addEventListener('click', event => {
+  const date = event.target.closest('.date');
+
+  if (!date) {
+    return;
+  }
+
+  event.preventDefault();
+  const detail = date.getAttribute('href').slice(1);
+  keepPlace(detail);
+  showNamed(detail);
+  beep();
+});
 
 function drawSound() {
   const button = $('sound');
