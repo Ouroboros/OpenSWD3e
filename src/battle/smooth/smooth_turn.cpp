@@ -321,8 +321,6 @@ constexpr std::size_t kBlockNextExperienceAt = 2;
 constexpr std::size_t kBlockNextSpecialAt = 3;
 constexpr i32 kBlockSpecialMask = 0x7FFFFFFF;
 constexpr std::string_view kFrameDebugLine = "FRAME:%d";
-constexpr int kMenuHomeX = 0xF0;  // swd3e: where the command menu opens
-constexpr int kMenuHomeY = 0x8C;
 constexpr i32 kLastGridCommand = 9;  // a command past the grid goes back to 1
 constexpr int kRoleIconX = 0x1E;     // the role's icon over the menu
 constexpr int kRoleIconY = 0x21;
@@ -2910,8 +2908,8 @@ void TurnFrame::DrawCommandPanelAdvance(i32 nameIndex, Scene& scene)
             battle.unk5772AC = 1;
         }
 
-        battle.menuX = kMenuHomeX;
-        battle.menuY = kMenuHomeY;
+        battle.menuX = BattleState::MenuHomeX;
+        battle.menuY = BattleState::MenuHomeY;
     }
 
     if (grown >= kMenuOpened)

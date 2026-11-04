@@ -81,6 +81,8 @@ public:
     static constexpr i32 InitialGaugeFull = 900;
     static constexpr std::size_t ItemUseIds = 0xFF;  // itemUses entries
     static constexpr u8 StartPoseDone = 0x80;        // startPoseRole: the start pose is over
+    static constexpr i32 MenuHomeX = 0xF0;           // menuX, menuY: where the command menu opens (swd3e)
+    static constexpr i32 MenuHomeY = 0x8C;
     static constexpr u8 CostlyUses = 2;  // past this many uses (itemUses + 1 >= 3) an object costs a third more
     static constexpr int QueueRows = 4;
     static constexpr int QueueColumns = 10;

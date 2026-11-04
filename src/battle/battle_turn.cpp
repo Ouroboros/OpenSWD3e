@@ -6417,6 +6417,16 @@ void Game::BattleKeys()
                 continue;
             }
 
+            // The rebuild (deviations.md): with the active time battle the role on the panel may not have its menu
+            // opened yet (the confirm key opens it): its commands are listed and the menu placed where it opens, as
+            // the opening does, before a key takes a command (guard reads the list of the menu shown otherwise).
+            if (battle.activeTime && battle.result == 0)
+            {
+                this->BuildCommandMenu();
+                battle.menuX = BattleState::MenuHomeX;
+                battle.menuY = BattleState::MenuHomeY;
+            }
+
             if (command == kGuardCommand)
             {
                 if (battle.menuCommand != kGuardCommand)
