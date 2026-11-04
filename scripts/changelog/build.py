@@ -1,7 +1,8 @@
-"""scripts/changelog/build.py <CHANGELOG.md> <out.html> [move.wav]: the changelog page (docs/changelog.html).
+"""scripts/changelog/build.py <CHANGELOG.md> <out.html> [move.wav]: the changelog page (docs/changelog.html), every
+day on one page, the newest first.
 
 CHANGELOG.md: "## 日期" starts a day, "### 分類" a heading, "- " a change; other lines are paragraphs. The days keep
-their order (the newest first).
+their order.
 """
 import base64
 import html
@@ -33,8 +34,11 @@ def main():
         else:
             days[-1]['blocks'].append(['p', html.escape(line.strip())])
 
-    data = [dict(date=day['date'], html=blocks(day['blocks'])) for day in days]
-    page = TEMPLATE.replace('/*DATA*/null', json.dumps(data, ensure_ascii=False))
+    body = ''.join(
+        f'<section id="{html.escape(day["date"])}"><h2>{html.escape(day["date"])}</h2>{blocks(day["blocks"])}</section>'
+        for day in days
+    )
+    page = TEMPLATE.replace('<!--BODY-->', body)
     page = page.replace('/*SOUND*/null', json.dumps(sound_url(rest[0] if rest else '')))
     with open(out_path, 'w', encoding='utf-8') as out:
         out.write(page)
@@ -151,7 +155,7 @@ h1 {
 
 .layout {
   display: grid;
-  grid-template-columns: 290px 1fr;
+  grid-template-columns: 1fr;
   gap: 0 14px;
   margin-top: 8px;
   flex: 1;
@@ -182,35 +186,6 @@ h1 {
 
 
 
-.list {
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-gutter: stable both-edges;
-  padding: 12px 0;
-  scrollbar-color: var(--gold) #000;
-  --fill: var(--panel-list);
-}
-
-.row {
-  font-family: var(--kai);
-  font-size: 23px;
-  line-height: 38px;
-  padding: 0 10px 0 16px;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 1px 1px 0 #302018;
-}
-
-/* The game's highlight: a band brightest in the middle, fading to the top and bottom edges. */
-.row.chosen {
-  color: #fff0b0;
-  background: linear-gradient(180deg, rgba(160, 104, 0, 0), rgba(200, 130, 10, 0.95) 50%, rgba(160, 104, 0, 0));
-}
-
-.empty { font-family: var(--kai); font-size: 20px; color: var(--dim); padding: 8px 16px; }
 
 .page { display: flex; flex-direction: column; min-height: 0; padding: 14px 8px 12px 24px; }
 
@@ -238,6 +213,18 @@ h1 {
   line-height: 31px;
 }
 
+.page h2 {
+  font-family: var(--kai);
+  font-size: 30px;
+  font-weight: normal;
+  color: #f0e0a8;
+  margin: 22px 16px 4px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--gold-dark);
+}
+
+.page section:first-child h2 { margin-top: 4px; }
+
 .page h3 { font-family: var(--kai); font-size: 23px; font-weight: normal; color: var(--gold-light); margin: 14px 0 2px; }
 .page p { margin: 2px 0 6px; }
 .page ul, .page ol { margin: 0 0 6px; padding-left: 26px; }
@@ -261,14 +248,11 @@ h1 {
     <h1>更新記錄</h1>
   </div>
   <div class="layout">
-    <div class="frame list" id="list"></div>
-    <div class="frame page"><div class="title" id="title"></div><div class="body" id="body"></div></div>
+    <div class="frame page"><div class="body" id="body"><!--BODY--></div></div>
   </div>
-  <div class="hint">↑↓ 選擇　Home / End 首尾　PgUp / PgDn 捲動</div>
+  <div class="hint">↑↓ PgUp / PgDn 捲動　Home / End 首尾</div>
 </div>
 <script>
-const DAYS = /*DATA*/null;
-
 // The game's cursor sound (all.snd 0x2E, which the menus play as the cursor moves).
 const MOVE_SOUND = /*SOUND*/null;
 
@@ -277,7 +261,6 @@ const MOVE_SOUND = /*SOUND*/null;
 const SOUND_PARAMETER = 'sound';
 const SOUND_OFF = 'off';
 let soundOn = new URLSearchParams(location.search).get(SOUND_PARAMETER) !== SOUND_OFF;
-let chosen = 0;
 
 const $ = id => document.getElementById(id);
 
@@ -289,61 +272,16 @@ function beep() {
   }
 }
 
-function escape(text) {
-  return text.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-}
-
-function list() {
-  $('list').innerHTML = DAYS.map((day, at) =>
-    `<div class="row${at === chosen ? ' chosen' : ''}" data-at="${at}">${escape(day.date)}</div>`).join('');
-}
-
-function show() {
-  document.querySelectorAll('.row').forEach((row, at) => row.classList.toggle('chosen', at === chosen));
-  const row = document.querySelector('.row.chosen');
-
-  if (row) {
-    row.scrollIntoView({ block: 'nearest' });
-  }
-
-  const day = DAYS[chosen];
-
-  if (!day) {
-    return;
-  }
-
-  keepPlace(day.date);
-  $('title').textContent = day.date;
-  $('body').innerHTML = day.html;
-  $('body').scrollTop = 0;
-}
-
-function move(by) {
-  const before = chosen;
-  chosen = Math.max(0, Math.min(DAYS.length - 1, chosen + by));
-
-  if (chosen !== before) {
-    beep();
-    show();
-  }
-}
-
-$('list').addEventListener('click', event => {
-  const row = event.target.closest('.row');
-
-  if (row) {
-    move(Number(row.dataset.at) - chosen);
-  }
-});
-
 document.addEventListener('keydown', event => {
+  const body = $('body');
+  const page = body.clientHeight - 40;
   const keys = {
-    ArrowUp: () => move(-1),
-    ArrowDown: () => move(1),
-    Home: () => move(-DAYS.length),
-    End: () => move(DAYS.length),
-    PageUp: () => { $('body').scrollTop -= $('body').clientHeight - 40; },
-    PageDown: () => { $('body').scrollTop += $('body').clientHeight - 40; },
+    ArrowUp: () => { body.scrollTop -= 40; },
+    ArrowDown: () => { body.scrollTop += 40; },
+    PageUp: () => { body.scrollTop -= page; },
+    PageDown: () => { body.scrollTop += page; },
+    Home: () => { body.scrollTop = 0; },
+    End: () => { body.scrollTop = body.scrollHeight; },
   };
 
   if (keys[event.key]) {
@@ -361,15 +299,6 @@ function fit() {
   book.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
 }
 
-// The day shown kept in the address (and in the home page's) in place, so that going back returns here.
-function keepPlace(detail) {
-  history.replaceState(null, '', `${location.search}#${encodeURIComponent(detail)}`);
-
-  if (window.parent !== window) {
-    window.parent.postMessage({ shown: 'changelog', detail }, '*');
-  }
-}
-
 function addressed() {
   try {
     return decodeURIComponent(location.hash.slice(1));
@@ -378,15 +307,10 @@ function addressed() {
   }
 }
 
-// A day named in the address (changelog.html#2026-11-05) is chosen.
-function chooseNamed(text = addressed()) {
-  const at = DAYS.findIndex(day => day.date === text);
-
-  if (at >= 0) {
-    chosen = at;
-  }
-
-  show();
+// A day named in the address (changelog.html#2026-11-05) is scrolled to.
+function showNamed(text = addressed()) {
+  const section = text ? document.getElementById(text) : null;
+  $('body').scrollTop = section ? section.offsetTop - $('body').offsetTop : 0;
 }
 
 function drawSound() {
@@ -430,10 +354,9 @@ addEventListener('message', event => {
 
 drawSound();
 addEventListener('resize', fit);
-addEventListener('hashchange', () => chooseNamed());
+addEventListener('hashchange', () => showNamed());
 fit();
-list();
-chooseNamed();
+showNamed();
 </script>
 </body>
 </html>
