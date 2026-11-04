@@ -21,6 +21,7 @@
 | 0x004276C0、0x004276F0、0x00427720、0x00427760 | 越界 | 像素转换为 do-while（计数减 1 后大于 0 才继续），计数 ≤ 0 时仍转换起点的一个像素 | 计数 ≤ 0 时不转换 | asm/004276C0.asm、asm/004276F0.asm、asm/00427720.asm、asm/00427760.asm（与 swd32 同码：reverse/evidence/pass1/startup_identity.txt） |
 | 绘制核心整体 | 越界 | 翻转的原始图片下移一个图片高度、拖影读写上下 640 像素、镜像成对写入右侧像素，可能落在表面之外 | Surface 前后各留一个表面大小的保护区，越出的读写落在保护区内，不显示 | 绘制核心各函数与 swd32 同码（reverse/evidence/pass1/painter_rle_identity.txt、startup_identity.txt）；保护区见 src/platform/surface.cpp |
 | 0x00401780 | 空指针 | 8 位图片无调色板时经空指针取色 | 颜色取 0 | asm/00401780.asm（0x004017E6 取调色板，0x00401889 查色不判空） |
+| 0x0049BB50、0x00494840（重置后的我方角色） | 空指针 | 剧情战斗由剧本结束时（0x00479860 指令 0xFFFF）先重置全部单位，再经 0x00465B00 重置一遍；清空状态时每释放一个就跳过下一个，第一次重置后我方角色可能仍留有状态，而 +0xC 已释放为空、种类已清 0。第二次重置到期处理这些状态时，0x0049BB50 把它当作非我方单位，经空指针读狂暴条件（0x0049BB85、0x0049BB88 读地址 0x94）；抗性增益到期也经 +0xC 写回 | 没有 +0xC 对象的单位不做狂暴检查（返回 0），抗性增益到期不写回 | asm/0049BB50.asm（0x0049BB85）、asm/00491690.asm（0x0049177F～0x0049178F 释放 +0xC，0x00491916 清种类）、asm/00494840.asm |
 | 全局 | 平台替换 | 载入过程中调用 Miles AIL_serve 驱动音频流 | 音频由 SDL 独立线程驱动，不需要该调用 | 平台层替换（AGENTS.md 平台层与第三方依赖）；源码平台层（src/platform/） |
 | 0x0049CE20、0x0049CE10、0x0049CE40、0x004A1070、0x0049CDF0 | 平台替换 | Miles 启动：AIL_set_redist_directory(安装目录)、atexit 注册 AIL_shutdown、AIL_startup；退出时再经 0x0049CDF0、0x0049CE10／0x0049CE40 调 AIL_shutdown | 只记下目录与启动状态，音频设备由平台层 AudioDevice 打开与关闭 | asm/0049CE20.asm、asm/004A1070.asm、asm/0049CDD0.asm（0x0049CDF0） |
 | 0x00436C80 | 越界 | 脚本缺少 'DE' 时继续读脚本之后的堆数据 | 脚本之外的字视为 'DE' | asm/00436C80.asm（0x00436F5F 按位置读字不设界） |

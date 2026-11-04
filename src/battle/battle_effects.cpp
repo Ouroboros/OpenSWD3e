@@ -1612,8 +1612,9 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
                     this->roleRecord->resistances[element] =
                         static_cast<u8>(this->roleRecord->resistances[element] - kResistStep);
                 }
-                else
+                else if (this->data != nullptr)
                 {
+                    // The rebuild (deviations.md): without its object (see EnrageCheck) nothing is taken back.
                     this->data->data.resistances[element] =
                         static_cast<u8>(this->data->data.resistances[element] - kResistStep);
                 }
@@ -1647,6 +1648,13 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
 int BattleUnit::EnrageCheck(BattleServices& services, i16 cause, i16 element)
 {
     if ((this->unk2BC0 & kEnraged) != 0 || this->kind == BattleUnit::PartyRole || (this->marks & BattleUnit::Held) != 0)
+    {
+        return 0;
+    }
+
+    // The rebuild (deviations.md): a unit without its object (a party role reset once already, its kind cleared, as a
+    // battle ended by its talk resets it twice) is left out; the original reads the condition through the null pointer.
+    if (this->data == nullptr)
     {
         return 0;
     }
