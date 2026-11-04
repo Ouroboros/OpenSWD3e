@@ -3690,6 +3690,7 @@ void Game::AimGhostStep(int step)
     UnitRect rect;
     this->AimEnemyStep(step, rect);
     battle.aiTarget = battle.aimTarget;
+    battle.ghostAimStepped = 1;
     this->input.SetMousePosition(rect.x + (rect.width >> 1), rect.y + (rect.height >> 1));
 }
 
@@ -4918,6 +4919,7 @@ void Game::ConfirmCommand()
         if (battle.ghostOrderRow == kLockOrder)
         {
             battle.result = kTurnState9;
+            battle.ghostAimStepped = 0;
         }
         else
         {
@@ -6993,7 +6995,13 @@ void Game::DrawGhostAimPointer()
     }
 
     this->mediumFont.SetAdvance(TextFont::DefaultGlyphSize);
-    battle.actingEnemy = 0;
+
+    // The rebuild (deviations.md): with the keyboard in use the aim MenuUp / MenuDown stepped stays (in the original
+    // the pointer moved over it takes the battle to the mouse mode, where the pointer shows the aim).
+    if (battle.ghostAimStepped == 0 || !this->input.KeyboardInUse())
+    {
+        battle.actingEnemy = 0;
+    }
 
     if (battle.mouseMode == 0)
     {

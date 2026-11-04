@@ -350,6 +350,7 @@ public:
     // (StartBattle, RoleFrame); the auto battle key waits for it
     u8 startPoseRole = 0;
     i32 ghostLockTarget = 0;  // 0x00576FBC (swd3e) the enemy (1-based) the ghost's 鎖定目標 aims at; 0: none
+    i32 ghostAimStepped = 0;  // the rebuild (deviations.md): 1 once MenuUp / MenuDown stepped the 鎖定目標 aim
     i16 unk57723C = 0;        // 0x0057723C only ever cleared (HurtFrame 0x0048FAAB and three others), never read
     i16 unk57723E = 0;        // 0x0057723E likewise
     u16 unk577210 = 0;        // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
