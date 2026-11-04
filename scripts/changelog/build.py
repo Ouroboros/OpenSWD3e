@@ -338,7 +338,6 @@ $('body').addEventListener('click', event => {
   const detail = date.getAttribute('href').slice(1);
   keepPlace(detail);
   showNamed(detail);
-  beep();
 });
 
 function drawSound() {
