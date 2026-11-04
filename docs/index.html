@@ -208,6 +208,7 @@ footer a { color: var(--ink); }
   <a href="#top">OpenSWD3e</a>
   <a href="#compare">與原版相比</a>
   <a href="#install">安裝與運行</a>
+  <a href="#versions">版本差異</a>
   <a href="#settings">設置</a>
   <a href="#secrets">隱藏秘籍</a>
   <a href="#attributes">角色屬性</a>
@@ -229,7 +230,7 @@ footer a { color: var(--ink); }
     <ul>
       <li>基于 2000 年 12 月的天之痕 CD 版 V2.03 主程序。</li>
       <li>DVD 版打上 V2.03 更新后，游戏资料和 CD 版完全相同，可以直接用。</li>
-      <li>Steam 版的游戏资料也通用，但存档不通用，Steam 版的存档不能读取。</li>
+      <li>Steam 版的游戏资料也通用，但存档不通用，Steam 版的存档不能读取。Steam 版的剧本改过一些地方，见<a href="#versions">版本差異</a>。</li>
     </ul>
     <p class="note">本项目不含任何游戏资料，需要你已有原版游戏。</p>
   </div>
@@ -269,6 +270,32 @@ data_dir = 'E:\Game\swd3e'</code></pre>
       </li>
       <li>运行 <code>swd3er.exe</code>。</li>
     </ol>
+  </section>
+
+  <section id="versions">
+    <h2>版本差異</h2>
+    <p>CD 版和 DVD 版打上 V2.03 更新后，剧本、地图等游戏资料完全相同。Steam 版的剧本文件（talk1～talk4.dat）和它们不同，用 Steam 版的资料运行时，游戏照 Steam 版的剧本走。下面是逐条比对两份剧本指令的结果。</p>
+    <h3>错别字</h3>
+    <table>
+      <tr><th>场景</th><th>CD／DVD 版</th><th>Steam 版</th></tr>
+      <tr><td>取出神农鼎后问起铜壶（两句）</td><td>瓷壺</td><td>銅壺</td></tr>
+      <tr><td>玉儿道谢</td><td>今生今生</td><td>今生今世</td></tr>
+      <tr><td>阿雪谈靖仇</td><td>他年兒比我小</td><td>他年紀比我小</td></tr>
+      <tr><td>阿雪向玉儿说明</td><td>我說了這麼多我難相信的事</td><td>我說了這麼多很難相信的事</td></tr>
+      <tr><td>河道断崖</td><td>宇文太師要去洛陽去</td><td>宇文太師要去洛陽了</td></tr>
+      <tr><td>张烈</td><td>愚兄才寧願願</td><td>去掉重复的「願」</td></tr>
+      <tr><td>洛阳古维然</td><td>想研就一下</td><td>想研究一下</td></tr>
+      <tr><td>张烈说通天塔</td><td>由通天塔上空而將</td><td>由通天塔上空而降</td></tr>
+    </table>
+    <h3>玩法与剧情</h3>
+    <ul>
+      <li>洛阳古维然多一个选项「可以各送99份」：五色药材各交 99 份，换桑果、蟠桃、野石榴、嘉果、凌霄果、三葉雪桑果、海檬果、山蛇莓、神祕果各一个；不够时他说「您不夠各99份喔!!」。</li>
+      <li>海中建木的隐藏物品，CD／DVD 版是玄武之沂，Steam 版改为沙塵之珠。CD／DVD 版的玄武之沂共有两个，另一个在独孤家道观的宝箱。</li>
+      <li>DOMO 组员高玉玫判断「改过游戏」的条件：CD／DVD 版是身上有 50 个以上神祕果，Steam 版改为五种晶矿（金、木、水、火、土象晶礦）任一种有 3 个以上。回春堂里的对应台词也改为「你有修改遊戲，所以.........我．不．回．去。」</li>
+      <li>巴蜀古王墓祭坛通道的剧情多了移除一个角色的指令；螫魂塔多了在地图上放置并显示一个角色的指令。</li>
+      <li>十一段过场的音效与等待画面的指令有调整。</li>
+    </ul>
+    <p class="note">比对时把各事件的剧本解成一条条指令，跳转地址的移动不算差异；关键的句子都在两边的原始文件里搜过。少数事件在 Steam 文件里解析不完整，其中的改动可能没有列出。</p>
   </section>
 
   <section id="settings">
