@@ -26,6 +26,42 @@ SLOTS = [
 ]
 ARMOUR_SLOTS = {'武器', '頭部', '身體', '手部', '足部', '飾品'}  # slots 0..6: the regeneration and the element resistance
 ROLES = ['陳靖仇', '于小雪', '拓跋玉兒', '張烈']  # Party::DefaultNames
+# What a treasure does by its actionKind (BattleRole::ApplyAccessory 0x0047F3E0, UseAccessorySkill 0x0047F5C0 and the
+# commands of RoleActionFrame): the command it adds (BattleState::AccessoryCommandNames, 0x004BF01C) or none for a
+# treasure that works by being worn, and the effect. A command costs the low 14 bits of costBits in stamina
+# (AccessoryValue 0x00499FA0). The effects marked 說明書 follow the game's readme where the code was not followed to
+# the numbers.
+ACCESSORY_VALUE_MASK = 0x3FFF
+ACCESSORIES = {
+    0x00: (None, '沒有作用：遊戲資料裡這件法寶沒有設定任何效果。'),
+    0x15: ('連擊', '普通攻擊連打兩下。'),
+    0x16: ('天雷', '擲出陰陽：屬性相對的全體敵人受到大量傷害，屬性相符的敵人反而回復生命（說明書）。'),
+    0x17: ('偷竊', '偷取一個敵人身上的物品，偷到的放進物品欄。'),
+    0x18: ('群攻', '一擊同時打所有站著的敵人。'),
+    0x1B: ('投擲', '把一件投擲用的物品丟向一個敵人造成傷害，物品會用掉。'),
+    0x1F: ('鼠槌', '敵人上方出現槌子，約 5 秒內每按一下確認鍵（空白鍵、Enter 或滑鼠左鍵）就打一下；'
+                  '每下傷害很小，靠連按的次數累積。'),
+    0x21: ('分解', '對一個敵人出手，按成長的百分比機率讓它直接倒下；頭目（神魔異事錄標 BOSS 的）不受影響。'),
+    0x23: ('回氣', '回復自己的靈力：上限的 10%，成長滿時 30%。'),
+    0x25: ('龍颿', '轉動數字轉盤，按確認鍵停下，停下的數字就是對一個敵人的傷害；轉盤的數字隨法寶的等級變大。'),
+    0x26: ('改變', '在戰鬥中變更自己的五行屬性（說明書）。'),
+    0x27: ('蓄勁', '連續幾回合蓄力，每回合選「繼續」或「放勁」；放勁時這一擊的攻擊力乘以（蓄力次數 + 1）。'
+                  '蓄力次數最多為成長百分比的十分之一（成長滿時 10 次）；蓄力期間防禦只剩次數 × 10%。'),
+    0x28: ('逆攻', '使用後出現傷害累計，之後受到的傷害都累積起來，指令變成「釋放」，把累積的傷害打向一個敵人；'
+                  '累積超過上限會歸零，用逆攻期間不能用奇術（說明書）。'),
+    0x29: ('融合', '召喚出護駕時才能用：把物品欄裡一隻活物的能力加到護駕身上，那隻活物會消失，效果到戰鬥結束（說明書）。'),
+    0x33: (None, '穿戴者的{element}屬性抗性提高成長百分比的 80%（成長滿時 +80，抗性最高 100）；'
+                 '被{element}屬性的攻擊打中時成長。'),
+    0x34: (None, '攻擊力提高 10%，再加上成長百分比的一半（成長滿時共 +60%）。'),
+    0x36: (None, '精準防禦：敵人打中這個角色、傷害數字跳出時按確認鍵，抵消那一下的傷害。'
+                 '規則見流程攻略「洞察光環的用法」。'),
+    0x37: (None, '被敵人的法術、絕招打中時回復靈力：傷害乘以成長百分比的一半，再加 1；普通攻擊不觸發。'),
+    0x38: (None, '普通攻擊吸血：打出多少傷害，就回復自己多少生命。'),
+    0x39: (None, '擋住敵人攻擊附帶的異常狀態：成長每多 20% 擋住更多種，成長滿時全部擋住。'),
+    0x3A: (None, '戰鬥中倒下時自動復活一次：生命回到上限的 40%，再加上成長百分比乘以上限的 90%'
+                 '（成長滿時為上限的 130%）。'),
+    0x3B: (None, '受到的生命傷害先用銀兩抵，1 兩抵 1 點，銀兩用完才扣生命；被打時身上顯示剩下的銀兩。'),
+}
 FIRST_ROLE_BIT = 0x8000
 ELEMENTS = ['金', '木', '水', '火', '土']
 # ApplyEquipment: the bonuses added to the battle record (strength and endurance also to the attack and defence).
@@ -126,12 +162,24 @@ def worn(item, slots, names):
         lines['熟練'] = f'命中 {item["counterMax"]} 次練滿'
         lines['熟練加成'] = f'練滿時每擊傷害 +{item["masteryValue"]}'
         notes['熟練加成'] = '按命中次數的比例增加，有傷害時才加'
+    if '法寶' in slots and item['actionKind'] in ACCESSORIES:
+        command, effect = ACCESSORIES[item['actionKind']]
+        element = next((ELEMENTS[at] for at, value in enumerate(item['resistances']) if value), '')
+        if command:
+            lines['指令'] = command
+            lines['消耗體力'] = str(item['costBits'] & ACCESSORY_VALUE_MASK)
+        lines['作用'] = effect.format(element=element)
     if '法寶' in slots and item['counterMax']:
         # The equipment page's 成長 (value / counterMax of the proficiency list); a full one with masteryValue turns into
         # that object (Game::AnnounceMastery, 0x00477EE0).
         lines['成長'] = f'上限 {item["counterMax"]}'
         if item['masteryValue']:
             lines['成長'] += f'，練滿後變為{names.get(item["masteryValue"], "")}'
+    if '作用' in lines:
+        # A treasure's command and effect come first.
+        first = ('指令', '消耗體力', '作用')
+        lines = {**{key: lines[key] for key in first if key in lines},
+                 **{key: value for key, value in lines.items() if key not in first}}
     return lines, notes
 
 
