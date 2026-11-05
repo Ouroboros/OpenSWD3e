@@ -51,6 +51,9 @@ private:
     Display& display;
     KeyState keys{};
     MouseState mouse;
+    // The rebuild (deviations.md): the keypad Enter also holds the Enter key down; each one's own state.
+    bool enterDown = false;
+    bool keypadEnterDown = false;
 };
 
 // The DirectInput scan code (DIK_*) of an SDL scancode, 0 for keys without one.

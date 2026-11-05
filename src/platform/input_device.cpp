@@ -55,6 +55,9 @@ constexpr ScanCodePair kScanCodes[] = {
     {SDL_SCANCODE_RGUI, 0xDC},        {SDL_SCANCODE_APPLICATION, 0xDD},
 };
 
+constexpr u8 kEnterCode = 0x1C;        // DIK_RETURN
+constexpr u8 kKeypadEnterCode = 0x9C;  // DIK_NUMPADENTER
+
 }  // namespace
 
 u8 ScanCodeOf(int sdlScancode)
@@ -89,6 +92,14 @@ void WindowInputDevice::HandleEvent(const SDL_Event& event)
                 this->keys[code] = event.type == SDL_EVENT_KEY_DOWN ? InputDevice::KeyDown : 0;
             }
 
+            // The rebuild (deviations.md): the keypad Enter works as Enter too, its own code still reported; Enter
+            // is let go once neither is held.
+            if (code == kEnterCode || code == kKeypadEnterCode)
+            {
+                (code == kEnterCode ? this->enterDown : this->keypadEnterDown) = event.type == SDL_EVENT_KEY_DOWN;
+                this->keys[kEnterCode] = this->enterDown || this->keypadEnterDown ? InputDevice::KeyDown : 0;
+            }
+
             break;
         }
 
@@ -119,6 +130,8 @@ void WindowInputDevice::HandleEvent(const SDL_Event& event)
 
         case SDL_EVENT_WINDOW_FOCUS_LOST:
             this->keys.fill(0);
+            this->enterDown = false;
+            this->keypadEnterDown = false;
             this->mouse.left = false;
             this->mouse.right = false;
             break;

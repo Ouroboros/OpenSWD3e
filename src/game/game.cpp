@@ -2496,9 +2496,10 @@ void Game::HandleEvent(const SDL_Event& event)
             bool character;
         };
 
-        constexpr std::array<KeyCode, 8> kKeys = {{
+        constexpr std::array<KeyCode, 9> kKeys = {{
             {SDLK_BACKSPACE, TextKey::Back, true},
             {SDLK_RETURN, TextKey::Return, true},
+            {SDLK_KP_ENTER, TextKey::Return, true},  // the rebuild: the keypad Enter works as Enter (deviations.md)
             {SDLK_ESCAPE, TextKey::Escape, true},
             {SDLK_LEFT, TextKey::Left, false},
             {SDLK_RIGHT, TextKey::Right, false},

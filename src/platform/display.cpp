@@ -513,7 +513,9 @@ bool Display::SetVSync(bool enabled)
 bool Display::HandleEvent(const SDL_Event& event)
 {
     this->TrackWindow(event);
-    const bool altEnter = event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_RETURN;
+    // The keypad Enter works as Enter (deviations.md).
+    const bool altEnter =
+        event.type == SDL_EVENT_KEY_DOWN && (event.key.key == SDLK_RETURN || event.key.key == SDLK_KP_ENTER);
 
     if (altEnter && (event.key.mod & SDL_KMOD_ALT) != 0 && !event.key.repeat)
     {
