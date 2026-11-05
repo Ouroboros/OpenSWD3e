@@ -434,14 +434,32 @@ void Painter::SetZoomSheared(int anchorX, int anchorY, int zoomX, int zoomY, int
     this->BuildZoomTables();
 }
 
+// The rebuild (deviations.md): the phase of the next zoom tables (SetZoomPhase); the zoom set next builds them.
+void Painter::SetZoomPhase(int parts, int phaseX, int phaseY)
+{
+    this->zoomParts = std::max(parts, 1);
+    this->zoomPhaseX = phaseX;
+    this->zoomPhaseY = phaseY;
+}
+
 // Part of 0x00423670 (from 0x004236B0): each table rebuilt when its value differs from the one it was built for. A
 // scale of 0 is made 1 when its table is rebuilt (a table still built for 0 leaves it 0); a shear of 0 keeps the old
-// shifts, which nothing reads then.
+// shifts, which nothing reads then. The rebuild also rebuilds a table for another phase (SetZoomPhase): with parts of
+// 1 and a phase of 0 an entry is the original's.
 void Painter::BuildZoomTables()
 {
-    auto build = [](std::array<i32, Painter::ZoomTableSize>& table, int& scale, int& builtFor)
+    const int parts = this->zoomParts;
+
+    auto build = [parts](
+                     std::array<i32, Painter::ZoomTableSize>& table,
+                     int& scale,
+                     int& builtFor,
+                     int phase,
+                     int& builtParts,
+                     int& builtPhase
+                 )
     {
-        if (builtFor == scale)
+        if (builtFor == scale && builtParts == parts && builtPhase == phase)
         {
             return;
         }
@@ -453,14 +471,23 @@ void Painter::BuildZoomTables()
 
         for (std::size_t index = 0; index < table.size(); ++index)
         {
-            table[index] = kZoomUnit * static_cast<int>(index) / scale;
+            table[index] = kZoomUnit * (parts * static_cast<int>(index) + phase) / (parts * scale);
         }
 
         builtFor = scale;
+        builtParts = parts;
+        builtPhase = phase;
     };
 
-    build(this->zoomColumns, this->zoomX, this->zoomColumnsFor);
-    build(this->zoomRows, this->zoomY, this->zoomRowsFor);
+    build(
+        this->zoomColumns,
+        this->zoomX,
+        this->zoomColumnsFor,
+        this->zoomPhaseX,
+        this->zoomColumnsParts,
+        this->zoomColumnsPhase
+    );
+    build(this->zoomRows, this->zoomY, this->zoomRowsFor, this->zoomPhaseY, this->zoomRowsParts, this->zoomRowsPhase);
 
     if (this->zoomShearsFor != this->zoomShear)
     {
@@ -561,7 +588,13 @@ int Painter::BlitZoomed(int x, int y, int width, int height, u32 mode, bool keep
 
     const u8* line = this->source + kRleLines;
     std::size_t lineIndex = 0;
-    int sourceLine = this->zoomRows[0];
+    int sourceLine = 0;
+
+    // The original's tables start at line 0; one built at a phase (SetZoomPhase, the rebuild) may start further on.
+    for (; sourceLine != this->zoomRows[0] && Word(line) != 0; ++sourceLine)
+    {
+        line += Word(line) & kRunCount;
+    }
 
     while (Word(line) != 0)
     {

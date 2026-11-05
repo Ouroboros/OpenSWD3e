@@ -239,6 +239,9 @@ void FieldView::PaintBetween(Surface& out)
 
     // The effect elements the last game frame drew, placed like the roles (on the map) or on the screen.
     this->paintScale = scale;
+    this->paintRoleX = fineX;
+    this->paintRoleY = fineY;
+
     this->paintCameraX = fineCameraX;
     this->paintCameraY = fineCameraY;
 
@@ -317,7 +320,8 @@ void FieldView::PaintBetween(Surface& out)
     std::array<std::size_t, Game::MaxRenderScale> columnShown = {};
     std::array<std::size_t, Game::MaxRenderScale> rowShown = {};
 
-    auto placesOf = [this, &fineX, &fineY, scale](std::vector<i32>& places, i32 fineCamera, int offset, bool across)
+    auto placesOf =
+        [this, &state, &fineX, &fineY, scale](std::vector<i32>& places, i32 fineCamera, int offset, bool across)
     {
         const i32 cameraPlace = FloorDivide(fineCamera + offset, scale);
         places.resize(1 + GameState::Roles);
@@ -327,6 +331,19 @@ void FieldView::PaintBetween(Surface& out)
         {
             const i32 fine = across ? fineX[index] : fineY[index];
             places[1 + index] = cameraPlace + CeilDivide(fine - fineCamera - offset, scale);
+        }
+
+        // The rebuild: a role zoomed by the depth scale is sampled at the block's phase (DrawRole), so blocks placing
+        // it alike still draw it apart: the phase is part of what a block shows.
+        for (std::size_t index = 0; index < GameState::Roles; ++index)
+        {
+            const Role& role = state.roles[index];
+
+            if ((role.flags & Role::Visible) != 0 && role.id != Role::NoId && (role.flags & Role::NoDepthScale) == 0)
+            {
+                const i32 fine = (across ? fineX[index] : fineY[index]) - fineCamera - offset;
+                places.push_back((scale * CeilDivide(fine, scale) - fine) / FieldView::ZoomPhaseStep(scale));
+            }
         }
 
         for (const auto& [key, effect] : this->effectMotions)

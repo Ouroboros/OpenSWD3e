@@ -343,6 +343,9 @@ private:
         bool frozen = false;
         bool turning =
             false;  // a walking follower turned on its tile: drawn with `act`, its first turn's, until it steps
+        // Drawn at its walk's mean pace (PaceOf): paceDistance (1/MotionFine pixels) every paceTime milliseconds.
+        i32 paceTime = 0;
+        i32 paceDistance = 0;
         ActState act;
     };
 
@@ -363,6 +366,14 @@ private:
 
     static constexpr i32 RoleStepMostFrames = 0x80;  // a role whose act holds longer has stopped: it steps in a frame
 
+    // The pace of a walk: the game frames its next steps take and how many steps; uneven when they are not all alike.
+    struct WalkPace
+    {
+        i32 frames = 0;
+        i32 steps = 0;
+        bool uneven = false;
+    };
+
     void MotionTick();
     void BeginPlayerMotion();
     void EndPlayerMotion(bool atFrame);
@@ -373,6 +384,18 @@ private:
     bool RoleStopping(std::size_t index) const;
     bool RoleTurning(std::size_t index) const;
     i32 StepsToEnd(std::size_t index, const RolePlace& from) const;
+    std::size_t RoleIndex(const Role& role) const;
+
+    // The step of the zoom phases at render scale `parts` (DrawRole): the zoomed pictures are sampled at twice the
+    // original's resolution at an even render scale (the steps part a mirrored picture's phases as an upright one's),
+    // at every part of an odd one.
+    static int ZoomPhaseStep(int parts)
+    {
+        constexpr int kSamplingParts = 2;
+        return parts % kSamplingParts == 0 ? parts / kSamplingParts : 1;
+    }
+
+    WalkPace PaceOf(const ActState& act);
     std::array<i32, 2> MotionShown(const RoleMotion& step) const;
     void ArriveFollower(std::size_t index, std::size_t move, u8 direction);
     void StartPan(i32 byX, i32 byY);
@@ -393,6 +416,10 @@ private:
     i32 paintCameraY = 0;
     int paintColumn = 0;
     int paintRow = 0;
+
+    // Every role's place in 1/paintScale pixels (RoleFine): the place its depth scale is read at on every block.
+    std::array<i32, GameState::Roles> paintRoleX = {};
+    std::array<i32, GameState::Roles> paintRoleY = {};
     // The places PaintBetween last painted at (the camera's, then every role's), its game frame and its target.
     std::vector<i32> paintedKey;
     std::vector<i32> placesKey;

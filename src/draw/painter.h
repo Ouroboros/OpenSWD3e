@@ -186,6 +186,10 @@ public:
     void SetWavePhase(int phase);
     void SetZoom(int anchorX, int anchorY, int zoomX, int zoomY);
     void SetZoomSheared(int anchorX, int anchorY, int zoomX, int zoomY, int shear);
+    // The rebuild's render scale (deviations.md): the zoom tables of the next SetZoom sample each target pixel as the
+    // one `phase` parts of 1/`parts` of a pixel on in a picture `parts` times as fine (a block of a woven render scale
+    // draws its share of the zoomed picture); parts 1 samples as the original.
+    void SetZoomPhase(int parts, int phaseX, int phaseY);
 
     // Drawing.
     int DrawPicture(int x, int y, int width, int height, u32 mode, const DrawArgument& argument = {});
@@ -443,6 +447,15 @@ private:
     int zoomColumnsFor = 0;                        // 0x004EEE78
     int zoomRowsFor = 0;                           // 0x004EEE7C
     int zoomShearsFor = 0;                         // 0x004EEE80
+    // SetZoomPhase (the rebuild): the parts of a pixel and the phases the zoom tables sample at, and those they were
+    // built with.
+    int zoomParts = 1;
+    int zoomPhaseX = 0;
+    int zoomPhaseY = 0;
+    int zoomColumnsParts = 1;
+    int zoomColumnsPhase = 0;
+    int zoomRowsParts = 1;
+    int zoomRowsPhase = 0;
     std::array<ZoomBlitter, 0x100> zoomBlitters{};
 };
 

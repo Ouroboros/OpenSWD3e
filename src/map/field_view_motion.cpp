@@ -12,6 +12,10 @@ constexpr u32 kMostTicks = 0x100;
 constexpr i32 kFarSteps = 2;
 // A role drawn behind where the frames left it gains at most this part of its step on each step it takes.
 constexpr i32 kCatchUpShare = 4;
+// The steps of a walk measured for its pace (whole rounds of the walks whose steps take turns of two or four lengths),
+// looked for over at most this many game frames.
+constexpr i32 kPaceSteps = 8;
+constexpr i32 kPaceMostFrames = 0x100;
 
 i32 Sign(i32 value)
 {
@@ -483,8 +487,36 @@ void FieldView::CaptureRoleSteps(bool continuous)
                 {
                     step.act = role.act;
                 }
+                else
+                {
+                    // The rebuild: the act kept facing the first turn plays on as the role's does (a copy held still
+                    // shows one picture until the role steps).
+                    step.act = owner.acts.Peek(step.act);
+                }
 
                 continue;
+            }
+
+            const i32 walkToX = (role.x + followerMove->stepX) * MotionFine;
+            const i32 walkToY = (role.y + followerMove->stepY) * MotionFine;
+            i32 walkLength = 2 * (static_cast<i32>(role.act.delay) + 1) * interval;
+
+            // The rebuild: a walk whose steps take frames of different lengths goes on at its mean pace (PaceOf), as
+            // its steps are drawn.
+            const WalkPace walkPace = this->PaceOf(role.act);
+            const i32 walkStep = std::max(std::abs(followerMove->stepX), std::abs(followerMove->stepY)) * MotionFine;
+            const bool walkPaced = walkPace.uneven && walkStep > 0;
+
+            if (walkPaced)
+            {
+                const i32 aimed = std::max(std::abs(walkToX - shown[0]), std::abs(walkToY - shown[1]));
+                walkLength = std::max(
+                    static_cast<i32>(
+                        static_cast<i64>(aimed) * walkPace.frames * interval /
+                        (static_cast<i64>(walkPace.steps) * walkStep)
+                    ),
+                    1
+                );
             }
 
             step = RoleMotion{
@@ -493,15 +525,46 @@ void FieldView::CaptureRoleSteps(bool continuous)
                 .targetY = role.y,
                 .fromX = shown[0],
                 .fromY = shown[1],
-                .toX = (role.x + followerMove->stepX) * MotionFine,
-                .toY = (role.y + followerMove->stepY) * MotionFine,
-                .length = 2 * (static_cast<i32>(role.act.delay) + 1) * interval,
+                .toX = walkToX,
+                .toY = walkToY,
+                .length = walkLength,
                 .elapsed = 0,
                 .frame = owner.gameFrames,
                 .stops = false,
                 .frozen = false,
                 .turning = true,
+                .paceTime = walkPaced ? walkPace.frames * interval : 0,
+                .paceDistance = walkPaced ? walkPace.steps * walkStep : 0,
                 .act = role.act,
+            };
+
+            continue;
+        }
+
+        // The rebuild: a role drawn at its walk's mean pace (PaceOf) that the frame stopped facing the way it walked
+        // goes to its tile at that pace from where it is drawn (short of it or past it), with the act it walked with;
+        // one that turned as it stopped stands where it is drawn with its act, as any role turning.
+        const bool stopped =
+            !moved && !held && role.act.action != from.act.action && role.act.direction == from.act.direction;
+
+        if (stopped && tracked && step.paceDistance > 0 && !step.frozen)
+        {
+            const i32 back =
+                std::max(std::abs(role.x * MotionFine - shown[0]), std::abs(role.y * MotionFine - shown[1]));
+            step = RoleMotion{
+                .active = true,
+                .targetX = role.x,
+                .targetY = role.y,
+                .fromX = shown[0],
+                .fromY = shown[1],
+                .toX = role.x * MotionFine,
+                .toY = role.y * MotionFine,
+                .length = std::max(static_cast<i32>(static_cast<i64>(back) * step.paceTime / step.paceDistance), 1),
+                .elapsed = 0,
+                .frame = step.frame,
+                .stops = true,
+                .frozen = false,
+                .act = step.act,
             };
 
             continue;
@@ -536,10 +599,18 @@ void FieldView::CaptureRoleSteps(bool continuous)
 
         if (!moved)
         {
-            // A turning follower faced its first turn's way again: its act goes on.
-            if (tracked && step.turning && role.act.direction == step.act.direction)
+            // A turning follower faced its first turn's way again: its act goes on; facing another way, the act kept
+            // plays on (the rebuild).
+            if (tracked && step.turning)
             {
-                step.act = role.act;
+                step.act = role.act.direction == step.act.direction ? role.act : owner.acts.Peek(step.act);
+            }
+
+            // The rebuild: a role drawn walking on to where it stopped plays its walk on until it gets there (a copy
+            // held still shows one picture, then the stand at once).
+            if (tracked && step.stops && !step.frozen && step.elapsed < step.length)
+            {
+                step.act = owner.acts.Peek(step.act);
             }
 
             continue;
@@ -591,6 +662,28 @@ void FieldView::CaptureRoleSteps(bool continuous)
         }
 
         const i32 frames = next > RoleStepMostFrames ? 1 : next;
+        i32 length = frames * interval;
+
+        // The rebuild: a walk whose steps take frames of different lengths (its act's frames hold for different
+        // delays: 7 and 11, 9 and 5, ...) is drawn at its mean pace all along, the speed of its steps over a round of
+        // the walk; the frames' steps are those of the original. It is drawn on toward the step after the one the
+        // frame took (a long wait would have it reach its tile and stand): a stop takes it back to its tile.
+        const WalkPace pace = stops ? WalkPace{} : this->PaceOf(role.act);
+        const bool paced = pace.uneven && stepped > 0;
+
+        if (paced)
+        {
+            endX = toX + (role.x - from.x) * MotionFine;
+            endY = toY + (role.y - from.y) * MotionFine;
+            const i32 aimed = std::max(std::abs(endX - shown[0]), std::abs(endY - shown[1]));
+            length = std::max(
+                static_cast<i32>(
+                    static_cast<i64>(aimed) * pace.frames * interval / (static_cast<i64>(pace.steps) * stepped)
+                ),
+                1
+            );
+        }
+
         step = RoleMotion{
             .active = true,
             .targetX = role.x,
@@ -599,11 +692,13 @@ void FieldView::CaptureRoleSteps(bool continuous)
             .fromY = shown[1],
             .toX = endX,
             .toY = endY,
-            .length = frames * interval,
+            .length = length,
             .elapsed = 0,
             .frame = owner.gameFrames,
             .stops = stops,
             .frozen = false,
+            .paceTime = paced ? pace.frames * interval : 0,
+            .paceDistance = paced ? pace.steps * stepped : 0,
             .act = from.act,
         };
     }
@@ -638,6 +733,40 @@ i32 FieldView::StepsToEnd(std::size_t index, const RolePlace& from) const
     }
 
     return 0;
+}
+
+// The pace of a role walking with `act` (its state after the frame): the frames to its next kPaceSteps steps, a step
+// taken on each frame that starts with the act's delay at 0 (PathMove); uneven when the gaps between them differ.
+FieldView::WalkPace FieldView::PaceOf(const ActState& act)
+{
+    ActState state = act;
+    WalkPace pace;
+    i32 first = -1;
+    i32 gap = 0;
+
+    for (i32 frame = 0; frame < kPaceMostFrames && pace.steps < kPaceSteps; ++frame)
+    {
+        if (state.delay == 0)
+        {
+            if (first < 0)
+            {
+                first = frame;
+            }
+            else
+            {
+                const i32 since = frame - first - pace.frames;
+                pace.uneven = pace.uneven || (gap != 0 && since != gap);
+                gap = since;
+                pace.frames += since;
+                ++pace.steps;
+            }
+        }
+
+        state = this->game.acts.Peek(state);
+    }
+
+    pace.uneven = pace.uneven && pace.steps == kPaceSteps;
+    return pace;
 }
 
 // A millisecond of a role's step as it is drawn.

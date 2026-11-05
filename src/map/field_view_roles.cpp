@@ -45,6 +45,19 @@ void FieldView::DrawRoles()
     }
 }
 
+// The index of `role` among the game's roles; GameState::Roles for a role held elsewhere (the pointer).
+std::size_t FieldView::RoleIndex(const Role& role) const
+{
+    const Role* first = this->game.state.roles.data();
+
+    if (std::less<const Role*>{}(&role, first) || !std::less<const Role*>{}(&role, first + GameState::Roles))
+    {
+        return GameState::Roles;
+    }
+
+    return static_cast<std::size_t>(&role - first);
+}
+
 // swd3e.exe 0x00413F20: a visible role (flag 0x8000 without 0x400) near the camera: its sound cue, its shadow, its
 // picture with its wave and translucency, a tinted copy (the map's tint and the tint of bits 20..23), the act attached
 // to it, its bubbles and, while no event runs, its label. Act roles are skipped while story flag 0xB is set. A role
@@ -101,13 +114,26 @@ int FieldView::DrawRole(Role& role)
 
     if (role.id != Role::NoId && (role.flags & Role::NoDepthScale) == 0)
     {
+        // The rebuild: on the blocks of a smooth painting (PaintBetween) a role is placed a pixel apart from block to
+        // block; its depth scale is read at the one place of its fine place (floored), so that every block draws it
+        // alike (a scale a step apart drops other lines and columns: the woven picture would tear).
+        int depthX = role.x;
+        int depthY = role.y;
+        const std::size_t index = this->RoleIndex(role);
+
+        if (this->replaying && index < GameState::Roles)
+        {
+            depthX = FloorDivide(this->paintRoleX[index], this->paintScale);
+            depthY = FloorDivide(this->paintRoleY[index], this->paintScale);
+        }
+
         const MapScale& depth = field.scale;
-        scale = depth.Scale(depth.LevelAt(role.x, role.y));
+        scale = depth.Scale(depth.LevelAt(depthX, depthY));
 
         if (depth.GetKind() == MapScale::Kind::Rows)
         {
-            const int above = depth.Scale(depth.LevelAt(role.x, role.y - MapHeader::TileSize));
-            scale = above + (role.y & MapHeader::TileFraction) * (scale - above) / MapHeader::TileSize;
+            const int above = depth.Scale(depth.LevelAt(depthX, depthY - MapHeader::TileSize));
+            scale = above + (depthY & MapHeader::TileFraction) * (scale - above) / MapHeader::TileSize;
         }
 
         zoomed = true;
@@ -135,6 +161,26 @@ int FieldView::DrawRole(Role& role)
 
     if (scale != 0)
     {
+        // The rebuild (deviations.md): on a block of a smooth painting at a render scale the zoom samples the
+        // picture where the block's pixels lie on the woven picture, so that the blocks together zoom it at the
+        // render scale (each block zooming it whole drops the same lines and columns: an eye comes and goes).
+        if (zoomed && this->replaying && this->paintScale > 1 && this->RoleIndex(role) < GameState::Roles)
+        {
+            const std::size_t index = this->RoleIndex(role);
+            const int parts = this->paintScale;
+            const i32 fineX = this->paintRoleX[index] - this->paintCameraX - this->paintColumn;
+            const i32 fineY = this->paintRoleY[index] - this->paintCameraY - this->paintRow;
+            const int restX = parts * CeilDivide(fineX, parts) - fineX;
+            const int restY = parts * CeilDivide(fineY, parts) - fineY;
+            // A mirrored (flipped) picture is laid from its right (bottom) edge. The phase is taken in steps of
+            // ZoomPhaseStep: the picture is sampled at twice the original's resolution, which keeps every pixel of
+            // a picture zoomed to half or more and lets the blocks of one step share their painting.
+            const int step = FieldView::ZoomPhaseStep(parts);
+            const int phaseX = ((mode & Painter::Mirror) != 0 ? parts - 1 - restX : restX) / step * step;
+            const int phaseY = ((mode & Painter::Flip) != 0 ? parts - 1 - restY : restY) / step * step;
+            painter.SetZoomPhase(parts, phaseX, phaseY);
+        }
+
         painter.SetZoomSheared(role.act.x + kZoomAnchorX, role.act.y + kZoomAnchorY, scale, scale, 0);
     }
 
@@ -200,6 +246,7 @@ int FieldView::DrawRole(Role& role)
         }
     }
 
+    painter.SetZoomPhase(1, 0, 0);
     painter.SetZoom(0, 0, kZoomUnit, kZoomUnit);
 
     if (!this->replaying)
