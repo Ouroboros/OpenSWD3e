@@ -15,36 +15,36 @@ namespace swd3e
 // The kinds of the accessories (ObjectData::actionKind), named after the mon.dat items of each kind.
 enum class AccessoryKind : u16
 {
-    RepeatAttack = 0x15,  // 武聖手鐲, 姜公膽: the attack repeats once
-    Unk16 = 0x16,         // no item has it
-    Steal = 0x17,         // 神偷面具, 乾坤袋
+    RepeatAttack = 0x15,  // 電光聖鐲, 姜公膽: the attack repeats once
+    Unk16 = 0x16,         // 陰陽鏡 (天雷: YinYangAttack)
+    Steal = 0x17,         // 乾坤袋
     Unk18 = 0x18,         // 武神魂玉
     Unk19 = 0x19,         // no item has it
     Unk1A = 0x1A,         // no item has it
     Unk1B = 0x1B,         // 暗殺寶錄, 御夫錄
-    Unk1C = 0x1C,         // 硃砂辟魔玉
+    Unk1C = 0x1C,         // no item has it (swd32's 硃砂辟魔玉; swd3e keeps the name with no effect)
     Unk1D = 0x1D,         // no item has it
-    Unk1E = 0x1E,         // 硃砂神筆
+    Unk1E = 0x1E,         // no item has it
     Unk1F = 0x1F,         // 鼠槌
-    Unk20 = 0x20,         // 金鐘罩秘笈
-    Unk21 = 0x21,         // 庖丁菜刀
+    Unk20 = 0x20,         // no item has it (swd32's 金鐘罩秘笈; swd3e keeps the name with no effect)
+    Unk21 = 0x21,         // 庖丁菜刀 (分解)
     Unk22 = 0x22,         // no item has it
     Unk23 = 0x23,         // 夜叉肩帶
     Unk24 = 0x24,         // no item has it
-    Unk25 = 0x25,         // swd3e: command 0x25 alone (the command name 攻擊)
-    Unk27 = 0x27,         // swd3e: unk2EB2 counts up (the command name 物品)
-    Unk28 = 0x28,       // swd3e: armed by a first use (equipmentFlags 0x100), taken by the next (the command name 絕招)
-    Unk29 = 0x29,       // swd3e: the proficiency steps only (the command name 防禦)
+    Unk25 = 0x25,         // swd3e: 藍格怪衣, command 0x25 alone (龍颿: the roulette)
+    Unk27 = 0x27,         // swd3e: 奇魄古玉, unk2EB2 counts up (蓄勁)
+    Unk28 = 0x28,       // swd3e: 歸靈指套, armed by a first use (equipmentFlags 0x100), taken by the next (逆攻 / 釋放)
+    Unk29 = 0x29,       // swd3e: 三清符筆, the proficiency steps only (融合)
     Unk32 = 0x32,       // no item has it
-    ElementOrb = 0x33,  // 地炎玉, 水靈珠, 青龍水珠, ...: the resistance to its element raised by 80% of its proficiency
-    AttackRing = 0x34,  // 薩登荊環, 星君眼
-    BladeReturn = 0x35,  // 返刃玉
-    Unk36 = 0x36,        // no item has it
-    SpiritDrain = 0x37,  // 吸魔壺
-    LifeDrain = 0x38,    // 吸血鬼指環
+    ElementOrb = 0x33,  // 朱雀火羽, 青龍靈珠, ...: the resistance to its element raised by 80% of its proficiency
+    AttackRing = 0x34,  // 星君眼
+    BladeReturn = 0x35,  // no item has it (swd3e's 返刃玉 has no effect)
+    Unk36 = 0x36,        // 洞察光環: a hit number taken back (CancelHitNumber)
+    SpiritDrain = 0x37,  // 碧綠魔壺
+    LifeDrain = 0x38,    // 玄能臂環
     SpiritFan = 0x39,    // 靈虛扇
-    SpecialAct = 0x3A,   // swd3e: equipment flag 0x80 (BattleRole::StartSpecialAct)
-    GoldGuard = 0x3B,    // swd3e: the gold pays for the hits (goldGuard)
+    SpecialAct = 0x3A,   // swd3e: 七仙神針, equipment flag 0x80 (BattleRole::StartSpecialAct)
+    GoldGuard = 0x3B,    // swd3e: 投幣式鎧甲, the gold pays for the hits (goldGuard)
 };
 
 // A party role in battle (0x2F34 bytes in the original, ten of them at 0x005029D0): a unit with a battle copy of the
