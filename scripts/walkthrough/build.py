@@ -8,7 +8,7 @@ Lists follow one rule everywhere, at every depth: numbered for steps done in ord
 is taken (ways, cases, sources); "- " for the rest (items, shops, conditions, rewards, notes). The report names a list
 of one line, a numbered item or gold place, and a step after a "- " line under the same heading.
 {名} names an item (物品大全), 〔名〕 a monster (神魔異事錄); [標籤] marks a tag; «標題» goes to a section;
-【文字｜網址】 is a link out. Unknown names, shop prices the item data does not confirm ("{名} 價" in a 商店 heading)
+【文字｜網址】 is a link out. Unknown names, shop prices the item data does not confirm ("{名} 價" under a heading naming 商店)
 and steals the monster data does not confirm ("〔怪〕可偷{物}") are reported.
 """
 import base64
@@ -87,7 +87,7 @@ def main():
             if monster in steals and item not in steals[monster]:
                 problems.append(f'{number}: 〔{monster}〕 steals {sorted(steals[monster])}, text says {item}')
 
-        if heading.startswith('商店') and line.startswith('- '):
+        if '商店' in heading and line.lstrip().startswith('- '):
             for name, price in re.findall(r'\{([^}]+)\} (\d+)', line):
                 if name in prices and prices[name] != int(price):
                     problems.append(f'{number}: {name} costs {prices[name]}, text says {price}')
