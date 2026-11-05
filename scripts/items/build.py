@@ -166,8 +166,9 @@ def worn(item, slots, names):
         command, effect = ACCESSORIES[item['actionKind']]
         element = next((ELEMENTS[at] for at, value in enumerate(item['resistances']) if value), '')
         if command:
-            lines['指令'] = command
-            lines['消耗體力'] = str(item['costBits'] & ACCESSORY_VALUE_MASK)
+            lines['指令'] = f'{command}　消耗體力 {item["costBits"] & ACCESSORY_VALUE_MASK}'
+        if not lines['加成']:
+            del lines['加成']
         lines['作用'] = effect.format(element=element)
     if '法寶' in slots and item['counterMax']:
         # The equipment page's 成長 (value / counterMax of the proficiency list); a full one with masteryValue turns into
@@ -176,10 +177,10 @@ def worn(item, slots, names):
         if item['masteryValue']:
             lines['成長'] += f'，練滿後變為{names.get(item["masteryValue"], "")}'
     if '作用' in lines:
-        # A treasure's command and effect come first.
-        first = ('指令', '消耗體力', '作用')
-        lines = {**{key: lines[key] for key in first if key in lines},
-                 **{key: value for key, value in lines.items() if key not in first}}
+        # A treasure's command first; its effect is shown last (the page gives the last line the room left).
+        lines = {**({'指令': lines['指令']} if '指令' in lines else {}),
+                 **{key: value for key, value in lines.items() if key not in ('指令', '作用')}}
+        lines['作用'] = effect.format(element=element)
     return lines, notes
 
 
@@ -594,7 +595,6 @@ h1 {
   display: grid;
   grid-template-columns: 130px minmax(0, 1fr);
   align-content: start;
-  grid-auto-rows: 44px;
   padding: 12px 24px;
   font-size: 19px;
   overflow: hidden;
@@ -604,7 +604,7 @@ h1 {
 .detail > div { line-height: 44px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .detail .none { color: var(--dim); }
 .detail .note { font-size: 15px; color: var(--dim); margin-left: 14px; }
-.detail .found { white-space: normal; line-height: 26px; padding-top: 9px; grid-row: span 3; overflow-y: auto;
+.detail .rest { white-space: normal; line-height: 26px; padding-top: 9px; overflow-y: auto;
   scrollbar-color: var(--gold) #000; }
 
 .description {
@@ -667,6 +667,9 @@ function beep() {
   }
 }
 let category = 0;
+// The lines shown last, in this order: the last of an item takes the room left in its panel, wrapping and scrolling;
+// the others keep to one line.
+const LAST_LINES = ['取得', '作用'];
 let chosen = 0;
 let shown = [];
 
@@ -759,8 +762,11 @@ function show() {
   const line = text => text ? escape(text) : '<span class="none">無</span>';
   // The rows of the item (an equipment's four, or the damage of an object used in battle), then where it is found.
   const note = label => item.notes[label] ? `<span class="note">${escape(item.notes[label])}</span>` : '';
-  $('detail').innerHTML = Object.keys(item.lines).filter(label => label !== '取得').map(label =>
-    `<div class="label">${label}</div><div>${line(item.lines[label])}${note(label)}</div>`).join('') + `<div class="label">取得</div><div class="found">${line(item.lines['取得'])}</div>`;
+  const labels = [...Object.keys(item.lines).filter(label => !LAST_LINES.includes(label)),
+    ...LAST_LINES.filter(label => label in item.lines)];
+  $('detail').style.gridTemplateRows = `repeat(${labels.length - 1}, 44px) minmax(0, 1fr)`;
+  $('detail').innerHTML = labels.map((label, at) =>
+    `<div class="label">${label}</div><div${at === labels.length - 1 ? ' class="rest"' : ''}>${line(item.lines[label])}${note(label)}</div>`).join('');
   $('description').textContent = item.description;
 }
 
