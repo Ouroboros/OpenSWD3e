@@ -69,7 +69,9 @@ ACCESSORIES = {
                  '規則見流程攻略「洞察光環的用法」。'),
     0x37: (None, '被敵人的法術、絕招打中時回復靈力：傷害乘以成長的一半，再加 1；普通攻擊不觸發。'),
     0x38: (None, '普通攻擊吸血：打出多少傷害，就回復自己多少生命。'),
-    0x39: (None, '擋住敵人攻擊附帶的異常狀態：成長每多 20% 擋住更多種，成長滿時全部擋住。'),
+    0x39: (None, '擋住敵人攻擊附帶的異常狀態，擋住的種類隨成長增加：成長 0～19% 擋中毒、盲目、昏睡；20% 起加上電解、定身；'
+                 '40% 起加上瘟疫、炎灼、失智；60% 起加上封魔、石化、凍結；80% 起加上退化、鬼降；成長滿時全部擋住。'
+                 '每次判定成長 +5。'),
     0x3A: (None, '每場戰鬥第一次倒下時自動復活：生命回到上限的 40%，再加上成長乘以上限的 90%'
                  '（成長滿時為上限的 130%）。'),
     0x3B: (None, '受到的生命傷害先用銀兩抵，1 兩抵 1 點，銀兩用完才扣生命；被打時身上顯示剩下的銀兩。'),
@@ -185,7 +187,7 @@ def worn(item, slots, names):
     if '法寶' in slots and item['counterMax']:
         # The equipment page's 成長 (value / counterMax of the proficiency list); a full one with masteryValue turns into
         # that object (Game::AnnounceMastery, 0x00477EE0).
-        lines['成長'] = f'上限 {item["counterMax"]}'
+        lines['成長'] = str(item['counterMax'])
         if item['masteryValue']:
             lines['成長'] += f'，練滿後變為{names.get(item["masteryValue"], "")}'
     if '作用' in lines:
