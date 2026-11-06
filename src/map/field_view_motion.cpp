@@ -390,6 +390,7 @@ bool FieldView::RoleOnStep(std::size_t index) const
 void FieldView::KeepRolePlaces()
 {
     const Game& owner = this->game;
+    const i32 interval = std::max(static_cast<i32>(owner.state.frameInterval), 1);
     this->framePlaces.resize(GameState::Roles);
 
     for (std::size_t index = 0; index < GameState::Roles; ++index)
@@ -399,8 +400,12 @@ void FieldView::KeepRolePlaces()
 
         if (index < this->roleMotions.size())
         {
+            // A step drawn over its frames is walking until the frame after its last (a step of two frames ends as
+            // the frame that stands the role starts).
             const RoleMotion& step = this->roleMotions[index];
-            walking = step.active && !step.frozen && (step.elapsed < step.length || step.frame + 1 == owner.gameFrames);
+            const u32 frames = static_cast<u32>(std::max((step.length + interval - 1) / interval, 1));
+            walking = step.active && !step.frozen &&
+                      (step.elapsed < step.length || owner.gameFrames <= step.frame + frames);
         }
 
         this->framePlaces[index] = RolePlace{
@@ -625,8 +630,8 @@ void FieldView::CaptureRoleSteps(bool continuous)
         }
 
         // On the straight end of a move the drawing covers an even share of the way left to the move's end on each of
-        // the steps left: it gets there with the frame that takes the last (and stands the role), at one pace all
-        // along the straight.
+        // the steps left, at one pace all along the straight; a short straight (one step after a turn) would take
+        // twice the walk, so the share is held to the catch-up below and the stop walks the rest on.
         const i32 left = this->StepsToEnd(index, from);
         const i32 aimX =
             left >= 1 ? shown[0] + ((role.x + left * (role.x - from.x)) * MotionFine - shown[0]) / left : toX;
@@ -636,10 +641,9 @@ void FieldView::CaptureRoleSteps(bool continuous)
         const i32 aimGapY = aimY - shown[1];
         const i32 aimGap = std::max(std::abs(aimGapX), std::abs(aimGapY));
 
-        // The step drawn gains at most a part of the frame's step on a role drawn behind (on a straight end, its even
-        // share, at most two steps).
+        // The step drawn gains at most a part of the frame's step on a role drawn behind.
         const i32 stepped = std::max(std::abs(role.x - from.x), std::abs(role.y - from.y)) * MotionFine;
-        const i32 most = left >= 1 ? 2 * stepped : stepped + stepped / kCatchUpShare;
+        const i32 most = stepped + stepped / kCatchUpShare;
         i32 endX = aimX;
         i32 endY = aimY;
 
