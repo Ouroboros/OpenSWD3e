@@ -2286,7 +2286,24 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
             }
         }
 
-        if (static_cast<i32>(battle.enemyCount) - battle.enemiesGone - static_cast<i32>(dying) == 1)
+        auto mayAimEnemy = [this, enemy](i32 index)
+        {
+            const BattleEnemy& other = this->battleEnemies[static_cast<std::size_t>(index)];
+            return !other.IsDefeated() && other.StatusBit13() != 1 && other.HasEffectBits(kUnaimedEffect) != 1 &&
+                   index != enemy;
+        };
+
+        // The rebuild: an enemy no other enemy is left for (the others put away by a battle event's DefeatedMark,
+        // which the count below does not take: a merged enemy) aims at a role as the last one standing does; the
+        // original draws for ever (deviations.md).
+        bool otherLeft = false;
+
+        for (u32 index = 0; index < battle.enemyCount && !otherLeft; ++index)
+        {
+            otherLeft = mayAimEnemy(static_cast<i32>(index));
+        }
+
+        if (static_cast<i32>(battle.enemyCount) - battle.enemiesGone - static_cast<i32>(dying) == 1 || !otherLeft)
         {
             for (int tries = 0;; ++tries)
             {
@@ -2319,10 +2336,7 @@ bool Game::EnemyPickTarget(BattleEnemy& unit, int enemy)
                 target = static_cast<i32>(this->random.Below(battle.enemyCount));
             }
 
-            BattleEnemy& other = this->battleEnemies[static_cast<std::size_t>(target)];
-
-            if (!other.IsDefeated() && other.StatusBit13() != 1 && other.HasEffectBits(kUnaimedEffect) != 1 &&
-                target != enemy)
+            if (mayAimEnemy(target))
             {
                 break;
             }

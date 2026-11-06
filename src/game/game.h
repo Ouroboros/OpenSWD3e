@@ -592,6 +592,7 @@ private:
     int FightTalkWin();
     int FightTalkLift();
     int FightTalkAllDone();
+    void LeaveHiddenEnemies();
     int FightTalkMarks(bool set);
     int FightTalkRepeat();
     int FightTalkRandomJump();
