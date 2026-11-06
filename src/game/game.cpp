@@ -1527,6 +1527,49 @@ void Game::SetMapView(const ScreenLayout& layout)
     LogInfo(u8"map view %dx%d (the screen at %d,%d)", layout.width, layout.height, layout.screenX, layout.screenY);
 }
 
+// The rebuild's smooth map laid by the GPU: the map behind the menus as the window showed it (at its resolution), with
+// the frame the menus draw on there (the screen of the map's last frame, before it is greyed); the display then shows
+// it around and under them (Display::SetMenuBehind). Without it the map's canvas is shown, at the map's resolution.
+void Game::CaptureMapBehind()
+{
+    if (!this->smoothMotion || this->mapCanvas == nullptr)
+    {
+        return;
+    }
+
+    std::vector<Pixel> reference(Display::Pixels);
+
+    for (int row = 0; row < Display::Height; ++row)
+    {
+        const Pixel* from = this->mapCanvas->Row(row + this->field.screenY) + this->field.screenX;
+        std::copy_n(from, Display::Width, reference.begin() + static_cast<std::ptrdiff_t>(row) * Display::Width);
+    }
+
+    int scale = this->renderScaleSetting;
+
+    if (scale == Game::AutoRenderScale)
+    {
+        scale = std::min(this->display.FitScale(), static_cast<int>(DisplaySettings::MaximumAutoScale));
+    }
+
+    this->display.SetCapturing(true);
+    const bool laid = this->fieldView.LayBetween(scale);
+    this->display.SetCapturing(false);
+    std::vector<Pixel> shown;
+    int width = 0;
+    int height = 0;
+
+    if (!laid || !this->display.Captured(shown, width, height))
+    {
+        return;
+    }
+
+    std::vector<Pixel> around = shown;
+    this->painter.TintPixels(around, kShopTintRed, kShopTintGreen, kShopTintBlue);
+    this->painter.GrayPixels(around);
+    this->display.SetMenuBehind(shown, around, width, height, reference);
+}
+
 void Game::ShowLayout(bool map)
 {
     const u32 menu = this->menuState & Game::MenuNumberMask;
@@ -1541,6 +1584,7 @@ void Game::ShowLayout(bool map)
         // The map around the menus and the shop is darkened and grey, as the shop's own background is.
         if (overMap)
         {
+            this->CaptureMapBehind();
             const std::span<Pixel> canvas(
                 this->mapCanvas->Pixels(),
                 static_cast<std::size_t>(this->mapCanvas->Width()) * static_cast<std::size_t>(this->mapCanvas->Height())
@@ -1551,6 +1595,11 @@ void Game::ShowLayout(bool map)
 
         this->display.SetBackdrop(overMap ? this->mapCanvas.get() : nullptr);
         this->backdropTaken = overMap;
+
+        if (!overMap)
+        {
+            this->display.ClearMenuBehind();
+        }
     }
 
     // On the map the pointer reaches over the whole canvas, elsewhere the 640x480 screen.

@@ -229,6 +229,7 @@ private:
     // The window shows the frames presented next: the map canvas, a 640x480 frame over the last map canvas (the
     // menus and the shop over the map), or the 640x480 screen alone.
     void ShowLayout(bool map);
+    void CaptureMapBehind();
     // The display setup of the system tab (deviations.md): smoothMotion, vsync, frameRate and renderScaleSetting put
     // to use, and written to [display] of the program's settings file.
     void ApplyDisplay();

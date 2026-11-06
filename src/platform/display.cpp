@@ -22,6 +22,27 @@ constexpr float kHalf = 0.5F;            // the picture is centred in the window
 constexpr int kMostCanvasWidth = 2048;   // the widest canvas the map fills a window with
 constexpr int kMostCanvasHeight = 1024;  // the painter's row table holds this many rows
 
+// An RGB565 pixel as opaque ARGB8888, each channel's top bits repeated below (as the GPU widens a 565 texel).
+u32 OpaqueArgb(Pixel pixel)
+{
+    constexpr u32 kOpaque = 0xFF000000u;
+    constexpr int kRedShift = 11;
+    constexpr int kGreenShift = 5;
+    constexpr u32 kFiveBits = 0x1F;
+    constexpr u32 kSixBits = 0x3F;
+    constexpr int kWiden5 = 3;
+    constexpr int kWiden6 = 2;
+    constexpr int kRedOut = 16;
+    constexpr int kGreenOut = 8;
+    const u32 red = (static_cast<u32>(pixel) >> kRedShift) & kFiveBits;
+    const u32 green = (static_cast<u32>(pixel) >> kGreenShift) & kSixBits;
+    const u32 blue = static_cast<u32>(pixel) & kFiveBits;
+    const u32 red8 = red << kWiden5 | red >> (kGreenShift - kWiden5);
+    const u32 green8 = green << kWiden6 | green >> (kGreenShift - 1);
+    const u32 blue8 = blue << kWiden5 | blue >> (kGreenShift - kWiden5);
+    return kOpaque | red8 << kRedOut | green8 << kGreenOut | blue8;
+}
+
 // A copy of `icon` as an SDL surface; null when it is empty.
 SDL_Surface* MakeIconSurface(const IconImage& icon)
 {
@@ -119,6 +140,14 @@ Display::~Display()
     if (this->mapTarget != nullptr)
     {
         SDL_DestroyTexture(this->mapTarget);
+    }
+
+    for (SDL_Texture* texture : {this->captureTarget, this->menuShown, this->menuAround, this->menuOverlay})
+    {
+        if (texture != nullptr)
+        {
+            SDL_DestroyTexture(texture);
+        }
     }
 
     if (this->renderer != nullptr)
@@ -281,7 +310,19 @@ void Display::Present(const Surface& screen)
     if (static_cast<i64>(screen.Width()) * this->layout.height !=
         static_cast<i64>(screen.Height()) * this->layout.width)
     {
-        if (this->backdropShown && this->backdrop != nullptr)
+        int outputWidth = 0;
+        int outputHeight = 0;
+        SDL_GetRenderOutputSize(this->renderer, &outputWidth, &outputHeight);
+        // The map behind a menu as the GPU showed it (SetMenuBehind), while the output keeps its size.
+        const bool behind = this->menuShown != nullptr && screen.Width() == Display::Width &&
+                            screen.Height() == Display::Height &&
+                            this->menuSize == std::array<int, 2>{outputWidth, outputHeight};
+
+        if (behind)
+        {
+            SDL_RenderTexture(this->renderer, this->menuAround, nullptr, nullptr);
+        }
+        else if (this->backdropShown && this->backdrop != nullptr)
         {
             SDL_RenderTexture(this->renderer, this->backdrop, nullptr, &target);
         }
@@ -294,6 +335,33 @@ void Display::Present(const Surface& screen)
             static_cast<float>(Display::Width) * scaleX,
             static_cast<float>(Display::Height) * scaleY,
         };
+
+        // The screen: the map where the frame still holds what the menu drew on, the menu's own pixels over it.
+        if (behind)
+        {
+            SDL_RenderTexture(this->renderer, this->menuShown, &target, &target);
+            this->menuOverlayPixels.resize(Display::Pixels);
+
+            for (int y = 0; y < Display::Height; ++y)
+            {
+                const Pixel* row = screen.Row(y);
+                const Pixel* under = this->menuReference.data() + static_cast<std::ptrdiff_t>(y) * Display::Width;
+                u32* out = this->menuOverlayPixels.data() + static_cast<std::ptrdiff_t>(y) * Display::Width;
+
+                for (int x = 0; x < Display::Width; ++x)
+                {
+                    out[x] = row[x] == under[x] ? 0 : OpaqueArgb(row[x]);
+                }
+            }
+
+            SDL_UpdateTexture(
+                this->menuOverlay,
+                nullptr,
+                this->menuOverlayPixels.data(),
+                Display::Width * static_cast<int>(sizeof(u32))
+            );
+            shown = this->menuOverlay;
+        }
     }
 
     SDL_RenderTexture(this->renderer, shown, nullptr, &target);
@@ -729,11 +797,126 @@ void Display::UpdateMattedLayer(
 
 void Display::BeginLayers() const
 {
-    if (this->IsOpen())
+    if (!this->IsOpen())
     {
-        SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(this->renderer);
+        return;
     }
+
+    if (this->capturing)
+    {
+        int width = 0;
+        int height = 0;
+        SDL_GetRenderOutputSize(this->renderer, &width, &height);
+
+        if (this->captureTarget == nullptr || this->captureSize != std::array<int, 2>{width, height})
+        {
+            if (this->captureTarget != nullptr)
+            {
+                SDL_DestroyTexture(this->captureTarget);
+            }
+
+            this->captureTarget =
+                SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+            this->captureSize = {width, height};
+        }
+
+        SDL_SetRenderTarget(this->renderer, this->captureTarget);
+    }
+
+    SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(this->renderer);
+}
+
+void Display::SetCapturing(bool capturing)
+{
+    this->capturing = capturing;
+
+    if (capturing)
+    {
+        this->captured.clear();
+        this->capturedSize = {};
+    }
+}
+
+bool Display::Captured(std::vector<Pixel>& pixels, int& width, int& height) const
+{
+    if (this->captured.empty())
+    {
+        return false;
+    }
+
+    pixels = this->captured;
+    width = this->capturedSize[0];
+    height = this->capturedSize[1];
+    return true;
+}
+
+void Display::SetMenuBehind(
+    std::span<const Pixel> shown,
+    std::span<const Pixel> around,
+    int width,
+    int height,
+    std::span<const Pixel> reference
+)
+{
+    this->ClearMenuBehind();
+
+    if (!this->IsOpen() || shown.size() != static_cast<std::size_t>(width) * static_cast<std::size_t>(height) ||
+        around.size() != shown.size() || reference.size() != static_cast<std::size_t>(Display::Pixels))
+    {
+        return;
+    }
+
+    auto make = [this, width, height](std::span<const Pixel> pixels)
+    {
+        SDL_Texture* texture =
+            SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STATIC, width, height);
+
+        if (texture != nullptr)
+        {
+            SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+            SDL_UpdateTexture(texture, nullptr, pixels.data(), width * static_cast<int>(sizeof(Pixel)));
+        }
+
+        return texture;
+    };
+
+    this->menuShown = make(shown);
+    this->menuAround = make(around);
+    this->menuOverlay = SDL_CreateTexture(
+        this->renderer,
+        SDL_PIXELFORMAT_ARGB8888,
+        SDL_TEXTUREACCESS_STREAMING,
+        Display::Width,
+        Display::Height
+    );
+
+    if (this->menuShown == nullptr || this->menuAround == nullptr || this->menuOverlay == nullptr)
+    {
+        LogError(u8"menu backdrop textures failed: %s", AsUtf8(SDL_GetError()));
+        this->ClearMenuBehind();
+        return;
+    }
+
+    SDL_SetTextureScaleMode(this->menuOverlay, SDL_SCALEMODE_NEAREST);
+    SDL_SetTextureBlendMode(this->menuOverlay, SDL_BLENDMODE_BLEND);
+    this->menuSize = {width, height};
+    this->menuReference.assign(reference.begin(), reference.end());
+}
+
+void Display::ClearMenuBehind()
+{
+    for (SDL_Texture** texture : {&this->menuShown, &this->menuAround, &this->menuOverlay})
+    {
+        if (*texture != nullptr)
+        {
+            SDL_DestroyTexture(*texture);
+            *texture = nullptr;
+        }
+    }
+
+    this->menuSize = {};
+    this->menuReference.clear();
 }
 
 void Display::DrawLayer(const Layer& layer, float x, float y, float width, float height, LayerBlend blend) const
@@ -875,7 +1058,8 @@ void Display::EndMapTarget(std::span<const MapPiece> pieces)
         return;
     }
 
-    SDL_SetRenderTarget(this->renderer, nullptr);
+    // Back to what the layers go to (the output, or the copy while capturing).
+    SDL_SetRenderTarget(this->renderer, this->capturing ? this->captureTarget : nullptr);
     SDL_SetTextureBlendMode(this->mapTarget, SDL_BLENDMODE_NONE);
     SDL_SetTextureAlphaMod(this->mapTarget, SDL_ALPHA_OPAQUE);
     SDL_SetTextureColorMod(this->mapTarget, 0xFF, 0xFF, 0xFF);
@@ -1012,11 +1196,49 @@ void Display::TintArea(float x, float y, float width, float height, int red, int
 
 void Display::EndLayers()
 {
-    if (this->IsOpen())
+    if (!this->IsOpen())
     {
-        SDL_RenderPresent(this->renderer);
-        this->lastShownNs = SDL_GetTicksNS();
+        return;
     }
+
+    // Captured: the copy read back as RGB565, nothing shown.
+    if (this->capturing)
+    {
+        SDL_Surface* read = SDL_RenderReadPixels(this->renderer, nullptr);
+        SDL_SetRenderTarget(this->renderer, nullptr);
+
+        if (read == nullptr)
+        {
+            LogError(u8"capture read failed: %s", AsUtf8(SDL_GetError()));
+            return;
+        }
+
+        SDL_Surface* converted = SDL_ConvertSurface(read, SDL_PIXELFORMAT_RGB565);
+        SDL_DestroySurface(read);
+
+        if (converted == nullptr)
+        {
+            return;
+        }
+
+        this->captured.resize(static_cast<std::size_t>(converted->w) * static_cast<std::size_t>(converted->h));
+
+        for (int y = 0; y < converted->h; ++y)
+        {
+            std::memcpy(
+                this->captured.data() + static_cast<std::ptrdiff_t>(y) * converted->w,
+                static_cast<const u8*>(converted->pixels) + static_cast<std::ptrdiff_t>(y) * converted->pitch,
+                sizeof(Pixel) * static_cast<std::size_t>(converted->w)
+            );
+        }
+
+        this->capturedSize = {converted->w, converted->h};
+        SDL_DestroySurface(converted);
+        return;
+    }
+
+    SDL_RenderPresent(this->renderer);
+    this->lastShownNs = SDL_GetTicksNS();
 }
 
 u64 Display::RefreshPeriod() const

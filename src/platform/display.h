@@ -239,6 +239,21 @@ public:
     // by `red`, `green`, `blue` steps of 1/31, saturating.
     void TintArea(float x, float y, float width, float height, int red, int green, int blue) const;
     void EndLayers();
+    // While capturing, the layers go to a copy of the output, read back at EndLayers (nothing shown); Captured holds
+    // it as RGB565, the output's size.
+    void SetCapturing(bool capturing);
+    bool Captured(std::vector<Pixel>& pixels, int& width, int& height) const;
+    // The map behind a menu as the GPU showed it: `shown` inside the 640x480 screen, `around` around it (the output's
+    // size, RGB565); `reference` the 640x480 frame the menu draws on there. A menu frame then shows the map where it
+    // still holds the reference, itself elsewhere. Cleared when the menu leaves the map (or the output's size changes).
+    void SetMenuBehind(
+        std::span<const Pixel> shown,
+        std::span<const Pixel> around,
+        int width,
+        int height,
+        std::span<const Pixel> reference
+    );
+    void ClearMenuBehind();
     // With vsync: the time between the display's refreshes, and when the last frame was shown (SDL_GetTicksNS);
     // 0 without vsync.
     u64 RefreshPeriod() const;
@@ -279,7 +294,18 @@ private:
     std::array<int, 4> textInputArea{};  // SetTextInputArea: the area last given to SDL (x, y, width, height)
     SDL_Texture* mapTarget = nullptr;    // BeginMapTarget: the copy of the screen (the output's size)
     bool vsync = false;                  // SetVSync
-    u64 lastShownNs = 0;                 // EndLayers
+    mutable bool capturing = false;      // SetCapturing
+    mutable SDL_Texture* captureTarget = nullptr;
+    mutable std::array<int, 2> captureSize{};
+    std::vector<Pixel> captured;  // EndLayers while capturing
+    std::array<int, 2> capturedSize{};
+    SDL_Texture* menuShown = nullptr;  // SetMenuBehind
+    SDL_Texture* menuAround = nullptr;
+    SDL_Texture* menuOverlay = nullptr;
+    std::array<int, 2> menuSize{};
+    std::vector<Pixel> menuReference;
+    std::vector<u32> menuOverlayPixels;
+    u64 lastShownNs = 0;  // EndLayers
     std::array<int, 2> mapTargetSize{};
     std::vector<float> piecePlaces;   // EndMapTarget: x, y of each corner
     std::vector<float> pieceSources;  // u, v of each corner

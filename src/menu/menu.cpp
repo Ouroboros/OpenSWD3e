@@ -1,5 +1,6 @@
 #include "menu/menu.h"
 
+#include <algorithm>
 #include <cmath>
 #include <span>
 #include <string>
@@ -843,6 +844,17 @@ bool Menu::PaintPage(bool replay)
         }
 
         owner.actDrawer.Draw(this->background, offset + kBackgroundX, 0);
+
+        // The rebuild: the columns left of the sliding background (the tabs panel is clear there) keep what earlier
+        // frames drew, in the original as well; they take the background's own first columns.
+        if (offset > 0)
+        {
+            Painter& painter = owner.painter;
+            const auto [clipX, clipY, clipWidth, clipHeight] = painter.ClipRect();
+            painter.SetClip(clipX, clipY, std::min(clipX + offset, clipX + clipWidth), clipY + clipHeight);
+            owner.actDrawer.DrawShown(this->background, kBackgroundX, 0);
+            painter.SetClip(clipX, clipY, clipX + clipWidth, clipY + clipHeight);
+        }
     }
 
     if (this->code != Menu::MainCode)

@@ -406,21 +406,25 @@ void FieldView::DrawFinalAgain()
 
 // swd3e: the first two pixels of every row of the screen cleared at the end of the map frame (part of 0x00412F60);
 // with the camera at the map's left edge they hide the stray pixels of the map's first two columns of tiles. The
-// rebuild's map filling the window (deviations.md) clears them on every row of the canvas at the window's left edge,
-// and the map's first two columns where they lie on the canvas (the screen lies inside the canvas: clearing its first
-// pixels made a black line down the map, and left those columns showing where the map ends inside the window).
+// rebuild's map filling the window (deviations.md) clears the map's first two columns where they lie on the canvas:
+// at the window's left edge while the camera is there (else the map's columns there are others, the two black ones a
+// line down the window's edge), and where the map ends inside the window (the screen lies inside the canvas: clearing
+// its first pixels made a black line down the map).
 void FieldView::ClearRowStarts()
 {
+    constexpr int kClearedColumns = 2;
     Pixel* screen = this->game.painter.Target();
     const int pitch = this->game.painter.ScreenPitch();
     int rows = Display::Height;
     int mapEdge = -1;
+    bool windowEdge = true;
 
     if (this->FillsWindow())
     {
         const Field& field = this->game.field;
         screen -= this->ScreenAt();
         rows = field.viewHeight;
+        windowEdge = field.cameraLeft < kClearedColumns;
 
         if (field.cameraLeft < 0 && -field.cameraLeft < field.viewWidth - 1)
         {
@@ -431,8 +435,12 @@ void FieldView::ClearRowStarts()
     for (int row = 0; row < rows; ++row)
     {
         Pixel* line = screen + static_cast<std::ptrdiff_t>(pitch) * row;
-        line[0] = 0;
-        line[1] = 0;
+
+        if (windowEdge)
+        {
+            line[0] = 0;
+            line[1] = 0;
+        }
 
         if (mapEdge > 0)
         {
