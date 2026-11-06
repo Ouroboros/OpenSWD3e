@@ -207,6 +207,7 @@ void FieldView::MotionTick()
     player.x = motion.startX + motion.across * pixels;
     player.y = motion.startY + motion.down * pixels;
     field.FollowOriginal({player.x - from.x, player.y - from.y});
+    this->NoteStep(static_cast<std::size_t>(state.playerRole), player.x - from.x, player.y - from.y);
     motion.leftX = player.x;
     motion.leftY = player.y;
     motion.leftCameraX = field.cameraLeft;
@@ -272,6 +273,7 @@ void FieldView::EndPlayerMotion(bool atFrame)
     player.x = motion.startX + motion.across * pixels;
     player.y = motion.startY + motion.down * pixels;
     field.FollowOriginal({player.x - from.x, player.y - from.y});
+    this->NoteStep(static_cast<std::size_t>(owner.state.playerRole), player.x - from.x, player.y - from.y);
 }
 
 // The distance of the step under way in 1/scale pixels.
@@ -360,6 +362,16 @@ std::array<i32, 2> FieldView::MotionShown(const RoleMotion& step) const
 }
 
 // Whether role `index` is drawn on a step that stops it, with the act it had where the step started.
+// The steps role `index` walked since the frame kept its place (the frames' moves, the controlled role's motion).
+void FieldView::NoteStep(std::size_t index, i32 x, i32 y)
+{
+    if (index < this->frameSteps.size())
+    {
+        this->frameSteps[index].x += x;
+        this->frameSteps[index].y += y;
+    }
+}
+
 bool FieldView::RoleStopping(std::size_t index) const
 {
     return this->RoleOnStep(index) && this->roleMotions[index].stops &&
@@ -404,8 +416,8 @@ void FieldView::KeepRolePlaces()
             // the frame that stands the role starts).
             const RoleMotion& step = this->roleMotions[index];
             const u32 frames = static_cast<u32>(std::max((step.length + interval - 1) / interval, 1));
-            walking = step.active && !step.frozen &&
-                      (step.elapsed < step.length || owner.gameFrames <= step.frame + frames);
+            walking =
+                step.active && !step.frozen && (step.elapsed < step.length || owner.gameFrames <= step.frame + frames);
         }
 
         this->framePlaces[index] = RolePlace{
@@ -417,6 +429,8 @@ void FieldView::KeepRolePlaces()
             .walking = walking,
             .held = (role.flags & Role::Held) != 0,
         };
+
+        this->frameSteps[index] = {};
     }
 
     this->framePlacesFrame = owner.gameFrames;
@@ -470,6 +484,23 @@ void FieldView::CaptureRoleSteps(bool continuous)
         const bool moved = role.x != from.x || role.y != from.y;
         const bool held = (role.flags & Role::Held) != 0 && !from.held;
         const bool turned = role.act.direction != from.act.direction || role.act.action != from.act.action;
+
+        // The rebuild: what moved the role besides its steps put it there (an event's command, a path's place, a step
+        // skipped off the camera, the map's start): it is drawn there at once. A role between tiles moved to the start
+        // of a tile next to it was aligned (RolePath::TileStart, AlignPlayer: an event holding it, a move started from
+        // it), which the drawing follows as below.
+        const Point walked = this->frameSteps[index];
+        const i32 putX = role.x - from.x - walked.x;
+        const i32 putY = role.y - from.y - walked.y;
+        const bool between = ((from.x | from.y) & MapHeader::TileFraction) != 0;
+        const bool aligned = between && ((role.x | role.y) & MapHeader::TileFraction) == 0 &&
+                             std::abs(putX) < MapHeader::TileSize && std::abs(putY) < MapHeader::TileSize;
+
+        if ((putX != 0 || putY != 0) && !aligned)
+        {
+            step.active = false;
+            continue;
+        }
 
         const MoveRecord* followerMove = FollowerMoveOf(owner.scene, index);
 
@@ -575,12 +606,7 @@ void FieldView::CaptureRoleSteps(bool continuous)
             continue;
         }
 
-        // A role the event holds as it puts it elsewhere (command 0x28 on the frame that holds it) jumps there below.
-        constexpr i32 kFar = kFarSteps * MapHeader::TileSize * MotionFine;
-        const bool jumped =
-            std::abs(role.x * MotionFine - shown[0]) > kFar || std::abs(role.y * MotionFine - shown[1]) > kFar;
-
-        if ((held && !jumped) || (!moved && turned))
+        if (held || (!moved && turned))
         {
             step = RoleMotion{
                 .active = true,
@@ -625,6 +651,8 @@ void FieldView::CaptureRoleSteps(bool continuous)
 
             continue;
         }
+
+        constexpr i32 kFar = kFarSteps * MapHeader::TileSize * MotionFine;
 
         if (std::abs(gapX) > kFar || std::abs(gapY) > kFar)
         {

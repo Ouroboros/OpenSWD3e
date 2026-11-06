@@ -1534,7 +1534,7 @@ bool FieldView::LayBetween(int scale)
             );
         }
 
-        owner.display.BeginLayers();
+        owner.display.BeginLayers(scale);
         owner.display.DrawLayer(
             this->gpuFinal,
             0.0f,
@@ -1637,9 +1637,10 @@ bool FieldView::LayBetween(int scale)
         }
     }
 
-    // The layers laid where the camera and the moving roles are now (canvas pixels, fractions kept).
-    const float cameraX = this->gpuCamera[0];
-    const float cameraY = this->gpuCamera[1];
+    // The layers laid where the camera and the moving roles are now (canvas pixels, fractions kept to the pixels of
+    // the composing copy, so that every layer lies on its pixels alike).
+    float cameraX = this->gpuCamera[0];
+    float cameraY = this->gpuCamera[1];
     const float half = 1.0f / static_cast<float>(kRecordParts);
     int mouseX = 0;
     int mouseY = 0;
@@ -1647,7 +1648,10 @@ bool FieldView::LayBetween(int scale)
     // The effects moving between game frames, recorded where they are now.
     this->RecordEffects();
     const Display& display = owner.display;
-    display.BeginLayers();
+    display.BeginLayers(scale);
+    const auto grid = static_cast<float>(display.ComposeScale());
+    cameraX = std::round(cameraX * grid) / grid;
+    cameraY = std::round(cameraY * grid) / grid;
 
     // What the heat haze and the ripples bend is drawn on a copy of the screen first.
     if (!this->gpuPieces.empty())

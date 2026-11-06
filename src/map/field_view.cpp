@@ -733,6 +733,11 @@ void FieldView::Render()
         const int scroll = owner.state.walkSpeed;
         player.x += scroll * (owner.scrollStepX + owner.walkStepX);
         player.y += scroll * (owner.scrollStepY + owner.walkStepY);
+        this->NoteStep(
+            static_cast<std::size_t>(state.playerRole),
+            scroll * (owner.scrollStepX + owner.walkStepX),
+            scroll * (owner.scrollStepY + owner.walkStepY)
+        );
         field.cameraLeft += owner.scrollStepX * scroll;
         field.cameraTop += owner.scrollStepY * scroll;
         field.cameraRight += owner.scrollStepX * scroll;
@@ -799,6 +804,7 @@ void FieldView::Render()
 
             role.x += stepX;
             role.y += stepY;
+            this->NoteStep(index, stepX, stepY);
 
             if (((role.x | role.y) & MapHeader::TileFraction) == 0)
             {
@@ -869,6 +875,7 @@ void FieldView::Render()
 
             role.x += move.stepX;
             role.y += move.stepY;
+            this->NoteStep(move.role, move.stepX, move.stepY);
 
             if (((role.x | role.y) & MapHeader::TileFraction) == 0)
             {

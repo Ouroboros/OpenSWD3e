@@ -193,8 +193,12 @@ public:
         int height,
         int pitch
     ) const;
-    // A frame of layers begun cleared to black, the layers drawn in order, then shown.
-    void BeginLayers() const;
+    // A frame of layers begun cleared to black, the layers drawn in order, then shown. The layers are composed on a
+    // copy of the canvas `scale` times larger (twice that for an odd scale: the layers lie on half pixels), where
+    // every layer meets the same pixels; the copy is then scaled to the window once, as Present scales a frame.
+    void BeginLayers(int scale) const;
+    // The pixels of the composing copy per canvas pixel (BeginLayers).
+    int ComposeScale() const;
     void DrawLayer(const Layer& layer, float x, float y, float width, float height, LayerBlend blend) const;
 
     // A layer drawn mirrored, flipped, at an alpha and with its colours scaled (0..255 each).
@@ -293,10 +297,13 @@ private:
     int restoredHeight = DefaultWindowHeight;
     bool maximized = false;
     ScreenLayout layout{Width, Height, 0, 0};
-    std::array<int, 4> textInputArea{};  // SetTextInputArea: the area last given to SDL (x, y, width, height)
-    SDL_Texture* mapTarget = nullptr;    // BeginMapTarget: the copy of the screen (the output's size)
-    bool vsync = false;                  // SetVSync
-    mutable bool capturing = false;      // SetCapturing
+    std::array<int, 4> textInputArea{};            // SetTextInputArea: the area last given to SDL (x, y, width, height)
+    SDL_Texture* mapTarget = nullptr;              // BeginMapTarget: the copy of the screen (the output's size)
+    bool vsync = false;                            // SetVSync
+    mutable bool capturing = false;                // SetCapturing
+    mutable SDL_Texture* composeTarget = nullptr;  // BeginLayers: the canvas the layers are composed on
+    mutable std::array<int, 2> composeSize{};
+    mutable int composeScale = 1;
     mutable SDL_Texture* captureTarget = nullptr;
     mutable std::array<int, 2> captureSize{};
     std::vector<Pixel> captured;  // EndLayers while capturing

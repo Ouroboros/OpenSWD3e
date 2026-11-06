@@ -139,6 +139,7 @@ public:
     void DrawRoles();
     int DrawRole(Role& role);
     // The rebuild's smooth motion: the roles' places as a game frame starts (the steps it takes are drawn from them).
+    void NoteStep(std::size_t index, i32 x, i32 y);
     void KeepRolePlaces();
     void ArriveMoving(std::size_t index, std::size_t move, u8 direction);
     void UpdateRoleSound(Role& role);
@@ -412,7 +413,10 @@ private:
     void PanTick();
     std::array<i32, 2> RoleFine(std::size_t index, int scale) const;
     PlayerMotion playerMotion;
-    std::vector<RolePlace> framePlaces;   // per role
+    std::vector<RolePlace> framePlaces;  // per role
+    // The steps each role walked since its place was kept (the frames' moves and the controlled role's motion): what
+    // else moved it put it there (CaptureRoleSteps).
+    std::array<Point, GameState::Roles> frameSteps{};
     u32 framePlacesFrame = 0;             // the game frame they were kept for
     std::vector<RoleMotion> roleMotions;  // per role
     PanMotion panMotion;

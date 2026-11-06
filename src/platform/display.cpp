@@ -795,50 +795,55 @@ void Display::UpdateMattedLayer(
     SDL_UnlockTexture(layer.texture);
 }
 
-void Display::BeginLayers() const
+void Display::BeginLayers(int scale) const
 {
     if (!this->IsOpen())
     {
         return;
     }
 
-    if (this->capturing)
+    constexpr int kLayerParts = 2;  // the layers lie on half canvas pixels
+    this->composeScale = std::max(scale, 1) % kLayerParts == 0 ? std::max(scale, 1) : kLayerParts * std::max(scale, 1);
+    const int width = this->layout.width * this->composeScale;
+    const int height = this->layout.height * this->composeScale;
+
+    if (this->composeTarget == nullptr || this->composeSize != std::array<int, 2>{width, height})
     {
-        int width = 0;
-        int height = 0;
-        SDL_GetRenderOutputSize(this->renderer, &width, &height);
-
-        if (this->captureTarget == nullptr || this->captureSize != std::array<int, 2>{width, height})
+        if (this->composeTarget != nullptr)
         {
-            if (this->captureTarget != nullptr)
-            {
-                SDL_DestroyTexture(this->captureTarget);
-            }
-
-            this->captureTarget =
-                SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
-            this->captureSize = {width, height};
+            SDL_DestroyTexture(this->composeTarget);
         }
 
-        SDL_SetRenderTarget(this->renderer, this->captureTarget);
+        this->composeTarget =
+            SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+        this->composeSize = {width, height};
+
+        if (this->composeTarget == nullptr)
+        {
+            LogError(u8"compose target creation failed: %s", AsUtf8(SDL_GetError()));
+            return;
+        }
+
+        SDL_SetTextureScaleMode(this->composeTarget, SDL_SCALEMODE_NEAREST);
+        SDL_SetTextureBlendMode(this->composeTarget, SDL_BLENDMODE_NONE);
     }
 
+    SDL_SetRenderTarget(this->renderer, this->composeTarget);
     SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(this->renderer);
     const SDL_Rect canvas = this->CanvasClip();
     SDL_SetRenderClipRect(this->renderer, &canvas);
 }
 
-// The output pixels the canvas covers (those whose centres lie in it, as the GPU fills a rectangle): the layers drawn
-// past the canvas (a map shifted by a fraction of a pixel) are cut there, where the margins stay black.
+int Display::ComposeScale() const
+{
+    return this->composeScale;
+}
+
+// The composing copy whole (the layers are cut at the canvas's edges).
 SDL_Rect Display::CanvasClip() const
 {
-    const Viewport viewport = this->CurrentViewport();
-    const auto left = static_cast<int>(std::round(viewport.x));
-    const auto top = static_cast<int>(std::round(viewport.y));
-    const auto right = static_cast<int>(std::round(viewport.x + viewport.width));
-    const auto bottom = static_cast<int>(std::round(viewport.y + viewport.height));
-    return {left, top, right - left, bottom - top};
+    return {0, 0, this->composeSize[0], this->composeSize[1]};
 }
 
 void Display::SetCapturing(bool capturing)
@@ -953,17 +958,10 @@ void Display::DrawLayer(
         return;
     }
 
-    // Canvas pixels of the layout to output pixels of the viewport.
-    const Viewport viewport = this->CurrentViewport();
-    const float scaleX = viewport.width / static_cast<float>(this->layout.width);
-    const float scaleY = viewport.height / static_cast<float>(this->layout.height);
+    // Canvas pixels to pixels of the composing copy.
+    const auto scale = static_cast<float>(this->composeScale);
     const SDL_FRect source{0.0f, 0.0f, static_cast<float>(layer.width), static_cast<float>(layer.height)};
-    const SDL_FRect target{
-        viewport.x + x * scaleX,
-        viewport.y + y * scaleY,
-        width * scaleX,
-        height * scaleY,
-    };
+    const SDL_FRect target{x * scale, y * scale, width * scale, height * scale};
 
     // What is under it less the layer, its alpha kept.
     static const SDL_BlendMode kSubtract = SDL_ComposeCustomBlendMode(
@@ -1016,15 +1014,8 @@ void Display::ClipLayers(int x, int y, int width, int height) const
         return;
     }
 
-    const Viewport viewport = this->CurrentViewport();
-    const float scaleX = viewport.width / static_cast<float>(this->layout.width);
-    const float scaleY = viewport.height / static_cast<float>(this->layout.height);
-    const SDL_Rect area{
-        static_cast<int>(std::floor(viewport.x + static_cast<float>(x) * scaleX)),
-        static_cast<int>(std::floor(viewport.y + static_cast<float>(y) * scaleY)),
-        static_cast<int>(std::ceil(static_cast<float>(width) * scaleX)),
-        static_cast<int>(std::ceil(static_cast<float>(height) * scaleY)),
-    };
+    const int scale = this->composeScale;
+    const SDL_Rect area{x * scale, y * scale, width * scale, height * scale};
 
     const SDL_Rect canvas = this->CanvasClip();
     SDL_Rect clip{};
@@ -1044,9 +1035,8 @@ void Display::BeginMapTarget()
         return;
     }
 
-    int width = 0;
-    int height = 0;
-    SDL_GetRenderOutputSize(this->renderer, &width, &height);
+    const int width = this->composeSize[0];
+    const int height = this->composeSize[1];
 
     if (this->mapTarget == nullptr || this->mapTargetSize[0] != width || this->mapTargetSize[1] != height)
     {
@@ -1080,8 +1070,8 @@ void Display::EndMapTarget(std::span<const MapPiece> pieces)
         return;
     }
 
-    // Back to what the layers go to (the output, or the copy while capturing), cut to the canvas.
-    SDL_SetRenderTarget(this->renderer, this->capturing ? this->captureTarget : nullptr);
+    // Back to the composing copy.
+    SDL_SetRenderTarget(this->renderer, this->composeTarget);
     const SDL_Rect canvas = this->CanvasClip();
     SDL_SetRenderClipRect(this->renderer, &canvas);
     SDL_SetTextureBlendMode(this->mapTarget, SDL_BLENDMODE_NONE);
@@ -1094,10 +1084,9 @@ void Display::EndMapTarget(std::span<const MapPiece> pieces)
         return;
     }
 
-    // Canvas pixels to output pixels, and to the copy's texture coordinates.
-    const Viewport viewport = this->CurrentViewport();
-    const float scaleX = viewport.width / static_cast<float>(this->layout.width);
-    const float scaleY = viewport.height / static_cast<float>(this->layout.height);
+    // Canvas pixels to pixels of the composing copy, and to the map copy's texture coordinates.
+    const auto scaleX = static_cast<float>(this->composeScale);
+    const float scaleY = scaleX;
     const auto textureWidth = static_cast<float>(this->mapTargetSize[0]);
     const auto textureHeight = static_cast<float>(this->mapTargetSize[1]);
     constexpr SDL_FColor kWhole{1.0f, 1.0f, 1.0f, 1.0f};
@@ -1109,12 +1098,12 @@ void Display::EndMapTarget(std::span<const MapPiece> pieces)
 
     for (const MapPiece& piece : pieces)
     {
-        const float left = viewport.x + piece.x * scaleX;
-        const float top = viewport.y + piece.y * scaleY;
+        const float left = piece.x * scaleX;
+        const float top = piece.y * scaleY;
         const float right = left + piece.width * scaleX;
         const float bottom = top + piece.height * scaleY;
-        const float sourceLeft = (viewport.x + piece.sourceX * scaleX) / textureWidth;
-        const float sourceTop = (viewport.y + piece.sourceY * scaleY) / textureHeight;
+        const float sourceLeft = piece.sourceX * scaleX / textureWidth;
+        const float sourceTop = piece.sourceY * scaleY / textureHeight;
         const float sourceRight = sourceLeft + piece.width * scaleX / textureWidth;
         const float sourceBottom = sourceTop + piece.height * scaleY / textureHeight;
         const auto first = static_cast<int>(this->piecePlaces.size()) / kCoordinates;
@@ -1187,10 +1176,8 @@ void Display::TintArea(float x, float y, float width, float height, int red, int
         return static_cast<u8>(std::min(level, kSteps) * kTop / kSteps);
     };
 
-    const Viewport viewport = this->CurrentViewport();
-    const float scaleX = viewport.width / static_cast<float>(this->layout.width);
-    const float scaleY = viewport.height / static_cast<float>(this->layout.height);
-    const SDL_FRect target{viewport.x + x * scaleX, viewport.y + y * scaleY, width * scaleX, height * scaleY};
+    const auto scale = static_cast<float>(this->composeScale);
+    const SDL_FRect target{x * scale, y * scale, width * scale, height * scale};
 
     if ((red > 0 || green > 0 || blue > 0) && SDL_SetRenderDrawBlendMode(this->renderer, kRaise))
     {
@@ -1227,6 +1214,33 @@ void Display::EndLayers()
     }
 
     SDL_SetRenderClipRect(this->renderer, nullptr);
+
+    // The composed canvas scaled to the window once (to the output's copy while capturing).
+    if (this->capturing)
+    {
+        int width = 0;
+        int height = 0;
+        SDL_GetRenderOutputSize(this->renderer, &width, &height);
+
+        if (this->captureTarget == nullptr || this->captureSize != std::array<int, 2>{width, height})
+        {
+            if (this->captureTarget != nullptr)
+            {
+                SDL_DestroyTexture(this->captureTarget);
+            }
+
+            this->captureTarget =
+                SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+            this->captureSize = {width, height};
+        }
+    }
+
+    SDL_SetRenderTarget(this->renderer, this->capturing ? this->captureTarget : nullptr);
+    SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(this->renderer);
+    const Viewport viewport = this->CurrentViewport();
+    const SDL_FRect shown{viewport.x, viewport.y, viewport.width, viewport.height};
+    SDL_RenderTexture(this->renderer, this->composeTarget, nullptr, &shown);
 
     // Captured: the copy read back as RGB565, nothing shown.
     if (this->capturing)
