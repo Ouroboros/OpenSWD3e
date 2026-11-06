@@ -575,7 +575,12 @@ void FieldView::CaptureRoleSteps(bool continuous)
             continue;
         }
 
-        if (held || (!moved && turned))
+        // A role the event holds as it puts it elsewhere (command 0x28 on the frame that holds it) jumps there below.
+        constexpr i32 kFar = kFarSteps * MapHeader::TileSize * MotionFine;
+        const bool jumped =
+            std::abs(role.x * MotionFine - shown[0]) > kFar || std::abs(role.y * MotionFine - shown[1]) > kFar;
+
+        if ((held && !jumped) || (!moved && turned))
         {
             step = RoleMotion{
                 .active = true,
@@ -620,8 +625,6 @@ void FieldView::CaptureRoleSteps(bool continuous)
 
             continue;
         }
-
-        constexpr i32 kFar = kFarSteps * MapHeader::TileSize * MotionFine;
 
         if (std::abs(gapX) > kFar || std::abs(gapY) > kFar)
         {
