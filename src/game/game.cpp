@@ -442,9 +442,10 @@ int Game::Run([[maybe_unused]] std::u8string_view commandLine)
 
     SDL_RemoveEventWatch(&Game::LiveResize, this);
     LogInfo(
-        u8"frames: %d game frames, %d drawn between them",
+        u8"frames: %d game frames, %d drawn between them (%d laid by the GPU)",
         static_cast<i32>(this->gameFrames),
-        static_cast<i32>(this->framesBetween)
+        static_cast<i32>(this->framesBetween),
+        static_cast<i32>(this->framesLaid)
     );
 
     if (this->framesBetween != 0)
@@ -1712,6 +1713,19 @@ bool Game::PresentBetween()
     }
     else
     {
+        // The rebuild: the map laid by the GPU (reverse/analysis/smooth-gpu.md), painted where its layers cannot show
+        // the frame.
+
+        if (this->fieldView.LayBetween(scale))
+        {
+            const u64 laid = SDL_GetTicksNS() - paintStart;
+            this->paintBetweenNs += laid;
+            this->paintBetweenMostNs = std::max(this->paintBetweenMostNs, laid);
+            ++this->framesBetween;
+            ++this->framesLaid;
+            return true;
+        }
+
         this->fieldView.PaintBetween(*this->smoothScreen);
     }
 

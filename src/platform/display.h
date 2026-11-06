@@ -1,7 +1,9 @@
 #pragma once
 
 #include <array>
+#include <span>
 #include <string>
+#include <vector>
 
 #include "core/point.h"
 #include "core/types.h"
@@ -125,6 +127,122 @@ public:
     void EndOverlays() const;
     // The size of the render output in pixels, where the overlays are placed.
     Point OutputSize() const;
+
+    // The rebuild's smooth map (deviations.md): layers of the map laid by the GPU between game frames. A layer holds
+    // RGB565 pixels; it is drawn at a place and size in canvas pixels of the layout (fractions allowed) with nearest
+    // sampling.
+    enum class LayerBlend
+    {
+        Add,       // added to what is under it, saturating
+        Over,      // over what is under it, its pixels of the key clear
+        Subtract,  // each pixel takes from what is under it what it lacks of white (a shadow drawn on white), the key
+                   // (white) taking nothing
+        Opaque,    // every pixel shown as it is (kept as RGB565, no key)
+    };
+
+    class Layer
+    {
+    public:
+        Layer() = default;
+        ~Layer();
+        Layer(const Layer&) = delete;
+        Layer& operator=(const Layer&) = delete;
+        Layer(Layer&& other) noexcept;
+        Layer& operator=(Layer&& other) noexcept;
+
+        int Width() const
+        {
+            return this->width;
+        }
+
+        int Height() const
+        {
+            return this->height;
+        }
+
+    private:
+        friend class Display;
+
+        SDL_Texture* texture = nullptr;
+        int width = 0;  // the pixels it holds
+        int height = 0;
+        int textureWidth = 0;  // the texture's (the largest it held)
+        int textureHeight = 0;
+        bool opaque = false;  // the texture holds RGB565 (LayerBlend::Opaque), ARGB8888 otherwise
+    };
+
+    // `layer` made to hold the `width` x `height` pixels at `pixels` (rows `pitch` pixels apart) for `blend`.
+    void UpdateLayer(
+        Layer& layer,
+        const Pixel* pixels,
+        int width,
+        int height,
+        int pitch,
+        Pixel key,
+        LayerBlend blend
+    ) const;
+    // `layer` made to hold what was drawn twice over black (`overBlack`) and over white (`overWhite`): a pixel alike on
+    // both is solid, one left black and white clear, one between them translucent (its level and colour taken from
+    // the two, as a blend at a level shows them); drawn with LayerBlend::Over.
+    void UpdateMattedLayer(
+        Layer& layer,
+        const Pixel* overBlack,
+        const Pixel* overWhite,
+        int width,
+        int height,
+        int pitch
+    ) const;
+    // A frame of layers begun cleared to black, the layers drawn in order, then shown.
+    void BeginLayers() const;
+    void DrawLayer(const Layer& layer, float x, float y, float width, float height, LayerBlend blend) const;
+
+    // A layer drawn mirrored, flipped, at an alpha and with its colours scaled (0..255 each).
+    struct LayerLook
+    {
+        bool mirrored = false;
+        bool flipped = false;
+        u8 alpha = 0xFF;
+        u8 red = 0xFF;
+        u8 green = 0xFF;
+        u8 blue = 0xFF;
+    };
+
+    void DrawLayer(
+        const Layer& layer,
+        float x,
+        float y,
+        float width,
+        float height,
+        LayerBlend blend,
+        const LayerLook& look
+    ) const;
+
+    // A piece of the screen copied within it (canvas pixels): what lies at (sourceX, sourceY) drawn at (x, y).
+    struct MapPiece
+    {
+        float sourceX = 0.0f;
+        float sourceY = 0.0f;
+        float x = 0.0f;
+        float y = 0.0f;
+        float width = 0.0f;
+        float height = 0.0f;
+    };
+
+    // The layers drawn from now on go to a copy of the screen, which EndMapTarget then shows with the pieces copied
+    // within it (taken from the copy as it was drawn).
+    void BeginMapTarget();
+    void EndMapTarget(std::span<const MapPiece> pieces);
+    // The layers drawn from now on are clipped to the area (canvas pixels); none: not clipped.
+    void ClipLayers(int x, int y, int width, int height) const;
+    void UnclipLayers() const;
+    // What is drawn on the area (canvas pixels) tinted as Painter::TintPixels tints: each channel raised or lowered
+    // by `red`, `green`, `blue` steps of 1/31, saturating.
+    void TintArea(float x, float y, float width, float height, int red, int green, int blue) const;
+    void EndLayers();
+    // With vsync: the time between the display's refreshes, and when the last frame was shown (SDL_GetTicksNS);
+    // 0 without vsync.
+    u64 RefreshPeriod() const;
+    u64 LastShown() const;
     // The positions of a mouse event in output pixels.
     void ToOutput(SDL_Event& event) const;
     // The system's pointer shown over the window (its arrow, or its move pointer while `moving`), instead of the
@@ -159,6 +277,13 @@ private:
     bool maximized = false;
     ScreenLayout layout{Width, Height, 0, 0};
     std::array<int, 4> textInputArea{};  // SetTextInputArea: the area last given to SDL (x, y, width, height)
+    SDL_Texture* mapTarget = nullptr;    // BeginMapTarget: the copy of the screen (the output's size)
+    bool vsync = false;                  // SetVSync
+    u64 lastShownNs = 0;                 // EndLayers
+    std::array<int, 2> mapTargetSize{};
+    std::vector<float> piecePlaces;   // EndMapTarget: x, y of each corner
+    std::vector<float> pieceSources;  // u, v of each corner
+    std::vector<int> pieceIndices;
 
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;

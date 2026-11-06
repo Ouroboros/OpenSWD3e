@@ -55,7 +55,32 @@ std::array<i32, 2> FieldView::EffectAt(u64 key, i32 x, i32 y, bool screen)
     {
         if (found == this->effectMotions.end() || found->second.seen != this->placesFrame)
         {
+            if (this->recordingEffects)
+            {
+                this->effectShift = {};
+            }
+
             return {x, y};
+        }
+
+        // Laid by the GPU (RecordEffects): drawn at the pixel under it, the rest of the way left to the GPU (a map
+        // element also the camera's fraction).
+        if (this->recordingEffects)
+        {
+            const std::array<double, 2> shown = this->EffectShown(found->second);
+            const std::array<double, 2> pixel = {std::floor(shown[0]), std::floor(shown[1])};
+            this->effectShift = {
+                static_cast<float>(shown[0] - pixel[0]),
+                static_cast<float>(shown[1] - pixel[1]),
+            };
+
+            if (!found->second.screen)
+            {
+                this->effectShift[0] += static_cast<float>(this->game.field.cameraLeft) - this->gpuCamera[0];
+                this->effectShift[1] += static_cast<float>(this->game.field.cameraTop) - this->gpuCamera[1];
+            }
+
+            return {static_cast<i32>(pixel[0]), static_cast<i32>(pixel[1])};
         }
 
         return this->EffectPlace(found->second, this->paintColumn, this->paintRow);

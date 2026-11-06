@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <span>
@@ -198,6 +199,8 @@ struct ScriptObject
 
     void CopyScreen(std::span<const u16> pixels);
     void Refract(std::span<u16> pixels) const;
+    // The rebuild: what Refract does, as each pixel `at` of the screen taken from `source` of its copy.
+    void Refractions(const std::function<void(int at, int source)>& take) const;
     bool Step();
 };
 

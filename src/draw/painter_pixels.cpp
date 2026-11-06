@@ -190,6 +190,13 @@ void Painter::TintPixels(std::span<u16> pixels, int red, int green, int blue) co
 {
     constexpr std::size_t kFastPixels = 0x40;
 
+    // The rebuild (SetRecorder): the tint handed to the recorder instead.
+    if (this->recorder != nullptr)
+    {
+        this->recorder->RecordTint(pixels.data() - this->target, pixels.size(), red, green, blue);
+        return;
+    }
+
     if (pixels.size() >= kFastPixels)
     {
         this->TintPixelsFast(pixels, red, green, blue);

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <numeric>
 #include <span>
 
 #if defined(__SSE2__)
@@ -56,6 +57,12 @@ enum class EffectKind : u64
     Spotlight,
     Pointer,  // the offset of the mouse pointer's picture, which its act sways
 };
+
+// LayBetween (field_view_gpu.cpp): the room a role's drawing takes about its picture on a layer (its shadow and
+// attached act beside it, its bubbles and label above it, its shadow below it).
+constexpr i32 kLayerRoleSide = 48;
+constexpr i32 kLayerRoleTop = 64;
+constexpr i32 kLayerRoleBottom = 48;
 
 constexpr i32 kEffectSnap = 0x80;  // an element moving further in a frame has been placed again: it jumps
 constexpr i32 kBubbleSnap = 6;     // a bubble moves 2 pixels at most; the original copies the next bubble into a

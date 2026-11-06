@@ -41,6 +41,35 @@ struct DrawOptions
     bool operator==(const DrawOptions& other) const = default;
 };
 
+// The rebuild's smooth map laid by the GPU (FieldView::LayBetween): a picture drawn while a recorder is set is handed
+// to it as the draw that would have been made (the picture, its place, mode, options, zoom and clip), nothing drawn.
+struct DrawCommand
+{
+    const u8* source = nullptr;
+    const u16* palette = nullptr;
+    DrawArgument argument;
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    u32 mode = 0;
+    DrawOptions options;
+    int zoomAnchorX = 0;
+    int zoomAnchorY = 0;
+    int zoomX = 0;
+    int zoomY = 0;
+    std::array<int, 4> clip = {};  // x, y, width, height
+};
+
+class DrawRecorder
+{
+public:
+    virtual ~DrawRecorder() = default;
+    virtual void Record(const DrawCommand& command) = 0;
+    // Painter::TintPixels: `count` pixels from `at` (pixels from the target's start) tinted by the steps given.
+    virtual void RecordTint(std::ptrdiff_t at, std::size_t count, int red, int green, int blue) = 0;
+};
+
 // One colour channel of the display format.
 struct ColorChannel
 {
@@ -178,8 +207,11 @@ public:
 
     // Source and persistent effect state.
     void SetSource(const void* data);
+    // The rebuild: the recorder the pictures drawn from now on go to instead (none: they are drawn).
+    void SetRecorder(DrawRecorder* recorder);
     const void* Source() const;
     void SetPalette(const u16* palette);
+    const u16* Palette() const;
     DrawOptions& Options();
     void SetWave(int mode);
     int WavePhase() const;
@@ -422,6 +454,7 @@ private:
     // Source and options.
     const u8* source = nullptr;
     const u16* palette = nullptr;
+    DrawRecorder* recorder = nullptr;  // SetRecorder
     DrawOptions options;
     Placement placement;
     int mirrorStart = 0;  // first drawn picture column of a mirrored walk

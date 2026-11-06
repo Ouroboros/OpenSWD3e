@@ -381,6 +381,21 @@ void ScriptObject::CopyScreen(std::span<const u16> pixels)
 // slopes point at (the differences to the cells right of and below it, divided by 8); only the first page is read
 void ScriptObject::Refract(std::span<u16> pixels) const
 {
+    this->Refractions(
+        [this, pixels](int at, int source)
+        {
+            if (at >= 0 && static_cast<std::size_t>(at) < pixels.size() && source >= 0 &&
+                static_cast<std::size_t>(source) < this->screen.size())
+            {
+                pixels[static_cast<std::size_t>(at)] = this->screen[static_cast<std::size_t>(source)];
+            }
+        }
+    );
+}
+
+// swd3e.exe 0x00435C80: the loop of Refract, each pixel handed to `take`
+void ScriptObject::Refractions(const std::function<void(int at, int source)>& take) const
+{
     const int width = this->gridWidth;
     const int last = width * (this->gridHeight - 1);
     int at = this->left + this->pitch * (this->top + 1);
@@ -390,14 +405,6 @@ void ScriptObject::Refract(std::span<u16> pixels) const
         return index >= 0 && static_cast<std::size_t>(index) < this->heights.size()
                    ? this->heights[static_cast<std::size_t>(index)]
                    : 0;
-    };
-
-    auto copy = [this](int index, u16& out)
-    {
-        if (index >= 0 && static_cast<std::size_t>(index) < this->screen.size())
-        {
-            out = this->screen[static_cast<std::size_t>(index)];
-        }
     };
 
     for (int cell = width + 1; cell < last; at += this->pitch - width + kGridBorder)
@@ -411,12 +418,7 @@ void ScriptObject::Refract(std::span<u16> pixels) const
                 const int here = height(cell);
                 const int source = this->pitch * ((here - height(cell + width)) >> kRefractShift) + at +
                                    ((here - height(cell + 1)) >> kRefractShift);
-
-                if (at >= 0 && static_cast<std::size_t>(at) < pixels.size())
-                {
-                    copy(source, pixels[static_cast<std::size_t>(at)]);
-                }
-
+                take(at, source);
                 ++cell;
                 ++at;
             }

@@ -582,11 +582,55 @@ void Painter::DrawOutline(int x, int y, int width, int height, u32 mode, const D
 // scaling (DrawOptions::scaleHeight) and shear take the clipping path of the sheared effects; every option is reset
 // afterwards. A draw clipped away returns what the original leaves in eax: the alpha (not above 0), the height (cut off
 // above), the rows or columns left (not above 0), or, on the scaled and sheared paths, the clip's top or left.
+const u16* Painter::Palette() const
+{
+    return this->palette;
+}
+
+void Painter::SetRecorder(DrawRecorder* recorder)
+{
+    this->recorder = recorder;
+}
+
 int Painter::DrawPicture(int x, int y, int width, int height, u32 mode, const DrawArgument& argument)
 {
     if (DrawPlacer* placer = DrawPlacer::Active(); placer != nullptr)
     {
         placer->Place(x, y, __builtin_return_address(0), this->source);
+    }
+
+    if (this->recorder != nullptr)
+    {
+        if (this->source != nullptr)
+        {
+            const bool rle = ReadPixel(this->source) == this->rleColors.magic && this->palette == nullptr;
+            this->recorder->Record(
+                DrawCommand{
+                    .source = this->source,
+                    .palette = this->palette,
+                    .argument = argument,
+                    .x = x,
+                    .y = y,
+                    .width = width,
+                    .height = height,
+                    .mode = rle ? mode | Painter::RleSource : mode,
+                    .options = this->options,
+                    .zoomAnchorX = this->zoomAnchorX,
+                    .zoomAnchorY = this->zoomAnchorY,
+                    .zoomX = this->zoomX,
+                    .zoomY = this->zoomY,
+                    .clip = {this->clipX, this->clipY, this->clipWidth, this->clipHeight},
+                }
+            );
+        }
+
+        // The options stay set after a zoomed draw, as DispatchZoom leaves them.
+        if ((mode & Painter::ZoomModeMask) < Painter::ZoomModes)
+        {
+            this->options = DrawOptions{};
+        }
+
+        return 1;
     }
 
     if (this->source == nullptr)

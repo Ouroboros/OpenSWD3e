@@ -474,18 +474,31 @@ void FieldView::PaintWorld()
 
     // The rebuild's view larger than the original's screen shows black where nothing is drawn: past the map's edges,
     // and past an overlay made for the original's screen behind see-through tiles (deviations.md).
-    if (state.GameFlag(GameState::OverlaysFirst) || state.GameFlag(GameState::Spotlight) || field.WiderView())
+    // The rebuild (LayBetween): the white pass of a recording draws what lies on the layers past the first alone.
+    // With the overlays laid by the GPU (recordOverlays) the first layer is recorded over white too, without them.
+    const bool ground = (this->recordPass != RecordPass::White || this->recordOverlays) && !this->recordSkip;
+    constexpr Pixel kRecordWhite = 0xFFFF;
+    const Pixel fill = this->recordPass == RecordPass::White ? kRecordWhite : Pixel{0};
+
+    if (ground &&
+        (state.GameFlag(GameState::OverlaysFirst) || state.GameFlag(GameState::Spotlight) || field.WiderView()))
     {
-        std::fill(canvas.begin(), canvas.end(), Pixel{0});
+        std::fill(canvas.begin(), canvas.end(), fill);
     }
 
     if ((view.screenFlags & Scene::BlackScreen) != 0)
     {
-        std::fill(canvas.begin(), canvas.end(), Pixel{0});
+        if (ground)
+        {
+            std::fill(canvas.begin(), canvas.end(), fill);
+        }
     }
     else
     {
-        this->DrawOverlays();
+        if (ground && (this->recordPass == RecordPass::None || !this->recordOverlays))
+        {
+            this->DrawOverlays();
+        }
 
         if (!state.GameFlag(GameState::PlainScreen) && state.GameFlag(GameState::Spotlight))
         {
@@ -495,43 +508,70 @@ void FieldView::PaintWorld()
         const bool scrolled =
             (field.cameraLeft & MapHeader::TileFraction) != 0 || (field.cameraTop & MapHeader::TileFraction) != 0;
 
-        if (state.map.bitsPerPixel == MapHeader::TrueColorBits)
+        if (ground)
         {
-            scrolled ? this->DrawTiles16Scrolled(0) : this->DrawTiles16(0);
-        }
-        else
-        {
-            painter.SetPalette(field.palette.data());
-            scrolled ? this->DrawTiles8Scrolled(0) : this->DrawTiles8(0);
+            if (state.map.bitsPerPixel == MapHeader::TrueColorBits)
+            {
+                scrolled ? this->DrawTiles16Scrolled(0) : this->DrawTiles16(0);
+            }
+            else
+            {
+                painter.SetPalette(field.palette.data());
+                scrolled ? this->DrawTiles8Scrolled(0) : this->DrawTiles8(0);
+            }
         }
 
         painter.SetPalette(nullptr);
 
         // swd3e reads story flag 0xB here and does nothing with it (swd32 drew the reflections without it).
         this->DrawRoles();
+
+        // The rebuild (LayBetween): what follows the roles goes to a still layer after the last sprite.
+        if (this->recordPass != RecordPass::None)
+        {
+            this->RecordStill();
+        }
+
         this->DrawItemHints();
         this->DrawAnimations(view.animationsA);
-        this->DrawSprites();
+        // The rebuild (LayBetween): the effects moving between game frames are laid apart from the recorded layers.
+        const bool moving = this->recordPass == RecordPass::None;
+
+        if (moving)
+        {
+            this->DrawSprites();
+        }
 
         if (!state.GameFlag(GameState::PlainScreen) && (view.screenFlags & Scene::BlackScreen) == 0)
         {
-            this->DrawLeaves();
-            this->DrawLightning();
-            this->DrawFireflies();
-            this->DrawWeather();
-            this->DrawHeat();
-            this->DrawRipples();
+            if (moving)
+            {
+                this->DrawLeaves();
+                this->DrawLightning();
+                this->DrawFireflies();
+                this->DrawWeather();
+            }
+
+            if (moving)
+            {
+                this->DrawHeat();
+                this->DrawRipples();
+            }
         }
 
         if (!state.GameFlag(GameState::PlainScreen))
         {
-            this->DrawSpotlight();
-            this->DrawAnimations(view.animationsB);
+            if (moving)
+            {
+                this->DrawSpotlight();
+                this->DrawAnimations(view.animationsB);
+            }
+
             later = false;
         }
     }
 
-    if (later)
+    if (later && this->recordPass == RecordPass::None)
     {
         this->DrawAnimations(view.animationsB);
     }

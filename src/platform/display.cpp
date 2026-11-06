@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <utility>
 
 #include "core/log.h"
 #include "core/types.h"
@@ -113,6 +114,11 @@ Display::~Display()
     if (this->backdrop != nullptr)
     {
         SDL_DestroyTexture(this->backdrop);
+    }
+
+    if (this->mapTarget != nullptr)
+    {
+        SDL_DestroyTexture(this->mapTarget);
     }
 
     if (this->renderer != nullptr)
@@ -433,6 +439,605 @@ void Display::EndOverlays() const
     }
 }
 
+Display::Layer::~Layer()
+{
+    if (this->texture != nullptr)
+    {
+        SDL_DestroyTexture(this->texture);
+    }
+}
+
+Display::Layer::Layer(Layer&& other) noexcept
+    : texture(std::exchange(other.texture, nullptr)),
+      width(std::exchange(other.width, 0)),
+      height(std::exchange(other.height, 0)),
+      textureWidth(std::exchange(other.textureWidth, 0)),
+      textureHeight(std::exchange(other.textureHeight, 0)),
+      opaque(std::exchange(other.opaque, false))
+{
+}
+
+Display::Layer& Display::Layer::operator=(Layer&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (this->texture != nullptr)
+        {
+            SDL_DestroyTexture(this->texture);
+        }
+
+        this->texture = std::exchange(other.texture, nullptr);
+        this->width = std::exchange(other.width, 0);
+        this->height = std::exchange(other.height, 0);
+        this->textureWidth = std::exchange(other.textureWidth, 0);
+        this->textureHeight = std::exchange(other.textureHeight, 0);
+        this->opaque = std::exchange(other.opaque, false);
+    }
+
+    return *this;
+}
+
+void Display::UpdateLayer(
+    Layer& layer,
+    const Pixel* pixels,
+    int width,
+    int height,
+    int pitch,
+    Pixel key,
+    LayerBlend blend
+) const
+{
+    if (!this->IsOpen() || width <= 0 || height <= 0)
+    {
+        return;
+    }
+
+    const bool opaque = blend == LayerBlend::Opaque;
+
+    if (layer.texture == nullptr || layer.textureWidth < width || layer.textureHeight < height ||
+        layer.opaque != opaque)
+    {
+        if (layer.texture != nullptr)
+        {
+            SDL_DestroyTexture(layer.texture);
+        }
+
+        // A texture grows to the largest layer it held, so that layers of changing sizes keep one.
+        if (layer.opaque != opaque)
+        {
+            layer.textureWidth = 0;
+            layer.textureHeight = 0;
+        }
+
+        layer.opaque = opaque;
+        layer.textureWidth = std::max(width, layer.textureWidth);
+        layer.textureHeight = std::max(height, layer.textureHeight);
+        layer.texture = SDL_CreateTexture(
+            this->renderer,
+            opaque ? SDL_PIXELFORMAT_RGB565 : SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            layer.textureWidth,
+            layer.textureHeight
+        );
+
+        if (layer.texture == nullptr)
+        {
+            LogError(u8"layer texture %dx%d creation failed: %s", width, height, AsUtf8(SDL_GetError()));
+            layer.textureWidth = 0;
+            layer.textureHeight = 0;
+            layer.width = 0;
+            layer.height = 0;
+            return;
+        }
+
+        SDL_SetTextureScaleMode(layer.texture, SDL_SCALEMODE_NEAREST);
+    }
+
+    layer.width = width;
+    layer.height = height;
+
+    const SDL_Rect area{0, 0, width, height};
+    void* locked = nullptr;
+    int lockedPitch = 0;
+
+    if (!SDL_LockTexture(layer.texture, &area, &locked, &lockedPitch))
+    {
+        LogError(u8"layer texture lock failed: %s", AsUtf8(SDL_GetError()));
+        return;
+    }
+
+    if (opaque)
+    {
+        for (int y = 0; y < height; ++y)
+        {
+            std::memcpy(
+                static_cast<u8*>(locked) + static_cast<std::ptrdiff_t>(y) * lockedPitch,
+                pixels + static_cast<std::ptrdiff_t>(y) * pitch,
+                static_cast<std::size_t>(width) * sizeof(Pixel)
+            );
+        }
+
+        SDL_UnlockTexture(layer.texture);
+        return;
+    }
+
+    // RGB565 to ARGB8888, each channel's top bits repeated below as the GPU widens a 565 texel; a subtracting layer
+    // holds what each channel lacks of its top.
+    constexpr u32 kOpaque = 0xFF000000u;
+    constexpr u32 kClear = 0;
+    constexpr u32 kRedTop = 0x1F;
+    constexpr u32 kGreenTop = 0x3F;
+    constexpr u32 kBlueTop = 0x1F;
+    const bool subtract = blend == LayerBlend::Subtract;
+    const u32 keyed = subtract ? kOpaque : kClear;
+
+    for (int y = 0; y < height; ++y)
+    {
+        const Pixel* from = pixels + static_cast<std::ptrdiff_t>(y) * pitch;
+        u32* to = reinterpret_cast<u32*>(static_cast<u8*>(locked) + static_cast<std::ptrdiff_t>(y) * lockedPitch);
+
+        for (int x = 0; x < width; ++x)
+        {
+            const u32 pixel = from[x];
+
+            if (pixel == key)
+            {
+                to[x] = keyed;
+                continue;
+            }
+
+            u32 red = (pixel >> 11) & kRedTop;
+            u32 green = (pixel >> 5) & kGreenTop;
+            u32 blue = pixel & kBlueTop;
+
+            if (subtract)
+            {
+                red = kRedTop - red;
+                green = kGreenTop - green;
+                blue = kBlueTop - blue;
+            }
+
+            to[x] =
+                kOpaque | ((red << 3 | red >> 2) << 16) | ((green << 2 | green >> 4) << 8) | (blue << 3 | blue >> 2);
+        }
+    }
+
+    SDL_UnlockTexture(layer.texture);
+}
+
+void Display::UpdateMattedLayer(
+    Layer& layer,
+    const Pixel* overBlack,
+    const Pixel* overWhite,
+    int width,
+    int height,
+    int pitch
+) const
+{
+    if (!this->IsOpen() || width <= 0 || height <= 0)
+    {
+        return;
+    }
+
+    constexpr Pixel kBlack = 0;
+
+    if (layer.texture == nullptr || layer.textureWidth < width || layer.textureHeight < height || layer.opaque)
+    {
+        if (layer.texture != nullptr)
+        {
+            SDL_DestroyTexture(layer.texture);
+        }
+
+        if (layer.opaque)
+        {
+            layer.textureWidth = 0;
+            layer.textureHeight = 0;
+        }
+
+        layer.textureWidth = std::max(width, layer.textureWidth);
+        layer.textureHeight = std::max(height, layer.textureHeight);
+        layer.opaque = false;
+        layer.texture = SDL_CreateTexture(
+            this->renderer,
+            SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            layer.textureWidth,
+            layer.textureHeight
+        );
+
+        if (layer.texture == nullptr)
+        {
+            LogError(u8"layer texture %dx%d creation failed: %s", width, height, AsUtf8(SDL_GetError()));
+            layer.textureWidth = 0;
+            layer.textureHeight = 0;
+            return;
+        }
+
+        SDL_SetTextureScaleMode(layer.texture, SDL_SCALEMODE_NEAREST);
+    }
+
+    layer.width = width;
+    layer.height = height;
+    const SDL_Rect area{0, 0, width, height};
+    void* locked = nullptr;
+    int lockedPitch = 0;
+
+    if (!SDL_LockTexture(layer.texture, &area, &locked, &lockedPitch))
+    {
+        LogError(u8"layer texture lock failed: %s", AsUtf8(SDL_GetError()));
+        return;
+    }
+
+    constexpr Pixel kWhite = 0xFFFF;
+    constexpr u32 kTop = 0xFF;
+    constexpr u32 kGreenTop = 0x3F;
+
+    // A channel of 565 widened to eight bits.
+    auto widen = [](u32 value, int bits)
+    {
+        return value << (8 - bits) | value >> (2 * bits - 8);
+    };
+
+    for (int y = 0; y < height; ++y)
+    {
+        const Pixel* black = overBlack + static_cast<std::ptrdiff_t>(y) * pitch;
+        const Pixel* white = overWhite + static_cast<std::ptrdiff_t>(y) * pitch;
+        u32* to = reinterpret_cast<u32*>(static_cast<u8*>(locked) + static_cast<std::ptrdiff_t>(y) * lockedPitch);
+
+        for (int x = 0; x < width; ++x)
+        {
+            const u32 dark = black[x];
+            const u32 light = white[x];
+            const u32 red = widen(dark >> 11 & 0x1F, 5);
+            const u32 green = widen(dark >> 5 & kGreenTop, 6);
+            const u32 blue = widen(dark & 0x1F, 5);
+
+            if (dark == light)
+            {
+                to[x] = kTop << 24 | red << 16 | green << 8 | blue;
+                continue;
+            }
+
+            if (dark == kBlack && light == kWhite)
+            {
+                to[x] = 0;
+                continue;
+            }
+
+            // Over black a pixel at level a shows a * colour, over white a * colour + (1 - a): the green channel (six
+            // bits) gives the level, the colour is what black shows of it over a.
+            const u32 gap = (light >> 5 & kGreenTop) - std::min(light >> 5 & kGreenTop, dark >> 5 & kGreenTop);
+            const u32 alpha = kTop - gap * kTop / kGreenTop;
+
+            if (alpha == 0)
+            {
+                to[x] = 0;
+                continue;
+            }
+
+            auto unblend = [alpha, kTop](u32 channel)
+            {
+                return std::min(channel * kTop / alpha, kTop);
+            };
+
+            to[x] = alpha << 24 | unblend(red) << 16 | unblend(green) << 8 | unblend(blue);
+        }
+    }
+
+    SDL_UnlockTexture(layer.texture);
+}
+
+void Display::BeginLayers() const
+{
+    if (this->IsOpen())
+    {
+        SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(this->renderer);
+    }
+}
+
+void Display::DrawLayer(const Layer& layer, float x, float y, float width, float height, LayerBlend blend) const
+{
+    this->DrawLayer(layer, x, y, width, height, blend, LayerLook{});
+}
+
+void Display::DrawLayer(
+    const Layer& layer,
+    float x,
+    float y,
+    float width,
+    float height,
+    LayerBlend blend,
+    const LayerLook& look
+) const
+{
+    if (!this->IsOpen() || layer.texture == nullptr || width <= 0.0f || height <= 0.0f)
+    {
+        return;
+    }
+
+    // Canvas pixels of the layout to output pixels of the viewport.
+    const Viewport viewport = this->CurrentViewport();
+    const float scaleX = viewport.width / static_cast<float>(this->layout.width);
+    const float scaleY = viewport.height / static_cast<float>(this->layout.height);
+    const SDL_FRect source{0.0f, 0.0f, static_cast<float>(layer.width), static_cast<float>(layer.height)};
+    const SDL_FRect target{
+        viewport.x + x * scaleX,
+        viewport.y + y * scaleY,
+        width * scaleX,
+        height * scaleY,
+    };
+
+    // What is under it less the layer, its alpha kept.
+    static const SDL_BlendMode kSubtract = SDL_ComposeCustomBlendMode(
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDOPERATION_REV_SUBTRACT,
+        SDL_BLENDFACTOR_ZERO,
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDOPERATION_ADD
+    );
+    const SDL_BlendMode mode = blend == LayerBlend::Over       ? SDL_BLENDMODE_BLEND
+                               : blend == LayerBlend::Subtract ? kSubtract
+                               : blend == LayerBlend::Add      ? SDL_BLENDMODE_ADD
+                                                               : SDL_BLENDMODE_NONE;
+
+    // A renderer without the blend (SDL's software renderer has no subtraction) leaves the layer out.
+    if (!SDL_SetTextureBlendMode(layer.texture, mode))
+    {
+        static bool logged = false;
+
+        if (!logged)
+        {
+            LogError(u8"layer blend unsupported: %s", AsUtf8(SDL_GetError()));
+            logged = true;
+        }
+
+        return;
+    }
+
+    SDL_SetTextureAlphaMod(layer.texture, look.alpha);
+    SDL_SetTextureColorMod(layer.texture, look.red, look.green, look.blue);
+    const auto flip = static_cast<SDL_FlipMode>(
+        (look.mirrored ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE) | (look.flipped ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE)
+    );
+
+    if (flip == SDL_FLIP_NONE)
+    {
+        SDL_RenderTexture(this->renderer, layer.texture, &source, &target);
+    }
+    else
+    {
+        SDL_RenderTextureRotated(this->renderer, layer.texture, &source, &target, 0.0, nullptr, flip);
+    }
+}
+
+void Display::ClipLayers(int x, int y, int width, int height) const
+{
+    if (!this->IsOpen())
+    {
+        return;
+    }
+
+    const Viewport viewport = this->CurrentViewport();
+    const float scaleX = viewport.width / static_cast<float>(this->layout.width);
+    const float scaleY = viewport.height / static_cast<float>(this->layout.height);
+    const SDL_Rect clip{
+        static_cast<int>(std::floor(viewport.x + static_cast<float>(x) * scaleX)),
+        static_cast<int>(std::floor(viewport.y + static_cast<float>(y) * scaleY)),
+        static_cast<int>(std::ceil(static_cast<float>(width) * scaleX)),
+        static_cast<int>(std::ceil(static_cast<float>(height) * scaleY)),
+    };
+
+    SDL_SetRenderClipRect(this->renderer, &clip);
+}
+
+void Display::BeginMapTarget()
+{
+    if (!this->IsOpen())
+    {
+        return;
+    }
+
+    int width = 0;
+    int height = 0;
+    SDL_GetRenderOutputSize(this->renderer, &width, &height);
+
+    if (this->mapTarget == nullptr || this->mapTargetSize[0] != width || this->mapTargetSize[1] != height)
+    {
+        if (this->mapTarget != nullptr)
+        {
+            SDL_DestroyTexture(this->mapTarget);
+        }
+
+        this->mapTarget =
+            SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+        this->mapTargetSize = {width, height};
+
+        if (this->mapTarget == nullptr)
+        {
+            LogError(u8"map target creation failed: %s", AsUtf8(SDL_GetError()));
+            return;
+        }
+
+        SDL_SetTextureScaleMode(this->mapTarget, SDL_SCALEMODE_NEAREST);
+    }
+
+    SDL_SetRenderTarget(this->renderer, this->mapTarget);
+    SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(this->renderer);
+}
+
+void Display::EndMapTarget(std::span<const MapPiece> pieces)
+{
+    if (!this->IsOpen() || this->mapTarget == nullptr)
+    {
+        return;
+    }
+
+    SDL_SetRenderTarget(this->renderer, nullptr);
+    SDL_SetTextureBlendMode(this->mapTarget, SDL_BLENDMODE_NONE);
+    SDL_SetTextureAlphaMod(this->mapTarget, SDL_ALPHA_OPAQUE);
+    SDL_SetTextureColorMod(this->mapTarget, 0xFF, 0xFF, 0xFF);
+    SDL_RenderTexture(this->renderer, this->mapTarget, nullptr, nullptr);
+
+    if (pieces.empty())
+    {
+        return;
+    }
+
+    // Canvas pixels to output pixels, and to the copy's texture coordinates.
+    const Viewport viewport = this->CurrentViewport();
+    const float scaleX = viewport.width / static_cast<float>(this->layout.width);
+    const float scaleY = viewport.height / static_cast<float>(this->layout.height);
+    const auto textureWidth = static_cast<float>(this->mapTargetSize[0]);
+    const auto textureHeight = static_cast<float>(this->mapTargetSize[1]);
+    constexpr SDL_FColor kWhole{1.0f, 1.0f, 1.0f, 1.0f};
+    constexpr std::array<int, 6> kQuad = {0, 1, 2, 2, 1, 3};
+    constexpr int kCoordinates = 2;
+    this->piecePlaces.clear();
+    this->pieceSources.clear();
+    this->pieceIndices.clear();
+
+    for (const MapPiece& piece : pieces)
+    {
+        const float left = viewport.x + piece.x * scaleX;
+        const float top = viewport.y + piece.y * scaleY;
+        const float right = left + piece.width * scaleX;
+        const float bottom = top + piece.height * scaleY;
+        const float sourceLeft = (viewport.x + piece.sourceX * scaleX) / textureWidth;
+        const float sourceTop = (viewport.y + piece.sourceY * scaleY) / textureHeight;
+        const float sourceRight = sourceLeft + piece.width * scaleX / textureWidth;
+        const float sourceBottom = sourceTop + piece.height * scaleY / textureHeight;
+        const auto first = static_cast<int>(this->piecePlaces.size()) / kCoordinates;
+        this->piecePlaces.insert(this->piecePlaces.end(), {left, top, right, top, left, bottom, right, bottom});
+        this->pieceSources.insert(
+            this->pieceSources.end(),
+            {sourceLeft, sourceTop, sourceRight, sourceTop, sourceLeft, sourceBottom, sourceRight, sourceBottom}
+        );
+
+        for (const int corner : kQuad)
+        {
+            this->pieceIndices.push_back(first + corner);
+        }
+    }
+
+    // One colour for every corner (a stride of 0).
+    SDL_RenderGeometryRaw(
+        this->renderer,
+        this->mapTarget,
+        this->piecePlaces.data(),
+        static_cast<int>(kCoordinates * sizeof(float)),
+        &kWhole,
+        0,
+        this->pieceSources.data(),
+        static_cast<int>(kCoordinates * sizeof(float)),
+        static_cast<int>(this->piecePlaces.size()) / kCoordinates,
+        this->pieceIndices.data(),
+        static_cast<int>(this->pieceIndices.size()),
+        sizeof(int)
+    );
+}
+
+void Display::UnclipLayers() const
+{
+    if (this->IsOpen())
+    {
+        SDL_SetRenderClipRect(this->renderer, nullptr);
+    }
+}
+
+void Display::TintArea(float x, float y, float width, float height, int red, int green, int blue) const
+{
+    if (!this->IsOpen())
+    {
+        return;
+    }
+
+    constexpr int kSteps = 31;
+    constexpr int kTop = 0xFF;
+    static const SDL_BlendMode kRaise = SDL_ComposeCustomBlendMode(
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDOPERATION_ADD,
+        SDL_BLENDFACTOR_ZERO,
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDOPERATION_ADD
+    );
+    static const SDL_BlendMode kLower = SDL_ComposeCustomBlendMode(
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDOPERATION_REV_SUBTRACT,
+        SDL_BLENDFACTOR_ZERO,
+        SDL_BLENDFACTOR_ONE,
+        SDL_BLENDOPERATION_ADD
+    );
+
+    auto amount = [kSteps](int level)
+    {
+        return static_cast<u8>(std::min(level, kSteps) * kTop / kSteps);
+    };
+
+    const Viewport viewport = this->CurrentViewport();
+    const float scaleX = viewport.width / static_cast<float>(this->layout.width);
+    const float scaleY = viewport.height / static_cast<float>(this->layout.height);
+    const SDL_FRect target{viewport.x + x * scaleX, viewport.y + y * scaleY, width * scaleX, height * scaleY};
+
+    if ((red > 0 || green > 0 || blue > 0) && SDL_SetRenderDrawBlendMode(this->renderer, kRaise))
+    {
+        SDL_SetRenderDrawColor(
+            this->renderer,
+            amount(std::max(red, 0)),
+            amount(std::max(green, 0)),
+            amount(std::max(blue, 0)),
+            SDL_ALPHA_OPAQUE
+        );
+        SDL_RenderFillRect(this->renderer, &target);
+    }
+
+    if ((red < 0 || green < 0 || blue < 0) && SDL_SetRenderDrawBlendMode(this->renderer, kLower))
+    {
+        SDL_SetRenderDrawColor(
+            this->renderer,
+            amount(std::max(-red, 0)),
+            amount(std::max(-green, 0)),
+            amount(std::max(-blue, 0)),
+            SDL_ALPHA_OPAQUE
+        );
+        SDL_RenderFillRect(this->renderer, &target);
+    }
+
+    SDL_SetRenderDrawBlendMode(this->renderer, SDL_BLENDMODE_NONE);
+}
+
+void Display::EndLayers()
+{
+    if (this->IsOpen())
+    {
+        SDL_RenderPresent(this->renderer);
+        this->lastShownNs = SDL_GetTicksNS();
+    }
+}
+
+u64 Display::RefreshPeriod() const
+{
+    if (!this->IsOpen() || !this->vsync)
+    {
+        return 0;
+    }
+
+    const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(this->window));
+    constexpr double kNanosecondsPerSecond = 1e9;
+    return mode == nullptr || mode->refresh_rate <= 0.0f
+               ? 0
+               : static_cast<u64>(kNanosecondsPerSecond / static_cast<double>(mode->refresh_rate));
+}
+
+u64 Display::LastShown() const
+{
+    return this->lastShownNs;
+}
+
 Point Display::OutputSize() const
 {
     Point size{Display::Width, Display::Height};
@@ -497,6 +1102,8 @@ int Display::FitScale() const
 
 bool Display::SetVSync(bool enabled)
 {
+    this->vsync = false;
+
     if (!this->IsOpen() || !SDL_SetRenderVSync(this->renderer, enabled ? 1 : 0))
     {
         LogWarning(
@@ -507,6 +1114,7 @@ bool Display::SetVSync(bool enabled)
         return false;
     }
 
+    this->vsync = enabled;
     return true;
 }
 

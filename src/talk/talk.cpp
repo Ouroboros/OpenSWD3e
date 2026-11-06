@@ -116,6 +116,12 @@ void Talk::Draw()
     this->shown = std::move(scene);
 }
 
+bool Talk::WindowsShown() const
+{
+    // Draw records a still scene with no window open, drawing nothing (TalkFrame::DrawAdvance).
+    return this->shown != nullptr && this->game.scene.talkWindows != nullptr;
+}
+
 // The rebuild's smooth motion: the talk windows of the map's last game frame drawn again, as they were drawn.
 void Talk::DrawAgain()
 {

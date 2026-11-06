@@ -3,16 +3,20 @@
 #include <array>
 #include <cstddef>
 #include <functional>
+#include <map>
 #include <memory>
 #include <span>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
 #include "core/point.h"
 #include "core/types.h"
 #include "crt/msvc.h"
+#include "draw/painter.h"
 #include "file/file.h"
+#include "platform/display.h"
 #include "platform/surface.h"
 #include "talk/event_scan.h"
 #include "text/big5.h"
@@ -23,6 +27,7 @@ namespace swd3e
 class Game;
 class Surface;
 struct Picture;
+struct MapOverlay;
 struct Role;
 struct ScriptAnimation;
 struct ScriptObject;
@@ -194,6 +199,11 @@ public:
     // laid over it. `out` is the logical screen times a whole render scale N: the camera and the roles are placed to
     // 1/N of a pixel, every pixel of the game shown as an N x N block. Nothing the game frames read is changed.
     void PaintBetween(Surface& out);
+    // The same laid by the GPU (field_view_gpu.cpp, reverse/analysis/smooth-gpu.md): the map recorded once a game frame
+    // in layers (the still parts and each moving role apart), laid on the window where the continuous motion has them
+    // now at render scale `scale`, the interface over them; false (nothing shown) when the frame holds what the layers
+    // cannot show, for PaintBetween.
+    bool LayBetween(int scale);
 
     // The rebuild's map overview (deviations.md): the whole map drawn into `out` (made its size) as a still picture,
     // its overlays, tiles and the roles of the map file (none of the story's: the people). Nothing the game frames
@@ -458,6 +468,140 @@ private:
     bool pointerShown = false;            // the frame drew the pointer
     std::array<i32, 2> pointerSway = {};  // the offset of the pointer's picture last drawn to (EffectKind::Pointer)
     std::vector<Surface> parts;           // the logical screens of a render scale above 1 (PaintBetween)
+
+    // LayBetween (field_view_gpu.cpp): the layers of the game frame recorded last, in drawing order: still layers and
+    // the sprites of the moving roles between them. A layer's pixels are in halves of a pixel (the zoomed pictures
+    // sampled at twice the original's resolution); a still layer lies on the recorded canvas (`recordLeft`,
+    // `recordTop` its corner on the map), a sprite at its role's place (`originX`, `originY` the role's place on it).
+    // `shaded`: its shadows are a layer of their own darkening what lies under it.
+    struct GpuLayer
+    {
+        Display::Layer color;
+        Display::Layer shade;
+        bool shaded = false;
+        bool drawn = false;
+        std::size_t role = GameState::Roles;  // the moving role of a sprite (Roles: a still layer)
+        i32 left = 0;                         // what it holds, in halves of a pixel of its canvas
+        i32 top = 0;
+        i32 width = 0;
+        i32 height = 0;
+        i32 originX = 0;  // a sprite: the role's place on it (pixels)
+        i32 originY = 0;
+        i32 canvasWidth = 0;  // its canvas (pixels)
+        i32 canvasHeight = 0;
+        i32 spriteHeight =
+            0;  // a sprite: what its role's drawing takes of its canvas (the canvas holds the font's rows)
+        // Its canvases of the recording's blocks (colour over black, over white, shade) and what was drawn on them
+        // (pixels).
+        std::array<Surface, 4> colors;
+        std::array<Surface, 4> whites;
+        std::array<Surface, 4> shades;
+        std::array<i32, 4> dirty = {};
+        // What its first block held when it was last handed to the GPU (an unchanged layer is kept as it is).
+        std::vector<Pixel> kept;
+        std::array<i32, 4> keptDirty = {};
+        std::size_t keptRole = GameState::Roles + 1;
+        i32 keptWidth = 0;
+        i32 keptHeight = 0;
+        bool changed = false;
+        bool single =
+            false;  // handed over at its canvas's resolution (the ground, a role not zoomed), else at twice it
+        bool additive = false;  // a sprite of a role drawn added to what is under it: its colour over black, added
+    };
+
+    enum class RecordPass
+    {
+        None,
+        Color,  // over black (the first layer as it is)
+        White,  // the layers past the first over white
+        Shade,  // their shadows over white
+    };
+
+    // The screen effects moving between game frames (script sprites, leaves, lightning, fireflies, weather, the
+    // spotlight), recorded as draws once a painting (Painter::SetRecorder) and laid by the GPU over the map's layers.
+    struct EffectDraw
+    {
+        bool tint = false;                // a tint of an area (`area`, `tintLevels`), or a picture (`command`)
+        std::array<float, 2> shift = {};  // what its element is off the pixel it is drawn at (EffectAt)
+        DrawCommand command;
+        std::array<i32, 4> area = {};  // x, y, width, height
+        std::array<int, 3> tintLevels = {};
+    };
+
+    class EffectRecorder;
+    void RecordEffects();
+    void RecordOverlays();
+    // The heat haze and the ripples while recording effects: what each pixel of the canvas then shows, as the pixel
+    // of the map laid before them (distortSource), handed to the GPU as pieces copied within the screen.
+    void DistortMove(std::ptrdiff_t to, std::ptrdiff_t from, std::size_t count);
+    void DistortRipple(const ScriptObject& ripple, std::size_t pixels);
+    void DistortTouch(std::ptrdiff_t at, std::size_t count);
+    void DistortPieces();
+    void LayEffects(const std::vector<EffectDraw>& draws, std::size_t first, std::size_t end);
+    const Display::Layer* EffectTexture(const DrawCommand& command, u32 decodeMode, bool mask);
+
+    bool RecordLayers();
+    void ScanDirty(GpuLayer& layer);
+    void RecordStill();
+    void ClaimLayer(std::size_t at, std::size_t role);
+    bool RecordSprite(Role& role);
+    void RecordTarget();
+    void RecordDirty(i32 left, i32 top, i32 right, i32 bottom);
+    static void WeaveBlocks(
+        const std::array<Surface, 4>& blocks,
+        const std::array<i32, 4>& dirty,
+        std::vector<Pixel>& woven
+    );
+    bool LayInterface(int mouseX, int mouseY);
+
+    std::vector<GpuLayer> gpuLayers;
+    std::vector<i32> gpuKey;  // what the layers were recorded for (LayBetween)
+    std::vector<i32> gpuKeyNow;
+    bool gpuValid = false;
+    i32 recordLeft = 0;  // the corner of the recorded canvas on the map (pixels)
+    i32 recordTop = 0;
+    RecordPass recordPass = RecordPass::None;
+    std::size_t recordLayer = 0;  // the layer the recording draws on
+    std::size_t recordBlock = 0;
+    bool recordInSprite = false;
+    bool recordStillPending = false;  // RecordSprite: the layer drawn on is a sprite done with (RecordStill)
+    // Past the first block's colour pass, a layer whose first block did not change is not drawn again (its roles
+    // and the ground skipped, what else is drawn going to recordSkipScratch).
+    bool recordSkip = false;
+    Surface recordSkipScratch;
+    Surface effectScratch;  // RecordEffects, RecordOverlays: what an effect draws on the canvas itself
+    // The map has an overlay with a parallax: every overlay is laid by the GPU where the camera glides (gpuOverlays,
+    // in their order), the first layer recorded without them.
+    bool recordOverlays = false;
+    std::vector<EffectDraw> gpuOverlays;
+    const MapOverlay* gpuOverlaysOf = nullptr;  // the overlays the pictures of gpuPictures were decoded for
+    bool recordFailed = false;
+    std::array<i32, GameState::Roles> recordSpriteOf = {};  // the layer of each moving role's sprite (0: none)
+    std::vector<Pixel> gpuWoven;                            // a layer woven from its blocks (over black)
+    std::vector<Pixel> gpuWovenWhite;                       // over white
+    Surface recordScratch;  // the first layer's canvas in the white and shade passes (nothing is kept of it)
+    std::vector<EffectDraw> gpuEffects;           // RecordEffects
+    std::size_t gpuEffectsBefore = 0;             // those drawn before the heat haze and the ripples
+    std::vector<i32> distortSource;               // identity outside the rows of distortRows
+    std::vector<i32> distortCopy;                 // a ripple's copy of the screen
+    std::vector<std::array<i32, 2>> distortRows;  // the columns each row has touched (first, end)
+    std::vector<Display::MapPiece> gpuPieces;
+    bool distortValid = false;  // gpuPieces hold the bends of the game frame and canvas of distortKey
+    std::array<i32, 3> distortKey = {};
+    bool recordingEffects = false;            // RecordEffects under way
+    std::array<float, 2> effectShift = {};    // EffectAt while recording effects: the element's shift off its pixel
+    std::array<float, 2> gpuCamera = {};      // the camera laid (canvas pixels, fractions kept)
+    std::array<i32, 2> gpuScreenCamera = {};  // the camera's pixel nearest it
+    bool gpuSpotlightMoving = false;          // the spotlight glides: shown at gpuSpotlight
+    std::array<i32, 2> gpuSpotlight = {};
+    // The pictures of the effects as textures (their source, palette, argument, size and mode decoded).
+    std::map<std::tuple<const void*, const void*, const void*, u32, i32, i32, u32>, Display::Layer> gpuPictures;
+    std::array<Surface, 2> gpuDecode;  // a picture decoded over black, over white
+    Display::Layer gpuFinal;           // the last game frame as shown (a movie, LayBetween)
+    std::vector<Pixel> gpuFinalShown;  // what was last given to gpuFinal
+    Display::Layer gpuInterface;
+    std::array<Surface, 2> gpuInterfaceCanvas;            // drawn over black, over white
+    std::array<std::vector<Pixel>, 2> gpuInterfaceShown;  // what was last given to gpuInterface
     bool fadeTinted = false;
 
     // The levels the fade tinted the last game frame by.
@@ -474,7 +618,7 @@ private:
     void DrawTileGrid(const TileSet& tiles);
     void DrawTileGridScrolled(const TileSet& tiles);
     void DrawTileCanvas(const TileSet& tiles);
-    void DrawHeatCanvas();
+    void DrawHeatCanvas(const std::function<void(std::ptrdiff_t, std::ptrdiff_t, std::size_t)>& move);
     u32 Block(int index) const;
     u16 Tile(int index) const;
     void SetTileSource(const TileSet& tiles, int index, bool wideRead = false);

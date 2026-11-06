@@ -482,6 +482,40 @@ void FieldView::DrawOverlays()
             }
         }
 
+        // The rebuild (RecordOverlays): the rest of the way to where the camera glides: an overlay fixed to the map
+        // moves with it, one with a parallax where its offset worked out at the glide without the division's
+        // rounding lies.
+        if (this->recordingEffects)
+        {
+            auto rest = [](u16 parallax, int cameraFar, int areaStart, float glide)
+            {
+                if (parallax == MapOverlay::FixedToMap)
+                {
+                    return -glide;
+                }
+
+                const auto unit = static_cast<float>(MapOverlay::ParallaxUnit);
+                const int rounded = parallax * (cameraFar - areaStart) / MapOverlay::ParallaxUnit;
+                return static_cast<float>(rounded) -
+                       static_cast<float>(parallax) * (static_cast<float>(cameraFar - areaStart) + glide) / unit;
+            };
+
+            this->effectShift = {
+                rest(
+                    overlay->parallaxX,
+                    field.cameraRight,
+                    areaLeft,
+                    this->gpuCamera[0] - static_cast<float>(field.cameraLeft)
+                ),
+                rest(
+                    overlay->parallaxY,
+                    field.cameraBottom,
+                    areaTop,
+                    this->gpuCamera[1] - static_cast<float>(field.cameraTop)
+                ),
+            };
+        }
+
         painter.SetSource(overlay->picture.data());
         painter.DrawPicture(clipLeft - offsetX, clipTop - offsetY, overlay->width, overlay->height, Painter::Copy);
         painter.SetClipClamped(0, 0, field.viewWidth, field.viewHeight);

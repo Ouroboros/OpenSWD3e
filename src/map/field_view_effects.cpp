@@ -605,14 +605,29 @@ void FieldView::DrawHeat()
     }
 
     ++view.heatFrame;
+    Pixel* canvas = owner.drawSurface;
+
+    // Each line of a strip takes the pixels of the line under it (`to`, `from`: pixels from the canvas start); the
+    // rebuild's GPU (RecordEffects) gathers the moves instead.
+    const std::function<void(std::ptrdiff_t, std::ptrdiff_t, std::size_t)> move =
+        [this, canvas](std::ptrdiff_t to, std::ptrdiff_t from, std::size_t count)
+    {
+        if (this->recordingEffects)
+        {
+            this->DistortMove(to, from, count);
+        }
+        else
+        {
+            std::memmove(canvas + to, canvas + from, sizeof(Pixel) * count);
+        }
+    };
 
     if (this->FillsWindow())
     {
-        this->DrawHeatCanvas();
+        this->DrawHeatCanvas(move);
         return;
     }
 
-    auto* bytes = reinterpret_cast<u8*>(owner.drawSurface);
     constexpr std::size_t kScreenBytes = sizeof(Pixel) * Display::Pixels;
     constexpr int kLineBytes = static_cast<int>(sizeof(Pixel)) * Display::Width;
 
@@ -629,21 +644,22 @@ void FieldView::DrawHeat()
                 continue;
             }
 
-            std::memmove(bytes + at, bytes + at + kLineBytes, length);
+            // The lengths are even (kJitterStep): whole pixels.
+            const std::ptrdiff_t to = at / static_cast<int>(sizeof(Pixel));
+            move(to, to + Display::Width, length / sizeof(Pixel));
         }
     }
 }
 
 // The rebuild's map filling the window (deviations.md): the strips of the 640x480 screen's haze laid on it again
 // and again across the canvas, from the screen's place.
-void FieldView::DrawHeatCanvas()
+void FieldView::DrawHeatCanvas(const std::function<void(std::ptrdiff_t, std::ptrdiff_t, std::size_t)>& move)
 {
     Game& owner = this->game;
     const Scene& view = owner.scene;
     const Field& field = owner.field;
     const int width = field.viewWidth;
     const int height = field.viewHeight;
-    Pixel* canvas = owner.drawSurface;
     const int firstX = field.screenX - Display::Width * CeilDivide(field.screenX, Display::Width);
     const int firstY = field.screenY - Display::Height * CeilDivide(field.screenY, Display::Height);
 
@@ -666,8 +682,8 @@ void FieldView::DrawHeatCanvas()
                         continue;
                     }
 
-                    Pixel* at = canvas + static_cast<std::ptrdiff_t>(width) * y + x;
-                    std::memmove(at, at + width, sizeof(Pixel) * static_cast<std::size_t>(pixels));
+                    const std::ptrdiff_t at = static_cast<std::ptrdiff_t>(width) * y + x;
+                    move(at, at + width, static_cast<std::size_t>(pixels));
                 }
             }
         }
@@ -1067,11 +1083,19 @@ void FieldView::DrawRipples()
     {
         ScriptObject& ripple = **link;
 
-        // A ripple made on a canvas of another size (the window resized meanwhile) is not drawn.
+        // A ripple made on a canvas of another size (the window resized meanwhile) is not drawn; the rebuild's GPU
+        // (RecordEffects) gathers what it takes from where.
         if (ripple.pitch == owner.painter.ScreenPitch())
         {
-            ripple.CopyScreen(screen);
-            ripple.Refract(screen);
+            if (this->recordingEffects)
+            {
+                this->DistortRipple(ripple, screen.size());
+            }
+            else
+            {
+                ripple.CopyScreen(screen);
+                ripple.Refract(screen);
+            }
         }
 
         if (this->replaying)

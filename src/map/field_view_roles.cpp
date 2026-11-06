@@ -70,6 +70,30 @@ int FieldView::DrawRole(Role& role)
         return 0;
     }
 
+    // The rebuild's smooth map laid by the GPU (LayBetween): a moving role is recorded on a sprite of its own; the
+    // shade pass records the shadows past the first layer alone.
+    if (this->recordPass != RecordPass::None && !this->recordInSprite && this->RecordSprite(role))
+    {
+        return 1;
+    }
+
+    if (this->recordPass != RecordPass::None && !this->recordInSprite)
+    {
+        this->RecordStill();
+    }
+
+    if (this->recordSkip)
+    {
+        return 1;
+    }
+
+    // (The white pass keeps the first layer's roles too when the overlays lie under it, recordOverlays.)
+    if ((this->recordPass == RecordPass::Shade || (this->recordPass == RecordPass::White && !this->recordOverlays)) &&
+        this->recordLayer == 0)
+    {
+        return 1;
+    }
+
     Painter& painter = this->game.painter;
     const Field& field = this->game.field;
     const Scene& view = this->game.scene;
@@ -140,7 +164,24 @@ int FieldView::DrawRole(Role& role)
         mode |= Painter::ZoomCopy;
     }
 
-    if (field.shadowKind != 0 && (role.flags & Role::CellEffects) != 0)
+    // The rebuild (LayBetween): a sprite of a role drawn added to what is under it is laid added.
+    if (this->recordInSprite && this->recordPass == RecordPass::Color && this->recordBlock == 0)
+    {
+        const u32 effect = mode & Painter::EffectMask;
+        this->gpuLayers[this->recordLayer].additive =
+            effect == Painter::Additive || effect == Painter::ScaledGlow || effect == Painter::ZoomAddTinted;
+    }
+
+    // The rebuild (LayBetween): on a layer past the first a shadow goes to the layer's shade.
+    const bool layered = this->recordPass != RecordPass::None && this->recordLayer > 0;
+    const bool shadowed = field.shadowKind != 0 && (role.flags & Role::CellEffects) != 0;
+
+    if (layered)
+    {
+        this->gpuLayers[this->recordLayer].shaded = this->gpuLayers[this->recordLayer].shaded || shadowed;
+    }
+
+    if (shadowed && (!layered || this->recordPass == RecordPass::Shade))
     {
         this->DrawShadow(
             role,
@@ -151,6 +192,24 @@ int FieldView::DrawRole(Role& role)
             kShadowTint[(role.flags & Role::CellShades) >> Role::CellShadeShift],
             scale
         );
+    }
+
+    if (layered)
+    {
+        const int left = x - role.act.x - cameraLeft;
+        const int top = y - role.act.y - cameraTop;
+        this->RecordDirty(
+            left - kLayerRoleSide,
+            top - kLayerRoleTop,
+            left + picture->width + kLayerRoleSide,
+            top + picture->height + kLayerRoleBottom
+        );
+    }
+
+    if (this->recordPass == RecordPass::Shade)
+    {
+        painter.SetZoom(0, 0, kZoomUnit, kZoomUnit);
+        return 1;
     }
 
     painter.SetWave(role.act.wait);
@@ -187,6 +246,7 @@ int FieldView::DrawRole(Role& role)
     options.tintBlue = 0;
     options.tintGreen = 0;
     options.tintRed = 0;
+
     painter.SetSource(picture->data.data());
     const int drawX = x + role.drawOffsetX - role.act.x - cameraLeft;
     const int drawY = y + role.drawOffsetY - role.act.y - cameraTop;

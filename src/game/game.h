@@ -743,6 +743,7 @@ private:
     bool menuFrameShown = false;  // the last game frame showed a frame of the main menu or the shop
     u32 gameFrames = 0;
     u32 framesBetween = 0;
+    u32 framesLaid = 0;      // of framesBetween, those the GPU laid (FieldView::LayBetween)
     u64 paintBetweenNs = 0;  // the time the frames between took to paint, in all and the longest
     u64 paintBetweenMostNs = 0;
     i32 backgroundShifted = 0;  // the rebuild's smooth battle: the background's shifts so far (where it stands)

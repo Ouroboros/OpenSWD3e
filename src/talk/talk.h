@@ -134,6 +134,10 @@ public:
 
     void Draw();
     void DrawAgain();
+
+    // The rebuild's smooth map laid by the GPU: whether DrawAgain draws anything.
+    bool WindowsShown() const;
+
     void HandlePointer();
     void DrawColoredText(u16* pixels, int x, int y, int color, int shade, std::string_view text, int style);
     static bool ParseNumber(std::string_view text, int& value);
