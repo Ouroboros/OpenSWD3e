@@ -1286,10 +1286,11 @@ void Game::StepPointer()
 
             const ButtonState& click = this->controls.At(Button::MouseLeft);
 
-            // The rebuild's map filling the window keeps the button at the right of the canvas (deviations.md); the
-            // pointer beside the screen is compared signed.
+            // The rebuild's map filling the window keeps the button at the top right of the canvas (deviations.md); the
+            // pointer beside the screen is compared signed, the rows from the canvas's top.
             if (click.press != 0 && this->state.pointerX > static_cast<i32>(kButtonLeft) + this->field.screenX &&
-                static_cast<u32>(this->state.pointerY) < kButtonBottom && this->state.leader.id == Role::NoId)
+                static_cast<u32>(this->state.pointerY + this->field.screenY) < kButtonBottom &&
+                this->state.leader.id == Role::NoId)
             {
                 this->menuState = Game::MenuEntering | Game::MainMenu;
             }
@@ -1335,10 +1336,16 @@ void Game::DrawMenuButton(bool again)
 {
     ActState& act = this->scene.menuButtonAct;
     const int x = this->menuButtonX + this->field.screenX;
+    const bool moved = this->field.screenX != 0 || this->field.screenY != 0;
+    u16* const screen = this->painter.Target();
 
-    // The rebuild's map filling the window keeps the button at the right of the canvas (deviations.md).
-    if (this->field.screenX != 0)
+    // The rebuild's map filling the window keeps the button at the top right of the canvas (deviations.md): drawn
+    // from the canvas's top row, where the screen lies lower on it.
+    if (moved)
     {
+        this->painter.SetTarget(
+            screen - static_cast<std::ptrdiff_t>(this->field.screenY) * this->painter.ScreenPitch()
+        );
         this->painter.SetClipClamped(0, 0, Display::Width + this->field.screenX, Display::Height);
     }
 
@@ -1351,8 +1358,9 @@ void Game::DrawMenuButton(bool again)
         this->actDrawer.Draw(act, x, 0);
     }
 
-    if (this->field.screenX != 0)
+    if (moved)
     {
+        this->painter.SetTarget(screen);
         this->painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     }
 }
