@@ -825,6 +825,20 @@ void Display::BeginLayers() const
 
     SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(this->renderer);
+    const SDL_Rect canvas = this->CanvasClip();
+    SDL_SetRenderClipRect(this->renderer, &canvas);
+}
+
+// The output pixels the canvas covers (those whose centres lie in it, as the GPU fills a rectangle): the layers drawn
+// past the canvas (a map shifted by a fraction of a pixel) are cut there, where the margins stay black.
+SDL_Rect Display::CanvasClip() const
+{
+    const Viewport viewport = this->CurrentViewport();
+    const auto left = static_cast<int>(std::round(viewport.x));
+    const auto top = static_cast<int>(std::round(viewport.y));
+    const auto right = static_cast<int>(std::round(viewport.x + viewport.width));
+    const auto bottom = static_cast<int>(std::round(viewport.y + viewport.height));
+    return {left, top, right - left, bottom - top};
 }
 
 void Display::SetCapturing(bool capturing)
@@ -1005,12 +1019,20 @@ void Display::ClipLayers(int x, int y, int width, int height) const
     const Viewport viewport = this->CurrentViewport();
     const float scaleX = viewport.width / static_cast<float>(this->layout.width);
     const float scaleY = viewport.height / static_cast<float>(this->layout.height);
-    const SDL_Rect clip{
+    const SDL_Rect area{
         static_cast<int>(std::floor(viewport.x + static_cast<float>(x) * scaleX)),
         static_cast<int>(std::floor(viewport.y + static_cast<float>(y) * scaleY)),
         static_cast<int>(std::ceil(static_cast<float>(width) * scaleX)),
         static_cast<int>(std::ceil(static_cast<float>(height) * scaleY)),
     };
+
+    const SDL_Rect canvas = this->CanvasClip();
+    SDL_Rect clip{};
+
+    if (!SDL_GetRectIntersection(&area, &canvas, &clip))
+    {
+        clip = {canvas.x, canvas.y, 0, 0};
+    }
 
     SDL_SetRenderClipRect(this->renderer, &clip);
 }
@@ -1058,8 +1080,10 @@ void Display::EndMapTarget(std::span<const MapPiece> pieces)
         return;
     }
 
-    // Back to what the layers go to (the output, or the copy while capturing).
+    // Back to what the layers go to (the output, or the copy while capturing), cut to the canvas.
     SDL_SetRenderTarget(this->renderer, this->capturing ? this->captureTarget : nullptr);
+    const SDL_Rect canvas = this->CanvasClip();
+    SDL_SetRenderClipRect(this->renderer, &canvas);
     SDL_SetTextureBlendMode(this->mapTarget, SDL_BLENDMODE_NONE);
     SDL_SetTextureAlphaMod(this->mapTarget, SDL_ALPHA_OPAQUE);
     SDL_SetTextureColorMod(this->mapTarget, 0xFF, 0xFF, 0xFF);
@@ -1127,7 +1151,8 @@ void Display::UnclipLayers() const
 {
     if (this->IsOpen())
     {
-        SDL_SetRenderClipRect(this->renderer, nullptr);
+        const SDL_Rect canvas = this->CanvasClip();
+        SDL_SetRenderClipRect(this->renderer, &canvas);
     }
 }
 
@@ -1200,6 +1225,8 @@ void Display::EndLayers()
     {
         return;
     }
+
+    SDL_SetRenderClipRect(this->renderer, nullptr);
 
     // Captured: the copy read back as RGB565, nothing shown.
     if (this->capturing)

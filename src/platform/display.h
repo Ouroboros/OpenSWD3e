@@ -12,6 +12,7 @@ struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
 struct SDL_Cursor;
+struct SDL_Rect;
 union SDL_Event;
 
 namespace swd3e
@@ -283,6 +284,7 @@ public:
 
 private:
     Viewport CurrentViewport() const;
+    SDL_Rect CanvasClip() const;
     void TrackWindow(const SDL_Event& event);
     // A logical screen point in window coordinates (what SDL_WarpMouseInWindow and SDL_SetTextInputArea take).
     void LogicalToWindow(int x, int y, float& windowX, float& windowY) const;
