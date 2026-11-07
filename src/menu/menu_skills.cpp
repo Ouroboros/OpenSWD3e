@@ -337,10 +337,17 @@ void Menu::SkillsEnter()
         page.cells.assign(SkillsPage::CellBytes, 0);
     }
 
+    // The rebuild (deviations.md): with no tab raised the page opens on the tab it showed last (roleCycle, the first
+    // when the party has fewer roles now), and Shift steps on from the tab it opens on. The original opens on the first
+    // tab and keeps roleCycle from the page shown before (nothing resets it): opened again after Shift raised the
+    // second tab, Shift skips to the third.
     if (this->roleTab == Menu::NoTab)
     {
-        this->roleTab = 0;
+        const bool kept = page.roleCycle >= 0 && page.roleCycle < this->VisibleCount();
+        this->roleTab = kept ? static_cast<u16>(page.roleCycle) : u16{0};
     }
+
+    page.roleCycle = static_cast<i32>(this->roleTab);
 
     this->mode = static_cast<u16>(Menu::FirstPageMode + 2 * Menu::PageModeStep);
     page.target = 0;
