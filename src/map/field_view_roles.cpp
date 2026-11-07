@@ -240,7 +240,7 @@ int FieldView::DrawRole(Role& role)
             painter.SetZoomPhase(parts, phaseX, phaseY);
         }
 
-        painter.SetZoomSheared(role.act.x + kZoomAnchorX, role.act.y + kZoomAnchorY, scale, scale, 0);
+        painter.SetZoomSheared(this->ZoomAnchorX(role), role.act.y + kZoomAnchorY, scale, scale, 0);
     }
 
     options.tintBlue = 0;
@@ -408,6 +408,34 @@ void FieldView::UpdateRoleSound(Role& role)
     effects.SetPan(role.sound, (role.x - player.x) * kPanScale / kSoundRange);
 }
 
+// The zoom anchor across of role `role`'s picture: 16 right of its act's anchor (act.x).
+// The rebuild (deviations.md): with the smooth motion on, a mirrored picture is zoomed about the point its act's first
+// picture is zoomed about. The original mirrors the zoom anchor (width - anchor, DrawZoomedMirrored, BlitZoomed) though
+// the anchor of a mirrored act is counted on the mirrored picture: the centre lies at the role's place + width -
+// 2 * act.x - 16 and moves twice as far as the anchor. An act whose pictures lie at different anchors (富生 pushing his
+// cart leftwards: 43, 32, 29, 10) then lurches back and forth on a scaled map as it walks, which the smooth motion
+// drew as a slide between the jumps; an act whose anchor stays is zoomed as the original zooms it.
+int FieldView::ZoomAnchorX(const Role& role)
+{
+    const int anchor = role.act.x + kZoomAnchorX;
+
+    if (!this->game.smoothMotion || (role.act.flags & Painter::Mirror) == 0)
+    {
+        return anchor;
+    }
+
+    ActState first;
+    first.id = role.act.id;
+    first.lastId = -1;
+    first.action = role.act.action;
+    first.lastAction = -1;
+    first.direction = role.act.direction;
+    first.lastDirection = -1;
+    first = this->game.acts.Peek(first);
+    const int shift = first.x - role.act.x;
+    return anchor + shift + shift;
+}
+
 // swd3e.exe 0x00414BF0: the shadow of a role: its picture tinted onto the destination, zoomed about the act's anchor
 // (16, 8 to the right and down) to the role's scale across and half of it down (a quarter from shadow kind 5 on),
 // sheared to the right for odd kinds (to the left otherwise), flipped for kinds whose (kind - 1) % 4 is 2 or 3, and
@@ -420,7 +448,7 @@ void FieldView::DrawShadow(const Role& role, const Picture& picture, int x, int 
     const u32 bits = role.act.flags;
     painter.SetSource(picture.data.data());
     painter.SetZoomSheared(
-        role.act.x + kZoomAnchorX,
+        this->ZoomAnchorX(role),
         role.act.y + kZoomAnchorY,
         scale,
         scale / (shadow < kQuarterShadowKind ? kHalfShadow : kQuarterShadow),

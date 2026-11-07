@@ -407,6 +407,7 @@ private:
     }
 
     WalkPace PaceOf(const ActState& act);
+    int ZoomAnchorX(const Role& role);
     std::array<i32, 2> MotionShown(const RoleMotion& step) const;
     void ArriveFollower(std::size_t index, std::size_t move, u8 direction);
     void StartPan(i32 byX, i32 byY);
