@@ -75,6 +75,12 @@ u32 ProcessId()
     return static_cast<u32>(getpid());
 }
 
+// An ELF program keeps no link time.
+std::u8string ProgramBuildTime()
+{
+    return {};
+}
+
 namespace
 {
 

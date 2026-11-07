@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <ctime>
 #include <cwchar>
 #include <exception>
 #include <limits>
@@ -64,6 +65,31 @@ LocalDateTime LocalTime()
 u32 ProcessId()
 {
     return static_cast<u32>(::GetCurrentProcessId());
+}
+
+std::u8string ProgramBuildTime()
+{
+    constexpr std::size_t kTimeChars = 32;
+    const auto* image = reinterpret_cast<const u8*>(::GetModuleHandleW(nullptr));
+
+    if (image == nullptr)
+    {
+        return {};
+    }
+
+    const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(image);
+    const auto* headers = reinterpret_cast<const IMAGE_NT_HEADERS*>(image + dos->e_lfanew);
+    const auto linked = static_cast<std::time_t>(headers->FileHeader.TimeDateStamp);
+    std::tm local{};
+
+    if (localtime_s(&local, &linked) != 0)
+    {
+        return {};
+    }
+
+    std::array<char, kTimeChars> text{};
+    const std::size_t length = std::strftime(text.data(), text.size(), "%Y-%m-%d %H:%M:%S", &local);
+    return std::u8string(text.begin(), text.begin() + static_cast<std::ptrdiff_t>(length));
 }
 
 namespace

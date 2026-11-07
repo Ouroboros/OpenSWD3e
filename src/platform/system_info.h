@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <string>
 #include <thread>
 
 #include "core/types.h"
@@ -32,6 +33,9 @@ struct LocalDateTime
 LocalDateTime LocalTime();
 // The id of this process.
 u32 ProcessId();
+// The rebuild: when this program was linked, local time ("2026-11-07 19:15:09"; the PE header's TimeDateStamp on
+// Windows), to tell the builds apart in the logs; empty where the program file keeps no such time.
+std::u8string ProgramBuildTime();
 // The processor faults that end the process logged first (an unhandled structured exception on Windows, a fault
 // signal elsewhere).
 void InstallFaultLog();

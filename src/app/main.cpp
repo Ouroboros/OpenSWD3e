@@ -134,9 +134,11 @@ int main(int count, char** arguments)
 
     const int version = SDL_GetVersion();
     const char* base = SDL_GetBasePath();
+    const std::u8string built = swd3e::ProgramBuildTime();
     swd3e::LogInfo(
-        u8"start program=%s base=%s working_directory=%s command_line=\"%s\" log=%s",
+        u8"start program=%s build=%s base=%s working_directory=%s command_line=\"%s\" log=%s",
         swd3e::AsUtf8(count > 0 ? arguments[0] : ""),
+        built.empty() ? std::u8string(u8"-") : built,
         swd3e::AsUtf8(base != nullptr ? base : ""),
         directory,
         commandLine,
