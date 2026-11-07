@@ -2508,7 +2508,9 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     const u8 level = this->party.roles[static_cast<std::size_t>(battle.partyRoles[0])].level;
     const int caught = unit.CatchRoll(services, level);
 
-    if (caught == 1)
+    // The rebuild (deviations.md): with fleeing forbidden an enemy rolled to flee stays and chooses its command (the
+    // roll drawn as in the original).
+    if (caught == 1 && !this->config.noFleeing)
     {
         unit.Retarget(0);
         unit.SetCommand(kRunCommand);

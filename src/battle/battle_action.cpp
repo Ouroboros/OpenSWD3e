@@ -2433,7 +2433,9 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
         levels += data != nullptr ? data->data.level : 0;
     }
 
-    if (unit.LevelGapRoll(services, static_cast<u16>(levels / battle.enemyCount)) == 1)
+    // The rebuild (deviations.md): with fleeing forbidden the roll is drawn and the escort stays (there is no guest in
+    // swd3e: nothing sets guestControl).
+    if (unit.LevelGapRoll(services, static_cast<u16>(levels / battle.enemyCount)) == 1 && !this->config.noFleeing)
     {
         unit.SetCommand(kLeaveCommand);
         return;

@@ -442,6 +442,13 @@ void Game::StartBattle(u16 number)
         battle.startPoseRole |= BattleState::StartPoseDone;
     }
 
+    // The rebuild (deviations.md): with fleeing forbidden the party cannot retreat, as in a battle whose talk forbids
+    // it (command 0x53): the retreat shows 無法撤退!!, a role out of control does not leave.
+    if (this->config.noFleeing)
+    {
+        battle.panelFlags |= BattleState::NoRetreat;
+    }
+
     battle.unk5770D4 = 0;
 
     if (state.GameFlag(GameState::Unk5A))

@@ -94,6 +94,8 @@ public:
     void StoreActiveTime(bool on) const;
     // The rebuild's start pose of the battles shown or not, kept in [game] start_pose (deviations.md).
     void StoreStartPose(bool shown) const;
+    // The rebuild's fleeing forbidden in the battles, kept in [game] no_fleeing (deviations.md).
+    void StoreNoFleeing(bool on) const;
 
 private:
     void StoreKeys(GameSettings& game) const;
@@ -111,6 +113,7 @@ public:
     bool autoCombo = false;          // the rebuild's [game] auto_combo: the auto battle attacks with 連擊 when it can
     bool activeTime = false;         // the rebuild's [game] active_time: a full gauge does not stop the battle
     bool startPose = true;           // the rebuild's [game] start_pose: a role strikes its pose as a battle starts
+    bool noFleeing = false;          // the rebuild's [game] no_fleeing: neither the party nor the enemies flee
     std::array<u16, Channels> channelMasks = Config::DefaultChannelMasks;
     std::array<i32, Keys> keys = {};  // 0x004D0B90 DirectInput scan codes of the key slots
 

@@ -395,6 +395,21 @@ void Menu::OptionsSetStartPose(bool shown)
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
+// The rebuild's fleeing forbidden in the battles (deviations.md): on, or off, written at once.
+void Menu::OptionsSetNoFleeing(bool on)
+{
+    Game& owner = this->game;
+
+    if (owner.config.noFleeing == on)
+    {
+        return;
+    }
+
+    owner.config.noFleeing = on;
+    owner.config.StoreNoFleeing(on);
+    owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
+}
+
 // The choices of row `row` of `setup` (Big5), and the one in use in `chosen` (-1 for none).
 std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) const
 {
@@ -410,12 +425,13 @@ std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) c
 
     if (setup == Setup::Battle)
     {
-        if (row == kAutoComboRow || row == kActiveTimeRow || row == kStartPoseRow)
+        if (row == kAutoComboRow || row == kActiveTimeRow || row == kStartPoseRow || row == kNoFleeingRow)
         {
             choices = OnOffChoices();
             const bool on = row == kAutoComboRow    ? owner.config.autoCombo
                             : row == kActiveTimeRow ? owner.config.activeTime
-                                                    : owner.config.startPose;
+                            : row == kStartPoseRow  ? owner.config.startPose
+                                                    : owner.config.noFleeing;
             chosen = on ? 0 : 1;
         }
 
@@ -488,6 +504,10 @@ void Menu::SetupChoose(Setup setup, i32 row, i32 choice)
         else if (row == kStartPoseRow)
         {
             this->OptionsSetStartPose(choice == 0);
+        }
+        else if (row == kNoFleeingRow)
+        {
+            this->OptionsSetNoFleeing(choice == 0);
         }
 
         return;

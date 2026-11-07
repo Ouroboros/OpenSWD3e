@@ -255,6 +255,16 @@ void Config::StoreStartPose(bool shown) const
     );
 }
 
+void Config::StoreNoFleeing(bool on) const
+{
+    this->Store(
+        [on](GameSettings& game)
+        {
+            game.noFleeing = on;
+        }
+    );
+}
+
 // [game] of the program's settings file changed by `change` (a failure is logged).
 void Config::Store(const std::function<void(GameSettings&)>& change) const
 {
@@ -309,6 +319,7 @@ void Config::Apply(const GameSettings& game, i32& unknown14, u8& effectsOff)
     this->autoCombo = game.autoCombo.value_or(false);
     this->activeTime = game.activeTime.value_or(false);
     this->startPose = game.startPose.value_or(true);
+    this->noFleeing = game.noFleeing.value_or(false);
 
     if (game.debug.has_value())
     {
