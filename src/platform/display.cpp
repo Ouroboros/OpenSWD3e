@@ -22,27 +22,6 @@ constexpr float kHalf = 0.5F;            // the picture is centred in the window
 constexpr int kMostCanvasWidth = 2048;   // the widest canvas the map fills a window with
 constexpr int kMostCanvasHeight = 1024;  // the painter's row table holds this many rows
 
-// An RGB565 pixel as opaque ARGB8888, each channel's top bits repeated below (as the GPU widens a 565 texel).
-u32 OpaqueArgb(Pixel pixel)
-{
-    constexpr u32 kOpaque = 0xFF000000u;
-    constexpr int kRedShift = 11;
-    constexpr int kGreenShift = 5;
-    constexpr u32 kFiveBits = 0x1F;
-    constexpr u32 kSixBits = 0x3F;
-    constexpr int kWiden5 = 3;
-    constexpr int kWiden6 = 2;
-    constexpr int kRedOut = 16;
-    constexpr int kGreenOut = 8;
-    const u32 red = (static_cast<u32>(pixel) >> kRedShift) & kFiveBits;
-    const u32 green = (static_cast<u32>(pixel) >> kGreenShift) & kSixBits;
-    const u32 blue = static_cast<u32>(pixel) & kFiveBits;
-    const u32 red8 = red << kWiden5 | red >> (kGreenShift - kWiden5);
-    const u32 green8 = green << kWiden6 | green >> (kGreenShift - 1);
-    const u32 blue8 = blue << kWiden5 | blue >> (kGreenShift - kWiden5);
-    return kOpaque | red8 << kRedOut | green8 << kGreenOut | blue8;
-}
-
 // A copy of `icon` as an SDL surface; null when it is empty.
 SDL_Surface* MakeIconSurface(const IconImage& icon)
 {
@@ -142,7 +121,7 @@ Display::~Display()
         SDL_DestroyTexture(this->mapTarget);
     }
 
-    for (SDL_Texture* texture : {this->captureTarget, this->menuShown, this->menuAround, this->menuOverlay})
+    for (SDL_Texture* texture : {this->captureTarget, this->menuAround})
     {
         if (texture != nullptr)
         {
@@ -313,8 +292,8 @@ void Display::Present(const Surface& screen)
         int outputWidth = 0;
         int outputHeight = 0;
         SDL_GetRenderOutputSize(this->renderer, &outputWidth, &outputHeight);
-        // The map behind a menu as the GPU showed it (SetMenuBehind), while the output keeps its size.
-        const bool behind = this->menuShown != nullptr && screen.Width() == Display::Width &&
+        // The map around a menu as the GPU showed it (SetMenuBehind), while the output keeps its size.
+        const bool behind = this->menuAround != nullptr && screen.Width() == Display::Width &&
                             screen.Height() == Display::Height &&
                             this->menuSize == std::array<int, 2>{outputWidth, outputHeight};
 
@@ -335,33 +314,6 @@ void Display::Present(const Surface& screen)
             static_cast<float>(Display::Width) * scaleX,
             static_cast<float>(Display::Height) * scaleY,
         };
-
-        // The screen: the map where the frame still holds what the menu drew on, the menu's own pixels over it.
-        if (behind)
-        {
-            SDL_RenderTexture(this->renderer, this->menuShown, &target, &target);
-            this->menuOverlayPixels.resize(Display::Pixels);
-
-            for (int y = 0; y < Display::Height; ++y)
-            {
-                const Pixel* row = screen.Row(y);
-                const Pixel* under = this->menuReference.data() + static_cast<std::ptrdiff_t>(y) * Display::Width;
-                u32* out = this->menuOverlayPixels.data() + static_cast<std::ptrdiff_t>(y) * Display::Width;
-
-                for (int x = 0; x < Display::Width; ++x)
-                {
-                    out[x] = this->menuSeeThrough && row[x] == under[x] ? 0 : OpaqueArgb(row[x]);
-                }
-            }
-
-            SDL_UpdateTexture(
-                this->menuOverlay,
-                nullptr,
-                this->menuOverlayPixels.data(),
-                Display::Width * static_cast<int>(sizeof(u32))
-            );
-            shown = this->menuOverlay;
-        }
     }
 
     SDL_RenderTexture(this->renderer, shown, nullptr, &target);
@@ -870,78 +822,38 @@ bool Display::Captured(std::vector<Pixel>& pixels, int& width, int& height) cons
     return true;
 }
 
-void Display::SetMenuBehind(
-    std::span<const Pixel> shown,
-    std::span<const Pixel> around,
-    int width,
-    int height,
-    std::span<const Pixel> reference
-)
+void Display::SetMenuBehind(std::span<const Pixel> around, int width, int height)
 {
     this->ClearMenuBehind();
 
-    if (!this->IsOpen() || shown.size() != static_cast<std::size_t>(width) * static_cast<std::size_t>(height) ||
-        around.size() != shown.size() || reference.size() != static_cast<std::size_t>(Display::Pixels))
+    if (!this->IsOpen() || around.size() != static_cast<std::size_t>(width) * static_cast<std::size_t>(height))
     {
         return;
     }
 
-    auto make = [this, width, height](std::span<const Pixel> pixels)
+    this->menuAround =
+        SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STATIC, width, height);
+
+    if (this->menuAround == nullptr)
     {
-        SDL_Texture* texture =
-            SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STATIC, width, height);
-
-        if (texture != nullptr)
-        {
-            SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
-            SDL_UpdateTexture(texture, nullptr, pixels.data(), width * static_cast<int>(sizeof(Pixel)));
-        }
-
-        return texture;
-    };
-
-    this->menuShown = make(shown);
-    this->menuAround = make(around);
-    this->menuOverlay = SDL_CreateTexture(
-        this->renderer,
-        SDL_PIXELFORMAT_ARGB8888,
-        SDL_TEXTUREACCESS_STREAMING,
-        Display::Width,
-        Display::Height
-    );
-
-    if (this->menuShown == nullptr || this->menuAround == nullptr || this->menuOverlay == nullptr)
-    {
-        LogError(u8"menu backdrop textures failed: %s", AsUtf8(SDL_GetError()));
-        this->ClearMenuBehind();
+        LogError(u8"menu backdrop texture failed: %s", AsUtf8(SDL_GetError()));
         return;
     }
 
-    SDL_SetTextureScaleMode(this->menuOverlay, SDL_SCALEMODE_NEAREST);
-    SDL_SetTextureBlendMode(this->menuOverlay, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureScaleMode(this->menuAround, SDL_SCALEMODE_NEAREST);
+    SDL_UpdateTexture(this->menuAround, nullptr, around.data(), width * static_cast<int>(sizeof(Pixel)));
     this->menuSize = {width, height};
-    this->menuReference.assign(reference.begin(), reference.end());
 }
 
 void Display::ClearMenuBehind()
 {
-    for (SDL_Texture** texture : {&this->menuShown, &this->menuAround, &this->menuOverlay})
+    if (this->menuAround != nullptr)
     {
-        if (*texture != nullptr)
-        {
-            SDL_DestroyTexture(*texture);
-            *texture = nullptr;
-        }
+        SDL_DestroyTexture(this->menuAround);
+        this->menuAround = nullptr;
     }
 
     this->menuSize = {};
-    this->menuReference.clear();
-    this->menuSeeThrough = false;
-}
-
-void Display::SetMenuSeeThrough(bool on)
-{
-    this->menuSeeThrough = on;
 }
 
 void Display::DrawLayer(const Layer& layer, float x, float y, float width, float height, LayerBlend blend) const
