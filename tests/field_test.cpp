@@ -68,6 +68,9 @@ constexpr u16 kSecondId = 3;
 constexpr u16 kThirdId = 7;
 constexpr u16 kAbsentId = 9;
 constexpr swd3e::i32 kRoleY = 0x20;
+constexpr swd3e::i32 kLowerY = 0x2F;  // a role lower in the same row (row 2 of 16 pixels)
+constexpr u16 kSideId = 2;            // two roles walking side by side above it
+constexpr u16 kOtherSideId = 3;
 constexpr int kGridSide = 8;
 constexpr int kCellX = 3;  // a one-cell footprint
 constexpr int kCellY = 3;
@@ -176,6 +179,37 @@ TEST_CASE("field: the drawing order of the roles in a row")
     CHECK(all.field.RemoveRole(kAbsentId, 0, 0, 1) == nullptr);
     CHECK(all.field.RemoveRole(kSecondId, 0, 0, 0) == nullptr);
     CHECK(third.next == &second);
+}
+
+TEST_CASE("field: roles of one y keep their order as they step past a lower role leading the row")
+{
+    Fixture all;
+    all.state.map.height = kRows;
+    all.field.ResetRows();
+    swd3e::Role lower;
+    swd3e::Role side;
+    swd3e::Role otherSide;
+    lower.id = swd3e::Role::NoId;
+    lower.y = kLowerY;
+    side.id = kSideId;
+    side.y = kRoleY;
+    otherSide.id = kOtherSideId;
+    otherSide.y = kRoleY;
+    all.field.InsertRole(lower, 0);
+    all.field.InsertRole(side, 0);
+    all.field.InsertRole(otherSide, 0);
+
+    swd3e::Role*& head = all.field.rows[0][(kRoleY >> swd3e::MapHeader::TileShift) + swd3e::Field::RowMargin];
+
+    // Each step puts the role back by its y (RemoveRole without keeping it): the order stays.
+    for (const u16 stepping : {kSideId, kOtherSideId, kSideId})
+    {
+        CHECK(all.field.RemoveRole(stepping, 0, 0, 0) == nullptr);
+        CHECK(head == &otherSide);
+        CHECK(otherSide.next == &side);
+        CHECK(side.next == &lower);
+        CHECK(lower.next == nullptr);
+    }
 }
 
 TEST_CASE("field: the cells around a footprint")

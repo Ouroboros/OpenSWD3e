@@ -198,7 +198,12 @@ void Field::ResetRows()
 }
 
 // swd3e.exe 0x00411790: `role` into the row of its y in `layer`, before the first role of the row it is not above (by
-// y, then by id)
+// y, then by id).
+// The rebuild (deviations.md): the row is kept in its drawing order, by y (the lower drawn later, in front), the roles
+// of one y by id downwards, as the original orders a row of roles of one y. The original walks the row from its head
+// with tests that let a role pass the roles of its own y when one lower than it leads the row: the role goes to the
+// end, so that of two roles walking side by side the one that just stepped is drawn over the other, which swap in front
+// of each other step by step (a role of the map at y 351 leads row 41 of the deck of 大龍舟甲板).
 void Field::InsertRole(Role& role, int layer)
 {
     // The original indexes past its three layers for a layer of 3 (a placement of 3, Field::LoadMap).
@@ -216,56 +221,27 @@ void Field::InsertRole(Role& role, int layer)
         return;
     }
 
+    // Whether `other` is drawn after (in front of) the role: lower, or of its y with a lower id.
+    auto drawnAfter = [&role, y](const Role& other)
+    {
+        const auto otherY = static_cast<u32>(other.y);
+        return otherY > y || (otherY == y && other.id < role.id);
+    };
+
     Role*& head = lists[row];
+
+    if (head == nullptr || drawnAfter(*head))
+    {
+        role.next = head;
+        head = &role;
+        return;
+    }
+
     Role* current = head;
 
-    if (current == nullptr)
+    while (current->next != nullptr && !drawnAfter(*current->next))
     {
-        head = &role;
-        role.next = nullptr;
-        return;
-    }
-
-    Role* following = current->next;
-    const auto currentY = static_cast<u32>(current->y);
-
-    if (following == nullptr)
-    {
-        if (currentY <= y && current->id >= role.id)
-        {
-            role.next = nullptr;
-            current->next = &role;
-            return;
-        }
-
-        role.next = current;
-        head = &role;
-        return;
-    }
-
-    if (currentY <= y && role.id >= current->id)
-    {
-        role.next = current;
-        head = &role;
-        return;
-    }
-
-    for (;;)
-    {
-        if (static_cast<u32>(current->y) <= y && current->id >= role.id && following->id <= role.id)
-        {
-            break;
-        }
-
-        current = following;
-        following = following->next;
-
-        if (following == nullptr)
-        {
-            current->next = &role;
-            role.next = nullptr;
-            return;
-        }
+        current = current->next;
     }
 
     role.next = current->next;
