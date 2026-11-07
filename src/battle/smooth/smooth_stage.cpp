@@ -246,7 +246,9 @@ void Stage::Replay()
 // Each draw of this frame takes the way back to its place before: in each code with as many draws as before, the
 // pairs of a draw and a draw before are taken nearest first (within kSnapDistance), each draw once. Held draws (what
 // stands at a place) are measured and moved by the places they show; others by where they are drawn, and only when
-// the picture is the same (a new picture is a new pose, drawn where it is).
+// the picture is the same (a new picture is a new pose, drawn where it is). A draw with another picture exactly where
+// one was drawn before is that one changed in place: the two are paired first and the draw stays (a code drawing the
+// digits of a number one at a time: a digit turning into the picture its neighbour had would glide over from it).
 void Stage::Match()
 {
     this->before = std::move(this->places);
@@ -289,17 +291,12 @@ void Stage::Match()
             {
                 const Drawn& then = earlier[at];
                 const bool held = now.held && then.held;
-
-                if (!held && now.source != then.source)
-                {
-                    continue;
-                }
-
                 const std::array<int, 2>& from = point(then, held);
                 const std::array<int, 2>& to = point(now, held);
                 const int far = std::max(std::abs(from[0] - to[0]), std::abs(from[1] - to[1]));
+                const bool same = held || now.source == then.source;
 
-                if (far <= kSnapDistance)
+                if ((same && far <= kSnapDistance) || far == 0)
                 {
                     pairs.push_back({far, static_cast<int>(draw), static_cast<int>(at)});
                 }
@@ -330,6 +327,13 @@ void Stage::Match()
             const Drawn& now = this->drawn[index].second;
             const Drawn& then = earlier[static_cast<std::size_t>(at)];
             const bool held = now.held && then.held;
+
+            // A new picture where one was drawn: drawn where it is, as an unpaired draw.
+            if (!held && now.source != then.source)
+            {
+                continue;
+            }
+
             const std::array<int, 2>& from = point(then, held);
             const std::array<int, 2>& to = point(now, held);
             this->moves[index] = {from[0] - to[0], from[1] - to[1]};
