@@ -350,7 +350,7 @@ void Display::Present(const Surface& screen)
 
                 for (int x = 0; x < Display::Width; ++x)
                 {
-                    out[x] = row[x] == under[x] ? 0 : OpaqueArgb(row[x]);
+                    out[x] = this->menuSeeThrough && row[x] == under[x] ? 0 : OpaqueArgb(row[x]);
                 }
             }
 
@@ -936,6 +936,12 @@ void Display::ClearMenuBehind()
 
     this->menuSize = {};
     this->menuReference.clear();
+    this->menuSeeThrough = false;
+}
+
+void Display::SetMenuSeeThrough(bool on)
+{
+    this->menuSeeThrough = on;
 }
 
 void Display::DrawLayer(const Layer& layer, float x, float y, float width, float height, LayerBlend blend) const

@@ -782,6 +782,12 @@ void Menu::Present()
         this->KeepFrame();
     }
 
+    // The rebuild (deviations.md): the map behind the menu shows through the screen at the window's resolution only
+    // while the page and the tabs slide in (up to kSlideFrames, a frame past their end for the frames painted between);
+    // then the page covers the screen, and a pixel of it that happens to match the map's frame is its own (two pixels
+    // of the darkened setup panel showed the map's at 4K).
+    owner.display.SetMenuSeeThrough(smooth && this->frames <= kSlideFrames);
+
     owner.drawSurface = owner.painter.LockSurface(*owner.offscreen);
     owner.painter.SetTarget(owner.drawSurface);
     owner.painter.UnlockSurface(*owner.offscreen);
