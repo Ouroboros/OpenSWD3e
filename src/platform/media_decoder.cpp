@@ -212,9 +212,15 @@ struct MediaDecoder::State
         return true;
     }
 
-    // Reads packets up to the next video frame, queueing the audio met on the way.
+    // Reads packets up to the next video frame, queueing the audio met on the way. A frame the decoder holds comes
+    // first (H.264 gives its frames some packets late, and the last ones once the input has ended).
     void DecodeNext()
     {
+        if (this->StoreVideo())
+        {
+            return;
+        }
+
         while (!this->ended)
         {
             if (av_read_frame(this->format, this->packet) < 0)
@@ -303,9 +309,10 @@ bool MediaDecoder::Open(const std::u8string& path)
 
     state->format->pb = state->io;
 
-    if (avformat_open_input(&state->format, nullptr, av_find_input_format("bink"), nullptr) < 0)
+    // The demuxers built (build_ffmpeg.sh) tell the format: Bink, or the MP4 of the Steam release.
+    if (avformat_open_input(&state->format, nullptr, nullptr, nullptr) < 0)
     {
-        this->error = "Not a Bink file: " + std::string(AsBytes(path));
+        this->error = "Not a movie file: " + std::string(AsBytes(path));
         return false;
     }
 
@@ -323,7 +330,7 @@ bool MediaDecoder::Open(const std::u8string& path)
 
     if (state->video == nullptr)
     {
-        this->error = "Unsupported Bink video";
+        this->error = "Unsupported video";
         return false;
     }
 

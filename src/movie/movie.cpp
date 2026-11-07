@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "core/log.h"
+
 namespace swd3e
 {
 
@@ -13,14 +15,35 @@ void Movie::Init(bool, bool)
 // swd3e.exe 0x0049C480
 Movie::Movie() = default;
 
-// swd3e.exe 0x0049C490: a failed open keeps Bink's error text and a zero summary; the volume is held within 0..0x7F
+// swd3e.exe 0x0049C490: a failed open keeps Bink's error text and a zero summary; the volume is held within 0..0x7F.
+// The rebuild (deviations.md): the Steam release replaced the Bink movies with MP4 files of the same names (the scripts
+// still name the .bik), so the .mp4 of a Bink movie is opened first and the .bik itself without one; a movie that
+// cannot be opened is logged (the script's wait for its end then goes on at once, as in the original).
 void Movie::Open(const std::u8string& path, int volume)
 {
     constexpr int kBinkVolumeShift = 15;
+    constexpr std::u8string_view kBink = u8".bik";
+    constexpr std::u8string_view kSteamMovie = u8".mp4";
 
-    if (!this->decoder.Open(path))
+    const std::size_t dot = path.rfind(u8'.');
+    std::u8string extension = dot == std::u8string::npos ? std::u8string() : path.substr(dot);
+    std::transform(
+        extension.begin(),
+        extension.end(),
+        extension.begin(),
+        [](char8_t letter)
+        {
+            return letter >= u8'A' && letter <= u8'Z' ? static_cast<char8_t>(letter - u8'A' + u8'a') : letter;
+        }
+    );
+
+    this->error.clear();
+    const bool steam = extension == kBink && this->decoder.Open(path.substr(0, dot) + std::u8string(kSteamMovie));
+
+    if (!steam && !this->decoder.Open(path))
     {
         this->error = this->decoder.Error();
+        LogError(u8"movie %s cannot be opened: %s", path, AsUtf8(this->error));
     }
 
     const int held = std::clamp(volume, 0, Movie::MaxVolume);

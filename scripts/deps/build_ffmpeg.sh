@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Minimal LGPL static FFmpeg n9.0: Bink video/audio and MP3 demux+decode, file protocol,
-# swresample and swscale, with the x86 assembly (nasm). Usage: build_ffmpeg.sh linux|windows|linux-i386|windows-x86
+# Minimal LGPL static FFmpeg n9.0: Bink video/audio and MP3 demux+decode, the Steam release's MP4 videos (MOV demux,
+# H.264 and AAC decode), file protocol, swresample and swscale, with the x86 assembly (nasm).
+# Usage: build_ffmpeg.sh linux|windows|linux-i386|windows-x86
 # (linux and windows are x64).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
@@ -21,9 +22,9 @@ common=(
     --disable-everything
     --enable-avcodec --enable-avformat --enable-avutil --enable-swresample --enable-swscale
     --enable-protocol=file
-    --enable-demuxer=bink,mp3
-    --enable-decoder=bink,binkaudio_rdft,binkaudio_dct,mp3,mp3float
-    --enable-parser=mpegaudio
+    --enable-demuxer=bink,mp3,mov
+    --enable-decoder=bink,binkaudio_rdft,binkaudio_dct,mp3,mp3float,h264,aac
+    --enable-parser=mpegaudio,h264,aac
 )
 
 case "${platform}" in
