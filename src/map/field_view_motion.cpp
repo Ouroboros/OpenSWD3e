@@ -702,8 +702,11 @@ void FieldView::CaptureRoleSteps(bool continuous)
         // The rebuild: a walk whose steps take frames of different lengths (its act's frames hold for different
         // delays: 7 and 11, 9 and 5, ...) is drawn at its mean pace all along, the speed of its steps over a round of
         // the walk; the frames' steps are those of the original. It is drawn on toward the step after the one the
-        // frame took (a long wait would have it reach its tile and stand): a stop takes it back to its tile.
-        const WalkPace pace = stops ? WalkPace{} : this->PaceOf(role.act);
+        // frame took (a long wait would have it reach its tile and stand): a stop takes it back to its tile. A role the
+        // frame gave another action walks on no more (it stopped where the walk had drawn it already, and turned: its
+        // new act, whose frames may hold unevenly too, would glide it a step past its tile).
+        const bool keepsAction = role.act.action == from.act.action;
+        const WalkPace pace = stops || !keepsAction ? WalkPace{} : this->PaceOf(role.act);
         const bool paced = pace.uneven && stepped > 0;
 
         if (paced)
