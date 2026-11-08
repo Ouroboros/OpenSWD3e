@@ -924,6 +924,8 @@ bool BattleUnit::IsDefeatedOrDying() const
 // unchanged); one with equipment flag Unk36 clears unk306C and sets unk2FD1 to 2 (unless kNumberSpent).
 int BattleUnit::StepTargetCount(BattleServices& services, int increase)
 {
+    this->regenerationShown = false;
+
     if (increase != 1)
     {
         --this->targetCount;
@@ -964,6 +966,14 @@ int BattleUnit::StepTargetCount(BattleServices& services, int increase)
     }
 
     return count;
+}
+
+// The rebuild: the check of unk3018 in AttackFrame (0x0047FFD0), ChargeAttackFrame (0x00484B20), MagicAttackFrame
+// (0x004854B0) and Walk (0x00499060). With the active time battle (deviations.md) the turn's regeneration alone does
+// not hold the unit, as one with nothing regenerated.
+bool BattleUnit::NumbersHold(const BattleState& battle) const
+{
+    return this->unk3018 == 1 && !(battle.activeTime && this->regenerationShown);
 }
 
 // swd3e.exe 0x004910A0
@@ -2037,6 +2047,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->held = 0;
     this->unk3014 = 0;
     this->unk3018 = 0;
+    this->regenerationShown = false;
     this->unk301C = 0;
     this->unk3020 = 0;
     this->unk2FB6 = 0;

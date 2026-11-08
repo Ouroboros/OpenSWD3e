@@ -512,6 +512,9 @@ public:
     i32 Unk2B00() const;
     i32 Unk2B04() const;
     int StepTargetCount(BattleServices& services, int increase);
+    // Whether the numbers over the unit hold its attack, magic, charge and walk (unk3018; the rebuild's active time
+    // battle lets the turn's regeneration alone not hold it).
+    bool NumbersHold(const BattleState& battle) const;
     int PushTargetAlt(u16 value);
     int ResetAfterGuard();
     int GetGuard() const;
@@ -977,6 +980,9 @@ public:
     i32 nudged = 0;  // +0x3058 (swd3e) set by SetNudge for a shake, read by HurtFrame
     i32 evadeRolled = 0;  // +0x305C 1: the evade roll of the attack was made
     i32 goldGuard = 0;    // +0x3060
+    // The rebuild's active time battle (deviations.md): the numbers shown are only the turn's regeneration
+    // (BattleRole::Regenerate), cleared by any other number and when the numbers are over.
+    bool regenerationShown = false;
 };
 
 int ApplyElement(const std::array<u8, 5>& resistances, i16 element, i16& value);

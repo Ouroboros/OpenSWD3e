@@ -116,7 +116,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
     BattleRole& role = this->role;
     BattleState& battle = services.state;
 
-    if (role.unk2F90 != 0 || role.unk3018 == 1)
+    if (role.unk2F90 != 0 || role.NumbersHold(battle))
     {
         return 0;
     }
@@ -1580,7 +1580,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
     BattleState& battle = services.state;
     ScenePainter painter(services, scene);
 
-    if (role.unk2F90 != 0 || role.unk3018 == 1)
+    if (role.unk2F90 != 0 || role.NumbersHold(battle))
     {
         return 0;
     }

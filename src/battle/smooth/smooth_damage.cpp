@@ -188,7 +188,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     BattleServices& services = game.battleServices;
     ScenePainter painter(game.battleServices, scene);
 
-    if (role.unk2F90 != 0 || role.unk3018 == 1)
+    if (role.unk2F90 != 0 || role.NumbersHold(battle))
     {
         return 0;
     }

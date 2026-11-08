@@ -438,7 +438,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
 {
     BattleUnit& unit = this->unit;
 
-    if (unit.unk3018 == 1)
+    if (unit.NumbersHold(services.state))
     {
         return 0;
     }
@@ -889,6 +889,7 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
     unit.targetCount = 0;
     unit.damageSlot = 0;
     unit.unk3018 = 0;
+    unit.regenerationShown = false;
     return 1;
 }
 

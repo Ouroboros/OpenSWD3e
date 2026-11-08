@@ -1478,6 +1478,8 @@ void BattleRole::Regenerate(BattleServices& services)
         return;
     }
 
+    // The rebuild's active time battle (deviations.md): whether only regenerated numbers show after it.
+    const bool alone = this->unk3018 == 0 || this->regenerationShown;
     u16 delay = 0;
 
     auto share = [](u16 bonus, i16 maximum)
@@ -1520,6 +1522,8 @@ void BattleRole::Regenerate(BattleServices& services)
         this->StepTargetCount(services, 1);
         this->restoreStamina = 0;
     }
+
+    this->regenerationShown = alone && this->unk3018 == 1;
 }
 
 // swd3e.exe 0x0047F5C0: the command of an accessory of `kind` (the stamina it costs taken first when none is owed):
