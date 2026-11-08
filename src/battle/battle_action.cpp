@@ -2138,7 +2138,10 @@ void Game::QueueRoleTurn(int unit)
 }
 
 // The rebuild's active time battle (deviations.md): with no role on the panel and no menu open, the first queued role
-// not held takes the panel, its menu opened by the confirm key (panelWaiting), as swd32's RoleFrame hands it on.
+// not held takes the panel, its menu opened by the confirm key (panelWaiting), as swd32's RoleFrame hands it on. Its
+// commands are listed at once, as the original lists them when the panel comes (RoleGaugeFull's ConfirmKey): the auto
+// battle may have started without a menu ever opened, and a role that may not choose guards through the listed 防禦
+// (RandomRoleAct), which an empty list refuses, leaving the menu state with no role on the panel.
 void Game::ActiveTimePanel()
 {
     BattleState& battle = this->battleState;
@@ -2159,6 +2162,7 @@ void Game::ActiveTimePanel()
 
         battle.currentUnit = unit;
         battle.panelWaiting = 1;
+        this->BuildCommandMenu();
         std::copy(
             battle.roleOrder.begin() + static_cast<std::ptrdiff_t>(at) + 1,
             battle.roleOrder.end(),
