@@ -170,6 +170,11 @@ constexpr std::u8string_view kSpecialLabel = u8"絕技";
 constexpr std::array<std::u8string_view, 5> kResistanceLabels = {u8"[金]", u8"[木]", u8"[水]", u8"[火]", u8"[土]"};
 // RoleRecord::evasion, ailmentChance, rapport and reaction.
 constexpr std::array<std::u8string_view, 4> kHiddenLabels = {u8"閃躲", u8"異常", u8"默契", u8"反應"};
+// The affection below the hidden attributes: the role id of a party role (its place plus this: the story's event
+// commands name 小雪 2) and the role variable (Talk::RoleVariable, the low byte).
+constexpr std::u8string_view kAffectionLabel = u8"好感";
+constexpr int kFirstRoleId = 1;
+constexpr int kAffectionVariable = 1;
 constexpr std::string_view kValueFormat = "%d";
 constexpr std::string_view kPercentFormat = "%d%%";
 constexpr std::string_view kProgressFormat = "%d/%d";
@@ -178,8 +183,13 @@ constexpr int kPanelStep = 0x11;
 constexpr int kPanelGap = 6;         // more between the attributes and the resistances
 constexpr int kPanelValueX = 0x36;   // the values after the label: two characters and two spaces
 constexpr int kPanelChangeX = 0x24;  // the equipment changes after the value: three digits and a space
-constexpr int kHiddenX = 0x78;       // beside the resistances (a five-character one, -100%, to 0x7B)
-constexpr int kHiddenValueX = 0x2D;  // two characters and a space
+// The resistances' values nearer their labels than the attributes' (which have the equipment changes after them),
+// as blank as the hidden attributes' column: nine pixels between the inks.
+constexpr int kResistanceValueX = 0x2A;
+// Beside the resistances: a four-character one (100%, -10%) is inked to 0x65, three digits of a value to 0xB0, the
+// paper ending at 0xBB.
+constexpr int kHiddenX = 0x6B;
+constexpr int kHiddenValueX = 0x2B;  // two characters and a narrow space
 // RoleBattleBlock::values as Game::LearnSpecials reads them (battle_turn.cpp): the special points, the points the next
 // special needs and the next special (bit 31 once set from the role's first special skill; -1: none).
 constexpr std::size_t kSpecialPointsAt = 1;
@@ -1221,7 +1231,8 @@ void Menu::DrawRoleTabs(int offset, int mode)
 
         for (std::size_t at = 0; at < kResistanceLabels.size(); ++at)
         {
-            row(x, valueX, y, kResistanceLabels[at], WinFormat(kPercentFormat, {static_cast<i32>(resistances[at])}));
+            const std::string value = WinFormat(kPercentFormat, {static_cast<i32>(resistances[at])});
+            row(x, x + kResistanceValueX, y, kResistanceLabels[at], value);
             y += kPanelStep;
         }
 
@@ -1229,12 +1240,21 @@ void Menu::DrawRoleTabs(int offset, int mode)
         const std::array<i32, 4> hidden = {record.evasion, record.ailmentChance, record.rapport, record.reaction};
         y = resistancesY;
 
+        const int hiddenX = kHiddenX - offset;
+
         for (std::size_t at = 0; at < hidden.size(); ++at)
         {
-            const int hiddenX = kHiddenX - offset;
             row(hiddenX, hiddenX + kHiddenValueX, y, kHiddenLabels[at], WinFormat(kValueFormat, {hidden[at]}));
             y += kPanelStep;
         }
+
+        // The rebuild (deviations.md): the role's affection below them, the low byte of the role's RoleVariables word,
+        // which decides the ending: the story sets 小雪's and 玉兒's to 100 as they join (event command 0xC5), then
+        // adds to and takes from them (0xC6 and 0xC7); the others' stay.
+        i32 affection = 0;
+        owner.talk
+            .RoleVariable(static_cast<u32>(role + kFirstRoleId), kAffectionVariable, affection, Talk::ReadVariable);
+        row(hiddenX, hiddenX + kHiddenValueX, y, kAffectionLabel, WinFormat(kValueFormat, {affection}));
 
         painter.SetClipClamped(0, 0, Display::Width, Display::Height);
         return;
