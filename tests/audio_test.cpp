@@ -1,5 +1,6 @@
 #include <SDL3/SDL.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <string_view>
@@ -142,6 +143,40 @@ TEST_CASE("audio: the music queue plays a list, fades it out on a switch and goe
     CHECK(queue.IsStopped());
     audio.Update();
     CHECK_EQ(queue.Mode(), MusicQueue::NoList);
+}
+
+TEST_CASE("audio: a stream decodes on its own thread, its start the start of the whole")
+{
+    constexpr std::size_t kStartSamples = static_cast<std::size_t>(swd3e::kMixRate) * swd3e::kMixChannels;
+    constexpr std::size_t kMillisecondsPerSecond = 1000;
+    const std::vector<u8> data = swd3etest::ReadGameFile("Music/Battle01.mp3");
+
+    if (data.empty())
+    {
+        std::printf("  (music not found, skipped)\n");
+        return;
+    }
+
+    std::vector<i16> all;
+    CHECK(swd3e::DecodeAudio(data.data(), data.size(), all));
+    std::vector<i16> start;
+    bool whole = true;
+    CHECK(swd3e::DecodeAudioStart(data.data(), data.size(), kStartSamples, start, whole));
+    CHECK(!whole);
+    CHECK(start.size() >= kStartSamples);
+    CHECK(start.size() < all.size());
+    CHECK(std::equal(start.begin(), start.end(), all.begin()));
+
+    UseDummyAudio();
+    swd3e::AudioDevice device;
+    const swd3e::VoiceHandle voice = device.OpenStream(swd3etest::GameFile("Music/Battle01.mp3"));
+    CHECK(voice != nullptr);
+    int total = 0;
+    int current = 0;
+    device.Position(voice, total, current);
+    const std::size_t frames = all.size() / swd3e::kMixChannels;
+    CHECK_EQ(total, static_cast<int>(frames * kMillisecondsPerSecond / swd3e::kMixRate));
+    CHECK(device.OpenStream(u8"Music/NoSuchTune.mp3") == nullptr);
 }
 
 TEST_CASE("audio: the MIDI player stays closed")
