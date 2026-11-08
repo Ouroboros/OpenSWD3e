@@ -335,7 +335,7 @@ h1 {
   text-shadow: 1px 1px 0 #302018;
 }
 
-.row span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.row span:first-child { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .row .level { font-family: var(--ming); font-size: 15px; color: var(--dim); flex: none; margin-left: 6px; }
 
 /* The game's highlight: a band brightest in the middle, fading to the top and bottom edges. */
@@ -361,8 +361,8 @@ h1 {
   box-shadow: inset 0 0 0 2px #1c1806, 0 0 0 1px #000; }
 .card .picture img { max-width: 100%; max-height: 100%; border: 2px solid #1c1806; background: #f4ecd8; }
 .card .main { font-family: var(--kai); font-size: 20px; line-height: 28px; min-width: 0; }
-.card .main .name { color: #f0e0a8; font-size: 30px; line-height: 38px; height: 38px; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; }
+.card .main .name { color: #f0e0a8; font-size: 30px; line-height: 38px; min-height: 38px;
+  overflow-wrap: anywhere; }
 .card table { border-collapse: collapse; width: 160px; font-size: 19px; }
 .card td { padding: 0; height: 25px; line-height: 25px; }
 .card td.value { text-align: right; font-family: var(--ming); font-size: 18px; }
@@ -391,7 +391,7 @@ h1 {
   font-size: 18px; line-height: 34px; padding: 0 8px 0 4px; cursor: pointer; white-space: nowrap; }
 .rule:hover { background: rgba(200, 130, 10, 0.2); }
 .rule.open { background: rgba(200, 130, 10, 0.32); }
-.rule .slot { overflow: hidden; text-overflow: ellipsis; }
+.rule .slot { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .rule .slot small { font-size: 13px; color: var(--dim); margin-right: 4px; }
 .rule .slot b { font-family: var(--kai); font-weight: normal; font-size: 21px; }
 .rule .plus { color: var(--dim); text-align: center; }
@@ -402,7 +402,7 @@ h1 {
 
 .pairs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; padding: 4px 8px 10px 12px;
   font-size: 16px; line-height: 26px; border-bottom: 1px dashed rgba(168, 144, 72, 0.4); }
-.pairs div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pairs div { overflow-wrap: anywhere; }
 .pairs .plus { color: var(--dim); margin: 0 4px; }
 .pairs .level { font-size: 13px; color: var(--dim); margin-left: 2px; }
 .pairs .more { grid-column: 1 / -1; color: var(--dim); }

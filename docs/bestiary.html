@@ -247,7 +247,7 @@ h1 {
   align-items: center;
 }
 
-.stats .name .text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.stats .name .text { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .stats .name .boss { flex: none; }
 .stats .boss.scripted { color: var(--gold-light); border-color: var(--gold-light); cursor: pointer; }
 .stats .boss { vertical-align: middle; line-height: 18px; font-size: 15px; color: var(--weak); border: 1px solid var(--weak); padding: 0 4px; margin-left: 6px; }
@@ -320,7 +320,7 @@ h1 {
 
 .loot .note { color: var(--dim); font-size: 15px; }
 /* The rows size to their content even when the panel is full (a minmax row stays at its minimum without free space). */
-.loot > div { min-height: 30px; line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loot > div { min-height: 30px; line-height: 30px; overflow-wrap: anywhere; }
 .loot > div.scripted { display: flex; white-space: normal; overflow: visible; line-height: 26px; padding: 2px 0; }
 .loot .battle { flex: none; width: 88px; color: var(--dim); }
 

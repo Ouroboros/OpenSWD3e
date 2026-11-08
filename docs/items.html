@@ -238,16 +238,14 @@ h1 {
   font-family: var(--kai);
   color: #f0e0a8;
   font-size: 32px;
-  height: 48px;
+  min-height: 48px;
   line-height: 48px;
   margin-bottom: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .stats table { border-collapse: collapse; table-layout: fixed; width: 100%; }
-.stats td { padding: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stats td { padding: 0; overflow-wrap: anywhere; }
 .stats td:first-child { width: 110px; color: var(--dim); font-family: var(--kai); }
 
 .portrait {
@@ -281,9 +279,9 @@ h1 {
 }
 
 .detail .label { font-family: var(--kai); color: var(--dim); }
-.detail > div { line-height: 44px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.detail > div { line-height: 30px; padding: 7px 0; overflow-wrap: anywhere; }
 .detail .none { color: var(--dim); }
-.detail .note { font-size: 15px; color: var(--dim); margin-left: 14px; }
+.detail .note { display: inline-block; font-size: 15px; color: var(--dim); margin-left: 14px; }
 .detail .rest { white-space: pre-line; line-height: 26px; padding-top: 9px; overflow-y: auto;
   scrollbar-color: var(--gold) #000; }
 
@@ -444,7 +442,7 @@ function show() {
   const note = label => item.notes[label] ? `<span class="note">${escape(item.notes[label])}</span>` : '';
   const labels = [...Object.keys(item.lines).filter(label => !LAST_LINES.includes(label)),
     ...LAST_LINES.filter(label => label in item.lines)];
-  $('detail').style.gridTemplateRows = `repeat(${labels.length - 1}, 44px) minmax(0, 1fr)`;
+  $('detail').style.gridTemplateRows = `repeat(${labels.length - 1}, auto) minmax(0, 1fr)`;
   $('detail').innerHTML = labels.map((label, at) =>
     `<div class="label">${label}</div><div${at === labels.length - 1 ? ' class="rest"' : ''}>${line(item.lines[label])}${note(label)}</div>`).join('');
   $('description').textContent = item.description;
