@@ -39,7 +39,7 @@ enum class AccessoryKind : u16
     ElementOrb = 0x33,  // 朱雀火羽, 青龍靈珠, ...: the resistance to its element raised by 80% of its proficiency
     AttackRing = 0x34,  // 星君眼
     BladeReturn = 0x35,  // no item has it (swd3e's 返刃玉 has no effect)
-    Unk36 = 0x36,        // 洞察光環: a hit number taken back (CancelHitNumber)
+    HitCancel = 0x36,    // 洞察光環: a hit number taken back (CancelHitNumber)
     SpiritDrain = 0x37,  // 碧綠魔壺
     LifeDrain = 0x38,    // 玄能臂環
     SpiritFan = 0x39,    // 靈虛扇

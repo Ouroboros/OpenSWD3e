@@ -59,10 +59,10 @@ constexpr i32 kUnkBlock30 = 0x30;
 constexpr u16 kUnk2EB2Accessory = 0x27;  // the accessory kind whose proficiency bounds unk2EB2 (swd3e)
 constexpr u16 kUnk2EB2Share = 10;        // unk2EB2 is held below a tenth of it
 constexpr int kTens = 10;
-constexpr i8 kNumberSpent = -1;     // unk2FD1: no use left
-constexpr i8 kNumberTaken = -2;     // unk2FD1: the hit number was taken back
-constexpr i8 kNumberCountdown = 2;  // unk2FD1: set by StepTargetCount past a damage number (IdleFrame counts it down)
-constexpr u16 kLastedTurns = 3;     // a lasting poison has lasted once past them
+constexpr i8 kHitCancelMissed = -1;  // hitCancelWindow: the space key came too late
+constexpr i8 kHitCancelTaken = -2;   // hitCancelWindow: the hit number was taken back
+constexpr i8 kHitCancelFrames = 2;   // hitCancelWindow: opened by StepTargetCount past a damage number
+constexpr u16 kLastedTurns = 3;      // a lasting poison has lasted once past them
 constexpr int kRippleGrid = 0xC8;
 constexpr int kRippleSplashX = 0x64;
 constexpr int kRippleSplashY = 0x32;
@@ -419,10 +419,10 @@ u16 BattleUnit::GetCommandB() const
     return this->commandB;
 }
 
-// swd3e.exe 0x0048B5D0
-u16 BattleUnit::GetWord2F90() const
+// swd3e.exe 0x0048B5D0: the times the battle talk caught the unit
+u16 BattleUnit::CaughtCount() const
 {
-    return this->unk2F90;
+    return this->caughtCount;
 }
 
 // swd3e.exe 0x0048B5E0
@@ -540,8 +540,8 @@ int BattleUnit::StartDefeat(int defeat)
 }
 
 // swd3e.exe 0x0048B7A0: clears the state of a turn: the acts, the first eight slot acts, the unit's own object and its
-// command; a party role gets a random gauge of 50..189 (unless unk306C held it); a unit of StatusBit5 turns to face
-// right. Guarding ends with command flag 8 (not when defeated or with unk3038) and with a delayed fade-in.
+// command; a party role gets a random gauge of 50..189 (unless hitCancelled held it); a unit of StatusBit5 turns to
+// face right. Guarding ends with command flag 8 (not when defeated or with unk3038) and with a delayed fade-in.
 int BattleUnit::ResetTurn(BattleServices& services)
 {
     this->gauge = 0;
@@ -609,12 +609,12 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->command = UnitCommand{};
     this->targets = {BattleUnit::NoTarget, BattleUnit::NoTarget, BattleUnit::NoTarget, BattleUnit::NoTarget};
 
-    if (this->kind == BattleUnit::PartyRole && this->unk306C == 0)
+    if (this->kind == BattleUnit::PartyRole && this->hitCancelled == 0)
     {
         this->gauge = static_cast<u16>(services.random.Below(kRoleGaugeSpread) + kRoleGaugeBase);
     }
 
-    this->unk306C = 0;
+    this->hitCancelled = 0;
     int result = this->StatusBit5();
 
     if (result == 1)
@@ -642,10 +642,10 @@ u16 BattleUnit::Counter2F92() const
     return this->unk2F92;
 }
 
-// swd3e.exe 0x0048BA10
-void BattleUnit::IncreaseHits()
+// swd3e.exe 0x0048BA10: the battle talk's catch (command 0x4E) took the unit once more (unk3020 marked too)
+void BattleUnit::CountCaught()
 {
-    ++this->unk2F90;
+    ++this->caughtCount;
     this->unk3020 = 1;
 }
 
@@ -921,7 +921,8 @@ bool BattleUnit::IsDefeatedOrDying() const
 
 // swd3e.exe 0x00490FF0: +1 (capped at 0x22) or -1 on the target count. Stepping past a damage number (DamageTarget):
 // a unit under DamageTransfer with no enrage counter 2FD6 and no pending damage starts its ripple instead (the count
-// unchanged); one with equipment flag Unk36 clears unk306C and sets unk2FD1 to 2 (unless kNumberSpent).
+// unchanged); one with equipment flag HitCancel clears hitCancelled and sets hitCancelWindow to 2 (unless
+// kHitCancelMissed).
 int BattleUnit::StepTargetCount(BattleServices& services, int increase)
 {
     this->regenerationShown = false;
@@ -929,7 +930,7 @@ int BattleUnit::StepTargetCount(BattleServices& services, int increase)
     if (increase != 1)
     {
         --this->targetCount;
-        this->unk3018 = increase;
+        this->numbersShown = increase;
         return increase;
     }
 
@@ -945,19 +946,19 @@ int BattleUnit::StepTargetCount(BattleServices& services, int increase)
             return 0;
         }
 
-        if ((this->equipmentFlags & BattleUnit::Unk36) != 0)
+        if ((this->equipmentFlags & BattleUnit::HitCancel) != 0)
         {
-            this->unk306C = 0;
+            this->hitCancelled = 0;
 
-            if (this->unk2FD1 != kNumberSpent)
+            if (this->hitCancelWindow != kHitCancelMissed)
             {
-                this->unk2FD1 = kNumberCountdown;
+                this->hitCancelWindow = kHitCancelFrames;
             }
         }
     }
 
     ++count;
-    this->unk3018 = 1;
+    this->numbersShown = 1;
     this->targetCount = count;
 
     if (count >= BattleUnit::MaxTargets)
@@ -968,12 +969,12 @@ int BattleUnit::StepTargetCount(BattleServices& services, int increase)
     return count;
 }
 
-// The rebuild: the check of unk3018 in AttackFrame (0x0047FFD0), ChargeAttackFrame (0x00484B20), MagicAttackFrame
+// The rebuild: the check of numbersShown in AttackFrame (0x0047FFD0), ChargeAttackFrame (0x00484B20), MagicAttackFrame
 // (0x004854B0) and Walk (0x00499060). With the active time battle (deviations.md) the turn's regeneration alone does
 // not hold the unit, as one with nothing regenerated.
 bool BattleUnit::NumbersHold(const BattleState& battle) const
 {
-    return this->unk3018 == 1 && !(battle.activeTime && this->regenerationShown);
+    return this->numbersShown == 1 && !(battle.activeTime && this->regenerationShown);
 }
 
 // swd3e.exe 0x004910A0
@@ -1920,7 +1921,7 @@ int BattleUnit::EffectFlag2() const
 // swd32.exe 0x0047F360 (unmatched in swd3e)
 int BattleUnit::EffectFlag3() const
 {
-    return (this->equipmentFlags & BattleUnit::Unk36) != 0 ? 1 : 0;
+    return (this->equipmentFlags & BattleUnit::HitCancel) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00495670: a fixed pose overrides the requested one
@@ -1998,7 +1999,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->commandA = 0;
     this->unk2F8A = 0;
     this->unk2F8E = 0;
-    this->unk2F90 = 0;
+    this->caughtCount = 0;
     this->hurtStep = 0;
     this->drainingGauge = 0;
     this->targetCount = 0;
@@ -2046,7 +2047,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->stage = 0;
     this->held = 0;
     this->unk3014 = 0;
-    this->unk3018 = 0;
+    this->numbersShown = 0;
     this->regenerationShown = false;
     this->unk301C = 0;
     this->unk3020 = 0;
@@ -4599,7 +4600,7 @@ int BattleUnit::CatchRoll(BattleServices& services, u8 level)
 // swd3e.exe 0x0048F390: one frame of the unit staggering from a hit (hurtStep one on each frame not held); 1 once over
 // (from step 13 when its act waits or for a unit of unk3070: hurtStep back to 1, the attack act and the targets
 // cleared, `charging` set) or when its act cannot run or the unit guards. A party member takes the hurt pose (the
-// guard pose when GetGuard or unk306C, not held nor with damage pending; under MarkBit4 act 0xFA), others the hurt
+// guard pose when GetGuard or hitCancelled, not held nor with damage pending; under MarkBit4 act 0xFA), others the hurt
 // pose (0x3A for unk3070); a unit nudged in place stands. The picture shakes back from the hit by StaggerShake
 // (towards the side of an enemy or a unit acting by itself or under MarkBit4; slides back by StaggerSlide while
 // nudged; lifts by StaggerLift when nudged in place, which lasts to step 22), over its shadow; a unit of unk3070
@@ -4621,7 +4622,7 @@ int BattleUnit::HurtFrame(BattleServices& services)
         {
             act.action = kHurtAction;
 
-            if ((this->GetGuard() == 1 || this->unk306C == 1) && (this->marks & BattleUnit::Held) == 0 &&
+            if ((this->GetGuard() == 1 || this->hitCancelled == 1) && (this->marks & BattleUnit::Held) == 0 &&
                 (this->unk2BC0 & kFlag2BC0Damage) == 0)
             {
                 act.action = kHurtGuardAction;
@@ -4901,9 +4902,9 @@ void BattleUnit::IdleFrame(BattleServices& services, int paused)
 {
     ActState& act = this->mainAct;
 
-    if ((this->equipmentFlags & BattleUnit::Unk36) != 0 && this->unk2FD1 > 0)
+    if ((this->equipmentFlags & BattleUnit::HitCancel) != 0 && this->hitCancelWindow > 0)
     {
-        --this->unk2FD1;
+        --this->hitCancelWindow;
     }
 
     this->unk3034 = paused;
@@ -6365,11 +6366,11 @@ int BattleUnit::StepOrbCounters(CounterList& list, const UnitCommand& command)
     return counts;
 }
 
-// swd3e.exe 0x0048FE60: one frame of the unit's damage numbers (while unk3018): from damageSlot to targetCount, each
-// slot waits out its delay, then its four digits (font pushedTargets) hop up one after another by DigitHops (not while
-// held); once all have landed (step 9) a pending extra number (extraNumber: digits unk575FC4..E4) becomes the next
-// slot, and the slot rises and fades by 2 a frame up to kNumberFadeEnd before it is cleared and the next is shown. A
-// leading zero digit is not drawn. 1 once every slot is done (all cleared).
+// swd3e.exe 0x0048FE60: one frame of the unit's damage numbers (while numbersShown): from damageSlot to targetCount,
+// each slot waits out its delay, then its four digits (font pushedTargets) hop up one after another by DigitHops (not
+// while held); once all have landed (step 9) a pending extra number (extraNumber: digits unk575FC4..E4) becomes the
+// next slot, and the slot rises and fades by 2 a frame up to kNumberFadeEnd before it is cleared and the next is shown.
+// A leading zero digit is not drawn. 1 once every slot is done (all cleared).
 int BattleUnit::DrawDamageNumbers(BattleServices& services)
 {
     smooth::Scene scene;
@@ -6557,31 +6558,31 @@ i32 BattleUnit::HitPointShare(int scale) const
     return crt::Ftol(share);
 }
 
-// swd3e.exe 0x0049B700: with equipment flag Unk36 the hit number of the last target slot is taken back once: its
-// amount off the hit damage, its digits cleared (unk2FD1 -2, unk306C 1). Not while panel flag 0x800 is set or once
-// spent; 1 while it holds.
+// swd3e.exe 0x0049B700: with equipment flag HitCancel the hit number of the last target slot is taken back once: its
+// amount off the hit damage, its digits cleared (hitCancelWindow -2, hitCancelled 1). Not while panel flag 0x800 is set
+// or once spent; 1 while it holds.
 int BattleUnit::CancelHitNumber(BattleServices& services)
 {
-    if ((services.state.panelFlags & BattleState::UnkPanel800) != 0 || this->unk2FD1 < 0)
+    if ((services.state.panelFlags & BattleState::UnkPanel800) != 0 || this->hitCancelWindow < 0)
     {
         return 0;
     }
 
-    if (this->unk306C == 1)
+    if (this->hitCancelled == 1)
     {
         return 1;
     }
 
-    if ((this->equipmentFlags & BattleUnit::Unk36) == 0)
+    if ((this->equipmentFlags & BattleUnit::HitCancel) == 0)
     {
         return 0;
     }
 
-    this->unk306C = 0;
+    this->hitCancelled = 0;
 
-    if (this->unk2FD1 <= 0)
+    if (this->hitCancelWindow <= 0)
     {
-        this->unk2FD1 = kNumberSpent;
+        this->hitCancelWindow = kHitCancelMissed;
         return 0;
     }
 
@@ -6611,15 +6612,15 @@ int BattleUnit::CancelHitNumber(BattleServices& services)
         digits = {};
     }
 
-    this->unk2FD1 = kNumberTaken;
-    this->unk306C = 1;
+    this->hitCancelWindow = kHitCancelTaken;
+    this->hitCancelled = 1;
     return 1;
 }
 
-// swd3e.exe 0x0049B7D0
-void BattleUnit::ClearUnk2FD1()
+// swd3e.exe 0x0049B7D0: the enemy's attack is over: the 洞察光環 window closes
+void BattleUnit::ClearHitCancel()
 {
-    this->unk2FD1 = 0;
+    this->hitCancelWindow = 0;
 }
 
 // swd3e.exe 0x0049B7E0: a lasting poison held more than three turns

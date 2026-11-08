@@ -2010,7 +2010,7 @@ int Game::RoleFrame(int role)
 
     BattleRole& unit = this->battleRoles[static_cast<std::size_t>(role)];
     const bool holding =
-        (unit.GetWord2F90() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
+        (unit.CaughtCount() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
     // The rebuild (deviations.md): with the active time battle the gauges step as swd32's RoleFrame steps them, while

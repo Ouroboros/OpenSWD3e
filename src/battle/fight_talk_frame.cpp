@@ -2477,7 +2477,7 @@ int Game::FightTalkCatch()
         BattleUnit& caught = enemyIndex < this->battleEnemies.size()
                                  ? static_cast<BattleUnit&>(this->battleEnemies[enemyIndex])
                                  : static_cast<BattleUnit&>(this->talkStrayUnit);
-        caught.IncreaseHits();
+        caught.CountCaught();
         battle.unk577330 = 1;
         talk.unk578450 = 1;
     }

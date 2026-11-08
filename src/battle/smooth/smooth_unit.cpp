@@ -722,7 +722,7 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
 {
     BattleUnit& unit = this->unit;
 
-    if (unit.unk3018 == 0)
+    if (unit.numbersShown == 0)
     {
         return 0;
     }
@@ -888,7 +888,7 @@ int UnitFrame::NumbersAdvance(BattleServices& services, NumbersView& view)
     clearMode();
     unit.targetCount = 0;
     unit.damageSlot = 0;
-    unit.unk3018 = 0;
+    unit.numbersShown = 0;
     unit.regenerationShown = false;
     return 1;
 }

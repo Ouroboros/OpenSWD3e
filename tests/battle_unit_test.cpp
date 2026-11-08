@@ -226,7 +226,7 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     CHECK_EQ(unit.slotActs[kTurnSlot].id, 0);
     CHECK_EQ(unit.slotActs[BattleUnit::UnkSlot9].id, kSlotAct);
     CHECK_EQ(unit.command.flags, 0);
-    unit.IncreaseHits();
+    unit.CountCaught();
     CHECK_EQ(unit.unk3020, 1);
     CHECK_EQ(unit.SetPosition(kPlaceX, kPlaceY), kPlaceX);
     unit.Move(kMoveStep, -kMoveStep);
@@ -1068,7 +1068,7 @@ TEST_CASE("battle unit: a damage number hops, rises and fades")
     Services all;
     BattleUnit unit;
     CHECK_EQ(unit.DrawDamageNumbers(all.services), 0);
-    unit.unk3018 = 1;
+    unit.numbersShown = 1;
     unit.targetCount = 1;
     unit.damageDigits[0] = {0, 0, kTens, kOnes};
     unit.damageDelays[0] = kDelay;
@@ -1091,10 +1091,10 @@ TEST_CASE("battle unit: a damage number hops, rises and fades")
     CHECK_EQ(frame, kFrames);
     CHECK_EQ(unit.DrawDamageNumbers(all.services), 1);
     CHECK_EQ(unit.targetCount, 0);
-    CHECK_EQ(unit.unk3018, 0);
+    CHECK_EQ(unit.numbersShown, 0);
     CHECK_EQ(unit.damageDigits[0][2], 0);
 
-    unit.unk3018 = 1;
+    unit.numbersShown = 1;
     unit.targetCount = 1;
     unit.damageSlot = 0;
     unit.damageDigits[0] = {0, 0, kTens, kOnes};

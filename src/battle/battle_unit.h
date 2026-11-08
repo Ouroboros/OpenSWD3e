@@ -277,7 +277,7 @@ public:
     {
         Unk32 = 1,
         BladeReturn = 4,
-        Unk36 = 8,
+        HitCancel = 8,
         SpiritDrain = 0x10,
         LifeDrain = 0x20,
         SpiritFan = 0x40,
@@ -461,7 +461,7 @@ public:
     int IsAimed() const;
     u16 GetCommandA() const;
     u16 GetCommandB() const;
-    u16 GetWord2F90() const;
+    u16 CaughtCount() const;
     u16 GetWord2EAE() const;
     int ClearIdleAction();
     int SetCommand(int command);
@@ -491,7 +491,7 @@ public:
     bool IsWeakEnemy() const;
     int DrainSecondGauge();
     u16 Counter2F92() const;
-    void IncreaseHits();
+    void CountCaught();
     void ClearWord2EAE();
     void RaiseUnk2FE8();
     int Unk2FE8() const;
@@ -512,8 +512,8 @@ public:
     i32 Unk2B00() const;
     i32 Unk2B04() const;
     int StepTargetCount(BattleServices& services, int increase);
-    // Whether the numbers over the unit hold its attack, magic, charge and walk (unk3018; the rebuild's active time
-    // battle lets the turn's regeneration alone not hold it).
+    // Whether the numbers over the unit hold its attack, magic, charge and walk (numbersShown; the rebuild's active
+    // time battle lets the turn's regeneration alone not hold it).
     bool NumbersHold(const BattleState& battle) const;
     int PushTargetAlt(u16 value);
     int ResetAfterGuard();
@@ -553,7 +553,7 @@ public:
     int CastPoseFrame(BattleServices& services, i32 slotAct);
     i32 HitPointShare(int scale) const;
     int CancelHitNumber(BattleServices& services);
-    void ClearUnk2FD1();
+    void ClearHitCancel();
     bool PoisonLasted() const;
     i16 PoisonBase() const;
     void CountPoisonTurn();
@@ -871,10 +871,13 @@ public:
     // +0x3070 (swd3e) 1: an enemy whose act has no action 0x26 (0x00487D60), or set by DrawEffects; cleared when
     // ailment 0x200 ends
     i32 unk3070 = 0;
-    // swd3e: with equipment flag Unk36 a hit number is taken back once (CancelHitNumber): the uses left (0x0048BA60
-    // counts them down; -1: none, -2: used), and 1 once it was
-    i8 unk2FD1 = 0;       // +0x2FD1
-    i32 unk306C = 0;      // +0x306C
+    // swd3e: 洞察光環 (equipment flag HitCancel): the space key during an enemy's attack takes the hit number back
+    // (CancelHitNumber). The frames left for it once a damage number is pushed (2 by StepTargetCount, counted down by
+    // IdleFrame; -1: missed, -2: taken back; 0 again when the enemy's attack is over, ClearHitCancel).
+    i8 hitCancelWindow = 0;  // +0x2FD1
+    // +0x306C (swd3e) 1 once the hit number was taken back: the hurt shows the guard pose and the turn reset keeps the
+    // gauge (ResetTurn clears it); cleared again past the next damage number
+    i32 hitCancelled = 0;
     u16 flightDelay = 0;  // +0x2FBE (swd3e) the frames FlyAct waited before its steps grow
     i16 unk2EB4 = 0;      // +0x2EB4 (swd3e) a sum kept by Damage (0x00495330)
     u16 unk2EDE = 0;      // +0x2EDE (swd3e) cleared when a flight arrives (FlyAct, WalkToTarget)
@@ -914,7 +917,9 @@ public:
     u16 unk2F8A = 0;
     u16 commandB = 0;  // +0x2F8C commands 2, 3, 6, 0xD, 0xE, 0xF, 0x29 and 0x50
     u16 unk2F8E = 0;
-    u16 unk2F90 = 0;
+    // +0x2F90 the times the battle talk's catch (command 0x4E, CountCaught) took the unit; never cleared but by Reset.
+    // While set its attack, charge and magic (and an enemy's attack, 0x00487FE0) do not start.
+    u16 caughtCount = 0;
     u16 hurtStep = 0;  // +0x2F94 the step of the stagger (HurtFrame)
     u16 unk2F92 = 0;
     u16 drainingGauge = 0;  // +0x2F96 (swd3e) 1 while the second gauge (unk2BE8) runs down (0x004902E0)
@@ -956,7 +961,7 @@ public:
     i32 unk300C = 0;
     i32 held = 0;  // +0x3010
     i32 unk3014 = 0;
-    i32 unk3018 = 0;
+    i32 numbersShown = 0;  // +0x3018 1 while numbers show over the unit (StepTargetCount; over in DrawDamageNumbers)
     i32 unk301C = 0;
     i32 unk3020 = 0;
     i32 target = 0;       // +0x3024

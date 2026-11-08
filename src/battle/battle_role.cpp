@@ -718,8 +718,8 @@ void BattleRole::ApplyAccessory(const ObjectRecord& accessory, CounterList& prof
             this->equipmentFlags |= BattleUnit::BladeReturn;
             break;
 
-        case AccessoryKind::Unk36:
-            this->equipmentFlags |= BattleUnit::Unk36;
+        case AccessoryKind::HitCancel:
+            this->equipmentFlags |= BattleUnit::HitCancel;
             break;
 
         case AccessoryKind::SpiritDrain:
@@ -1479,7 +1479,7 @@ void BattleRole::Regenerate(BattleServices& services)
     }
 
     // The rebuild's active time battle (deviations.md): whether only regenerated numbers show after it.
-    const bool alone = this->unk3018 == 0 || this->regenerationShown;
+    const bool alone = this->numbersShown == 0 || this->regenerationShown;
     u16 delay = 0;
 
     auto share = [](u16 bonus, i16 maximum)
@@ -1523,7 +1523,7 @@ void BattleRole::Regenerate(BattleServices& services)
         this->restoreStamina = 0;
     }
 
-    this->regenerationShown = alone && this->unk3018 == 1;
+    this->regenerationShown = alone && this->numbersShown == 1;
 }
 
 // swd3e.exe 0x0047F5C0: the command of an accessory of `kind` (the stamina it costs taken first when none is owed):

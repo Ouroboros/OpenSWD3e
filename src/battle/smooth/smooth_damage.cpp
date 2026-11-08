@@ -188,7 +188,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     BattleServices& services = game.battleServices;
     ScenePainter painter(game.battleServices, scene);
 
-    if (role.unk2F90 != 0 || role.NumbersHold(battle))
+    if (role.caughtCount != 0 || role.NumbersHold(battle))
     {
         return 0;
     }
@@ -458,7 +458,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     // The evade chance of the strikes (the drain kind of the first strike carries into the second, as in the original).
     u16 chance = 0;
 
-    if (enemy.unk2F90 != 0)
+    if (enemy.caughtCount != 0)
     {
         return 0;
     }

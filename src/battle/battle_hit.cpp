@@ -1880,7 +1880,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
         battle.staminaDamage = 0;
         battle.spiritDamage = 0;
         battle.darkenUnit = -1;
-        role.ClearUnk2FD1();
+        role.ClearHitCancel();
         unit.SetCommand(kAfterAttackCommand);
 
         if (battle.unk577360 != 1)
@@ -2198,7 +2198,7 @@ int Game::EnemyFrame(int enemy)
     }
 
     const bool holding =
-        (unit.GetWord2F90() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
+        (unit.CaughtCount() != 0 && (battle.unk577290 == 1 || battle.unk577294 == 1)) || battle.enraging == 1;
     unit.IdleFrame(services, holding ? 1 : 0);
 
     if (battle.unk575F38[at] != -1 && this->PlayHitAct(unit, static_cast<u32>(battle.enemiesHitAct), enemy) == 1)
