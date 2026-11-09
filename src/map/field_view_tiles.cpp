@@ -439,8 +439,16 @@ void FieldView::DrawOverlays()
         const int areaBottom = overlay->bottom + MapHeader::TileSize;
         const int left = std::max(field.cameraLeft, areaLeft);
         const int top = std::max(field.cameraTop, areaTop);
-        const int right = std::min(field.cameraRight, areaRight);
-        const int bottom = std::min(field.cameraBottom, areaBottom);
+        int right = std::min(field.cameraRight, areaRight);
+        int bottom = std::min(field.cameraBottom, areaBottom);
+
+        // The rebuild's wider view (deviations.md): nothing past the map, where the original's camera never looks (an
+        // area wider than the map, the horizon of 宇文太師府, showed beside it where no tile covers it).
+        if (this->FillsWindow())
+        {
+            right = std::min(right, MapHeader::TileSize * owner.state.map.width);
+            bottom = std::min(bottom, MapHeader::TileSize * owner.state.map.height);
+        }
 
         if (left >= right || top >= bottom)
         {
