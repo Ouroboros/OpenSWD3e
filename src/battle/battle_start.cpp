@@ -190,9 +190,9 @@ void Game::StartBattle(u16 number)
     battle.unk50EBFC.fill(0);
     battle.slotDamage.fill(0);
     battle.roleListScrolls.fill(0);
-    battle.unk513664.fill(-1);
+    battle.felledUnits.fill(-1);
     battle.slotTargets.fill(-1);
-    battle.unk575F38.fill(-1);
+    battle.hitActPending.fill(-1);
     battle.unk537A20.fill(-1);
     battle.unk537A10 = 0;
     battle.unk537A14 = 0;
@@ -206,14 +206,14 @@ void Game::StartBattle(u16 number)
     battle.skillNamePending = {};
     battle.roleNames = {};
     battle.ghostLockTarget = 0;
-    battle.unk50CE6C.fill(0);
+    battle.secondGaugeWaits.fill(0);
     std::fill_n(battle.stolenItems.begin(), kClearedStolenLists, std::array<u16, 0x20>{});
-    battle.unk5774E8 = 0;
-    battle.unk576FC4 = 0;
+    battle.sameAimCount = 0;
+    battle.lastAimedRole = 0;
     battle.coinTossing = 0;
-    battle.unk576FD0 = 0;
-    battle.unk576FC8 = 0;
-    battle.unk576FCC = 0;
+    battle.markingEnemy = 0;
+    battle.markedRole = 0;
+    battle.markedTurns = 0;
     this->battleHud.ResetMeter();
     battle.unk57734C = 0;
     battle.actingUnit = -1;
@@ -239,7 +239,7 @@ void Game::StartBattle(u16 number)
         record.unit = -1;
         record.allAtOnce = 0;
         record.atParty = 0;
-        record.unk10 = 0;
+        record.atEnemies = 0;
         record.targetsAll = 0;
         record.unk0A = 0;
     }
@@ -449,7 +449,7 @@ void Game::StartBattle(u16 number)
         battle.panelFlags |= BattleState::NoRetreat;
     }
 
-    battle.unk5770D4 = 0;
+    battle.ghostCount = 0;
 
     if (state.GameFlag(GameState::Unk5A))
     {
@@ -465,7 +465,7 @@ void Game::StartBattle(u16 number)
         unit.SetupGhost(place, ghost, services);
         battle.ghostOrderRow = unit.GhostOrder();
         battle.ghostSlot = static_cast<i16>(battle.roleCount);
-        battle.unk5770D4 = 1;
+        battle.ghostCount = 1;
         ++battle.roleCount;
 
         if (this->battleRoles[0].IsDefeated())
@@ -504,7 +504,7 @@ void Game::StartBattle(u16 number)
     }
 
     // Unsigned as in the original: more left out than in the battle wraps around and does not end it.
-    const u32 fighting = battle.roleCount - battle.escortCount - battle.guestCount - battle.unk5770D4;
+    const u32 fighting = battle.roleCount - battle.escortCount - battle.guestCount - battle.ghostCount;
 
     if (static_cast<u32>(battle.defeatedRoles) >= fighting)
     {

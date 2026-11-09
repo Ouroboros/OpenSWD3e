@@ -530,8 +530,8 @@ int HitFrame::HitTargetFrameAdvance(BattleUnit& target, BattleUnit& attacker, u3
         battle.darkGreen = static_cast<i16>(hit.green);
         battle.darkBlue = static_cast<i16>(hit.blue);
         game.DarkenByTint();
-        battle.unk577290 = 1;
-        battle.unk577294 = 1;
+        battle.darkened = 1;
+        battle.attackDarkened = 1;
     }
 
     this->AddAndDrawHitPictures(target, attacker, index, scene);
@@ -626,8 +626,8 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         battle.darkBlue = static_cast<i16>(hit.blue);
         battle.darkRed = static_cast<i16>(hit.red);
         battle.darkGreen = static_cast<i16>(hit.green);
-        battle.unk577290 = 1;
-        battle.unk577294 = 1;
+        battle.darkened = 1;
+        battle.attackDarkened = 1;
         game.DarkenByTint();
     }
 
@@ -663,7 +663,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         }
     }
 
-    if ((hit.target & ActState::UnkTarget4) != 0)
+    if ((hit.target & ActState::Staggers) != 0)
     {
         game.RaiseAllHit(target, all);
         hit.target = 0;

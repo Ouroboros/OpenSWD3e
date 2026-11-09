@@ -342,7 +342,7 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
 
             case SkillOpcode::Unk24:
                 skill.flags |= SkillScript::UnkFlag100000;
-                skill.unk24 = code.WordAt(at);
+                skill.stealChance = code.WordAt(at);
                 code.position += sizeof(u16);
                 break;
 

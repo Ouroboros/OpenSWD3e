@@ -242,7 +242,7 @@ constexpr u16 kFullPercent = 100;  // StepWornCounters: a counter with no top is
 constexpr std::size_t kClearedNameBytes = 0x10;
 constexpr u32 kSeparateKind = 0x800;     // ObjectData::kind: the object plays its own act (UnkCommandFlag1000)
 constexpr u32 kReusableKind = 0x80;      // an object not taken when used
-constexpr int kUnk1FScale = 0xB;         // Unk1F: unk2EB0 is 11 percent of the proficiency and 1 (swd3e)
+constexpr int kUnk1FScale = 0xB;         // Unk1F: commandAttack is 11 percent of the proficiency and 1 (swd3e)
 constexpr int kAccessoryBaseShare = 10;  // the heals add a tenth of their base
 constexpr int kTenthShare = 10;          // Unk22 / Unk24: the proficiency is halved, less a tenth of it (swd3e)
 constexpr int kSpiritShare = 5;          // Unk23: a fifth of the proficiency
@@ -254,7 +254,7 @@ constexpr u16 kCriticalChance = 5;           // a roll above it is critical
 constexpr u16 kWalkCommand = 0xC8;           // command A of a walking attack (its command in command B)
 constexpr u16 kTwoCommand = 2;               // PrepareCommand (swd3e): the skill name is kept for command B 2
 constexpr u16 kStillSkill = 0xA6;            // the skill a MarkBit4 role takes in place of its weapon's
-constexpr u32 kStandAsideFlag = 0x10000000;  // unk2BC0: under StatusBit5 the role stands aside
+constexpr u32 kStandAsideFlag = 0x10000000;  // stateFlags: under Confused the role stands aside
 constexpr i16 kStandAsideX = 0x154;
 constexpr i16 kStandAsideY = 0x140;
 
@@ -413,7 +413,7 @@ void BattleRole::SetupEscort(const UnitPlacement& at, BattleServices& services, 
     record.attackBonus = object.attack;
     record.defenseBonus = object.defense;
     record.agility = static_cast<i16>(object.agility);
-    record.wisdom = static_cast<i16>(object.unk60);
+    record.wisdom = static_cast<i16>(object.wisdom);
     record.evasion = object.battleLevel;
     record.level = static_cast<u8>(object.level);
     std::copy_n(object.resistances.begin(), object.resistances.size(), record.resistances.begin());
@@ -446,7 +446,7 @@ void BattleRole::TakeObjectForm(Database& database, u16 id)
     record.attackBonus = static_cast<u16>(record.attackBonus + object.attack);
     record.defenseBonus = static_cast<u16>(record.defenseBonus + object.defense);
     record.agility = static_cast<i16>(record.agility + object.agility);
-    record.wisdom = static_cast<i16>(record.wisdom + object.unk60);
+    record.wisdom = static_cast<i16>(record.wisdom + object.wisdom);
     record.evasion = static_cast<i16>(record.evasion + object.battleLevel);
     record.level = static_cast<u8>(record.level + object.level);
     std::copy_n(object.resistances.begin(), object.resistances.size(), record.resistances.begin());
@@ -847,18 +847,18 @@ void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadab
         target.StepTargetCount(services, 1);
     }
 
-    target.RaiseFlag2BC0(services.state);
+    target.Stagger(services.state);
     this->evadeRolled = 1;
 }
 
 // swd3e.exe 0x0047FFD0: one frame of the role's attack on `target`; 1 once it is over. A unit with autoControl or
-// StatusBit5 and an AtTarget command fades in first (turning first under unk2BC0 bit 28); one with guestControl attacks
-// from the middle of the field. The attack act (the critical one of a party member, with the weapon's act, unless
-// MarkBit4; act 0xFA under MarkBit4) is drawn, an error box (returning 1) when it cannot run; its target bits play the
-// effect in the recoil act, quake the screen, slide the units, start the follow-up in slotActs[slot] (fading the field
-// by the act's lights), or strike. The follow-up (the command's cast act) flies to the target (TargetsUnit) or is
-// placed on it, may add a hit picture and strike again; once it waits it darkens by 4 a frame. When the attack act
-// waits too and the afterimages and hit pictures are done, the acts are cleared; without a critical attack an extra
+// Confused and an AtTarget command fades in first (turning first under stateFlags bit 28); one with guestControl
+// attacks from the middle of the field. The attack act (the critical one of a party member, with the weapon's act,
+// unless MarkBit4; act 0xFA under MarkBit4) is drawn, an error box (returning 1) when it cannot run; its target bits
+// play the effect in the recoil act, quake the screen, slide the units, start the follow-up in slotActs[slot] (fading
+// the field by the act's lights), or strike. The follow-up (the command's cast act) flies to the target (TargetsUnit)
+// or is placed on it, may add a hit picture and strike again; once it waits it darkens by 4 a frame. When the attack
+// act waits too and the afterimages and hit pictures are done, the acts are cleared; without a critical attack an extra
 // attack repeats it, and the recoil tint is left at 1.
 int BattleRole::AttackFrame(BattleServices& services, BattleUnit& target, int slot)
 {
@@ -1071,7 +1071,7 @@ u16 BattleRole::AttackPose(BattleServices& services)
     return result;
 }
 
-// swd3e.exe 0x004832C0: whether the role absorbs the target: only an Absorbable monster (not UnkKind20). One of the
+// swd3e.exe 0x004832C0: whether the role absorbs the target: only an Absorbable monster (not Boss). One of the
 // category of the item used (absorbCategory) on a 0..9 roll below absorbChance; else one of class up to
 // kMaxAbsorbClass, at most 11 levels above the role. Ten levels or more below it always; 7..11 above it at a quarter
 // of its hit points or less; otherwise at a third or less, or by a 0..99 roll: up to 80 for 5..9 levels below, 20 less
@@ -1083,7 +1083,7 @@ int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) co
     i32 maximum = 0;
     target.GetHitPoints(hitPoints, maximum);
 
-    if ((data.kind & ObjectData::UnkKind20) != 0 || (data.kind & ObjectData::Absorbable) == 0)
+    if ((data.kind & ObjectData::Boss) != 0 || (data.kind & ObjectData::Absorbable) == 0)
     {
         return 0;
     }
@@ -1240,7 +1240,7 @@ int BattleRole::BoomerangFrame(BattleServices& services, BattleUnit& target, i32
 
 // swd3e.exe 0x00485DD0: one frame of the role's leap spell (magic act in slot act 8, stages in stage); 1 once the
 // battle marks the spell over after stage 3 (the act cleared). Stage 0 draws the magic act; stage 1 the next action on
-// the target; stage 2 the action after that walking home (UnkFlag8 set), stage 3 once home. A waiting act moves on a
+// the target; stage 2 the action after that walking home (StepsIn set), stage 3 once home. A waiting act moves on a
 // stage; a follow-up marks the spell cast.
 int BattleRole::LeapSpellFrame(BattleServices& services, BattleUnit& target)
 {
@@ -1386,7 +1386,7 @@ void BattleRole::CancelCommand()
     this->restoreHitPoints = 0;
     this->restoreSpirit = 0;
     this->restoreStamina = 0;
-    this->unk2EB0 = 0;
+    this->commandAttack = 0;
     this->usedItem = 0;
 
     if (this->selectedItem == nullptr)
@@ -1528,9 +1528,9 @@ void BattleRole::Regenerate(BattleServices& services)
 
 // swd3e.exe 0x0047F5C0: the command of an accessory of `kind` (the stamina it costs taken first when none is owed):
 // the kind sets its accessoryCommands bit and becomes command A (some take command B with UnkCommandFlag400, command A
-// 0) and most read the accessory's proficiency into proficiency; Unk1F scales unk2EB0, Unk22 / Unk23 / Unk24 a heal of
-// the hit points / spirit / stamina of the battle record; swd3e adds Unk25 (command A only, no step), Unk27 (unk2EB2
-// up), Unk28 (armed by one use, taken as command A by the next) and Unk29. The proficiencies then step by
+// 0) and most read the accessory's proficiency into proficiency; Unk1F scales commandAttack, Unk22 / Unk23 / Unk24 a
+// heal of the hit points / spirit / stamina of the battle record; swd3e adds Unk25 (command A only, no step), Unk27
+// (unk2EB2 up), Unk28 (armed by one use, taken as command A by the next) and Unk29. The proficiencies then step by
 // kAccessoryStep.
 void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 {
@@ -1614,7 +1614,8 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             this->commandA = 0;
             this->commandB = kind;
             this->AccessoryProficiency(kind, proficiency);
-            this->unk2EB0 = static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);  // 0x0047F77B: 32 bits
+            this->commandAttack =
+                static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);  // 0x0047F77B: 32 bits
             break;
 
         case AccessoryKind::Unk20:
@@ -1709,12 +1710,12 @@ int BattleRole::RollCritical(BattleServices& services)
 }
 
 // swd3e.exe 0x004808D0: the role's chosen command prepared (the start of the skill name cleared unless command B is 2;
-// 1 at once without a command). A UnkCommandFlag200 command takes command unk34A8; a walking one (UnkFlag8 /
+// 1 at once without a command). A UnkCommandFlag200 command takes command unk34A8; a walking one (StepsIn /
 // UnkFlag20) goes to command B with command A kWalkCommand (1), otherwise 0. Else the attack is set from the battle
 // record (not for Unk1B), the accessory command applied, the critical rolled and the command loaded from skill 0 (a
 // LifeDrain equipment drains life); without a weapon skill a walking attack (command 1, Steal or Unk1A of a party
 // member) walks and it is 0. With one the command is loaded anew from the weapon's skill (0xA6 under MarkBit4): under
-// StatusBit5 a walking attack of command 1 walks (1), or with unk2BC0 bit 28 and UnkFlag4 the role turns and stands at
+// Confused a walking attack of command 1 walks (1), or with stateFlags bit 28 and UnkFlag4 the role turns and stands at
 // (0x154, 0x140) (1); otherwise a walking attack, or Steal, walks as without a skill. 1.
 int BattleRole::PrepareCommand(BattleServices& services, Database& database)
 {
@@ -1728,7 +1729,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
         return 1;
     }
 
-    const u16 walking = UnitCommand::UnkFlag8 | UnitCommand::UnkFlag20;
+    const u16 walking = UnitCommand::StepsIn | UnitCommand::UnkFlag20;
 
     auto walk = [this]
     {
@@ -1766,7 +1767,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
 
     if (kind != static_cast<u16>(AccessoryKind::Unk1B))
     {
-        this->unk2EB0 = this->battleRecord->attackBonus;
+        this->commandAttack = this->battleRecord->attackBonus;
     }
 
     this->UseAccessorySkill(services, kind);
@@ -1799,14 +1800,14 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
         this->command.actionFlags |= UnitCommand::DrainsLife;
     }
 
-    if (this->StatusBit5() == 1)
+    if (this->Confused() == 1)
     {
         if (this->commandA != 1)
         {
             return 1;
         }
 
-        if ((this->unk2BC0 & kStandAsideFlag) != 0)
+        if ((this->stateFlags & kStandAsideFlag) != 0)
         {
             if ((this->command.flags & UnitCommand::UnkFlag4) != 0)
             {
@@ -2810,12 +2811,13 @@ int BattleRole::CanPaySkill(BattleServices& services, int category, int index)
 // swd3e.exe 0x00481540: the `index`th object of `category` (0..6) usable by roles bit 0 or 2 with some left (category
 // 6 whoever may use it; category 4 also counts every object with kListedObject) taken as the role's command: the
 // command and the first bytes of the skill name cleared, the used item 0; UnkCommandFlag4000 set and the object
-// chosen. A listed object of category 4 loads its unk3E script, unk2EB0 its unk24 (1). An object with an actionKind
-// script loads it (not for category 6), else its unk3E script; a spirit or stamina cost (unk34A0, staminaCost; the
-// stamina cost doubled from the object's third use in the battle when it has no actionKind script) above the role's
-// gives 0. The heals as SelectSkill; `act` the cast act; an object of kind kSeparateKind sets UnkCommandFlag1000 with
-// its act as the used item. `kind` 1 for category 0 or a shared kind bit 8. The object's taken count rises unless it is
-// of kind bit kReusableKind (without kind bit kCountedKind) or of category 3. 0 past the end or for index 0.
+// chosen. A listed object of category 4 loads its unk3E script, commandAttack its unk24 (1). An object with an
+// actionKind script loads it (not for category 6), else its unk3E script; a spirit or stamina cost (unk34A0,
+// staminaCost; the stamina cost doubled from the object's third use in the battle when it has no actionKind script)
+// above the role's gives 0. The heals as SelectSkill; `act` the cast act; an object of kind kSeparateKind sets
+// UnkCommandFlag1000 with its act as the used item. `kind` 1 for category 0 or a shared kind bit 8. The object's taken
+// count rises unless it is of kind bit kReusableKind (without kind bit kCountedKind) or of category 3. 0 past the end
+// or for index 0.
 int BattleRole::SelectObject(
     Database& database,
     const BattleState& battle,
@@ -2882,7 +2884,7 @@ int BattleRole::SelectObject(
     if (kinds == kCategory4 && (data.costBits & kListedObject) != 0)
     {
         this->LoadCommand(database, data.skillScript);
-        this->unk2EB0 = data.attackBonusUp;
+        this->commandAttack = data.attackBonusUp;
         return 1;
     }
 

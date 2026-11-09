@@ -41,17 +41,17 @@ namespace
 {
 
 constexpr i32 kRoleHomeAction = 0x2F;     // swd3e (swd32: 0x32)
-constexpr u32 kStandsAside = 0x10000000;  // unk2BC0: under StatusBit5 the unit stands aside and does not walk home
+constexpr u32 kStandsAside = 0x10000000;  // stateFlags: under Confused the unit stands aside and does not walk home
 constexpr int kFixedOriginX = 0xF0;       // HasFixedOrigin: the walk starts from here
 constexpr int kFixedOriginY = 0x12C;
 constexpr int kHomeSteps = 0x1C;  // ReturnHome: line steps per frame and frame followed up
 constexpr int kGhostHomeSteps = 0x18;
 constexpr i32 kHomePose = 0x28;
-constexpr i32 kHomePose1 = 0x30;           // an enemy with unk2FB6 1
+constexpr i32 kHomePose1 = 0x30;           // an enemy with attackPose 1
 constexpr i32 kHomePose2 = 0x31;           // and with kSecondHomePose
 constexpr i32 kRoleWalkAction = 0x2E;      // swd3e (swd32: 0x2A)
-constexpr u32 kWalkBlocked = 0x80000000u;  // unk2BC0: the unit does not walk (WalkToTarget, swd3e)
-constexpr u32 kVanishWalk = 0x2000000;     // unk2BC0: the act shows at the target until it ends (swd3e)
+constexpr u32 kWalkBlocked = 0x80000000u;  // stateFlags: the unit does not walk (WalkToTarget, swd3e)
+constexpr u32 kVanishWalk = 0x2000000;     // stateFlags: the act shows at the target until it ends (swd3e)
 constexpr i32 kVanishAction = 0x39;
 constexpr u16 kVanishingAct = 1;  // a unit of act 1 sets kVanishWalk when it arrives
 constexpr int kWalkSteps = 0x18;  // WalkToTarget: line steps per frame walked
@@ -63,7 +63,7 @@ constexpr u16 kActNudge = 0x28;
 constexpr u16 kEnemyFixedX = 0x1A4;  // HasFixedOrigin: an enemy's act stands here
 constexpr u16 kEnemyFixedY = 0x118;
 constexpr u16 kAfterImageTarget = 0x100;  // with FollowsUp the act leaves afterimages
-constexpr u32 kAfterImages = 0x40000;     // unk2BC0: the unit's acts leave afterimages
+constexpr u32 kAfterImages = 0x40000;     // stateFlags: the unit's acts leave afterimages
 constexpr int kRoundShift = 8;            // ActState::counter: the round in the high byte
 constexpr i16 kAfterImageTintBlue = 0xA;
 constexpr i16 kAfterImageLevel = 0xE;
@@ -231,7 +231,7 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
     if (unit.kind != 0)
     {
         if ((unit.accessoryCommands & kWalksHome) == 0 &&
-            (unit.command.flags & (UnitCommand::UnkFlag8 | UnitCommand::UnkFlag20)) == 0)
+            (unit.command.flags & (UnitCommand::StepsIn | UnitCommand::UnkFlag20)) == 0)
         {
             return 1;
         }
@@ -242,12 +242,12 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
     }
 
     if (unit.autoControl == 1 || unit.guestControl == 1 ||
-        (unit.StatusBit5() == 1 && (unit.unk2BC0 & kStandsAside) != 0) || unit.MarkBit4() == 1)
+        (unit.Confused() == 1 && (unit.stateFlags & kStandsAside) != 0) || unit.MarkBit4() == 1)
     {
         return 1;
     }
 
-    unit.unk2FEC = 1;
+    unit.inAction = 1;
     ActState& act = unit.attackAct;
     ActState& pose = unit.recoilAct;
     act.hold = unit.held == 1 ? 1 : 0;
@@ -275,12 +275,12 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
 
     if (unit.kind == 0)
     {
-        if (unit.unk2FB6 == 1)
+        if (unit.attackPose == 1)
         {
             pose.action = kHomePose1;
         }
 
-        if (unit.unk2FB6 == kSecondHomePose)
+        if (unit.attackPose == kSecondHomePose)
         {
             pose.action = kHomePose2;
         }
@@ -454,15 +454,15 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
         return 1;
     }
 
-    if ((unit.unk2BC0 & kWalkBlocked) != 0)
+    if ((unit.stateFlags & kWalkBlocked) != 0)
     {
         return 0;
     }
 
-    unit.unk2FEC = 1;
+    unit.inAction = 1;
     ActState& act = unit.attackAct;
     ActState& pose = unit.recoilAct;
-    const bool vanishing = (unit.unk2BC0 & kVanishWalk) != 0;
+    const bool vanishing = (unit.stateFlags & kVanishWalk) != 0;
     act.id = unit.actId;
     act.action = vanishing ? kVanishAction : kRoleWalkAction;
 
@@ -494,12 +494,12 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
 
     if (unit.kind == 0)
     {
-        if (unit.unk2FB6 == 1)
+        if (unit.attackPose == 1)
         {
             pose.action = kHomePose1;
         }
 
-        if (unit.unk2FB6 == kSecondHomePose)
+        if (unit.attackPose == kSecondHomePose)
         {
             pose.action = kHomePose2;
         }
@@ -539,7 +539,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
     view.picture = {act.frame, act.picture, true};
     view.who = &unit;
 
-    // swd3e: unk2BC0 bit 25 shows the act at the target until it ends, then takes the command.
+    // swd3e: stateFlags bit 25 shows the act at the target until it ends, then takes the command.
     if (vanishing)
     {
         view.x = toX - static_cast<i16>(unit.actOffsetX);
@@ -552,7 +552,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
             return 0;
         }
 
-        unit.unk2BC0 &= ~kVanishWalk;
+        unit.stateFlags &= ~kVanishWalk;
         unit.flight = LineWalker{};
         pose = ActState{};
         act = ActState{};
@@ -644,7 +644,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
 
         if (unit.actId == kVanishingAct)
         {
-            unit.unk2BC0 |= kVanishWalk;
+            unit.stateFlags |= kVanishWalk;
         }
         else
         {
@@ -1138,18 +1138,18 @@ int UnitFrame::ActionAdvance(BattleServices& services, BattleUnit& target, ActSt
     services.audio.SetSoundPan(act.view, centre >= kPanCentre ? kFadePan : -kFadePan);
     act.view = 0;
 
-    // swd3e: an act that follows up with target bit 0x100 leaves afterimages (unk2BC0 bit 18; not for an auto unit).
+    // swd3e: an act that follows up with target bit 0x100 leaves afterimages (stateFlags bit 18; not for an auto unit).
     if ((act.target & ActState::FollowsUp) != 0 && (act.target & kAfterImageTarget) != 0)
     {
         if (unit.autoControl == 0)
         {
-            unit.unk2BC0 |= kAfterImages;
+            unit.stateFlags |= kAfterImages;
         }
 
         act.target = 0;
     }
 
-    if ((unit.unk2BC0 & kAfterImages) != 0)
+    if ((unit.stateFlags & kAfterImages) != 0)
     {
         if (act.waiting == 0)
         {
@@ -2086,7 +2086,7 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
 
         if (unit.evadeRolled != 0 || target.RollEvade(services, chance) == 0)
         {
-            target.RaiseFlag2BC0(battle);
+            target.Stagger(battle);
             i16 spirit = 0;
             i16 stamina = 0;
             i32 damage = unit.kind != 0 ? unit.HitDamage(services, target, spirit, stamina)
@@ -2419,10 +2419,10 @@ int UnitFrame::DrawAimedAdvance(
         services.state.quakePhase = 0;
     }
 
-    if ((act.target & ActState::UnkTarget4) != 0)
+    if ((act.target & ActState::Staggers) != 0)
     {
         act.target = 0;
-        target.RaiseFlag2BC0(services.state);
+        target.Stagger(services.state);
     }
 
     painter.SetSource(unit.picture->data.data());
@@ -2640,10 +2640,10 @@ int UnitFrame::DrawFadeInAdvance(BattleServices& services, const BattleUnit& anc
         return 1;
     }
 
-    unit.unk2FEC = 1;
-    unit.recoilAct.action = unit.commandA == BattleUnit::UnkCommand1 ? kCommand1Action : kShadowAction;
+    unit.inAction = 1;
+    unit.recoilAct.action = unit.commandA == BattleUnit::AttackCommand ? kCommand1Action : kShadowAction;
     unit.recoilAct.id = unit.actId;
-    const u16 pose = unit.unk2FB6;
+    const u16 pose = unit.attackPose;
 
     if (pose != 0)
     {
@@ -2744,7 +2744,7 @@ int UnitFrame::DrawFadeOutAdvance(BattleServices& services, Scene& scene)
     BattleUnit& unit = this->unit;
     ScenePainter painter(services, scene);
 
-    if ((unit.unk2BC0 & kFlag2BC0) != 0)
+    if ((unit.stateFlags & kStaggering) != 0)
     {
         return 0;
     }
@@ -2762,7 +2762,7 @@ int UnitFrame::DrawFadeOutAdvance(BattleServices& services, Scene& scene)
     }
 
     unit.recoilAct.id = unit.actId;
-    unit.unk2FEC = 1;
+    unit.inAction = 1;
     unit.recoilAct.action = kShadowAction;
     unit.recoilAct.hold = unit.held == 1 ? 1 : 0;
 
@@ -2900,7 +2900,7 @@ int UnitFrame::RunAwayAdvance(BattleServices& services, Scene& scene)
     }
 
     run.id = unit.actId;
-    unit.unk2FEC = 1;
+    unit.inAction = 1;
     run.action = kShadowAction;
     run.hold = 0;
 

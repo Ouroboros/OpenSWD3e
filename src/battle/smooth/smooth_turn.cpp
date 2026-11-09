@@ -1292,7 +1292,7 @@ void TurnFrame::DrawControlMenuAdvance(int x, int y, int cursor, Scene& scene)
 
         if (cursor == number)
         {
-            battle.unk577018 = 0;
+            battle.controlChoice = 0;
             battle.orderedSkill = static_cast<i32>(id);
         }
     }
@@ -1317,7 +1317,7 @@ void TurnFrame::DrawControlMenuAdvance(int x, int y, int cursor, Scene& scene)
         if (cursor == number)
         {
             battle.orderedSkill = 0;
-            battle.unk577018 = choice + 1;
+            battle.controlChoice = choice + 1;
         }
     }
 
@@ -2305,7 +2305,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
             const auto partyRole = static_cast<std::size_t>(battle.partyRoles[index]);
             RoleRecord& record = game.party.roles[partyRole];
 
-            if (record.level < battle.levelCap && role.HasEffectBits(BattleUnit::UnkStatus4) == 0)
+            if (record.level < battle.levelCap && role.HasEffectBits(BattleUnit::Stone) == 0)
             {
                 record.totalExperience += battle.battleExperience;
             }
@@ -2843,7 +2843,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             kDebugFlagsY,
             WinFormat(
                 kFlagsDebugLine,
-                {battle.unk576084, static_cast<i32>(battle.darkenUnit), game.fightTalk.battleRuns}
+                {battle.enemiesUnhurt, static_cast<i32>(battle.darkenUnit), game.fightTalk.battleRuns}
             )
         );
         text(

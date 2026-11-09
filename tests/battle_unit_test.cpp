@@ -128,8 +128,8 @@ constexpr swd3e::i16 kPlaceY = 40;
 constexpr swd3e::i16 kMoveStep = 5;
 constexpr swd3e::i16 kHitPoints = 99;
 constexpr swd3e::u8 kFallbackDefeatPose = 6;     // the pose of a unit defeated without one
-constexpr swd3e::u32 kRaiseBlocked = 0x2000000;  // status bit 25 blocks RaiseFlag2BC0
-constexpr swd3e::u32 kFlag2BC0Damage = 0x2000;   // set by RaiseFlag2BC0 with damage pending (swd3e)
+constexpr swd3e::u32 kRaiseBlocked = 0x2000000;  // status bit 25 blocks Stagger
+constexpr swd3e::u32 kFlag2BC0Damage = 0x2000;   // set by Stagger with damage pending (swd3e)
 constexpr swd3e::u8 kEvadeSkill = 9;
 constexpr swd3e::u8 kSureEvadeStreak = 0x1A;  // swd3e: the failed rolls after which a party role evades
 constexpr swd3e::u16 kSureChance = 10;        // a chance of ten in ten
@@ -245,13 +245,13 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     CHECK_EQ(role.hitPoints, 0);
     CHECK_EQ(unit.defeatPose, kFallbackDefeatPose);
     unit.status = kRaiseBlocked;
-    unit.RaiseFlag2BC0(all.state);
-    CHECK_EQ(unit.Flag2BC0(), 0);
+    unit.Stagger(all.state);
+    CHECK_EQ(unit.Staggering(), 0);
     unit.status = 0;
     unit.pendingDamage = 1;
-    unit.RaiseFlag2BC0(all.state);
-    CHECK_EQ(unit.Flag2BC0(), 1);
-    CHECK((unit.unk2BC0 & kFlag2BC0Damage) != 0);
+    unit.Stagger(all.state);
+    CHECK_EQ(unit.Staggering(), 1);
+    CHECK((unit.stateFlags & kFlag2BC0Damage) != 0);
 }
 
 TEST_CASE("battle unit: evasion, vitals and scaling")
@@ -662,15 +662,15 @@ TEST_CASE("battle unit: an enemy with nothing to use attacks")
     // swd3e: no roll is drawn before the attack.
     CHECK_EQ(enemy.ChooseCommand(all.services, database, act), 0);
     CHECK_EQ(all.random.Below(kCatchRoll), reference.Below(kCatchRoll));
-    CHECK_EQ(enemy.commandA, BattleUnit::UnkCommand1);
+    CHECK_EQ(enemy.commandA, BattleUnit::AttackCommand);
     CHECK_EQ(enemy.choicePhase, 1);
     CHECK_EQ(enemy.idleTurns, 1);
     CHECK_EQ(enemy.itemWait, 1);
     CHECK_EQ(enemy.skillWait, 1);
-    CHECK_EQ(enemy.unk2EB0, kEnemyAttack);
+    CHECK_EQ(enemy.commandAttack, kEnemyAttack);
     enemy.ChooseCommand(all.services, database, act);
     CHECK_EQ(enemy.idleTurns, 2);
-    CHECK_EQ(enemy.unk2EB0, 2 * kEnemyAttack);
+    CHECK_EQ(enemy.commandAttack, 2 * kEnemyAttack);
 }
 
 TEST_CASE("battle unit: an enemy chooses its first skill")
@@ -697,12 +697,12 @@ TEST_CASE("battle unit: an enemy chooses its first skill")
         const bool first = reference.Below(kCatchRoll) <= kFirstSkillRoll;
         CHECK_EQ(enemy.ChooseCommand(all.services, database, act), 0);
         CHECK_EQ(enemy.choicePhase, 0);
-        CHECK_EQ(enemy.commandA, BattleUnit::UnkCommand1);
+        CHECK_EQ(enemy.commandA, BattleUnit::AttackCommand);
 
         if (first)
         {
             CHECK_EQ(object.data.skillACount, 0);
-            CHECK_EQ(enemy.unk2FB6, 1);
+            CHECK_EQ(enemy.attackPose, 1);
             CHECK_EQ(enemy.idleTurns, 1);  // swd3e: a skill leaves the idle turns
         }
         else
@@ -719,17 +719,17 @@ TEST_CASE("battle unit: the damage of an enemy's hit")
     Services all;
     swd3e::ObjectRecord attackerData;
     attackerData.data.level = kEnemyLevel;
-    attackerData.data.unk60 = kEnemyLevel;
+    attackerData.data.wisdom = kEnemyLevel;
     BattleUnit attacker;
     attacker.data = &attackerData;
-    attacker.unk2EB0 = kAttackValue;
+    attacker.commandAttack = kAttackValue;
     swd3e::ObjectRecord targetData;
     targetData.data.defense = static_cast<swd3e::u16>(kTargetDefense);
     BattleUnit target;
     target.data = &targetData;
     swd3e::Random reference;
 
-    attacker.commandA = BattleUnit::UnkCommand2;
+    attacker.commandA = BattleUnit::SkillCommand;
     all.random.Seed(kSeed);
     reference.Seed(kSeed);
     const swd3e::u32 spread = reference.Below(kSpread);
@@ -738,14 +738,14 @@ TEST_CASE("battle unit: the damage of an enemy's hit")
     const int bonus = static_cast<int>(reference.Below(limit)) + 1;
     CHECK_EQ(attacker.EnemyHitDamage(all.services, target), kAttackValue + bonus);
 
-    attacker.commandA = BattleUnit::UnkCommand1;
+    attacker.commandA = BattleUnit::AttackCommand;
     all.random.Seed(kSeed);
     reference.Seed(kSeed);
     const int roll = static_cast<int>(reference.Below(kEnemyLevel / kLevelShare + kLevelRollBase)) + 1;
     CHECK_EQ(attacker.EnemyHitDamage(all.services, target), kAttackValue + roll - kTargetDefense);
 
     targetData.data.defense = static_cast<swd3e::u16>(kHighDefense);
-    attacker.unk2FB6 = 1;
+    attacker.attackPose = 1;
     CHECK_EQ(attacker.EnemyHitDamage(all.services, target), 1);
 
     attacker.restoreHitPoints = kHeal;
@@ -911,7 +911,7 @@ TEST_CASE("battle state: the initial turn and push values match swd3e.exe")
                 state.lastRoleHit,
                 state.lastEnemyHit,
                 state.lastRoleDefeated,
-                state.unk4BF1CA,
+                state.lastFelled,
                 state.unk4BF1CC,
                 state.levelCap
             }

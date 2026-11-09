@@ -185,8 +185,9 @@ struct UnitCommand
     {
         TargetsUnit = 1,  // a target command (ClearMoveAxes)
         UnkFlag2 = 2,
-        UnkFlag4 = 4,      // swd3e: under StatusBit5 with unk2BC0 bit 28 the role stands aside (PrepareCommand)
-        UnkFlag8 = 8,      // with UnkFlag20: a party role walks home after it acts (ReturnHome)
+        UnkFlag4 = 4,  // swd3e: under Confused with stateFlags bit 28 the role stands aside (PrepareCommand)
+        StepsIn = 8,   // the unit goes to the target to act (an enemy fades in there; with UnkFlag20 a party role walks
+                       // home after it acts, ReturnHome)
         UnkFlag10 = 0x10,  // an enemy walks home after it acts
         UnkFlag20 = 0x20,  // the walks wait for the act to follow up, then cover 1/16 (there) or 1/12 (home) a frame
         AtTarget = 0x38,   // any of bits 3..5: DrawAction places the act on the target (inferred from DrawAction)
@@ -208,7 +209,7 @@ struct UnitCommand
     u16 pose = 0;         // +0x1E the pose of a defeat (its low byte)
     i16 unk20 = 0;        // +0x20
     u16 unk22 = 0;        // +0x22
-    u16 unk24 = 0;        // +0x24 (swd3e)
+    u16 stealChance = 0;  // +0x24 (swd3e) a steal (action flag 0x100000) succeeds on a 0..9 roll under it
     u16 target = 0;       // +0x26 the first value of CommandTarget
     u16 unk28 = 0;        // +0x28 (swd3e) the second value of CommandTarget
     u8 turns = 0;         // +0x2A
@@ -292,7 +293,7 @@ public:
     {
         UnkStatus1 = 1,
         UnkStatus2 = 2,
-        UnkStatus4 = 4,
+        Stone = 4,  // stone (石化): no damage nor stagger, the side all stone loses (CheckStoneSides)
         UnkStatus8 = 8,
         UnkStatus10 = 0x10,  // cleared with mark UnkMark100
         UnkStatus20 = 0x20,
@@ -302,7 +303,7 @@ public:
         StatsScaled = 0x200,  // a party role's attributes are scaled (undone when it ends)
         UnkStatus400 = 0x400,
         Poisoned = 0x1000,         // swd3e: a poison (EffectNode::bits 0x1000) eats hit points a tick
-        DamageTransfer = 0x20000,  // swd3e: 傷害轉移 (no ailment lands; RaiseFlag2BC0 outside a cast spell)
+        DamageTransfer = 0x20000,  // swd3e: 傷害轉移 (no ailment lands; Stagger outside a cast spell)
         StrongAttack = 0x40000,    // swd3e: 強攻擊 (a role's attacks are always critical)
         DefenseDown = 0x100000,
         AttackDown = 0x1000000,
@@ -318,11 +319,11 @@ public:
     static constexpr int SlotActs = 11;
     static constexpr i32 PartyRole = 1;
 
-    // BattleUnit::commandA / commandB values (meanings not yet known).
+    // BattleUnit::commandA / commandB values (most meanings not yet known).
     enum Command : u16
     {
-        UnkCommand1 = 1,  // fades in with action 0x28
-        UnkCommand2 = 2,
+        AttackCommand = 1,  // the attack (ChooseAttack; fades in with action 0x28)
+        SkillCommand = 2,   // a skill or a spell (LoadSkillAction, ChooseCommand)
         UnkCommand3 = 3,
         UnkCommand4 = 4,  // swd3e: an enemy takes the anchor of its stand act (GetOffset)
         UnkCommand6 = 6,
@@ -421,7 +422,7 @@ public:
     static constexpr int UnkSlot8 = 8;
     static constexpr int UnkSlot9 = 9;
     static constexpr u32 NoTarget = 0xFFFFFFFF;
-    static constexpr u16 NoUnk2EAE = 0xFFFF;
+    static constexpr u16 NoAim = 0xFFFF;
     static constexpr u16 MaxTargets = 0x23;      // pushedTargets entries
     static constexpr u16 Healing = 0x8000;       // a damage amount that heals
     static constexpr i32 Opaque = 0xF;           // fadeLevel of a fully visible unit; the fade out counts down from it
@@ -457,17 +458,17 @@ public:
     i16 GetPosition(u16& x, u16& y) const;
     const Picture* StepIdleAction(BattleServices& services);
     const void* SelectEntry(int second) const;
-    int GetValue2FEC() const;
+    int InAction() const;
     int IsAimed() const;
     u16 GetCommandA() const;
     u16 GetCommandB() const;
     u16 CaughtCount() const;
-    u16 GetWord2EAE() const;
+    u16 Aim() const;
     int ClearIdleAction();
     int SetCommand(int command);
-    void ClearFlag2BC0();
-    void RaiseFlag2BC0(const BattleState& battle);
-    int Flag2BC0() const;
+    void ClearStagger();
+    void Stagger(const BattleState& battle);
+    int Staggering() const;
     int PushTarget(u16 target);
     int StartDefeat(int kind);
     int ResetTurn(BattleServices& services);
@@ -476,7 +477,7 @@ public:
     int ActFlag15() const;
     int ActFlag17() const;
     bool HasActionFlags(u32 flags) const;
-    int SetUnk3038(int value);
+    int SetStandingAside(int value);
     void RaiseFlag2BC0Bit17();
     int Flag2BC0Bit17() const;
     bool HitPointsAtMost(int share) const;
@@ -492,13 +493,13 @@ public:
     int DrainSecondGauge();
     u16 Counter2F92() const;
     void CountCaught();
-    void ClearWord2EAE();
-    void RaiseUnk2FE8();
-    int Unk2FE8() const;
+    void ClearAim();
+    void MarkSweeping();
+    int Sweeping() const;
     int SetOutline(int value);
     bool IsAE4Clear() const;
     u16 CommandUnk16() const;
-    void RaiseUnk3008();
+    void MarkActionStarted();
     int DrawFadeOut(BattleServices& services);
     int DrawFadeIn(BattleServices& services, const BattleUnit& anchor);
     int SetHeld(int value);
@@ -507,7 +508,7 @@ public:
     int Mirrored() const;
     std::array<i16, GuardLetters>& GuardPhases();
     bool IsDefeated() const;
-    int StatusBit13() const;
+    int MarkedDefeated() const;
     bool IsDefeatedOrDying() const;
     i32 Unk2B00() const;
     i32 Unk2B04() const;
@@ -557,7 +558,7 @@ public:
     bool PoisonLasted() const;
     i16 PoisonBase() const;
     void CountPoisonTurn();
-    void RaiseUnk2BC0Bit28();
+    void MarkAimsOwnSide();
     i32 PartyMember() const;
     i32 AutoControl() const;
     i32 GuestControl() const;
@@ -568,8 +569,8 @@ public:
     u8 CommandTurns() const;
     void SetUnk2BC0Bit19(int on);
     int Unk2BC0Bit23() const;
-    i32 RaiseUnk2BC0(i32 bits);
-    i32 ClearUnk2BC0(i32 bits);
+    i32 RaiseStateFlags(i32 bits);
+    i32 ClearStateFlags(i32 bits);
     int DamageTransferred() const;
     int CommandSupports() const;
     int CommandRefreshOnly() const;
@@ -704,11 +705,11 @@ public:
     int IsHeld() const;
     u16 ActId() const;
     u16 DrainKind() const;
-    int StatusBit5() const;
+    int Confused() const;
     int MarkBit4() const;
     i32 Unk2EB2Shown() const;
     bool Unk2EB2BelowProficiency(CounterList& proficiency);
-    int SetValue2FEC(int value);
+    int SetInAction(int value);
     int SetFacingIfAble(int value);
     void SetNudge(u16 nudge, u16 saved);
     bool CommandTarget(u16& target, u16& second) const;
@@ -721,7 +722,7 @@ public:
     int CommandStatusBit() const;
     void CommandValues(u16& value, u16& turns) const;
     bool IsSmallMachine() const;
-    void Unk66And90(u16& first, u16& second) const;
+    void Rewards(u16& first, u16& second) const;
     u16 AccessoryValue(u16 kind) const;
     i16 AccessoryProficiency(u16 kind, CounterList& proficiency);
     void SetEnemySkills(i16 first, i16 second, i16 third, i16 fourth);
@@ -812,9 +813,10 @@ public:
     u32 shadowMode = 0;      // +0x2BAC the mode its shadow is drawn with
     i32 unk2BB0 = 0;
     i32 unk2BB4 = 0;
-    i32 damageCarry = 0;               // +0x2BB8
-    i32 hitPointsOverride = 0;         // +0x2BBC an enemy's current hit points when set
-    u32 unk2BC0 = 0;                   // +0x2BC0 bit 31
+    i32 damageCarry = 0;        // +0x2BB8
+    i32 hitPointsOverride = 0;  // +0x2BBC an enemy's current hit points when set
+    u32 stateFlags =
+        0;  // +0x2BC0 bits of the unit's state (staggering, enraged, aiming at its own side, poisoned, ...)
     u32 colorPair = DefaultColorPair;  // +0x2BC4
     u32 status = 0;                    // +0x2BC8 status bits (2: stone, 12: frozen, ...)
     u32 equipmentFlags = 0;            // +0x2BD0 bits 0, 2..6 from the equipment
@@ -836,8 +838,8 @@ public:
     i16 glowLevel = 0;   // +0x2E64 the brightness of a glow act (GlowAct)
     std::array<i16, MaxTargets> numberFades = {};  // +0x2E66 the rise and fade of each damage number
     i16 guardRise = 0;                             // +0x2EAC
-    u16 unk2EAE = NoUnk2EAE;
-    u16 unk2EB0 = 0;
+    u16 aim = NoAim;        // +0x2EAE the unit it aims at (Retarget; a role or an enemy by its side), NoAim: none
+    u16 commandAttack = 0;  // +0x2EB0 the attack of its command: the command's value and the attack bonus (HitDamage)
     // +0x2EB2 (swd3e) a count kept by HitDamage (0x00497900), cleared by ClearExtras; while positive the role has no
     // critical attack; shown as "X%2d" plus one by the panel of 0x00478FA0 against a tenth of the proficiency of
     // accessory kind 0x27
@@ -931,7 +933,7 @@ public:
     u16 commandFlags = 0;   // +0x2FB0 CommandFlag bits (high byte at +0x2FB1)
     u16 restAction = 0;     // +0x2FB2 the rest action of the frame (IdleFrame)
     u16 magicAction = 0;    // +0x2FB4 the action of its magic act
-    u16 unk2FB6 = 0;
+    u16 attackPose = 0;     // +0x2FB6 the attack pose an enemy chose (1: action 0x30, 2: 0x31; 0: none)
     u16 unk2FB8 = 0;
     u16 barrierTurns = 0;  // +0x2FBA
     u8 unk2FC4 = 0;        // +0x2FC4 (cleared by ResetUnit 0x00491690)
@@ -949,15 +951,15 @@ public:
     u8 healPercent = 0;    // +0x2FD0 1: restoreHitPoints..restoreStamina are percentages of the target's maxima
     i32 kind = 0;          // +0x2FE0 1: a party role
     i32 unk2FE4 = 0;
-    i32 unk2FE8 = 0;
-    i32 unk2FEC = 0;
-    i32 unk2FF0 = 0;
-    i32 aimed = 0;     // +0x2FF4 1: its target is set (Retarget), until its turn is reset
-    i32 defeated = 0;  // +0x2FF8
-    i32 dying = 0;     // +0x2FFC 1 while the defeat runs (DefeatFrame)
-    i32 outline = 0;   // +0x3000
-    i32 charging = 0;  // +0x3004 1: ChargeAttackFrame is in its charge (also set when a stagger ends)
-    i32 unk3008 = 0;
+    i32 sweeping = 0;       // +0x2FE8 the unit takes part in a sweep (MarkSweeping, the gathered order)
+    i32 inAction = 0;       // +0x2FEC the unit plays an act of its own (an attack, a walk, a cast, a hurt, a defeat)
+    i32 gaugeFilled = 0;    // +0x2FF0 its action gauge is full and its turn waits (the gauge stops)
+    i32 aimed = 0;          // +0x2FF4 1: its target is set (Retarget), until its turn is reset
+    i32 defeated = 0;       // +0x2FF8
+    i32 dying = 0;          // +0x2FFC 1 while the defeat runs (DefeatFrame)
+    i32 outline = 0;        // +0x3000
+    i32 charging = 0;       // +0x3004 1: ChargeAttackFrame is in its charge (also set when a stagger ends)
+    i32 actionStarted = 0;  // +0x3008 its action has started (RoleActFrame, EnemyActFrame)
     i32 unk300C = 0;
     i32 held = 0;  // +0x3010
     i32 unk3014 = 0;
@@ -969,8 +971,9 @@ public:
     i32 unk302C = 0;
     i32 guarding = 0;  // +0x3030
     i32 unk3034 = 0;
-    i32 unk3038 = 0;    // +0x3038 1: the gauge tick (0x0047E720) and the poison spread (0x00469D80) skip the unit
-    i32 absorbing = 0;  // +0x303C 1 while an absorb runs (AbsorbFrame)
+    i32 standingAside = 0;  // +0x3038 1 once it retreated or stood aside (a talk, the ghost leaving): not aimed at, its
+                            // gauge and the poison spread skip it
+    i32 absorbing = 0;      // +0x303C 1 while an absorb runs (AbsorbFrame)
     // +0x3040 (swd3e) 1: a party role set up from its record (Setup), 0: the talisman ghost (0x0047ED60); read by
     // HitDamage, 0x0048BA60, HurtFrame and 0x004808D0
     i32 partyMember = 0;

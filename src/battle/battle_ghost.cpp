@@ -59,10 +59,10 @@ constexpr std::size_t kClearedName = 0x10;
 constexpr u16 kGhostHeal = 0x237E;  // the spirit gain number
 constexpr int kAttackCommand = 1;
 constexpr int kSkillCommand = 2;
-constexpr u16 kWalkingFlags = 0x18;  // UnitCommand::flags (UnkFlag8 | 0x10): the ghost walks to the target to attack
-constexpr u16 kWalkCommand = 0xC8;   // the walk command (as BattleRole::PrepareCommand)
-constexpr int kSpendShare = 40;      // SpendGhostSpirit: below 40 percent of the cost the ghost does nothing
-constexpr int kElementAccessory = 0x26;      // SetElement: the accessory kind whose proficiency scales the resistance
+constexpr u16 kWalkingFlags = 0x18;      // UnitCommand::flags (StepsIn | 0x10): the ghost walks to the target to attack
+constexpr u16 kWalkCommand = 0xC8;       // the walk command (as BattleRole::PrepareCommand)
+constexpr int kSpendShare = 40;          // SpendGhostSpirit: below 40 percent of the cost the ghost does nothing
+constexpr int kElementAccessory = 0x26;  // SetElement: the accessory kind whose proficiency scales the resistance
 constexpr std::size_t kBattleElementAt = 9;  // SetElement: the battle record keeps its element in resistance 9
 // (+0x36), the party record in resistance 10 (+0x37, RoleRecord::ElementAt); the resistance taken is unk38[0] (+0x38)
 constexpr u32 kGapRoll = 100;
@@ -475,7 +475,7 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
     const std::size_t length = std::min(name.size(), this->skillName.size() - 1);
     std::copy_n(name.begin(), length, this->skillName.begin());
     this->skillName[length] = '\0';
-    this->unk2EB0 = static_cast<u16>(this->unk2EB0 + this->command.value);
+    this->commandAttack = static_cast<u16>(this->commandAttack + this->command.value);
     this->SetCommand(kSkillCommand);
     this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
     kind = 0;
@@ -506,8 +506,8 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
 }
 
 // swd3e.exe 0x00486E10: the ghost's attack: its weapon's script as the command (command 1), the weak stand pose
-// cleared, unk2EB0 raised by the record's attack bonus; an attack of command flags 0x18 under command 1 becomes command
-// 0xC8 with command B 1.
+// cleared, commandAttack raised by the record's attack bonus; an attack of command flags 0x18 under command 1 becomes
+// command 0xC8 with command B 1.
 void BattleRole::GhostAttackCommand(Database& database)
 {
     std::fill_n(this->skillName.begin(), kClearedName, '\0');
@@ -516,7 +516,7 @@ void BattleRole::GhostAttackCommand(Database& database)
     this->SetCommand(kAttackCommand);
     const u16 flags = this->command.flags;
     this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::WeakStand);
-    this->unk2EB0 = static_cast<u16>(this->unk2EB0 + this->battleRecord->attackBonus);
+    this->commandAttack = static_cast<u16>(this->commandAttack + this->battleRecord->attackBonus);
 
     if ((flags & kWalkingFlags) != 0 && this->commandA == 1)
     {
@@ -646,16 +646,16 @@ void BattleRole::SetElement(CounterList& proficiency, i8 element)
 }
 
 // swd3e.exe 0x00487160
-i16 BattleRole::SetUnk34C0(i16 value)
+i16 BattleRole::SetTransferTarget(i16 value)
 {
-    this->unk34C0 = value;
+    this->transferTarget = value;
     return value;
 }
 
 // swd3e.exe 0x00487170
-i16 BattleRole::Unk34C0() const
+i16 BattleRole::TransferTarget() const
 {
-    return this->unk34C0;
+    return this->transferTarget;
 }
 
 // swd3e.exe 0x00487180: below a quarter of the party record's spirit

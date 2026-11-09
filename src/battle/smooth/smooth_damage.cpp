@@ -22,8 +22,8 @@ constexpr int kSpellPanCentre = 0x140;
 constexpr int kSpellPan = 0x30;
 constexpr u16 kDrainGainDelay = 8;  // the stamina gain shows 8 frames after the healing
 constexpr i32 kEnemyAttackAction = 0x28;
-constexpr i32 kEnemyAttackAction1 = 0x30;  // unk2FB6 1
-constexpr i32 kEnemyAttackAction2 = 0x31;  // unk2FB6 2
+constexpr i32 kEnemyAttackAction1 = 0x30;  // attackPose 1
+constexpr i32 kEnemyAttackAction2 = 0x31;  // attackPose 2
 constexpr u16 kSecondEnemyAttack = 2;
 constexpr std::size_t kEnemyFlightAct = 1;  // the slot act a flying follow-up uses
 constexpr u16 kEnemyStrikeBits = ActState::Strikes | ActState::UnkTarget10;
@@ -32,14 +32,14 @@ constexpr i16 kEnemyFadeEnd = -0x20;
 constexpr i16 kEnemyFadeStep = 4;
 constexpr u32 kGaugeRestRoll = 0x78;  // the gauge gains 10..129 once the attack is over
 constexpr u16 kGaugeRestBase = 10;
-constexpr u32 kStandsAsideFlag = 0x10000000;  // unk2BC0: the enemy turns before it fades in at the target (swd3e)
-constexpr u32 kStepsAway = 0x10000;           // unk2BC0: the attack fells the enemy (swd3e)
+constexpr u32 kStandsAsideFlag = 0x10000000;  // stateFlags: the enemy turns before it fades in at the target (swd3e)
+constexpr u32 kStepsAway = 0x10000;           // stateFlags: the attack fells the enemy (swd3e)
 constexpr i16 kStepAwayTintFrom = 0xF;
 constexpr i16 kStepAwayFrames = 0x1F;
 constexpr u8 kStepAwayPose = 2;
 constexpr u32 kEvadeStatus = 0x80;         // status bit 7: the target evades with kStatusEvade
 constexpr i16 kEvadedEnrageCause = 0x1B;   // an evaded strike checks this enrage cause
-constexpr u32 kFliesMirrored = 0x1000000;  // unk2BC0: the follow-up flies mirrored once
+constexpr u32 kFliesMirrored = 0x1000000;  // stateFlags: the follow-up flies mirrored once
 }  // namespace
 
 DamageFrame::DamageFrame(Game& game)
@@ -55,7 +55,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
     BattleServices& services = game.battleServices;
     ScenePainter painter(game.battleServices, scene);
     ActState& act = role.slotActs[BattleUnit::UnkSlot8];
-    role.unk2FEC = 1;
+    role.inAction = 1;
     act.id = role.actId;
     act.action = role.magicAction;
 
@@ -117,7 +117,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {
-        battle.unk577290 = 1;
+        battle.darkened = 1;
     }
 
     if ((act.target & (ActState::Strikes | ActState::FollowsUp)) == 0)
@@ -149,7 +149,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
         return 0;
     }
 
-    target.RaiseFlag2BC0(this->game.battleState);
+    target.Stagger(this->game.battleState);
     i16 spirit = 0;
     i16 stamina = 0;
     i32 damage = role.HitDamage(services, target, spirit, stamina);
@@ -194,7 +194,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     }
 
     ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
-    role.unk2FEC = 1;
+    role.inAction = 1;
     magic.hold = 0;
 
     if ((magic.target & ActState::Holds) != 0)
@@ -239,11 +239,11 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
         battle.quakePhase = 0;
     }
 
-    if ((magic.target & ActState::UnkTarget4) != 0)
+    if ((magic.target & ActState::Staggers) != 0)
     {
         magic.target = 0;
         role.stage |= BattleUnit::FollowingUp;
-        target.RaiseFlag2BC0(this->game.battleState);
+        target.Stagger(this->game.battleState);
     }
 
     ActState& follow = role.slotActs[0];
@@ -288,7 +288,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {
-        battle.unk577290 = 1;
+        battle.darkened = 1;
     }
 
     if ((role.stage & BattleUnit::FollowingUp) == 0)
@@ -347,9 +347,9 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
         battle.quakePhase = 0;
     }
 
-    if ((follow.target & ActState::UnkTarget4) != 0)
+    if ((follow.target & ActState::Staggers) != 0)
     {
-        target.RaiseFlag2BC0(this->game.battleState);
+        target.Stagger(this->game.battleState);
         follow.target = 0;
     }
 
@@ -440,7 +440,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
     role.trails = {};
     role.targets.fill(BattleUnit::NoTarget);
     role.slotTint = 0;
-    role.unk2FF0 = 0;
+    role.gaugeFilled = 0;
     role.stage = 0;
     role.unk2BDE = 0;
     battle.criticalAttack = 0;
@@ -465,7 +465,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
 
     ActState& attack = enemy.standAct;
     ActState& follow = enemy.castAct;
-    enemy.unk2FEC = 1;
+    enemy.inAction = 1;
     attack.hold = 0;
 
     if (enemy.held == 1)
@@ -478,14 +478,14 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         attack.hold = 1;
     }
 
-    if ((enemy.command.flags & UnitCommand::UnkFlag8) != 0 && enemy.fadedIn == 0)
+    if ((enemy.command.flags & UnitCommand::StepsIn) != 0 && enemy.fadedIn == 0)
     {
         if (UnitFrame(enemy).DrawFadeOutAdvance(services, scene) == 0)
         {
             return 0;
         }
 
-        if ((enemy.unk2BC0 & kStandsAsideFlag) != 0)
+        if ((enemy.stateFlags & kStandsAsideFlag) != 0)
         {
             enemy.SetFacing(1);
         }
@@ -501,9 +501,9 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
     attack.id = enemy.actId;
     attack.action = kEnemyAttackAction;
 
-    if (enemy.unk2FB6 != 0)
+    if (enemy.attackPose != 0)
     {
-        attack.action = enemy.unk2FB6 == kSecondEnemyAttack ? kEnemyAttackAction2 : kEnemyAttackAction1;
+        attack.action = enemy.attackPose == kSecondEnemyAttack ? kEnemyAttackAction2 : kEnemyAttackAction1;
     }
 
     if (UnitFrame(enemy).Action(services, target, attack, scene) == 0)
@@ -529,14 +529,14 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         enemy.trails = {};
         enemy.targets.fill(BattleUnit::NoTarget);
         enemy.stage = 0;
-        enemy.unk2FF0 = 0;
+        enemy.gaugeFilled = 0;
         enemy.fadedIn = 0;
         enemy.nudge = 0;
         enemy.gauge = static_cast<u16>(enemy.gauge + services.random.Below(kGaugeRestRoll) + kGaugeRestBase);
     };
 
-    // swd3e: unk2BC0 bit 16: the act shows once, then the enemy darkens away under itself and falls.
-    if ((enemy.unk2BC0 & kStepsAway) != 0)
+    // swd3e: stateFlags bit 16: the act shows once, then the enemy darkens away under itself and falls.
+    if ((enemy.stateFlags & kStepsAway) != 0)
     {
         attack = ActState{};
 
@@ -574,7 +574,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         enemy.dying = 1;
         enemy.fixedPose = kStepAwayPose;
         enemy.data->data.hitPoints = 0;
-        battle.unk577360 = 1;
+        battle.stepInFelled = 1;
         clearAttack();
         return 1;
     }
@@ -668,11 +668,11 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
         enemy.stage &= ~BattleUnit::FollowingUp;
     }
 
-    if ((attack.target & ActState::UnkTarget4) != 0)
+    if ((attack.target & ActState::Staggers) != 0)
     {
         enemy.stage |= BattleUnit::FollowingUp;
         attack.target = 0;
-        target.RaiseFlag2BC0(battle);
+        target.Stagger(battle);
     }
 
     // A strike of the act or its follow-up (inline twice in the original): the evasion roll unless already rolled,
@@ -696,7 +696,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
 
         if ((bits & ActState::Strikes) != 0)
         {
-            target.RaiseFlag2BC0(battle);
+            target.Stagger(battle);
         }
 
         if (evaded != 0)
@@ -750,7 +750,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
 
     if (battle.darkRed != 0 || battle.darkGreen != 0 || battle.darkBlue != 0)
     {
-        battle.unk577294 = 1;
+        battle.attackDarkened = 1;
     }
 
     if ((enemy.stage & BattleUnit::FollowingUp) == 0)
@@ -824,7 +824,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
 
     if ((enemy.command.flags & UnitCommand::TargetsUnit) != 0)
     {
-        if ((enemy.unk2BC0 & kFliesMirrored) != 0)
+        if ((enemy.stateFlags & kFliesMirrored) != 0)
         {
             enemy.facing = 1;
             const int flown = UnitFrame(enemy).Queued(services, target, 0, scene);
@@ -836,7 +836,7 @@ int DamageFrame::EnemyAttackFrameAdvance(BattleUnit& enemy, BattleUnit& target, 
             }
 
             follow.waiting = 1;
-            enemy.unk2BC0 &= ~kFliesMirrored;
+            enemy.stateFlags &= ~kFliesMirrored;
         }
         else
         {
@@ -902,16 +902,16 @@ int DamageFrame::EnemySkillFrameAdvance(BattleUnit& enemy, BattleUnit& target, S
     BattleState& battle = game.battleState;
     BattleServices& services = game.battleServices;
     ActState& act = enemy.standAct;
-    enemy.unk2FEC = 1;
+    enemy.inAction = 1;
 
-    if ((enemy.command.flags & UnitCommand::UnkFlag8) != 0 && enemy.fadedIn == 0)
+    if ((enemy.command.flags & UnitCommand::StepsIn) != 0 && enemy.fadedIn == 0)
     {
         if (UnitFrame(enemy).DrawFadeOutAdvance(services, scene) == 0)
         {
             return 0;
         }
 
-        if ((enemy.unk2BC0 & kStandsAsideFlag) != 0)
+        if ((enemy.stateFlags & kStandsAsideFlag) != 0)
         {
             enemy.SetFacing(1);
         }

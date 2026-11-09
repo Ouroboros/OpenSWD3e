@@ -18,9 +18,10 @@ namespace swd3e
 struct ObjectData
 {
     static constexpr u16 FirstRoleBit = 0x8000;  // in `usableBy`: the bit of the first role, the others below it
-    static constexpr u32 UnkKind20 = 0x20;       // in `kind`: scripted acts and absorbs do not affect it
-    static constexpr u32 Absorbable = 0x800;     // in `kind`: an ordinary monster (蟹精魔機, 黏怪, 吸血殭屍, ...)
-    static constexpr u32 UnkKind8000 = 0x8000;   // in `kind`: cleared on a skill learnt by a talk command
+    static constexpr u32 Boss =
+        0x20;  // in `kind`: a boss (its reward, Named); scripted acts and absorbs do not affect it
+    static constexpr u32 Absorbable = 0x800;    // in `kind`: an ordinary monster (蟹精魔機, 黏怪, 吸血殭屍, ...)
+    static constexpr u32 UnkKind8000 = 0x8000;  // in `kind`: cleared on a skill learnt by a talk command
 
     std::array<char, 0x20> name = {};  // +0x00 tag 0x3E8 (a longer name runs into the next fields)
     u32 kind = 0;                      // +0x20 tag 0x19
@@ -59,10 +60,10 @@ struct ObjectData
     u16 attack = 0;         // +0x5A
     u16 defense = 0;        // +0x5C
     u16 agility = 0;        // +0x5E the battle speed
-    u16 unk60 = 0;          // +0x60
+    u16 wisdom = 0;         // +0x60 the wisdom (an escort's, the spells' landing, an enemy's choice over 50)
     u16 ailmentChance = 0;  // +0x62 an ailment lands on a roll of 1..10 up to it
     u16 skill = 0;          // +0x64 an enemy's skill script (mon.dat)
-    u16 unk66 = 0;          // +0x66
+    u16 experience = 0;     // +0x66 the experience a defeated enemy gives
     i32 hitPoints = 0;      // +0x68 (read as a dword by the bestiary, 0x00442920)
     u16 itemA = 0;          // +0x6C the objects an enemy uses (inferred) and their counts; set together by
                             // BattleUnit::ChooseCommand
@@ -83,7 +84,7 @@ struct ObjectData
     u16 dropChance = 0;       // +0x8A a roll of 0..19 below it drops it
     u16 stealItem = 0;        // +0x8C the item an enemy can be robbed of (BattleRole::Steal), 0: none
     u16 stealDifficulty = 0;  // +0x8E 2..5: a steal roll below it succeeds
-    u16 unk90 = 0;            // +0x90 (swd3e) the gold an enemy stole (EnemyHitDamage)
+    u16 gold = 0;             // +0x90 the gold a defeated enemy gives, with what it stole (EnemyHitDamage)
     u16 unk92 = 0;
     // +0x94..+0x97 tag 0x18 (and tag 1's block): an enemy's enrage (0x0049BB50, 0x0049BE20)
     u16 enrageCondition = 0;  // +0x94 1..0x1E: what enrages the enemy (EnrageCheck)
@@ -219,22 +220,22 @@ struct SkillScript
     };
 
     u32 unk00 = 0;
-    u32 flags = 0;       // +0x04 opcodes 3, 6, 9, 0xB, 0xC, 0xE..0x16, 0x18, 0x19, 0x1B..0x1F
-    u32 statusBits = 0;  // +0x08 opcode 0xC: the status bits of a buff
-    u32 unk0C = 0;       // +0x0C opcode 0
-    u32 unk10 = 0;       // +0x10 opcode 0
-    u16 unk14 = 0;       // +0x14 opcode 8
-    u16 unk16 = 0;       // +0x16 opcode 4
-    u16 unk18 = 0;       // +0x18 opcode 0x1A (new in swd3e)
-    u16 ailment = 0;     // +0x1A opcodes 6, 7 (bit 13: none, bit 15: refresh only)
-    u16 element = 0;     // +0x1C opcode 0xE: the element of a resistance buff
-    u16 unk1E = 0;       // +0x1E opcode 0xD
-    u16 unk20 = 0;       // +0x20 opcode 0xA (bit 15 set with it)
-    u16 unk22 = 0;       // +0x22 opcode 0x16
-    u16 unk24 = 0;       // +0x24 opcode 0x1F (new in swd3e)
-    u16 unk26 = 0;       // +0x26 opcode 0x17, first value (new in swd3e)
-    u16 unk28 = 0;       // +0x28 opcode 0x17, second value
-    u8 turns = 0;        // +0x2A opcodes 2, 0x16: the turns of an effect
+    u32 flags = 0;        // +0x04 opcodes 3, 6, 9, 0xB, 0xC, 0xE..0x16, 0x18, 0x19, 0x1B..0x1F
+    u32 statusBits = 0;   // +0x08 opcode 0xC: the status bits of a buff
+    u32 unk0C = 0;        // +0x0C opcode 0
+    u32 unk10 = 0;        // +0x10 opcode 0
+    u16 unk14 = 0;        // +0x14 opcode 8
+    u16 unk16 = 0;        // +0x16 opcode 4
+    u16 unk18 = 0;        // +0x18 opcode 0x1A (new in swd3e)
+    u16 ailment = 0;      // +0x1A opcodes 6, 7 (bit 13: none, bit 15: refresh only)
+    u16 element = 0;      // +0x1C opcode 0xE: the element of a resistance buff
+    u16 unk1E = 0;        // +0x1E opcode 0xD
+    u16 unk20 = 0;        // +0x20 opcode 0xA (bit 15 set with it)
+    u16 unk22 = 0;        // +0x22 opcode 0x16
+    u16 stealChance = 0;  // +0x24 opcode 0x1F (new in swd3e)
+    u16 unk26 = 0;        // +0x26 opcode 0x17, first value (new in swd3e)
+    u16 unk28 = 0;        // +0x28 opcode 0x17, second value
+    u8 turns = 0;         // +0x2A opcodes 2, 0x16: the turns of an effect
 };
 
 static_assert(sizeof(SkillScript) == 0x2C);

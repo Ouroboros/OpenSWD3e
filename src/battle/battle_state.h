@@ -36,7 +36,8 @@ struct BattleSlotRecord
     u16 kind = 0;         // +0x08
     u16 unk0A = 0;        // +0x0A
     i32 atParty = 0;      // +0x0C 1: its order is at the party (PendingOrder::atParty)
-    i32 unk10 = 0;        // +0x10
+    i32 atEnemies = 0;    // +0x10 an enemy's order aims at the enemies (PendingOrder::atParty of an enemy; to
+                          // BattleState::atEnemies when it acts)
     i32 targetsAll = 0;   // +0x14 1: its order hits every unit of its side (PendingOrder::targetsAll)
     i32 allAtOnce = 0;    // +0x18 1: all of them at once (PendingOrder::allAtOnce)
 };
@@ -264,17 +265,18 @@ public:
     std::array<u8, Party::Roles> inParty = {};
     // 0x004BF578 the party roles by turn, from 1 (swd3e: a party of three rewrites [1..4], StartBattle)
     std::array<i32, 5> roleCycle = InitialRoleCycle;
-    u16 partyMask = 0;  // 0x005770D2 (swd3e) bit per party role in the battle (StartBattle; not read)
-    i32 unk577224 = 0;  // 0x00577224 (swd3e) cleared by StartBattle, not read
-    u16 unk577228 = 0;  // 0x00577228 (swd3e) cleared by StartBattle, not read
-    u8 unk5774E8 = 0;   // 0x005774E8 (swd3e) cleared by StartBattle, used by EnemyFrame
-    i32 unk576FC4 = 0;  // 0x00576FC4 (swd3e) cleared by StartBattle, used by EnemyFrame
-    i32 unk576FC8 = 0;  // 0x00576FC8 (swd3e)
-    i32 unk576FD0 = 0;  // 0x00576FD0 (swd3e)
-    i32 unk576FCC = 0;  // 0x00576FCC (swd3e) cleared by StartBattle, used by EnemyFrame
+    u16 partyMask = 0;      // 0x005770D2 (swd3e) bit per party role in the battle (StartBattle; not read)
+    i32 unk577224 = 0;      // 0x00577224 (swd3e) cleared by StartBattle, not read
+    u16 unk577228 = 0;      // 0x00577228 (swd3e) cleared by StartBattle, not read
+    u8 sameAimCount = 0;    // 0x005774E8 (swd3e) the times in a row the enemies drew lastAimedRole (EnemyPickTarget)
+    i32 lastAimedRole = 0;  // 0x00576FC4 (swd3e) the role the enemies drew last (EnemyPickTarget)
+    i32 markedRole = 0;  // 0x00576FC8 (swd3e) the role (1-based) a named enemy marked at a twentieth of its hit points
+                         // (EnemyAfterAction), aimed at first (EnemyPickTarget)
+    i32 markingEnemy = 0;  // 0x00576FD0 (swd3e) the enemy that marked markedRole
+    i32 markedTurns = 0;   // 0x00576FCC (swd3e) the turns markingEnemy aims at markedRole yet
     // 0x0050D878 (swd3e) per enemy: 1 while the name of its skill is to show when it acts (EnemyFrame)
     std::array<u8, Enemies> skillNamePending = {};  // 0x0050D878 per enemy: its skill name is shown when it acts
-    i32 unk57736C = 0;  // 0x0057736C (swd3e) 1: every party role standing is taunted (EnemyFrame aims at them all)
+    i32 allTaunted = 0;  // 0x0057736C (swd3e) 1: every party role standing is taunted (EnemyFrame aims at them all)
     // 0x005376A4 (swd3e) per enemy: the party's hits on it (MenuConfirm; cleared when it falls); the roles acting by
     // themselves aim at the most hit (MostHitEnemy)
     std::array<u8, Enemies> enemyHits = {};  // 0x005376A4 per enemy: the hits it took (MostHitEnemy)
@@ -286,7 +288,7 @@ public:
     u16 guestCount = 0;    // 0x005771F4
     // 0x005770D4 low word: party roles the battle's checks leave out (read by 0x004612D0, 0x0045FA80 and
     // CheckBattleEnd; its writer is not rebuilt yet); the high word is a role slot
-    u16 unk5770D4 = 0;
+    u16 ghostCount = 0;    // 0x005770D4 the talisman ghost in battle (1; StartBattle), left out of the party counted
     i16 ghostSlot = 0;     // 0x005770D6 (swd3e) the role slot of the talisman ghost (StartBattle sets it to roleCount)
     i32 ghostRescued = 0;  // 0x00577358 (swd3e) 1 once the ghost healed its master this turn (ApplyHits; 0x0045FA80)
     i32 musicBeforeBattle = 0;       // 0x005770C8 the music queue's mode when the battle started (StartBattle)
@@ -346,7 +348,7 @@ public:
     i32 unk57727C = 0;     // cleared when a party unit's order is taken (InsertSlotRecord)
     i32 gathersParty = 0;  // 0x005772D0 1: a sweep order chosen at the party (cleared by any queued order or action)
     // 0x0057735C (swd3e) 1: the skill chosen (ActFlag17) is turned on the role itself once its enemy is aimed at, the
-    // enemy kept in the role's unk34C0 (MenuConfirm states 2 and 3)
+    // enemy kept in the role's transferTarget (MenuConfirm states 2 and 3)
     i32 unk57735C = 0;
     // 0x0057722A (swd3e) the role whose start pose (Pose36Frame) plays at the battle start, StartPoseDone once over
     // (StartBattle, RoleFrame); the auto battle key waits for it
@@ -364,9 +366,10 @@ public:
     i32 unk537A10 = 0;                        // 0x00537A10
     i32 unk537A14 = 0;                        // 0x00537A14
     std::array<i32, Units> slotDamage = {};   // 0x00537758 per slot: the damage of the hit so far
-    std::array<i32, Units> unk513664 = {};    // 0x00513664 per slot: the slot of a unit the hit felled (-1: none)
+    std::array<i32, Units> felledUnits = {};  // 0x00513664 per slot: the slot of a unit the hit felled (-1: none)
     std::array<i32, Units> slotTargets = {};  // 0x005378F8 per slot: the unit it hits (-1: none)
-    std::array<i32, Units> unk575F38 = {};    // 0x00575F38 (swd3e: 30 slots) set to -1 by StartBattle
+    std::array<i32, Units> hitActPending =
+        {};  // 0x00575F38 (swd3e: 30 slots) per unit: the enemies' hit act is to play on it (-1: none)
     std::array<i32, 0xD2> unk537A20 =
         {};                  // 0x00537A20 (swd3e, 0x348 bytes) set to -1 by StartBattle and EndBattle only
     i32 unk57734C = 0;       // 0x0057734C
@@ -381,8 +384,9 @@ public:
     i32 shake = 0;       // 0x0057702C the shift of the background this frame, cleared once drawn
     i32 quaking = 0;     // 0x0057730C 1: the screen quakes (read by 0x00453200, shaken by 0x0045E7D0)
     i32 quakePhase = 0;  // 0x00577030 the step of the quake in its offset table (0x004A75EC)
-    i32 unk577290 = 0;   // 0x00577290 with unk577294 (0x00577294): the field is darkened
-    i32 unk577294 = 0;
+    i32 darkened = 0;    // 0x00577290 the field is darkened by an action (a command, a cast, a drain, an enrage, a hit)
+    i32 attackDarkened =
+        0;  // 0x00577294 the field is darkened by an enemy's attack or a hit act (undarkened after the enemy acts)
     i16 darkenUnit = -1;  // 0x004BF1D4 the unit darkening the field
     u16 unk53BF2C = 0;
     u16 grayBandState = 0;       // 0x00577214 (swd3e) 1 opens the grey band, 2 closes it (0x0045BEA0, inferred)
@@ -400,7 +404,7 @@ public:
     i32 darkFrames = 0;          // 0x005369C4 frames counted to the next darker level
     i32 undarkening = 0;         // 0x005772EC the darkening is undone a level a frame
     // 0x005772C8 set by 0x0049B9D0 and 0x0049BE20, cleared by 0x0049C0D0: the undarkening waits while set
-    i32 unk5772C8 = 0;
+    i32 effectHolds = 0;                      // 0x005772C8 an enrage act or a unit's ripple plays (no turn is taken)
     std::unique_ptr<HitPicture> hitPictures;  // 0x00577818 (swd3e) the second-tier spell pictures (DrawHitPictures)
     u16 hitBits = 0;                          // 0x005778CC (swd3e) their target bits of the frame
     u16 experienceBonus = 0;  // 0x00577220 (swd3e) the percent the roulette adds to the battle's experience
@@ -486,7 +490,8 @@ public:
     std::array<i32, Units> turnTaken = {};      // 0x00576024 per unit, set when it takes the turn
     std::array<i32, RoleUnits> roleOrder = {};  // 0x005368AC role units in order, a defeated one taken out
     i32 aimTarget = 1;                          // 0x004BF0DC the enemy a role turn aims at, 1-based
-    u16 unk4BF1CA = 0xFFFF;                     // 0x004BF1CA the last enemy felled by a talk (command 0xA)
+    u16 lastFelled = 0xFFFF;  // 0x004BF1CA the unit an attack or a talk (command 0xA) felled last (RetargetRoles turns
+                              // the roles aiming at it)
     // The rewards of the defeated enemies (RemoveDefeated).
     u16 battleGold = 0;         // 0x005771FA the battle's gold (bit 15: given out by DrawVictoryPanel)
     u16 battleExperience = 0;   // 0x005771FC the experience each standing party role gains
@@ -506,8 +511,9 @@ public:
     std::array<u16, Units> walkModes = {};
     // The draw order around the acting unit (SortDrawOrderAround).
     u8 unk577A50 = 0;
-    i32 atParty = 0;  // 0x00575F24 the acting unit's slot record: atParty
-    i32 unk575F28 = 0;
+    i32 atParty = 0;      // 0x00575F24 the acting unit's slot record: atParty
+    i32 atEnemies = 0;    // 0x00575F28 the acting enemy aims at the enemies (its slot record's atEnemies;
+                          // EnemyPickTarget, EnemyChooseCommand)
     i32 orderSorted = 0;  // 0x00577344 set once the order is sorted around the acting unit
     // The push of a hit (Game::PushUnits).
     i16 hitPush = 0x1A4;       // 0x004BF1DE the push, halved each frame
@@ -544,15 +550,15 @@ public:
     // 0x005770CE the frames of the level-up stats (the high word of 0x0053BDE8)
     u16 levelUpFrames = 0;
     // The debug keys (Game::BattleDebugKeys) and the acting unit.
-    i32 unk537A18 = 0;   // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' second gauges
-    i32 slowFrames = 0;  // 0x005777F8 (swd3e) the debug keys' F5: the frames are slowed to 100 ms
-    i32 unk577360 = 0;   // 0x00577360 (swd3e) set when an enemy's step-in attack fells it (0x00487FE0); 0x0045EE20
-    u8 itemStolen = 0;   // 0x00577255 (swd3e) 1 once an enemy stole (EnemyHitDamage, command flag 0x100000); 0x0045EE20
+    i32 unk537A18 = 0;     // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' second gauges
+    i32 slowFrames = 0;    // 0x005777F8 (swd3e) the debug keys' F5: the frames are slowed to 100 ms
+    i32 stepInFelled = 0;  // 0x00577360 (swd3e) set when an enemy's step-in attack fells it (0x00487FE0); 0x0045EE20
+    u8 itemStolen = 0;  // 0x00577255 (swd3e) 1 once an enemy stole (EnemyHitDamage, command flag 0x100000); 0x0045EE20
     i32 unk5772F8 = 0;  // 0x005772F8 (swd3e) set by 0x0045BEA0: the victory gives no loot, proficiency or battle counts
     i32 showRoleBlocks = 0;  // 0x00577808 (swd3e) the debug keys toggle it: the overlay shows the party battle blocks
     u8 unk5774E9 = 0;        // 0x005774E9 (swd3e) 0 or 1, set by FightTalkFrame (0x0047DF22, 0x0047DF46); debug overlay
-    i32 unk576084 = 0;
-    i32 hitsAllRoles = 0;  // 0x00577264 1: the hit falls on all roles at once
+    i32 enemiesUnhurt = 0;   // 0x00576084 the debug keys F1 / X: the attacks leave the enemies' hit points
+    i32 hitsAllRoles = 0;    // 0x00577264 1: the hit falls on all roles at once
     i32 unk577064 = 0;
     i32 unk577050 = 0;
     i32 snapNext = 0;           // 0x005772E8 1: the next frame is saved as a screenshot
@@ -560,7 +566,7 @@ public:
     i32 unk53AF30 = 0;
     i32 unk53AF34 = 0;
     i32 sweepTotal = 0;  // 0x00575F1C the units a sweep is to hit
-    u16 unk575F20 = 0;
+    u16 actingKind = 0;  // 0x00575F20 the kind of the acting slot record (1: a role, 2: an enemy)
     i32 allAtOnce = 0;   // 0x00575F30 the acting unit's slot record: allAtOnce (a sweep hits at once, HitFrame)
     i32 targetsAll = 0;  // 0x00575F2C the acting unit's slot record: targetsAll (the effect messages name the side)
     u16 unk577240 = 0;   // a unit's place read for the debug gauge and the menu
@@ -588,7 +594,8 @@ public:
     std::array<u16, Units> escortCalled = {};  // 0x00536EA8 per unit: the escort place it called
     u16 callingEscort = 0;                     // 0x0057720C the escort being called (its low word)
     i32 levelUpPending = 0;                    // 0x0057733C a level-up to show at the end
-    u16 unk577204 = 0;
+    u16 retreat = 0;  // 0x00577204 the retreat under way (RetreatCommandFrame, RoleRetreatFrame: asked, retreating, the
+                      // roles stepped back); no unit acts meanwhile
     i32 timingBarShown = 0;       // 0x00577328 1: the timing bar of command 0x1A runs (the confirm key waits)
     i32 victoryWithoutPanel = 0;  // 0x00577308 1: the victory ends without its panel (BattleEndFrame; inferred)
     // The hit act of a slot (Game::HitTargetFrame).
@@ -623,7 +630,9 @@ public:
     // 0x0050F41C (swd3e) per enemy: the items it stole (0x20 a enemy, the first free one taken; 0x00464ED0)
     std::array<std::array<u16, 0x20>, Enemies> stolenItems = {};
     i32 unk577370 = 0;  // 0x00577370 (swd3e) set when battle role 0 falls with the ghost in the battle
-    std::array<i32, Enemies> unk50CE6C = {};  // 0x0050CE6C (swd3e) per enemy, set by EnemyFrame, cleared once it falls
+    std::array<i32, Enemies> secondGaugeWaits =
+        {};  // 0x0050CE6C (swd3e) per enemy: its chosen command waits for its second gauge (EnemyChooseCommand);
+             // cleared when it is slotted again or falls
     // 0x00576DE8 (swd3e) by battle number - 1: the times the battle was fought while a battle talk limits it
     // (FightTalk::repeatLimit, BattleIntro); past the limit its enemies give half their first two rewards
     std::array<u8, 0x1B4> battleRepeats = {};  // 0x00576DE8 per battle number (1-based): the times it was fought
@@ -642,7 +651,7 @@ public:
     i32 enemyTarget = 0;                        // 0x00576FC0 the target of the acting enemy
     i32 enemyAimsAtEnemies = 0;                 // 0x005772D4 1: an ordered enemy aims at the enemies
     i32 unk577298 = 0;
-    i32 enemiesHitAct = 0;  // 0x00577098 the hit act of the enemies (unk575F38)
+    i32 enemiesHitAct = 0;  // 0x00577098 the hit act of the enemies (hitActPending)
     i32 unk5772DC = 0;      // 0x005772DC set when a talk fells an enemy (command 0xA)
     // The commands of a role (Game::RoleActionFrame).
     // 0x00577324 1: the taking (收化) succeeded; the enemy taken then gives no first reward and keeps its stolen
@@ -709,14 +718,14 @@ public:
     u16 controlledEnemy = 0xFFFF;          // 0x004BF1D0 the enemy under control (0xFFFF: none)
     u16 talkRole = 0xFFFF;                 // 0x004BF1D2 the role with a battle talk (0xFFFF: none)
     i32 orderedSkill = 0;                  // 0x00577014 the skill a controlled enemy is ordered to use
-    i32 unk577018 = 0;
-    i32 unk577330 = 0;          // 0x00577330 1 while the catch of talk command 0x4E runs
-    i32 unk577284 = 0;          // 0x00577284
-    i32 unk5772F0 = 0;          // 0x005772F0
-    i32 listReturnCommand = 0;  // 0x00576FB0 the menu command a list returns to
-    i32 specialRow = 1;         // 0x004BF0F0 the row of the 絕招 list (1-based)
-    i32 controlRows = 2;        // 0x004BF0FC the rows of the 控制 menu
-    i32 controlCursor = 1;      // 0x004BF100 its row under the cursor (1-based)
+    i32 controlChoice = 0;                 // 0x00577018 the row chosen on the 控制 menu (1-based; 0: none)
+    i32 unk577330 = 0;                     // 0x00577330 1 while the catch of talk command 0x4E runs
+    i32 unk577284 = 0;                     // 0x00577284
+    i32 unk5772F0 = 0;                     // 0x005772F0
+    i32 listReturnCommand = 0;             // 0x00576FB0 the menu command a list returns to
+    i32 specialRow = 1;                    // 0x004BF0F0 the row of the 絕招 list (1-based)
+    i32 controlRows = 2;                   // 0x004BF0FC the rows of the 控制 menu
+    i32 controlCursor = 1;                 // 0x004BF100 its row under the cursor (1-based)
     // The proficiency filled in the battle (AnnounceMastery).
     ObjectRecord lastObject;   // 0x00576D40 the object read last (stolen, or its proficiency filled)
     LearnedSkill lastLearned;  // 0x0057747C the name of the accessory or of the skill learned, for the messages

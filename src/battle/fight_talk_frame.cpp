@@ -762,9 +762,9 @@ int Game::FightTalkDefeat()
 
         if (unit <= kLastEnemy)
         {
-            battle.unk4BF1CA = unit;
+            battle.lastFelled = unit;
             battle.unk5772DC = 1;
-            battle.unk513664[unit] = unit;
+            battle.felledUnits[unit] = unit;
             battle.flashing = 1;
             battle.enemyFaded = 0;
             talk.battleRuns = 0;
@@ -894,7 +894,7 @@ int Game::FightTalkWin()
 
     for (u32 index = 0; index < battle.enemyCount; ++index)
     {
-        if (battle.unk513664[index] != -1)
+        if (battle.felledUnits[index] != -1)
         {
             battle.actingUnit = kNoActingUnit;
             this->BattleFrame();
@@ -1058,14 +1058,15 @@ void Game::LeaveHiddenEnemies()
 
     auto hidden = [this, count](i32 enemy)
     {
-        return enemy >= 0 && enemy < count && this->battleEnemies[static_cast<std::size_t>(enemy)].StatusBit13() == 1;
+        return enemy >= 0 && enemy < count &&
+               this->battleEnemies[static_cast<std::size_t>(enemy)].MarkedDefeated() == 1;
     };
 
     for (u32 index = 0; index < battle.roleCount; ++index)
     {
         BattleRole& role = this->battleRoles[index];
 
-        if (hidden(static_cast<i16>(role.GetWord2EAE())) && standing >= 0)
+        if (hidden(static_cast<i16>(role.Aim())) && standing >= 0)
         {
             role.Retarget(static_cast<i16>(standing));
             battle.retargeted = 1;
@@ -1455,7 +1456,7 @@ int Game::FightTalkUnits(u16 command)
         {
             const u16 unit = talk.UnsignedWord(1);
             this->SetTalkCommandUnit(unit);
-            this->TalkUnit(unit).SetUnk3038(1);
+            this->TalkUnit(unit).SetStandingAside(1);
 
             if (unit <= kLastEnemy)
             {
@@ -2526,7 +2527,7 @@ int Game::FightTalkDamage()
             static_cast<i16>(talk.unk578452),
             static_cast<i16>(talk.unk578454)
         );
-        role.RaiseFlag2BC0(this->battleState);
+        role.Stagger(this->battleState);
         role.PushTarget(BattleUnit::DamageTarget);
         role.SetDamageDigits(this->battleServices, static_cast<i16>(talk.unk578450));
         role.StepTargetCount(this->battleServices, 1);

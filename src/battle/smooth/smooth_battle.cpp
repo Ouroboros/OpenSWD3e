@@ -263,7 +263,7 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
     painter.SetSource(background);
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
 
-    if (battle.unk577290 == 0 && battle.unk577294 == 0)
+    if (battle.darkened == 0 && battle.attackDarkened == 0)
     {
         if (shake != 0)
         {
@@ -326,7 +326,7 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
 
     painter.SetClipClamped(0, 0, Display::Width, Display::Height);
 
-    if ((battle.unk577290 == 1 || battle.unk577294 == 1) && battle.undarkening == 0)
+    if ((battle.darkened == 1 || battle.attackDarkened == 1) && battle.undarkening == 0)
     {
         if (battle.darkenByTint != 0)
         {
@@ -378,7 +378,7 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
         battle.darkFrames = frames + 1;
     }
 
-    if (battle.undarkening != 1 || battle.fadingField != 0 || battle.unk5772C8 != 0)
+    if (battle.undarkening != 1 || battle.fadingField != 0 || battle.effectHolds != 0)
     {
         return;
     }
@@ -432,8 +432,8 @@ void BattleFrame::DrawBattleBackgroundAdvance(int shake, Scene& scene)
     battle.darkBlueShown = 0;
     battle.darkLevel = 0;
     battle.darkenUnit = -1;
-    battle.unk577294 = 0;
-    battle.unk577290 = 0;
+    battle.attackDarkened = 0;
+    battle.darkened = 0;
     battle.darkenByTint = 0;
     battle.undarkening = 0;
 }
@@ -557,7 +557,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
         {
             const auto gauge = static_cast<u16>(unit.GaugeLength(game.battleServices));
 
-            if (unit.unk2FF0 == 0)
+            if (unit.gaugeFilled == 0)
             {
                 hud.DrawGaugeWideAdvance(kNameGauge, nameX, kNameY, gauge, scene);
             }
@@ -568,7 +568,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             font.DrawText(game.drawSurface, nameX, kNameY, name, kDefeatedColor, kNameStyle);
         }
 
-        if (unit.unk2FF0 == 1 && battle.panelGrown[slot] == 1)
+        if (unit.gaugeFilled == 1 && battle.panelGrown[slot] == 1)
         {
             if (current)
             {
@@ -693,7 +693,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             scene
         );
 
-        if (unit.unk2FF0 == 1 && unit.PartyMember() == 1 && battle.panelGrown[slot] == 0)
+        if (unit.gaugeFilled == 1 && unit.PartyMember() == 1 && battle.panelGrown[slot] == 0)
         {
             battle.panelGrown[slot] =
                 static_cast<u8>(game.battleHud.DrawGrowing(index, kNameGauge, nameX, kNameY, scene));

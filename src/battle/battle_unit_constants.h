@@ -10,8 +10,8 @@ namespace swd3e
 
 constexpr u16 kShadowAction = 0x24;
 constexpr u16 kDefeatedShadowAction = 0x27;
-constexpr u32 kFlag2BC0 = 0x80000000u;
-constexpr u32 kFlag2BC0Damage = 0x2000;      // set with kFlag2BC0 when damage is pending (swd3e)
+constexpr u32 kStaggering = 0x80000000u;
+constexpr u32 kFlag2BC0Damage = 0x2000;      // set with kStaggering when damage is pending (swd3e)
 constexpr u32 kFlag2BC0Blocked = 0x4000000;  // the unit does not stagger (swd3e)
 constexpr u32 kFlag2BC0Spell = 0x8000000;    // a hit under DamageTransfer outside a cast spell (swd3e)
 constexpr u32 kFlag2BC0Poison = 0x20000000;  // a lasting poison holds (swd3e)

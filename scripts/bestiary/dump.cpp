@@ -165,8 +165,8 @@ int Data(const std::u8string& directory)
             d.healCountB,
             d.itemChance,
             d.skillChance,
-            d.unk66,
-            d.unk90,
+            d.experience,
+            d.gold,
             resist.c_str(),
             d.ailmentChance,
             d.catchChance,
@@ -179,7 +179,7 @@ int Data(const std::u8string& directory)
             Json(d.enrageEffect != 0 && d.enrageEffect < 1001 ? Name(database, d.enrageEffect) : std::string()).c_str(),
             d.battleLevel,
             d.skill,
-            d.unk60,
+            d.wisdom,
             Json(description).c_str()
         );
     }

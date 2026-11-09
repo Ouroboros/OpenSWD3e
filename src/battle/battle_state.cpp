@@ -121,7 +121,7 @@ void BattleState::AddSlotRecord(int kind, i32 unit)
         {
             PendingOrder& order = this->enemyPendingOrders[static_cast<std::size_t>(unit)];
             record.targetsAll = order.targetsAll;
-            record.unk10 = order.atParty;
+            record.atEnemies = order.atParty;
             record.allAtOnce = order.allAtOnce;
             record.unk0A = order.unk0C;
             record.targetCount = order.targetCount;
@@ -499,10 +499,10 @@ void BattleState::ClearActing()
 {
     this->actingUnit = 0;
     this->sweepTotal = 0;
-    this->unk575F20 = 0;
+    this->actingKind = 0;
     this->slideBackPicture = 0;
     this->atParty = 0;
-    this->unk575F28 = 0;
+    this->atEnemies = 0;
     this->allAtOnce = 0;
     this->targetsAll = 0;
 }

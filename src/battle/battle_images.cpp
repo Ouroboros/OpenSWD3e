@@ -135,7 +135,7 @@ constexpr std::size_t kKnockBackTrail = 1;
 
 }  // namespace
 
-// swd3e.exe 0x0048FB20: one frame of a knock back (unk2BC0 bit 26): the attack act takes action 0x3A (0x24 for an
+// swd3e.exe 0x0048FB20: one frame of a knock back (stateFlags bit 26): the attack act takes action 0x3A (0x24 for an
 // enemy or under mark bit 4, act 0xFA then) and slides the unit 8 pixels a frame away from the enemies for six
 // frames with sound 5, each frame leaving a fading afterimage; the unit is drawn over its shadow. Once the
 // afterimages are gone (and mark bit 0 is clear) the knock back ends: 1. 1 also when the act cannot run or the unit
@@ -143,7 +143,7 @@ constexpr std::size_t kKnockBackTrail = 1;
 int BattleUnit::KnockBackFrame(BattleServices& services)
 {
     ActState& act = this->attackAct;
-    this->unk2FEC = 1;
+    this->inAction = 1;
     act.id = this->actId;
     act.action = kKnockBackAction;
 
@@ -238,8 +238,8 @@ int BattleUnit::KnockBackFrame(BattleServices& services)
 
     this->hurtStep = 0;
     this->trails[kKnockBackTrail].started = 0;
-    this->unk2FEC = 0;
-    this->unk2BC0 &= ~kFlag2BC0Blocked;
+    this->inAction = 0;
+    this->stateFlags &= ~kFlag2BC0Blocked;
     act = ActState{};
     return 1;
 }

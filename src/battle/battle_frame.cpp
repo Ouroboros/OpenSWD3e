@@ -156,21 +156,21 @@ int Game::BattleFrame()
     // the field is no longer busy (swd3e's own plays, the start pose, a turn playing or a ripple, still hold it), and
     // the next unit acts whatever the menu shows (a list holds it by battleBusy).
     if (battle.activeTime && battle.battleBusy == 1 && battle.actingUnit == -1 && battle.turnPlaying == 0 &&
-        battle.unk5772C8 == 0 && (battle.startPoseRole & BattleState::StartPoseDone) != 0)
+        battle.effectHolds == 0 && (battle.startPoseRole & BattleState::StartPoseDone) != 0)
     {
         battle.battleBusy = 0;
     }
 
     if (battle.slotRecords[0].unit != -1 && battle.turnPlaying == 0 && this->fightTalk.battleRuns == 1 &&
-        (battle.result == 0 || (battle.activeTime && battle.battleBusy == 0)) && battle.unk5772C8 == 0)
+        (battle.result == 0 || (battle.activeTime && battle.battleBusy == 0)) && battle.effectHolds == 0)
     {
         BattleSlotRecord acting{
             battle.actingUnit,
             battle.sweepTotal,
-            battle.unk575F20,
+            battle.actingKind,
             static_cast<u16>(battle.slideBackPicture),
             battle.atParty,
-            battle.unk575F28,
+            battle.atEnemies,
             battle.targetsAll,
             battle.allAtOnce
         };
@@ -178,10 +178,10 @@ int Game::BattleFrame()
         this->TakeSlotRecord(acting);
         battle.actingUnit = acting.unit;
         battle.sweepTotal = acting.targetCount;
-        battle.unk575F20 = acting.kind;
+        battle.actingKind = acting.kind;
         battle.slideBackPicture = static_cast<i16>(acting.unk0A);
         battle.atParty = acting.atParty;
-        battle.unk575F28 = acting.unk10;
+        battle.atEnemies = acting.atEnemies;
         battle.targetsAll = acting.targetsAll;
         battle.allAtOnce = acting.allAtOnce;
 
@@ -227,7 +227,7 @@ int Game::BattleFrame()
         const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
         hud.DrawPicturePalette(kCurrentPanelPicture, kCurrentPanelX[unit], kBottomBarY);
 
-        if (battle.grayBandShown == 0 && this->battleRoles[unit].Flag2BC0() == 0)
+        if (battle.grayBandShown == 0 && this->battleRoles[unit].Staggering() == 0)
         {
             hud.DrawCursorAnimation(kPanelCursor, battle.panelPlaces[2 * unit], battle.panelPlaces[2 * unit + 1]);
         }
@@ -473,7 +473,7 @@ void Game::EndBattle()
     battle.battleGold = 0;
     battle.battleExperience = 0;
     battle.battleProficiency = 0;
-    battle.unk577204 = 0;
+    battle.retreat = 0;
     battle.timerAttack = 0;
     battle.pendingActionRow = 0;
     battle.pendingAction = 0;
@@ -486,7 +486,7 @@ void Game::EndBattle()
     battle.lastRoleHit = kNoUnit;
     battle.lastEnemyHit = kNoUnit;
     battle.lastRoleDefeated = kNoUnit;
-    battle.unk4BF1CA = kNoUnit;
+    battle.lastFelled = kNoUnit;
     battle.unk50CE6A = 0;
     battle.unk5377D0 = 0;
     battle.unk4BF1CC = kOpeningPanels;
@@ -540,8 +540,8 @@ void Game::EndBattle()
     battle.unk577284 = 0;
     battle.gatheringSweep = 0;
     battle.unk57728C = 0;
-    battle.unk577290 = 0;
-    battle.unk577294 = 0;
+    battle.darkened = 0;
+    battle.attackDarkened = 0;
     battle.unk577298 = 0;
     battle.unk57729C = 0;
     battle.unk5772A0 = 0;
