@@ -173,6 +173,8 @@ SDL3与FFmpeg由构建脚本自行下载源码并构建，不查找或复用本�
 
 单元测试源码放在tests/，由CTest运行。
 
+改动代码后默认只做格式化（scripts/format.sh）、风格检查（scripts/check_style.sh）与Windows构建，不跑全部单元测试；只有改动落在已有测试覆盖的逻辑上时，才单独运行相关的测试用例。
+
 ## 函数状态与验证次数
 
 reverse/functions.tsv是唯一函数状态表，以binary和address标识原函数。binary相对原始输入目录；source和evidence路径相对工作区根目录。module记录当前归属，unknown表示未知模块；归属调整保留原函数身份、实现状态和验证次数，更新源码位置与依据。
