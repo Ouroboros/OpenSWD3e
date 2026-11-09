@@ -657,6 +657,9 @@ int Game::RemoveDefeated(int index, int role)
         }
 
         battle.castWaits[static_cast<std::size_t>(index)] = 0;
+        // The rebuild (deviations.md): an enemy felled between its pick and its action leaves no pick to the one
+        // called to its number later (CallEnemies after the field shrinks to the first enemy).
+        battle.enemyTargetPicked[static_cast<std::size_t>(index)] = 0;
         return 1;
     }
 

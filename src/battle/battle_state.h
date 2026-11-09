@@ -647,9 +647,12 @@ public:
     i32 enemyGaugeBoost = 0;                    // 0x00577348 the boost of the enemies' gauges
     i32 heldEnemy = 0;                          // 0x00577028 the enemy (1-based) whose turn ended held
     i32 gatheringSweep = 0;                     // 0x00577288 1 while an enemy gathers the targets of a sweep
-    i32 enemyTargetPicked = 0;                  // 0x00577318 1 once the acting enemy picked its target
-    i32 enemyTarget = 0;                        // 0x00576FC0 the target of the acting enemy
-    i32 enemyAimsAtEnemies = 0;                 // 0x005772D4 1: an ordered enemy aims at the enemies
+    // 0x00577318 1 once the acting enemy picked its target. The original keeps one for all the enemies, so that an
+    // enemy acting while another waits for its cast countdown takes that one's pick; the rebuild keeps one per enemy
+    // (deviations.md).
+    std::array<i32, Enemies> enemyTargetPicked = {};
+    i32 enemyTarget = 0;         // 0x00576FC0 the target of the acting enemy
+    i32 enemyAimsAtEnemies = 0;  // 0x005772D4 1: an ordered enemy aims at the enemies
     i32 unk577298 = 0;
     i32 enemiesHitAct = 0;  // 0x00577098 the hit act of the enemies (hitActPending)
     i32 unk5772DC = 0;      // 0x005772DC set when a talk fells an enemy (command 0xA)

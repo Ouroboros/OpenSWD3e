@@ -2055,6 +2055,8 @@ int Game::CallEnemies(BattleEnemy& unit)
 
             BattleEnemy& enemy = this->battleEnemies[battle.enemyCount];
             enemy.Reset(this->battleServices);
+            // The rebuild (deviations.md): the enemy called picks its own target (the number may be one used before).
+            battle.enemyTargetPicked[battle.enemyCount] = 0;
             battle.unk537D68 = ObjectRecord{};
             UnitPlacement& place = battle.enemyPlaces[battle.enemyCount];
             place.actId = battle.unk577210;
@@ -2148,6 +2150,9 @@ int Game::EnemyFrame(int enemy)
                         battle.heldEnemy = enemy + 1;
                     }
 
+                    // The rebuild (deviations.md): its pick ends with its turn (the original's, one for all the
+                    // enemies, was left for the next enemy acting).
+                    battle.enemyTargetPicked[at] = 0;
                     return unit.ResetTurn(services);
                 }
 
@@ -2157,7 +2162,12 @@ int Game::EnemyFrame(int enemy)
                 }
                 else
                 {
-                    if (battle.enemyTargetPicked == 0)
+                    // The rebuild (deviations.md): the enemy's own pick, kept while it waits for its cast countdown
+                    // (EnemyChooseCommand); the original's, one for all the enemies, let an enemy acting meanwhile
+                    // take that one's target (an enemy's own number for a supporting command) on its own side,
+                    // striking a party slot past the roles in battle (a null object read) or a role it had not
+                    // picked, and made the waiting one pick again once the other had acted.
+                    if (battle.enemyTargetPicked[at] == 0)
                     {
                         if (!this->EnemyPickTarget(unit, enemy))
                         {
@@ -2165,7 +2175,7 @@ int Game::EnemyFrame(int enemy)
                             return battle.enemyTarget;
                         }
 
-                        battle.enemyTargetPicked = 1;
+                        battle.enemyTargetPicked[at] = 1;
                     }
 
                     if (unit.IsAimed() == 0)
@@ -2885,7 +2895,7 @@ void Game::EnemyAfterAction(BattleEnemy& unit, int enemy)
         }
     }
 
-    battle.enemyTargetPicked = 0;
+    battle.enemyTargetPicked[static_cast<std::size_t>(enemy)] = 0;
     battle.hitsAllRoles = 0;
     battle.turnPending = 0;
     battle.enemyFaded = 1;

@@ -214,6 +214,9 @@ void Game::StartBattle(u16 number)
     battle.markingEnemy = 0;
     battle.markedRole = 0;
     battle.markedTurns = 0;
+    // The rebuild (deviations.md): no pick is left from the battle before (the original's stays set when the battle
+    // ends while an enemy waits for its cast countdown).
+    battle.enemyTargetPicked.fill(0);
     this->battleHud.ResetMeter();
     battle.unk57734C = 0;
     battle.actingUnit = -1;
