@@ -4,6 +4,7 @@
 #include "battle/smooth/smooth_turn.h"
 #include "core/fault.h"
 #include "core/format.h"
+#include "core/log.h"
 #include "crt/msvc.h"
 #include "font/text_font.h"
 #include "game/game.h"
@@ -657,8 +658,22 @@ int Game::RemoveDefeated(int index, int role)
         }
 
         battle.castWaits[static_cast<std::size_t>(index)] = 0;
+
         // The rebuild (deviations.md): an enemy felled between its pick and its action leaves no pick to the one
         // called to its number later (CallEnemies after the field shrinks to the first enemy).
+        // Diagnostics (enemy pick): an enemy felled with its pick.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (battle.enemyTargetPicked[static_cast<std::size_t>(index)] == 1)
+            {
+                LogDiagnostic(
+                    u8"enemy pick: enemy %d felled with its pick (put away %d)",
+                    index,
+                    this->battleEnemies[static_cast<std::size_t>(index)].MarkedDefeated()
+                );
+            }
+        }
+
         battle.enemyTargetPicked[static_cast<std::size_t>(index)] = 0;
         return 1;
     }

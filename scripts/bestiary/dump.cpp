@@ -4,7 +4,8 @@
 // skills: one JSON line per skill script of mon.dat's skill table (an enemy's skillA and skillB) in the range.
 // formations: one JSON line per battle of battle.ffd, the mon.dat objects of its enemy slots (formation 0, the one
 // StartBattle reads).
-// Build after `cmake --build --preset linux`, linking build/linux/libswd3e_core.a and the libraries of swd3e_tests
+// Build after `cmake --build --preset linux` with -Isrc -Ibuild/linux/generated, linking build/linux/libswd3e_core.a and the
+// libraries of swd3e_tests
 // (third_party/install/linux/lib: SDL3, avformat, avcodec, swscale, swresample, avutil) with -static -pthread.
 // The page: dump <dir> data > monsters.jsonl; dump <dir> portrait 59 1 500 > portraits.raw;
 // dump <dir> formations > formations.jsonl; dump <dir> skills 1 1200 > skills.jsonl;

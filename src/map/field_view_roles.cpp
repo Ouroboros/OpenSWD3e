@@ -70,6 +70,30 @@ int FieldView::DrawRole(Role& role)
         return 0;
     }
 
+    // Diagnostics (smooth gpu): the roles the first block of a recording meets, and those whose look changed.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (this->recordPass == RecordPass::Color && this->recordBlock == 0 && !this->recordInSprite)
+        {
+            const std::array<i32, 8> look = {
+                role.act.id,
+                static_cast<i32>(role.act.frame),
+                role.act.picture,
+                role.act.direction,
+                static_cast<i32>(role.flags),
+                role.x,
+                role.y,
+                role.act.signal,
+            };
+
+            auto& kept = this->diagnostics.roleLooks[&role];
+            ++this->diagnostics.rolesMet;
+            this->diagnostics.rolesChanged += kept != look ? 1 : 0;
+            this->diagnostics.actorsMet += this->RoleIndex(role) < GameState::Roles ? 1 : 0;
+            kept = look;
+        }
+    }
+
     // The rebuild's smooth map laid by the GPU (LayBetween): a moving role is recorded on a sprite of its own; the
     // shade pass records the shadows past the first layer alone.
     if (this->recordPass != RecordPass::None && !this->recordInSprite && this->RecordSprite(role))
@@ -162,6 +186,31 @@ int FieldView::DrawRole(Role& role)
 
         zoomed = true;
         mode |= Painter::ZoomCopy;
+    }
+
+    // Diagnostics (smooth gpu): the modes the roles are drawn with.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (this->recordPass == RecordPass::Color && this->recordBlock == 0 && (mode & Painter::EffectMask) != 0)
+        {
+            static std::map<std::pair<std::size_t, u32>, int> modesSeen;
+
+            if (modesSeen[{this->RoleIndex(role), mode}]++ == 0)
+            {
+                LogDiagnostic(
+                    u8"role mode: role %u id %u mode %x effect %x zoomed %d tint %d,%d,%d alpha %d",
+                    static_cast<u32>(this->RoleIndex(role)),
+                    static_cast<u32>(role.id),
+                    mode,
+                    mode & Painter::EffectMask,
+                    zoomed ? 1 : 0,
+                    painter.Options().tintRed,
+                    painter.Options().tintGreen,
+                    painter.Options().tintBlue,
+                    painter.Options().alpha
+                );
+            }
+        }
     }
 
     // The rebuild (LayBetween): a sprite of a role drawn added to what is under it is laid added.

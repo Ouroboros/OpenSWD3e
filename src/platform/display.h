@@ -321,6 +321,19 @@ private:
     bool backdropShown = false;
     SDL_Cursor* cursor = nullptr;
     std::array<SDL_Cursor*, 2> systemCursors{};  // ShowSystemPointer: the arrow and the move pointer
+
+public:
+    // Diagnostics (smooth gpu): the output read back before it is shown, when set (ARGB8888), one frame; read and
+    // written only by the code built with BuildOptions::Diagnostics.
+    struct DiagnosticData
+    {
+        std::vector<u32>* readBack = nullptr;
+        int width = 0;
+        int height = 0;
+    };
+
+    mutable DiagnosticData diagnostics;
+    void DebugRead() const;
 };
 
 }  // namespace swd3e

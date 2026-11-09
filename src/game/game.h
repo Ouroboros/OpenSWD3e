@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <vector>
@@ -745,7 +746,24 @@ private:
     bool menuFrameShown = false;  // the last game frame showed a frame of the main menu or the shop
     u32 gameFrames = 0;
     u32 framesBetween = 0;
-    u32 framesLaid = 0;      // of framesBetween, those the GPU laid (FieldView::LayBetween)
+    u32 framesLaid = 0;  // of framesBetween, those the GPU laid (FieldView::LayBetween)
+
+    // Diagnostics (smooth gpu): read and written only by the code built with BuildOptions::Diagnostics.
+    struct DiagnosticData
+    {
+        std::array<u32, 3> framesNotLaid = {};  // the frames between not laid: in a menu, a battle, the map painted
+        int lastLaidWay = -1;                   // how the frame between before was drawn (PresentBetween)
+        // A frame drawn both ways and read back, a map change: asked by the Linux test program.
+        std::atomic<int> compare = 0;
+        std::atomic<int> warpMap = 0;
+        std::atomic<int> warpX = 0;
+        std::atomic<int> warpY = 0;
+        std::vector<u32> laid;
+        std::vector<u32> painted;
+        bool laidShown = false;
+    };
+
+    DiagnosticData diagnostics;
     u64 paintBetweenNs = 0;  // the time the frames between took to paint, in all and the longest
     u64 paintBetweenMostNs = 0;
     i32 backgroundShifted = 0;  // the rebuild's smooth battle: the background's shifts so far (where it stands)

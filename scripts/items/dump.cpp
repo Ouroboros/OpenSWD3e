@@ -2,7 +2,8 @@
 // data: one JSON line per mon.dat object 1..1199 with a name (the range the debug key F6 walks, 0x00402AA0), with the
 // fields the items and altar pages show (the altar takes objects of any kind among 501..899).
 // picture: each act's action at its first frame as "id width height" and its RGB rows (the item pictures, act 0x3B).
-// Build after `cmake --build --preset linux`, linking build/linux/libswd3e_core.a and the libraries of swd3e_tests
+// Build after `cmake --build --preset linux` with -Isrc -Ibuild/linux/generated, linking build/linux/libswd3e_core.a and the
+// libraries of swd3e_tests
 // (third_party/install/linux/lib: SDL3, avformat, avcodec, swscale, swresample, avutil) with -static -pthread.
 // The game directory ends in a slash. The pages:
 //   dump <dir> data > objects.jsonl; dump <dir> picture 59 1 1199 > pictures.raw;

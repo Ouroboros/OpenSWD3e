@@ -448,6 +448,17 @@ int Game::Run([[maybe_unused]] std::u8string_view commandLine)
         static_cast<i32>(this->framesLaid)
     );
 
+    // Diagnostics (smooth gpu): the frames between not laid.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        LogDiagnostic(
+            u8"frames between not laid: %d menu, %d battle, %d map",
+            static_cast<i32>(this->diagnostics.framesNotLaid[0]),
+            static_cast<i32>(this->diagnostics.framesNotLaid[1]),
+            static_cast<i32>(this->diagnostics.framesNotLaid[2])
+        );
+    }
+
     if (this->framesBetween != 0)
     {
         LogInfo(
@@ -1720,8 +1731,34 @@ bool Game::PresentBetween()
 
     const u64 paintStart = SDL_GetTicksNS();
 
+    // Diagnostics (smooth gpu): how each frame between is drawn (0 laid, 1 menu, 2 battle, 3 map painted), those not
+    // laid counted and the way logged when it changes.
+    auto drawnWay = [this](int way)
+    {
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (way > 0)
+            {
+                ++this->diagnostics.framesNotLaid[static_cast<std::size_t>(way - 1)];
+            }
+
+            if (way != this->diagnostics.lastLaidWay)
+            {
+                LogDiagnostic(
+                    u8"frames between drawn way %d at game frame %u: talk windows %d, screen flags %x",
+                    way,
+                    this->gameFrames,
+                    this->talk.WindowsShown() ? 1 : 0,
+                    this->scene.screenFlags
+                );
+                this->diagnostics.lastLaidWay = way;
+            }
+        }
+    };
+
     if (this->menuFrameShown && !this->battleFrameShown)
     {
+        drawnWay(1);
         Surface& screen = *this->menuScreen;
         const bool painted = this->menu.PaintBetween(screen.Pixels());
         const u64 took = SDL_GetTicksNS() - paintStart;
@@ -1757,23 +1794,51 @@ bool Game::PresentBetween()
         int mouseX = 0;
         int mouseY = 0;
         this->input.PeekMouse(mouseX, mouseY);
+        drawnWay(2);
         this->battleStage.PaintBetween(now, *this->smoothScreen, mouseX, mouseY);
     }
     else
     {
         // The rebuild: the map laid by the GPU (reverse/analysis/smooth-gpu.md), painted where its layers cannot show
         // the frame.
+        // Diagnostics (smooth gpu): both drawings of one frame read back for the Linux test program.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (this->diagnostics.compare.load() != 0)
+            {
+                this->display.diagnostics.readBack = &this->diagnostics.laid;
+                this->diagnostics.laidShown = this->fieldView.LayBetween(scale);
+                this->display.diagnostics.readBack = &this->diagnostics.painted;
+                this->fieldView.PaintBetween(*this->smoothScreen);
+                this->display.Present(*this->smoothScreen);
+                this->display.diagnostics.readBack = nullptr;
+                this->diagnostics.compare.store(0);
 
-        if (this->fieldView.LayBetween(scale))
+                return true;
+            }
+        }
+
+        // Diagnostics (smooth gpu): SWD3E_WEAVE paints every frame, the GPU's laying left out.
+        bool weave = false;
+
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            weave = std::getenv("SWD3E_WEAVE") != nullptr;
+        }
+
+        if (!weave && this->fieldView.LayBetween(scale))
         {
             const u64 laid = SDL_GetTicksNS() - paintStart;
             this->paintBetweenNs += laid;
             this->paintBetweenMostNs = std::max(this->paintBetweenMostNs, laid);
             ++this->framesBetween;
             ++this->framesLaid;
+
+            drawnWay(0);
             return true;
         }
 
+        drawnWay(3);
         this->fieldView.PaintBetween(*this->smoothScreen);
     }
 
@@ -2146,6 +2211,23 @@ void Game::MainFrame()
     this->menuFrameShown = false;
     ++this->gameFrames;
     this->fieldView.KeepRolePlaces();
+
+    // Diagnostics (smooth gpu): the map change asked by the Linux test program.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (const int warp = this->diagnostics.warpMap.exchange(0); warp != 0)
+        {
+            this->ChangeMap(
+                warp,
+                this->diagnostics.warpX.load(),
+                this->diagnostics.warpY.load(),
+                Talk::Keep,
+                Talk::Keep,
+                Talk::Keep,
+                0
+            );
+        }
+    }
 
     if ((this->deviceFlags & 1) != 0)
     {

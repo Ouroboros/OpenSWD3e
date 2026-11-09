@@ -5,6 +5,7 @@
 #include "battle/smooth/smooth_hit.h"
 #include "core/fault.h"
 #include "core/format.h"
+#include "core/log.h"
 #include "platform/display.h"
 
 namespace swd3e
@@ -2055,6 +2056,16 @@ int Game::CallEnemies(BattleEnemy& unit)
 
             BattleEnemy& enemy = this->battleEnemies[battle.enemyCount];
             enemy.Reset(this->battleServices);
+
+            // Diagnostics (enemy pick): a number called again with a pick left on it.
+            if constexpr (BuildOptions::Diagnostics)
+            {
+                if (battle.enemyTargetPicked[battle.enemyCount] == 1)
+                {
+                    LogDiagnostic(u8"enemy pick: enemy %u called with a pick left", battle.enemyCount);
+                }
+            }
+
             // The rebuild (deviations.md): the enemy called picks its own target (the number may be one used before).
             battle.enemyTargetPicked[battle.enemyCount] = 0;
             battle.unk537D68 = ObjectRecord{};
@@ -2150,6 +2161,20 @@ int Game::EnemyFrame(int enemy)
                         battle.heldEnemy = enemy + 1;
                     }
 
+                    // Diagnostics (enemy pick): a pick dropped by a held, felled or put away enemy.
+                    if constexpr (BuildOptions::Diagnostics)
+                    {
+                        if (battle.enemyTargetPicked[at] == 1)
+                        {
+                            LogDiagnostic(
+                                u8"enemy pick: enemy %d ends its turn %s with its pick (put away %d)",
+                                enemy,
+                                held ? std::u8string_view(u8"held") : std::u8string_view(u8"felled"),
+                                unit.MarkedDefeated()
+                            );
+                        }
+                    }
+
                     // The rebuild (deviations.md): its pick ends with its turn (the original's, one for all the
                     // enemies, was left for the next enemy acting).
                     battle.enemyTargetPicked[at] = 0;
@@ -2169,6 +2194,30 @@ int Game::EnemyFrame(int enemy)
                     // picked, and made the waiting one pick again once the other had acted.
                     if (battle.enemyTargetPicked[at] == 0)
                     {
+                        // Diagnostics (enemy pick): an enemy picking while another keeps its pick (the original
+                        // took that one's target here).
+                        if constexpr (BuildOptions::Diagnostics)
+                        {
+                            for (u32 other = 0; other < battle.enemyCount; ++other)
+                            {
+                                if (other != at && battle.enemyTargetPicked[other] == 1)
+                                {
+                                    LogDiagnostic(
+                                        u8"enemy pick: enemy %d picks its own while enemy %u keeps its pick (waits "
+                                        u8"%d, "
+                                        u8"aim %u); the original took target %d, at enemies %d, roles %u",
+                                        enemy,
+                                        other,
+                                        battle.castWaits[other],
+                                        static_cast<u32>(this->battleEnemies[other].Aim()),
+                                        battle.enemyTarget,
+                                        battle.atEnemies,
+                                        battle.roleCount
+                                    );
+                                }
+                            }
+                        }
+
                         if (!this->EnemyPickTarget(unit, enemy))
                         {
                             battle.actingUnit = -1;

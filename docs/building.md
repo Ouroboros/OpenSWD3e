@@ -77,6 +77,8 @@ cmake --build --preset windows
 | `asset/` | 字库，以及从原版提取的图标、启动画面、音效与对话框 |
 | `swd3e_tests.exe` | 单元测试 |
 
+诊断代码（`LogDiagnostic` 与 `if constexpr (BuildOptions::Diagnostics)` 包住的代码，注释标作「Diagnostics (主题)」）默认不编译。开发时加 `-DSWD3E_DIAGNOSTICS=ON` 配置即编入，日志按 debug 级别写出；`scripts/package.bat`（`scripts/release.bat`）打包的版本不含诊断代码。
+
 Linux 版：
 
 ```sh

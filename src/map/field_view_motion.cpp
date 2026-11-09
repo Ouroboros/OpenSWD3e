@@ -740,6 +740,65 @@ void FieldView::CaptureRoleSteps(bool continuous)
             .act = from.act,
         };
     }
+
+    // Diagnostics (party overlap): the party's moves the frame took and the steps drawn of them.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (kept)
+        {
+            for (std::size_t index = 0; index < GameState::Roles; ++index)
+            {
+                const Role& role = owner.state.roles[index];
+
+                if (role.id < 1 || role.id > 4 || (role.flags & Role::Visible) == 0)
+                {
+                    continue;
+                }
+
+                const RolePlace& from = this->framePlaces[index];
+                const Point walked = this->frameSteps[index];
+                const RoleMotion& step = this->roleMotions[index];
+                const bool changed = role.x != from.x || role.y != from.y || walked.x != 0 || walked.y != 0 ||
+                                     role.act.action != from.act.action || role.act.direction != from.act.direction ||
+                                     ((role.flags & Role::Held) != 0) != from.held;
+
+                if (!changed)
+                {
+                    continue;
+                }
+
+                LogDiagnostic(
+                    u8"party step: frame %u role %u id %u from %d,%d to %d,%d walked %d,%d held %d action %d>%d dir "
+                    u8"%d>%d "
+                    u8"flags %x; step active %d from %d,%d to %d,%d (1/256) length %d stops %d frozen %d turning %d",
+                    owner.gameFrames,
+                    static_cast<u32>(index),
+                    static_cast<u32>(role.id),
+                    from.x,
+                    from.y,
+                    role.x,
+                    role.y,
+                    walked.x,
+                    walked.y,
+                    (role.flags & Role::Held) != 0 ? 1 : 0,
+                    from.act.action,
+                    role.act.action,
+                    from.act.direction,
+                    role.act.direction,
+                    role.flags,
+                    step.active ? 1 : 0,
+                    step.fromX,
+                    step.fromY,
+                    step.toX,
+                    step.toY,
+                    step.length,
+                    step.stops ? 1 : 0,
+                    step.frozen ? 1 : 0,
+                    step.turning ? 1 : 0
+                );
+            }
+        }
+    }
 }
 
 // The steps like the one the game frame took (from `from`) that end role `index`'s move where it ends, in a straight

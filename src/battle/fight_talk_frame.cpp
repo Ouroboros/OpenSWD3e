@@ -6,6 +6,7 @@
 #include "core/error_box.h"
 #include "core/fault.h"
 #include "core/format.h"
+#include "core/log.h"
 #include "core/spline.h"
 #include "core/words.h"
 
@@ -1005,6 +1006,25 @@ int Game::FightTalkMarks(bool set)
     const i16 unit = talk.Word(1);
     const u16 marks = talk.UnsignedWord(2);
     BattleUnit& marked = this->TalkUnit(unit);
+
+    // Diagnostics (enemy pick): an enemy put away or brought back by the talk (a merge), with its pick.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (unit >= 0 && unit <= kLastEnemy && (marks & BattleUnit::DefeatedMark) != 0)
+        {
+            const auto at = static_cast<std::size_t>(unit);
+            LogDiagnostic(
+                u8"enemy pick: talk %s enemy %d: picked %d, waits %d, aim %u, acting %d, enemies %u",
+                set ? std::u8string_view(u8"puts away") : std::u8string_view(u8"brings back"),
+                static_cast<i32>(unit),
+                at < battle.enemyTargetPicked.size() ? battle.enemyTargetPicked[at] : -1,
+                at < battle.castWaits.size() ? battle.castWaits[at] : -1,
+                static_cast<u32>(marked.Aim()),
+                battle.actingUnit,
+                battle.enemyCount
+            );
+        }
+    }
 
     if (set)
     {

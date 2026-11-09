@@ -1,5 +1,7 @@
 #include "platform/display.h"
 
+#include "core/build_options.h"
+
 #include <SDL3/SDL.h>
 
 #include <algorithm>
@@ -317,6 +319,13 @@ void Display::Present(const Surface& screen)
     }
 
     SDL_RenderTexture(this->renderer, shown, nullptr, &target);
+
+    // Diagnostics (smooth gpu): the output read back when asked.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        this->DebugRead();
+    }
+
     SDL_RenderPresent(this->renderer);
 }
 
@@ -1196,6 +1205,12 @@ void Display::EndLayers()
         return;
     }
 
+    // Diagnostics (smooth gpu): the output read back when asked.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        this->DebugRead();
+    }
+
     SDL_RenderPresent(this->renderer);
     this->lastShownNs = SDL_GetTicksNS();
 }
@@ -1217,6 +1232,51 @@ u64 Display::RefreshPeriod() const
 u64 Display::LastShown() const
 {
     return this->lastShownNs;
+}
+
+// Diagnostics (smooth gpu): the output read back for the Linux test program (diagnostics.readBack), one frame.
+void Display::DebugRead() const
+{
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        std::vector<u32>* const into = this->diagnostics.readBack;
+
+        if (into == nullptr)
+        {
+            return;
+        }
+
+        SDL_Surface* read = SDL_RenderReadPixels(this->renderer, nullptr);
+
+        if (read == nullptr)
+        {
+            return;
+        }
+
+        SDL_Surface* converted = SDL_ConvertSurface(read, SDL_PIXELFORMAT_ARGB8888);
+        SDL_DestroySurface(read);
+
+        if (converted == nullptr)
+        {
+            return;
+        }
+
+        into->resize(static_cast<std::size_t>(converted->w) * static_cast<std::size_t>(converted->h));
+
+        for (int y = 0; y < converted->h; ++y)
+        {
+            std::memcpy(
+                into->data() + static_cast<std::ptrdiff_t>(y) * converted->w,
+                static_cast<const u8*>(converted->pixels) + static_cast<std::ptrdiff_t>(y) * converted->pitch,
+                static_cast<std::size_t>(converted->w) * sizeof(u32)
+            );
+        }
+
+        this->diagnostics.height = converted->h;
+        this->diagnostics.width = converted->w;
+        this->diagnostics.readBack = nullptr;  // one frame read back
+        SDL_DestroySurface(converted);
+    }
 }
 
 Point Display::OutputSize() const

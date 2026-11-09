@@ -548,6 +548,7 @@ private:
     bool RecordLayers();
     void ScanDirty(GpuLayer& layer);
     void RecordStill();
+
     void ClaimLayer(std::size_t at, std::size_t role);
     bool RecordSprite(Role& role);
     void RecordTarget();
@@ -575,6 +576,18 @@ private:
     bool recordSkip = false;
     Surface recordSkipScratch;
     Surface effectScratch;  // RecordEffects, RecordOverlays: what an effect draws on the canvas itself
+
+    // Diagnostics (smooth gpu): the roles a recording met and those whose look changed; read and written only by the
+    // code built with BuildOptions::Diagnostics.
+    struct DiagnosticData
+    {
+        std::map<const Role*, std::array<i32, 8>> roleLooks;
+        u64 rolesMet = 0;
+        u64 rolesChanged = 0;
+        u64 actorsMet = 0;
+    };
+
+    DiagnosticData diagnostics;
     // The map has an overlay with a parallax: every overlay is laid by the GPU where the camera glides (gpuOverlays,
     // in their order), the first layer recorded without them.
     bool recordOverlays = false;

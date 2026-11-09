@@ -23,6 +23,21 @@ constexpr Pixel kWhitePixel = 0xFFFF;
 // The top byte of an effect element's key holds its kind (EffectKey).
 constexpr int kEffectKindShift = 56;
 
+// Diagnostics (smooth gpu): the time of the recordings, the interface and presenting, and their counts.
+[[maybe_unused]] std::array<u64, 5> gpuTimes = {};
+[[maybe_unused]] std::array<u64, 4> gpuCounts = {};
+// Diagnostics (smooth gpu): a recording's steps (first block, other blocks, white, shade, hand-over).
+[[maybe_unused]] std::array<u64, 5> recordSteps = {};
+[[maybe_unused]] u64 recordStepCount = 0;
+[[maybe_unused]] u64 recordLayersChanged = 0;
+[[maybe_unused]] u64 recordPixelsHanded = 0;
+[[maybe_unused]] u64 recordUploadNs = 0;
+// Diagnostics (smooth gpu): the times between frames shown (under 5, 9, 13, 17 ms and longer) and the slow ones.
+[[maybe_unused]] std::array<u64, 5> intervalCounts = {};
+[[maybe_unused]] u64 lastShownNs = 0;
+[[maybe_unused]] u32 lastShownGameFrame = 0;
+[[maybe_unused]] u64 intervalMostNs = 0;
+
 void FillRect(Surface& surface, i32 left, i32 top, i32 right, i32 bottom, Pixel value)
 {
     left = std::max(left, 0);
@@ -254,6 +269,60 @@ bool FieldView::RecordSprite(Role& role)
             made.canvasWidth = std::max(made.canvasWidth + widen, made.originX + right);
             made.originY += raise;
             made.spriteHeight = std::max(made.spriteHeight + raise, top + raise + font.GlyphHeight() + kShadowReach);
+        }
+
+        // Diagnostics (smooth gpu): the sprites of the roles with an attached act.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (role.attached != nullptr)
+            {
+                static int attachedLogs = 0;
+                const Picture* extra = owner.archive.GetPicture(role.attached->frame, role.attached->picture);
+
+                if (attachedLogs < 40)
+                {
+                    ++attachedLogs;
+                    LogDiagnostic(
+                        u8"attached sprite: role %u act %d,%d picture %dx%d at %d,%d; sprite origin %d,%d canvas %dx%d",
+                        static_cast<u32>(index),
+                        role.attached->id,
+                        static_cast<i32>(role.attached->frame),
+                        extra != nullptr ? static_cast<i32>(extra->width) : -1,
+                        extra != nullptr ? static_cast<i32>(extra->height) : -1,
+                        role.drawOffsetX - role.attached->x,
+                        role.drawOffsetY - role.act.y,
+                        made.originX,
+                        made.originY,
+                        made.canvasWidth,
+                        made.spriteHeight
+                    );
+                }
+            }
+        }
+
+        // Diagnostics (smooth gpu): the sprites of the roles with a label.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (role.label.has_value())
+            {
+                static int labelLogs = 0;
+
+                if (labelLogs < 40)
+                {
+                    ++labelLogs;
+                    LogDiagnostic(
+                        u8"label sprite: role %u leader %d labelled %d bytes %u origin %d canvas %d font %d,%d",
+                        static_cast<u32>(index),
+                        static_cast<i32>(owner.state.leader.id),
+                        labelled ? 1 : 0,
+                        static_cast<u32>(role.label->size()),
+                        made.originX,
+                        made.canvasWidth,
+                        owner.largeFont.Advance(),
+                        owner.largeFont.GlyphWidth()
+                    );
+                }
+            }
         }
 
         // The font writes on rows of the screen's height (a role's label).
@@ -519,7 +588,33 @@ bool FieldView::RecordLayers()
         owner.SetDrawSize(width, height);
     };
 
+    // Diagnostics (smooth gpu): the time of each step of the recording.
+    u64 stepStart = 0;
+    std::array<u64, 5> theseSteps = {};
+
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        stepStart = SDL_GetTicksNS();
+    }
+
+    const u64 recordingStart = stepStart;
+    const u64 handedBefore = recordPixelsHanded;
+    const u64 changedBefore = recordLayersChanged;
+    const u64 uploadBefore = recordUploadNs;
+
+    auto step = [&](std::size_t index)
+    {
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            const u64 now = SDL_GetTicksNS();
+            recordSteps[index] += now - stepStart;
+            theseSteps[index] += now - stepStart;
+            stepStart = now;
+        }
+    };
+
     paintBlock(0);
+    step(0);
 
     // The layers whose first block differs from what they last handed to the GPU.
     bool changed = false;
@@ -540,7 +635,73 @@ bool FieldView::RecordLayers()
             const auto count = static_cast<std::size_t>(dirty[2] - dirty[0]);
             layer.changed = !std::equal(row, row + count, layer.kept.begin() + static_cast<std::ptrdiff_t>(at));
 
+            // Diagnostics (smooth gpu): what changed in a sprite when the canvas moved.
+            if constexpr (BuildOptions::Diagnostics)
+            {
+                if (layer.changed && moved && layer.role < GameState::Roles && layer.keptRole == layer.role)
+                {
+                    static int movedLogs = 0;
+                    std::size_t differing = 0;
+                    i32 firstX = -1;
+
+                    for (std::size_t column = 0; column < count; ++column)
+                    {
+                        if (row[column] != layer.kept[at + column])
+                        {
+                            firstX = firstX < 0 ? static_cast<i32>(column) + dirty[0] : firstX;
+                            ++differing;
+                        }
+                    }
+
+                    if (movedLogs < 30)
+                    {
+                        ++movedLogs;
+                        LogDiagnostic(
+                            u8"moved sprite changed: role %u row %d first x %d, %u pixels of the row differ (canvas "
+                            u8"%dx%d)",
+                            static_cast<u32>(layer.role),
+                            y,
+                            firstX,
+                            static_cast<u32>(differing),
+                            layer.canvasWidth,
+                            layer.spriteHeight
+                        );
+                    }
+                }
+            }
+
             at += count;
+        }
+
+        // Diagnostics (smooth gpu): why a sprite changed when the canvas moved.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (moved && layer.role < GameState::Roles && layer.changed && layer.keptRole == layer.role)
+            {
+                static int whyLogs = 0;
+
+                if (whyLogs < 30)
+                {
+                    ++whyLogs;
+                    LogDiagnostic(
+                        u8"moved sprite: role %u kept role %u size %dx%d kept %dx%d dirty %d,%d-%d,%d kept %d,%d-%d,%d",
+                        static_cast<u32>(layer.role),
+                        static_cast<u32>(layer.keptRole),
+                        layer.canvasWidth,
+                        layer.canvasHeight,
+                        layer.keptWidth,
+                        layer.keptHeight,
+                        dirty[0],
+                        dirty[1],
+                        dirty[2],
+                        dirty[3],
+                        layer.keptDirty[0],
+                        layer.keptDirty[1],
+                        layer.keptDirty[2],
+                        layer.keptDirty[3]
+                    );
+                }
+            }
         }
 
         changed = changed || layer.changed;
@@ -575,6 +736,8 @@ bool FieldView::RecordLayers()
             paintBlock(block);
         }
 
+        step(1);
+
         // The layers past the first over white.
         for (std::size_t block = 0; block < kBlocks && (layers > 1 || this->recordOverlays) && !this->recordFailed;
              ++block)
@@ -593,6 +756,7 @@ bool FieldView::RecordLayers()
             owner.SetDrawSize(width, height);
         }
 
+        step(2);
         bool shaded = false;
 
         for (std::size_t index = 1; index < layers; ++index)
@@ -616,6 +780,7 @@ bool FieldView::RecordLayers()
         }
     }
 
+    step(3);
     this->recordPass = RecordPass::None;
     this->recordSkip = false;
     this->replaying = false;
@@ -638,12 +803,28 @@ bool FieldView::RecordLayers()
 
     owner.SetDrawSize(Display::Width, Display::Height);
 
+    // Diagnostics (party layers): the layers of the party and the still layer after each, as recorded.
+    std::string partyLayers;
+    bool afterParty = false;
+
     for (std::size_t index = 0; index < this->gpuLayers.size(); ++index)
     {
         GpuLayer& layer = this->gpuLayers[index];
         const std::array<i32, 4>& dirty = layer.dirty;
         const bool holds = index < layers && dirty[0] < dirty[2] && dirty[1] < dirty[3];
         layer.drawn = holds && !this->recordFailed;
+
+        // Diagnostics (party layers): whether the layer is logged (a party role's, or the still one after it).
+        bool logged = false;
+        u32 partyHash = 0;
+
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            const bool partyLayer = layer.role < GameState::Roles && owner.state.roles[layer.role].id >= 1 &&
+                                    owner.state.roles[layer.role].id <= 4;
+            logged = partyLayer || afterParty;
+            afterParty = partyLayer;
+        }
 
         if (!holds)
         {
@@ -652,33 +833,46 @@ bool FieldView::RecordLayers()
 
         if (layer.drawn && layer.changed)
         {
-            static int changeLogs = 0;
-
-            if (changeLogs < 120)
+            // Diagnostics (smooth gpu): the layers handed over again.
+            if constexpr (BuildOptions::Diagnostics)
             {
-                ++changeLogs;
-                LogInfo(
-                    u8"gpu layer changed: frame %u layer %u of %u role %u dirty %d,%d-%d,%d moved %d kept role %u "
-                    u8"kept dirty %d,%d-%d,%d",
-                    this->placesFrame,
-                    static_cast<u32>(index),
-                    static_cast<u32>(layers),
-                    static_cast<u32>(layer.role),
-                    dirty[0],
-                    dirty[1],
-                    dirty[2],
-                    dirty[3],
-                    moved ? 1 : 0,
-                    static_cast<u32>(layer.keptRole),
-                    layer.keptDirty[0],
-                    layer.keptDirty[1],
-                    layer.keptDirty[2],
-                    layer.keptDirty[3]
-                );
+                ++recordLayersChanged;
+                static int changeLogs = 0;
+
+                if (changeLogs < 120)
+                {
+                    ++changeLogs;
+                    LogDiagnostic(
+                        u8"gpu layer changed: frame %u layer %u of %u role %u dirty %d,%d-%d,%d moved %d kept role %u "
+                        u8"kept dirty %d,%d-%d,%d",
+                        this->placesFrame,
+                        static_cast<u32>(index),
+                        static_cast<u32>(layers),
+                        static_cast<u32>(layer.role),
+                        dirty[0],
+                        dirty[1],
+                        dirty[2],
+                        dirty[3],
+                        moved ? 1 : 0,
+                        static_cast<u32>(layer.keptRole),
+                        layer.keptDirty[0],
+                        layer.keptDirty[1],
+                        layer.keptDirty[2],
+                        layer.keptDirty[3]
+                    );
+                }
             }
 
             // The first layer holds the ground (what is not zoomed): its first block at the canvas's resolution.
             const i32 parts = layer.single ? 1 : kRecordParts;
+
+            // Diagnostics (smooth gpu): the pixels handed over.
+            if constexpr (BuildOptions::Diagnostics)
+            {
+                recordPixelsHanded +=
+                    static_cast<u64>(parts * (dirty[2] - dirty[0])) * static_cast<u64>(parts * (dirty[3] - dirty[1]));
+            }
+
             layer.left = parts * dirty[0];
             layer.top = parts * dirty[1];
             layer.width = parts * (dirty[2] - dirty[0]);
@@ -694,10 +888,26 @@ bool FieldView::RecordLayers()
                 FieldView::WeaveBlocks(layer.colors, dirty, this->gpuWoven);
             }
 
+            // Diagnostics (party layers): the colours recorded (FNV-1a).
+            if constexpr (BuildOptions::Diagnostics)
+            {
+                if (logged)
+                {
+                    partyHash = 2166136261u;
+
+                    for (const Pixel pixel : this->gpuWoven)
+                    {
+                        partyHash = (partyHash ^ pixel) * 16777619u;
+                    }
+                }
+            }
+
             // The first layer covers the canvas (but where the overlays under it show): it is handed over as it is; an
             // added sprite too (black adds nothing).
             if ((index == 0 && !this->recordOverlays) || layer.additive)
             {
+                // Diagnostics (smooth gpu): the time of the upload.
+                const u64 uploadStart = BuildOptions::Diagnostics ? SDL_GetTicksNS() : 0;
                 display.UpdateLayer(
                     layer.color,
                     this->gpuWoven.data(),
@@ -707,6 +917,11 @@ bool FieldView::RecordLayers()
                     kBlackPixel,
                     Display::LayerBlend::Opaque
                 );
+
+                if constexpr (BuildOptions::Diagnostics)
+                {
+                    recordUploadNs += SDL_GetTicksNS() - uploadStart;
+                }
             }
             else
             {
@@ -719,6 +934,51 @@ bool FieldView::RecordLayers()
                     FieldView::WeaveBlocks(layer.whites, dirty, this->gpuWovenWhite);
                 }
 
+                // Diagnostics (smooth gpu): one layer's two recordings written out.
+                if constexpr (BuildOptions::Diagnostics)
+                {
+                    if (const char* dump = std::getenv("SMOKE_DUMP_ROLE");
+                        dump != nullptr && static_cast<std::size_t>(std::atoi(dump)) == layer.role)
+                    {
+                        for (int ground = 0; ground < 2; ++ground)
+                        {
+                            const std::vector<Pixel>& woven = ground == 0 ? this->gpuWoven : this->gpuWovenWhite;
+                            std::string name =
+                                "role_" + std::to_string(layer.role) + (ground == 0 ? "_black.ppm" : "_white.ppm");
+                            std::FILE* file = std::fopen(name.c_str(), "wb");
+
+                            if (file != nullptr)
+                            {
+                                std::fprintf(file, "P6\n%d %d\n255\n", layer.width, layer.height);
+
+                                for (const Pixel pixel : woven)
+                                {
+                                    const std::array<u8, 3> rgb = {
+                                        static_cast<u8>((pixel >> 11) << 3),
+                                        static_cast<u8>(((pixel >> 5) & 0x3F) << 2),
+                                        static_cast<u8>((pixel & 0x1F) << 3),
+                                    };
+
+                                    std::fwrite(rgb.data(), 1, rgb.size(), file);
+                                }
+
+                                std::fclose(file);
+                            }
+                        }
+
+                        LogDiagnostic(
+                            u8"dumped role %u: act %d frame %u picture %d flags %x",
+                            static_cast<u32>(layer.role),
+                            owner.state.roles[layer.role].act.id,
+                            static_cast<u32>(owner.state.roles[layer.role].act.frame),
+                            owner.state.roles[layer.role].act.picture,
+                            owner.state.roles[layer.role].flags
+                        );
+                    }
+                }
+
+                // Diagnostics (smooth gpu): the time of the upload.
+                const u64 uploadStart = BuildOptions::Diagnostics ? SDL_GetTicksNS() : 0;
                 display.UpdateMattedLayer(
                     layer.color,
                     this->gpuWoven.data(),
@@ -727,6 +987,11 @@ bool FieldView::RecordLayers()
                     layer.height,
                     layer.width
                 );
+
+                if constexpr (BuildOptions::Diagnostics)
+                {
+                    recordUploadNs += SDL_GetTicksNS() - uploadStart;
+                }
             }
 
             if (layer.shaded)
@@ -749,6 +1014,26 @@ bool FieldView::RecordLayers()
                     kWhitePixel,
                     Display::LayerBlend::Subtract
                 );
+            }
+        }
+
+        // Diagnostics (party layers)
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (logged)
+            {
+                const bool roleLayer = layer.role < GameState::Roles;
+                const Role* held = roleLayer ? &owner.state.roles[layer.role] : nullptr;
+                partyLayers +=
+                    std::to_string(index) + ":" +
+                    (roleLayer
+                         ? "id" + std::to_string(held->id) + "(pic " + std::to_string(held->act.frame) + "." +
+                               std::to_string(held->act.picture) + " dir " + std::to_string(held->act.direction) + ")"
+                         : std::string("still")) +
+                    " kept " + std::to_string(layer.keptRole) + " changed " + std::to_string(layer.changed ? 1 : 0) +
+                    " drawn " + std::to_string(layer.drawn ? 1 : 0) + " dirty " + std::to_string(dirty[0]) + "," +
+                    std::to_string(dirty[1]) + "-" + std::to_string(dirty[2]) + "," + std::to_string(dirty[3]) +
+                    (partyHash != 0 ? " hash " + std::to_string(partyHash) : std::string()) + "; ";
             }
         }
 
@@ -775,6 +1060,83 @@ bool FieldView::RecordLayers()
                     FillRect(layer.shades[block], dirty[0], dirty[1], dirty[2], dirty[3], kWhitePixel);
                 }
             }
+        }
+    }
+
+    // Diagnostics (party layers)
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (!partyLayers.empty())
+        {
+            LogDiagnostic(u8"party layers: frame %u: %s", this->placesFrame, partyLayers.c_str());
+        }
+    }
+
+    step(4);
+
+    // Diagnostics (smooth gpu): the recordings counted.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        ++recordStepCount;
+    }
+
+    // Diagnostics (smooth gpu): a slow recording's steps.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (SDL_GetTicksNS() - recordingStart > 8'000'000)
+        {
+            LogDiagnostic(
+                u8"slow recording (us): first block %u, other blocks %u, white %u, shade %u, hand-over %u (upload %u; "
+                u8"%u "
+                u8"layers changed of %u, %u kpixels; moved %d, white pass %d, shade pass %d)",
+                static_cast<u32>(theseSteps[0] / 1000),
+                static_cast<u32>(theseSteps[1] / 1000),
+                static_cast<u32>(theseSteps[2] / 1000),
+                static_cast<u32>(theseSteps[3] / 1000),
+                static_cast<u32>(theseSteps[4] / 1000),
+                static_cast<u32>((recordUploadNs - uploadBefore) / 1000),
+                static_cast<u32>(recordLayersChanged - changedBefore),
+                static_cast<u32>(layers),
+                static_cast<u32>((recordPixelsHanded - handedBefore) / 1000),
+                moved ? 1 : 0,
+                whitePass ? 1 : 0,
+                shadePass ? 1 : 0
+            );
+        }
+    }
+
+    // Diagnostics (smooth gpu): the steps of the recordings summed up every 40.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (recordStepCount == 40)
+        {
+            LogDiagnostic(
+                u8"gpu record steps (us): first block %u, other blocks %u, white %u, shade %u, hand-over %u (upload "
+                u8"%u; "
+                u8"%u layers, %u kpixels each recording)",
+                static_cast<u32>(recordSteps[0] / recordStepCount / 1000),
+                static_cast<u32>(recordSteps[1] / recordStepCount / 1000),
+                static_cast<u32>(recordSteps[2] / recordStepCount / 1000),
+                static_cast<u32>(recordSteps[3] / recordStepCount / 1000),
+                static_cast<u32>(recordSteps[4] / recordStepCount / 1000),
+                static_cast<u32>(recordUploadNs / recordStepCount / 1000),
+                static_cast<u32>(recordLayersChanged / recordStepCount),
+                static_cast<u32>(recordPixelsHanded / recordStepCount / 1000)
+            );
+            LogDiagnostic(
+                u8"gpu record roles: %u met (%u of the game's), %u changed each recording",
+                static_cast<u32>(this->diagnostics.rolesMet / recordStepCount),
+                static_cast<u32>(this->diagnostics.actorsMet / recordStepCount),
+                static_cast<u32>(this->diagnostics.rolesChanged / recordStepCount)
+            );
+            this->diagnostics.rolesMet = 0;
+            this->diagnostics.actorsMet = 0;
+            this->diagnostics.rolesChanged = 0;
+            recordSteps = {};
+            recordStepCount = 0;
+            recordLayersChanged = 0;
+            recordPixelsHanded = 0;
+            recordUploadNs = 0;
         }
     }
 
@@ -902,6 +1264,39 @@ bool FieldView::LayInterface(int mouseX, int mouseY)
         {
             shown.assign(screen.begin(), screen.end());
             changed = true;
+        }
+    }
+
+    // Diagnostics (smooth gpu): the interface over black written out at a comparison.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (owner.diagnostics.compare.load() != 0 && std::getenv("SMOKE_DUMP_INTERFACE") != nullptr)
+        {
+            const Surface& canvas = this->gpuInterfaceCanvas[0];
+            const std::string name = "interface_" + std::to_string(this->placesFrame) + ".ppm";
+            std::FILE* file = std::fopen(name.c_str(), "wb");
+
+            if (file != nullptr)
+            {
+                std::fprintf(file, "P6\n%d %d\n255\n", canvas.Width(), canvas.Height());
+
+                for (i32 y = 0; y < canvas.Height(); ++y)
+                {
+                    for (i32 x = 0; x < canvas.Width(); ++x)
+                    {
+                        const Pixel pixel = canvas.Row(y)[x];
+                        const std::array<u8, 3> rgb = {
+                            static_cast<u8>((pixel >> 11) << 3),
+                            static_cast<u8>(((pixel >> 5) & 0x3F) << 2),
+                            static_cast<u8>((pixel & 0x1F) << 3),
+                        };
+
+                        std::fwrite(rgb.data(), 1, rgb.size(), file);
+                    }
+                }
+
+                std::fclose(file);
+            }
         }
     }
 
@@ -1504,6 +1899,9 @@ void FieldView::LayEffects(const std::vector<EffectDraw>& draws, std::size_t fir
 
 bool FieldView::LayBetween(int scale)
 {
+    // Diagnostics (smooth gpu): the time of the laying and of its recording.
+    const u64 layStart = BuildOptions::Diagnostics ? SDL_GetTicksNS() : 0;
+    u64 recordedNs = 0;
     Game& owner = this->game;
     GameState& state = owner.state;
     const Field& field = owner.field;
@@ -1513,6 +1911,24 @@ bool FieldView::LayBetween(int scale)
     // A game frame not drawn on this canvas (none yet, or the window resized since) is painted by PaintBetween.
     if (this->finalLayer.size() != canvasPixels)
     {
+        // Diagnostics (smooth gpu): a frame size the canvas does not have.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            static std::size_t loggedSize = 1;
+
+            if (loggedSize != this->finalLayer.size())
+            {
+                LogDiagnostic(
+                    u8"gpu layers: last frame %u pixels, canvas %u (%dx%d)",
+                    static_cast<u32>(this->finalLayer.size()),
+                    static_cast<u32>(canvasPixels),
+                    field.viewWidth,
+                    field.viewHeight
+                );
+                loggedSize = this->finalLayer.size();
+            }
+        }
+
         this->gpuValid = false;
         return false;
     }
@@ -1616,8 +2032,64 @@ bool FieldView::LayBetween(int scale)
 
     if (!this->gpuValid || key != this->gpuKey)
     {
+        // Diagnostics (smooth gpu): what changed the key.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            static int keyLogs = 0;
+
+            if (keyLogs < 400)
+            {
+                ++keyLogs;
+                std::string changed;
+
+                for (std::size_t at = 0; at < std::max(key.size(), this->gpuKey.size()); ++at)
+                {
+                    const i32 before = at < this->gpuKey.size() ? this->gpuKey[at] : INT_MIN;
+                    const i32 now = at < key.size() ? key[at] : INT_MIN;
+
+                    if (before != now)
+                    {
+                        changed += std::to_string(at) + ":" + std::to_string(before) + ">" + std::to_string(now) + " ";
+                    }
+                }
+
+                int parallax = 0;
+
+                for (const MapOverlay* overlay = field.overlays.get(); overlay != nullptr;
+                     overlay = overlay->next.get())
+                {
+                    parallax +=
+                        overlay->parallaxX != MapOverlay::FixedToMap || overlay->parallaxY != MapOverlay::FixedToMap;
+                }
+
+                LogDiagnostic(u8"gpu key: map %d parallax overlays %d", owner.currentMap, parallax);
+                LogDiagnostic(
+                    u8"gpu key: valid %d size %u frame %u clock %u changed %s",
+                    this->gpuValid ? 1 : 0,
+                    static_cast<u32>(key.size()),
+                    this->placesFrame,
+                    this->motionClock,
+                    AsUtf8(changed.c_str())
+                );
+            }
+        }
+
         this->gpuKey = key;
+        // Diagnostics (smooth gpu): the time of the recording.
+        const u64 recordStart = BuildOptions::Diagnostics ? SDL_GetTicksNS() : 0;
         this->gpuValid = this->RecordLayers();
+
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            recordedNs = SDL_GetTicksNS() - recordStart;
+            gpuTimes[0] += recordedNs;
+            ++gpuCounts[0];
+
+            if (!this->gpuValid)
+            {
+                LogDiagnostic(u8"gpu layers: recording failed at frame %u", this->placesFrame);
+            }
+        }
 
         if (!this->gpuValid)
         {
@@ -1646,7 +2118,15 @@ bool FieldView::LayBetween(int scale)
     int mouseY = 0;
     owner.input.PeekMouse(mouseX, mouseY);
     // The effects moving between game frames, recorded where they are now.
+    // Diagnostics (smooth gpu): the time of the effects.
+    const u64 effectsStart = BuildOptions::Diagnostics ? SDL_GetTicksNS() : 0;
     this->RecordEffects();
+
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        gpuTimes[4] += SDL_GetTicksNS() - effectsStart;
+    }
+
     const Display& display = owner.display;
     display.BeginLayers(scale);
     const auto grid = static_cast<float>(display.ComposeScale());
@@ -1667,6 +2147,7 @@ bool FieldView::LayBetween(int scale)
     }
 
     this->RecordOverlays();
+
     this->LayEffects(this->gpuOverlays, 0, this->gpuOverlays.size());
 
     for (const GpuLayer& layer : this->gpuLayers)
@@ -1687,6 +2168,46 @@ bool FieldView::LayBetween(int scale)
         }
 
         const float unit = layer.single ? 1.0f : half;
+
+        // Diagnostics (party overlap): where the party's layers are laid (logged when a place changes).
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (layer.role < GameState::Roles && layer.role < this->roleMotions.size() &&
+                owner.state.roles[layer.role].id >= 1 && owner.state.roles[layer.role].id <= 4)
+            {
+                static std::array<std::array<i32, 3>, GameState::Roles> lastLaid = {};
+                const std::array<i32, 2> fine = this->RoleFine(layer.role, scale);
+                const auto layerIndex = static_cast<i32>(&layer - this->gpuLayers.data());
+                std::array<i32, 3>& last = lastLaid[layer.role];
+
+                if (last[0] != fine[0] || last[1] != fine[1] || last[2] != layerIndex)
+                {
+                    last = {fine[0], fine[1], layerIndex};
+                    const Role& laid = owner.state.roles[layer.role];
+                    const RoleMotion& step = this->roleMotions[layer.role];
+                    LogDiagnostic(
+                        u8"party laid: frame %u role %u id %u layer %d fine %d,%d (1/%d) at %d,%d origin %d,%d step "
+                        u8"%d/%d "
+                        u8"active %d",
+                        owner.gameFrames,
+                        static_cast<u32>(layer.role),
+                        static_cast<u32>(laid.id),
+                        layerIndex,
+                        fine[0],
+                        fine[1],
+                        scale,
+                        laid.x,
+                        laid.y,
+                        layer.originX,
+                        layer.originY,
+                        step.elapsed,
+                        step.length,
+                        step.active ? 1 : 0
+                    );
+                }
+            }
+        }
+
         x += static_cast<float>(layer.left) * unit;
         y += static_cast<float>(layer.top) * unit;
         const float shownWidth = static_cast<float>(layer.width) * unit;
@@ -1715,6 +2236,27 @@ bool FieldView::LayBetween(int scale)
 
         const bool opaque = &layer == this->gpuLayers.data() && !this->recordOverlays;
 
+        // Diagnostics (smooth gpu): each layer laid, at a comparison asked by the Linux test program.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            if (owner.diagnostics.compare.load() != 0)
+            {
+                LogDiagnostic(
+                    u8"compare layer %u role %u id %u single %d additive %d at %d,%d size %dx%d (tenths) shaded %d",
+                    static_cast<u32>(&layer - this->gpuLayers.data()),
+                    static_cast<u32>(layer.role),
+                    layer.role < GameState::Roles ? static_cast<u32>(owner.state.roles[layer.role].id) : 0u,
+                    layer.single ? 1 : 0,
+                    layer.additive ? 1 : 0,
+                    static_cast<i32>(x * 10.0f),
+                    static_cast<i32>(y * 10.0f),
+                    static_cast<i32>(shownWidth * 10.0f),
+                    static_cast<i32>(shownHeight * 10.0f),
+                    layer.shaded ? 1 : 0
+                );
+            }
+        }
+
         display.DrawLayer(
             layer.color,
             x,
@@ -1742,6 +2284,13 @@ bool FieldView::LayBetween(int scale)
 
     this->LayEffects(this->gpuEffects, this->gpuEffectsBefore, this->gpuEffects.size());
 
+    // Diagnostics (smooth gpu): the time of the effects laid.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        gpuTimes[3] += SDL_GetTicksNS() - effectsStart;
+        ++gpuCounts[3];
+    }
+
     // The fade of the last game frame over its map (PaintBetween tints the map alone, under the interface).
     if (this->fadeTinted)
     {
@@ -1756,7 +2305,16 @@ bool FieldView::LayBetween(int scale)
         );
     }
 
+    // Diagnostics (smooth gpu): the time of the interface.
+    const u64 interfaceStart = BuildOptions::Diagnostics ? SDL_GetTicksNS() : 0;
     this->LayInterface(mouseX, mouseY);
+
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        gpuTimes[1] += SDL_GetTicksNS() - interfaceStart;
+        ++gpuCounts[1];
+    }
+
     display.DrawLayer(
         this->gpuInterface,
         0.0f,
@@ -1765,7 +2323,116 @@ bool FieldView::LayBetween(int scale)
         static_cast<float>(field.viewHeight),
         Display::LayerBlend::Over
     );
+    // Diagnostics (smooth gpu): the time of presenting.
+    const u64 presentStart = BuildOptions::Diagnostics ? SDL_GetTicksNS() : 0;
     owner.display.EndLayers();
+    const u64 shownNs = BuildOptions::Diagnostics ? SDL_GetTicksNS() : 0;
+
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        gpuTimes[2] += shownNs - presentStart;
+    }
+
+    // Diagnostics (smooth gpu): the time since the frame shown before, and what a slow one did.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (lastShownNs != 0)
+        {
+            const u64 interval = shownNs - lastShownNs;
+            constexpr std::array<u64, 4> kBounds = {5'000'000, 9'000'000, 13'000'000, 17'000'000};
+            std::size_t bucket = 0;
+
+            while (bucket < kBounds.size() && interval >= kBounds[bucket])
+            {
+                ++bucket;
+            }
+
+            ++intervalCounts[bucket];
+            intervalMostNs = std::max(intervalMostNs, interval);
+
+            if (interval >= 13'000'000)
+            {
+                LogDiagnostic(
+                    u8"slow frame: %u us since the last shown, game frame %s, this one %u us (recording %u us, "
+                    u8"present %u us)",
+                    static_cast<u32>(interval / 1000),
+                    owner.gameFrames != lastShownGameFrame ? "ran" : "none",
+                    static_cast<u32>((shownNs - layStart) / 1000),
+                    static_cast<u32>(recordedNs / 1000),
+                    static_cast<u32>((shownNs - presentStart) / 1000)
+                );
+            }
+        }
+    }
+
+    // Diagnostics (smooth gpu): the frame shown, for the time to the next.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        lastShownNs = shownNs;
+        lastShownGameFrame = owner.gameFrames;
+    }
+
+    // Diagnostics (smooth gpu): when each frame was shown and the camera it showed, while it moves.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        static int cameraLines = 0;
+        static std::array<float, 2> lastCamera = {};
+
+        if (cameraLines < 4000 && owner.currentMap == 34 && this->gpuCamera != lastCamera)
+        {
+            ++cameraLines;
+            LogDiagnostic(
+                u8"cam %u %d %d",
+                static_cast<u32>(shownNs / 1000),
+                static_cast<i32>(this->gpuCamera[0] * static_cast<float>(scale)),
+                static_cast<i32>(this->gpuCamera[1] * static_cast<float>(scale))
+            );
+        }
+
+        lastCamera = this->gpuCamera;
+    }
+
+    // Diagnostics (smooth gpu): the times summed up every 300 frames laid.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (gpuCounts[1] == 300)
+        {
+            LogDiagnostic(
+                u8"gpu layers: %u recordings %u us, interface %u us, effects %u us (record %u us, %u draws, %u "
+                u8"pieces), "
+                u8"present %u us, layers %u",
+                static_cast<u32>(gpuCounts[0]),
+                static_cast<u32>(gpuCounts[0] != 0 ? gpuTimes[0] / gpuCounts[0] / 1000 : 0),
+                static_cast<u32>(gpuTimes[1] / gpuCounts[1] / 1000),
+                static_cast<u32>(gpuTimes[3] / gpuCounts[1] / 1000),
+                static_cast<u32>(gpuTimes[4] / gpuCounts[1] / 1000),
+                static_cast<u32>(this->gpuEffects.size()),
+                static_cast<u32>(this->gpuPieces.size()),
+                static_cast<u32>(gpuTimes[2] / gpuCounts[1] / 1000),
+                static_cast<u32>(std::count_if(
+                    this->gpuLayers.begin(),
+                    this->gpuLayers.end(),
+                    [](const GpuLayer& layer)
+                    {
+                        return layer.drawn;
+                    }
+                ))
+            );
+            LogDiagnostic(
+                u8"gpu frame intervals: <5ms %u, <9ms %u, <13ms %u, <17ms %u, longer %u, most %u us",
+                static_cast<u32>(intervalCounts[0]),
+                static_cast<u32>(intervalCounts[1]),
+                static_cast<u32>(intervalCounts[2]),
+                static_cast<u32>(intervalCounts[3]),
+                static_cast<u32>(intervalCounts[4]),
+                static_cast<u32>(intervalMostNs / 1000)
+            );
+            intervalCounts = {};
+            intervalMostNs = 0;
+            gpuTimes = {};
+            gpuCounts = {};
+        }
+    }
 
     return true;
 }
