@@ -226,7 +226,7 @@ struct SkillScript
     u32 unk10 = 0;        // +0x10 opcode 0
     u16 unk14 = 0;        // +0x14 opcode 8
     u16 unk16 = 0;        // +0x16 opcode 4
-    u16 unk18 = 0;        // +0x18 opcode 0x1A (new in swd3e)
+    u16 castSpeed = 0;    // +0x18 opcode 0x1A (new in swd3e)
     u16 ailment = 0;      // +0x1A opcodes 6, 7 (bit 13: none, bit 15: refresh only)
     u16 element = 0;      // +0x1C opcode 0xE: the element of a resistance buff
     u16 unk1E = 0;        // +0x1E opcode 0xD

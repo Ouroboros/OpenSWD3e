@@ -320,7 +320,7 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 break;
 
             case SkillOpcode::Unk18:
-                skill.unk18 = code.WordAt(at);
+                skill.castSpeed = code.WordAt(at);
                 code.position += sizeof(u16);
                 break;
 

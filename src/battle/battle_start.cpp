@@ -206,7 +206,7 @@ void Game::StartBattle(u16 number)
     battle.skillNamePending = {};
     battle.roleNames = {};
     battle.ghostLockTarget = 0;
-    battle.secondGaugeWaits.fill(0);
+    battle.castWaits.fill(0);
     std::fill_n(battle.stolenItems.begin(), kClearedStolenLists, std::array<u16, 0x20>{});
     battle.sameAimCount = 0;
     battle.lastAimedRole = 0;

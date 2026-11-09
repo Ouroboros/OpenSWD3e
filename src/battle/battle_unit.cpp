@@ -562,7 +562,7 @@ int BattleUnit::ResetTurn(BattleServices& services)
     this->commandA = 0;
     this->commandB = 0;
     this->unk2F8E = 0;
-    this->drainingGauge = 0;
+    this->castCounting = 0;
     this->commandAttack = 0;
     this->fadeLevel = BattleUnit::Opaque;
     this->brightLevel = 1;
@@ -1123,12 +1123,12 @@ int BattleUnit::ActFlag14() const
     return (this->command.actionFlags & UnitCommand::UnkAction4000) != 0 ? 1 : 0;
 }
 
-// swd3e.exe 0x00491D10: also restarts the main act, unless the second gauge runs down (then `value` is returned)
+// swd3e.exe 0x00491D10: also restarts the main act, unless the cast countdown runs down (then `value` is returned)
 int BattleUnit::SetAction(i16 value)
 {
     this->action = static_cast<u16>(value);
 
-    if (this->drainingGauge != 0)
+    if (this->castCounting != 0)
     {
         return value;
     }
@@ -1384,7 +1384,7 @@ int StaggerValue(const std::array<T, Size>& table, u16 step)
 constexpr u16 kShaken = 1;          // SetNudge: the unit is nudged in place
 constexpr i32 kWeakAction = 0x25;   // the stand pose of unk2BDA bit 0 or a weak party member
 constexpr i16 kWeakShare = 4;       // a party member at a quarter of its hit points or less looks weak
-constexpr i32 kDrainAction = 0x2D;  // while the second gauge runs down
+constexpr i32 kDrainAction = 0x2D;  // while the cast countdown runs down
 constexpr i32 kReadyAction = 0x2C;
 constexpr i32 kItemReadyAction = 0x34;
 constexpr i32 kAbsorbReadyAction = 0x31;
@@ -1459,7 +1459,7 @@ constexpr u32 kPartyBuff = 0x10000;        // unk08: chosen only while a party m
 constexpr u32 kAllPartyBuffs = 0x8180000;  // unk08: an object not chosen when all party members hold them
 constexpr u16 kEnrageObjectMiss = 2;       // an enraged enemy takes its effect's object on 2..9
 constexpr int kEnrageObject = 3;
-constexpr u16 kWiseEnemy = 0x32;         // an object of a wiser enemy raises unk18
+constexpr u16 kWiseEnemy = 0x32;         // an object of a wiser enemy raises castSpeed
 constexpr u32 kAttackStepsIn = 0x10000;  // stateFlags: the attack takes StepsIn alone (ChooseAttack)
 constexpr u16 kDelayedCommand = 0xC8;
 
@@ -1525,12 +1525,12 @@ constexpr i32 kWeakEnemyShare = 3;
 constexpr int kPulseRaise = 30;
 
 // StepGauge.
-constexpr int kAgilityShare = 4;                    // the gauge fills by a quarter of the agility a tick
-constexpr u32 kObeyRoll = 100;                      // the talisman ghost obeys on a roll of 1..100 up to its unk104
-constexpr int kDisobeyShare = 3;                    // a disobeying ghost's gauge falls back a third
-constexpr i16 kSecondGaugeFull = 0x960;             // FillSecondGauge
-constexpr float kSecondGaugeStep = 0.00041666668F;  // 0x004AAE1C: SecondGaugeLength scales by 1 / 0x960
-constexpr float kSecondGaugePixels = 62.0F;         // 0x004AAE18
+constexpr int kAgilityShare = 4;                      // the gauge fills by a quarter of the agility a tick
+constexpr u32 kObeyRoll = 100;                        // the talisman ghost obeys on a roll of 1..100 up to its unk104
+constexpr int kDisobeyShare = 3;                      // a disobeying ghost's gauge falls back a third
+constexpr i16 kCastCountdownFull = 0x960;             // StartCastCountdown
+constexpr float kCastCountdownStep = 0.00041666668F;  // 0x004AAE1C: CastCountdownLength scales by 1 / 0x960
+constexpr float kCastCountdownPixels = 62.0F;         // 0x004AAE18
 constexpr int kBoostShare = 4;
 constexpr int kInvisibleSlowdown = 4;
 
@@ -2001,7 +2001,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->unk2F8E = 0;
     this->caughtCount = 0;
     this->hurtStep = 0;
-    this->drainingGauge = 0;
+    this->castCounting = 0;
     this->targetCount = 0;
     this->queuedActions = 0;
     this->damageSlot = 0;
@@ -2022,7 +2022,7 @@ void BattleUnit::Reset(BattleServices& services)
     this->pendingDamage = 0;
     this->equipmentFlags = 0;
     this->accessoryCommands = 0;
-    this->unk2BE8 = 0;
+    this->castCountdown = 0;
     this->enrageCounter2FD3 = 0;
     this->enrageCounter2FD5 = 0;
     this->enrageCounter2FD6 = 0;
@@ -2129,11 +2129,11 @@ void BattleUnit::GetHitPoints(i32& value, i32& maximum) const
 
 // swd3e.exe 0x00487C40: the action gauge filled by a quarter of the agility with speedShift added (speed up) and taken
 // (speed down), with a quarter more and one when boosted, an invisible unit losing half the proficiency percent of it
-// and 4, while below full; a full gauge marks the unit ready (true). Held, stopped (Unk4000) and stateFlags bit 31
+// and 4, while below full; a full gauge marks the unit ready (true). Held, stopped (GaugeStopped) and stateFlags bit 31
 // units do not move.
 int BattleUnit::AdvanceGauge(const BattleServices& services, int boost)
 {
-    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::Unk4000) != 0 ||
+    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::GaugeStopped) != 0 ||
         static_cast<i32>(this->stateFlags) < 0)
     {
         return 0;
@@ -2198,7 +2198,7 @@ SkillScript BattleUnit::CommandSkill() const
     skill.unk10 = MakeWords(this->command.followAct, this->command.resistance);
     skill.unk14 = this->command.castAct;
     skill.unk16 = this->command.unk16;
-    skill.unk18 = this->command.unk18;
+    skill.castSpeed = this->command.castSpeed;
     skill.ailment = this->command.ailment;
     skill.element = this->command.element;
     skill.unk1E = this->command.pose;
@@ -2226,7 +2226,7 @@ void BattleUnit::LoadCommand(Database& database, u16 id)
     this->command.followAct = HighWord(skill.unk10);
     this->command.castAct = skill.unk14;
     this->command.unk16 = skill.unk16;
-    this->command.unk18 = skill.unk18;
+    this->command.castSpeed = skill.castSpeed;
     this->command.ailment = skill.ailment;
     this->command.element = skill.element;
     this->command.pose = skill.unk1E;
@@ -2245,9 +2245,9 @@ ObjectRecord* BattleUnit::Data() const
 }
 
 // swd3e.exe 0x00483490
-bool BattleUnit::MarkBit11Clear() const
+bool BattleUnit::MayFlee() const
 {
-    return (this->marks & BattleUnit::UnkMark800) == 0;
+    return (this->marks & BattleUnit::NoFlee) == 0;
 }
 
 // swd3e.exe 0x00495C10: held (by the mark)
@@ -3609,7 +3609,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
     return counts;
 }
 
-// swd3e.exe 0x0047E720: one tick of the action gauge: nothing while held, stopped (Unk4000), defeated, with
+// swd3e.exe 0x0047E720: one tick of the action gauge: nothing while held, stopped (GaugeStopped), defeated, with
 // standingAside, full (gaugeFilled), kept by its master (GhostGuards) or staggering. Below gaugeFull it fills by a
 // quarter of the agility with speedShift added under SpeedUp and taken under SpeedDown (a quarter more and 1 with
 // `boost`), less by half the proficiency percent of it and 4 while Invisible (0). Full, the talisman ghost obeys on a
@@ -3618,7 +3618,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
 // facingTurnsBack turned back (1); a ghost that rests starts over (0).
 int BattleUnit::StepGauge(BattleServices& services, int boost)
 {
-    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::Unk4000) != 0 || this->defeated == 1 ||
+    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::GaugeStopped) != 0 || this->defeated == 1 ||
         this->standingAside == 1 || this->gaugeFilled == 1 || (this->unk2BDA & BattleUnit::GhostGuards) != 0 ||
         (this->stateFlags & kStaggering) != 0)
     {
@@ -4494,7 +4494,7 @@ int BattleUnit::DrainEffectFrame(BattleServices& services, int slot)
 }
 
 // swd3e.exe 0x00488D80: whether the enemy flees from a party of `level` (1), only shows its name (0) or stays (-1):
-// never with UnkMark800 or when its object's catchChance is 0 (a 0..11 roll drawn and not used first). With Confused
+// never with NoFlee or when its object's catchChance is 0 (a 0..11 roll drawn and not used first). With Confused
 // a coin decides between staying and a 3 in 10 flight, its name shown otherwise; with stateFlags bit 14 it flees in 8
 // of 10 (the bit cleared). More than 10 levels above it 80 in 100, 6..10 above 50 in 100, exactly 5 above catchChance
 // in 10 (its name shown instead with Confused); a failed roll there checks enrage cause 0x13 and shows its name with
@@ -4516,7 +4516,7 @@ int BattleUnit::CatchRoll(BattleServices& services, u8 level)
         return 0;
     };
 
-    if ((this->marks & BattleUnit::UnkMark800) != 0)
+    if ((this->marks & BattleUnit::NoFlee) != 0)
     {
         return kStays;
     }
@@ -5010,7 +5010,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         act.action = kWeakAction;
     }
 
-    if (this->drainingGauge == 1)
+    if (this->castCounting == 1)
     {
         act.action = kDrainAction;
     }
@@ -5947,8 +5947,8 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
 
     if (data.wisdom >= kWiseEnemy)
     {
-        this->command.unk18 =
-            static_cast<u16>(this->command.unk18 + this->command.unk18 * (data.wisdom - kWiseEnemy) / kPercent);
+        this->command.castSpeed =
+            static_cast<u16>(this->command.castSpeed + this->command.castSpeed * (data.wisdom - kWiseEnemy) / kPercent);
     }
 
     const bool special = (this->command.actionFlags & UnitCommand::UnkAction1000) != 0;
@@ -7169,12 +7169,12 @@ int BattleUnit::Named() const
     return (LowByte(this->data->data.kind) & ObjectData::Boss) != 0 ? 1 : 0;
 }
 
-// swd3e.exe 0x00489710: the turn's command cleared: command word +0x18, the second gauge, the ready action, aimed,
+// swd3e.exe 0x00489710: the turn's command cleared: command word +0x18, the cast countdown, the ready action, aimed,
 // the target and the start of the skill name
 void BattleUnit::ClearTurnCommand()
 {
-    this->command.unk18 = 0;
-    this->unk2BE8 = 0;
+    this->command.castSpeed = 0;
+    this->castCountdown = 0;
     this->readyAction = 0;
     this->aimed = 0;
     this->target = 0;
@@ -7242,17 +7242,17 @@ u16 BattleUnit::RoleAttackBonus() const
     return this->kind == BattleUnit::PartyRole ? this->roleRecord->attackBonus : u16{0};
 }
 
-// swd3e.exe 0x0048B170: the second gauge filled for a command with unk18, else emptied
-void BattleUnit::FillSecondGauge()
+// swd3e.exe 0x0048B170: the cast countdown filled for a command with castSpeed, else emptied
+void BattleUnit::StartCastCountdown()
 {
-    this->unk2BE8 = this->command.unk18 != 0 ? kSecondGaugeFull : i16{0};
+    this->castCountdown = this->command.castSpeed != 0 ? kCastCountdownFull : i16{0};
 }
 
-// swd3e.exe 0x0048B190: the second gauge scaled to 62 pixels of its full 0x960
-int BattleUnit::SecondGaugeLength() const
+// swd3e.exe 0x0048B190: the cast countdown scaled to 62 pixels of its full 0x960
+int BattleUnit::CastCountdownLength() const
 {
-    const double share = static_cast<double>(this->unk2BE8) * static_cast<double>(kSecondGaugeStep);
-    return static_cast<int>(crt::Ftol(share * static_cast<double>(kSecondGaugePixels)));
+    const double share = static_cast<double>(this->castCountdown) * static_cast<double>(kCastCountdownStep);
+    return static_cast<int>(crt::Ftol(share * static_cast<double>(kCastCountdownPixels)));
 }
 
 // swd3e.exe 0x00488AB0: an enemy with heal uses left, unless flag 2BC0 bit 21 holds
@@ -7420,10 +7420,10 @@ bool BattleUnit::IsWeakEnemy() const
     return hitPoints < data.maxHitPoints / kWeakEnemyShare;
 }
 
-// swd3e.exe 0x004902E0: a frame of the second gauge running down by the command's unk18 (not while held or marked
-// UnkMark2; then actionStarted is cleared): 1 once it is empty or without unk18. Nothing with a target; a fallen unit
-// other than the talisman ghost loses its gauge (0).
-int BattleUnit::DrainSecondGauge()
+// swd3e.exe 0x004902E0: a frame of the cast countdown running down by the command's castSpeed (not while held or marked
+// UnkMark2; then actionStarted is cleared): 1 once it is empty or without castSpeed. Nothing with a target; a fallen
+// unit other than the talisman ghost loses its gauge (0).
+int BattleUnit::StepCastCountdown()
 {
     if (this->target != 0)
     {
@@ -7432,12 +7432,12 @@ int BattleUnit::DrainSecondGauge()
 
     if (this->Ghost() == 0 && (this->defeated == 1 || this->dying == 1))
     {
-        this->unk2BE8 = 0;
-        this->drainingGauge = 0;
+        this->castCountdown = 0;
+        this->castCounting = 0;
         return 0;
     }
 
-    const u16 step = this->command.unk18;
+    const u16 step = this->command.castSpeed;
 
     if (step == 0)
     {
@@ -7449,13 +7449,13 @@ int BattleUnit::DrainSecondGauge()
         return 0;
     }
 
-    this->unk2BE8 = static_cast<i16>(this->unk2BE8 - step);
-    this->drainingGauge = 1;
+    this->castCountdown = static_cast<i16>(this->castCountdown - step);
+    this->castCounting = 1;
 
-    if (this->unk2BE8 <= 0)
+    if (this->castCountdown <= 0)
     {
-        this->unk2BE8 = 0;
-        this->drainingGauge = 0;
+        this->castCountdown = 0;
+        this->castCounting = 0;
         return 1;
     }
 

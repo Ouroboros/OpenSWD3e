@@ -679,7 +679,7 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
             this->status |= BattleUnit::StatsScaled;
             node.icon = StatsScaledIcon;
             node.level = kAilment100Start;
-            this->unk2BE8 = 0;
+            this->castCountdown = 0;
             this->unk2EB2 = 0;
             this->target = 0;
             this->ResetTurn(services);

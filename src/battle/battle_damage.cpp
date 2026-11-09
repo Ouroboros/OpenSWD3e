@@ -152,7 +152,7 @@ void Game::TryRetreat(int role)
         return;
     }
 
-    if (!this->battleRoles[0].MarkBit11Clear() || (battle.panelFlags & BattleState::NoRetreat) != 0)
+    if (!this->battleRoles[0].MayFlee() || (battle.panelFlags & BattleState::NoRetreat) != 0)
     {
         this->battleMessages
             .Add(kRetreatX, kRetreatY, kRetreatFrames, kNoRetreat, BattleMessage::BlackBar | BattleMessage::Centered);

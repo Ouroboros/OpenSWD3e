@@ -656,7 +656,7 @@ int Game::RemoveDefeated(int index, int role)
             battle.ListEnemyOrder();
         }
 
-        battle.secondGaugeWaits[static_cast<std::size_t>(index)] = 0;
+        battle.castWaits[static_cast<std::size_t>(index)] = 0;
         return 1;
     }
 
@@ -3970,7 +3970,7 @@ int Game::BattleDebugKeys()
 // swd3e.exe 0x00468B20: the debug overlay (unk537A18): each enemy's hit points, lock (CaughtCount), command and
 // level, each role's lock and command, the slot records (攻擊順序), the party order (我方等待順序) and the draw order
 // (排列順序), the acting and current units, each enemy's action gauge as a two-row bar of kGaugePixel at its place
-// with its second gauge as a green bar, and the state values (無敵, UM, 戰鬥, the menu, the command, the aim, the
+// with its cast countdown as a green bar, and the state values (無敵, UM, 戰鬥, the menu, the command, the aim, the
 // locks, the battle number, the enemies gone, the frame). With showRoleBlocks the experience values of the four party
 // battle blocks follow.
 void Game::DrawBattleDebug()
@@ -5291,7 +5291,7 @@ void Game::ConfirmSpell()
 // menu command, the role's choice ends (蓄勁 and, once the meter is gone, 逆攻 no longer the role's), the party's hits
 // on the aimed enemy (on each standing enemy for a whole side) counted, every unit unmarked and the lists reset, the
 // command back on 1. Command 0x1E throws the chosen object (state 0xD when it lands, a talisman paper back otherwise);
-// a skill takes its stamina; 奇術 fills the second gauge; the auto battle remembers the aim.
+// a skill takes its stamina; 奇術 fills the cast countdown; the auto battle remembers the aim.
 void Game::ConfirmTarget()
 {
     BattleState& battle = this->battleState;
@@ -5478,7 +5478,7 @@ void Game::ConfirmTarget()
 
         if (role != nullptr)
         {
-            role->FillSecondGauge();
+            role->StartCastCountdown();
         }
     }
 
@@ -6486,7 +6486,7 @@ void Game::BattleKeys()
                 return;
             }
 
-            if (!role.MarkBit11Clear() || (battle.panelFlags & BattleState::NoRetreat) != 0)
+            if (!role.MayFlee() || (battle.panelFlags & BattleState::NoRetreat) != 0)
             {
                 SleepMilliseconds(kRefusedPause);
                 this->battleMessages.Add(

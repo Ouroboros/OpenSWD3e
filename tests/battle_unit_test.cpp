@@ -554,7 +554,7 @@ TEST_CASE("battle unit: the catch roll")
         return enemy.CatchRoll(all.services, static_cast<swd3e::u8>(kEnemyLevel + above));
     };
 
-    enemy.marks = BattleUnit::UnkMark800;
+    enemy.marks = BattleUnit::NoFlee;
     CHECK_EQ(catches(kNearAbove, kSeed), kStays);
     CHECK_EQ(all.random.Below(kCatchRoll), reference.Below(kCatchRoll));
     enemy.marks = 0;

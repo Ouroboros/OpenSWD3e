@@ -201,12 +201,12 @@ public:
     // that category is absorbed on a 0..9 roll below the second (CanAbsorb)
     u16 absorbCategory = 0;
     u16 absorbChance = 0;
-    i16 absorbFrames = 0;  // +0x34BE the frames of the running absorb (AbsorbFrame)
+    i16 absorbFrames = 0;    // +0x34BE the frames of the running absorb (AbsorbFrame)
     i16 transferTarget = 0;  // +0x34C0 (swd3e) the enemy a 傷害轉移 skill names (ConfirmTarget), taking the damage the
                              // role takes (EnemyAfterAction)
-    u8 critical = 0;    // +0x34CA 1: the next attack is critical (set by 0x0046FF00)
-    i32 ghostActs = 0;  // +0x34CC (swd3e) 1: the ghost acts this turn (a half roll of its order)
-    i32 unk34D0 = 0;    // +0x34D0 (swd3e) set by StartSpecialAct
+    u8 critical = 0;         // +0x34CA 1: the next attack is critical (set by 0x0046FF00)
+    i32 ghostActs = 0;       // +0x34CC (swd3e) 1: the ghost acts this turn (a half roll of its order)
+    i32 unk34D0 = 0;         // +0x34D0 (swd3e) set by StartSpecialAct
 };
 
 }  // namespace swd3e

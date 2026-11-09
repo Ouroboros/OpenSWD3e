@@ -206,8 +206,8 @@ constexpr u32 kCategory5 = 0x8000000;
 constexpr u32 kCategory6 = 2;  // swd3e: CountObjects counts these whoever may use them
 constexpr int kSkillCategories = 3;
 constexpr int kListCategories = 4;
-constexpr int kCountCategories = 7;              // swd3e: CountObjects has category 6 as well
-constexpr u16 kWisdomBonusFrom = 0x32;           // swd3e: SelectSkill raises unk18 by the wisdom over this, in percent
+constexpr int kCountCategories = 7;     // swd3e: CountObjects has category 6 as well
+constexpr u16 kWisdomBonusFrom = 0x32;  // swd3e: SelectSkill raises castSpeed by the wisdom over this, in percent
 constexpr std::size_t kClearedSkillName = 0x10;  // SelectSkill clears only the start of the skill name
 constexpr int kSkillType0 = 0x11;                // ObjectData::category of the skill types (swd3e: 奇術 and 絕技)
 constexpr int kSkillType1 = 0x14;
@@ -2593,7 +2593,7 @@ int BattleRole::StepWornCounters(BattleServices& services, CounterList& list, u1
 // after the last counted skill is taken when it is reached) taken as the role's command: type 0 counts unk52
 // category kSkillType0 and sets UnkCommandFlag8000, type 1 counts kSkillType1 and sets
 // UnkCommandFlag200, other types count kSkillType1. `act` takes its unk50, the command its skill script (cleared
-// first; swd3e: its unk18 raised by the share of the role's wisdom over 50 in percent), the skill name its name;
+// first; swd3e: its castSpeed raised by the share of the role's wisdom over 50 in percent), the skill name its name;
 // with UnkCommandFlag200 magicAction, unk34A6 and unk34A8 take its actionKind, unk50 and unk40. Its unk34..unk38 are
 // the heals when unk3C is 0, and percentages with bit kHealPercentBit. The result is 1 for a skill of category 0 or a
 // category with kind bit 8 the skill also has; 0xFFFF without one (or index 0).
@@ -2648,8 +2648,9 @@ u16 BattleRole::SelectSkill(Database& database, int category, int type, int inde
 
         if (wisdom >= kWisdomBonusFrom)
         {
-            this->command.unk18 =
-                static_cast<u16>(this->command.unk18 + this->command.unk18 * (wisdom - kWisdomBonusFrom) / kPercent);
+            this->command.castSpeed = static_cast<u16>(
+                this->command.castSpeed + this->command.castSpeed * (wisdom - kWisdomBonusFrom) / kPercent
+            );
         }
 
         // Only the first 0x10 bytes are cleared before the name is copied with its terminator.

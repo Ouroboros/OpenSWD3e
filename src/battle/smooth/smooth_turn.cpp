@@ -2822,7 +2822,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
                 }
             }
 
-            const auto second = static_cast<u16>(enemy.SecondGaugeLength());
+            const auto second = static_cast<u16>(enemy.CastCountdownLength());
 
             if (second != 0)
             {

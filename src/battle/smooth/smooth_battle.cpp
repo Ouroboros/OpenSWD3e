@@ -37,8 +37,8 @@ constexpr int kGlowFrames = 3;
 constexpr i8 kGlowTop = 8;
 constexpr u8 kGlowFalling = 0x80;
 constexpr u8 kGlowMask = 0x7F;
-constexpr int kSecondGaugeY = 0x177;  // the second gauge of the debug overlay
-constexpr int kSecondGaugeGreen = 0x18;
+constexpr int kCastCountdownY = 0x177;  // the cast countdown of the debug overlay
+constexpr int kCastCountdownGreen = 0x18;
 constexpr int kGaugeHeight = 3;
 constexpr int kNameY = 0x18B;
 constexpr int kNameGauge = 0x2380;
@@ -541,12 +541,12 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
 
         if (battle.unk537A18 == 1)
         {
-            const auto second = static_cast<u16>(unit.SecondGaugeLength());
+            const auto second = static_cast<u16>(unit.CastCountdownLength());
 
             if (second != 0)
             {
-                const u32 color = game.painter.MakeColor(0, kSecondGaugeGreen, 0);
-                hud.FillColor(nameX, kSecondGaugeY, second, kGaugeHeight, color, scene);
+                const u32 color = game.painter.MakeColor(0, kCastCountdownGreen, 0);
+                hud.FillColor(nameX, kCastCountdownY, second, kGaugeHeight, color, scene);
             }
         }
 

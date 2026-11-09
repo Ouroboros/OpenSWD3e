@@ -203,7 +203,7 @@ struct UnitCommand
     u16 followAct = 0;    // +0x12 the follow-up action's act
     u16 castAct = 0;      // +0x14
     u16 unk16 = 0;        // +0x16
-    u16 unk18 = 0;        // +0x18 (swd3e) raised by the wisdom over 50 (SelectSkill)
+    u16 castSpeed = 0;    // +0x18 (swd3e) raised by the wisdom over 50 (SelectSkill)
     u16 ailment = 0;      // +0x1A
     u16 element = 0;      // +0x1C
     u16 pose = 0;         // +0x1E the pose of a defeat (its low byte)
@@ -252,11 +252,12 @@ public:
         UnkMark100 = 0x100,
         UnkMark200 = 0x200,  // set by ResetTurn
         UnkMark400 = 0x400,  // set when invisibility ends
-        UnkMark800 = 0x800,
+        NoFlee = 0x800,  // the enemy never flees (CatchRoll); on the first role the party cannot retreat (TryRetreat)
         GuardingMark = 0x1000,
         DefeatedMark = 0x2000,
-        Unk4000 = 0x4000,      // the gauge stops (set elsewhere in the battle loop)
-        UnkMark8000 = 0x8000,  // the damage of the unit is not raised
+        GaugeStopped = 0x4000,  // the gauge stops (AdvanceGauge, StepGauge); the battle talk sets it with DefeatedMark
+                                // (0x7800: the enemies it hides and brings back)
+        UnkMark8000 = 0x8000,   // the damage of the unit is not raised
     };
 
     // BattleUnit::unk2BDA bits (swd3e): the weak stand pose and the state of the talisman ghost's orders
@@ -483,14 +484,14 @@ public:
     bool HitPointsAtMost(int share) const;
     i16 RoleAgility() const;
     u16 RoleAttackBonus() const;
-    void FillSecondGauge();
-    int SecondGaugeLength() const;
+    void StartCastCountdown();
+    int CastCountdownLength() const;
     bool CanHeal() const;
     void SlideHook(int value);
     u16 TreasureLevel(const CounterList& list) const;
     int AddTreasureExperience(CounterList& list, u16 kind, u16 amount);
     bool IsWeakEnemy() const;
-    int DrainSecondGauge();
+    int StepCastCountdown();
     u16 Counter2F92() const;
     void CountCaught();
     void ClearAim();
@@ -701,7 +702,7 @@ public:
     void SetDamageDigits(BattleServices& services, int amount);
     int AdvanceGauge(const BattleServices& services, int boost);
     ObjectRecord* Data() const;
-    bool MarkBit11Clear() const;
+    bool MayFlee() const;
     int IsHeld() const;
     u16 ActId() const;
     u16 DrainKind() const;
@@ -866,10 +867,10 @@ public:
     u8 enrageElement = 0;      // +0x2FDC
     // +0x2FDD (swd3e) an enemy with no object counts 1, with no skill counts 2 (BattleEnemy::Setup, Reload)
     u8 unk2FDD = 0;
-    // swd3e: a second gauge (0x960 when full, 0x0048B170; drawn by 0x0048B190, run down by 0x004902E0), cleared by
+    // swd3e: a cast countdown (0x960 when full, 0x0048B170; drawn by 0x0048B190, run down by 0x004902E0), cleared by
     // ailment 0x200
-    i16 unk2BE8 = 0;  // +0x2BE8
-    u16 unk2FA0 = 0;  // +0x2FA0 (swd3e) cleared when a poison ends
+    i16 castCountdown = 0;  // +0x2BE8
+    u16 unk2FA0 = 0;        // +0x2FA0 (swd3e) cleared when a poison ends
     // +0x3070 (swd3e) 1: an enemy whose act has no action 0x26 (0x00487D60), or set by DrawEffects; cleared when
     // ailment 0x200 ends
     i32 unk3070 = 0;
@@ -924,7 +925,7 @@ public:
     u16 caughtCount = 0;
     u16 hurtStep = 0;  // +0x2F94 the step of the stagger (HurtFrame)
     u16 unk2F92 = 0;
-    u16 drainingGauge = 0;  // +0x2F96 (swd3e) 1 while the second gauge (unk2BE8) runs down (0x004902E0)
+    u16 castCounting = 0;   // +0x2F96 (swd3e) 1 while the cast countdown (castCountdown) runs down (0x004902E0)
     u16 targetCount = 0;    // +0x2F98
     u16 damageSlot = 0;     // +0x2F9A
     u16 queuedActions = 0;  // +0x2F9C the acts AddQueuedAction appended

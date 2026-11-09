@@ -550,7 +550,7 @@ public:
     // 0x005770CE the frames of the level-up stats (the high word of 0x0053BDE8)
     u16 levelUpFrames = 0;
     // The debug keys (Game::BattleDebugKeys) and the acting unit.
-    i32 unk537A18 = 0;     // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' second gauges
+    i32 unk537A18 = 0;     // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' cast countdowns
     i32 slowFrames = 0;    // 0x005777F8 (swd3e) the debug keys' F5: the frames are slowed to 100 ms
     i32 stepInFelled = 0;  // 0x00577360 (swd3e) set when an enemy's step-in attack fells it (0x00487FE0); 0x0045EE20
     u8 itemStolen = 0;  // 0x00577255 (swd3e) 1 once an enemy stole (EnemyHitDamage, command flag 0x100000); 0x0045EE20
@@ -630,8 +630,8 @@ public:
     // 0x0050F41C (swd3e) per enemy: the items it stole (0x20 a enemy, the first free one taken; 0x00464ED0)
     std::array<std::array<u16, 0x20>, Enemies> stolenItems = {};
     i32 unk577370 = 0;  // 0x00577370 (swd3e) set when battle role 0 falls with the ghost in the battle
-    std::array<i32, Enemies> secondGaugeWaits =
-        {};  // 0x0050CE6C (swd3e) per enemy: its chosen command waits for its second gauge (EnemyChooseCommand);
+    std::array<i32, Enemies> castWaits =
+        {};  // 0x0050CE6C (swd3e) per enemy: its chosen command waits for its cast countdown (EnemyChooseCommand);
              // cleared when it is slotted again or falls
     // 0x00576DE8 (swd3e) by battle number - 1: the times the battle was fought while a battle talk limits it
     // (FightTalk::repeatLimit, BattleIntro); past the limit its enemies give half their first two rewards

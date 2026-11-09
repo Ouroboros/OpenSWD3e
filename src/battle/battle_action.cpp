@@ -2471,7 +2471,7 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
 }
 
 // The turn of a role in RoleFrame (inline in the original): a role not slotted, not held, ready (IsAimed) while no
-// unit acts, the battle goes on, no role has the panel and the fight talk lets it run, once its second gauge drains,
+// unit acts, the battle goes on, no role has the panel and the fight talk lets it run, once its cast countdown drains,
 // takes the turn (its turn resets when the enemy being taken is the last one or the battle is to end with nothing
 // pending). A role ordered to act (turnTaken 2) acts at once when no slot record waits (its pending order becomes the
 // acting state), otherwise it is slotted first; any other is slotted last.
@@ -2488,7 +2488,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
                                          : battle.actingUnit != -1 || battle.result != 0 || battle.currentUnit != 0;
 
     if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.IsAimed() != 1 || waits ||
-        this->fightTalk.battleRuns != 1 || unit.DrainSecondGauge() != 1)
+        this->fightTalk.battleRuns != 1 || unit.StepCastCountdown() != 1)
     {
         return;
     }

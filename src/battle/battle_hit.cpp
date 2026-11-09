@@ -2096,7 +2096,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 // unit acting its effects tick and its gauge fills (a full gauge queues its slot record), and unless the battle waits
 // (roleActing, retreat) the acting enemy (actingUnit) takes its turn: a held or defeated one ends it; a sweep of the
 // whole side aims at the first unit; otherwise it picks a target (EnemyPickTarget) and, once ready, a command
-// (EnemyChooseCommand). A chosen command waits for the second gauge (secondGaugeWaits) and is slotted again; then the
+// (EnemyChooseCommand). A chosen command waits for the cast countdown (castWaits) and is slotted again; then the
 // enemy acts (EnemyActionFrame) until the action is over (EnemyAfterAction). Every frame it is drawn at rest (its acts
 // holding while the field is darkened with word 2F90, or while an enemy enrages), its hit act plays, its enrage runs
 // and a defeat is taken out; the result of RemoveDefeated is returned (ResetTurn's when a held or defeated acting enemy
@@ -2177,9 +2177,8 @@ int Game::EnemyFrame(int enemy)
 
             // The rebuild (deviations.md): with the active time battle the enemy is slotted again whatever the menu
             // shows, the battle going on, as swd32 slots its enemies.
-            if (battle.secondGaugeWaits[at] == 1 && battle.actingUnit == -1 &&
-                (battle.result == 0 || battle.activeTime) && this->fightTalk.battleRuns == 1 &&
-                unit.DrainSecondGauge() == 1)
+            if (battle.castWaits[at] == 1 && battle.actingUnit == -1 && (battle.result == 0 || battle.activeTime) &&
+                this->fightTalk.battleRuns == 1 && unit.StepCastCountdown() == 1)
             {
                 if (!battle.activeTime)
                 {
@@ -2187,11 +2186,11 @@ int Game::EnemyFrame(int enemy)
                     battle.turnPending = 1;
                 }
 
-                battle.secondGaugeWaits[at] = 0;
+                battle.castWaits[at] = 0;
                 battle.AddSlotRecord(kEnemySlotRecord, enemy);
             }
 
-            if (battle.actingUnit == enemy && battle.secondGaugeWaits[at] == 0 && unit.IsAimed() == 1)
+            if (battle.actingUnit == enemy && battle.castWaits[at] == 0 && unit.IsAimed() == 1)
             {
                 this->EnemyActFrame(unit, enemy);
             }
@@ -2488,10 +2487,10 @@ bool Game::AimedDown(i32 index) const
 // The command of an acting enemy in EnemyFrame (inline in the original): the order's low byte aims it when its bits
 // are set; the catch roll (the first party role's level) makes it run (0x11) or step home (0x12C, its name shown).
 // With an order from the fight talk (enemyOrders) the order's bits give the command: 0x8000 a prepared command, 0x4000
-// the spell (it waits for its second gauge), 0x2000 the drain; AllAtOnce hits at once, TargetsAll sweeps; the aim
+// the spell (it waits for its cast countdown), 0x2000 the drain; AllAtOnce hits at once, TargetsAll sweeps; the aim
 // passes on from a downed target to the next standing unit (up to unit 0x14). Otherwise a healer may aim at itself or
-// at the weakest enemy, and it chooses its command (then it waits for its second gauge with the skill name to show); a
-// supporting command aims at itself, a sweep starts, and the target is aimed at when it stands.
+// at the weakest enemy, and it chooses its command (then it waits for its cast countdown with the skill name to show);
+// a supporting command aims at itself, a sweep starts, and the target is aimed at when it stands.
 void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
 {
     BattleState& battle = this->battleState;
@@ -2526,14 +2525,14 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
         return;
     }
 
-    auto waitSecondGauge = [&battle, &unit, at]
+    auto waitCast = [&battle, &unit, at]
     {
         battle.actingUnit = -1;
-        battle.secondGaugeWaits[at] = 1;
+        battle.castWaits[at] = 1;
         battle.turnPlaying = 0;
         battle.turnPending = 0;
         battle.battleBusy = 0;
-        unit.FillSecondGauge();
+        unit.StartCastCountdown();
     };
 
     auto allAtOnce = [&battle, &unit, &pending]
@@ -2566,7 +2565,7 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
             unit.SetCommand(kEnemySpellCommand);
             battle.darkenUnit = static_cast<i16>(enemy);
             battle.skillNamePending[at] = 1;
-            waitSecondGauge();
+            waitCast();
         }
 
         if ((order & kOrderDrain) != 0)
@@ -2613,7 +2612,7 @@ void Game::EnemyChooseCommand(BattleEnemy& unit, int enemy)
     {
         battle.darkenUnit = static_cast<i16>(enemy);
         battle.unk576FE0 = 0;
-        waitSecondGauge();
+        waitCast();
         allAtOnce();
         battle.skillNamePending[at] = 1;
     }

@@ -1201,7 +1201,7 @@ int Game::FightTalkShift()
 // Command 0x17 of FightTalkFrame (inline in the original): the unit of the third word uses the skill (an enemy) or
 // the object (a role) of the second word on the unit of the fourth, as command 9 sets an attack: an enemy's order is
 // a spell order, its turn command cleared, its act in enemyHitActs and its slot record added; a role's object fills
-// its second gauge and its order takes the act's speed and flags. The battle then runs until the unit is done
+// its cast countdown and its order takes the act's speed and flags. The battle then runs until the unit is done
 // (enemyFaded).
 int Game::FightTalkSkill()
 {
@@ -1285,7 +1285,7 @@ int Game::FightTalkSkill()
                 u32 act = static_cast<u32>(battle.unk50D88C[role]);
                 actor.LoadItemAction(this->database, static_cast<u16>(talk.unk5782A0), act);
                 battle.unk50D88C[role] = static_cast<i32>(act);
-                actor.FillSecondGauge();
+                actor.StartCastCountdown();
                 battle.pendingOrders[role].unk0C = static_cast<u16>(actor.ActSpeed());
                 battle.pendingOrders[role].unk0E = 0;
 
