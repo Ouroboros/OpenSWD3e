@@ -1153,7 +1153,7 @@ int Game::YinYangAttack(int role)
     BattleRole& caster = this->battleRoles[static_cast<std::size_t>(role)];
     const bool yang = static_cast<u16>(this->battleHud.coinState) != 0;
     const auto proficiency = static_cast<u16>(caster.AccessoryProficiency(
-        static_cast<u16>(AccessoryKind::Unk16),
+        static_cast<u16>(AccessoryKind::Thunder),
         this->party.fame.lists[Fame::ProficiencyList]
     ));
     battle.hitDamage = kYinYangScale * proficiency / kYinYangPercent + kYinYangBase;

@@ -138,11 +138,11 @@ constexpr int kResistanceShare = 20;  // the water and wood resistances move the
 constexpr int kPercent = 100;
 constexpr i32 kAilmentAct = 0x2AF8;  // the act shown over an ailing unit, by its action
 constexpr i32 kHeldAction = 1;       // ailment 1
-constexpr i32 kAilment80Action = 2;
-constexpr i32 kAilment20Action = 4;
-constexpr i32 kAilment10Action = 5;
-constexpr i32 kAilment200Action = 6;
-constexpr i32 kAilment8Action = 0;
+constexpr i32 kBlindAction = 2;
+constexpr i32 kConfusionAction = 4;
+constexpr i32 kSealAction = 5;
+constexpr i32 kStatsScaledAction = 6;
+constexpr i32 kSleepAction = 0;
 constexpr i32 kAilment200SlotAct = 0x1B8B;  // the act ailment 0x200 starts in slot act 10
 constexpr std::size_t kEffectSlot = 10;     // the slot act of the effects (ailment 0x200, the enrage)
 constexpr u16 kStatsCut = 20;               // ailment 0x200 cuts the stats of a party role by 20 percent
@@ -151,25 +151,25 @@ constexpr float kPoisonStart = 50.0F;       // the level a lasting poison starts
 constexpr float kAilment100Start = 20.0F;
 constexpr float kAilment40Start = 5.0F;
 constexpr u16 kLastingTurns = 0xFFFF;
-constexpr u32 kRefreshBlockingStatus = BattleUnit::UnkStatus400 | BattleUnit::StatsScaled | BattleUnit::UnkStatus100;
-constexpr u32 kRefreshBlockingStatus2 = BattleUnit::UnkStatus20 | BattleUnit::UnkStatus2 | BattleUnit::UnkStatus1;
+constexpr u32 kRefreshBlockingStatus = BattleUnit::Cursed | BattleUnit::StatsScaled | BattleUnit::Burning;
+constexpr u32 kRefreshBlockingStatus2 = BattleUnit::Confusion | BattleUnit::Frozen | BattleUnit::Fixed;
 
 // The icons of the effects (picture 0x23B6, frame icon - 1).
 enum EffectIcon : u16
 {
     PoisonIcon = 1,
-    Ailment2Icon = 2,
-    Ailment100Icon = 3,
-    Ailment4Icon = 4,
+    FrozenIcon = 2,
+    BurnIcon = 3,
+    StoneIcon = 4,
     SlowedIcon = 5,
-    Ailment20Icon = 6,
+    ConfusionIcon = 6,
     LastingPoisonIcon = 7,
     HeldIcon = 8,
-    Ailment10Icon = 9,
+    SealIcon = 9,
     StatsScaledIcon = 0xA,
-    Ailment80Icon = 0xB,
-    Ailment8Icon = 0xC,
-    Ailment400Icon = 0xD,
+    BlindIcon = 0xB,
+    SleepIcon = 0xC,
+    CurseIcon = 0xD,
     AttackUpIcon = 0xE,
     DefenseUpIcon = 0xF,
     SpeedUpIcon = 0x10,
@@ -336,7 +336,7 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
 
     if ((status & BattleUnit::Slowed) != 0)
     {
-        if ((ailment & SkillScript::UnkAilment100) != 0)
+        if ((ailment & SkillScript::BurnAilment) != 0)
         {
             this->CureEffects(services, BattleUnit::Slowed);
             return 0;
@@ -356,18 +356,18 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
             return 0;
         }
 
-        if ((ailment & SkillScript::UnkAilment4) != 0 || (buffs & SkillScript::Invisible) != 0 ||
+        if ((ailment & SkillScript::StoneAilment) != 0 || (buffs & SkillScript::Invisible) != 0 ||
             (this->stateFlags & kFlag2BC0Poison) != 0)
         {
             return 0;
         }
     }
 
-    if ((status & BattleUnit::UnkStatus2) != 0)
+    if ((status & BattleUnit::Frozen) != 0)
     {
-        if ((ailment & SkillScript::UnkAilment4) != 0)
+        if ((ailment & SkillScript::StoneAilment) != 0)
         {
-            this->CureEffects(services, BattleUnit::UnkStatus2);
+            this->CureEffects(services, BattleUnit::Frozen);
             return 0;
         }
 
@@ -378,11 +378,11 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
         }
     }
 
-    if ((status & BattleUnit::UnkStatus100) != 0)
+    if ((status & BattleUnit::Burning) != 0)
     {
-        if ((ailment & SkillScript::UnkAilment2) != 0)
+        if ((ailment & SkillScript::FrozenAilment) != 0)
         {
-            this->CureEffects(services, BattleUnit::UnkStatus100);
+            this->CureEffects(services, BattleUnit::Burning);
             return 0;
         }
 
@@ -403,7 +403,7 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
         return 0;
     }
 
-    if ((status & BattleUnit::UnkStatus8) != 0 &&
+    if ((status & BattleUnit::Asleep) != 0 &&
         ((LowByte(ailment) & kAilment8Blocked) != 0 || (buffs & SkillScript::Invisible) != 0))
     {
         return 0;
@@ -420,13 +420,13 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
         return 1;
     }
 
-    if ((status & BattleUnit::UnkStatus1) != 0 &&
+    if ((status & BattleUnit::Fixed) != 0 &&
         ((ailment & kAilment1Blocked) != 0 || (ailment & SkillScript::StatsScaledAilment) != 0))
     {
         return 0;
     }
 
-    if ((status & BattleUnit::UnkStatus20) != 0 && (buffs & kInvisibleOrResistAll) != 0)
+    if ((status & BattleUnit::Confusion) != 0 && (buffs & kInvisibleOrResistAll) != 0)
     {
         return 0;
     }
@@ -481,7 +481,7 @@ int BattleUnit::AddAilment(BattleServices& services, const SkillScript& skill)
     // The water (third) and wood (second) resistances move the roll of ailment 4.
     auto resisted = [&roll, kind](i8 water, i8 wood, int chance)
     {
-        if ((kind & SkillScript::UnkAilment4) == 0)
+        if ((kind & SkillScript::StoneAilment) == 0)
         {
             return roll > chance;
         }
@@ -589,19 +589,19 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
 
     switch (node.bits)
     {
-        case SkillScript::UnkAilment1:
+        case SkillScript::FixedAilment:
             act(kHeldAction);
             node.icon = HeldIcon;
             this->marks = static_cast<u16>(this->marks | BattleUnit::Held);
-            this->status |= BattleUnit::UnkStatus1;
+            this->status |= BattleUnit::Fixed;
             break;
 
-        case SkillScript::UnkAilment2:
+        case SkillScript::FrozenAilment:
         {
-            node.icon = Ailment2Icon;
+            node.icon = FrozenIcon;
             this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark2 | BattleUnit::Held);
             this->overlayWipe = static_cast<u16>(this->overlayWipe | kOverlayWiping);
-            this->status |= BattleUnit::UnkStatus2;
+            this->status |= BattleUnit::Frozen;
             // The earth resistance shortens it, the metal one lengthens it (in percent, signed: 0x00492710, the
             // compare 0x0049272D signed too).
             const auto earth = static_cast<i8>(
@@ -627,31 +627,31 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
             break;
         }
 
-        case SkillScript::UnkAilment4:
+        case SkillScript::StoneAilment:
             this->status |= BattleUnit::Stone;
-            node.icon = Ailment4Icon;
+            node.icon = StoneIcon;
             this->marks = static_cast<u16>(this->marks | BattleUnit::Held);
             this->overlayWipe = static_cast<u16>(this->overlayWipe | kOverlayWiping);
             break;
 
-        case SkillScript::UnkAilment8:
-            act(kAilment8Action);
-            node.icon = Ailment8Icon;
+        case SkillScript::SleepAilment:
+            act(kSleepAction);
+            node.icon = SleepIcon;
             this->marks = static_cast<u16>(this->marks | BattleUnit::Held);
-            this->status |= BattleUnit::UnkStatus8;
+            this->status |= BattleUnit::Asleep;
             break;
 
-        case SkillScript::UnkAilment10:
-            act(kAilment10Action);
-            node.icon = Ailment10Icon;
-            this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark100);
-            this->status |= BattleUnit::UnkStatus10;
+        case SkillScript::SealAilment:
+            act(kSealAction);
+            node.icon = SealIcon;
+            this->marks = static_cast<u16>(this->marks | BattleUnit::SealedMark);
+            this->status |= BattleUnit::Sealed;
             break;
 
-        case SkillScript::UnkAilment20:
-            act(kAilment20Action);
-            node.icon = Ailment20Icon;
-            this->status |= BattleUnit::UnkStatus20;
+        case SkillScript::ConfusionAilment:
+            act(kConfusionAction);
+            node.icon = ConfusionIcon;
+            this->status |= BattleUnit::Confusion;
             break;
 
         case SkillScript::SlowedAilment:
@@ -660,21 +660,21 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
             this->status |= BattleUnit::Slowed;
             break;
 
-        case SkillScript::UnkAilment80:
-            act(kAilment80Action);
-            node.icon = Ailment80Icon;
-            this->status |= BattleUnit::UnkStatus80;
+        case SkillScript::BlindAilment:
+            act(kBlindAction);
+            node.icon = BlindIcon;
+            this->status |= BattleUnit::Blind;
             break;
 
-        case SkillScript::UnkAilment100:
-            node.icon = Ailment100Icon;
+        case SkillScript::BurnAilment:
+            node.icon = BurnIcon;
             node.level = kAilment100Start;
-            this->status |= BattleUnit::UnkStatus100;
+            this->status |= BattleUnit::Burning;
             break;
 
         case SkillScript::StatsScaledAilment:
         {
-            act(kAilment200Action);
+            act(kStatsScaledAction);
             this->slotActs[kEffectSlot].id = kAilment200SlotAct;
             this->status |= BattleUnit::StatsScaled;
             node.icon = StatsScaledIcon;
@@ -712,9 +712,9 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
             break;
         }
 
-        case SkillScript::UnkAilment400:
-            this->status |= BattleUnit::UnkStatus400;
-            node.icon = Ailment400Icon;
+        case SkillScript::CurseAilment:
+            this->status |= BattleUnit::Cursed;
+            node.icon = CurseIcon;
             break;
 
         case SkillScript::PoisonAilment:
@@ -1135,7 +1135,7 @@ int BattleUnit::AddBuff(BattleServices& services, const SkillScript& skill)
 // 15 / turns to 20 or falling by 20 / turns to 0; ailment 0x200 cuts the battle stats by 10..19 percent while its level
 // is below 80; the rises fall back by their total over the turns, the falls add their strength again. Ailment 4 clears
 // the pending damage. A turn passes (not for ailment 4); a barrier costs a party role 10 stamina a turn (ending it
-// below 10); with UnkStatus400 the last turn deals 9999. Then the finished effects expire.
+// below 10); with Cursed the last turn deals 9999. Then the finished effects expire.
 void BattleUnit::TickEffects(BattleServices& services)
 {
     if (this->effects.next == nullptr || this->held != 0)
@@ -1146,7 +1146,7 @@ void BattleUnit::TickEffects(BattleServices& services)
     for (EffectNode* node = this->effects.next.get(); node != nullptr; node = node->next.get())
     {
         const bool fast =
-            (node->bits & SkillScript::SlowedAilment) != 0 || (node->bits & SkillScript::UnkAilment100) != 0;
+            (node->bits & SkillScript::SlowedAilment) != 0 || (node->bits & SkillScript::BurnAilment) != 0;
         node->timer = static_cast<u16>(node->timer + (fast ? kFastTick : kTick));
 
         if (static_cast<i32>(node->timer) < services.state.gaugeFull)
@@ -1176,7 +1176,7 @@ void BattleUnit::TickEffects(BattleServices& services)
             }
         }
 
-        if ((node->bits & SkillScript::UnkAilment100) != 0)
+        if ((node->bits & SkillScript::BurnAilment) != 0)
         {
             const double step = kAilment100Total / node->turnsMax;
             const i32 damage = crt::Ftol(static_cast<double>(node->value) * static_cast<double>(node->level));
@@ -1250,7 +1250,7 @@ void BattleUnit::TickEffects(BattleServices& services)
             continue;
         }
 
-        if ((LowByte(node->bits) & SkillScript::UnkAilment4) == 0)
+        if ((LowByte(node->bits) & SkillScript::StoneAilment) == 0)
         {
             --node->turns;
         }
@@ -1267,7 +1267,7 @@ void BattleUnit::TickEffects(BattleServices& services)
             }
         }
 
-        if ((this->status & BattleUnit::UnkStatus400) != 0 && node->turns == 0)
+        if ((this->status & BattleUnit::Cursed) != 0 && node->turns == 0)
         {
             this->pendingDamage = kBlockedDamage;
         }
@@ -1437,51 +1437,51 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
         {
             switch (node.bits)
             {
-                case SkillScript::UnkAilment1:
-                    this->status &= ~BattleUnit::UnkStatus1;
-                    releaseHeld(BattleUnit::UnkStatus2 | BattleUnit::Stone | BattleUnit::UnkStatus8);
+                case SkillScript::FixedAilment:
+                    this->status &= ~BattleUnit::Fixed;
+                    releaseHeld(BattleUnit::Frozen | BattleUnit::Stone | BattleUnit::Asleep);
                     this->EnrageCheck(services, Cause15, 0);
                     this->held = 0;
                     break;
 
-                case SkillScript::UnkAilment2:
+                case SkillScript::FrozenAilment:
                     this->marks = static_cast<u16>(this->marks & ~BattleUnit::UnkMark2);
-                    this->status &= ~BattleUnit::UnkStatus2;
-                    releaseHeld(BattleUnit::UnkStatus1 | BattleUnit::Stone | BattleUnit::UnkStatus8);
+                    this->status &= ~BattleUnit::Frozen;
+                    releaseHeld(BattleUnit::Fixed | BattleUnit::Stone | BattleUnit::Asleep);
                     break;
 
-                case SkillScript::UnkAilment4:
+                case SkillScript::StoneAilment:
                     this->status &= ~BattleUnit::Stone;
-                    releaseHeld(BattleUnit::UnkStatus1 | BattleUnit::UnkStatus2 | BattleUnit::UnkStatus8);
+                    releaseHeld(BattleUnit::Fixed | BattleUnit::Frozen | BattleUnit::Asleep);
                     this->held = 0;
                     break;
 
-                case SkillScript::UnkAilment8:
-                    this->status &= ~BattleUnit::UnkStatus8;
-                    releaseHeld(BattleUnit::UnkStatus1 | BattleUnit::UnkStatus2 | BattleUnit::Stone);
+                case SkillScript::SleepAilment:
+                    this->status &= ~BattleUnit::Asleep;
+                    releaseHeld(BattleUnit::Fixed | BattleUnit::Frozen | BattleUnit::Stone);
                     this->held = 0;
                     this->EnrageCheck(services, Cause14, 0);
                     break;
 
-                case SkillScript::UnkAilment10:
-                    this->marks = static_cast<u16>(this->marks & ~BattleUnit::UnkMark100);
-                    this->status &= ~BattleUnit::UnkStatus10;
+                case SkillScript::SealAilment:
+                    this->marks = static_cast<u16>(this->marks & ~BattleUnit::SealedMark);
+                    this->status &= ~BattleUnit::Sealed;
                     break;
 
-                case SkillScript::UnkAilment20:
-                    this->status &= ~BattleUnit::UnkStatus20;
+                case SkillScript::ConfusionAilment:
+                    this->status &= ~BattleUnit::Confusion;
                     break;
 
                 case SkillScript::SlowedAilment:
                     this->status &= ~BattleUnit::Slowed;
                     break;
 
-                case SkillScript::UnkAilment80:
-                    this->status &= ~BattleUnit::UnkStatus80;
+                case SkillScript::BlindAilment:
+                    this->status &= ~BattleUnit::Blind;
                     break;
 
-                case SkillScript::UnkAilment100:
-                    this->status &= ~BattleUnit::UnkStatus100;
+                case SkillScript::BurnAilment:
+                    this->status &= ~BattleUnit::Burning;
                     break;
 
                 case SkillScript::StatsScaledAilment:
@@ -1501,8 +1501,8 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
 
                     break;
 
-                case SkillScript::UnkAilment400:
-                    this->status &= ~BattleUnit::UnkStatus400;
+                case SkillScript::CurseAilment:
+                    this->status &= ~BattleUnit::Cursed;
                     services.state.ailment400From.fill(0);
                     break;
 
@@ -1706,15 +1706,15 @@ int BattleUnit::EnrageCheck(BattleServices& services, i16 cause, i16 element)
             break;
 
         case Status20:
-            met = (this->status & BattleUnit::UnkStatus20) != 0;
+            met = (this->status & BattleUnit::Confusion) != 0;
             break;
 
         case Status10:
-            met = (this->status & BattleUnit::UnkStatus10) != 0;
+            met = (this->status & BattleUnit::Sealed) != 0;
             break;
 
         case Status80:
-            met = (this->status & BattleUnit::UnkStatus80) != 0;
+            met = (this->status & BattleUnit::Blind) != 0;
             break;
 
         case Counter2FD8Two:

@@ -142,17 +142,17 @@ struct SkillScript
     // skillAilment bits against the cures the item lists of the game's guides name).
     enum Ailment : u16
     {
-        UnkAilment1 = 1,                // 定身 (cured by 解僵針)
-        UnkAilment2 = 2,                // 凍結 (化雪奇石)
-        UnkAilment4 = 4,                // 石化 (溶石魔羽)
-        UnkAilment8 = 8,                // 昏睡 (茴香茶)
-        UnkAilment10 = 0x10,            // 封魔 (破元仙露)
-        UnkAilment20 = 0x20,            // 失智 (安神定志丸)
+        FixedAilment = 1,               // 定身 (cured by 解僵針)
+        FrozenAilment = 2,              // 凍結 (化雪奇石)
+        StoneAilment = 4,               // 石化 (溶石魔羽)
+        SleepAilment = 8,               // 昏睡 (茴香茶)
+        SealAilment = 0x10,             // 封魔 (破元仙露)
+        ConfusionAilment = 0x20,        // 失智 (安神定志丸)
         SlowedAilment = 0x40,           // 電解 (活骨靈藥)
-        UnkAilment80 = 0x80,            // 盲目 (延胡索之花 brings it)
-        UnkAilment100 = 0x100,          // 炎灼 (三葉雪桑果)
+        BlindAilment = 0x80,            // 盲目 (延胡索之花 brings it)
+        BurnAilment = 0x100,            // 炎灼 (三葉雪桑果)
         StatsScaledAilment = 0x200,     // 退化 (河車丸)
-        UnkAilment400 = 0x400,          // 鬼降 (七葉蓮)
+        CurseAilment = 0x400,           // 鬼降 (七葉蓮)
         PoisonAilment = 0x1000,         // 中毒 (swd3e): a poison of the skill's turns (AddAilment)
         LastingPoisonAilment = 0x2000,  // 瘟疫 (swd3e): a poison that does not wear off (AddAilment)
         RefreshOnly = 0x8000,           // an effect of the same kind only gets new turns and value

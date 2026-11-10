@@ -1310,10 +1310,10 @@ constexpr std::size_t kElementResistances = 5;  // HitDamage (swd3e): the five e
 constexpr u16 kElementLimit = 9;                // commands of element 1..9 go through the elements
 constexpr u16 kWisdomShare = 20;                // the ailment roll gains a twentieth of the wisdom over the target's
 constexpr u16 kUnlandedAilments = 0x24;         // a Boss enemy takes no ailment of these bits or of 0x200
-constexpr u16 kAilment200 = 0x200;
+constexpr u16 kStatsScaledAilment = 0x200;
 constexpr u16 kFellingAilment = 0x8000;  // the ailment fells the target outright
 constexpr int kFellingDamage = 0x270F;
-constexpr u16 kAilment8 = 8;                // cured by any hit that restores nothing
+constexpr u16 kSleepAilment = 8;            // cured by any hit that restores nothing
 constexpr int kGuardingGhostPercent = 70;   // a guarding ghost attacks with 70 percent of its bonus
 constexpr u32 kNoDrainStrike = 0x10000000;  // stateFlags of the attacker: its critical drain strike does nothing
 constexpr int kChargeScaleTop = 15;         // command 0x1B: strength / (15 - proficiency / 20)
@@ -1464,8 +1464,8 @@ constexpr u32 kAttackStepsIn = 0x10000;  // stateFlags: the attack takes StepsIn
 constexpr u16 kDelayedCommand = 0xC8;
 
 // EnemyHitDamage.
-constexpr u16 kAilment40 = 0x40;  // EnemyHitDamage (swd3e): these ailments take the attack as their value
-constexpr u16 kAilment100 = 0x100;
+constexpr u16 kSlowedAilment = 0x40;  // EnemyHitDamage (swd3e): these ailments take the attack as their value
+constexpr u16 kBurnAilment = 0x100;
 constexpr u32 kStealsGold = 0x80000;   // UnitCommand::actionFlags: the hit steals gold
 constexpr u32 kStealsItem = 0x100000;  // and an item
 constexpr u16 kStealSound = 0x117;
@@ -2285,7 +2285,7 @@ u16 BattleUnit::DrainKind() const
 // swd3e.exe 0x0049A950
 int BattleUnit::Confused() const
 {
-    return (this->status & BattleUnit::UnkStatus20) != 0 ? 1 : 0;
+    return (this->status & BattleUnit::Confusion) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00498CD0
@@ -2366,7 +2366,7 @@ int BattleUnit::MarkBit1() const
 // swd3e.exe 0x00498CB0
 bool BattleUnit::MarkBit8Clear() const
 {
-    return (this->marks & BattleUnit::UnkMark100) == 0;
+    return (this->marks & BattleUnit::SealedMark) == 0;
 }
 
 // swd3e.exe 0x00499EB0: the role's battle block starts with 0x30
@@ -2608,13 +2608,13 @@ u16 BattleUnit::PrepareCommand(Database& database)
     return 0;
 }
 
-// swd3e.exe 0x00488B30: an enemy that uses objects and is not marked UnkMark100 heals itself: on a roll of 0..4 its
+// swd3e.exe 0x00488B30: an enemy that uses objects and is not marked SealedMark heals itself: on a roll of 0..4 its
 // first way, on 5..9 its second, when it has uses of it (the hit points are no longer looked at)
 bool BattleUnit::ChooseHeal(BattleServices& services)
 {
     const ObjectData& object = this->data->data;
 
-    if ((this->marks & BattleUnit::UnkMark100) != 0 || object.itemChance == 0)
+    if ((this->marks & BattleUnit::SealedMark) != 0 || object.itemChance == 0)
     {
         return false;
     }
@@ -2803,7 +2803,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
             {
                 if ((object.kind & ObjectData::Boss) != 0)
                 {
-                    if ((ailment & kUnlandedAilments) == 0 && (ailment & kAilment200) == 0)
+                    if ((ailment & kUnlandedAilments) == 0 && (ailment & kStatsScaledAilment) == 0)
                     {
                         if (target.AddAilment(services, this->CommandSkill()) == 1)
                         {
@@ -2869,10 +2869,10 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         target.EnrageCheck(services, 0, static_cast<i16>(element));
     }
 
-    if (this->command.ailment != kAilment8 && this->restoreHitPoints == 0 && this->restoreSpirit == 0 &&
-        this->restoreStamina == 0 && target.HasStatus(kAilment8))
+    if (this->command.ailment != kSleepAilment && this->restoreHitPoints == 0 && this->restoreSpirit == 0 &&
+        this->restoreStamina == 0 && target.HasStatus(kSleepAilment))
     {
-        target.CureEffects(services, kAilment8);
+        target.CureEffects(services, kSleepAilment);
     }
 
     if (this->healPercent == 1)
@@ -3055,7 +3055,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
             }
         }
 
-        if (target.HasEffectBits(BattleUnit::UnkStatus2) == 1)
+        if (target.HasEffectBits(BattleUnit::Frozen) == 1)
         {
             attack *= 2;
         }
@@ -5507,7 +5507,7 @@ void BattleUnit::DrawFlash(smooth::ScenePainter& painter)
 int BattleUnit::DrawPulse(const BattleServices& services, smooth::ScenePainter& painter)
 {
     if ((this->stateFlags & kFlag2BC0Pulse) == 0 || services.state.effectHolds == 1 ||
-        (this->status & (BattleUnit::UnkStatus2 | BattleUnit::Stone)) != 0)
+        (this->status & (BattleUnit::Frozen | BattleUnit::Stone)) != 0)
     {
         return 0;
     }
@@ -5726,7 +5726,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
 
     if (choice == kHealChoice)
     {
-        if ((this->marks & BattleUnit::UnkMark100) == 0 &&
+        if ((this->marks & BattleUnit::SealedMark) == 0 &&
             (this->healChoice == kFirstHeal || this->healChoice == kSecondHeal))
         {
             const bool first = this->healChoice == kFirstHeal;
@@ -5834,7 +5834,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
         return 0;
     }
 
-    if (choice != kItemChoice || (this->marks & BattleUnit::UnkMark100) != 0 || data.itemChance == 0)
+    if (choice != kItemChoice || (this->marks & BattleUnit::SealedMark) != 0 || data.itemChance == 0)
     {
         return this->ChooseAttack(database);
     }
@@ -6043,7 +6043,7 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
 
         if (ailment != 0 && !target.FanGuards(services, ailment))
         {
-            if (((ailment & kAilment40) != 0 || (ailment & kAilment100) != 0) && this->command.value == 0)
+            if (((ailment & kSlowedAilment) != 0 || (ailment & kBurnAilment) != 0) && this->command.value == 0)
             {
                 this->command.value = static_cast<i16>(this->commandAttack);
             }
@@ -6087,9 +6087,9 @@ i16 BattleUnit::EnemyHitDamage(BattleServices& services, BattleUnit& target)
         target.SetDefeatPose(LowByte(this->command.pose));
     }
 
-    if (this->command.ailment != kAilment8 && this->restoreHitPoints == 0 && target.HasStatus(kAilment8))
+    if (this->command.ailment != kSleepAilment && this->restoreHitPoints == 0 && target.HasStatus(kSleepAilment))
     {
-        target.CureEffects(services, kAilment8);
+        target.CureEffects(services, kSleepAilment);
     }
 
     i32& gold = services.party.variables[Party::Gold];
@@ -6741,7 +6741,7 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
     {
         do
         {
-            if ((node->bits & BattleUnit::UnkStatus400) != 0)
+            if ((node->bits & BattleUnit::Cursed) != 0)
             {
                 turns = node->turns;
             }
@@ -6879,7 +6879,7 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
         return;
     }
 
-    if ((this->status & BattleUnit::UnkStatus100) != 0)
+    if ((this->status & BattleUnit::Burning) != 0)
     {
         ActState& act = this->status100Act;
         act.action = this->kind == 0 ? 1 : 0;
@@ -6936,7 +6936,7 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
         }
     }
 
-    if ((this->status & BattleUnit::UnkStatus2) != 0)
+    if ((this->status & BattleUnit::Frozen) != 0)
     {
         this->shadowMode = mirrored;
 
@@ -6946,8 +6946,8 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
                 this->shadowMode | Painter::TintUnder,
                 [this, &options]
                 {
-                    const auto green = static_cast<int>(crt::Ftol(this->EffectShare(BattleUnit::UnkStatus2)));
-                    const auto blue = static_cast<int>(crt::Ftol(this->EffectShare(BattleUnit::UnkStatus2)));
+                    const auto green = static_cast<int>(crt::Ftol(this->EffectShare(BattleUnit::Frozen)));
+                    const auto blue = static_cast<int>(crt::Ftol(this->EffectShare(BattleUnit::Frozen)));
                     options.tintRed = 0;
                     options.tintGreen = kFreezeGreenStep * green + kFreezeGreen;
                     options.tintBlue = kFreezeBlueStep * blue + kFreezeBlue;
@@ -6956,10 +6956,10 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
         }
     }
 
-    if ((this->status & BattleUnit::UnkStatus400) != 0)
+    if ((this->status & BattleUnit::Cursed) != 0)
     {
         this->shadowMode = mirrored;
-        const double share = this->EffectShare(BattleUnit::UnkStatus400) * static_cast<double>(kStatus400Scale);
+        const double share = this->EffectShare(BattleUnit::Cursed) * static_cast<double>(kStatus400Scale);
         const int tint = kStatus400Tint - static_cast<int>(crt::Ftol(share));
         options.tintRed = tint;
         options.tintGreen = tint;

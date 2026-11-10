@@ -1322,7 +1322,7 @@ TEST_CASE("battle role: counting and listing the inventory")
     CHECK_EQ(count, kCount);
     CHECK_EQ(role.ListedObject(2, name, count), 0);
     role.proficiency = kProficiency;
-    CHECK_EQ(role.Unk1EProficiency(all.services), kProficiency);
+    CHECK_EQ(role.RefineTalismanProficiency(all.services), kProficiency);
 }
 
 TEST_CASE("battle role: the object and skill lists of the battle menu")

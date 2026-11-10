@@ -84,9 +84,9 @@ constexpr i16 kEnemySkillFrames = 0x23;
 constexpr int kEnemySpellCommand = 2;
 constexpr int kEnemyDrainCommand = 6;
 constexpr i32 kLastAimedUnit = 0x14;
-constexpr int kStepHomeCommand = 0x12C;                   // CatchRoll 0: the enemy only shows its name and steps home
-constexpr u32 kUnaimedEffect = SkillScript::UnkAilment4;  // an enemy does not aim at a unit with this effect
-constexpr u32 kTauntEffect = SkillScript::UnkAilment8;    // the enemies aim past a role with it while others are free
+constexpr int kStepHomeCommand = 0x12C;                    // CatchRoll 0: the enemy only shows its name and steps home
+constexpr u32 kUnaimedEffect = SkillScript::StoneAilment;  // an enemy does not aim at a unit with this effect
+constexpr u32 kTauntEffect = SkillScript::SleepAilment;    // the enemies aim past a role with it while others are free
 constexpr i32 kSameTargetLimit = 3;     // an enemy aims at the same role at most this many times in a row
 constexpr i32 kMarkedRoleBit = 0x1000;  // stateFlags of an enemy marking a role (markedRole)
 constexpr int kMarkedShare = 5;         // HitPointsAtMost: the role marked is at a twentieth of its hit points
@@ -3013,7 +3013,7 @@ void Game::CureHeldBy(int enemy)
         if (battle.ailment400From[role] == enemy + 1)
         {
             battle.ailment400From[role] = 0;
-            this->battleRoles[role].CureEffects(this->battleServices, BattleUnit::UnkStatus400);
+            this->battleRoles[role].CureEffects(this->battleServices, BattleUnit::Cursed);
         }
     }
 }

@@ -670,8 +670,8 @@ void BattleRole::ApplyAccessory(const ObjectRecord& accessory, CounterList& prof
 
     switch (static_cast<AccessoryKind>(accessory.data.actionKind))
     {
-        case AccessoryKind::Unk32:
-            this->equipmentFlags |= BattleUnit::Unk32;
+        case AccessoryKind::SureCritical:
+            this->equipmentFlags |= BattleUnit::SureCritical;
             break;
 
         case AccessoryKind::ElementOrb:
@@ -795,7 +795,7 @@ void BattleRole::TakeCommand34A8()
 
 // swd3e.exe 0x00485F30: a strike of the role on `target`: the weapon's proficiency takes a step unless the talisman
 // ghost strikes (its bonus adds to a hit that does damage), an evadable strike may be evaded (8 in 10 under
-// UnkStatus80) unless the role struck already this turn, and the damage (at most kMaxDamage) adds to the hit's damage
+// Blind) unless the role struck already this turn, and the damage (at most kMaxDamage) adds to the hit's damage
 // and shows on the target, which then staggers
 void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadable)
 {
@@ -813,7 +813,7 @@ void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadab
         ));
     }
 
-    const u16 evasion = (this->status & BattleUnit::UnkStatus80) != 0 ? kStruckEvasion : u16{0};
+    const u16 evasion = (this->status & BattleUnit::Blind) != 0 ? kStruckEvasion : u16{0};
 
     if (evadable == 1 && this->evadeRolled == 0 && target.RollEvade(services, evasion) != 0)
     {
@@ -1558,7 +1558,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             this->extraAttacks = 1;
             return;
 
-        case AccessoryKind::Unk16:
+        case AccessoryKind::Thunder:
             this->commandA = 0;
             this->accessoryCommands |= kAccessoryBit16;
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
@@ -1570,46 +1570,46 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             this->accessoryCommands |= kAccessoryBit17;
             break;
 
-        case AccessoryKind::Unk18:
+        case AccessoryKind::GroupAttack:
             this->accessoryCommands |= kAccessoryBit18;
             this->commandA = kind;
             this->AccessoryProficiency(kind, proficiency);
             break;
 
-        case AccessoryKind::Unk19:
+        case AccessoryKind::Control:
             this->commandA = 0;
             this->accessoryCommands |= kAccessoryBit19;
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
             this->commandB = kind;
             break;
 
-        case AccessoryKind::Unk1A:
+        case AccessoryKind::SureHit:
             this->commandA = kind;
             this->accessoryCommands |= kAccessoryBit1A;
             break;
 
-        case AccessoryKind::Unk1B:
+        case AccessoryKind::Throw:
             this->accessoryCommands |= kAccessoryBit1B;
             this->commandA = kind;
             this->AccessoryProficiency(kind, proficiency);
             break;
 
-        case AccessoryKind::Unk1C:
+        case AccessoryKind::Invisibility:
             this->commandA = kind;
             this->AccessoryProficiency(kind, proficiency);
             break;
 
-        case AccessoryKind::Unk1D:
+        case AccessoryKind::BreakJade:
             this->commandA = kind;
             this->accessoryCommands |= kAccessoryBit1D;
             break;
 
-        case AccessoryKind::Unk1E:
+        case AccessoryKind::RefineTalisman:
             this->commandA = kind;
             this->accessoryCommands |= kAccessoryBit1E;
             break;
 
-        case AccessoryKind::Unk1F:
+        case AccessoryKind::MouseHammer:
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag400);
             this->commandA = 0;
             this->commandB = kind;
@@ -1618,39 +1618,39 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
                 static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);  // 0x0047F77B: 32 bits
             break;
 
-        case AccessoryKind::Unk20:
-        case AccessoryKind::Unk21:
+        case AccessoryKind::Shield:
+        case AccessoryKind::Dismantle:
             this->commandA = kind;
             this->AccessoryProficiency(kind, proficiency);
             break;
 
-        case AccessoryKind::Unk22:
+        case AccessoryKind::Focus:
             this->AccessoryProficiency(kind, proficiency);
             this->proficiency = static_cast<u16>((this->proficiency >> 1) - this->proficiency / kTenthShare);
             this->restoreHitPoints = share(record.maxHitPoints, this->proficiency);
             break;
 
-        case AccessoryKind::Unk23:
+        case AccessoryKind::RecoverSpirit:
             this->AccessoryProficiency(kind, proficiency);
             this->proficiency = static_cast<u16>(this->proficiency / kSpiritShare);
             this->restoreSpirit = share(record.maxSpirit, this->proficiency);
             break;
 
-        case AccessoryKind::Unk24:
+        case AccessoryKind::Meditate:
             this->AccessoryProficiency(kind, proficiency);
             this->proficiency = static_cast<u16>((this->proficiency >> 1) - this->proficiency / kTenthShare);
             this->restoreStamina = share(record.stamina, this->proficiency);
             break;
 
-        case AccessoryKind::Unk25:
+        case AccessoryKind::Roulette:
             this->commandA = kind;
             return;
 
-        case AccessoryKind::Unk27:
+        case AccessoryKind::Gather:
             ++this->unk2EB2;
             break;
 
-        case AccessoryKind::Unk28:
+        case AccessoryKind::StrikeBack:
             if ((this->equipmentFlags & kUnk28Armed) != 0)
             {
                 this->equipmentFlags &= ~kUnk28Armed;
@@ -1665,7 +1665,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 
             break;
 
-        case AccessoryKind::Unk29:
+        case AccessoryKind::Fuse:
             break;
 
         default:
@@ -1689,7 +1689,7 @@ int BattleRole::RollCritical(BattleServices& services)
         return 0;
     }
 
-    if ((this->equipmentFlags & BattleUnit::Unk32) != 0 || (this->status & BattleUnit::StrongAttack) != 0)
+    if ((this->equipmentFlags & BattleUnit::SureCritical) != 0 || (this->status & BattleUnit::StrongAttack) != 0)
     {
         this->critical = 1;
         return 1;
@@ -1741,7 +1741,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
     {
         const u16 kind = this->commandA;
         return (kind == 1 || kind == static_cast<u16>(AccessoryKind::Steal) ||
-                kind == static_cast<u16>(AccessoryKind::Unk1A)) &&
+                kind == static_cast<u16>(AccessoryKind::SureHit)) &&
                this->partyMember == 1;
     };
 
@@ -1765,7 +1765,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
 
     const u16 kind = this->commandA;
 
-    if (kind != static_cast<u16>(AccessoryKind::Unk1B))
+    if (kind != static_cast<u16>(AccessoryKind::Throw))
     {
         this->commandAttack = this->battleRecord->attackBonus;
     }
@@ -1926,10 +1926,10 @@ int BattleRole::DrainShare(BattleServices& services, i32& amount)
 
 // swd32.exe 0x00475160 (unmatched in swd3e): the proficiency in percent of the Unk1E accessory (硃砂神筆), kept in
 // proficiency
-u16 BattleRole::Unk1EProficiency(BattleServices& services)
+u16 BattleRole::RefineTalismanProficiency(BattleServices& services)
 {
     this->AccessoryProficiency(
-        static_cast<u16>(AccessoryKind::Unk1E),
+        static_cast<u16>(AccessoryKind::RefineTalisman),
         services.party.fame.lists[Fame::ProficiencyList]
     );
     return this->proficiency;
@@ -2525,7 +2525,7 @@ int BattleRole::StepWornCounters(BattleServices& services, CounterList& list, u1
             continue;
         }
 
-        if (static_cast<AccessoryKind>(data.actionKind) == AccessoryKind::Unk25)
+        if (static_cast<AccessoryKind>(data.actionKind) == AccessoryKind::Roulette)
         {
             if (this->AddTreasureExperience(list, data.actionKind, amount) == 1)
             {

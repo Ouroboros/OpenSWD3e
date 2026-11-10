@@ -249,7 +249,7 @@ public:
         MissedMark = 0x20,  // the ailment missed (SkillScript::MissedAilment)
         Held = 0x40,
         InvisibleMark = 0x80,
-        UnkMark100 = 0x100,
+        SealedMark = 0x100,  // set with ailment 封魔 (StartAilment)
         UnkMark200 = 0x200,  // set by ResetTurn
         UnkMark400 = 0x400,  // set when invisibility ends
         NoFlee = 0x800,  // the enemy never flees (CatchRoll); on the first role the party cannot retreat (TryRetreat)
@@ -277,7 +277,7 @@ public:
     // BattleUnit::equipmentFlags set by the accessories (BattleRole::ApplyAccessory).
     enum EquipmentFlag : u32
     {
-        Unk32 = 1,
+        SureCritical = 1,  // AccessoryKind::SureCritical: every attack is critical (RollCritical)
         BladeReturn = 4,
         HitCancel = 8,
         SpiritDrain = 0x10,
@@ -292,17 +292,17 @@ public:
     // buffs announce (AddBuff 0x0047BC50) and their effects.
     enum Status : u32
     {
-        UnkStatus1 = 1,
-        UnkStatus2 = 2,
-        Stone = 4,  // stone (石化): no damage nor stagger, the side all stone loses (CheckStoneSides)
-        UnkStatus8 = 8,
-        UnkStatus10 = 0x10,  // cleared with mark UnkMark100
-        UnkStatus20 = 0x20,
-        Slowed = 0x40,       // ailment 0x40: the gauge fills at half speed
-        UnkStatus80 = 0x80,  // a struck unit evades 8 times in 10 (Strike)
-        UnkStatus100 = 0x100,
-        StatsScaled = 0x200,  // a party role's attributes are scaled (undone when it ends)
-        UnkStatus400 = 0x400,
+        Fixed = 1,                 // ailment 定身 (FixedAilment)
+        Frozen = 2,                // ailment 凍結 (FrozenAilment)
+        Stone = 4,                 // stone (石化): no damage nor stagger, the side all stone loses (CheckStoneSides)
+        Asleep = 8,                // ailment 昏睡 (SleepAilment)
+        Sealed = 0x10,             // ailment 封魔 (SealAilment), cleared with mark SealedMark
+        Confusion = 0x20,          // ailment 失智 (ConfusionAilment): the unit acts at random (Confused)
+        Slowed = 0x40,             // ailment 0x40: the gauge fills at half speed
+        Blind = 0x80,              // ailment 盲目 (BlindAilment): a struck unit evades 8 times in 10 (Strike)
+        Burning = 0x100,           // ailment 炎灼 (BurnAilment)
+        StatsScaled = 0x200,       // a party role's attributes are scaled (undone when it ends)
+        Cursed = 0x400,            // ailment 鬼降 (CurseAilment)
         Poisoned = 0x1000,         // swd3e: a poison (EffectNode::bits 0x1000) eats hit points a tick
         DamageTransfer = 0x20000,  // swd3e: 傷害轉移 (no ailment lands; Stagger outside a cast spell)
         StrongAttack = 0x40000,    // swd3e: 強攻擊 (a role's attacks are always critical)
