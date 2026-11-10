@@ -661,6 +661,7 @@ public:
     void OptionsSetActiveTime(bool on);
     void OptionsSetStartPose(bool shown);
     void OptionsSetNoFleeing(bool on);
+    void OptionsSetCastCountdown(bool shown);
     std::vector<std::string> SetupChoices(Setup setup, i32 row, i32& chosen) const;
     void SetupChoose(Setup setup, i32 row, i32 choice);
     void SetupStep(Setup setup, i32 row, bool up, bool wrap);

@@ -46,12 +46,14 @@ constexpr i32 kAutoComboRow = 0;
 constexpr i32 kActiveTimeRow = 1;
 constexpr i32 kStartPoseRow = 2;
 constexpr i32 kNoFleeingRow = 3;
-constexpr i32 kBattleBackRow = 4;
-constexpr std::array<std::u8string_view, 5> kBattleLabels = {
+constexpr i32 kCastCountdownRow = 4;
+constexpr i32 kBattleBackRow = 5;
+constexpr std::array<std::u8string_view, 6> kBattleLabels = {
     u8"自動連擊",
     u8"即時行動",
     u8"開場動作",
     u8"禁止逃跑",
+    u8"施法倒數",
     u8"返回",
 };
 

@@ -67,6 +67,8 @@ public:
 
     void DrawBattleDebugAdvance(Scene& scene);
 
+    void DrawCastCountdownsAdvance(Scene& scene);
+
     void DrawCommandPanelAdvance(i32 nameIndex, Scene& scene);
 
 private:

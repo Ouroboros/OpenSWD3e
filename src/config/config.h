@@ -96,6 +96,8 @@ public:
     void StoreStartPose(bool shown) const;
     // The rebuild's fleeing forbidden in the battles, kept in [game] no_fleeing (deviations.md).
     void StoreNoFleeing(bool on) const;
+    // The rebuild's cast countdowns of the party shown in the battles, kept in [game] cast_countdown (deviations.md).
+    void StoreCastCountdown(bool shown) const;
 
 private:
     void StoreKeys(GameSettings& game) const;
@@ -114,6 +116,7 @@ public:
     bool activeTime = false;         // the rebuild's [game] active_time: a full gauge does not stop the battle
     bool startPose = true;           // the rebuild's [game] start_pose: a role strikes its pose as a battle starts
     bool noFleeing = false;          // the rebuild's [game] no_fleeing: neither the party nor the enemies flee
+    bool castCountdown = false;      // the rebuild's [game] cast_countdown: the party's cast countdowns shown
     std::array<u16, Channels> channelMasks = Config::DefaultChannelMasks;
     std::array<i32, Keys> keys = {};  // 0x004D0B90 DirectInput scan codes of the key slots
 

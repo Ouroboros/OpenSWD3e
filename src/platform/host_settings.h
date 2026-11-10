@@ -184,22 +184,23 @@ struct GameKeys
 // A value missing keeps the original's default without Env.dat.
 struct GameSettings
 {
-    std::optional<i64> soundVolume;  // sound_volume: 0..11
-    std::optional<i64> musicVolume;  // music_volume: 0..11
-    std::optional<i64> cacheSize;    // cache_size: the map cache in MB (60, 100 or 140)
-    std::optional<bool> effectsOff;  // effects_off: the screen effects are off
-    std::optional<i64> textSpeed;    // text_speed: 0 (fastest) .. 4
-    std::optional<i64> battleSpeed;  // battle_speed: 0..11
-    std::optional<bool> running;     // running: the walk/run toggle of the R key as last left (missing: running)
-    std::optional<bool> launcher;    // launcher: the launcher shown at the start (missing: shown; off: the title)
-    std::optional<bool> autoCombo;   // auto_combo: the auto battle repeats the attack with 連擊 (missing: off)
-    std::optional<bool> activeTime;  // active_time: a full gauge does not stop the battle (missing: off)
-    std::optional<bool> startPose;   // start_pose: a role strikes its pose as the battle starts (missing: shown)
-    std::optional<bool> noFleeing;   // no_fleeing: neither the party nor the enemies flee a battle (missing: off)
-    std::optional<bool> debug;       // debug: the debug hot keys
-    std::optional<i64> unk14;        // unk14: the dword Env.dat kept at 0x14 (the settings write 100)
-    std::optional<i64> redMask;      // red_mask, green_mask, blue_mask: the display's channel masks the map cache was
-    std::optional<i64> greenMask;    // made for (another display empties it)
+    std::optional<i64> soundVolume;     // sound_volume: 0..11
+    std::optional<i64> musicVolume;     // music_volume: 0..11
+    std::optional<i64> cacheSize;       // cache_size: the map cache in MB (60, 100 or 140)
+    std::optional<bool> effectsOff;     // effects_off: the screen effects are off
+    std::optional<i64> textSpeed;       // text_speed: 0 (fastest) .. 4
+    std::optional<i64> battleSpeed;     // battle_speed: 0..11
+    std::optional<bool> running;        // running: the walk/run toggle of the R key as last left (missing: running)
+    std::optional<bool> launcher;       // launcher: the launcher shown at the start (missing: shown; off: the title)
+    std::optional<bool> autoCombo;      // auto_combo: the auto battle repeats the attack with 連擊 (missing: off)
+    std::optional<bool> activeTime;     // active_time: a full gauge does not stop the battle (missing: off)
+    std::optional<bool> startPose;      // start_pose: a role strikes its pose as the battle starts (missing: shown)
+    std::optional<bool> noFleeing;      // no_fleeing: neither the party nor the enemies flee a battle (missing: off)
+    std::optional<bool> castCountdown;  // cast_countdown: the party's cast countdowns shown in battle (missing: off)
+    std::optional<bool> debug;          // debug: the debug hot keys
+    std::optional<i64> unk14;           // unk14: the dword Env.dat kept at 0x14 (the settings write 100)
+    std::optional<i64> redMask;    // red_mask, green_mask, blue_mask: the display's channel masks the map cache was
+    std::optional<i64> greenMask;  // made for (another display empties it)
     std::optional<i64> blueMask;
     std::optional<bool> sessionOpen;  // session_open: set while the game runs; still set at a start, the map cache
                                       // is emptied (the last session did not end cleanly)
@@ -222,6 +223,7 @@ struct GameSettings
             Flag{"active_time", &GameSettings::activeTime},
             Flag{"start_pose", &GameSettings::startPose},
             Flag{"no_fleeing", &GameSettings::noFleeing},
+            Flag{"cast_countdown", &GameSettings::castCountdown},
             Flag{"debug", &GameSettings::debug},
             Number{"unk14", &GameSettings::unk14},
             Number{"red_mask", &GameSettings::redMask},

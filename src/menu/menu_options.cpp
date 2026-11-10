@@ -410,6 +410,21 @@ void Menu::OptionsSetNoFleeing(bool on)
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
+// The rebuild's cast countdowns of the party shown in the battles (deviations.md): shown, or not, written at once.
+void Menu::OptionsSetCastCountdown(bool shown)
+{
+    Game& owner = this->game;
+
+    if (owner.config.castCountdown == shown)
+    {
+        return;
+    }
+
+    owner.config.castCountdown = shown;
+    owner.config.StoreCastCountdown(shown);
+    owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
+}
+
 // The choices of row `row` of `setup` (Big5), and the one in use in `chosen` (-1 for none).
 std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) const
 {
@@ -425,13 +440,15 @@ std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) c
 
     if (setup == Setup::Battle)
     {
-        if (row == kAutoComboRow || row == kActiveTimeRow || row == kStartPoseRow || row == kNoFleeingRow)
+        if (row == kAutoComboRow || row == kActiveTimeRow || row == kStartPoseRow || row == kNoFleeingRow ||
+            row == kCastCountdownRow)
         {
             choices = OnOffChoices();
             const bool on = row == kAutoComboRow    ? owner.config.autoCombo
                             : row == kActiveTimeRow ? owner.config.activeTime
                             : row == kStartPoseRow  ? owner.config.startPose
-                                                    : owner.config.noFleeing;
+                            : row == kNoFleeingRow  ? owner.config.noFleeing
+                                                    : owner.config.castCountdown;
             chosen = on ? 0 : 1;
         }
 
@@ -508,6 +525,10 @@ void Menu::SetupChoose(Setup setup, i32 row, i32 choice)
         else if (row == kNoFleeingRow)
         {
             this->OptionsSetNoFleeing(choice == 0);
+        }
+        else if (row == kCastCountdownRow)
+        {
+            this->OptionsSetCastCountdown(choice == 0);
         }
 
         return;

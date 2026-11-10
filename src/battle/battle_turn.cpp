@@ -4001,6 +4001,15 @@ void Game::DrawBattleDebug()
     scene.Show(this->battleServices);
 }
 
+// The rebuild (deviations.md): with [game] cast_countdown the cast countdown of each party role standing, a green bar
+// at its place as the debug overlay shows an enemy's (DrawBattleDebug), whatever the debug mode.
+void Game::DrawCastCountdowns()
+{
+    smooth::Scene scene;
+    smooth::TurnFrame(*this).DrawCastCountdownsAdvance(scene);
+    scene.Show(this->battleServices);
+}
+
 // swd3e.exe 0x0046BFB0: the pointer over the battle (only when it moved, or while mouseMode): the click regions of
 // a talk choose Talk::choice; then by battle state: 0 and 1 (outside the menu) find the party panel under it
 // (anyStateRole); 1 picks the row of an open choice (ghost's orders, 煉妖, elements), the command of the role that

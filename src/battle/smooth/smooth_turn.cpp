@@ -2706,6 +2706,32 @@ void TurnFrame::DrawLevelUpStatsAdvance(Scene& scene)
     attribute(6, now.agility, before.agility, 6, rolls[5] == 0);
 }
 
+// What Game::DrawCastCountdowns decides of the frame; the draws into `scene`: the cast countdown of each party role
+// standing as the debug overlay draws an enemy's, a green bar at its place.
+void TurnFrame::DrawCastCountdownsAdvance(Scene& scene)
+{
+    Game& game = this->game;
+    BattleState& battle = game.battleState;
+    const u32 color = game.painter.MakeColor(0, kDebugGaugeGreen, 0);
+
+    for (u32 index = 0; index < battle.roleCount; ++index)
+    {
+        BattleRole& role = game.battleRoles[index];
+        const auto length = static_cast<u16>(role.CastCountdownLength());
+
+        if (role.IsDefeated() || length == 0)
+        {
+            continue;
+        }
+
+        u16 x = 0;
+        u16 y = 0;
+        role.GetPosition(x, y);
+        HudFrame(game.battleHud)
+            .FillColor(static_cast<i16>(x), static_cast<i16>(y), length, kDebugGaugeHeight, color, scene);
+    }
+}
+
 // What Game::DrawBattleDebug decides of the frame; the draws into `scene`.
 void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
 {

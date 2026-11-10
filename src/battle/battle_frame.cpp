@@ -448,6 +448,12 @@ int Game::BattleFrame()
         this->DrawBattleDebug();
     }
 
+    // The rebuild (deviations.md): the party's cast countdowns, by their own setting.
+    if (this->config.castCountdown)
+    {
+        this->DrawCastCountdowns();
+    }
+
     this->CheckBattleEnd();
 
     // Diagnostics (gauge hold): the end checked; a lasting hold of every gauge reported.

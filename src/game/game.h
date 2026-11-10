@@ -453,6 +453,7 @@ private:
     void MenuDown();
     int BattleDebugKeys();
     void DrawBattleDebug();
+    void DrawCastCountdowns();
     int MouseHover();
     int HoverRefineCell();
     int HoverTarget();
