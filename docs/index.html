@@ -211,7 +211,7 @@ footer a { color: var(--ink); }
   <a href="#versions">版本差異</a>
   <a href="#settings">設置</a>
   <a href="#secrets">隱藏秘籍</a>
-  <a href="#attributes">角色屬性</a>
+  <a href="#mechanics">遊戲機制</a>
   <a href="#walkthrough">流程攻略</a>
   <a href="#bestiary">神魔異事錄</a>
   <a href="#items">物品大全</a>
@@ -387,8 +387,8 @@ level = &quot;debug&quot;</code></pre>
     <h3>调试模式</h3>
     <p>在 <code>swd3er.toml</code> 的 <code>[game]</code> 里写上 <code>debug = true</code> 打开调试模式。之后：</p>
     <ul>
-      <li>战斗中的调试键直接可用。</li>
-      <li>地图上同时按住 右Ctrl + 右Shift + Home + End，才会开启地图的调试键。开启状态记在剧情旗标里，会随存档保存：之后读这个存档或它后来的存档，不用再按就能用，也没有办法关掉（和原版一样）。</li>
+      <li>在地图上同时按住 右Ctrl + 右Shift + Home + End，开启地图和战斗的调试键。开启状态记在剧情旗标里，会随存档保存：之后读这个存档或它后来的存档，不用再按就能用，也没有办法关掉（和原版一样）。</li>
+      <li>要在进入战斗前按。每场战斗开始时，调试模式会按这个旗标重新设定：没按过就进了战斗，战斗调试键不能用，之后地图上也按不出这组键，要重新启动游戏（和原版一样）。</li>
     </ul>
     <p>地图上：</p>
     <table>
@@ -419,34 +419,12 @@ level = &quot;debug&quot;</code></pre>
       <tr><td>Ctrl+R</td><td>我方全员受到 500 点伤害，灵力、体力各减 5</td></tr>
       <tr><td>Ctrl+V</td><td>敌人全员受到 10 点伤害</td></tr>
       <tr><td>Ctrl+T</td><td>敌人的行动条重新随机</td></tr>
-      <tr><td>Ctrl+F2</td><td>切换「絕對靈契」／「正常靈契」</td></tr>
+      <tr><td>Ctrl+F2</td><td>切换「絕對靈契」／「正常靈契」：下一次收化必成功，连头目也收得下；只管一次，见<a href="#mechanics/absorb">遊戲機制</a></td></tr>
       <tr><td>Ctrl+F9</td><td>快速模式（对话自动跳过）</td></tr>
       <tr><td>Ctrl+C</td><td>中止正在施放的法术</td></tr>
       <tr><td>Ctrl+F3</td><td>停止战斗音乐</td></tr>
       <tr><td>Ctrl+F5</td><td>战斗放慢（每帧 0.1 秒），再按一次恢复</td></tr>
       <tr><td>H／J（不按 Ctrl）</td><td>所有角色和敌人向右／向左移动 10 像素</td></tr>
-    </table>
-  </section>
-
-  <section id="attributes">
-    <h2>角色屬性</h2>
-    <p>各项属性在原版里的实际作用（重制版的计算与原版相同）。属性都存成 16 位整数，最大 32767；表中的「上限」是超过后会被截掉、或再高也没有用的值。</p>
-    <table>
-      <tr><th>属性</th><th>作用</th><th>上限</th></tr>
-      <tr><td>生命</td><td>降到 0 就倒下</td><td>9999。每场战斗开始时，参战角色的生命和生命上限超过 9999 的部分会被永久截掉</td></tr>
-      <tr><td>靈力</td><td>施放法术和部分招式时消耗</td><td>9999，同生命</td></tr>
-      <tr><td>體力</td><td>使用部分招式和饰品指令时消耗</td><td>9999，同生命</td></tr>
-      <tr><td>力量</td><td>战斗中的攻擊 = 力量 + 装备的攻击力（装备加的力量同时加到攻擊）。普通攻击的伤害 = 攻擊 + 随机 1～（等級 ÷ 3 + 3）− 敌人防禦，不超过敌人防禦时伤害为 1；攻擊提升状态加 200%，和招式同属性的五行攻擊提升再加 30%，攻擊下降按状态的回合数减少一定比例</td><td>攻擊按 16 位有符号数计算，超过 32767 时溢出，伤害反而只剩 1</td></tr>
-      <tr><td>耐力</td><td>战斗中的防禦 = 耐力 + 装备的防御力；防禦提升状态加 200%。只减少敌人普通攻击的伤害：伤害 = 敌人攻擊 + 随机 1～（敌人等級 ÷ 3 + 3）− 防禦；不超过防禦时只受 0～1 加随机 1～（敌人等級 ÷ 3 + 3）的伤害。法术伤害不看防禦</td><td>没有截断；高过敌人的攻擊后再高也没用</td></tr>
-      <tr><td>智慧</td><td>法术等按招式数值计算的伤害，额外加随机 1～（等級 + 智慧）÷（5～9）。用带异常状态的招式攻击敌人时，智慧每高出敌人的智慧 20 点，中异常的机率加一成</td><td>没有截断</td></tr>
-      <tr><td>敏捷</td><td>战斗中行动条每帧增加「敏捷 ÷ 4」（加速状态时敏捷先加 40，減速时减 30），满了就轮到行动。行动条的满值 = 100 ×（20 − 戰鬥速度），戰鬥速度在「環境設定」里设定，0～11</td><td>达到满值的 4 倍后一帧就满，再高也没用：戰鬥速度 11 时为 3600，0 时为 8000</td></tr>
-      <tr><td>閃躲</td><td>原版不显示在状态页（重制版显示在五行抗性右边）。敌人攻击时，我方连续 13 次没闪开之后，每次掷 0～9，小于閃躲值就闪开；连续 26 次没闪开时下一次必闪；有人刚闪开后的下一次一定不闪。隐身状态时九成闪开。我方四人共用这个连续次数</td><td>10，10 以上在可以掷时必闪。战斗中只取 0～255，超过 255 会绕回</td></tr>
-      <tr><td>異常</td><td>原版不显示在状态页（重制版显示在五行抗性右边）。敌人攻击时掷 0～9，大于異常值才可能中异常状态，所以越高越好：中招机率为（9 − 異常）成</td><td>9 以上不会中异常。变成负数时按很大的数比较，同样不会中</td></tr>
-      <tr><td>默契</td><td>没有作用：战斗和其他计算都不读取，只在升级时显示增加了多少</td><td>—</td></tr>
-      <tr><td>反應</td><td>没有作用，同默契</td><td>—</td></tr>
-      <tr><td>好感</td><td>原版不显示（重制版显示在反應下面）。小雪和玉儿入队时设为 100，之后剧情里先和谁说话、怎么选择时增减，其他角色的不变，影响结局，见攻略「結局與好感度」</td><td>存为 0～255 的一个字节，减到 0 以下会绕回 255 附近</td></tr>
-      <tr><td>五行抗性</td><td>状态页的 [金] [木] [水] [火] [土] 五个百分比。受到某个属性的攻击时，按五行生剋各取一项：一项按百分比减少伤害，一项按百分比增加伤害，一项不为 0 时把伤害变成按该百分比的回复。金：減 [火]、加 [木]、回復 [水]；木：減 [金]、加 [土]、回復 [火]；水：減 [土]、加 [火]、回復 [木]；火：減 [水]、加 [金]、回復 [土]；土：減 [木]、加 [水]、回復 [金]</td><td>每项 −128～127</td></tr>
-      <tr><td>等級</td><td>普通攻击的随机加成是 1～（等級 ÷ 3 + 3），法术的随机加成也计入等級</td><td>战斗胜利升级只到 60 级</td></tr>
     </table>
   </section>
 
@@ -460,7 +438,7 @@ level = &quot;debug&quot;</code></pre>
 <script>
 // The walkthrough, the bestiary and the items open in place of the page, beside the menu; each is loaded the first
 // time it is shown.
-const VIEWS = { walkthrough: 'walkthrough.html', bestiary: 'bestiary.html', items: 'items.html', altar: 'altar.html', changelog: 'changelog.html' };
+const VIEWS = { mechanics: 'mechanics.html', walkthrough: 'walkthrough.html', bestiary: 'bestiary.html', items: 'items.html', altar: 'altar.html', changelog: 'changelog.html' };
 const frames = {};
 const details = {};  // by page: what it shows (as its address names it)
 // The pages' sound switch, kept in the address (?sound=off) and passed on to every page loaded.
