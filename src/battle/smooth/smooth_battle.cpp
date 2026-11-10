@@ -539,7 +539,7 @@ void BattleFrame::DrawRolePanelsAdvance(Scene& scene)
             }
         }
 
-        if (battle.unk537A18 == 1)
+        if (battle.debugOverlay == 1)
         {
             const auto second = static_cast<u16>(unit.CastCountdownLength());
 

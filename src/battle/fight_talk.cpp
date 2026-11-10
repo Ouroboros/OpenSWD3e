@@ -85,7 +85,7 @@ void FightTalk::Close()
     this->unk578456 = 0;
     this->repeatLimit = 0;
     this->windowTimeout = kNoTalk;
-    this->unk57845C = 0;
+    this->choicesCounted = 0;
     this->unk57828C = 0;
     this->offset = 0;
     this->open = false;

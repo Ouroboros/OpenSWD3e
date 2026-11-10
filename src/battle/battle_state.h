@@ -316,15 +316,16 @@ public:
     std::array<i32, RoleUnits> stamina = {};      // 0x00536884
     std::array<i32, RoleUnits> blockValues = {};  // 0x005377D4 and its copy 0x00537524
     std::array<i32, RoleUnits> blockValuesShown = {};
-    std::array<i32, Units> unitY = {};               // 0x0053694C the y of each unit
-    std::array<i32, Units> drawOrder = {};           // 0x0053730C the units from the top down
-    std::array<i32, Units> drawTaken = {};           // 0x00536808
-    std::array<i32, Enemies> enemyOrder = {};        // 0x005368D4 the enemies from the top down
-    ActState unk5394E8;                              // 0x005394E8 cleared twice by StartBattle
-    ObjectRecord unk537D68;                          // 0x00537D68 cleared by StartBattle for each enemy
+    std::array<i32, Units> unitY = {};         // 0x0053694C the y of each unit
+    std::array<i32, Units> drawOrder = {};     // 0x0053730C the units from the top down
+    std::array<i32, Units> drawTaken = {};     // 0x00536808
+    std::array<i32, Enemies> enemyOrder = {};  // 0x005368D4 the enemies from the top down
+    ActState unk5394E8;                        // 0x005394E8 cleared twice by StartBattle
+    ObjectRecord
+        calledObject;  // 0x00537D68 the object of an enemy called (CallEnemies); cleared by StartBattle for each enemy
     std::array<i32, 0x14> unk50ED68 = {};            // 0x0050ED68
     std::array<i32, 0x3C> unk5377FC = {};            // 0x005377FC
-    std::array<i32, 0xA> unk50D88C = {};             // 0x0050D88C the act of the item a role uses (LoadItemAction)
+    std::array<i32, 0xA> usedItemActs = {};          // 0x0050D88C the act of the item a role uses (LoadItemAction)
     std::array<std::u8string_view, 4> commandNames;  // 0x0050EBF0 the listed commands of the menu (pointers)
     std::array<u16, 4> commandKinds = {};            // 0x0050D870 their kinds (swd3e: four)
     std::array<i32, Units> unk5376B8 = {};           // 0x005376B8 per unit (swd3e: 0x78 bytes)
@@ -333,7 +334,7 @@ public:
     std::array<u8, 9> commandEnabled = {};
     // 0x0050D86C (swd3e) a colour (0x19, 0x19, 0x1D) set by StartBattle and not drawn: the steps of MenuRight and
     // MenuLeft past an empty listed command read it as the kind of command 4 (MenuKind)
-    u16 unk50D86C = 0;
+    u16 greyColor = 0;         // 0x0050D86C a grey made at StartBattle, the word of menu kind 4
     i32 chargingRole = -1;     // 0x004BF58C (swd3e) the role unit that took 蓄勁 (kind 0x27): its menu offers 1 and 2
     i32 meterRole = -1;        // 0x004BF590 (swd3e) the role unit that started the meter (逆攻, kind 0x28)
     u8 ghostOrdersOpen = 0;    // 0x00577999 (swd3e) 1: the 符鬼 command shows the ghost's orders
@@ -372,11 +373,11 @@ public:
     std::array<i32, Units> hitActPending =
         {};  // 0x00575F38 (swd3e: 30 slots) per unit: the enemies' hit act is to play on it (-1: none)
     std::array<i32, 0xD2> unk537A20 =
-        {};                  // 0x00537A20 (swd3e, 0x348 bytes) set to -1 by StartBattle and EndBattle only
-    i32 unk57734C = 0;       // 0x0057734C
-    i32 actingUnit = 0;      // 0x00575F18 the unit acting now (-1: none)
-    u16 listedCommands = 0;  // 0x0057720A the commands the menu lists beyond its fixed ones
-    i32 unk577994 = 0;       // 0x00577994
+        {};                   // 0x00537A20 (swd3e, 0x348 bytes) set to -1 by StartBattle and EndBattle only
+    i32 standingCounted = 0;  // 0x0057734C 1 once the standing enemies were counted defeated
+    i32 actingUnit = 0;       // 0x00575F18 the unit acting now (-1: none)
+    u16 listedCommands = 0;   // 0x0057720A the commands the menu lists beyond its fixed ones
+    i32 thrownCount = 0;      // 0x00577994 the objects thrown still out (CommandThrows)
     std::array<BattleSlotRecord, Units> slotRecords;  // 0x00537E10 the BattleSlotRecord of each slot
     u16 escortCount = 0;                              // 0x0057720E the high word of 0x0053BF24
 
@@ -551,17 +552,18 @@ public:
     // 0x005770CE the frames of the level-up stats (the high word of 0x0053BDE8)
     u16 levelUpFrames = 0;
     // The debug keys (Game::BattleDebugKeys) and the acting unit.
-    i32 unk537A18 = 0;     // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' cast countdowns
+    i32 debugOverlay = 0;  // 0x00537A18 (swd3e) the debug overlay (F1): DrawBattleDebug, the panels' cast countdowns
     i32 slowFrames = 0;    // 0x005777F8 (swd3e) the debug keys' F5: the frames are slowed to 100 ms
     i32 stepInFelled = 0;  // 0x00577360 (swd3e) set when an enemy's step-in attack fells it (0x00487FE0); 0x0045EE20
     u8 itemStolen = 0;  // 0x00577255 (swd3e) 1 once an enemy stole (EnemyHitDamage, command flag 0x100000); 0x0045EE20
-    i32 unk5772F8 = 0;  // 0x005772F8 (swd3e) set by 0x0045BEA0: the victory gives no loot, proficiency or battle counts
+    // 0x005772F8 (swd3e) set by 0x0045BEA0 (CommandDefeatsAll): the victory gives no loot, proficiency or battle counts
+    i32 allDefeatedByCast = 0;
     i32 showRoleBlocks = 0;  // 0x00577808 (swd3e) the debug keys toggle it: the overlay shows the party battle blocks
     u8 unk5774E9 = 0;        // 0x005774E9 (swd3e) 0 or 1, set by FightTalkFrame (0x0047DF22, 0x0047DF46); debug overlay
     i32 enemiesUnhurt = 0;   // 0x00576084 the debug keys F1 / X: the attacks leave the enemies' hit points
     i32 hitsAllRoles = 0;    // 0x00577264 1: the hit falls on all roles at once
     i32 unk577064 = 0;
-    i32 unk577050 = 0;
+    i32 sweepStep = 0;          // 0x00577050 the sweep hits so far (sweepTotal)
     i32 snapNext = 0;           // 0x005772E8 1: the next frame is saved as a screenshot
     std::u8string battleMusic;  // 0x005774EC the path of the battle music
     i32 unk53AF30 = 0;
@@ -570,8 +572,8 @@ public:
     u16 actingKind = 0;  // 0x00575F20 the kind of the acting slot record (1: a role, 2: an enemy)
     i32 allAtOnce = 0;   // 0x00575F30 the acting unit's slot record: allAtOnce (a sweep hits at once, HitFrame)
     i32 targetsAll = 0;  // 0x00575F2C the acting unit's slot record: targetsAll (the effect messages name the side)
-    u16 unk577240 = 0;   // a unit's place read for the debug gauge and the menu
-    u16 unk577244 = 0;
+    u16 readX = 0;       // a unit's place read for the debug gauge and the menu
+    u16 readY = 0;
     i32 hoverScrollPart = 0;    // 0x0057707C the part of the scroll bar under the pointer (1..4)
     i32 frameMilliseconds = 1;  // 0x004BF18C the milliseconds of a frame (the debug overlay shows 1000 / it)
     i32 frameNow = 0;           // 0x005770A0 (swd3e) the time of this frame (milliseconds)
@@ -630,7 +632,7 @@ public:
     std::array<u8, Enemies> escapedEnemies = {};  // 0x005379C0 (swd3e) per enemy: 1 once it ran away (0x00464ED0)
     // 0x0050F41C (swd3e) per enemy: the items it stole (0x20 a enemy, the first free one taken; 0x00464ED0)
     std::array<std::array<u16, 0x20>, Enemies> stolenItems = {};
-    i32 unk577370 = 0;  // 0x00577370 (swd3e) set when battle role 0 falls with the ghost in the battle
+    i32 ghostAlone = 0;  // 0x00577370 (swd3e) set when battle role 0 falls with the ghost in the battle
     std::array<i32, Enemies> castWaits =
         {};  // 0x0050CE6C (swd3e) per enemy: its chosen command waits for its cast countdown (EnemyChooseCommand);
              // cleared when it is slotted again or falls
@@ -745,9 +747,9 @@ public:
     i32 timerAttack = 0;  // 0x00577088 the timer attack of command 0x1F (bit 31: running, bit 0: a press to hit)
     i32 mouseMode = 0;    // 0x005772B8 1: the mouse is in use (MouseHover): the menus follow the pointer, the aim waits
     i32 turnPointer = 1;  // 0x004BF1E8 1: the pointer shows the turn mark
-    i32 unk57724C = 0;
-    i16 unk577246 = 0;
-    i16 unk577248 = 0;
+    i32 timerMarkRunning = 0;  // 1 while the timer mark effect runs
+    i16 timerMarkX = 0;        // the place of the 鼠槌 timer mark (TimerAttackFrame)
+    i16 timerMarkY = 0;
 };
 
 }  // namespace swd3e

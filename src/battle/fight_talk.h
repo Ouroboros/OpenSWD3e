@@ -58,9 +58,9 @@ public:
     u16 unk578456 = 0;         // 0x00578456 the units listed by commands 0xE and 0x3D
     // 0x00578458 (swd3e) the times the battle may be fought for the full rewards (talk opcode 0x54; battleRepeats)
     u16 repeatLimit = 0;
-    i32 unk57845C = 0;  // 0x0057845C the choices counted by command 0x1F
-    i32 offset = 0;     // 0x00578460 the place of the script read last (Seek)
-    i32 wonByTalk = 0;  // 0x00578468 1: the battle ends as won (Game::CheckBattleEnd)
+    i32 choicesCounted = 0;  // 0x0057845C the choices counted by command 0x1F
+    i32 offset = 0;          // 0x00578460 the place of the script read last (Seek)
+    i32 wonByTalk = 0;       // 0x00578468 1: the battle ends as won (Game::CheckBattleEnd)
     // The state of the talk frames (Game::FightTalkFrame).
     i32 unk5782A0 = 0;        // 0x005782A0 a value of the command run (also the result of BattleFrame)
     std::size_t textAt = 0;   // 0x00578438 the text of a talk window in the script (a pointer in the original)

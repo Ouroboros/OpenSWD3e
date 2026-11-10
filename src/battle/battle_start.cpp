@@ -26,7 +26,7 @@ constexpr int kLightBlue = 0x17;
 constexpr int kDarkRed = 0xF;
 constexpr int kDarkGreen = 0xE;
 constexpr int kDarkBlue = 0xB;
-constexpr int kGreyRed = 0x19;  // swd3e: unk50D86C
+constexpr int kGreyRed = 0x19;  // swd3e: greyColor
 constexpr int kGreyGreen = 0x19;
 constexpr int kGreyBlue = 0x1D;
 constexpr int kPointerX = 0x140;  // the pointer starts at (320, 200) (0x00459FF8)
@@ -176,7 +176,7 @@ void Game::StartBattle(u16 number)
     battle.unk50ED68.fill(0);
     battle.ClearActing();
     battle.unk5377FC.fill(0);
-    battle.unk50D88C.fill(0);
+    battle.usedItemActs.fill(0);
     battle.actionQueue.fill(0);
     battle.commandNames[0] = {};
     battle.commandKinds = {};
@@ -218,10 +218,10 @@ void Game::StartBattle(u16 number)
     // ends while an enemy waits for its cast countdown).
     battle.enemyTargetPicked.fill(0);
     this->battleHud.ResetMeter();
-    battle.unk57734C = 0;
+    battle.standingCounted = 0;
     battle.actingUnit = -1;
     battle.listedCommands = 0;
-    battle.unk577994 = 0;
+    battle.thrownCount = 0;
 
     for (std::size_t role = 0; role < Party::Roles; ++role)
     {
@@ -285,7 +285,7 @@ void Game::StartBattle(u16 number)
     this->mediumFont.SetAdvance(kMediumAdvance);
     battle.lightColor = static_cast<u16>(this->painter.MakeColor(kLightRed, kLightGreen, kLightBlue));
     battle.darkColor = static_cast<u16>(this->painter.MakeColor(kDarkRed, kDarkGreen, kDarkBlue));
-    battle.unk50D86C = static_cast<u16>(this->painter.MakeColor(kGreyRed, kGreyGreen, kGreyBlue));
+    battle.greyColor = static_cast<u16>(this->painter.MakeColor(kGreyRed, kGreyGreen, kGreyBlue));
     battle.projector.Init(this->graphics);
     state.pointerX = kPointerX;
     battle.pointerX = kPointerX;
@@ -318,7 +318,7 @@ void Game::StartBattle(u16 number)
     {
         BattleEnemy& unit = this->battleEnemies[enemy];
         unit.Reset(services);
-        battle.unk537D68 = ObjectRecord{};
+        battle.calledObject = ObjectRecord{};
         UnitPlacement& place = battle.enemyPlaces[enemy];
         place.actId = static_cast<u16>(battle.formation.enemies[enemy]);
         place.x = static_cast<i16>(battle.formation.enemyX[enemy]);
@@ -473,7 +473,7 @@ void Game::StartBattle(u16 number)
 
         if (this->battleRoles[0].IsDefeated())
         {
-            battle.unk577370 = 1;
+            battle.ghostAlone = 1;
             unit.SetStatus(kGhostAloneStatus);
         }
     }

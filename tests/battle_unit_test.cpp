@@ -1614,7 +1614,7 @@ TEST_CASE("battle state: the menu kinds around the listed commands")
     constexpr int kFirstListed = 6;
     constexpr int kLastListed = 9;
     swd3e::BattleState state;
-    state.unk50D86C = kColour;
+    state.greyColor = kColour;
     state.commandKinds = {kRefineKind, 0, 0, kFuseKind};
     CHECK_EQ(state.MenuKind(kColourCommand), kColour);
     CHECK_EQ(state.MenuKind(kHighWordCommand), 0);

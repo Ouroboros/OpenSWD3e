@@ -876,7 +876,8 @@ void Game::StartRoleCast(BattleRole& unit)
     battle.slotDamage.fill(0);
 }
 
-// Every enemy standing defeated by a cast with CommandDefeatsAll (inline in 0x0045BEA0): pose 0x10, unk5772F8 set.
+// Every enemy standing defeated by a cast with CommandDefeatsAll (inline in 0x0045BEA0): pose 0x10, allDefeatedByCast
+// set.
 void Game::DefeatAllByCast(BattleRole& unit)
 {
     BattleState& battle = this->battleState;
@@ -886,7 +887,7 @@ void Game::DefeatAllByCast(BattleRole& unit)
         return;
     }
 
-    battle.unk5772F8 = 1;
+    battle.allDefeatedByCast = 1;
 
     for (u32 index = 0; index < battle.enemyCount; ++index)
     {
@@ -1377,7 +1378,7 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
 
     if (role == 0)
     {
-        battle.unk577370 = 1;
+        battle.ghostAlone = 1;
         this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)].SetStatus(kGhostAloneStatus);
         battle.RemoveSlotRecord(battle.ghostSlot + BattleState::FirstRoleUnit);
     }
@@ -1751,7 +1752,7 @@ int Game::AccessoryBuffFrame(BattleRole& unit, int target, int command)
 }
 
 // Command 0x1F of RoleActionFrame (inline in the original): a five-second timer (StartTimer) runs over the enemy
-// (its place in unk577246); game flag 0x4B (the timer's end) ends the command; each press (timerAttack) hits the enemy
+// (its place in timerMarkX); game flag 0x4B (the timer's end) ends the command; each press (timerAttack) hits the enemy
 // with the role's hit (its digits) and a defeat clears game flag 0x4A and ends it.
 int Game::TimerAttackFrame(BattleRole& unit, int target)
 {
@@ -1767,8 +1768,8 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
         u16 x = 0;
         u16 y = 0;
         enemy.GetDrawPosition(x, y);
-        battle.unk577246 = static_cast<i16>(x);
-        battle.unk577248 = static_cast<i16>(y);
+        battle.timerMarkX = static_cast<i16>(x);
+        battle.timerMarkY = static_cast<i16>(y);
         this->battleHud.ResetEffectAt();
     }
 
@@ -1776,7 +1777,7 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
     {
         this->state.ClearGameFlag(kTimerFlag);
         battle.timerAttack = 0;
-        battle.unk57724C = 0;
+        battle.timerMarkRunning = 0;
         battle.darkenUnit = -1;
         return 1;
     }
@@ -1789,7 +1790,7 @@ int Game::TimerAttackFrame(BattleRole& unit, int target)
     this->audio.PlaySound(kTimerSound, this->config.soundVolume);
     this->battleHud.ResetEffectAt();
     battle.timerAttack = kTimerStarted;
-    battle.unk57724C = 1;
+    battle.timerMarkRunning = 1;
     battle.hitDamage = unit.HitDamage(services, enemy, battle.spiritDamage, battle.staminaDamage);
     enemy.Stagger(this->battleState);
     enemy.SetDamageDigits(services, battle.hitDamage);
@@ -2356,7 +2357,7 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
 
             if (unit.SpendGhostSpirit(hitPoints, maximum, kGhostHealSpirit) == 1)
             {
-                battle.unk50D88C[at] = kGhostHealCast;
+                battle.usedItemActs[at] = kGhostHealCast;
                 order.atParty = 1;
             }
             else
@@ -2384,10 +2385,10 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
 
     if (unit.Ghost() == 1)
     {
-        u32 act = static_cast<u32>(battle.unk50D88C[at]);
+        u32 act = static_cast<u32>(battle.usedItemActs[at]);
         u16 kind = 0;
         const int chosen = unit.GhostSkillCommand(this->database, act, kind);
-        battle.unk50D88C[at] = static_cast<i32>(act);
+        battle.usedItemActs[at] = static_cast<i32>(act);
 
         if (chosen == 1)
         {
@@ -2444,9 +2445,9 @@ void Game::RoleAutoCommand(BattleRole& unit, int role)
         return;
     }
 
-    u32 act = static_cast<u32>(battle.unk50D88C[at]);
+    u32 act = static_cast<u32>(battle.usedItemActs[at]);
     const int chosen = unit.ChooseCommand(services, this->database, act);
-    battle.unk50D88C[at] = static_cast<i32>(act);
+    battle.usedItemActs[at] = static_cast<i32>(act);
 
     if (chosen != 1)
     {
@@ -2854,10 +2855,10 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
 
-    if (battle.unk577370 == 1 && !this->battleRoles[0].IsDefeated())
+    if (battle.ghostAlone == 1 && !this->battleRoles[0].IsDefeated())
     {
         BattleRole& ghost = this->battleRoles[static_cast<std::size_t>(battle.ghostSlot)];
-        battle.unk577370 = 0;
+        battle.ghostAlone = 0;
         ghost.ClearStatus(kGhostOutStatus1);
         ghost.ClearStatus(kGhostOutStatus2);
         ghost.ClearStatus(kGhostOutStatus3);
@@ -2924,7 +2925,7 @@ void Game::RoleAfterAction(BattleRole& unit, int role)
     battle.ClearActing();
     const auto at = static_cast<std::size_t>(role);
     battle.nameFlashes[at] = 0;
-    battle.unk50D88C[at] = 0;
+    battle.usedItemActs[at] = 0;
     battle.unk5376B8[at] = 0;
     battle.roleListScrolls.fill(0);
     battle.roleListRows.fill(1);

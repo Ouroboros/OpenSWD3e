@@ -394,7 +394,7 @@ void Game::EndBattle()
     battle.unk50ED68.fill(0);
     battle.roleListScrolls.fill(0);
     battle.unk5377FC.fill(0);
-    battle.unk50D88C.fill(0);
+    battle.usedItemActs.fill(0);
     battle.actionQueue.fill(0);
     battle.commandNames[0] = {};
     battle.commandKinds = {};
@@ -460,7 +460,7 @@ void Game::EndBattle()
     battle.unk577044 = 0;
     battle.unk577048 = 0;
     battle.sweepTargets = 0;
-    battle.unk577050 = 0;
+    battle.sweepStep = 0;
     battle.sweepDefeated = 0;
     battle.unk577064 = 0;
     battle.fadeActLevels.fill(0);
@@ -562,7 +562,7 @@ void Game::EndBattle()
     battle.endFade = 0;
     battle.unk5772F0 = 0;
     battle.enemyHitsAll = 0;
-    battle.unk5772F8 = 0;
+    battle.allDefeatedByCast = 0;
     battle.unk4BF1E4 = 1;
     battle.learnedPending = 0;
     battle.mirrored = 0;
@@ -574,7 +574,7 @@ void Game::EndBattle()
     this->fightTalk.wonByTalk = 0;
     battle.levelUpPending = 0;
     battle.orderSorted = 0;
-    battle.unk57734C = 0;
+    battle.standingCounted = 0;
     this->archive.Flush();
     this->acts.CloseAll();
     this->audio.StopAllSounds();

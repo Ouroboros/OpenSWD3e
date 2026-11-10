@@ -2245,7 +2245,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
         game.audio.StopAllSounds();
         game.audio.PlaySound(kVictorySound, game.config.soundVolume);
 
-        for (u32 index = 0; index < battle.enemyCount && battle.unk5772F8 == 0; ++index)
+        for (u32 index = 0; index < battle.enemyCount && battle.allDefeatedByCast == 0; ++index)
         {
             const u16 drop = game.battleEnemies[index].RollDrop(services);
 
@@ -2310,7 +2310,7 @@ void TurnFrame::DrawVictoryPanelAdvance(Scene& scene)
                 record.totalExperience += battle.battleExperience;
             }
 
-            if (battle.unk5772F8 == 0)
+            if (battle.allDefeatedByCast == 0)
             {
                 if (role.StepWornCounters(
                         game.battleServices,
@@ -2722,7 +2722,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
         font.DrawText(game.drawSurface, x, y, line, kWhite, TextFont::BoldOutline);
     };
 
-    if (battle.unk537A18 == 1)
+    if (battle.debugOverlay == 1)
     {
         font.SetBackground(TextFont::NoBackground);
         font.SetShadow(0);
@@ -2803,8 +2803,8 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
         for (u32 index = 0; index < battle.enemyCount; ++index)
         {
             BattleEnemy& enemy = game.battleEnemies[index];
-            enemy.GetPosition(battle.unk577240, battle.unk577244);
-            const int row = Display::Width * static_cast<i16>(battle.unk577244);
+            enemy.GetPosition(battle.readX, battle.readY);
+            const int row = Display::Width * static_cast<i16>(battle.readY);
             // The length is taken as an unsigned word (0x00468ECC).
             const auto gauge = static_cast<u16>(enemy.GaugeLength(services));
 
@@ -2812,8 +2812,8 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             for (int pixel = 0; pixel < gauge; ++pixel)
             {
                 for (const int at :
-                     {row + pixel + static_cast<i16>(battle.unk577240),
-                      row + pixel + Display::Width + static_cast<i16>(battle.unk577240)})
+                     {row + pixel + static_cast<i16>(battle.readX),
+                      row + pixel + Display::Width + static_cast<i16>(battle.readX)})
                 {
                     if (at >= 0 && at < Display::Width * Display::Height)
                     {
@@ -2828,8 +2828,8 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             {
                 HudFrame(game.battleHud)
                     .FillColor(
-                        static_cast<i16>(battle.unk577240),
-                        static_cast<i16>(battle.unk577244),
+                        static_cast<i16>(battle.readX),
+                        static_cast<i16>(battle.readY),
                         second,
                         kDebugGaugeHeight,
                         painter.MakeColor(0, kDebugGaugeGreen, 0),
@@ -2858,7 +2858,7 @@ void TurnFrame::DrawBattleDebugAdvance(Scene& scene)
             WinFormat(kAimDebugLine, {battle.aimTarget, battle.battleBusy, battle.turnPending})
         );
         text(kDebugLocksX, kDebugTop, WinFormat(kLockDebugLine, {battle.sweepTotal, battle.sweepTargets}));
-        text(kDebugLocksX, kDebugFlagsY, WinFormat(kAllHitDebugLine, {battle.unk577050}));
+        text(kDebugLocksX, kDebugFlagsY, WinFormat(kAllHitDebugLine, {battle.sweepStep}));
         text(kDebugRightX, kDebugMenuY, WinFormat(kBattleDebugLine, {static_cast<i32>(battle.battle)}));
         text(kDebugRightX, kDebugUnitsY, WinFormat(kGoneDebugLine, {static_cast<i32>(battle.enemiesGone)}));
         text(

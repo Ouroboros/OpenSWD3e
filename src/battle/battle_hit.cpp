@@ -284,8 +284,8 @@ int Game::SlideUnits(int unit, i16 x, i16 target)
         const auto at = static_cast<std::size_t>(unit);
         const BattleUnit& moving = target != 0 ? static_cast<const BattleUnit&>(this->battleRoles[at])
                                                : static_cast<const BattleUnit&>(this->battleEnemies[at]);
-        moving.GetPosition(battle.unk577240, battle.unk577244);
-        const auto from = static_cast<i16>(battle.unk577240);
+        moving.GetPosition(battle.readX, battle.readY);
+        const auto from = static_cast<i16>(battle.readX);
         step = (x - from) / kSlideToShare;
         battle.shake = step;
 
@@ -618,14 +618,14 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
 
 // swd3e.exe 0x004632B0: one frame of the hit act `act` of `attacker` on `target` or, with `all` 1, on its whole side
 // (unit slot `index`); 1 once the hit act waits with no second-tier spell picture left (a cast that defeats every
-// enemy, unk5772F8: once they are all gone), 0 when an act ends. The picture is read straight from its file (counting
-// hitAllFrames), placed at the attacker's offset from its origin less the act's anchor, or on a fixed place by the
-// side (kAllHitLeftX, kAllHitRightX, kAllHitY: an enemy attacker unmirrored keeps y 0; with unk5772F8 the middle of the
-// field), walking along y 0 for a moving attack; an act marked AddsPicture adds its effect as a second-tier picture.
-// The target bits work as in HitTargetFrame, on every unit of the side with `all`: the roles hit by a role while
-// roleActing and atParty take the damage at once (Damage), as do all roles while hitsAllRoles; the spirit and stamina
-// of a hit are cleared after their digits (so the slots record 0 for them), and the digit delay of the enemies runs
-// on from the walk speed without a reset (kept).
+// enemy, allDefeatedByCast: once they are all gone), 0 when an act ends. The picture is read straight from its file
+// (counting hitAllFrames), placed at the attacker's offset from its origin less the act's anchor, or on a fixed place
+// by the side (kAllHitLeftX, kAllHitRightX, kAllHitY: an enemy attacker unmirrored keeps y 0; with allDefeatedByCast
+// the middle of the field), walking along y 0 for a moving attack; an act marked AddsPicture adds its effect as a
+// second-tier picture. The target bits work as in HitTargetFrame, on every unit of the side with `all`: the roles hit
+// by a role while roleActing and atParty take the damage at once (Damage), as do all roles while hitsAllRoles; the
+// spirit and stamina of a hit are cleared after their digits (so the slots record 0 for them), and the digit delay of
+// the enemies runs on from the walk speed without a reset (kept).
 int Game::HitAllFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index, int all)
 {
     smooth::Scene scene;
@@ -1051,7 +1051,7 @@ void Game::DrainToSpirit(BattleRole& role, i32& damage)
     role.Damage(this->battleServices, 0, static_cast<i16>(damage), 0);
 }
 
-// A role attacking in HitFrame (inline in the original): its act is its unk50D88C. With targetsAll its hit sweeps a
+// A role attacking in HitFrame (inline in the original): its act is its usedItemActs. With targetsAll its hit sweeps a
 // side (allAtOnce 1: the whole side at once, the hits taken by the enemies; otherwise one unit after another as the
 // sweep reaches them, until sweepTotal are hit), else one target is hit (allAtOnce 1: HitAllFrame on the target
 // alone). atParty makes the party the target side.
@@ -1061,7 +1061,7 @@ int Game::RoleHitFrame(int role)
     BattleRole& attacker = this->battleRoles[static_cast<std::size_t>(role)];
     const auto target = static_cast<i16>(attacker.Aim());
     const auto at = static_cast<std::size_t>(target);
-    const u32 act = static_cast<u32>(battle.unk50D88C[static_cast<std::size_t>(role)]);
+    const u32 act = static_cast<u32>(battle.usedItemActs[static_cast<std::size_t>(role)]);
 
     if (battle.targetsAll != 0)
     {
@@ -1102,7 +1102,7 @@ int Game::RoleHitFrame(int role)
                     }
 
                     this->ClearHitDamage();
-                    ++battle.unk577050;
+                    ++battle.sweepStep;
                     battle.slotDamage[index] = 0;
                     battle.lastSpiritDamage[index] = 0;
                     battle.lastStaminaDamage[index] = 0;
@@ -1110,7 +1110,7 @@ int Game::RoleHitFrame(int role)
             }
 
             this->ClearHitDamage();
-            battle.unk577050 = 0;
+            battle.sweepStep = 0;
             battle.hitActs.fill(ActState{});
             this->ClearHitTotals();
             return 1;
@@ -1121,7 +1121,7 @@ int Game::RoleHitFrame(int role)
             return 0;
         }
 
-        battle.unk577050 = 0;
+        battle.sweepStep = 0;
         battle.sweptUnits = 1;
         battle.hitActs.fill(ActState{});
         this->ClearHitTotals();
@@ -1257,7 +1257,7 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
         }
 
         this->ClearHitDamage();
-        return ++battle.unk577050 >= battle.sweepTotal;
+        return ++battle.sweepStep >= battle.sweepTotal;
     };
 
     if (battle.atParty == 0)
@@ -1528,10 +1528,10 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
             battle.staminaDamage = 0;
             battle.slotDamage[slot] = 0;
 
-            if (++battle.unk577050 == battle.sweepTargets)
+            if (++battle.sweepStep == battle.sweepTargets)
             {
                 this->EndEnemyDrains(attacker);
-                battle.unk577050 = 0;
+                battle.sweepStep = 0;
                 return true;
             }
         }
@@ -1566,9 +1566,9 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
             this->ClearHitDamage();
             battle.slotDamage[slot] = 0;
 
-            if (++battle.unk577050 == battle.sweepTargets)
+            if (++battle.sweepStep == battle.sweepTargets)
             {
-                battle.unk577050 = 0;
+                battle.sweepStep = 0;
                 return true;
             }
         }
@@ -1590,11 +1590,11 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
         hitRole(role, slot, battle.sweepDefeated);
         battle.slotDamage[slot] = 0;
 
-        if (++battle.unk577050 >= battle.sweepTargets)
+        if (++battle.sweepStep >= battle.sweepTargets)
         {
             this->EndEnemyDrains(attacker);
             this->ClearHitDamage();
-            battle.unk577050 = 0;
+            battle.sweepStep = 0;
             return true;
         }
     }
@@ -2069,7 +2069,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 
             // The rebuild (deviations.md): the enemy called picks its own target (the number may be one used before).
             battle.enemyTargetPicked[battle.enemyCount] = 0;
-            battle.unk537D68 = ObjectRecord{};
+            battle.calledObject = ObjectRecord{};
             UnitPlacement& place = battle.enemyPlaces[battle.enemyCount];
             place.actId = battle.calledAct;
             place.x = kCallX;
@@ -2082,8 +2082,8 @@ int Game::CallEnemies(BattleEnemy& unit)
                 place.x = static_cast<i16>(Display::Width - place.x);
             }
 
-            this->database.LoadObject(battle.unk537D68, battle.calledAct);
-            this->database.FreeDescription(battle.unk537D68);
+            this->database.LoadObject(battle.calledObject, battle.calledAct);
+            this->database.FreeDescription(battle.calledObject);
             enemy.Setup(place, battle.calledAct, this->database, this->acts);
             enemy.SetStatus(BattleUnit::FadingInMark);
             ++battle.enemyCount;

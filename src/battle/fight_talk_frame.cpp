@@ -1302,9 +1302,9 @@ int Game::FightTalkSkill()
             {
                 BattleRole& actor = this->battleRoles[role];
                 actor.SetTarget(1);
-                u32 act = static_cast<u32>(battle.unk50D88C[role]);
+                u32 act = static_cast<u32>(battle.usedItemActs[role]);
                 actor.LoadItemAction(this->database, static_cast<u16>(talk.unk5782A0), act);
-                battle.unk50D88C[role] = static_cast<i32>(act);
+                battle.usedItemActs[role] = static_cast<i32>(act);
                 actor.StartCastCountdown();
                 battle.pendingOrders[role].actSpeed = static_cast<u16>(actor.ActSpeed());
                 battle.pendingOrders[role].unk0E = 0;
@@ -1582,13 +1582,13 @@ int Game::FightTalkChoice()
         talk.unk57844C = static_cast<i32>(
             (static_cast<u32>(talk.unk57844C) & kLowWordMask) | (static_cast<u32>(at) << kHighWordShift)
         );
-        ++talk.unk57845C;
+        ++talk.choicesCounted;
     }
 
-    if (static_cast<u32>(this->talk.choice + 1) <= static_cast<u32>(talk.unk57845C))
+    if (static_cast<u32>(this->talk.choice + 1) <= static_cast<u32>(talk.choicesCounted))
     {
         talk.Seek(talk.Word(2 * static_cast<std::size_t>(this->talk.choice)));
-        talk.unk57845C = 0;
+        talk.choicesCounted = 0;
         talk.unk57844C = static_cast<i32>(static_cast<u32>(talk.unk57844C) & kLowWordMask);
         return 1;
     }

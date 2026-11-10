@@ -26,7 +26,7 @@ constexpr int kRippleSplashX = 0x64;
 constexpr int kRippleSplashY = 0x32;
 constexpr int kRippleStartShiftY = 0x96;
 constexpr i32 kRippleWalked = 0x12C;   // HitTargetFrame: the ripple frames once the walk reached the target
-constexpr i32 kAllHitCentreX = 0x190;  // HitAllFrame: the place of a cast that defeats every enemy (unk5772F8)
+constexpr i32 kAllHitCentreX = 0x190;  // HitAllFrame: the place of a cast that defeats every enemy (allDefeatedByCast)
 constexpr i32 kAllHitCentreY = 0xC8;
 constexpr i32 kSplashEvery = 9;
 constexpr i32 kSplashFrames = 0x64;
@@ -608,7 +608,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
 
         game.PlaceAllHit(attacker, picture != nullptr ? picture->width : 0, index, delay);
 
-        if (battle.unk5772F8 == 1)
+        if (battle.allDefeatedByCast == 1)
         {
             battle.hitPictureX = kAllHitCentreX - hit.x;
             battle.hitPictureY = kAllHitCentreY - hit.y;
@@ -685,7 +685,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         }
     }
 
-    if (battle.unk5772F8 == 1)
+    if (battle.allDefeatedByCast == 1)
     {
         // A cast that defeats every enemy ends once they are all gone.
         if (static_cast<i32>(battle.enemiesGone) - battle.unk5771EA < static_cast<i32>(battle.enemyCount))
