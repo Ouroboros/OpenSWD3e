@@ -249,13 +249,14 @@ struct InventoryPage
     i32 followerRow = 0;      // 0x0050BBFC
     i32 followerPresent = 0;  // 0x0050BCB8 the follower chosen is called
     i32 discardChoice = 0;    // 0x0050BCA8 0: yes, 1: no
-    i32 unk4FD148 = 0;        // 0x0050BCAC the top of the role box below its first row, the follower box's choice
-    i32 glow = 0;             // 0x0050BCB0 the mode tab drawn raised (0x23..0x26 after sorting)
-    u16 arrows = 0;           // 0x0050BCBC frames the arrows stay pressed: the list's (bits 0..7), the towns'
-    u16 unk4FD1F0 = 0;        // 0x0050BD58 (only cleared)
-    i32 unk4FC3D0 = 0;        // 0x0050AD78 (only set)
-    i32 unk4FC3D4 = 0;        // 0x0050AD7C
-    i32 unk4FC3DC = 0;        // 0x0050AD84
+    i32 roleBoxTop =
+        0;  // 0x0050BCAC the top of the role box below its first row; while the follower box is open its choice (0, 1)
+    i32 glow = 0;       // 0x0050BCB0 the mode tab drawn raised (0x23..0x26 after sorting)
+    u16 arrows = 0;     // 0x0050BCBC frames the arrows stay pressed: the list's (bits 0..7), the towns'
+    u16 unk4FD1F0 = 0;  // 0x0050BD58 (only cleared)
+    i32 unk4FC3D0 = 0;  // 0x0050AD78 (only set)
+    i32 unk4FC3D4 = 0;  // 0x0050AD7C
+    i32 unk4FC3DC = 0;  // 0x0050AD84
     std::array<u16, 14> rowNumbers = {};  // 0x004BE59C the rows shown numbered from 100, ended by 0 (never read)
 };
 
@@ -275,7 +276,7 @@ struct GhostFood
     // [5] the description buffer as the last object left it (never read)
     std::string note;                                             // [6] the record's description
     std::array<i32, Skills> skills = {};                          // [7..0xB]; the end mark of five lands in icons[0]
-    std::array<i32, Skills> icons = {};                           // [0xC..0x10] by the skill script's unk10
+    std::array<i32, Skills> icons = {};                           // [0xC..0x10] by the skill script's element
     std::array<std::optional<std::string>, Skills> names;         // [0x11..0x15]
     std::array<std::optional<std::string>, Skills> descriptions;  // [0x16..0x1A]
     std::array<std::optional<std::string>, Skills> notes;         // [0x1B..0x1F]
@@ -820,20 +821,20 @@ public:
     AltarPage altar;
     EquipPage equip;
     SkillsPage skills;
-    std::vector<MenuTown> towns;  // 0x0050A1EC (its count at 0x0050B2D0)
-    i32 townTop = 0;              // 0x0050A828
-    i32 townRow = 0;              // 0x0050AEC0
-    i32 townShown = 0;            // 0x0050A1F0
-    MenuScrollBar townBar;        // 0x0050AEB0
-    MenuScrollBar unk4FBAB4;      // 0x0050A408 a second bar of the equipment list (only drawn)
-    i32 descriptionSlide = 0;     // 0x0050B014 the description box slides (up while positive)
-    i32 descriptionTop = 0x1E0;   // 0x0050B2CC its top
-    i32 buttonPress = 0;          // 0x0050B3B0 -1 while the description button is pressed
-    ActState buttonAct;           // 0x0050BC00 the description button (the skills page's button)
-    ItemLink itemObjects;         // 0x0050BD50 the objects of the items page
-    ItemLink savedInventory;      // 0x0050BCC0 the inventory kept while the items page saves
-    ItemLink savedItems;          // 0x0050BCA4 `itemObjects` kept with it
-    std::string description;      // 0x0050AC3C the description of the chosen object
+    std::vector<MenuTown> towns;    // 0x0050A1EC (its count at 0x0050B2D0)
+    i32 townTop = 0;                // 0x0050A828
+    i32 townRow = 0;                // 0x0050AEC0
+    i32 townShown = 0;              // 0x0050A1F0
+    MenuScrollBar townBar;          // 0x0050AEB0
+    MenuScrollBar secondScrollBar;  // 0x0050A408 a second bar of the equipment list (only drawn)
+    i32 descriptionSlide = 0;       // 0x0050B014 the description box slides (up while positive)
+    i32 descriptionTop = 0x1E0;     // 0x0050B2CC its top
+    i32 buttonPress = 0;            // 0x0050B3B0 -1 while the description button is pressed
+    ActState buttonAct;             // 0x0050BC00 the description button (the skills page's button)
+    ItemLink itemObjects;           // 0x0050BD50 the objects of the items page
+    ItemLink savedInventory;        // 0x0050BCC0 the inventory kept while the items page saves
+    ItemLink savedItems;            // 0x0050BCA4 `itemObjects` kept with it
+    std::string description;        // 0x0050AC3C the description of the chosen object
     OptionsPage options;
     InventoryPage itemsPage;
 

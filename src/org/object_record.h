@@ -47,8 +47,8 @@ struct ObjectData
     u16 actionKind = 0;                // +0x48 tag 0x16 the action it takes: a weapon's strong attack act, a
                                        // magic's cast action, an item's script (0: skillScript), an accessory's
                                        // kind (AccessoryKind)
-    u16 unk4A = 0;                     // +0x4A tag 2 (swd3e)
-    u16 unk4C = 0;                     // +0x4C tag 3 (swd3e)
+    u16 absorbCategory = 0;            // +0x4A tag 2 (swd3e) an absorbing item's category (UseSelectedItem)
+    u16 absorbChance = 0;              // +0x4C tag 3 (swd3e) and its chance
     u16 unk4E = 0;                     // +0x4E
     i32 maxHitPoints = 0;              // +0x50 an enemy's maximum (set in battle, 0x00487DBD)
     // +0x54..+0xA2: the 0x4F-byte block of tag 1; tags 0xE, 0x7D0, 0x18, 0x1C and 0x1D set parts of it. Against
@@ -95,7 +95,8 @@ struct ObjectData
     // +0x9C by element (金 木 水 火 土); tag 0x7D0 sets them
     std::array<u8, 5> resistances = {};
     u8 altar = 0;  // +0xA1 tags 0x1C, 0x7D0 the altar it belongs to
-    u8 unkA2 = 0;  // +0xA2 tags 0x1D, 0x7D0
+    u8 yang = 0;   // +0xA2 tags 0x1D, 0x7D0: 1 a yang (陽) monster, healed by the yang strike and hurt by the yin
+                   // (YinYangAttack), its shadow tinted yellow (DrawTint)
     u8 unkA3 = 0;  // +0xA3
 };
 
@@ -219,22 +220,23 @@ struct SkillScript
     };
 
     u32 unk00 = 0;
-    u32 flags = 0;        // +0x04 opcodes 3, 6, 9, 0xB, 0xC, 0xE..0x16, 0x18, 0x19, 0x1B..0x1F
-    u32 statusBits = 0;   // +0x08 opcode 0xC: the status bits of a buff
-    u32 unk0C = 0;        // +0x0C opcode 0
-    u32 unk10 = 0;        // +0x10 opcode 0
-    u16 unk14 = 0;        // +0x14 opcode 8
-    u16 unk16 = 0;        // +0x16 opcode 4
-    u16 castSpeed = 0;    // +0x18 opcode 0x1A (new in swd3e)
-    u16 ailment = 0;      // +0x1A opcodes 6, 7 (bit 13: none, bit 15: refresh only)
-    u16 element = 0;      // +0x1C opcode 0xE: the element of a resistance buff
-    u16 unk1E = 0;        // +0x1E opcode 0xD
-    u16 unk20 = 0;        // +0x20 opcode 0xA (bit 15 set with it)
-    u16 unk22 = 0;        // +0x22 opcode 0x16
-    u16 stealChance = 0;  // +0x24 opcode 0x1F (new in swd3e)
-    u16 unk26 = 0;        // +0x26 opcode 0x17, first value (new in swd3e)
-    u16 unk28 = 0;        // +0x28 opcode 0x17, second value
-    u8 turns = 0;         // +0x2A opcodes 2, 0x16: the turns of an effect
+    u32 flags = 0;                   // +0x04 opcodes 3, 6, 9, 0xB, 0xC, 0xE..0x16, 0x18, 0x19, 0x1B..0x1F
+    u32 statusBits = 0;              // +0x08 opcode 0xC: the status bits of a buff
+    u32 flagsAndValue = 0;           // +0x0C opcode 0: the command's flags (low word) and value (high word)
+    u32 resistanceAndFollowAct = 0;  // +0x10 opcode 0: the element (low word: the resistance it hits, the element
+                                     // picture of the skill pages) and the follow-up act (high word)
+    u16 castAct = 0;                 // +0x14 opcode 8
+    u16 unk16 = 0;                   // +0x16 opcode 4
+    u16 castSpeed = 0;               // +0x18 opcode 0x1A (new in swd3e)
+    u16 ailment = 0;                 // +0x1A opcodes 6, 7 (bit 13: none, bit 15: refresh only)
+    u16 element = 0;                 // +0x1C opcode 0xE: the element of a resistance buff
+    u16 pose = 0;                    // +0x1E opcode 0xD the pose of a defeat (its low byte)
+    u16 unk20 = 0;                   // +0x20 opcode 0xA (bit 15 set with it)
+    u16 unk22 = 0;                   // +0x22 opcode 0x16
+    u16 stealChance = 0;             // +0x24 opcode 0x1F (new in swd3e)
+    u16 target = 0;  // +0x26 opcode 0x17, first value (new in swd3e): the first value of BattleUnit::CommandTarget
+    u16 unk28 = 0;   // +0x28 opcode 0x17, second value
+    u8 turns = 0;    // +0x2A opcodes 2, 0x16: the turns of an effect
 };
 
 static_assert(sizeof(SkillScript) == 0x2C);
@@ -242,19 +244,19 @@ static_assert(sizeof(SkillScript) == 0x2C);
 // The opcodes of a skill script of mon.dat (Database::LoadSkill); 5 ends the script.
 enum class SkillOpcode : u16
 {
-    Values = 0,  // unk0C and unk10
+    Values = 0,  // flagsAndValue and resistanceAndFollowAct
     Turns = 2,
     SetUnkFlag1 = 3,
     Unk16 = 4,
     End = 5,
     NoAilment = 6,
     Ailment = 7,
-    Unk14 = 8,
+    CastAct = 8,
     SetUnkFlag2 = 9,
     Unk20 = 0xA,
     SetUnkFlag4 = 0xB,
     StatusBits = 0xC,
-    Unk1E = 0xD,
+    Pose = 0xD,
     Element = 0xE,
     SetUnkFlag10 = 0xF,
     SetUnkFlag20 = 0x10,
@@ -264,23 +266,23 @@ enum class SkillOpcode : u16
     SetUnkFlag400 = 0x14,
     SetUnkFlag800 = 0x15,
     Unk22 = 0x16,
-    Unk26 = 0x17,
+    Target = 0x17,
     SetUnkFlag2000 = 0x18,
     SetUnkFlag4000 = 0x19,
-    Unk18 = 0x1A,
+    CastSpeed = 0x1A,
     SetUnkFlag8000 = 0x1B,
     SetUnkFlag10000 = 0x1C,
     SetUnkFlag40000 = 0x1D,
     SetUnkFlag80000 = 0x1E,
-    Unk24 = 0x1F,
+    StealChance = 0x1F,
 };
 
 // The tags of an object script of mon.dat (Database::LoadObject); 5 ends the script.
 enum class ObjectTag : u16
 {
-    ActBlock = 1,  // 0x4F bytes from act (swd32: 0x4D)
-    Unk4A = 2,     // swd3e
-    Unk4C = 3,     // swd3e
+    ActBlock = 1,        // 0x4F bytes from act (swd32: 0x4D)
+    AbsorbCategory = 2,  // swd3e
+    AbsorbChance = 3,    // swd3e
     End = 5,
     CostBits = 6,
     AttackBonusUp = 7,
@@ -304,11 +306,11 @@ enum class ObjectTag : u16
     UsableBy = 0x1A,
     UseKind = 0x1B,
     Altar = 0x1C,
-    UnkA2 = 0x1D,
+    Yang = 0x1D,
     Description = 0x1E,
     SkillScript = 0x64,
     Name = 0x3E8,
-    Resistances = 0x7D0,  // swd3e: the last five resistances, the altar, unkA2, the level and category
+    Resistances = 0x7D0,  // swd3e: the last five resistances, the altar, yang, the level and category
 };
 
 }  // namespace swd3e

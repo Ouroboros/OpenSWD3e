@@ -74,7 +74,7 @@ constexpr int kRunnerY = 0x1CC;
 // Map settings (maps.dat table 3): the kind and speed bytes hold nibbles.
 constexpr int kNibbleBits = 4;
 constexpr u16 kNibbleMask = 0xF;
-constexpr u8 kNoUnk4ACDB4 = 0x10;    // in the kind: townWarpAllowed is 0
+constexpr u8 kNoTownWarp = 0x10;     // in the kind: townWarpAllowed is 0
 constexpr u32 kMaxWalkSpeed = 0x10;  // the walk speed is a power of two up to this
 constexpr i32 kDefaultWalkSpeed = 4;
 constexpr u32 kStartSpeeds = 3;  // a weather particle starts at speed 1..kStartSpeeds
@@ -709,10 +709,10 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
         const u16 speeds = MapsWord(data, at + MapsRecord::SettingsSpeedsAt);
         this->field.shadowKind = kind & kNibbleMask;
         view.mapWalkSpeed = data[at + MapsRecord::SettingsSpeedsAt] & kNibbleMask;
-        view.layerFrames = MapsWord(data, at + MapsRecord::SettingsUnk49E0BCAt);
-        view.encounterGroup = MapsWord(data, at + MapsRecord::SettingsUnk4B896CAt);
-        view.mapStory = MapsWord(data, at + MapsRecord::SettingsUnk4B88C0At);
-        view.townWarpAllowed = (kind & kNoUnk4ACDB4) == 0 ? 1 : 0;
+        view.layerFrames = MapsWord(data, at + MapsRecord::SettingsLayerFramesAt);
+        view.encounterGroup = MapsWord(data, at + MapsRecord::SettingsEncounterGroupAt);
+        view.mapStory = MapsWord(data, at + MapsRecord::SettingsStoryAt);
+        view.townWarpAllowed = (kind & kNoTownWarp) == 0 ? 1 : 0;
         game.ClearGameFlag(GameState::OverlaysFirst);
 
         if ((effects & kOverlaysFirst) != 0)

@@ -22,7 +22,7 @@ constexpr std::u8string_view kTooFull = u8"太飽了 無法餵食";     // 0x004
 constexpr std::u8string_view kUnsuited = u8"屬性不合 無法餵食";  // 0x004BEB70
 constexpr std::string_view kCountFormat = "%-02d";
 
-// 0x004AACD0: the icon of a skill by its script's unk10 (the first word belongs to the table before it in the
+// 0x004AACD0: the icon of a skill by its script's element (the first word belongs to the table before it in the
 // original; read as it is)
 constexpr std::array<i32, 10> kSkillIcons = {0x10002000, 0, 1, 2, 3, 4, 5, 6, -1, -1};
 // 0x004AACF8: the object category of each tab; read on by category too (0x0044B670), into the food values after it
@@ -1476,7 +1476,7 @@ void Menu::GhostBuildList(int tab)
             food.names[at] = ObjectName(record);
             SkillScript skill;
             owner.database.LoadSkill(skill, record.data.skillScript);
-            const auto icon = static_cast<std::size_t>(static_cast<u16>(skill.unk10));
+            const auto icon = static_cast<std::size_t>(static_cast<u16>(skill.resistanceAndFollowAct));
             // The original reads the table past its end for a larger value (see deviations.md).
             food.icons[at] = icon < kSkillIcons.size() ? kSkillIcons[icon] : GhostFood::NoIcon;
             food.descriptions[at] = ObjectDescription(owner.databases.mapsData, id);
@@ -1695,7 +1695,7 @@ void Menu::GhostMakeSlots()
             slots.names[slot] = ObjectName(record);
             SkillScript skill;
             owner.database.LoadSkill(skill, record.data.skillScript);
-            const auto icon = static_cast<std::size_t>(static_cast<u16>(skill.unk10));
+            const auto icon = static_cast<std::size_t>(static_cast<u16>(skill.resistanceAndFollowAct));
             slots.icons[slot] = icon < kSkillIcons.size() ? kSkillIcons[icon] : GhostFood::NoIcon;
             slots.descriptions[slot] = ObjectDescription(owner.databases.mapsData, static_cast<u16>(id));
             slots.notes[slot] = record.description.value_or(std::string());

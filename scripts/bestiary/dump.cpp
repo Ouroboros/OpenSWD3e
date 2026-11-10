@@ -282,15 +282,15 @@ int Skills(const std::u8string& directory, int first, int last)
             id,
             skill.flags,
             skill.statusBits,
-            skill.unk0C,
-            skill.unk10 & 0xFFFF,
+            skill.flagsAndValue,
+            skill.resistanceAndFollowAct & 0xFFFF,
             skill.ailment,
             skill.element,
             skill.turns,
-            skill.unk14,
-            skill.unk26,
+            skill.castAct,
+            skill.target,
             skill.unk28,
-            skill.unk24
+            skill.stealChance
         );
     }
 

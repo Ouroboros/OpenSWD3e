@@ -49,7 +49,7 @@ constexpr u16 kFollowerItem = 0xC16;
 constexpr u16 kHomeItem = 0x2DB;  // swd3e keeps the id of swd32
 constexpr int kTownWarpBlocked = GameState::FileNameA;
 constexpr int kExitWarpBlocked = GameState::FileNameB;
-constexpr int kHomeBlocked = GameState::Unk17;
+constexpr int kHomeBlocked = GameState::HomeBlocked;
 constexpr int kNoWarpMap = 0x16;
 constexpr i16 kWarpEvent = 0x52;
 constexpr u16 kHomeEvent = 0x51;
@@ -281,7 +281,7 @@ constexpr int kRoleBoxExtra = 0x10;  // below the rows
 constexpr int kRoleBoxRed = 0x10;
 constexpr int kRoleBoxGreen = 0x10;
 constexpr int kRoleBoxBlue = 0x80;
-constexpr int kRoleBoxClick = 2;  // InventoryPage::unk4FD148 is the box's top and this
+constexpr int kRoleBoxClick = 2;  // InventoryPage::roleBoxTop is the box's top and this
 constexpr int kRoleFrameLeft = 0x1BC;
 constexpr int kRoleFrameDown = 8;
 constexpr int kRoleFrameRight = 0x22C;
@@ -484,7 +484,7 @@ void Menu::ItemsFrame()
 
         if (x < kChoicesRight && x > kChoicesLeft && y < top + kChoicesBottom && y > top + kChoicesTop)
         {
-            page.unk4FD148 = (x - kChoicesLeft) / kChoiceWidth;
+            page.roleBoxTop = (x - kChoicesLeft) / kChoiceWidth;
 
             if ((clicks & kLeftClicks) != 0)
             {
@@ -615,13 +615,13 @@ void Menu::ItemsFrame()
         }
     }
     else if (
-        code == kRoleCode && y < page.unk4FD148 + kItemHeight * this->VisibleCount() && y > page.unk4FD148 &&
+        code == kRoleCode && y < page.roleBoxTop + kItemHeight * this->VisibleCount() && y > page.roleBoxTop &&
         x < kRolesRight && x > kRolesLeft
     )
     {
         if ((clicks & kLeftClicks) != 0)
         {
-            const auto slot = static_cast<i32>(static_cast<u32>(y - page.unk4FD148) / kItemHeight);
+            const auto slot = static_cast<i32>(static_cast<u32>(y - page.roleBoxTop) / kItemHeight);
 
             if (page.target != slot)
             {
@@ -791,7 +791,7 @@ void Menu::ItemsDown()
             break;
 
         case kFollowerCode:
-            page.unk4FD148 = 1;
+            page.roleBoxTop = 1;
             break;
 
         case kTownsCode:
@@ -855,7 +855,7 @@ void Menu::ItemsUp()
             break;
 
         case kFollowerCode:
-            page.unk4FD148 = 0;
+            page.roleBoxTop = 0;
             break;
 
         case kTownsCode:
@@ -909,7 +909,7 @@ void Menu::ItemsPageDown()
             break;
 
         case kFollowerCode:
-            page.unk4FD148 = 1;
+            page.roleBoxTop = 1;
             break;
 
         case kTownsCode:
@@ -969,7 +969,7 @@ void Menu::ItemsPageUp()
             break;
 
         case kFollowerCode:
-            page.unk4FD148 = 0;
+            page.roleBoxTop = 0;
             break;
 
         case kTownsCode:
@@ -1048,7 +1048,7 @@ void Menu::ItemsLeft()
             break;
 
         case kFollowerCode:
-            page.unk4FD148 = 0;
+            page.roleBoxTop = 0;
             break;
 
         case kTownsCode:
@@ -1100,7 +1100,7 @@ void Menu::ItemsRight()
             break;
 
         case kFollowerCode:
-            page.unk4FD148 = 1;
+            page.roleBoxTop = 1;
             break;
 
         case kTownsCode:
@@ -1441,7 +1441,7 @@ void Menu::ItemsSelect()
             {
                 page.followerPresent = role.act.action != 0 ? 1 : 0;
                 ++this->code;
-                page.unk4FD148 = 0;
+                page.roleBoxTop = 0;
             }
 
             return;
@@ -1450,7 +1450,7 @@ void Menu::ItemsSelect()
         case kFollowerCode:
             this->code = kFollowersCode;
 
-            if (page.unk4FD148 == 0 && this->ItemsCallFollower())
+            if (page.roleBoxTop == 0 && this->ItemsCallFollower())
             {
                 this->code = kListCode;
 
@@ -1668,7 +1668,7 @@ void Menu::ItemsDrawFollowers(Pixel color, std::string& line)
     owner.largeFont.DrawText(owner.drawSurface, kAskAnswersX, top + kAskAnswersY, kConfirmGiveUp, color, kPanelStyle);
     FillBox(
         painter,
-        (page.unk4FD148 != 0 ? kChoiceWidth : 0) + kChoicesLeft,
+        (page.roleBoxTop != 0 ? kChoiceWidth : 0) + kChoicesLeft,
         top + kAskHighlightY,
         kChoiceWidth,
         kRowHeight,
@@ -2030,7 +2030,7 @@ void Menu::ItemsDraw()
             kRoleBoxBlue,
             FillMode::Eighth
         );
-        page.unk4FD148 = top + kRoleBoxClick;
+        page.roleBoxTop = top + kRoleBoxClick;
         owner.acts.Run(panel);
         DrawWindowFrame(
             painter,

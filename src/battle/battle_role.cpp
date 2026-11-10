@@ -288,7 +288,7 @@ constexpr i8 kMaxResistance = 100;  // ApplyEquipment keeps the element resistan
 constexpr int kPercent = 100;
 constexpr u32 kAttackRingPercent = 10;  // an attack ring adds 10% of the attack bonus besides its proficiency share
 
-// The byte `at` of an object's resistances read as the original does: past the five, the altar, unkA2 and unkA3 after
+// The byte `at` of an object's resistances read as the original does: past the five, the altar, yang and unkA3 after
 // them; further on the description pointer of the record, read as 0 (deviations.md).
 u8 ResistanceByte(const ObjectData& stats, std::size_t at)
 {
@@ -307,7 +307,7 @@ u8 ResistanceByte(const ObjectData& stats, std::size_t at)
             return stats.altar;
 
         case kUnkA2Byte:
-            return stats.unkA2;
+            return stats.yang;
 
         case kUnkA3Byte:
             return stats.unkA3;
@@ -806,7 +806,7 @@ void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadab
     if (this->Ghost() == 0)
     {
         battle.proficiencyBonus = static_cast<i16>(StepCounterProgress(
-            services.party.fame.lists[Fame::UnkList0],
+            services.party.fame.lists[Fame::MasteryList],
             static_cast<i16>(this->weaponId),
             this->weapon.data.counterMax,
             this->weapon.data.masteryValue
@@ -1255,7 +1255,7 @@ int BattleRole::LeapSpellFrame(BattleServices& services, BattleUnit& target)
 // only with its last; a spent item that is not kept (kKeptKind without kUnkKind8000000) loses a count (else a pending
 // count) and workCount, and the selection is cleared; an item left with no count is freed from the list. The original
 // then reads the flag of the item before it (of the list head for the first item, past it). swd3e: an item of
-// `category` 6 sets UnkCommandFlag800 and its unk4A and unk4C become absorbCategory and absorbChance.
+// `category` 6 sets UnkCommandFlag800 and its absorbCategory and absorbChance become absorbCategory and absorbChance.
 u16 BattleRole::UseSelectedItem(int category)
 {
     int place = 0;
@@ -1305,8 +1305,8 @@ u16 BattleRole::UseSelectedItem(int category)
     if (category == kAnyUserCategory)
     {
         this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag800);
-        this->absorbCategory = data.unk4A;
-        this->absorbChance = data.unk4C;
+        this->absorbCategory = data.absorbCategory;
+        this->absorbChance = data.absorbChance;
     }
 
     if (spent && ((data.kind & kKeptKind) == 0 || (data.kind & kUnkKind8000000) != 0))
@@ -2503,7 +2503,7 @@ u16 BattleRole::ListSkill(Database& database, int category, int type, int index,
         cost = 0;
     }
 
-    return LowWord(script.unk10);
+    return LowWord(script.resistanceAndFollowAct);
 }
 
 // swd3e.exe 0x0047FA00: the proficiency counters of the two worn accessories (their act) stepped by `amount` up to

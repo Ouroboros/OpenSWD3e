@@ -24,7 +24,7 @@ constexpr int kTextSearch = 0xFF;
 constexpr u16 kEnd = static_cast<u16>(ObjectTag::End);
 constexpr std::size_t kActBlockBytes = 0x4F;
 constexpr std::size_t kTextEndBytes = 2;  // the "$$" after a text
-// Tag 0x7D0 (swd3e): seven bytes from the first resistance (to unkA2), then the level and the category.
+// Tag 0x7D0 (swd3e): seven bytes from the first resistance (to yang), then the level and the category.
 constexpr std::size_t kResistTailBytes = 7;
 constexpr std::size_t kResistLevelAt = 7;
 constexpr std::size_t kResistCategoryAt = 9;
@@ -199,8 +199,8 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
         switch (static_cast<SkillOpcode>(opcode))
         {
             case SkillOpcode::Values:
-                skill.unk0C = code.DwordAt(at);
-                skill.unk10 = code.DwordAt(at + sizeof(u32));
+                skill.flagsAndValue = code.DwordAt(at);
+                skill.resistanceAndFollowAct = code.DwordAt(at + sizeof(u32));
                 code.position += 2 * sizeof(u32);
                 break;
 
@@ -229,8 +229,8 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 code.position += sizeof(u16);
                 break;
 
-            case SkillOpcode::Unk14:
-                skill.unk14 = code.WordAt(at);
+            case SkillOpcode::CastAct:
+                skill.castAct = code.WordAt(at);
                 code.position += sizeof(u16);
                 break;
 
@@ -259,8 +259,8 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
 
                 break;
 
-            case SkillOpcode::Unk1E:
-                skill.unk1E = code.WordAt(at);
+            case SkillOpcode::Pose:
+                skill.pose = code.WordAt(at);
                 code.position += sizeof(u16);
                 break;
 
@@ -305,8 +305,8 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 code.position += sizeof(u32);
                 break;
 
-            case SkillOpcode::Unk26:
-                skill.unk26 = code.WordAt(at);
+            case SkillOpcode::Target:
+                skill.target = code.WordAt(at);
                 skill.unk28 = code.WordAt(at + sizeof(u16));
                 code.position += sizeof(u32);
                 break;
@@ -319,7 +319,7 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 skill.flags |= SkillScript::UnkFlag4000;
                 break;
 
-            case SkillOpcode::Unk18:
+            case SkillOpcode::CastSpeed:
                 skill.castSpeed = code.WordAt(at);
                 code.position += sizeof(u16);
                 break;
@@ -340,7 +340,7 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 skill.flags |= SkillScript::UnkFlag80000;
                 break;
 
-            case SkillOpcode::Unk24:
+            case SkillOpcode::StealChance:
                 skill.flags |= SkillScript::UnkFlag100000;
                 skill.stealChance = code.WordAt(at);
                 code.position += sizeof(u16);
@@ -429,12 +429,12 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
                 code.position += kActBlockBytes;
                 break;
 
-            case ObjectTag::Unk4A:
-                word(data.unk4A);
+            case ObjectTag::AbsorbCategory:
+                word(data.absorbCategory);
                 break;
 
-            case ObjectTag::Unk4C:
-                word(data.unk4C);
+            case ObjectTag::AbsorbChance:
+                word(data.absorbChance);
                 break;
 
             case ObjectTag::CostBits:
@@ -528,8 +528,8 @@ bool Database::LoadObject(ObjectRecord& record, u16 id)
                 code.position += sizeof(u8);
                 break;
 
-            case ObjectTag::UnkA2:
-                data.unkA2 = code.ByteAt(at);
+            case ObjectTag::Yang:
+                data.yang = code.ByteAt(at);
                 code.position += sizeof(u8);
                 break;
 

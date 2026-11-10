@@ -582,7 +582,7 @@ void Menu::EquipExtraStats(const ItemNode* tried, EquipStats& stats)
 
         auto percent = static_cast<u16>(stats[kPercentStat]);
         auto share = static_cast<u16>(stats[kShareStat]);
-        FindCounterShare(owner.party.fame.lists[Fame::UnkList0], tried->id, percent, share, owner.database);
+        FindCounterShare(owner.party.fame.lists[Fame::MasteryList], tried->id, percent, share, owner.database);
         stats[kPercentStat] = static_cast<i32>((static_cast<u32>(stats[kPercentStat]) & kHighWord) | percent);
         stats[kShareStat] = static_cast<i32>((static_cast<u32>(stats[kShareStat]) & kHighWord) | share);
     }
@@ -1514,7 +1514,7 @@ void Menu::EquipDraw()
             0,
             from,
             to,
-            this->unk4FBAB4
+            this->secondScrollBar
         );
     }
 

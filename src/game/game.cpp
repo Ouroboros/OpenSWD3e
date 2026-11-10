@@ -97,40 +97,23 @@ constexpr std::array<int, 4> kNewGameFlags = {
 };
 
 constexpr std::array<int, 23> kNewGameClearedFlags = {
-    GameState::Unk0,
-    GameState::DebugReports,
-    GameState::Weather,
-    GameState::Leaves,
-    GameState::HeatHaze,
-    GameState::Lightning,
-    GameState::NoChoicePointer,
-    GameState::NoPointer,
-    GameState::HideActRoles,
-    GameState::Encounters,
-    GameState::UnkD,
-    GameState::UnkE,
-    GameState::OverlaysFirst,
-    GameState::Timer,
-    GameState::TimerExpired,
-    GameState::TimerEvent,
-    GameState::Spotlight,
-    GameState::NoSlide,
-    GameState::Fireflies,
-    GameState::Unk17,
-    GameState::EventUnderfoot,
-    GameState::GhostAppears,
-    GameState::Unk5A,
+    GameState::Unk0,           GameState::DebugReports, GameState::Weather,         GameState::Leaves,
+    GameState::HeatHaze,       GameState::Lightning,    GameState::NoChoicePointer, GameState::NoPointer,
+    GameState::HideActRoles,   GameState::Encounters,   GameState::BattleHeld,      GameState::UnkE,
+    GameState::OverlaysFirst,  GameState::Timer,        GameState::TimerExpired,    GameState::TimerEvent,
+    GameState::Spotlight,      GameState::NoSlide,      GameState::Fireflies,       GameState::HomeBlocked,
+    GameState::EventUnderfoot, GameState::GhostAppears, GameState::TalismanGhost,
 };
 
 constexpr i32 kStartGold = 100;
 constexpr i32 kStartUnk4A94B0 = 0x40000000;
 constexpr i32 kStartUnk4ACDB8 = 3;
-constexpr i32 kStartUnk4ACBC8 = 2;
+constexpr i32 kStartMenuButtonSlide = 2;
 constexpr int kStartWalkSpeed = 0x10;
-constexpr int kUnk232EAct = 0x232E;
-constexpr int kUnk232EActs = 12;
-constexpr int kUnk4C83A8Action = 8;
-constexpr i32 kUnk4ACAF8Action = 0x60;
+constexpr int kAttachableAct = 0x232E;
+constexpr int kAttachableActs = 12;
+constexpr int kMenuButtonAction = 8;
+constexpr i32 kEffectAction = 0x60;
 constexpr u32 kGroupSlackBytes = 0x80;  // the encounter groups get 0x10 spare words
 constexpr u16 kOpeningEvent = 100;      // the leader's event of a new story
 
@@ -1117,18 +1100,18 @@ void Game::NewGame()
         ResetPlayback(scene.screenActs[index]);
     }
 
-    for (int index = 0; index < kUnk232EActs; ++index)
+    for (int index = 0; index < kAttachableActs; ++index)
     {
-        scene.screenActs[static_cast<std::size_t>(index)].id = kUnk232EAct;
+        scene.screenActs[static_cast<std::size_t>(index)].id = kAttachableAct;
         scene.screenActs[static_cast<std::size_t>(index)].action = index;
     }
 
     ResetPlayback(scene.menuButtonAct);
     scene.menuButtonAct.id = Scene::PointerAct;
-    scene.menuButtonAct.action = kUnk4C83A8Action;
+    scene.menuButtonAct.action = kMenuButtonAction;
     scene.viewWidth = Display::Width;
     scene.viewHeight = Display::Height;
-    scene.menuButtonSlide = kStartUnk4ACBC8;
+    scene.menuButtonSlide = kStartMenuButtonSlide;
     scene.menuButtonWait = 0;
     ResetPlayback(scene.spotlightAct);
     ResetPlayback(scene.loadingPicture);
@@ -1146,7 +1129,7 @@ void Game::NewGame()
     scene.weather.fill({MapParticle::Filled, MapParticle::Filled, MapParticle::Filled, MapParticle::Filled});
 
     scene.effectAct.id = Scene::EffectAct;
-    scene.effectAct.action = kUnk4ACAF8Action;
+    scene.effectAct.action = kEffectAction;
 
     for (ActState& state : scene.leafActs)
     {
@@ -2267,7 +2250,7 @@ void Game::MainFrame()
         return;
     }
 
-    if (this->inBattle == 0 && !this->state.GameFlag(GameState::UnkD) && this->battleRequest < 0)
+    if (this->inBattle == 0 && !this->state.GameFlag(GameState::BattleHeld) && this->battleRequest < 0)
     {
         this->battleRequest &= static_cast<i32>(~Game::ScriptedBattle);
 

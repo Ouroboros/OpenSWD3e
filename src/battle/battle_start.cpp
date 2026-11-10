@@ -454,7 +454,7 @@ void Game::StartBattle(u16 number)
 
     battle.ghostCount = 0;
 
-    if (state.GameFlag(GameState::Unk5A))
+    if (state.GameFlag(GameState::TalismanGhost))
     {
         this->battleRoles[0].SelectEntry(1);
         TalismanGhost& ghost = this->talismanGhost;

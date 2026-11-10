@@ -72,9 +72,9 @@ struct MapsRecord
     static constexpr std::size_t SettingsKindAt = 4;
     static constexpr std::size_t SettingsEffectsAt = 5;
     static constexpr std::size_t SettingsSpeedsAt = 6;
-    static constexpr std::size_t SettingsUnk49E0BCAt = 8;
-    static constexpr std::size_t SettingsUnk4B896CAt = 0xA;
-    static constexpr std::size_t SettingsUnk4B88C0At = 0xC;
+    static constexpr std::size_t SettingsLayerFramesAt = 8;
+    static constexpr std::size_t SettingsEncounterGroupAt = 0xA;
+    static constexpr std::size_t SettingsStoryAt = 0xC;
 
     // Table 4: where a new story starts.
     static constexpr std::size_t NewStoryColumnAt = 2;

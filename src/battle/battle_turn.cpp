@@ -1143,7 +1143,7 @@ void Game::SpreadPoison(int enemies)
 // swd3e.exe 0x0046A000: one frame of the 陰陽 command of role `role`: its damage 0x960 percent of the proficiency of
 // kind Unk16 plus 100 (hitDamage, lastDamage) while the cast pose of act 0x1775 plays; once it is done (1) the grey
 // band closes (2) and every standing enemy takes it: by the side of the coin (coinState) an enemy of the other kind
-// (ObjectUnkA2, 1 on 陽, 0 on 陰) is healed (minus the damage, HealTarget), the others are hit (flag 2BC0 raised),
+// (ObjectYang, 1 on 陽, 0 on 陰) is healed (minus the damage, HealTarget), the others are hit (flag 2BC0 raised),
 // the number shown (at most 9999) after the hit picture 0x2389; one defeated becomes lastFelled (its felledUnits entry
 // set), flashes the field (defeat pose 6) and whitens the frame. 0 while the pose plays.
 int Game::YinYangAttack(int role)
@@ -1177,7 +1177,7 @@ int Game::YinYangAttack(int role)
 
         battle.lastDamage = battle.hitDamage;
         enemy.PushTarget(kYinYangHitPicture);
-        const bool healed = yang ? enemy.ObjectUnkA2() == 1 : enemy.ObjectUnkA2() == 0;
+        const bool healed = yang ? enemy.ObjectYang() == 1 : enemy.ObjectYang() == 0;
 
         if (healed)
         {
@@ -2256,7 +2256,7 @@ void Game::BuildCommandMenu()
         add(static_cast<u16>(kRefineMenuCommand), BattleState::RefineCommandName);
         battle.listedCommands = 1;
 
-        if (this->state.GameFlag(GameState::Unk5A))
+        if (this->state.GameFlag(GameState::TalismanGhost))
         {
             add(kGhostMenuCommand, BattleState::GhostCommandName);
             ++battle.listedCommands;

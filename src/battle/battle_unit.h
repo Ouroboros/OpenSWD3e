@@ -196,7 +196,7 @@ struct UnitCommand
 
     i32 unk00 = 0;        // +0x00 (unit +0x1004)
     u32 actionFlags = 0;  // +0x04
-    i32 unk08 = 0;        // +0x08
+    i32 statusBits = 0;   // +0x08 the status bits of a buff (SkillScript::statusBits)
     u16 flags = 0;        // +0x0C
     i16 value = 0;        // +0x0E the value of the skill (SkillValue)
     u16 resistance = 0;   // +0x10 the element 1..9 whose resistance scales the damage
@@ -578,7 +578,7 @@ public:
     bool HasStatus(u32 bits) const;
     i32 HitPointsAndAttack() const;
     int OutOfChoices() const;
-    u8 ObjectUnkA2() const;
+    u8 ObjectYang() const;
     int FirstResistance() const;
     int Named() const;
     void ClearTurnCommand();

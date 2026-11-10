@@ -551,7 +551,7 @@ int BattleUnit::AddAilment(BattleServices& services, const SkillScript& skill)
         else
         {
             found->turns = skill.turns;
-            found->value = HighWord(skill.unk0C);
+            found->value = HighWord(skill.flagsAndValue);
             found->timer = 0;
         }
     }
@@ -570,7 +570,7 @@ int BattleUnit::AddAilment(BattleServices& services, const SkillScript& skill)
         node.turns = skill.turns;
         node.turnsMax = skill.turns;
         node.bits = skill.ailment;
-        node.value = HighWord(skill.unk0C);
+        node.value = HighWord(skill.flagsAndValue);
         this->StartAilment(services, node);
     }
 
@@ -842,7 +842,7 @@ int BattleUnit::AddBuff(BattleServices& services, const SkillScript& skill)
                 node = node->next.get();
                 node->turns = skill.turns;
                 node->turnsMax = skill.turns;
-                node->value = HighWord(skill.unk0C);
+                node->value = HighWord(skill.flagsAndValue);
 
                 if (buff != 0)
                 {

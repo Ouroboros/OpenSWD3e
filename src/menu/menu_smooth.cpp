@@ -40,7 +40,7 @@ struct Menu::FrameState
     std::array<ActState, 19> acts;
     MenuScrollBar scrollBar;
     MenuScrollBar townBar;
-    MenuScrollBar unk4FBAB4;
+    MenuScrollBar secondScrollBar;
     i32 townTop = 0;
     i32 townRow = 0;
     i32 townShown = 0;
@@ -176,7 +176,7 @@ void Menu::SaveFrame(FrameState& kept) const
 
     kept.scrollBar = this->scrollBar;
     kept.townBar = this->townBar;
-    kept.unk4FBAB4 = this->unk4FBAB4;
+    kept.secondScrollBar = this->secondScrollBar;
     kept.townTop = this->townTop;
     kept.townRow = this->townRow;
     kept.townShown = this->townShown;
@@ -315,7 +315,7 @@ void Menu::LoadFrame(const FrameState& kept)
     this->barsTrack = kept.acts[18];
     this->scrollBar = kept.scrollBar;
     this->townBar = kept.townBar;
-    this->unk4FBAB4 = kept.unk4FBAB4;
+    this->secondScrollBar = kept.secondScrollBar;
     this->townTop = kept.townTop;
     this->townRow = kept.townRow;
     this->townShown = kept.townShown;

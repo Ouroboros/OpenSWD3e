@@ -94,8 +94,8 @@ constexpr std::u8string_view kEmptyName = u8"無";             // 0x004AF630
 constexpr std::string_view kNameFormat = "%-14s";
 constexpr std::string_view kHeadingFormat = "~~~~~~~~%-14s~~~~~~~~";
 constexpr std::string_view kCostFormat = "%3d";
-// The element picture of a skill by SkillScript::unk10 in pictures of 0x23AC (-1: none). The first entry is the
-// grey of the unusable rows, which the original keeps in the same stack slot.
+// The element picture of a skill by SkillScript::resistanceAndFollowAct in pictures of 0x23AC (-1: none). The first
+// entry is the grey of the unusable rows, which the original keeps in the same stack slot.
 constexpr std::size_t kElementPictures = 10;
 constexpr std::array<i32, kElementPictures - 1> kElementPictureTail = {0, 1, 2, 3, 4, 5, 6, -1, -1};
 constexpr u16 kElementPictureFile = 0x23AC;
@@ -1588,7 +1588,7 @@ void Menu::SkillsDraw()
             if (page.unk50BAF4 <= 1 && node->id != ItemNode::Empty && !heading)
             {
                 owner.database.LoadSkill(page.skill, node->record.data.skillScript);
-                const auto element = static_cast<u16>(page.skill.unk10);
+                const auto element = static_cast<u16>(page.skill.resistanceAndFollowAct);
 
                 // Past the table the original reads its stack; a grey picture number (element 0) is not found and
                 // the original reads through a null picture there.

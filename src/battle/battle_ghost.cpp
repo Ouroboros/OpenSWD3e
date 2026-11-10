@@ -224,7 +224,7 @@ int BattleRole::HasCommandEffect(const BattleUnit& target) const
         return 1;
     }
 
-    return target.HasEffectBits(static_cast<u32>(this->command.unk08)) == 1 ? 1 : 0;
+    return target.HasEffectBits(static_cast<u32>(this->command.statusBits)) == 1 ? 1 : 0;
 }
 
 // swd3e.exe 0x00486700

@@ -121,12 +121,12 @@ int Data(const std::u8string& directory)
         const swd3e::SkillScript action = load(d.actionKind);
         const auto value = [](const swd3e::SkillScript& script)
         {
-            return static_cast<int>(static_cast<swd3e::i16>(script.unk0C >> kWordBits));
+            return static_cast<int>(static_cast<swd3e::i16>(script.flagsAndValue >> kWordBits));
         };
 
         const auto element = [](const swd3e::SkillScript& script)
         {
-            return static_cast<unsigned>(script.unk10 & kWordMask);
+            return static_cast<unsigned>(script.resistanceAndFollowAct & kWordMask);
         };
 
         const std::string description = swd3e::Utf8FromBig5(record.description.value_or(std::string()));
@@ -136,7 +136,7 @@ int Data(const std::u8string& directory)
             "\"enduranceUp\":%u,\"agilityUp\":%u,\"wisdomUp\":%u,\"rapportUp\":%u,\"evasionUp\":%u,"
             "\"hitPointsUp\":%u,\"spiritUp\":%u,\"staminaUp\":%u,\"costBits\":%u,\"counterMax\":%u,\"masteryValue\":%u,\"actionKind\":%u,"
             "\"skillScript\":%u,\"skillFlags\":%u,\"skillAilment\":%u,\"skillValue\":%d,\"skillElement\":%u,"
-            "\"actionFlags\":%u,\"actionValue\":%d,\"actionElement\":%u,\"altar\":%u,\"unkA2\":%u,\"resistances\":[%s],\"description\":%s}\n",
+            "\"actionFlags\":%u,\"actionValue\":%d,\"actionElement\":%u,\"altar\":%u,\"yang\":%u,\"resistances\":[%s],\"description\":%s}\n",
             id,
             Json(name).c_str(),
             d.kind,
@@ -170,7 +170,7 @@ int Data(const std::u8string& directory)
             value(action),
             element(action),
             d.altar,
-            d.unkA2,
+            d.yang,
             resist.c_str(),
             Json(description).c_str()
         );

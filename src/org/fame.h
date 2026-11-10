@@ -51,7 +51,7 @@ struct Fame
     // The index of each list in `lists`.
     enum List : std::size_t
     {
-        UnkList0 = 0,
+        MasteryList = 0,      // the weapons' mastery (熟練, a percent counter by object)
         FameList = 1,         // the fame of Fame.dat
         ProficiencyList = 2,  // also holds the proficiencies
         Lists = 3,

@@ -313,7 +313,7 @@ bool GetProficiency(CounterList& list, u16 id, u16& maximum, u16& value, Databas
 bool Fame::Save(std::vector<u8>& block, ErrorReporter& reporter) const
 {
     const auto counts = static_cast<u16>(
-        static_cast<u16>(this->lists[Fame::UnkList0].id) + static_cast<u16>(this->lists[Fame::FameList].id) +
+        static_cast<u16>(this->lists[Fame::MasteryList].id) + static_cast<u16>(this->lists[Fame::FameList].id) +
         this->lists[Fame::ProficiencyList].id
     );
     const std::size_t size = CounterNode::SavedBytes * counts + kSlackBytes;

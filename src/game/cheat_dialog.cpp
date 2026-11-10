@@ -86,7 +86,7 @@ void CheatDialog::ObjectCounter(const ItemNode& node, i32& value, i32& maximum) 
 
     if (HasKind(kind, Party::SlotKinds[kWeaponSlot]))
     {
-        value = static_cast<u16>(FindCounterPercent(lists[Fame::UnkList0], static_cast<i16>(node.id)));
+        value = static_cast<u16>(FindCounterPercent(lists[Fame::MasteryList], static_cast<i16>(node.id)));
         maximum = 0;
     }
 
@@ -120,7 +120,7 @@ void CheatDialog::SetObjectCounter(const ItemNode& node, u16 id, i32 value)
     if (HasKind(kind, Party::SlotKinds[kWeaponSlot]))
     {
         SetCounterProgress(
-            lists[Fame::UnkList0],
+            lists[Fame::MasteryList],
             static_cast<i16>(id),
             node.record.data.counterMax,
             static_cast<u16>(value)

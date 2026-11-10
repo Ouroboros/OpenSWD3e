@@ -173,7 +173,7 @@ public:
         NoPointer = 0xA,      // the pointer is not drawn
         HideActRoles = 0xB,   // roles drawn by an act alone are skipped
         Encounters = 0xC,     // enemies are met on the map
-        UnkD = 0xD,           // cleared by a new game
+        BattleHeld = 0xD,     // a requested battle waits while it is set (MainFrame); cleared by a new game
         UnkE = 0xE,
         OverlaysFirst = 0xF,  // the map's overlays are drawn before the roles (map effect bit 7)
         Timer = 0x10,         // the first timer runs
@@ -183,7 +183,7 @@ public:
         NoSlide = 0x14,  // steps into walls do not slide (debug key Ctrl+F3)
         Unk15 = 0x15,    // cleared by a new game
         Fireflies = 0x16,
-        Unk17 = 0x17,           // cleared by a new game
+        HomeBlocked = 0x17,     // the home item (0x2DB) cannot be used (ItemsUse); cleared by a new game
         EventUnderfoot = 0x18,  // swd3e: a step runs the event of the cell under the controlled role (0x00402AA0)
         // swd3e: cleared on entering a map, set by a first visit listed in maps.dat's table 0x19; the talisman ghost
         // then appears beside the controlled role (0x0040C570)
@@ -198,15 +198,16 @@ public:
         FileNameA = 0x4D,  // talk commands 0xAA..0xAD
         FileNameB = 0x4E,
         FollowersPassWalls = 0x4F,
-        TextBox = 0x50,           // the keyboard goes to the text box
-        HideHud = 0x51,           // the gold counter and the pointer are not drawn
-        DebugKeys = 0x52,         // the debug keys work
-        SecondDisc = 0x53,        // the minimal installation reads the second disc file
-        Unk5A = 0x5A,             // swd3e: cleared by a new game
-        UnkC9 = 0xC9,             // the battle start sets panel flag 2
-        MapEntered = 0x1388,      // + the map number: the map has been entered
-        MapNoEncounter = 0x1770,  // + the map number: no enemies on that map
-        Unk1BB0 = 0x1BB0,         // the timing window of the battle is 0x12 frames instead of 0x3C
+        TextBox = 0x50,        // the keyboard goes to the text box
+        HideHud = 0x51,        // the gold counter and the pointer are not drawn
+        DebugKeys = 0x52,      // the debug keys work
+        SecondDisc = 0x53,     // the minimal installation reads the second disc file
+        TalismanGhost = 0x5A,  // swd3e: the talisman ghost has joined (StartBattle takes it in, the command menu lists
+                               // 符鬼); cleared by a new game
+        UnkC9 = 0xC9,          // the battle start sets panel flag 2
+        MapEntered = 0x1388,   // + the map number: the map has been entered
+        MapNoEncounter = 0x1770,     // + the map number: no enemies on that map
+        ShortTimingWindow = 0x1BB0,  // the timing window of the battle is 0x12 frames instead of 0x3C
     };
 
     static constexpr int Roles = 300;  // 0x004D3FC8..0x004E4AF8 (0x0040FA20 reports an index from 0x12C on)

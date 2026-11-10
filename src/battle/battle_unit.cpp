@@ -2193,19 +2193,19 @@ SkillScript BattleUnit::CommandSkill() const
     SkillScript skill;
     skill.unk00 = static_cast<u32>(this->command.unk00);
     skill.flags = this->command.actionFlags;
-    skill.statusBits = static_cast<u32>(this->command.unk08);
-    skill.unk0C = MakeWords(static_cast<u16>(this->command.value), this->command.flags);
-    skill.unk10 = MakeWords(this->command.followAct, this->command.resistance);
-    skill.unk14 = this->command.castAct;
+    skill.statusBits = static_cast<u32>(this->command.statusBits);
+    skill.flagsAndValue = MakeWords(static_cast<u16>(this->command.value), this->command.flags);
+    skill.resistanceAndFollowAct = MakeWords(this->command.followAct, this->command.resistance);
+    skill.castAct = this->command.castAct;
     skill.unk16 = this->command.unk16;
     skill.castSpeed = this->command.castSpeed;
     skill.ailment = this->command.ailment;
     skill.element = this->command.element;
-    skill.unk1E = this->command.pose;
+    skill.pose = this->command.pose;
     skill.unk20 = static_cast<u16>(this->command.unk20);
     skill.unk22 = this->command.unk22;
     skill.stealChance = this->command.stealChance;
-    skill.unk26 = this->command.target;
+    skill.target = this->command.target;
     skill.unk28 = this->command.unk28;
     skill.turns = this->command.turns;
     return skill;
@@ -2219,21 +2219,21 @@ void BattleUnit::LoadCommand(Database& database, u16 id)
     database.LoadSkill(skill, id);
     this->command.unk00 = static_cast<i32>(skill.unk00);
     this->command.actionFlags = skill.flags;
-    this->command.unk08 = static_cast<i32>(skill.statusBits);
-    this->command.flags = static_cast<u16>(skill.unk0C);
-    this->command.value = static_cast<i16>(HighWord(skill.unk0C));
-    this->command.resistance = LowWord(skill.unk10);
-    this->command.followAct = HighWord(skill.unk10);
-    this->command.castAct = skill.unk14;
+    this->command.statusBits = static_cast<i32>(skill.statusBits);
+    this->command.flags = static_cast<u16>(skill.flagsAndValue);
+    this->command.value = static_cast<i16>(HighWord(skill.flagsAndValue));
+    this->command.resistance = LowWord(skill.resistanceAndFollowAct);
+    this->command.followAct = HighWord(skill.resistanceAndFollowAct);
+    this->command.castAct = skill.castAct;
     this->command.unk16 = skill.unk16;
     this->command.castSpeed = skill.castSpeed;
     this->command.ailment = skill.ailment;
     this->command.element = skill.element;
-    this->command.pose = skill.unk1E;
+    this->command.pose = skill.pose;
     this->command.unk20 = static_cast<i16>(skill.unk20);
     this->command.unk22 = skill.unk22;
     this->command.stealChance = skill.stealChance;
-    this->command.target = skill.unk26;
+    this->command.target = skill.target;
     this->command.unk28 = skill.unk28;
     this->command.turns = skill.turns;
 }
@@ -2411,7 +2411,7 @@ bool BattleUnit::RestartMainAct(i16 value, int force)
 // swd32.exe 0x00476140 (unmatched in swd3e): the command sets status bit 28, or its flag 12
 int BattleUnit::CommandStatusBit() const
 {
-    if ((static_cast<u32>(this->command.unk08) & kCommandStatusBit) != 0)
+    if ((static_cast<u32>(this->command.statusBits) & kCommandStatusBit) != 0)
     {
         return 1;
     }
@@ -5552,12 +5552,12 @@ int BattleUnit::DrawPulse(const BattleServices& services, smooth::ScenePainter& 
     return 1;
 }
 
-// swd3e.exe 0x00490C80: flag 2BC0 bit 19: the shadow picture tinted yellow (an object of byte +0xA2) or darkened.
+// swd3e.exe 0x00490C80: flag 2BC0 bit 19: the shadow picture tinted yellow (a yang object) or darkened.
 void BattleUnit::DrawTint(smooth::ScenePainter& painter)
 {
     DrawOptions& options = painter.Options();
 
-    if (this->ObjectUnkA2() != 0)
+    if (this->ObjectYang() != 0)
     {
         options.tintBlue = 0;
         options.tintRed = kTintedLevel;
@@ -5686,7 +5686,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
     // nor an UnkAction1000 one while unk577210 is set.
     auto usable = [this, &services, &data](bool item)
     {
-        const auto buffs = static_cast<u32>(this->command.unk08);
+        const auto buffs = static_cast<u32>(this->command.statusBits);
 
         if ((data.kind & ObjectData::Boss) != 0 && buffs != 0)
         {
@@ -5921,7 +5921,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
         database.LoadObject(this->object, data.enrageEffect);
         this->LoadCommand(database, this->object.data.skillScript);
 
-        if ((this->autoControl != 1 || (static_cast<u32>(this->command.unk08) & kNoForcedStatus) == 0) &&
+        if ((this->autoControl != 1 || (static_cast<u32>(this->command.statusBits) & kNoForcedStatus) == 0) &&
             ((this->command.actionFlags & UnitCommand::UnkAction1000) == 0 || services.state.unk577210 == 0))
         {
             chosen = true;
@@ -7094,7 +7094,7 @@ int BattleUnit::DamageTransferred() const
 // object has kind bit 2
 int BattleUnit::CommandSupports() const
 {
-    const u32 buffs = static_cast<u32>(this->command.unk08);
+    const u32 buffs = static_cast<u32>(this->command.statusBits);
 
     if ((buffs & kSupportBuffs) != 0 || (this->command.actionFlags & UnitCommand::UnkAction1000) != 0)
     {
@@ -7142,9 +7142,9 @@ int BattleUnit::OutOfChoices() const
 }
 
 // swd3e.exe 0x004896C0
-u8 BattleUnit::ObjectUnkA2() const
+u8 BattleUnit::ObjectYang() const
 {
-    return this->data->data.unkA2;
+    return this->data->data.yang;
 }
 
 // swd3e.exe 0x004896D0: the element (1..5) of the object's first resistance, 0 without one
