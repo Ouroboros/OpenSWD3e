@@ -44,7 +44,7 @@ constexpr std::u8string_view kBadBattle = u8"第%d號戰鬥場景資料錯誤!!"
 constexpr u32 kThreeRoles = 3;
 // The talisman ghost (swd3e): its act (0x5A on by its kind), its place and its status when battle role 0 is down.
 constexpr i32 kGhostActBase = 0x5A;
-constexpr i32 kGhostUnk10C = 0xA8;
+constexpr i32 kGhostAttackScript = 0xA8;
 constexpr i16 kGhostX = 0x1C2;
 constexpr i16 kGhostY = 0xAA;
 constexpr u32 kGhostAloneStatus = 0x5000;
@@ -458,8 +458,8 @@ void Game::StartBattle(u16 number)
     {
         this->battleRoles[0].SelectEntry(1);
         TalismanGhost& ghost = this->talismanGhost;
-        ghost.unk10C = kGhostUnk10C;
-        ghost.unk108 = this->party.variables[Party::GhostVariable] + kGhostActBase;
+        ghost.attackScript = kGhostAttackScript;
+        ghost.battleAct = this->party.variables[Party::GhostVariable] + kGhostActBase;
         UnitPlacement& place = battle.rolePlaces[battle.roleCount];
         place.x = kGhostX;
         place.y = kGhostY;

@@ -34,7 +34,7 @@ constexpr u16 kSeventhOrder = 7;
 constexpr u16 kEighthOrder = 8;
 constexpr u32 kHalfRoll = 100;  // RollHalf: a roll of 0..99 of 50 or more
 constexpr i16 kHalfRollFrom = 50;
-constexpr i32 kTrustedSkill = 0x33;   // the ghost's unk104 from which a skill of TakeSkillUsed counts
+constexpr i32 kTrustedSkill = 0x33;   // the ghost's trust from which a skill of TakeSkillUsed counts
 constexpr i32 kTrustedAttack = 0x51;  // from which a skill of TakeAttackUsed and TakeHealUsed counts
 constexpr u32 kObeyRoll = 100;
 constexpr u32 kRestoreRoll = 10;  // RestoreGhostSpirit: 5..14 percent of the maximum spirit
@@ -128,7 +128,7 @@ bool BattleRole::GhostOrderIs6() const
     return this->ghostOrder == kSixthOrder;
 }
 
-// swd3e.exe 0x00486540: the skill chosen this turn (GhostSkillUsed, taken back): true when the ghost's unk104 is at
+// swd3e.exe 0x00486540: the skill chosen this turn (GhostSkillUsed, taken back): true when the ghost's trust is at
 // least 0x33
 bool BattleRole::TakeSkillUsed()
 {
@@ -138,11 +138,11 @@ bool BattleRole::TakeSkillUsed()
     }
 
     this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostSkillUsed);
-    return this->ghostRecord->unk104 >= kTrustedSkill;
+    return this->ghostRecord->trust >= kTrustedSkill;
 }
 
 // swd3e.exe 0x00486570: the attack skill chosen this turn (GhostAttackUsed, taken back): true under orders 1 and 3
-// when the ghost's unk104 is at least 0x51
+// when the ghost's trust is at least 0x51
 bool BattleRole::TakeAttackUsed()
 {
     if ((this->unk2BDA & BattleUnit::GhostAttackUsed) == 0)
@@ -152,10 +152,10 @@ bool BattleRole::TakeAttackUsed()
 
     this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostAttackUsed);
     const u16 order = this->ghostOrder;
-    return (order == kSkillOrder || order == kAttackOrder) && this->ghostRecord->unk104 >= kTrustedAttack;
+    return (order == kSkillOrder || order == kAttackOrder) && this->ghostRecord->trust >= kTrustedAttack;
 }
 
-// swd3e.exe 0x004865B0: the heal skill chosen this turn (GhostHealUsed, taken back): true when the ghost's unk104 is
+// swd3e.exe 0x004865B0: the heal skill chosen this turn (GhostHealUsed, taken back): true when the ghost's trust is
 // at least 0x51
 bool BattleRole::TakeHealUsed()
 {
@@ -165,7 +165,7 @@ bool BattleRole::TakeHealUsed()
     }
 
     this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostHealUsed);
-    return this->ghostRecord->unk104 >= kTrustedAttack;
+    return this->ghostRecord->trust >= kTrustedAttack;
 }
 
 // swd3e.exe 0x004865E0: order 7 given this turn (GhostOrder7, taken back)
@@ -180,7 +180,7 @@ int BattleRole::TakeOrder7()
     return 1;
 }
 
-// swd3e.exe 0x00486600: a ghost keeping by its master (GhostGuards) obeys on a roll of 1..100 up to its unk104;
+// swd3e.exe 0x00486600: a ghost keeping by its master (GhostGuards) obeys on a roll of 1..100 up to its trust;
 // otherwise it takes the weak stand pose (unk2BDA bit 0)
 int BattleRole::GhostObeys(BattleServices& services)
 {
@@ -189,7 +189,7 @@ int BattleRole::GhostObeys(BattleServices& services)
         return 0;
     }
 
-    if (static_cast<i16>(services.random.Below(kObeyRoll) + 1) > this->ghostRecord->unk104)
+    if (static_cast<i16>(services.random.Below(kObeyRoll) + 1) > this->ghostRecord->trust)
     {
         this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::WeakStand);
         return 0;

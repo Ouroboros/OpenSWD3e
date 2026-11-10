@@ -67,11 +67,12 @@ struct TalismanGhost
     i32 essence = 0;                   // +0xF8 stat 0xD 精魄 (0..100)
     i32 wisdom = 0;                    // +0xFC stat 0xE 智慧 (0..100)
     i32 agility = 0;                   // +0x100 stat 0xF 敏捷 (0..100)
-    i32 unk104 = 0;                    // +0x104
-    i32 unk108 = 0;                    // +0x108
-    i32 unk10C = 0;                    // +0x10C
-    i32 satiety = 0;                   // +0x110 fed points (0..200; falls by 3..7 every 900 frames)
-    i32 unk114 = 0;                    // +0x114
+    i32 trust = 0;  // +0x104 the obedience in battle (copied from `insight`): it obeys on a roll of 1..100 up to it,
+                    // its attack and heal skills from 0x51
+    i32 battleAct = 0;     // +0x108 its act in battle (StartBattle: the ghost variable + 0x181C)
+    i32 attackScript = 0;  // +0x10C the skill script of its attack (its weapon in battle)
+    i32 satiety = 0;       // +0x110 fed points (0..200; falls by 3..7 every 900 frames)
+    i32 unk114 = 0;        // +0x114
     // +0x118 the skills it was fed (the ghost page shows three; Skill reads on into the fields after them)
     std::array<i32, 4> skills = {};
     i32 balance = 0;  // +0x128 平衡, the top of the ghost page's triangle (0..100)

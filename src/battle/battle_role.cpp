@@ -488,11 +488,11 @@ int BattleRole::LevelInReach(Database& database, u16 id, u16 reach)
     return 0;
 }
 
-// swd3e.exe 0x0047ED60: the talisman ghost fighting with the party at `at`: its act (unk108, asserted non-zero), its
+// swd3e.exe 0x0047ED60: the talisman ghost fighting with the party at `at`: its act (battleAct, asserted non-zero), its
 // strength as the attack bonus, its wisdom, agility and spirit; on its days 0..6 its agility is halved and its attack
 // bonus 30% less, on days 7..10 its agility 30% less, its attack bonus halved and its wisdom 30% more, on days 11..24
-// its agility and attack bonus 30% more. Its spirit is full, its unk104 takes its insight, its skill script is its
-// unk10C; its order is 1 (order 4 keeps it by its master; order 8 becomes 1). A roll of 0..4 is made and dropped.
+// its agility and attack bonus 30% more. Its spirit is full, its trust takes its insight, its skill script is its
+// attackScript; its order is 1 (order 4 keeps it by its master; order 8 becomes 1). A roll of 0..4 is made and dropped.
 void BattleRole::SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, BattleServices& services)
 {
     this->partyMember = 0;
@@ -500,7 +500,7 @@ void BattleRole::SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, Battl
     this->savedPlacement = at;
     this->ghostRecord = &ghost;
     this->kind = BattleUnit::PartyRole;
-    this->actId = static_cast<u16>(ghost.unk108);
+    this->actId = static_cast<u16>(ghost.battleAct);
 
     if (this->actId == 0)
     {
@@ -537,11 +537,11 @@ void BattleRole::SetupGhost(const UnitPlacement& at, TalismanGhost& ghost, Battl
     }
 
     record.spirit = record.maxSpirit;
-    ghost.unk104 = ghost.insight;
+    ghost.trust = ghost.insight;
     this->ghost = 1;
     this->orbitStep = 0;
     this->orbitSegment = 0;
-    this->weapon.data.skillScript = static_cast<u16>(ghost.unk10C);
+    this->weapon.data.skillScript = static_cast<u16>(ghost.attackScript);
 
     if (this->ghostOrder == kGhostGuardOrder)
     {

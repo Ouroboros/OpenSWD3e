@@ -1526,7 +1526,7 @@ constexpr int kPulseRaise = 30;
 
 // StepGauge.
 constexpr int kAgilityShare = 4;                      // the gauge fills by a quarter of the agility a tick
-constexpr u32 kObeyRoll = 100;                        // the talisman ghost obeys on a roll of 1..100 up to its unk104
+constexpr u32 kObeyRoll = 100;                        // the talisman ghost obeys on a roll of 1..100 up to its trust
 constexpr int kDisobeyShare = 3;                      // a disobeying ghost's gauge falls back a third
 constexpr i16 kCastCountdownFull = 0x960;             // StartCastCountdown
 constexpr float kCastCountdownStep = 0.00041666668F;  // 0x004AAE1C: CastCountdownLength scales by 1 / 0x960
@@ -3613,7 +3613,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
 // standingAside, full (gaugeFilled), kept by its master (GhostGuards) or staggering. Below gaugeFull it fills by a
 // quarter of the agility with speedShift added under SpeedUp and taken under SpeedDown (a quarter more and 1 with
 // `boost`), less by half the proficiency percent of it and 4 while Invisible (0). Full, the talisman ghost obeys on a
-// roll of 1..100 up to its unk104 and takes its order (else it stands weak and its gauge falls back a third, 0); it is
+// roll of 1..100 up to its trust and takes its order (else it stands weak and its gauge falls back a third, 0); it is
 // then marked full, the main act's effect cleared, the cast act marked waiting and the facing of a unit with
 // facingTurnsBack turned back (1); a ghost that rests starts over (0).
 int BattleUnit::StepGauge(BattleServices& services, int boost)
@@ -3654,7 +3654,7 @@ int BattleUnit::StepGauge(BattleServices& services, int boost)
 
     if (this->Ghost() == 1)
     {
-        if (static_cast<i16>(services.random.Below(kObeyRoll) + 1) > this->ghostRecord->unk104)
+        if (static_cast<i16>(services.random.Below(kObeyRoll) + 1) > this->ghostRecord->trust)
         {
             this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::WeakStand);
             this->gauge = static_cast<u16>(this->gauge + full / -kDisobeyShare);

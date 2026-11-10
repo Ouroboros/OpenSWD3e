@@ -61,7 +61,7 @@ enum class GhostStat
     Kind = 0,
     Unk8C = 1,
     Unk90 = 2,
-    Unk10 = 3,
+    Insight = 3,
     Unk94 = 4,
     Unk98 = 5,
     Unk9C = 6,
@@ -69,11 +69,11 @@ enum class GhostStat
     UnkE4 = 8,
     UnkE8 = 9,
     UnkEC = 0xA,
-    UnkF0 = 0xB,
-    UnkF4 = 0xC,
-    UnkF8 = 0xD,
-    UnkFC = 0xE,
-    Unk100 = 0xF,
+    Spirit = 0xB,
+    Strength = 0xC,
+    Essence = 0xD,
+    Wisdom = 0xE,
+    Agility = 0xF,
 };
 
 }  // namespace
@@ -154,7 +154,7 @@ i32 TalismanGhost::Stat(int number)
         case GhostStat::Unk90:
             return this->unk90;
 
-        case GhostStat::Unk10:
+        case GhostStat::Insight:
             return this->insight;
 
         case GhostStat::Unk94:
@@ -178,19 +178,19 @@ i32 TalismanGhost::Stat(int number)
         case GhostStat::UnkEC:
             return this->unkEC;
 
-        case GhostStat::UnkF0:
+        case GhostStat::Spirit:
             return this->spirit;
 
-        case GhostStat::UnkF4:
+        case GhostStat::Strength:
             return this->strength;
 
-        case GhostStat::UnkF8:
+        case GhostStat::Essence:
             return this->essence;
 
-        case GhostStat::UnkFC:
+        case GhostStat::Wisdom:
             return this->wisdom;
 
-        case GhostStat::Unk100:
+        case GhostStat::Agility:
             return this->agility;
 
         default:
