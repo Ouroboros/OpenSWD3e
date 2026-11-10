@@ -51,11 +51,13 @@ def main():
             sections[-1]['blocks'].append(['p', inline(line.strip())])
 
     body = ''.join(
-        f'<section id="{section["id"]}"><h2><a class="date" href="#{section["id"]}" title="連到這一節">'
-        f'{html.escape(section["title"])}</a></h2>{blocks(section["blocks"])}</section>'
+        f'<section id="{section["id"]}"><h2>{html.escape(section["title"])}</h2>{blocks(section["blocks"])}</section>'
         for section in sections
     )
-    page = TEMPLATE.replace('<!--BODY-->', body)
+    tabs = ''.join(
+        f'<div class="tab" data-id="{section["id"]}">{html.escape(section["title"])}</div>' for section in sections
+    )
+    page = TEMPLATE.replace('<!--BODY-->', body).replace('<!--TABS-->', tabs)
     page = page.replace('/*SOUND*/null', json.dumps(sound_url(rest[0] if rest else '')))
     with open(out_path, 'w', encoding='utf-8') as out:
         out.write(page)
@@ -179,12 +181,50 @@ h1 {
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 116px 1fr;
   gap: 0 14px;
   margin-top: 8px;
   flex: 1;
   min-height: 0;
 }
+
+/* The sections as the bestiary's tabs, one shown at a time. */
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  margin-right: -20px;
+  z-index: 1;
+}
+
+.tab {
+  font-family: var(--kai);
+  font-size: 19px;
+  padding: 6px 19px 6px 12px;
+  color: #2c3410;
+  background: linear-gradient(90deg, #5c7034, #889c58);
+  --edge: #b89838;
+  border: 1px solid #000;
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  box-shadow: inset 0 0 0 2px var(--edge);
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tab.chosen {
+  color: #181800;
+  background: linear-gradient(90deg, #b8d050, #eef488);
+  --edge: #b07818;
+  font-weight: bold;
+}
+
+.layout .page { z-index: 2; }
+.page .body > section { display: none; }
+.page .body > section.chosen { display: block; }
 
 /* The bright corner marks of the game's frames, inside the frame line. */
 .frame {
@@ -247,7 +287,7 @@ h1 {
   border-bottom: 1px solid var(--gold-dark);
 }
 
-.page section:first-child h2 { margin-top: 4px; }
+.page .body > section > h2 { margin-top: 4px; }
 
 .page h2 .date { color: inherit; text-decoration: none; cursor: pointer; }
 .page h2 .date:hover { color: var(--gold-light); }
@@ -281,9 +321,10 @@ h1 {
     <h1>遊戲機制</h1>
   </div>
   <div class="layout">
+    <div class="tabs" id="tabs"><!--TABS--></div>
     <div class="frame page"><div class="body" id="body"><!--BODY--></div></div>
   </div>
-  <div class="hint">↑↓ PgUp / PgDn 捲動　Home / End 首尾</div>
+  <div class="hint">←→ 分頁　↑↓ PgUp / PgDn 捲動　Home / End 首尾</div>
 </div>
 <script>
 // The game's cursor sound (all.snd 0x2E, which the menus play as the cursor moves).
@@ -315,6 +356,8 @@ document.addEventListener('keydown', event => {
     PageDown: () => { body.scrollTop += page; },
     Home: () => { body.scrollTop = 0; },
     End: () => { body.scrollTop = body.scrollHeight; },
+    ArrowLeft: () => turn(-1),
+    ArrowRight: () => turn(1),
   };
 
   if (keys[event.key]) {
@@ -340,13 +383,26 @@ function addressed() {
   }
 }
 
-// A section named in the address (mechanics.html#absorb) is scrolled to.
-function showNamed(text = addressed()) {
-  const section = text ? document.getElementById(text) : null;
-  $('body').scrollTop = section ? section.offsetTop - $('body').offsetTop : 0;
+const tabs = [...document.querySelectorAll('.tab')];
+let shownTab = 0;
+
+// The tab of a section shown alone, from its top.
+function show(at) {
+  shownTab = at;
+  tabs.forEach((tab, index) => tab.classList.toggle('chosen', index === at));
+  document.querySelectorAll('.body > section').forEach((section, index) => {
+    section.classList.toggle('chosen', index === at);
+  });
+  $('body').scrollTop = 0;
 }
 
-// The section clicked kept in the address (and in the home page's, which opens it there), so that its link can be copied.
+// A section named in the address (mechanics.html#absorb) is shown; the first one otherwise.
+function showNamed(text = addressed()) {
+  const at = tabs.findIndex(tab => tab.dataset.id === text);
+  show(at < 0 ? 0 : at);
+}
+
+// The tab chosen kept in the address (and in the home page's, which opens it there), so that its link can be copied.
 function keepPlace(detail) {
   history.replaceState(null, '', `${location.search}#${encodeURIComponent(detail)}`);
 
@@ -355,17 +411,27 @@ function keepPlace(detail) {
   }
 }
 
-$('body').addEventListener('click', event => {
-  const date = event.target.closest('.date');
-
-  if (!date) {
+function choose(at) {
+  if (at === shownTab) {
     return;
   }
 
-  event.preventDefault();
-  const detail = date.getAttribute('href').slice(1);
-  keepPlace(detail);
-  showNamed(detail);
+  show(at);
+  keepPlace(tabs[at].dataset.id);
+  beep();
+}
+
+// ←→ step through the tabs, wrapping round as the bestiary's do.
+function turn(step) {
+  choose((shownTab + step + tabs.length) % tabs.length);
+}
+
+$('tabs').addEventListener('click', event => {
+  const tab = event.target.closest('.tab');
+
+  if (tab) {
+    choose(tabs.indexOf(tab));
+  }
 });
 
 function drawSound() {

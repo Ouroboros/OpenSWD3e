@@ -88,12 +88,50 @@ h1 {
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 116px 1fr;
   gap: 0 14px;
   margin-top: 8px;
   flex: 1;
   min-height: 0;
 }
+
+/* The sections as the bestiary's tabs, one shown at a time. */
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  margin-right: -20px;
+  z-index: 1;
+}
+
+.tab {
+  font-family: var(--kai);
+  font-size: 19px;
+  padding: 6px 19px 6px 12px;
+  color: #2c3410;
+  background: linear-gradient(90deg, #5c7034, #889c58);
+  --edge: #b89838;
+  border: 1px solid #000;
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  box-shadow: inset 0 0 0 2px var(--edge);
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tab.chosen {
+  color: #181800;
+  background: linear-gradient(90deg, #b8d050, #eef488);
+  --edge: #b07818;
+  font-weight: bold;
+}
+
+.layout .page { z-index: 2; }
+.page .body > section { display: none; }
+.page .body > section.chosen { display: block; }
 
 /* The bright corner marks of the game's frames, inside the frame line. */
 .frame {
@@ -156,7 +194,7 @@ h1 {
   border-bottom: 1px solid var(--gold-dark);
 }
 
-.page section:first-child h2 { margin-top: 4px; }
+.page .body > section > h2 { margin-top: 4px; }
 
 .page h2 .date { color: inherit; text-decoration: none; cursor: pointer; }
 .page h2 .date:hover { color: var(--gold-light); }
@@ -190,9 +228,10 @@ h1 {
     <h1>遊戲機制</h1>
   </div>
   <div class="layout">
-    <div class="frame page"><div class="body" id="body"><section id="attributes"><h2><a class="date" href="#attributes" title="連到這一節">角色屬性</a></h2><p>各项属性在原版里的实际作用（重制版的计算与原版相同）。属性都存成 16 位整数，最大 32767；表中的「上限」是超过后会被截掉、或再高也没有用的值。</p><table><tr><th>属性</th><th>作用</th><th>上限</th></tr><tr><td>生命</td><td>降到 0 就倒下</td><td>9999。每场战斗开始时，参战角色的生命和生命上限超过 9999 的部分会被永久截掉</td></tr><tr><td>靈力</td><td>施放法术和部分招式时消耗</td><td>9999，同生命</td></tr><tr><td>體力</td><td>使用部分招式和饰品指令时消耗</td><td>9999，同生命</td></tr><tr><td>力量</td><td>战斗中的攻擊 = 力量 + 装备的攻击力（装备加的力量同时加到攻擊）。普通攻击的伤害 = 攻擊 + 随机 1～（等級 ÷ 3 + 3）− 敌人防禦，不超过敌人防禦时伤害为 1；攻擊提升状态加 200%，和招式同属性的五行攻擊提升再加 30%，攻擊下降按状态的回合数减少一定比例</td><td>攻擊按 16 位有符号数计算，超过 32767 时溢出，伤害反而只剩 1</td></tr><tr><td>耐力</td><td>战斗中的防禦 = 耐力 + 装备的防御力；防禦提升状态加 200%。只减少敌人普通攻击的伤害：伤害 = 敌人攻擊 + 随机 1～（敌人等級 ÷ 3 + 3）− 防禦；不超过防禦时只受 0～1 加随机 1～（敌人等級 ÷ 3 + 3）的伤害。法术伤害不看防禦</td><td>没有截断；高过敌人的攻擊后再高也没用</td></tr><tr><td>智慧</td><td>法术等按招式数值计算的伤害，额外加随机 1～（等級 + 智慧）÷（5～9）。用带异常状态的招式攻击敌人时，智慧每高出敌人的智慧 20 点，中异常的机率加一成</td><td>没有截断</td></tr><tr><td>敏捷</td><td>战斗中行动条每帧增加「敏捷 ÷ 4」（加速状态时敏捷先加 40，減速时减 30），满了就轮到行动。行动条的满值 = 100 ×（20 − 戰鬥速度），戰鬥速度在「環境設定」里设定，0～11</td><td>达到满值的 4 倍后一帧就满，再高也没用：戰鬥速度 11 时为 3600，0 时为 8000</td></tr><tr><td>閃躲</td><td>原版不显示在状态页（重制版显示在五行抗性右边）。敌人攻击时，我方连续 13 次没闪开之后，每次掷 0～9，小于閃躲值就闪开；连续 26 次没闪开时下一次必闪；有人刚闪开后的下一次一定不闪。隐身状态时九成闪开。我方四人共用这个连续次数</td><td>10，10 以上在可以掷时必闪。战斗中只取 0～255，超过 255 会绕回</td></tr><tr><td>異常</td><td>原版不显示在状态页（重制版显示在五行抗性右边）。敌人攻击时掷 0～9，大于異常值才可能中异常状态，所以越高越好：中招机率为（9 − 異常）成</td><td>9 以上不会中异常。变成负数时按很大的数比较，同样不会中</td></tr><tr><td>默契</td><td>没有作用：战斗和其他计算都不读取，只在升级时显示增加了多少</td><td>—</td></tr><tr><td>反應</td><td>没有作用，同默契</td><td>—</td></tr><tr><td>好感</td><td>原版不显示（重制版显示在反應下面）。小雪和玉儿入队时设为 100，之后剧情里先和谁说话、怎么选择时增减，其他角色的不变，影响结局，见攻略「結局與好感度」</td><td>存为 0～255 的一个字节，减到 0 以下会绕回 255 附近</td></tr><tr><td>五行抗性</td><td>状态页的 [金] [木] [水] [火] [土] 五个百分比。受到某个属性的攻击时，按五行生剋各取一项：一项按百分比减少伤害，一项按百分比增加伤害，一项不为 0 时把伤害变成按该百分比的回复。金：減 [火]、加 [木]、回復 [水]；木：減 [金]、加 [土]、回復 [火]；水：減 [土]、加 [火]、回復 [木]；火：減 [水]、加 [金]、回復 [土]；土：減 [木]、加 [水]、回復 [金]</td><td>每项 −128～127</td></tr><tr><td>等級</td><td>普通攻击的随机加成是 1～（等級 ÷ 3 + 3），法术的随机加成也计入等級</td><td>战斗胜利升级只到 60 级</td></tr></table></section><section id="absorb"><h2><a class="date" href="#absorb" title="連到這一節">收化</a></h2><p>「煉妖」里的「收化」能否成功，看敌人等级减去出手角色等级的差。表中的「生命」是敌人当前的生命，「上限」是它的生命上限，除法取整数。</p><table><tr><th>敌人比角色</th><th>生命够低时必成功</th><th>生命不够低时</th></tr><tr><td>高 12 级以上</td><td>—</td><td>必失败</td></tr><tr><td>高 7～11 级</td><td>生命 ≤ 上限 ÷ 4</td><td>必失败</td></tr><tr><td>高 1～6 级</td><td>生命 ≤ 上限 ÷ 3</td><td>掷骰：高 1 级 16%、2 级 11%、3 级 6%、4 级 1%、5～6 级 0%</td></tr><tr><td>同级～低 4 级</td><td>生命 ≤ 上限 ÷ 3</td><td>掷骰：同级 21%，每低 1 级加 10%，低 4 级 61%</td></tr><tr><td>低 5～9 级</td><td>生命 ≤ 上限 ÷ 3</td><td>掷骰 81%</td></tr><tr><td>低 10 级以上</td><td>不看生命</td><td>必成功</td></tr></table><p>例外：</p><ul><li>头目（Boss）和不能收化的妖物，一律失败。</li><li>「人族」与「其他」类（神魔異事錄的分类）的敌人，按上表一律失败，只能靠「誘餌」。</li><li>「誘餌」先用掉一件诱饵：诱饵对应的类别和妖物相同时，不看生命和等级，只掷一次 0～9，小于诱饵的数值就成功；类别不同时按上表判定。</li><li>「收化」同一种妖物已经成功过 20 次以上：必成功。「誘餌」没有这一条。</li><li>失败时敌人可能因此暴怒。</li></ul><p>调试模式下战斗中按 Ctrl+F2 切到「絕對靈契」，下一次「收化」或「誘餌」必成功，连头目也收得下（判定时只要「絕對靈契」开着就不看上面的条件）。它只管一次：这次收化结束（不论成功失败）或在选目标时取消，就自动变回「正常靈契」，没有提示；再收化前要再按一次。</p></section><section id="specials"><h2><a class="date" href="#specials" title="連到這一節">絕技</a></h2><p>每个角色另有一份「絕技點數」。点数达到最近学会的絕技在下表所列的数值后，在战斗胜利结算时学会下一个絕技。</p><h3>加点</h3><table><tr><th>时机</th><th>点数</th></tr><tr><td>用「施放」为「絕技」的絕技命中敌人（见下表）</td><td>+2；打倒敌人再 +5</td></tr><tr><td>用「施放」为「法術」的絕技</td><td>每次 +2；打倒敌人不另加</td></tr><tr><td>战斗胜利</td><td>站着且由玩家操作的角色 +1；敌人有 3 只以上再 +1。用一招让敌人全体直接倒下而取胜的战斗不加</td></tr><tr><td>奇術、普通攻击、物品、饰品指令</td><td>不加</td></tr></table><ul><li>一场战斗里多次使用都会累加，每次命中都加，没有上限；点数在出手时就加上。</li><li>被自动操作、客串、灵兽与已倒下的角色，胜利时不加。</li><li>已学完全部絕技的角色不再加点。</li></ul><h3>学会</h3><ul><li>只在战斗胜利结算时判定：点数达到要求就学会下一个絕技，点数归零，超出的部分不保留。</li><li>每个角色一场战斗最多学会一个。逃跑的战斗不判定，已加的点数保留到下一场胜利。</li><li>使用絕技要怒氣滿。</li></ul><table><tr><th>角色</th><th>絕技</th><th>学下一个需要的点数</th><th>施放</th></tr><tr><td>陳靖仇</td><td>橫劍擺渡</td><td>150</td><td>絕技</td></tr><tr><td>陳靖仇</td><td>浪裡尋花</td><td>260</td><td>絕技</td></tr><tr><td>陳靖仇</td><td>銀鷹掠地</td><td>500</td><td>絕技</td></tr><tr><td>陳靖仇</td><td>龍翔九天</td><td>600</td><td>法術</td></tr><tr><td>陳靖仇</td><td>神劍傲州</td><td>—</td><td>法術</td></tr><tr><td>于小雪</td><td>靈鳳吐珠</td><td>200</td><td>絕技</td></tr><tr><td>于小雪</td><td>星火乾坤圈</td><td>500</td><td>法術</td></tr><tr><td>于小雪</td><td>亟電崩離</td><td>620</td><td>法術</td></tr><tr><td>于小雪</td><td>披雲追月</td><td>—</td><td>絕技</td></tr><tr><td>拓跋玉兒</td><td>伏虎沖天</td><td>250</td><td>法術</td></tr><tr><td>拓跋玉兒</td><td>追星破月</td><td>340</td><td>絕技</td></tr><tr><td>拓跋玉兒</td><td>蒼龍蓋天</td><td>600</td><td>絕技</td></tr><tr><td>拓跋玉兒</td><td>蝶靈神影</td><td>—</td><td>絕技</td></tr><tr><td>張烈</td><td>碎金削玉</td><td>100</td><td>絕技</td></tr><tr><td>張烈</td><td>猛虎出關</td><td>400</td><td>法術</td></tr><tr><td>張烈</td><td>九氣破霄</td><td>—</td><td>法術</td></tr></table></section></div></div>
+    <div class="tabs" id="tabs"><div class="tab" data-id="attributes">角色屬性</div><div class="tab" data-id="absorb">收化</div><div class="tab" data-id="specials">絕技點數</div><div class="tab" data-id="speciallist">絕技一覽</div></div>
+    <div class="frame page"><div class="body" id="body"><section id="attributes"><h2>角色屬性</h2><p>各项属性在原版里的实际作用（重制版的计算与原版相同）。属性都存成 16 位整数，最大 32767；表中的「上限」是超过后会被截掉、或再高也没有用的值。</p><table><tr><th>属性</th><th>作用</th><th>上限</th></tr><tr><td>生命</td><td>降到 0 就倒下</td><td>9999。每场战斗开始时，参战角色的生命和生命上限超过 9999 的部分会被永久截掉</td></tr><tr><td>靈力</td><td>施放法术和部分招式时消耗</td><td>9999，同生命</td></tr><tr><td>體力</td><td>使用部分招式和饰品指令时消耗</td><td>9999，同生命</td></tr><tr><td>力量</td><td>战斗中的攻擊 = 力量 + 装备的攻击力（装备加的力量同时加到攻擊）。普通攻击的伤害 = 攻擊 + 随机 1～（等級 ÷ 3 + 3）− 敌人防禦，不超过敌人防禦时伤害为 1；攻擊提升状态加 200%，和招式同属性的五行攻擊提升再加 30%，攻擊下降按状态的回合数减少一定比例</td><td>攻擊按 16 位有符号数计算，超过 32767 时溢出，伤害反而只剩 1</td></tr><tr><td>耐力</td><td>战斗中的防禦 = 耐力 + 装备的防御力；防禦提升状态加 200%。只减少敌人普通攻击的伤害：伤害 = 敌人攻擊 + 随机 1～（敌人等級 ÷ 3 + 3）− 防禦；不超过防禦时只受 0～1 加随机 1～（敌人等級 ÷ 3 + 3）的伤害。法术伤害不看防禦</td><td>没有截断；高过敌人的攻擊后再高也没用</td></tr><tr><td>智慧</td><td>法术等按招式数值计算的伤害，额外加随机 1～（等級 + 智慧）÷（5～9）。用带异常状态的招式攻击敌人时，智慧每高出敌人的智慧 20 点，中异常的机率加一成</td><td>没有截断</td></tr><tr><td>敏捷</td><td>战斗中行动条每帧增加「敏捷 ÷ 4」（加速状态时敏捷先加 40，減速时减 30），满了就轮到行动。行动条的满值 = 100 ×（20 − 戰鬥速度），戰鬥速度在「環境設定」里设定，0～11</td><td>达到满值的 4 倍后一帧就满，再高也没用：戰鬥速度 11 时为 3600，0 时为 8000</td></tr><tr><td>閃躲</td><td>原版不显示在状态页（重制版显示在五行抗性右边）。敌人攻击时，我方连续 13 次没闪开之后，每次掷 0～9，小于閃躲值就闪开；连续 26 次没闪开时下一次必闪；有人刚闪开后的下一次一定不闪。隐身状态时九成闪开。我方四人共用这个连续次数</td><td>10，10 以上在可以掷时必闪。战斗中只取 0～255，超过 255 会绕回</td></tr><tr><td>異常</td><td>原版不显示在状态页（重制版显示在五行抗性右边）。敌人攻击时掷 0～9，大于異常值才可能中异常状态，所以越高越好：中招机率为（9 − 異常）成</td><td>9 以上不会中异常。变成负数时按很大的数比较，同样不会中</td></tr><tr><td>默契</td><td>没有作用：战斗和其他计算都不读取，只在升级时显示增加了多少</td><td>—</td></tr><tr><td>反應</td><td>没有作用，同默契</td><td>—</td></tr><tr><td>好感</td><td>原版不显示（重制版显示在反應下面）。小雪和玉儿入队时设为 100，之后剧情里先和谁说话、怎么选择时增减，其他角色的不变，影响结局，见攻略「結局與好感度」</td><td>存为 0～255 的一个字节，减到 0 以下会绕回 255 附近</td></tr><tr><td>五行抗性</td><td>状态页的 [金] [木] [水] [火] [土] 五个百分比。受到某个属性的攻击时，按五行生剋各取一项：一项按百分比减少伤害，一项按百分比增加伤害，一项不为 0 时把伤害变成按该百分比的回复。金：減 [火]、加 [木]、回復 [水]；木：減 [金]、加 [土]、回復 [火]；水：減 [土]、加 [火]、回復 [木]；火：減 [水]、加 [金]、回復 [土]；土：減 [木]、加 [水]、回復 [金]</td><td>每项 −128～127</td></tr><tr><td>等級</td><td>普通攻击的随机加成是 1～（等級 ÷ 3 + 3），法术的随机加成也计入等級</td><td>战斗胜利升级只到 60 级</td></tr></table></section><section id="absorb"><h2>收化</h2><p>「煉妖」里的「收化」能否成功，看敌人等级减去出手角色等级的差。表中的「生命」是敌人当前的生命，「上限」是它的生命上限，除法取整数。</p><table><tr><th>敌人比角色</th><th>生命够低时必成功</th><th>生命不够低时</th></tr><tr><td>高 12 级以上</td><td>—</td><td>必失败</td></tr><tr><td>高 7～11 级</td><td>生命 ≤ 上限 ÷ 4</td><td>必失败</td></tr><tr><td>高 1～6 级</td><td>生命 ≤ 上限 ÷ 3</td><td>掷骰：高 1 级 16%、2 级 11%、3 级 6%、4 级 1%、5～6 级 0%</td></tr><tr><td>同级～低 4 级</td><td>生命 ≤ 上限 ÷ 3</td><td>掷骰：同级 21%，每低 1 级加 10%，低 4 级 61%</td></tr><tr><td>低 5～9 级</td><td>生命 ≤ 上限 ÷ 3</td><td>掷骰 81%</td></tr><tr><td>低 10 级以上</td><td>不看生命</td><td>必成功</td></tr></table><p>例外：</p><ul><li>头目（Boss）和不能收化的妖物，一律失败。</li><li>「人族」与「其他」类（神魔異事錄的分类）的敌人，按上表一律失败，只能靠「誘餌」。</li><li>「誘餌」先用掉一件诱饵：诱饵对应的类别和妖物相同时，不看生命和等级，只掷一次 0～9，小于诱饵的数值就成功；类别不同时按上表判定。</li><li>「收化」同一种妖物已经成功过 20 次以上：必成功。「誘餌」没有这一条。</li><li>失败时敌人可能因此暴怒。</li></ul><p>调试模式下战斗中按 Ctrl+F2 切到「絕對靈契」，下一次「收化」或「誘餌」必成功，连头目也收得下（判定时只要「絕對靈契」开着就不看上面的条件）。它只管一次：这次收化结束（不论成功失败）或在选目标时取消，就自动变回「正常靈契」，没有提示；再收化前要再按一次。</p></section><section id="specials"><h2>絕技點數</h2><p>每个角色另有一份「絕技點數」。点数达到最近学会的絕技所列的数值（见「絕技一覽」）后，在战斗胜利结算时学会下一个絕技。</p><h3>加点</h3><table><tr><th>时机</th><th>点数</th></tr><tr><td>用「施放」为「絕技」的絕技命中敌人（见「絕技一覽」）</td><td>+2；打倒敌人再 +5</td></tr><tr><td>用「施放」为「法術」的絕技</td><td>每次 +2；打倒敌人不另加</td></tr><tr><td>战斗胜利</td><td>站着且由玩家操作的角色 +1；敌人有 3 只以上再 +1。用一招让敌人全体直接倒下而取胜的战斗不加</td></tr><tr><td>奇術、普通攻击、物品、饰品指令</td><td>不加</td></tr></table><ul><li>一场战斗里多次使用都会累加，每次命中都加，没有上限；点数在出手时就加上。</li><li>被自动操作、客串、灵兽与已倒下的角色，胜利时不加。</li><li>已学完全部絕技的角色不再加点。</li></ul><h3>学会</h3><ul><li>只在战斗胜利结算时判定：点数达到要求就学会下一个絕技，点数归零，超出的部分不保留。</li><li>每个角色一场战斗最多学会一个。逃跑的战斗不判定，已加的点数保留到下一场胜利。</li><li>使用絕技要怒氣滿。</li></ul></section><section id="speciallist"><h2>絕技一覽</h2><p>各角色的絕技按学会的先后排列。「学下一个需要的点数」是学会这个絕技后，再学下一个要累积的点数；「施放」见「絕技點數」。</p><table><tr><th>角色</th><th>絕技</th><th>学下一个需要的点数</th><th>施放</th></tr><tr><td>陳靖仇</td><td>橫劍擺渡</td><td>150</td><td>絕技</td></tr><tr><td>陳靖仇</td><td>浪裡尋花</td><td>260</td><td>絕技</td></tr><tr><td>陳靖仇</td><td>銀鷹掠地</td><td>500</td><td>絕技</td></tr><tr><td>陳靖仇</td><td>龍翔九天</td><td>600</td><td>法術</td></tr><tr><td>陳靖仇</td><td>神劍傲州</td><td>—</td><td>法術</td></tr><tr><td>于小雪</td><td>靈鳳吐珠</td><td>200</td><td>絕技</td></tr><tr><td>于小雪</td><td>星火乾坤圈</td><td>500</td><td>法術</td></tr><tr><td>于小雪</td><td>亟電崩離</td><td>620</td><td>法術</td></tr><tr><td>于小雪</td><td>披雲追月</td><td>—</td><td>絕技</td></tr><tr><td>拓跋玉兒</td><td>伏虎沖天</td><td>250</td><td>法術</td></tr><tr><td>拓跋玉兒</td><td>追星破月</td><td>340</td><td>絕技</td></tr><tr><td>拓跋玉兒</td><td>蒼龍蓋天</td><td>600</td><td>絕技</td></tr><tr><td>拓跋玉兒</td><td>蝶靈神影</td><td>—</td><td>絕技</td></tr><tr><td>張烈</td><td>碎金削玉</td><td>100</td><td>絕技</td></tr><tr><td>張烈</td><td>猛虎出關</td><td>400</td><td>法術</td></tr><tr><td>張烈</td><td>九氣破霄</td><td>—</td><td>法術</td></tr></table></section></div></div>
   </div>
-  <div class="hint">↑↓ PgUp / PgDn 捲動　Home / End 首尾</div>
+  <div class="hint">←→ 分頁　↑↓ PgUp / PgDn 捲動　Home / End 首尾</div>
 </div>
 <script>
 // The game's cursor sound (all.snd 0x2E, which the menus play as the cursor moves).
@@ -224,6 +263,8 @@ document.addEventListener('keydown', event => {
     PageDown: () => { body.scrollTop += page; },
     Home: () => { body.scrollTop = 0; },
     End: () => { body.scrollTop = body.scrollHeight; },
+    ArrowLeft: () => turn(-1),
+    ArrowRight: () => turn(1),
   };
 
   if (keys[event.key]) {
@@ -249,13 +290,26 @@ function addressed() {
   }
 }
 
-// A section named in the address (mechanics.html#absorb) is scrolled to.
-function showNamed(text = addressed()) {
-  const section = text ? document.getElementById(text) : null;
-  $('body').scrollTop = section ? section.offsetTop - $('body').offsetTop : 0;
+const tabs = [...document.querySelectorAll('.tab')];
+let shownTab = 0;
+
+// The tab of a section shown alone, from its top.
+function show(at) {
+  shownTab = at;
+  tabs.forEach((tab, index) => tab.classList.toggle('chosen', index === at));
+  document.querySelectorAll('.body > section').forEach((section, index) => {
+    section.classList.toggle('chosen', index === at);
+  });
+  $('body').scrollTop = 0;
 }
 
-// The section clicked kept in the address (and in the home page's, which opens it there), so that its link can be copied.
+// A section named in the address (mechanics.html#absorb) is shown; the first one otherwise.
+function showNamed(text = addressed()) {
+  const at = tabs.findIndex(tab => tab.dataset.id === text);
+  show(at < 0 ? 0 : at);
+}
+
+// The tab chosen kept in the address (and in the home page's, which opens it there), so that its link can be copied.
 function keepPlace(detail) {
   history.replaceState(null, '', `${location.search}#${encodeURIComponent(detail)}`);
 
@@ -264,17 +318,27 @@ function keepPlace(detail) {
   }
 }
 
-$('body').addEventListener('click', event => {
-  const date = event.target.closest('.date');
-
-  if (!date) {
+function choose(at) {
+  if (at === shownTab) {
     return;
   }
 
-  event.preventDefault();
-  const detail = date.getAttribute('href').slice(1);
-  keepPlace(detail);
-  showNamed(detail);
+  show(at);
+  keepPlace(tabs[at].dataset.id);
+  beep();
+}
+
+// ←→ step through the tabs, wrapping round as the bestiary's do.
+function turn(step) {
+  choose((shownTab + step + tabs.length) % tabs.length);
+}
+
+$('tabs').addEventListener('click', event => {
+  const tab = event.target.closest('.tab');
+
+  if (tab) {
+    choose(tabs.indexOf(tab));
+  }
 });
 
 function drawSound() {
