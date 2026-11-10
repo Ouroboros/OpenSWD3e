@@ -271,7 +271,7 @@ constexpr int kBaitCategory = 6;
 constexpr i32 kLeaveCommand = 0x11;
 constexpr i32 kLeaveState = 6;
 constexpr i32 kSelfCommand = 0x16;
-constexpr i32 kPartyAimCommand = 0x18;
+constexpr i32 kGroupAttackCommand = 0x18;  // 群攻 (AccessoryKind::GroupAttack): aims at the whole enemy side
 constexpr i32 kControlMark = 0x10;
 constexpr i32 kStealCommand = 0x1A;
 constexpr i32 kOnceCommand1C = 0x1C;
@@ -5135,7 +5135,7 @@ void Game::ConfirmCommand()
             break;
 
         case kSelfCommand:
-        case kPartyAimCommand:
+        case kGroupAttackCommand:
             battle.result = kTargetState;
             battle.choiceReady = 1;
             battle.unk577284 = 1;
