@@ -5463,7 +5463,7 @@ void Game::ConfirmTarget()
     }
     else if (battle.turnCommand == kSkillCommand && role != nullptr)
     {
-        role->TakeCommand34A8();
+        role->TakeMagicCommand();
     }
 
     if (battle.menuCommand == kListState1B || battle.menuCommand == kWaitState50)

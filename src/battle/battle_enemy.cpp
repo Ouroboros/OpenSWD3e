@@ -11,7 +11,7 @@ namespace swd3e
 namespace
 {
 
-constexpr u32 kProbedAction = 0x26;  // ProbeAct: an enemy's act without it sets unk3070
+constexpr u32 kProbedAction = 0x26;  // ProbeAct: an enemy's act without it sets noHurtAction
 
 }  // namespace
 
@@ -64,31 +64,31 @@ void BattleEnemy::Setup(const UnitPlacement& at, u16 id, Database& database, Act
     this->ProbeAct(acts);
 }
 
-// The end of Setup and Reload (inline in each): unk3070 set when the act has no action 0x26 (the probe state
-// cleared after), unk2FDD NoObjects when the object counts are all 0 and NoSkills when the skill counts are.
+// The end of Setup and Reload (inline in each): noHurtAction set when the act has no action 0x26 (the probe state
+// cleared after), emptyChoices NoObjects when the object counts are all 0 and NoSkills when the skill counts are.
 void BattleEnemy::ProbeAct(ActArchive& acts)
 {
-    this->unk3070 = 0;
+    this->noHurtAction = 0;
     this->attackAct.id = this->actId;
     this->attackAct.action = kProbedAction;
 
     if (acts.Run(this->attackAct) == 0)
     {
-        this->unk3070 = 1;
+        this->noHurtAction = 1;
     }
 
     this->attackAct = ActState{};
-    this->unk2FDD = 0;
+    this->emptyChoices = 0;
     const ObjectData& object = this->data->data;
 
     if (object.itemACount == 0 && object.itemBCount == 0 && object.itemCCount == 0)
     {
-        this->unk2FDD = BattleEnemy::NoObjects;
+        this->emptyChoices = BattleEnemy::NoObjects;
     }
 
     if (object.skillACount == 0 && object.skillBCount == 0)
     {
-        this->unk2FDD = BattleEnemy::NoSkills;
+        this->emptyChoices = BattleEnemy::NoSkills;
     }
 }
 

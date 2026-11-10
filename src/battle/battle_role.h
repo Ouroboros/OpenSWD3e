@@ -140,7 +140,7 @@ public:
     void ShowAllSkills();
     void ShowAllItems();
     void PayStamina();
-    void TakeCommand34A8();
+    void TakeMagicCommand();
 
     // The talisman ghost in battle and the helpers of the roles acting by themselves (battle_ghost.cpp, swd3e).
     u16 SelectedItemId() const;
@@ -174,8 +174,8 @@ public:
     int StartSpecialAct(BattleState& battle);
     void SpecialActFrame(BattleServices& services);
 
-    std::unique_ptr<RoleRecord> ownedRecord;     // the 0x3C bytes at +0x00 (allocated cleared by the constructor)
-    ObjectRecord unk3074;                        // +0x3074 (cleared by ClearExtras)
+    std::unique_ptr<RoleRecord> ownedRecord;  // the 0x3C bytes at +0x00 (allocated cleared by the constructor)
+    ObjectRecord loadedObject;  // +0x3074 an object read for the ghost's skill, 融合 or a level check (ClearExtras)
     std::array<ActState, ExtraActs> extraActs;   // +0x311C the sparks of an absorb (FlyExtraAct)
     ItemNode* skills = nullptr;                  // +0x3450 the first skill shown in the list
     ItemNode* skillsHead = nullptr;              // +0x3454 the start of the list (its "無" head)
@@ -184,18 +184,18 @@ public:
     ItemLink* inventoryHead = nullptr;           // +0x345C the party's items
     ItemNode* selectedItem = nullptr;            // +0x3460 the item chosen to use
     std::array<i32, ExtraActs> extraSteps = {};  // +0x3488 the line steps of each extra act this frame
-    i32 unk349C = 0;
-    u16 unk34A0 = 0;
-    u16 staminaCost = 0;  // +0x34A2 the stamina the command takes when it runs
-    u16 usedItem = 0;     // +0x34A4 the id of the item used (UseSelectedItem; GlowAct plays it as its act)
+    i32 queueIndex = 0;                          // the boomerang leg; the swarm action queued (RoleFrame)
+    u16 commandCost = 0;                         // the spirit owed, or the item used up (CanPaySkill, FinishCommand)
+    u16 staminaCost = 0;                         // +0x34A2 the stamina the command takes when it runs
+    u16 usedItem = 0;  // +0x34A4 the id of the item used (UseSelectedItem; GlowAct plays it as its act)
     u16 unk34A6 = 0;
-    u16 unk34A8 = 0;
-    u16 weaponId = 0;  // +0x34AA
+    u16 magicCommand = 0;  // command A of a magic object (SelectSkill)
+    u16 weaponId = 0;      // +0x34AA
     u16 unk34AC = 0;
-    u16 bonusA = 0;  // +0x34AE the sum of the +0x34 words of the armour (slots 1..6 without kind)
-    u16 bonusB = 0;  // +0x34B0 of their +0x36 words
-    u16 bonusC = 0;  // +0x34B2 of their +0x38 words
-    u16 unk34B4 = 0;
+    u16 bonusA = 0;      // +0x34AE the sum of the +0x34 words of the armour (slots 1..6 without kind)
+    u16 bonusB = 0;      // +0x34B0 of their +0x36 words
+    u16 bonusC = 0;      // +0x34B2 of their +0x38 words
+    u16 swarmCount = 0;  // the swarm actions queued so far
     u16 ghostOrder = 0;  // +0x34B6 (swd3e) the order the player gave the talisman ghost (SetGhostOrder)
     u16 ghostSkill = 0;  // +0x34B8 (swd3e) the index of the fed skill chosen (bit 15 while choosing)
     // +0x34BA, +0x34BC (swd3e) the words +0x56 and +0x58 of the item used (UseSelectedItem, 0x004818E0): a target of
@@ -207,7 +207,7 @@ public:
                              // role takes (EnemyAfterAction)
     u8 critical = 0;         // +0x34CA 1: the next attack is critical (set by 0x0046FF00)
     i32 ghostActs = 0;       // +0x34CC (swd3e) 1: the ghost acts this turn (a half roll of its order)
-    i32 unk34D0 = 0;         // +0x34D0 (swd3e) set by StartSpecialAct
+    i32 specialActRunning = 0;  // +0x34D0 (swd3e) 1 while the special act runs
 };
 
 }  // namespace swd3e

@@ -112,7 +112,7 @@ constexpr u8 kDefeatPoses = 10;             // a defeated unit takes a pose of 1
 constexpr u8 kFallbackDefeatPose = 6;       // or this one when none was taken
 constexpr u16 kWhiteFrame = 0xFFFF;         // Damage (swd3e): a transferred hit whitens the frame (0xFF bytes)
 constexpr u32 kMeterArmed = 0x100;          // equipmentFlags: StrikeBack armed, the hits go to the meter
-constexpr int kMeterHealShare = -80;        // a heal takes the proficiency percent of -80 percent of unk2EB4
+constexpr int kMeterHealShare = -80;        // a heal takes the proficiency percent of -80 percent of meterSum
 constexpr int kMeterBaseShare = 20;         // a hit gives a fifth
 constexpr int kMeterHitShare = 80;          // and the proficiency percent of four fifths
 constexpr int kMeterLimitScale = 0x5F;      // the meter's top: 95 times the proficiency
@@ -1368,7 +1368,7 @@ constexpr i16 kFleeNameFrames = 0x28;
 // HurtFrame.
 constexpr i32 kHurtAction = 0x26;
 constexpr i32 kHurtGuardAction = 0x2B;
-constexpr i32 kKnockBackAction = 0x3A;  // the hurt pose of a unit of unk3070
+constexpr i32 kKnockBackAction = 0x3A;  // the hurt pose of a unit of noHurtAction
 constexpr int kKnockBackFlash = 0xF;    // the red of its flash
 constexpr u16 kHurtSteps = 0xC;         // the stagger lasts past this step
 constexpr u16 kNudgedSteps = 0x16;      // and to this one for a unit nudged in place
@@ -1382,7 +1382,7 @@ int StaggerValue(const std::array<T, Size>& table, u16 step)
 
 // IdleFrame.
 constexpr u16 kShaken = 1;          // SetNudge: the unit is nudged in place
-constexpr i32 kWeakAction = 0x25;   // the stand pose of unk2BDA bit 0 or a weak party member
+constexpr i32 kWeakAction = 0x25;   // the stand pose of ghostFlags bit 0 or a weak party member
 constexpr i16 kWeakShare = 4;       // a party member at a quarter of its hit points or less looks weak
 constexpr i32 kDrainAction = 0x2D;  // while the cast countdown runs down
 constexpr i32 kReadyAction = 0x2C;
@@ -1724,8 +1724,8 @@ void BattleUnit::DrawEffectIcons(BattleServices& services, int x, int y)
 // (32-bit) hit points, checking enrage cause 0 while it stands. A party role under DamageTransfer takes a positive hit
 // only with enrage counter 0x2FD6 or damage pending, else the frame whitens and nothing happens; with StrikeBack armed
 // the meter (topped at 95 times the proficiency plus 500) takes a share of the hit (a fifth plus the proficiency
-// percent of four fifths, the whole at 100; a heal takes the proficiency percent of minus 80 percent of unk2EB4) into
-// unk2EB4, emptied when the meter spills over; the gold guard pays from the gold while there is some (unsigned), the
+// percent of four fifths, the whole at 100; a heal takes the proficiency percent of minus 80 percent of meterSum) into
+// meterSum, emptied when the meter spills over; the gold guard pays from the gold while there is some (unsigned), the
 // rest from the hit points.
 int BattleUnit::Damage(BattleServices& services, int hitPoints, i16 spirit, i16 stamina)
 {
@@ -1812,7 +1812,7 @@ int BattleUnit::Damage(BattleServices& services, int hitPoints, i16 spirit, i16 
 
         if (hitPoints <= 0)
         {
-            share = proficiency * (kMeterHealShare * this->unk2EB4 / kPercent) / kPercent;
+            share = proficiency * (kMeterHealShare * this->meterSum / kPercent) / kPercent;
         }
         else
         {
@@ -1829,15 +1829,15 @@ int BattleUnit::Damage(BattleServices& services, int hitPoints, i16 spirit, i16 
 
         if (services.hud.AddToMeter(static_cast<i16>(share)) == 0)
         {
-            this->unk2EB4 = 0;
+            this->meterSum = 0;
         }
         else
         {
-            this->unk2EB4 = static_cast<i16>(this->unk2EB4 + share);
+            this->meterSum = static_cast<i16>(this->meterSum + share);
 
-            if (this->unk2EB4 < 0)
+            if (this->meterSum < 0)
             {
-                this->unk2EB4 = 0;
+                this->meterSum = 0;
             }
         }
     }
@@ -2031,8 +2031,8 @@ void BattleUnit::Reset(BattleServices& services)
     this->enrageCounter2FD8 = 0;
     this->enrageElement = 0;
     this->evadeCounter = 0;
-    this->unk2FA0 = 0;
-    this->unk2EB4 = 0;
+    this->poisonTurns = 0;
+    this->meterSum = 0;
     this->unk2FD9 = 0;
     this->unk2FDA = 0;
     this->kind = 0;
@@ -2066,12 +2066,12 @@ void BattleUnit::Reset(BattleServices& services)
     this->autoControl = 0;
     this->guestControl = 0;
     this->ghost = 0;
-    this->unk2BDA = 0;
+    this->ghostFlags = 0;
     this->facing = 0;
     this->unk3054 = 0;
     this->facingTurnsBack = 0;
     this->goldGuard = 0;
-    this->unk3070 = 0;
+    this->noHurtAction = 0;
 }
 
 // swd3e.exe 0x00495BF0
@@ -2926,7 +2926,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
                 attack = this->battleRecord->attackBonus;
             }
 
-            if ((this->unk2BDA & BattleUnit::GhostGuards) != 0)
+            if ((this->ghostFlags & BattleUnit::GhostGuards) != 0)
             {
                 attack = kGuardingGhostPercent * this->battleRecord->attackBonus / kPercent;
             }
@@ -3065,8 +3065,8 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
 
     if (kind == BattleUnit::StrikeBackCommand)
     {
-        attack = this->unk2EB4;
-        this->unk2EB4 = 0;
+        attack = this->meterSum;
+        this->meterSum = 0;
         services.hud.AddToMeter(kMeterEmpties);
     }
 
@@ -3621,7 +3621,7 @@ int BattleUnit::StepAccessoryCounters(CounterList& list, u16 kind, u16 amount)
 int BattleUnit::StepGauge(BattleServices& services, int boost)
 {
     if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::GaugeStopped) != 0 || this->defeated == 1 ||
-        this->standingAside == 1 || this->gaugeFilled == 1 || (this->unk2BDA & BattleUnit::GhostGuards) != 0 ||
+        this->standingAside == 1 || this->gaugeFilled == 1 || (this->ghostFlags & BattleUnit::GhostGuards) != 0 ||
         (this->stateFlags & kStaggering) != 0)
     {
         return 0;
@@ -3658,14 +3658,14 @@ int BattleUnit::StepGauge(BattleServices& services, int boost)
     {
         if (static_cast<i16>(services.random.Below(kObeyRoll) + 1) > this->ghostRecord->trust)
         {
-            this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::WeakStand);
+            this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::WeakStand);
             this->gauge = static_cast<u16>(this->gauge + full / -kDisobeyShare);
             return 0;
         }
 
         // Only a party role is set up as the ghost (SetupGhost).
         static_cast<BattleRole&>(*this).TakeGhostOrder(services, *services.database);
-        this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::WeakStand);
+        this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::WeakStand);
     }
 
     this->gaugeFilled = 1;
@@ -3685,14 +3685,14 @@ int BattleUnit::StepGauge(BattleServices& services, int boost)
     this->mainAct.effectQ = 0;
     this->castAct.waiting = 1;
 
-    if ((this->unk2BDA & BattleUnit::GhostRests) == 0)
+    if ((this->ghostFlags & BattleUnit::GhostRests) == 0)
     {
         return 1;
     }
 
     this->gaugeFilled = 0;
     this->gauge = 0;
-    this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostRests);
+    this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::GhostRests);
     return 0;
 }
 
@@ -4600,14 +4600,14 @@ int BattleUnit::CatchRoll(BattleServices& services, u8 level)
 }
 
 // swd3e.exe 0x0048F390: one frame of the unit staggering from a hit (hurtStep one on each frame not held); 1 once over
-// (from step 13 when its act waits or for a unit of unk3070: hurtStep back to 1, the attack act and the targets
+// (from step 13 when its act waits or for a unit of noHurtAction: hurtStep back to 1, the attack act and the targets
 // cleared, `charging` set) or when its act cannot run or the unit guards. A party member takes the hurt pose (the
 // guard pose when GetGuard or hitCancelled, not held nor with damage pending; under Regressed act 0xFA), others the
-// hurt pose (0x3A for unk3070); a unit nudged in place stands. The picture shakes back from the hit by StaggerShake
-// (towards the side of an enemy or a unit acting by itself or under Regressed; slides back by StaggerSlide while
-// nudged; lifts by StaggerLift when nudged in place, which lasts to step 22), over its shadow; a unit of unk3070
-// leaves a red flash shaking by StaggerFlash. The stone (Stone) copies the main act and stays. Its effects,
-// overlay and the recoil effect of its act follow.
+// hurt pose (0x3A for noHurtAction); a unit nudged in place stands. The picture shakes back from the hit by
+// StaggerShake (towards the side of an enemy or a unit acting by itself or under Regressed; slides back by StaggerSlide
+// while nudged; lifts by StaggerLift when nudged in place, which lasts to step 22), over its shadow; a unit of
+// noHurtAction leaves a red flash shaking by StaggerFlash. The stone (Stone) copies the main act and stays. Its
+// effects, overlay and the recoil effect of its act follow.
 int BattleUnit::HurtFrame(BattleServices& services)
 {
     ActState& act = this->attackAct;
@@ -4635,7 +4635,7 @@ int BattleUnit::HurtFrame(BattleServices& services)
     {
         act.action = kHurtAction;
 
-        if (this->unk3070 == 1)
+        if (this->noHurtAction == 1)
         {
             act.action = kKnockBackAction;
         }
@@ -4720,7 +4720,7 @@ int BattleUnit::HurtFrame(BattleServices& services)
     {
         x = placeX - this->homePoseX;
     }
-    else if (turned && this->unk3070 == 1)
+    else if (turned && this->noHurtAction == 1)
     {
         const int flash = StaggerValue(BattleUnit::StaggerFlash, step);
         options.tintRed = kKnockBackFlash;
@@ -4859,7 +4859,7 @@ int BattleUnit::HurtStep(BattleServices& services)
     const u16 step = this->hurtStep;
     this->inAction = 1;
 
-    if (step <= kHurtSteps || (act.waiting != 1 && this->unk3070 != 1))
+    if (step <= kHurtSteps || (act.waiting != 1 && this->noHurtAction != 1))
     {
         return 0;
     }
@@ -4892,7 +4892,7 @@ int BattleUnit::HurtStep(BattleServices& services)
 
 // swd3e.exe 0x0048BA60: one frame of the unit at rest (`paused`: its act holds). A staggering unit (flag 2BC0) runs
 // HurtFrame (a gold guard's gold shown by it), a knocked back one KnockBackFrame. Otherwise, unless busy, the main act
-// takes its pose: the stand pose (an enemy's plus unk2B8C; a weak one for unk2BDA bit 0 or a party member at a
+// takes its pose: the stand pose (an enemy's plus unk2B8C; a weak one for ghostFlags bit 0 or a party member at a
 // quarter of its hit points), the drain pose, the defeated pose of a party member, unk2F2A, the pose of a chosen
 // command (nothing drawn for command flag 0x200), a guard pose by guardPose. The talisman ghost circles its saved
 // place. The unit is drawn over its shadow (mirrored by the facing; a unit acting by itself adds Additive and is
@@ -4980,7 +4980,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
     act.id = this->actId;
     act.action = kShadowAction;
 
-    if ((this->unk2BDA & BattleUnit::WeakStand) != 0)
+    if ((this->ghostFlags & BattleUnit::WeakStand) != 0)
     {
         act.action = kWeakAction;
     }
@@ -5173,7 +5173,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         }
     };
 
-    if (this->ghost == 1 && (this->unk2BDA & BattleUnit::WeakStand) == 0 && this->actionStarted == 0)
+    if (this->ghost == 1 && (this->ghostFlags & BattleUnit::WeakStand) == 0 && this->actionStarted == 0)
     {
         std::array<std::array<i16, 2>, 4> points = {};
 
@@ -5593,7 +5593,7 @@ void BattleUnit::DrawShadowTinted(smooth::ScenePainter& painter)
 // swd3e.exe 0x00496650: an enemy chooses its command for the turn; `act` takes the act of an object or a cast; 1 when
 // the command is chosen with its act (PaysCost and command 2, or 0xF for Summons), 0 for an attack
 // or a skill of command 1, 1 at once while PaysCost is set. A heal (healChoice) comes first; an enraged
-// enemy chooses by its enrage effect (skills below 1001, objects from 6001, else a coin); otherwise unk2FDD or the
+// enemy chooses by its enrage effect (skills below 1001, objects from 6001, else a coin); otherwise emptyChoices or the
 // turns of choicePhase. Confused makes it attack; waiting objects or skills with no idle turn yet take a skill. A
 // named enemy at half its hit points or less tries with 3 more. An object or skill is tried with a roll of 0..9 below
 // idleTurns plus its chance and passes when its buffs are not held already; the third object comes every 7 turns, the
@@ -5639,17 +5639,17 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
     }
     else
     {
-        if (this->unk2FDD == BattleEnemy::NoSkills)
+        if (this->emptyChoices == BattleEnemy::NoSkills)
         {
             choice = kItemChoice;
         }
 
-        if (this->unk2FDD == BattleEnemy::NoObjects)
+        if (this->emptyChoices == BattleEnemy::NoObjects)
         {
             choice = kSkillChoice;
         }
 
-        if (this->unk2FDD == 0)
+        if (this->emptyChoices == 0)
         {
             if (this->choicePhase == kItemsChosen)
             {
@@ -6628,7 +6628,7 @@ void BattleUnit::ClearHitCancel()
 // swd3e.exe 0x0049B7E0: a lasting poison held more than three turns
 bool BattleUnit::PoisonLasted() const
 {
-    return (this->stateFlags & kFlag2BC0Poison) != 0 && this->unk2FA0 > kLastedTurns;
+    return (this->stateFlags & kFlag2BC0Poison) != 0 && this->poisonTurns > kLastedTurns;
 }
 
 // swd3e.exe 0x0049B800
@@ -6642,7 +6642,7 @@ void BattleUnit::CountPoisonTurn()
 {
     if ((this->stateFlags & kFlag2BC0Poison) != 0)
     {
-        ++this->unk2FA0;
+        ++this->poisonTurns;
     }
 }
 
@@ -6823,7 +6823,7 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
         {
             this->marks = static_cast<u16>(this->marks | BattleUnit::RegressedMark);
             this->facing = 1;
-            this->unk3070 = 1;
+            this->noHurtAction = 1;
             slot = ActState{};
         }
     }

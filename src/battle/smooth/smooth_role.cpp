@@ -55,7 +55,7 @@ constexpr u16 kGlowRising = 0;
 constexpr i16 kGlowStep = 2;
 constexpr int kGlowTintBase = 0x1F;  // the tint is glowLevel / 2 - kGlowTintBase
 constexpr i32 kNoImpact = -1;        // a queued act without an impact act that lands no hit
-constexpr u16 kNoUnk2FB8 = 0xFFFF;
+constexpr u16 kNoWalkPicture = 0xFFFF;
 constexpr i16 kStandBackEnd = 2;
 constexpr i32 kStepBackAction = 0x2F;        // swd3e (swd32: 0x2A)
 constexpr i32 kSecondStepBackAction = 0x2E;  // swd3e: the step back of the role of act 1
@@ -1612,7 +1612,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
         magic.target = 0;
         role.glowLevel = 0;
         role.unk2B80 = 0;
-        role.unk2FB8 = kNoUnk2FB8;
+        role.walkPicture = kNoWalkPicture;
         magic.hold = 0;
         charge.hold = 0;
     };
@@ -1839,7 +1839,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
 
     if (role.stage == kBoomerangGoing)
     {
-        if (role.unk349C == 0)
+        if (role.queueIndex == 0)
         {
             role.AddQueuedAction(
                 thrown.id,
@@ -1854,12 +1854,12 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
                 QueuedAction::NoHit
             );
             role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
-            role.unk349C = 1;
+            role.queueIndex = 1;
         }
 
         if (UnitFrame(role).Queued(services, target, 0, scene) == 1)
         {
-            role.unk349C = 0;
+            role.queueIndex = 0;
             role.stage = kBoomerangReturning;
             target.Stagger(services.state);
         }
@@ -1867,7 +1867,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
 
     if (role.stage == kBoomerangReturning)
     {
-        if (role.unk349C == 0)
+        if (role.queueIndex == 0)
         {
             role.AddQueuedAction(
                 thrown.id,
@@ -1882,12 +1882,12 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
                 QueuedAction::NoHit
             );
             role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
-            role.unk349C = 1;
+            role.queueIndex = 1;
         }
 
         if (UnitFrame(role).Queued(services, target, 0, scene) == 1)
         {
-            role.unk349C = 0;
+            role.queueIndex = 0;
             role.stage = kBoomerangBackHome;
             services.audio.PlaySound(kBoomerangSound, services.config.soundVolume);
         }
@@ -1962,8 +1962,8 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
         role.stage |= BattleUnit::FollowingUp;
         magic.target = 0;
         aim();
-        role.unk349C = role.unk34B4;
-        ++role.unk34B4;
+        role.queueIndex = role.swarmCount;
+        ++role.swarmCount;
     }
 
     if ((role.stage & BattleUnit::FollowingUp) == 0)
@@ -1979,7 +1979,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
         const std::size_t place = role.queuedActions & (kSwarmActs - 1);
         role.AddQueuedAction(
             role.command.castAct,
-            role.unk349C,
+            role.queueIndex,
             static_cast<i16>(role.placement.x + BattleRole::SwarmOffsetX[place]),
             static_cast<i16>(role.placement.y + BattleRole::SwarmOffsetY[place]),
             static_cast<i16>(targetX),
@@ -1993,7 +1993,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
         services.audio.PlaySound(kSwarmSound, services.config.soundVolume);
     }
 
-    if (UnitFrame(role).Queued(services, target, role.unk349C, scene) != 1)
+    if (UnitFrame(role).Queued(services, target, role.queueIndex, scene) != 1)
     {
         return 0;
     }
@@ -2006,8 +2006,8 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
     }
 
     role.glowLevel = 0;
-    role.unk349C = 0;
-    role.unk34B4 = 0;
+    role.queueIndex = 0;
+    role.swarmCount = 0;
     role.slotActs[0] = ActState{};
     magic = ActState{};
     return 1;

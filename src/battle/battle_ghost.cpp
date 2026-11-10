@@ -94,13 +94,13 @@ constexpr int kSpecialProficiencyShare = 90;  // and the proficiency percent of 
 // swd3e.exe 0x004864C0: the order the player gave the ghost (1..8); order 4 keeps it by its master
 void BattleRole::SetGhostOrder(i32 order)
 {
-    this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostGuards);
+    this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::GhostGuards);
     this->ghostOrder = static_cast<u16>(order);
 
     // The whole dword is compared (0x004864D4); only its low word is kept.
     if (order == kGuardOrder)
     {
-        this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostGuards);
+        this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::GhostGuards);
     }
 }
 
@@ -132,12 +132,12 @@ bool BattleRole::GhostOrderIs6() const
 // least 0x33
 bool BattleRole::TakeSkillUsed()
 {
-    if ((this->unk2BDA & BattleUnit::GhostSkillUsed) == 0)
+    if ((this->ghostFlags & BattleUnit::GhostSkillUsed) == 0)
     {
         return false;
     }
 
-    this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostSkillUsed);
+    this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::GhostSkillUsed);
     return this->ghostRecord->trust >= kTrustedSkill;
 }
 
@@ -145,12 +145,12 @@ bool BattleRole::TakeSkillUsed()
 // when the ghost's trust is at least 0x51
 bool BattleRole::TakeAttackUsed()
 {
-    if ((this->unk2BDA & BattleUnit::GhostAttackUsed) == 0)
+    if ((this->ghostFlags & BattleUnit::GhostAttackUsed) == 0)
     {
         return false;
     }
 
-    this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostAttackUsed);
+    this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::GhostAttackUsed);
     const u16 order = this->ghostOrder;
     return (order == kSkillOrder || order == kAttackOrder) && this->ghostRecord->trust >= kTrustedAttack;
 }
@@ -159,39 +159,39 @@ bool BattleRole::TakeAttackUsed()
 // at least 0x51
 bool BattleRole::TakeHealUsed()
 {
-    if ((this->unk2BDA & BattleUnit::GhostHealUsed) == 0)
+    if ((this->ghostFlags & BattleUnit::GhostHealUsed) == 0)
     {
         return false;
     }
 
-    this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostHealUsed);
+    this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::GhostHealUsed);
     return this->ghostRecord->trust >= kTrustedAttack;
 }
 
 // swd3e.exe 0x004865E0: order 7 given this turn (GhostOrder7, taken back)
 int BattleRole::TakeOrder7()
 {
-    if ((this->unk2BDA & BattleUnit::GhostOrder7) == 0)
+    if ((this->ghostFlags & BattleUnit::GhostOrder7) == 0)
     {
         return 0;
     }
 
-    this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostOrder7);
+    this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::GhostOrder7);
     return 1;
 }
 
 // swd3e.exe 0x00486600: a ghost keeping by its master (GhostGuards) obeys on a roll of 1..100 up to its trust;
-// otherwise it takes the weak stand pose (unk2BDA bit 0)
+// otherwise it takes the weak stand pose (ghostFlags bit 0)
 int BattleRole::GhostObeys(BattleServices& services)
 {
-    if ((this->unk2BDA & BattleUnit::GhostGuards) == 0)
+    if ((this->ghostFlags & BattleUnit::GhostGuards) == 0)
     {
         return 0;
     }
 
     if (static_cast<i16>(services.random.Below(kObeyRoll) + 1) > this->ghostRecord->trust)
     {
-        this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::WeakStand);
+        this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::WeakStand);
         return 0;
     }
 
@@ -202,7 +202,7 @@ int BattleRole::GhostObeys(BattleServices& services)
 // spirit gain
 int BattleRole::RestoreGhostSpirit(BattleServices& services)
 {
-    if ((this->unk2BDA & BattleUnit::GhostRests) == 0)
+    if ((this->ghostFlags & BattleUnit::GhostRests) == 0)
     {
         return 0;
     }
@@ -253,45 +253,45 @@ int BattleRole::ChooseGhostSkill(BattleServices& services, Database& database)
         return 1;
     }
 
-    database.LoadObject(this->unk3074, static_cast<u16>(skill));
-    Database::FreeDescription(this->unk3074);
-    this->unk34A0 = static_cast<u16>(this->unk3074.data.costBits & kCostMask);
+    database.LoadObject(this->loadedObject, static_cast<u16>(skill));
+    Database::FreeDescription(this->loadedObject);
+    this->commandCost = static_cast<u16>(this->loadedObject.data.costBits & kCostMask);
 
-    if (this->battleRecord->spirit < this->unk34A0)
+    if (this->battleRecord->spirit < this->commandCost)
     {
         return 1;
     }
 
     this->command = UnitCommand{};
-    this->LoadCommand(database, this->unk3074.data.skillScript);
-    const u32 kind = this->unk3074.data.kind;
+    this->LoadCommand(database, this->loadedObject.data.skillScript);
+    const u32 kind = this->loadedObject.data.kind;
 
     if ((kind & kAttackKind) != 0)
     {
-        this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostAttackUsed);
+        this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::GhostAttackUsed);
     }
 
     if ((kind & kHealKind) != 0)
     {
-        this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostHealUsed);
+        this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::GhostHealUsed);
     }
 
     if ((kind & kSkillKind) != 0)
     {
-        this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostSkillUsed);
+        this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::GhostSkillUsed);
     }
 
     return 1;
 }
 
-// The fed skill of `index` loaded into unk3074 with its spirit cost in unk34A0 (inline in ChooseGhostSkillOf and
-// GhostSkillCommand); true when the ghost has the spirit for it.
+// The fed skill of `index` loaded into loadedObject with its spirit cost in commandCost (inline in ChooseGhostSkillOf
+// and GhostSkillCommand); true when the ghost has the spirit for it.
 bool BattleRole::LoadGhostSkill(Database& database, i32 skill)
 {
-    database.LoadObject(this->unk3074, static_cast<u16>(skill));
-    Database::FreeDescription(this->unk3074);
-    this->unk34A0 = static_cast<u16>(this->unk3074.data.costBits & kCostMask);
-    return this->battleRecord->spirit >= this->unk34A0;
+    database.LoadObject(this->loadedObject, static_cast<u16>(skill));
+    Database::FreeDescription(this->loadedObject);
+    this->commandCost = static_cast<u16>(this->loadedObject.data.costBits & kCostMask);
+    return this->battleRecord->spirit >= this->commandCost;
 }
 
 // swd3e.exe 0x004867F0: a fed skill chosen by `mode`: 1 the third (GhostSkillUsed); 2 one of the first two of kind 4
@@ -301,7 +301,7 @@ int BattleRole::ChooseGhostSkillOf(BattleServices& services, Database& database,
 {
     auto none = [this]
     {
-        this->unk34A0 = 0;
+        this->commandCost = 0;
         this->command = UnitCommand{};
         return 0;
     };
@@ -309,8 +309,8 @@ int BattleRole::ChooseGhostSkillOf(BattleServices& services, Database& database,
     auto take = [this, &database](u16 flag)
     {
         this->command = UnitCommand{};
-        this->LoadCommand(database, this->unk3074.data.skillScript);
-        this->unk2BDA = static_cast<u16>(this->unk2BDA | flag);
+        this->LoadCommand(database, this->loadedObject.data.skillScript);
+        this->ghostFlags = static_cast<u16>(this->ghostFlags | flag);
     };
 
     if (mode == kThirdMode)
@@ -344,11 +344,11 @@ int BattleRole::ChooseGhostSkillOf(BattleServices& services, Database& database,
             continue;
         }
 
-        this->unk3074 = ObjectRecord{};
-        database.LoadObject(this->unk3074, static_cast<u16>(skill));
-        Database::FreeDescription(this->unk3074);
+        this->loadedObject = ObjectRecord{};
+        database.LoadObject(this->loadedObject, static_cast<u16>(skill));
+        Database::FreeDescription(this->loadedObject);
 
-        if ((this->unk3074.data.kind & wanted) != 0)
+        if ((this->loadedObject.data.kind & wanted) != 0)
         {
             qualifies[static_cast<std::size_t>(at)] = 1;
         }
@@ -406,7 +406,7 @@ void BattleRole::TakeGhostOrder(BattleServices& services, Database& database)
             break;
 
         case kRestOrder:
-            this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostRests);
+            this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::GhostRests);
             this->ghostActs = 0;
             this->RestoreGhostSpirit(services);
             break;
@@ -417,7 +417,7 @@ void BattleRole::TakeGhostOrder(BattleServices& services, Database& database)
             break;
 
         case kGuardOrder:
-            this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostGuards);
+            this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::GhostGuards);
             break;
 
         case kFifthOrder:
@@ -433,7 +433,7 @@ void BattleRole::TakeGhostOrder(BattleServices& services, Database& database)
             break;
 
         case kSeventhOrder:
-            this->unk2BDA = static_cast<u16>(this->unk2BDA | BattleUnit::GhostOrder7);
+            this->ghostFlags = static_cast<u16>(this->ghostFlags | BattleUnit::GhostOrder7);
             break;
 
         default:
@@ -449,9 +449,9 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
 {
     std::fill_n(this->skillName.begin(), kClearedName, '\0');
 
-    if ((this->unk2BDA & BattleUnit::GhostSpent) != 0)
+    if ((this->ghostFlags & BattleUnit::GhostSpent) != 0)
     {
-        this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::GhostSpent);
+        this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::GhostSpent);
         return 0;
     }
 
@@ -466,12 +466,12 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
         return 0;
     }
 
-    const ObjectData& data = this->unk3074.data;
+    const ObjectData& data = this->loadedObject.data;
     this->command = UnitCommand{};
     this->LoadCommand(database, data.skillScript);
     act = data.act;
     std::fill_n(this->skillName.begin(), kClearedName, '\0');
-    const std::string name = ObjectName(this->unk3074);
+    const std::string name = ObjectName(this->loadedObject);
     const std::size_t length = std::min(name.size(), this->skillName.size() - 1);
     std::copy_n(name.begin(), length, this->skillName.begin());
     this->skillName[length] = '\0';
@@ -515,7 +515,7 @@ void BattleRole::GhostAttackCommand(Database& database)
     this->LoadCommand(database, this->weapon.data.skillScript);
     this->SetCommand(kAttackCommand);
     const u16 flags = this->command.flags;
-    this->unk2BDA = static_cast<u16>(this->unk2BDA & ~BattleUnit::WeakStand);
+    this->ghostFlags = static_cast<u16>(this->ghostFlags & ~BattleUnit::WeakStand);
     this->commandAttack = static_cast<u16>(this->commandAttack + this->battleRecord->attackBonus);
 
     if ((flags & kWalkingFlags) != 0 && this->commandA == 1)
@@ -549,7 +549,7 @@ int BattleRole::SpendGhostSpirit(int less, int base, int percent)
     record.spirit = static_cast<i16>(record.spirit - static_cast<i16>(this->restoreHitPoints));
     this->SetCommand(kSkillCommand);
     this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::PaysCost);
-    this->unk2BDA = static_cast<u16>((this->unk2BDA & ~BattleUnit::WeakStand) | BattleUnit::GhostSpent);
+    this->ghostFlags = static_cast<u16>((this->ghostFlags & ~BattleUnit::WeakStand) | BattleUnit::GhostSpent);
     return 1;
 }
 
@@ -682,19 +682,20 @@ int BattleRole::StartSpecialAct(BattleState& battle)
     act.id = kSpecialAct;
     act.action = 0;
     battle.battleBusy = 1;
-    this->unk34D0 = 1;
+    this->specialActRunning = 1;
     return 1;
 }
 
-// swd3e.exe 0x00487200: one frame of the special act (StartSpecialAct) while equipment flag 0x80 and unk34D0 are set:
-// the battle marks battleBusy and slot act 10 runs, its sound played (panned right) and its picture drawn at the unit's
-// place (the stand act's sound cleared instead of the slot act's, as in the original). Once it ends the role stands up
-// again: unk34D0 and battleBusy cleared, the turn reset, the effects ended, the flag and `defeated` cleared, the
-// accessory's proficiency read, the party record's hit points set to 40 percent of the maximum plus the proficiency
-// percent of 90 percent of it and its Defeated bit cleared, the healing shown (HealTarget) and the act cleared.
+// swd3e.exe 0x00487200: one frame of the special act (StartSpecialAct) while equipment flag 0x80 and specialActRunning
+// are set: the battle marks battleBusy and slot act 10 runs, its sound played (panned right) and its picture drawn at
+// the unit's place (the stand act's sound cleared instead of the slot act's, as in the original). Once it ends the role
+// stands up again: specialActRunning and battleBusy cleared, the turn reset, the effects ended, the flag and `defeated`
+// cleared, the accessory's proficiency read, the party record's hit points set to 40 percent of the maximum plus the
+// proficiency percent of 90 percent of it and its Defeated bit cleared, the healing shown (HealTarget) and the act
+// cleared.
 void BattleRole::SpecialActFrame(BattleServices& services)
 {
-    if ((this->equipmentFlags & BattleUnit::SpecialActEquipment) == 0 || this->unk34D0 != 1)
+    if ((this->equipmentFlags & BattleUnit::SpecialActEquipment) == 0 || this->specialActRunning != 1)
     {
         return;
     }
@@ -733,7 +734,7 @@ void BattleRole::SpecialActFrame(BattleServices& services)
         return;
     }
 
-    this->unk34D0 = 0;
+    this->specialActRunning = 0;
     services.state.battleBusy = 0;
     this->ResetTurn(services);
     this->ExpireEffects(services, 1);

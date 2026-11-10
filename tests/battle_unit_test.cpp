@@ -689,7 +689,7 @@ TEST_CASE("battle unit: an enemy chooses its first skill")
         BattleUnit enemy;
         enemy.data = &object;
         enemy.idleTurns = 1;
-        enemy.unk2FDD = swd3e::BattleEnemy::NoObjects;  // swd3e: an enemy without objects takes its skills
+        enemy.emptyChoices = swd3e::BattleEnemy::NoObjects;  // swd3e: an enemy without objects takes its skills
         swd3e::u32 act = 0;
         all.random.Seed(seed);
         swd3e::Random reference;

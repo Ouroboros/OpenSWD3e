@@ -2741,7 +2741,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
 
     if (command == kMagicAttackCommand)
     {
-        unit.TakeCommand34A8();
+        unit.TakeMagicCommand();
     }
 
     unit.PrepareCommand(this->battleServices, this->database);

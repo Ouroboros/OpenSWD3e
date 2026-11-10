@@ -17,7 +17,7 @@ public:
     // ObjectData::kind bit of the machines (蟹精魔機, 羯忍幻機, ...).
     static constexpr u32 MachineKind = 0x800;
     static constexpr u16 SmallMachineTypes = 0xA;
-    // unk2FDD: the enemy has no object counts, or no skill counts.
+    // emptyChoices: the enemy has no object counts, or no skill counts.
     static constexpr u8 NoObjects = 1;
     static constexpr u8 NoSkills = 2;
 

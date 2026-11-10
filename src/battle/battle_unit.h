@@ -261,7 +261,7 @@ public:
         NoDamageMark = 0x8000,  // the damage of the unit is not raised
     };
 
-    // BattleUnit::unk2BDA bits (swd3e): the weak stand pose and the state of the talisman ghost's orders
+    // BattleUnit::ghostFlags bits (swd3e): the weak stand pose and the state of the talisman ghost's orders
     // (battle_ghost.cpp).
     enum GhostFlag : u16
     {
@@ -360,7 +360,7 @@ public:
     // BattleUnit::commandFlags bits.
     enum CommandFlag : u16
     {
-        CastsMagic = 0x200,     // a type 1 skill chosen (SelectSkill, TakeCommand34A8): its act kept (magicAction),
+        CastsMagic = 0x200,     // a type 1 skill chosen (SelectSkill, TakeMagicCommand): its act kept (magicAction),
                                 // GetOffset and GetOrigin take slot act MagicSlot
         UsesAccessory = 0x400,  // an accessory command that takes command B (UseAccessorySkill): the item ready pose
         AbsorbPose = 0x800,     // an absorb, a seal or a drain (SetCommand, StartAbsorb, StartDrainEffect): the absorb
@@ -395,7 +395,7 @@ public:
     // HurtFrame: the offsets of the stagger by its step. The four tables lie one after another up to 0x004BFC2C (eight
     // words no code of swd3e reads) and are read past their ends by the later steps: each runs on through the data
     // after it, up to 0x004BFC3C.
-    // 0x004BFBA4 (12 entries): the red flash of a unit of unk3070 shakes this far each way
+    // 0x004BFBA4 (12 entries): the red flash of a unit of noHurtAction shakes this far each way
     static constexpr std::array<i32, 38> StaggerFlash = {
         14,      14,      -24,       10,        10,        -8,        -8,       6,        6,        -4,
         -4,      0,       757736212, 825307183, 842150450, 842150450, 2621460,  5242940,  7864420,  9175180,
@@ -831,9 +831,9 @@ public:
     // +0x2BD4 the accessory commands of the turn: bit (kind - 0x15) of AccessoryKind for 0x15..0x1E, 0x400 for
     // StrikeBack
     u32 accessoryCommands = 0;
-    u16 marks = 0;      // +0x2BD8 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
-    u16 unk2BDA = 0;    // +0x2BDA (swd3e) bit 0: the weak stand pose (IdleFrame); bit 2 (0x00486540)
-    i16 guardPose = 0;  // +0x2BDC the guard pose (1, 2, 4)
+    u16 marks = 0;       // +0x2BD8 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
+    u16 ghostFlags = 0;  // +0x2BDA (swd3e) bit 0: the weak stand pose (IdleFrame); bit 2 (0x00486540)
+    i16 guardPose = 0;   // +0x2BDC the guard pose (1, 2, 4)
     u16 unk2BDE = 0;
     u16 nudge = 0;                                  // +0x2BE0
     u16 drawAtSaved = 0;                            // +0x2BE2
@@ -874,14 +874,14 @@ public:
     i8 enrageCounter2FD8 = 0;  // +0x2FD8
     u8 enrageElement = 0;      // +0x2FDC
     // +0x2FDD (swd3e) an enemy with no object counts 1, with no skill counts 2 (BattleEnemy::Setup, Reload)
-    u8 unk2FDD = 0;
+    u8 emptyChoices = 0;  // BattleEnemy::NoObjects or NoSkills (ProbeAct)
     // swd3e: a cast countdown (0x960 when full, 0x0048B170; drawn by 0x0048B190, run down by 0x004902E0), cleared by
     // ailment 0x200
     i16 castCountdown = 0;  // +0x2BE8
-    u16 unk2FA0 = 0;        // +0x2FA0 (swd3e) cleared when a poison ends
+    u16 poisonTurns = 0;    // +0x2FA0 (swd3e) the turns poisoned (CountPoisonTurn), cleared when it ends
     // +0x3070 (swd3e) 1: an enemy whose act has no action 0x26 (0x00487D60), or set by DrawEffects; cleared when
     // ailment 0x200 ends
-    i32 unk3070 = 0;
+    i32 noHurtAction = 0;  // 1: the act has no hurt action, the knock back plays instead (HurtFrame)
     // swd3e: 洞察光環 (equipment flag HitCancel): the space key during an enemy's attack takes the hit number back
     // (CancelHitNumber). The frames left for it once a damage number is pushed (2 by StepTargetCount, counted down by
     // IdleFrame; -1: missed, -2: taken back; 0 again when the enemy's attack is over, ClearHitCancel).
@@ -890,9 +890,9 @@ public:
     // gauge (ResetTurn clears it); cleared again past the next damage number
     i32 hitCancelled = 0;
     u16 flightDelay = 0;  // +0x2FBE (swd3e) the frames FlyAct waited before its steps grow
-    i16 unk2EB4 = 0;      // +0x2EB4 (swd3e) a sum kept by Damage (0x00495330)
-    u16 unk2EDE = 0;      // +0x2EDE (swd3e) cleared when a flight arrives (FlyAct, WalkToTarget)
-    u16 unk2EDC = 0;      // +0x2EDC (swd3e) set to 6 when a walk arrives (WalkToTarget), not read
+    i16 meterSum = 0;  // +0x2EB4 (swd3e) the hits taken added to the meter (Damage, 0x00495330); the StrikeBack attack
+    u16 unk2EDE = 0;   // +0x2EDE (swd3e) cleared when a flight arrives (FlyAct, WalkToTarget)
+    u16 unk2EDC = 0;   // +0x2EDC (swd3e) set to 6 when a walk arrives (WalkToTarget), not read
     u8 evadeCounter = 0;  // +0x2FD4 (swd3e) the evasion rolls of an enemy of skill 4 or more since its last success
     u8 rippleFrames = 0;  // +0x2FDB (swd3e) the frames of the unit's ripple (StartRipple, DrawEffects ends it past 30)
     // swd3e: 1 once an enemy chose its objects or its skills (read by OutOfChoices with the counts left)
@@ -943,22 +943,22 @@ public:
     u16 restAction = 0;     // +0x2FB2 the rest action of the frame (IdleFrame)
     u16 magicAction = 0;    // +0x2FB4 the action of its magic act
     u16 attackPose = 0;     // +0x2FB6 the attack pose an enemy chose (1: action 0x30, 2: 0x31; 0: none)
-    u16 unk2FB8 = 0;
-    u16 barrierTurns = 0;  // +0x2FBA
-    u8 unk2FC4 = 0;        // +0x2FC4 (cleared by ResetUnit 0x00491690)
-    u16 orbitStep = 0;     // +0x2FC0 (swd3e) the talisman ghost's step along its orbit segment (IdleFrame)
-    u16 orbitSegment = 0;  // +0x2FC2 (swd3e) and the segment
-    u8 evadeSkill = 0;     // +0x2FC5 an evade roll of 0..kEvadeRoll below it evades
-    u8 defeatPose = 0;     // +0x2FC6 the pose of the defeat (a fixed pose overrides it)
-    u8 fixedPose = 0;      // +0x2FC7
-    u8 idleTurns = 0;      // +0x2FC9 the turns since the enemy chose an object or a skill (ChooseCommand)
-    u8 itemWait = 0;       // +0x2FCA the turns since the third object was forced
-    u8 skillWait = 0;      // +0x2FCB the turns since the second skill was forced
-    u8 choicePhase = 0;    // +0x2FCC 1: objects were last chosen, 2: skills
-    u8 extraAttacks = 0;   // +0x2FCD the attacks the unit repeats (set by skill 0x15)
-    u8 healChoice = 0;     // +0x2FCE
-    u8 healPercent = 0;    // +0x2FD0 1: restoreHitPoints..restoreStamina are percentages of the target's maxima
-    i32 kind = 0;          // +0x2FE0 1: a party role
+    u16 walkPicture = 0;    // the last picture of the walk (WalkAdvance)
+    u16 barrierTurns = 0;   // +0x2FBA
+    u8 unk2FC4 = 0;         // +0x2FC4 (cleared by ResetUnit 0x00491690)
+    u16 orbitStep = 0;      // +0x2FC0 (swd3e) the talisman ghost's step along its orbit segment (IdleFrame)
+    u16 orbitSegment = 0;   // +0x2FC2 (swd3e) and the segment
+    u8 evadeSkill = 0;      // +0x2FC5 an evade roll of 0..kEvadeRoll below it evades
+    u8 defeatPose = 0;      // +0x2FC6 the pose of the defeat (a fixed pose overrides it)
+    u8 fixedPose = 0;       // +0x2FC7
+    u8 idleTurns = 0;       // +0x2FC9 the turns since the enemy chose an object or a skill (ChooseCommand)
+    u8 itemWait = 0;        // +0x2FCA the turns since the third object was forced
+    u8 skillWait = 0;       // +0x2FCB the turns since the second skill was forced
+    u8 choicePhase = 0;     // +0x2FCC 1: objects were last chosen, 2: skills
+    u8 extraAttacks = 0;    // +0x2FCD the attacks the unit repeats (set by skill 0x15)
+    u8 healChoice = 0;      // +0x2FCE
+    u8 healPercent = 0;     // +0x2FD0 1: restoreHitPoints..restoreStamina are percentages of the target's maxima
+    i32 kind = 0;           // +0x2FE0 1: a party role
     i32 unk2FE4 = 0;
     i32 sweeping = 0;       // +0x2FE8 the unit takes part in a sweep (MarkSweeping, the gathered order)
     i32 inAction = 0;       // +0x2FEC the unit plays an act of its own (an attack, a walk, a cast, a hurt, a defeat)

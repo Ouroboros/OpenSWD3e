@@ -1487,7 +1487,7 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
                 case SkillScript::StatsScaledAilment:
                     this->marks = static_cast<u16>(this->marks & ~BattleUnit::RegressedMark);
                     this->status &= ~BattleUnit::StatsScaled;
-                    this->unk3070 = 0;
+                    this->noHurtAction = 0;
 
                     if (this->kind == BattleUnit::PartyRole)
                     {
@@ -1509,7 +1509,7 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
                 case SkillScript::PoisonAilment:
                     this->status &= ~BattleUnit::Poisoned;
                     this->stateFlags &= ~kFlag2BC0Poison;
-                    this->unk2FA0 = 0;
+                    this->poisonTurns = 0;
                     break;
 
                 case SkillScript::EarthAttackUp:
