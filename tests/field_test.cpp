@@ -227,11 +227,11 @@ TEST_CASE("field: the cells around a footprint")
         return static_cast<std::size_t>(x + kGridSide * y);
     };
 
-    constexpr u32 kMask = MapHeader::Wall | MapHeader::SolidRole | MapHeader::Unk800000;
-    map.blocks[at(kCellX - 1, kCellY - 1)] = MapHeader::Wall;   // up left
-    map.blocks[at(kCellX + 1, kCellY)] = MapHeader::SolidRole;  // right
-    map.blocks[at(kCellX, kCellY + 1)] = MapHeader::Unk800000;  // down
-    map.blocks[at(kCellX - 1, kCellY + 1)] = 1;                 // down left, a region outside the mask
+    constexpr u32 kMask = MapHeader::Wall | MapHeader::SolidRole | MapHeader::ObstacleCell;
+    map.blocks[at(kCellX - 1, kCellY - 1)] = MapHeader::Wall;      // up left
+    map.blocks[at(kCellX + 1, kCellY)] = MapHeader::SolidRole;     // right
+    map.blocks[at(kCellX, kCellY + 1)] = MapHeader::ObstacleCell;  // down
+    map.blocks[at(kCellX - 1, kCellY + 1)] = 1;                    // down left, a region outside the mask
     CHECK_EQ(
         all.field.ProbeCells(static_cast<std::ptrdiff_t>(at(kCellX, kCellY)), 1, 1, kMask),
         BlockingMap::ProbeUpLeft | BlockingMap::ProbeRight | BlockingMap::ProbeDown

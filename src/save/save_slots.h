@@ -31,14 +31,14 @@ struct SavePreview
 
     std::array<SavePreviewRole, Party::Roles> roles;  // +0x00
     i32 unk20 = 0;                                    // +0x20
-    i32 unk24 = 0;                                    // +0x24 2, or 3 with story flag 0x53
-    i32 gold = 0;                                     // +0x28 the dword at +4 of the saved data: the gold
-    u16 state = 0;                                    // +0x30 Missing, Loaded
-    std::vector<u16> thumbnail;                       // +0x2C4 160 x 120 pixels
-    std::string date;                                 // +0x2C8 "yyyy/mm/dd hh:mm"
-    std::string location;                             // +0x2CC
-    std::array<char, 0x80> names = {};                // +0x2D0 the RoleName records of the party
-    std::string playTime;                             // +0x2D4
+    i32 emblem = 0;              // +0x24 the emblem shown (picture file 0x2357 + it): 2, or 3 with story flag 0x53
+    i32 gold = 0;                // +0x28 the dword at +4 of the saved data: the gold
+    u16 state = 0;               // +0x30 Missing, Loaded
+    std::vector<u16> thumbnail;  // +0x2C4 160 x 120 pixels
+    std::string date;            // +0x2C8 "yyyy/mm/dd hh:mm"
+    std::string location;        // +0x2CC
+    std::array<char, 0x80> names = {};  // +0x2D0 the RoleName records of the party
+    std::string playTime;               // +0x2D4
 };
 
 // The save slots of the load and save screens: the newest slot, the previews of the page of three slots it is on and

@@ -1059,7 +1059,7 @@ void Game::LoadCity(int map, int x, int y, i16 act, i16 action, i16 direction, i
                 entry.role = role.id;
                 entry.x = static_cast<u16>(role.x);
                 entry.y = static_cast<u16>(role.y);
-                entry.unk08 = 0;
+                entry.bubbleCount = 0;
                 entry.flags = 0;
                 entry.unk0E = 0;
             }

@@ -35,7 +35,8 @@ constexpr int kFollowerSpeed = 2;
 constexpr u32 kTrailSpacing = 2;   // the trail points between two followers
 constexpr u32 kWanderRoll = 0x50;  // a wandering role rolls 0..79: directions below 8, a rest above kRestAbove
 constexpr int kRestAbove = 0x3C;
-constexpr int kUnkMoveSlot = 0x20;  // FindPath: false only for this slot, which the full table never reaches
+constexpr int kFullMoveSlot =
+    0x20;                           // FindPath: the original's "no free move" slot, which the table of 72 never reaches
 constexpr int kFastWalkGap = 0x80;  // a follower further than this from its target walks fast
 constexpr u16 kFlagListEnd = 0xFFFF;
 constexpr u16 kKeepAct = 0xFFFF;      // SetAct: the act, action or direction left as it is
@@ -172,7 +173,7 @@ bool RolePath::FindPath(int index, u16 tileX, u16 tileY)
     {
         if (++slot >= RolePath::Moves)
         {
-            return slot != kUnkMoveSlot;
+            return slot != kFullMoveSlot;
         }
     }
 
@@ -237,7 +238,7 @@ bool RolePath::FindPath(int index, u16 tileX, u16 tileY)
         role.y = static_cast<i32>(y);
     }
 
-    return slot != kUnkMoveSlot;
+    return slot != kFullMoveSlot;
 }
 
 // swd3e.exe 0x004063A0: the next step of role `index` along its move: held while it talks; at the path's end the move

@@ -207,7 +207,7 @@ constexpr u16 kDownArrow = 0;
 constexpr u16 kDownArrowLit = 1;
 constexpr u16 kUpArrow = 2;
 constexpr u16 kUpArrowLit = 3;
-constexpr u16 kEmblemFiles = 0x2357;  // swd3e: a loaded slot shows picture file 0x2357 + SavePreview::unk24
+constexpr u16 kEmblemFiles = 0x2357;  // swd3e: a loaded slot shows picture file 0x2357 + SavePreview::emblem
 constexpr int kEmblemX = 0x25A;
 constexpr int kEmblemTop = 0x82;
 
@@ -1457,7 +1457,7 @@ void Game::UnpackParty(std::span<const u8> data)
 }
 
 // swd3e.exe 0x00408CC0: the slots page: the background (action 0 saving, 0xC loading), the three slots of the page (the
-// chosen one darker with frames: date, thumbnail, place, the roles' faces and levels, the gold, the emblem of unk24 and
+// chosen one darker with frames: date, thumbnail, place, the roles' faces and levels, the gold, the emblem and
 // the play time;
 // "沒有存檔資訊" for a free slot; the number), the overwrite prompt when saving, the arrows of the pages beyond (lit
 // under the pointer, pressed a few frames after paging) and the pointer
@@ -1583,7 +1583,7 @@ void Game::DrawSlotsPage()
             }
 
             this->actDrawer.DrawCounter(kGoldRight, y + kGoldTop, static_cast<u32>(preview.gold), this->counterAlpha);
-            this->actDrawer.DrawPicture(static_cast<u16>(preview.unk24 + kEmblemFiles), 0, kEmblemX, y + kEmblemTop);
+            this->actDrawer.DrawPicture(static_cast<u16>(preview.emblem + kEmblemFiles), 0, kEmblemX, y + kEmblemTop);
             this->mediumFont.DrawText(
                 this->drawSurface,
                 kPlayTimeRight - kPlayTimeCharWidth * static_cast<int>(preview.playTime.size()),

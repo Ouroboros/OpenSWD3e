@@ -891,9 +891,9 @@ void Field::MarkRoleCells(const Role& role, i32 leader)
 {
     u32 bits = (role.flags & Role::Solid) != 0 ? MapHeader::RoleCell | MapHeader::SolidRole : MapHeader::RoleCell;
 
-    if ((role.flags & Role::Unk10) != 0)
+    if ((role.flags & Role::Obstacle) != 0)
     {
-        bits |= MapHeader::Unk800000;
+        bits |= MapHeader::ObstacleCell;
     }
 
     if (static_cast<i32>(role.id) == leader)
@@ -917,7 +917,7 @@ void Field::MarkRoleCells(const Role& role, i32 leader)
 void Field::ClearRoleCells(const Role& role, i32 leader)
 {
     const u32 mask =
-        ~(MapHeader::RoleCell | MapHeader::SolidRole | MapHeader::Unk800000 |
+        ~(MapHeader::RoleCell | MapHeader::SolidRole | MapHeader::ObstacleCell |
           (static_cast<i32>(role.id) == leader ? MapHeader::LeaderCell : 0u));
     ChangeRoleCells(
         this->state.map.blocks,

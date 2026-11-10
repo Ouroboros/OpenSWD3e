@@ -41,7 +41,7 @@ void FieldView::DrawDebug(int screenLeft, int screenTop)
         this->MarkCells(MapHeader::RoleCell, static_cast<int>(green + blue), screenLeft, screenTop, kRoleCellInset);
         this->MarkCells(MapHeader::RegionMask, static_cast<int>(red + green), screenLeft, screenTop, kRegionInset);
         this->MarkCells(MapHeader::SolidRole, static_cast<int>(red), screenLeft, screenTop, kSolidRoleInset);
-        this->MarkCells(MapHeader::Unk800000, static_cast<int>(red + blue), screenLeft, screenTop, kUnk800000Inset);
+        this->MarkCells(MapHeader::ObstacleCell, static_cast<int>(red + blue), screenLeft, screenTop, kObstacleInset);
     }
 
     if (owner.debugText != 1)
@@ -125,8 +125,8 @@ void FieldView::DrawDebug(int screenLeft, int screenTop)
         u8"T.Gd[%d] T.Tid[%d] dbg1[%d] dbg2[%d]",
         static_cast<u32>(state.leader.id),
         static_cast<u32>(state.leader.event),
-        view.unk4C9A08,
-        view.unk4ACE64
+        view.debugValue1,
+        view.debugValue2
     );
 
     auto mode = [&view](u32 used, u32 repeat) -> std::string

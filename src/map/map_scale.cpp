@@ -19,11 +19,11 @@ constexpr std::size_t kScalesAt = 0x10;
 
 }  // namespace
 
-// swd3e.exe 0x0042B1C0 (from 0x0042B1F0): no kind, no rows, the default scale in every dword of unk00C and every
+// swd3e.exe 0x0042B1C0 (from 0x0042B1F0): no kind, no rows, the default scale in every dword of unusedScales and every
 // level, no picture
 MapScale::MapScale()
 {
-    this->unk00C.fill(this->defaultScale);
+    this->unusedScales.fill(this->defaultScale);
     this->levels.fill(static_cast<i16>(this->defaultScale));
 }
 
@@ -42,9 +42,9 @@ bool MapScale::SetScales(std::span<const u8> data)
 
     if (kind == static_cast<u32>(Kind::Picture))
     {
-        for (std::size_t index = 0; index < this->unk00C.size(); ++index)
+        for (std::size_t index = 0; index < this->unusedScales.size(); ++index)
         {
-            this->unk00C[index] = static_cast<i32>(ByteReader::Word32At(data, kScalesAt + sizeof(i32) * index));
+            this->unusedScales[index] = static_cast<i32>(ByteReader::Word32At(data, kScalesAt + sizeof(i32) * index));
         }
 
         this->kind = Kind::Picture;
@@ -93,7 +93,7 @@ bool MapScale::Clear()
     this->kind = Kind::None;
     this->defaultScale = MapScale::DefaultScale;
     this->rowScales.clear();
-    this->unk00C.fill(this->defaultScale);
+    this->unusedScales.fill(this->defaultScale);
     this->levels.fill(static_cast<i16>(this->defaultScale));
     this->picture.clear();
     return true;

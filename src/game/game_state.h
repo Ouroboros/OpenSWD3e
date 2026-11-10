@@ -22,7 +22,8 @@ struct MapHeader
         LeaderCell = 0x100,       // the leader stands on it
         Reflecting = 0x800,       // the roles on it are reflected
         ShadeMask = 0xF000,       // the shade of the roles on it (Role::CellShades >> ShadeShift)
-        Unk800000 = 0x800000,     // under a role with Role::Unk10
+        ObstacleCell = 0x800000,  // under a role with Role::Obstacle: it blocks the controlled role's slide
+                                  // (RoleControl::Slide) and the path search (PathFinder::mask)
         KeyedTile = 0x04000000,   // its tile is drawn with colour 0 transparent
         HiddenTile = 0x08000000,  // its tile is not drawn
         RoleCell = 0x10000000,    // a role stands on it

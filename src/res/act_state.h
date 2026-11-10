@@ -118,10 +118,11 @@ struct ActState
     // Bits of ActState::target read by BattleUnit::AimAction and BattleRole::AttackFrame.
     enum TargetBit : u16
     {
-        Strikes = 0x1,       // the act strikes the target (BattleRole::Strike)
-        Recoils = 0x2,       // the unit's recoil act plays the act's effectA (action effectQ)
-        Staggers = 0x4,      // staggers the target (BattleUnit::Stagger), then the bits are cleared
-        UnkTarget10 = 0x10,  // with Strikes: an enemy strikes without raising the flag (Game::EnemyAttackFrame)
+        Strikes = 0x1,   // the act strikes the target (BattleRole::Strike)
+        Recoils = 0x2,   // the unit's recoil act plays the act's effectA (action effectQ)
+        Staggers = 0x4,  // staggers the target (BattleUnit::Stagger), then the bits are cleared
+        StrikesUnstaggered =
+            0x10,  // the act strikes the target without staggering it (Game::TakeHitBits, Game::EnemyAttackFrame)
         FollowsUp = 0x8,     // the follow-up action starts
         Dashes = 0x100,      // with FollowsUp: the role dashes (BattleRole::ChargeAttackFrame)
         Holds = 0x200,       // the act stays on its step while the unit recoils

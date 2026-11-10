@@ -389,7 +389,7 @@ bool Talk::PlaceRole(EventRun& run)
                     mark.role = placed->id;
                     mark.x = static_cast<u16>(placed->x);
                     mark.y = static_cast<u16>(placed->y);
-                    mark.unk08 = 0;
+                    mark.bubbleCount = 0;
                     mark.flags = 0;
                     mark.unk0E = 0;
                 }

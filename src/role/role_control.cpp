@@ -12,7 +12,7 @@ namespace
 
 constexpr u32 kNone = 0xFFFFFFFF;
 constexpr u32 kSolid = MapHeader::Wall | MapHeader::SolidRole;
-constexpr u32 kSlideMask = MapHeader::Wall | MapHeader::SolidRole | MapHeader::Unk800000;
+constexpr u32 kSlideMask = MapHeader::Wall | MapHeader::SolidRole | MapHeader::ObstacleCell;
 
 // The tables of a slide (on the stack of 0x00403DC0): a straight step has the cell offset ahead (replaced by the
 // role's size when it moves right or down) and the probe bits of the side steps; a diagonal one its step and the probe

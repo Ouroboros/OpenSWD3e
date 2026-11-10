@@ -39,9 +39,10 @@ public:
     Kind GetKind() const;
 
 private:
-    Kind kind = Kind::None;                     // +0x000
-    std::vector<i32> rowScales;                 // +0x004 Rows: a scale per tile row (their count at +0x008)
-    std::array<i32, Levels> unk00C{};           // +0x00C set by SetScales for kind Picture; nothing reads them
+    Kind kind = Kind::None;      // +0x000
+    std::vector<i32> rowScales;  // +0x004 Rows: a scale per tile row (their count at +0x008)
+    std::array<i32, Levels>
+        unusedScales{};  // +0x00C dword scales SetScales reads for kind Picture; nothing reads them (`levels` is used)
     std::array<i16, Levels> levels{};           // +0x40C the scales the picture's indices pick
     std::vector<u8> picture;                    // +0x60C an RLE picture of level indices
     i32 defaultScale = MapScale::DefaultScale;  // +0x610

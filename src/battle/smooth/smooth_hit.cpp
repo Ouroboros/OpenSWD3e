@@ -669,7 +669,7 @@ int HitFrame::HitAllFrameAdvance(BattleUnit& target, BattleUnit& attacker, u32 a
         hit.target = 0;
     }
 
-    if ((hit.target & (ActState::Strikes | ActState::UnkTarget10)) != 0)
+    if ((hit.target & (ActState::Strikes | ActState::StrikesUnstaggered)) != 0)
     {
         game.StrikeAllHit(target, attacker, index, all, delay);
         hit.target = 0;

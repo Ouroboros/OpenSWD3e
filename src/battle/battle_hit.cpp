@@ -473,8 +473,8 @@ void Game::QuakeFrame()
 // picture is read straight from its file (zoomed by its 'CS' values) and drawn, walking to the target for a moving
 // attack; reaching it strikes, a command of several turns (enemyCommandTurns) walks again, and the attacker's follow
 // act becomes the act's effect: added as a second-tier spell picture where the act was drawn. The target bits:
-// Quakes the quake, FollowsUp the nudges and the field fade, Staggers raises flag 2BC0, Strikes (and UnkTarget10)
-// take the damage of the hit with its digits (and the spirit and stamina digits of a role's hit).
+// Quakes the quake, FollowsUp the nudges and the field fade, Staggers raises flag 2BC0, Strikes (and
+// StrikesUnstaggered) take the damage of the hit with its digits (and the spirit and stamina digits of a role's hit).
 int Game::HitTargetFrame(BattleUnit& target, BattleUnit& attacker, u32 act, int index)
 {
     smooth::Scene scene;
@@ -555,7 +555,7 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
     {
         target.Stagger(this->battleState);
     }
-    else if ((hit.target & ActState::UnkTarget10) == 0)
+    else if ((hit.target & ActState::StrikesUnstaggered) == 0)
     {
         return;
     }

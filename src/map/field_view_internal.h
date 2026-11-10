@@ -263,7 +263,7 @@ constexpr int kAverageShift = 2;
 constexpr int kRoleCellInset = 2;
 constexpr int kRegionInset = 4;
 constexpr int kSolidRoleInset = 6;
-constexpr int kUnk800000Inset = 8;
+constexpr int kObstacleInset = 8;
 
 // The sixth argument the original passes with a picture: the word at +4 of the picture record (its palette).
 inline DrawArgument PictureArgument(const Picture& picture)

@@ -25,14 +25,14 @@ constexpr u32 kSecondsPerHour = 0xE10;
 constexpr u32 kSecondsPerMinute = 0x3C;
 constexpr std::size_t kRoleRecords = 0x104;
 constexpr u16 kAbsentRole = 0xFFFF;  // maxHitPoints of a role not in the party
-constexpr int kUnk24Flag = 0x53;
-constexpr i32 kUnk24Base = 2;
+constexpr int kEmblemFlag = 0x53;
+constexpr i32 kEmblemBase = 2;
 constexpr char kDigitPlace = '_';                           // a place of DateTemplate the next header digit fills
 constexpr std::size_t kBlockHeaderBytes = 2 * sizeof(u32);  // a packed block: its packed size and its word count
 constexpr std::size_t kUnk20At = 0xC;                       // after the second table
 constexpr std::size_t kDataBlockAt = 0x24;
-constexpr std::size_t kUnk28At = 4;  // in the unpacked data
-constexpr i32 kLitAction = 8;        // the preview frame of the newest slot
+constexpr std::size_t kGoldAt = 4;  // in the unpacked data
+constexpr i32 kLitAction = 8;       // the preview frame of the newest slot
 constexpr i32 kPreviewDirection = 6;
 
 u32 Dword(std::span<const u8> bytes, std::size_t at)
@@ -134,13 +134,13 @@ void SaveSlots::LoadPreview(SavePreview& preview, int slot, const std::u8string&
         }
     }
 
-    preview.unk24 = (flag(kUnk24Flag) ? 1 : 0) + kUnk24Base;
+    preview.emblem = (flag(kEmblemFlag) ? 1 : 0) + kEmblemBase;
     const std::size_t table = at + Dword(view, at) + kBlockHeaderBytes;
     const std::size_t after = table + Dword(view, table);
     preview.unk20 = static_cast<i32>(Dword(view, after + kUnk20At));
     const std::size_t block = after + kDataBlockAt;
     const std::vector<u8> data = Unpack(view, block);
-    preview.gold = static_cast<i32>(Dword(data, kUnk28At));
+    preview.gold = static_cast<i32>(Dword(data, kGoldAt));
 
     for (std::size_t role = 0; role < preview.roles.size(); ++role)
     {

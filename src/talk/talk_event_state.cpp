@@ -44,8 +44,8 @@ u32 RoleFlagOf(EventCommand code)
         case EventCommand::RoleNoTalkPointer:
             return Role::NoTalkPointer;
 
-        case EventCommand::RoleUnk10:
-            return Role::Unk10;
+        case EventCommand::RoleObstacle:
+            return Role::Obstacle;
 
         case EventCommand::RoleStepsAct:
             return Role::StepsAct;
@@ -256,7 +256,7 @@ bool Talk::RunStateCommand(EventRun& run)
 
         case EventCommand::RoleExamine:
         case EventCommand::RoleNoTalkPointer:
-        case EventCommand::RoleUnk10:
+        case EventCommand::RoleObstacle:
         case EventCommand::RoleStepsAct:
         case EventCommand::RoleFacesTalker:
         case EventCommand::RoleTouchEvent:
@@ -890,7 +890,7 @@ bool Talk::RunStateCommand(EventRun& run)
 
                 if (learned != nullptr)
                 {
-                    learned->record.data.kind &= ~ObjectData::UnkKind8000;
+                    learned->record.data.kind &= ~ItemNode::PendingKind;
 
                     if ((learned->record.data.usableBy & (ObjectData::FirstRoleBit >> role)) == 0)
                     {

@@ -619,7 +619,7 @@ void FieldView::DrawBubbles(int x, int y, u16 role)
             mark.flags |= RoleMark::Emitting;
         }
 
-        if (mark.unk08 < kBubbleMarkLimit && (mark.flags & RoleMark::Emitting) != 0)
+        if (mark.bubbleCount < kBubbleMarkLimit && (mark.flags & RoleMark::Emitting) != 0)
         {
             auto bubble = std::make_unique<RoleMarkNode>();
             bubble->next = std::move(mark.nodes);

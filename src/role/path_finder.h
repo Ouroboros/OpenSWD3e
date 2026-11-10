@@ -100,10 +100,10 @@ public:
     i32 found = 0;                 // +0x14 1 after a successful FindPath, 0 after an impossible one
     i32 unk18 = 0;
     i32 unk1C = 0;
-    i32 width = 0;                                      // +0x20 tiles
-    i32 height = 0;                                     // +0x24
-    u32 mask = MapHeader::Wall | MapHeader::Unk800000;  // +0x28 blocking bits
-    std::array<u32, 8> blocked = {};                    // +0x2C N, NE, E, SE, S, SW, W, NW
+    i32 width = 0;                                         // +0x20 tiles
+    i32 height = 0;                                        // +0x24
+    u32 mask = MapHeader::Wall | MapHeader::ObstacleCell;  // +0x28 blocking bits
+    std::array<u32, 8> blocked = {};                       // +0x2C N, NE, E, SE, S, SW, W, NW
 
 private:
     PathNodePool& pool;

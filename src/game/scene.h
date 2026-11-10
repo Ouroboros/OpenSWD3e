@@ -110,7 +110,7 @@ struct RoleMark
     std::unique_ptr<RoleMarkNode> nodes;  // +0x00
     u16 x = 0;                            // +0x04 the role's place
     u16 y = 0;                            // +0x06
-    i16 unk08 = 0;                        // +0x08 bubbles start while below 0x18
+    i16 bubbleCount = 0;                  // +0x08 bubbles start while below 0x18; only ever cleared, so they always do
     u16 flags = 0;                        // +0x0A
     u16 role = 0;                         // +0x0C
     u16 unk0E = 0;                        // +0x0E
@@ -423,10 +423,10 @@ struct Scene
     std::array<i16, 0x40> heatCounts = {};      // 0x004C4A80 lines
     std::array<i32, 0x30> heatOffsets = {};     // 0x004C6154 pixels
     u16 heatFrame = 0;                          // 0x004E6CD8
-    ColorFade fade;     // 0x004C300C frames; steps 0x004C30DC, 0x004C2B90, 0x004E55A0; levels 0x004C2AA8, 0x004D0468,
-                        // 0x004E5808; targets 0x004C2AA4, 0x004D046C, 0x004E580C
-    i32 unk4C9A08 = 0;  // 0x004E5810 shown as dbg1 (read only by DrawDebug)
-    i32 unk4ACE64 = 0;  // 0x004C6614 shown as dbg2 (read only by DrawDebug)
+    ColorFade fade;       // 0x004C300C frames; steps 0x004C30DC, 0x004C2B90, 0x004E55A0; levels 0x004C2AA8, 0x004D0468,
+                          // 0x004E5808; targets 0x004C2AA4, 0x004D046C, 0x004E580C
+    i32 debugValue1 = 0;  // 0x004E5810 shown as dbg1 (read only by DrawDebug)
+    i32 debugValue2 = 0;  // 0x004C6614 shown as dbg2 (read only by DrawDebug)
     i32 followerCount = 0;          // 0x004D3FC0 one past the last follower listed (slot 0 unused)
     i32 mapWalkSpeed = 0;           // swd32 0x004C8BD8 the walking speed of the map
     u16 weatherActions = 0;         // 0x004E55A6 how many actions follow it

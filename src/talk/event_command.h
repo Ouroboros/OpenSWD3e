@@ -128,7 +128,7 @@ enum class EventCommand : u16
     ChangeMusic = 0x72,
     MusicVolume = 0x73,
     PutRoles = 0x74,
-    RoleUnk10 = 0x75,
+    RoleObstacle = 0x75,
     CloseDialog = 0x76,
     WaitDialogRead = 0x77,
     SetActData = 0x78,
@@ -369,7 +369,7 @@ constexpr std::array<CommandLength, 0xD7> kCommandBytes = {
     CommandLength{EventCommand::ChangeMusic, 8},                  // 0x72
     CommandLength{EventCommand::MusicVolume, 4},                  // 0x73
     CommandLength{EventCommand::PutRoles, 0},                     // 0x74
-    CommandLength{EventCommand::RoleUnk10, 6},                    // 0x75
+    CommandLength{EventCommand::RoleObstacle, 6},                 // 0x75
     CommandLength{EventCommand::CloseDialog, 4},                  // 0x76
     CommandLength{EventCommand::WaitDialogRead, 4},               // 0x77
     CommandLength{EventCommand::SetActData, 10},                  // 0x78
