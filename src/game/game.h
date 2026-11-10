@@ -409,6 +409,8 @@ private:
     void ScrollListForward();
     void AutoBattleTurn();
     bool AutoCombo(i32 unit);
+    bool AutoGroupAttack(i32 unit);
+    i32 AutoAttackCommand(i32 unit);
     bool CanSelectRole(int unit);
     std::array<i32, 4> PanelUnitsInUse() const;
     std::size_t PanelPlace(int unit) const;

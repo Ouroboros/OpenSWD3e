@@ -1742,6 +1742,47 @@ bool Game::AutoCombo(i32 unit)
     return wears && role.CanUseAccessory(static_cast<u16>(AccessoryKind::RepeatAttack)) == 1;
 }
 
+// The rebuild's auto combo (deviations.md): whether role unit `unit` attacks the whole enemy side with 群攻 in the
+// auto battle when it cannot with 連擊 (the setting on, the role wearing its accessory with the stamina for it), as
+// when it is chosen from the menu.
+bool Game::AutoGroupAttack(i32 unit)
+{
+    const i32 index = unit - BattleState::FirstRoleUnit;
+
+    if (!this->config.autoCombo || index < 0 || static_cast<std::size_t>(index) >= this->battleRoles.size())
+    {
+        return false;
+    }
+
+    BattleRole& role = this->battleRoles[static_cast<std::size_t>(index)];
+    const bool wears = std::any_of(
+        role.accessories.begin(),
+        role.accessories.end(),
+        [](const ObjectRecord& accessory)
+        {
+            return accessory.data.actionKind == static_cast<u16>(AccessoryKind::GroupAttack);
+        }
+    );
+    return wears && role.CanUseAccessory(static_cast<u16>(AccessoryKind::GroupAttack)) == 1;
+}
+
+// The rebuild's auto combo (deviations.md): the command of an attack of role unit `unit` in the auto battle: 連擊
+// when it can, else 群攻 when it can, else the attack.
+i32 Game::AutoAttackCommand(i32 unit)
+{
+    if (this->AutoCombo(unit))
+    {
+        return kAimedCommand15;
+    }
+
+    if (this->AutoGroupAttack(unit))
+    {
+        return kGroupAttackCommand;
+    }
+
+    return kAttackCommand;
+}
+
 // swd3e.exe 0x00467CF0: the auto battle takes the current role's turn (unless in battle state 3): with no remembered
 // enemy (autoTarget) the state becomes 3; otherwise the role acts on it (aimTarget); a defeated enemy gives way to the
 // first standing one, and with none the auto battle ends. The rebuild's auto combo attacks with 連擊 instead when it
@@ -1758,19 +1799,40 @@ void Game::AutoBattleTurn()
     battle.turnCommand = 1;
     battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = 1;
 
+    // The rebuild's auto combo (deviations.md): the attack with 連擊, else 群攻, when the role can.
+    const i32 command = this->AutoAttackCommand(battle.currentUnit);
+
     if (battle.autoTarget == -1)
     {
-        // The rebuild's auto combo (deviations.md): the attack aimed now with 連擊 when it can (the aim taken in
-        // battle state 3 takes the menu's command).
-        if (this->AutoCombo(battle.currentUnit))
+        // The rebuild's auto combo (deviations.md): the attack aimed now with 連擊 or 群攻 (the whole side, as the
+        // menu's 群攻 aims) when it can (the aim taken in battle state 3 takes the menu's command).
+        if (command != kAttackCommand)
         {
-            battle.turnCommand = kAimedCommand15;
-            battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = kAimedCommand15;
-            battle.menuCommand = kAimedCommand15;
+            battle.turnCommand = command;
+            battle.turnTaken[static_cast<std::size_t>(battle.currentUnit)] = command;
+            battle.menuCommand = command;
+        }
+
+        if (command == kGroupAttackCommand)
+        {
+            battle.unk577284 = 1;
         }
 
         battle.choiceReady = 1;
         battle.result = kTurnState;
+        return;
+    }
+
+    // The rebuild's auto combo (deviations.md): 群攻 takes the whole side as the menu's 群攻 confirmed does
+    // (ConfirmTarget: its order on every standing enemy), aimed at the remembered enemy.
+    if (command == kGroupAttackCommand)
+    {
+        battle.menuCommand = command;
+        battle.unk577284 = 1;
+        battle.choiceReady = 1;
+        battle.mouseMode = 0;
+        battle.aimTarget = battle.autoTarget;
+        this->ConfirmTarget();
         return;
     }
 
@@ -1784,7 +1846,7 @@ void Game::AutoBattleTurn()
     battle.mouseMode = 0;
     battle.choiceReady = 0;
 
-    if (this->AutoCombo(battle.turnUnit))
+    if (command == kAimedCommand15)
     {
         battle.turnCommand = kAimedCommand15;
         battle.turnTaken[static_cast<std::size_t>(battle.turnUnit)] = kAimedCommand15;
@@ -5392,9 +5454,14 @@ void Game::ConfirmTarget()
 
     // The rebuild's auto combo (deviations.md): an attack aimed in the auto battle by a role that can use 連擊 (the
     // aim may have been opened by the auto battle's key before the role's turn came).
-    if (battle.autoBattle == 1 && battle.menuCommand == 1 && this->AutoCombo(battle.currentUnit))
+    if (battle.autoBattle == 1 && battle.menuCommand == 1)
     {
-        battle.menuCommand = kAimedCommand15;
+        battle.menuCommand = this->AutoAttackCommand(battle.currentUnit);
+
+        if (battle.menuCommand == kGroupAttackCommand)
+        {
+            battle.unk577284 = 1;
+        }
     }
 
     const i32 chooser = battle.currentUnit;
@@ -6602,8 +6669,15 @@ void Game::BattleKeys()
 
         if (menuShown && this->scene.talkWindows == nullptr && (battle.startPoseRole & BattleState::StartPoseDone) != 0)
         {
-            // The rebuild's auto combo (deviations.md): the first aimed attack with 連擊 when it can.
-            const i32 command = this->AutoCombo(unit) ? kAimedCommand15 : 1;
+            // The rebuild's auto combo (deviations.md): the first aimed attack with 連擊, else 群攻 (the whole
+            // side), when it can.
+            const i32 command = this->AutoAttackCommand(unit);
+
+            if (command == kGroupAttackCommand)
+            {
+                battle.unk577284 = 1;
+            }
+
             battle.mouseMode = 0;
             battle.autoBattle = 1;
             battle.turnCommand = command;
