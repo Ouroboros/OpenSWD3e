@@ -1,21 +1,11 @@
-"""scripts/mechanics/build.py <mechanics.md> <out.html> [move.wav]: the game mechanics page (docs/mechanics.html).
+"""scripts/mechanics/build.py <mechanics.md> <out.html>: the game mechanics page (docs/mechanics.html), silent.
 
 mechanics.md: "## 標題 {#id}" starts a section (its link name), "### " a heading, "- " a list item, "| … |" table rows
 (the first row the header, the "|---|" row skipped); other lines are paragraphs. `code` spans are kept.
 """
-import base64
 import html
-import json
 import re
 import sys
-
-
-def sound_url(path):
-    """The cursor sound (scripts/sound/extract.py all.snd 0x2E) as a data address; none without one."""
-    if not path:
-        return None
-    with open(path, 'rb') as sound:
-        return 'data:audio/wav;base64,' + base64.b64encode(sound.read()).decode('ascii')
 
 
 def inline(text):
@@ -28,7 +18,7 @@ def cells(line):
 
 
 def main():
-    source, out_path, *rest = sys.argv[1:]
+    source, out_path = sys.argv[1:]
     sections = []
     for line in open(source, encoding='utf-8'):
         line = line.rstrip('\n')
@@ -58,7 +48,6 @@ def main():
         f'<div class="tab" data-id="{section["id"]}">{html.escape(section["title"])}</div>' for section in sections
     )
     page = TEMPLATE.replace('<!--BODY-->', body).replace('<!--TABS-->', tabs)
-    page = page.replace('/*SOUND*/null', json.dumps(sound_url(rest[0] if rest else '')))
     with open(out_path, 'w', encoding='utf-8') as out:
         out.write(page)
     print(f'{len(sections)} sections, {sum(len(s["blocks"]) for s in sections)} lines, {len(page)} bytes')
@@ -162,22 +151,6 @@ h1 {
 }
 
 .tools { display: flex; align-items: flex-end; gap: 10px; }
-
-.sound {
-  height: 34px;
-  margin: 0 0 6px;
-  font: inherit;
-  font-size: 18px;
-  color: var(--text);
-  background: var(--panel);
-  border: 2px solid var(--gold);
-  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
-  outline: none;
-}
-
-.sound { padding: 0 12px; font-family: var(--kai); cursor: pointer; white-space: nowrap; }
-.sound:hover { border-color: var(--gold-light); }
-.sound.off { color: var(--dim); }
 
 .layout {
   display: grid;
@@ -315,9 +288,7 @@ h1 {
 <body>
 <div class="book">
   <div class="top">
-    <div class="tools">
-      <button class="sound" id="sound" type="button"></button>
-    </div>
+    <div class="tools"></div>
     <h1>遊戲機制</h1>
   </div>
   <div class="layout">
@@ -327,24 +298,7 @@ h1 {
   <div class="hint">←→ 分頁　↑↓ PgUp / PgDn 捲動　Home / End 首尾</div>
 </div>
 <script>
-// The game's cursor sound (all.snd 0x2E, which the menus play as the cursor moves).
-const MOVE_SOUND = /*SOUND*/null;
-
-// The sound is on unless the address says ?sound=off; the switch keeps it there (and, shown in the home page, tells
-// the home page, which keeps it in its own address and passes it to the other pages).
-const SOUND_PARAMETER = 'sound';
-const SOUND_OFF = 'off';
-let soundOn = new URLSearchParams(location.search).get(SOUND_PARAMETER) !== SOUND_OFF;
-
 const $ = id => document.getElementById(id);
-
-function beep() {
-  if (MOVE_SOUND && soundOn) {
-    const sound = new Audio(MOVE_SOUND);
-    sound.volume = 0.6;
-    sound.play().catch(() => {});
-  }
-}
 
 document.addEventListener('keydown', event => {
   const body = $('body');
@@ -418,7 +372,6 @@ function choose(at) {
 
   show(at);
   keepPlace(tabs[at].dataset.id);
-  beep();
 }
 
 // ←→ step through the tabs, wrapping round as the bestiary's do.
@@ -434,46 +387,6 @@ $('tabs').addEventListener('click', event => {
   }
 });
 
-function drawSound() {
-  const button = $('sound');
-  button.textContent = soundOn ? '音效 開' : '音效 關';
-  button.classList.toggle('off', !soundOn);
-}
-
-function setSound(on, fromHome = false) {
-  soundOn = on;
-  const query = new URLSearchParams(location.search);
-
-  if (soundOn) {
-    query.delete(SOUND_PARAMETER);
-  } else {
-    query.set(SOUND_PARAMETER, SOUND_OFF);
-  }
-
-  const text = query.toString();
-  history.replaceState(null, '', `${location.pathname}${text ? `?${text}` : ''}${location.hash}`);
-  drawSound();
-
-  if (!fromHome && window.parent !== window) {
-    window.parent.postMessage({ sound: soundOn }, '*');
-  }
-}
-
-$('sound').addEventListener('click', event => {
-  setSound(!soundOn);
-  beep();
-  event.currentTarget.blur();
-});
-
-addEventListener('message', event => {
-  const { sound } = event.data || {};
-
-  if (typeof sound === 'boolean' && event.source === window.parent) {
-    setSound(sound, true);
-  }
-});
-
-drawSound();
 addEventListener('resize', fit);
 addEventListener('hashchange', () => showNamed());
 fit();
