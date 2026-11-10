@@ -54,7 +54,7 @@ int DamageFrame::DrainSpellFrameAdvance(BattleRole& role, BattleUnit& target, Sc
     BattleState& battle = game.battleState;
     BattleServices& services = game.battleServices;
     ScenePainter painter(game.battleServices, scene);
-    ActState& act = role.slotActs[BattleUnit::UnkSlot8];
+    ActState& act = role.slotActs[BattleUnit::MagicSlot];
     role.inAction = 1;
     act.id = role.actId;
     act.action = role.magicAction;
@@ -193,7 +193,7 @@ int DamageFrame::MagicAttackFrameAdvance(BattleRole& role, BattleUnit& target, S
         return 0;
     }
 
-    ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
+    ActState& magic = role.slotActs[BattleUnit::MagicSlot];
     role.inAction = 1;
     magic.hold = 0;
 

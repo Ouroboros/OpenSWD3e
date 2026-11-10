@@ -447,7 +447,7 @@ int BattleUnit::CanTakeEffect(BattleServices& services, const SkillScript& skill
         return 0;
     }
 
-    if ((this->marks & BattleUnit::UnkMark400) != 0 &&
+    if ((this->marks & BattleUnit::FadingInMark) != 0 &&
         ((LowByte(ailment) & kAilment400Blocked) != 0 || (buffs & kInvisibleOrResistAll) != 0))
     {
         return 0;
@@ -599,7 +599,7 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
         case SkillScript::FrozenAilment:
         {
             node.icon = FrozenIcon;
-            this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark2 | BattleUnit::Held);
+            this->marks = static_cast<u16>(this->marks | BattleUnit::FrozenMark | BattleUnit::Held);
             this->overlayWipe = static_cast<u16>(this->overlayWipe | kOverlayWiping);
             this->status |= BattleUnit::Frozen;
             // The earth resistance shortens it, the metal one lengthens it (in percent, signed: 0x00492710, the
@@ -680,7 +680,7 @@ void BattleUnit::StartAilment(BattleServices& services, EffectNode& node)
             node.icon = StatsScaledIcon;
             node.level = kAilment100Start;
             this->castCountdown = 0;
-            this->unk2EB2 = 0;
+            this->gatheredCharge = 0;
             this->target = 0;
             this->ResetTurn(services);
 
@@ -1445,7 +1445,7 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
                     break;
 
                 case SkillScript::FrozenAilment:
-                    this->marks = static_cast<u16>(this->marks & ~BattleUnit::UnkMark2);
+                    this->marks = static_cast<u16>(this->marks & ~BattleUnit::FrozenMark);
                     this->status &= ~BattleUnit::Frozen;
                     releaseHeld(BattleUnit::Fixed | BattleUnit::Stone | BattleUnit::Asleep);
                     break;
@@ -1485,7 +1485,7 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
                     break;
 
                 case SkillScript::StatsScaledAilment:
-                    this->marks = static_cast<u16>(this->marks & ~BattleUnit::UnkMark10);
+                    this->marks = static_cast<u16>(this->marks & ~BattleUnit::RegressedMark);
                     this->status &= ~BattleUnit::StatsScaled;
                     this->unk3070 = 0;
 
@@ -1569,7 +1569,7 @@ void BattleUnit::ExpireEffects(BattleServices& services, int clearAll)
                     break;
 
                 case SkillScript::Invisible:
-                    this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark400);
+                    this->marks = static_cast<u16>(this->marks | BattleUnit::FadingInMark);
                     this->status &= ~BattleUnit::Invisible;
                     this->glowLevel = 0;
 

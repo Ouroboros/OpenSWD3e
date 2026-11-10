@@ -528,7 +528,7 @@ void Game::RetargetRoles(int role, int enemy)
 // over. An enemy (none counted once the battle is won) adds its rewards (battleExperience, battleGold unless unk5772F8,
 // battleProficiency), halved past the battle talk's repeat limit; one that ran away gives none and no bestiary count;
 // its stolen items come back (unless absorbSucceeded) with their notice. All down wins the battle, a last one standing
-// is enraged, and a lone standing first enemy of a unk577210 battle ends the others. A role counts as defeated (an
+// is enraged, and a lone standing first enemy of a calledAct battle ends the others. A role counts as defeated (an
 // escort clears its place and returned object: once all are down their places go and the units are measured again),
 // drops 蓄勁, its command, slot record, order and its panel; a role with a special act left is not counted. Battle role
 // 0 with the ghost takes the ghost out; with no role left standing the battle is lost, else the enemies are enraged.
@@ -646,12 +646,12 @@ int Game::RemoveDefeated(int index, int role)
             EnrageEnemies(services, kLastStandingCause);
         }
 
-        if (battle.unk577210 != 0 && !this->battleEnemies[0].IsDefeated() &&
+        if (battle.calledAct != 0 && !this->battleEnemies[0].IsDefeated() &&
             static_cast<i32>(battle.enemyCount) - battle.enemiesGone == 1)
         {
             battle.enemyCount = 1;
             battle.enemiesGone = 0;
-            battle.unk577210 = 0;
+            battle.calledAct = 0;
             this->MeasureUnits();
             battle.SortDrawOrder();
             battle.ListEnemyOrder();
@@ -886,9 +886,9 @@ void Game::ReturnBattleItems()
 
 // swd3e.exe 0x004692E0: with every party role down (panelWaiting set; besides the escorts and guests, ghostCount more
 // roles are left out) the field fades out (endFade), then the objects return and frameResult becomes 2 (0, with the
-// music before the battle back, for a battle state of 0x68 or UnkPanel8); with every enemy down or wonByTalk set it
-// fades out too, the battle music stops, the music before the battle comes back, the objects return and frameResult
-// becomes 0.
+// music before the battle back, for a battle state of 0x68 or QuietLossPanel); with every enemy down or wonByTalk
+// set it fades out too, the battle music stops, the music before the battle comes back, the objects return and
+// frameResult becomes 0.
 void Game::CheckBattleEnd()
 {
     BattleState& battle = this->battleState;
@@ -909,7 +909,7 @@ void Game::CheckBattleEnd()
                 battle.frameResult = 0;
             }
 
-            if ((battle.panelFlags & BattleState::UnkPanel8) != 0)
+            if ((battle.panelFlags & BattleState::QuietLossPanel) != 0)
             {
                 queue.Switch(battle.musicBeforeBattle, MusicQueue::RepeatList, 0);
                 battle.frameResult = 0;
@@ -2185,8 +2185,8 @@ void Game::MenuLeft()
 // (kGhostMenuCommand), and the accessory commands (kinds kFirstAccessoryCommand..kLastAccessoryCommand of the two
 // accessory slots, named by kind) of the first party role; otherwise those of its own party role. A 逆攻 accessory
 // reads 釋放 while the meter shows, a 融合 one is off without escorts and a 蓄勁 one below 10 percent. 奇術 is off for
-// the role that started the meter until its 逆攻 is fully grown, and without MarkBit8Clear; 絕技 without HasBlock30;
-// the listed commands CanUseAccessory refuses are off. A MarkBit4 role keeps 攻擊 and 防禦 only.
+// the role that started the meter until its 逆攻 is fully grown, and without MarkBit8Clear; 絕技 without FuryFull;
+// the listed commands CanUseAccessory refuses are off. A Regressed role keeps 攻擊 and 防禦 only.
 void Game::BuildCommandMenu()
 {
     BattleState& battle = this->battleState;
@@ -2280,7 +2280,7 @@ void Game::BuildCommandMenu()
         battle.commandEnabled[1] = 0;
     }
 
-    if (!role.HasBlock30())
+    if (!role.FuryFull())
     {
         battle.commandEnabled[3] = 0;
     }
@@ -2293,7 +2293,7 @@ void Game::BuildCommandMenu()
         }
     }
 
-    if (role.MarkBit4() == 1)
+    if (role.Regressed() == 1)
     {
         battle.commandEnabled = {1, 0, 0, 0, 1, 0, 0, 0, 0};
     }
@@ -2795,8 +2795,9 @@ int Game::DrawRefineStats(int x, int y)
 }
 
 // swd3e.exe 0x00478FA0: the 蓄勁 panel of the current role: a quarter-dark box with two frames, the role's icon, its
-// charge count ("X%2d", unk2EB2 + 1) and the choices 繼續 and 放勁 in columns (繼續 dark once unk2EB2 reaches a tenth
-// of the proficiency of kind 0x27), choice `cursor` drawn again a pixel up and left on the highlight. Returns 2.
+// charge count ("X%2d", gatheredCharge + 1) and the choices 繼續 and 放勁 in columns (繼續 dark once gatheredCharge
+// reaches a tenth of the proficiency of kind 0x27), choice `cursor` drawn again a pixel up and left on the highlight.
+// Returns 2.
 int Game::DrawChargePanel(int x, int y, int cursor)
 {
     smooth::Scene scene;
@@ -4506,7 +4507,7 @@ int Game::HoverRefineCell()
     }
 }
 
-// The aim of MouseHover in battle state 3 (inline in the original; none with a whole side, unk577A50 or unk577212).
+// The aim of MouseHover in battle state 3 (inline in the original; none with a whole side, unk577A50 or calledCount).
 // With an order on the party: the party members from the last whose idle picture is under the pointer (sampled every
 // pixel of an 8 x 8 square; the current role only for menu commands 2 and 3, its other samples still taken), or
 // whose portrait is (PortraitX by place). Otherwise the standing enemies from the last whose picture is under it
@@ -4519,7 +4520,7 @@ int Game::HoverTarget()
     const int x = this->state.pointerX;
     const int y = this->state.pointerY;
 
-    if (battle.unk577284 == 1 || battle.unk577A50 == 1 || battle.unk577212 != 0)
+    if (battle.unk577284 == 1 || battle.unk577A50 == 1 || battle.calledCount != 0)
     {
         return 0;
     }
@@ -4846,7 +4847,7 @@ bool Game::PrepareOrder()
     const auto unit = static_cast<std::size_t>(battle.currentUnit - BattleState::FirstRoleUnit);
     BattleRole& role = this->battleRoles[unit];
     PendingOrder& order = battle.pendingOrders[unit];
-    order.unk0C = static_cast<u16>(role.ActSpeed());
+    order.actSpeed = static_cast<u16>(role.ActSpeed());
     order.unk0E = 0;
     battle.unk5772F0 = 0;
 
@@ -5012,7 +5013,7 @@ void Game::ConfirmCommand()
     {
         if (command == kAttackCommand)
         {
-            if (!role.Unk2EB2BelowProficiency(this->ProficiencyList()))
+            if (!role.ChargeBelowProficiency(this->ProficiencyList()))
             {
                 this->battleMessages.Add(kNoticeX, kNoticeY, kNoticeFrames, kGatherRefused, kNoticeFlags);
                 this->audio.PlaySound(kRefusedSound, this->config.soundVolume);
@@ -5261,7 +5262,7 @@ void Game::ConfirmSpell()
     PendingOrder& order = battle.pendingOrders[unit];
 
     const bool aimsEnemies = this->PrepareOrder();
-    battle.unk57735C = role.ActFlag17() == 1 ? 1 : 0;
+    battle.transfersDamage = role.CommandTransfersDamage() == 1 ? 1 : 0;
 
     if (aimsEnemies)
     {
@@ -5283,7 +5284,7 @@ void Game::ConfirmSpell()
     {
         order.atParty = kind == 0 ? 1 : 0;
 
-        if (battle.unk57735C == 1)
+        if (battle.transfersDamage == 1)
         {
             order.atParty = 0;
         }
@@ -5305,11 +5306,11 @@ void Game::ConfirmSpell()
 }
 
 // Battle state 3 of MenuConfirm: the aimed unit taken (kept as aiTarget; refused with 煉妖 and state 0x50 while
-// turnPointer is off): an ActFlag17 skill turns on the role itself, its enemy kept in transferTarget; the order is the
-// menu command, the role's choice ends (蓄勁 and, once the meter is gone, 逆攻 no longer the role's), the party's hits
-// on the aimed enemy (on each standing enemy for a whole side) counted, every unit unmarked and the lists reset, the
-// command back on 1. Command 0x1E throws the chosen object (state 0xD when it lands, a talisman paper back otherwise);
-// a skill takes its stamina; 奇術 fills the cast countdown; the auto battle remembers the aim.
+// turnPointer is off): an CommandTransfersDamage skill turns on the role itself, its enemy kept in transferTarget; the
+// order is the menu command, the role's choice ends (蓄勁 and, once the meter is gone, 逆攻 no longer the role's), the
+// party's hits on the aimed enemy (on each standing enemy for a whole side) counted, every unit unmarked and the lists
+// reset, the command back on 1. Command 0x1E throws the chosen object (state 0xD when it lands, a talisman paper back
+// otherwise); a skill takes its stamina; 奇術 fills the cast countdown; the auto battle remembers the aim.
 void Game::ConfirmTarget()
 {
     BattleState& battle = this->battleState;
@@ -5355,7 +5356,7 @@ void Game::ConfirmTarget()
         return;
     }
 
-    if (battle.unk57735C == 1)
+    if (battle.transfersDamage == 1)
     {
         if (order != nullptr)
         {
@@ -5370,7 +5371,7 @@ void Game::ConfirmTarget()
         battle.aimTarget = battle.currentUnit - (BattleState::FirstRoleUnit - 1);
     }
 
-    battle.unk57735C = 0;
+    battle.transfersDamage = 0;
 
     // The rebuild's auto combo (deviations.md): an attack aimed in the auto battle by a role that can use 連擊 (the
     // aim may have been opened by the auto battle's key before the role's turn came).
@@ -5688,8 +5689,8 @@ void Game::CallEscort(BattleRole& role)
 }
 
 // Battle state 5 of MenuConfirm: the escort object used (counted) takes the place of escort row guardCursor (an
-// escort there gives its object back and marks UnkPanel4): row 1 the first place, row 2 the second; the order 0xF ends
-// the role's choice and the units are measured again.
+// escort there gives its object back and marks EscortReturnedPanel): row 1 the first place, row 2 the second; the order
+// 0xF ends the role's choice and the units are measured again.
 void Game::ConfirmEscort()
 {
     BattleState& battle = this->battleState;
@@ -5725,7 +5726,7 @@ void Game::ConfirmEscort()
         if (place.actId != 0)
         {
             AddOneItem(this->party.inventory, place.actId, 0, this->database);
-            battle.panelFlags |= BattleState::UnkPanel4;
+            battle.panelFlags |= BattleState::EscortReturnedPanel;
         }
 
         place.x = x;
@@ -7367,7 +7368,7 @@ void Game::BattleEndFrame()
             battle.battleBusy = 1;
             battle.turnPending = 1;
 
-            if ((battle.panelFlags & BattleState::UnkPanel8) != 0)
+            if ((battle.panelFlags & BattleState::QuietLossPanel) != 0)
             {
                 if (++battle.endFrames >= kEndQuietFrames)
                 {

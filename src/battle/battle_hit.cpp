@@ -410,7 +410,7 @@ void Game::ShiftUnits(int shift)
 // swd3e.exe 0x004695B0: the frame shown shaken by the quake step of quakePhase (QuakeSteps): odd steps move it down,
 // even ones up, the band left uncovered black (the frame's top rows are cleared for it); the original blits to the
 // primary surface instead of the plain copy. Every quakeStepFrames frames (counted in glowFrames, shared with the panel
-// glow) the phase steps on (between 0 and 1 for UnkPanel100); after 10 the quake ends.
+// glow) the phase steps on (between 0 and 1 for QuakingPanel); after 10 the quake ends.
 void Game::QuakeFrame()
 {
     BattleState& battle = this->battleState;
@@ -449,7 +449,7 @@ void Game::QuakeFrame()
     {
         battle.glowFrames = 0;
 
-        if ((battle.panelFlags & BattleState::UnkPanel100) != 0)
+        if ((battle.panelFlags & BattleState::QuakingPanel) != 0)
         {
             battle.quakePhase = (battle.quakePhase + 1) % 2;
         }
@@ -503,8 +503,8 @@ void Game::DrawHitPicture(BattleUnit& target, BattleUnit& attacker, u32 act, int
 }
 
 // The target bits of HitTargetFrame (inline in the original); see there. A strike's damage (capped at kMaxHitDamage,
-// none for -1) adds to slotDamage of the slot and becomes hitDamage; resisted (ActFlag14) it shows the target's
-// resistance panel and ends the menu.
+// none for -1) adds to slotDamage of the slot and becomes hitDamage; resisted (CommandShowsResistances) it shows the
+// target's resistance panel and ends the menu.
 void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
 {
     BattleState& battle = this->battleState;
@@ -560,7 +560,7 @@ void Game::TakeHitBits(BattleUnit& target, BattleUnit& attacker, int index)
         return;
     }
 
-    if (attacker.ActFlag14() == 1)
+    if (attacker.CommandShowsResistances() == 1)
     {
         battle.panelFlags |= BattleState::ResistancePanel;
         const ObjectRecord* record = target.Data();
@@ -1606,10 +1606,10 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
 // while atEnemies); 1 once the action is over (a defeated enemy or one without commands at once). 1: the attack (the
 // stolen item, the drain and the damage, a defeat flashing white, the enrage damage; on a role it goes on with
 // command 0x12C and stays 0); 2: the spell (SpellCast set, the sweep reset, the hit act timed, a ripple battle for
-// ActFlag13; the music fades meanwhile) until SpellOver; 4: the enemy's skill act (EnemySkillFrame, then command
+// CommandRipples; the music fades meanwhile) until SpellOver; 4: the enemy's skill act (EnemySkillFrame, then command
 // 0x12C); 6: the drain of a role out of battle; 9: the role's defeat, with unit `target` + 4 taken out of the slot
 // records and the menu (as in the original); 0xA the fade out; 0xB and 0xC the fade in and out (0xC ends the battle
-// once every enemy left); 0xF calls unk577212 enemies of act unk577210 for 0x19 frames; 0x11 the escape; 100 at once;
+// once every enemy left); 0xF calls calledCount enemies of act calledAct for 0x19 frames; 0x11 the escape; 100 at once;
 // 200 walks to the role; 300 returns home.
 // swd3e.exe 0x004A9700 (EH unwind: the new ripple, freed by its unique_ptr)
 // swd3e.exe 0x004A970B (EH handler of 0x0045EE20)
@@ -1924,7 +1924,7 @@ int Game::EnemyAttackAction(int enemy, BattleEnemy& unit, int target)
 }
 
 // Command 2 of EnemyActionFrame (inline in the original): the first frame (SpellCast clear) casts the spell: the
-// sweep reset, a ripple for ActFlag13, the turns of the command kept for the roles, the enemy's hit act run once
+// sweep reset, a ripple for CommandRipples, the turns of the command kept for the roles, the enemy's hit act run once
 // (half its round limit kept), the standing targets of a whole side counted (otherwise a defeated target gives way
 // to the first role that can be hit). The battle music fades a step a frame down to 5 until SpellOver, which
 // restores it and ends the action.
@@ -1940,12 +1940,12 @@ int Game::EnemySpellAction(int enemy, BattleEnemy& unit, int target)
     if ((battle.spellStage & BattleState::SpellCast) == 0)
     {
         battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast);
-        battle.sweepGap = unit.CommandUnk16();
+        battle.sweepGap = unit.CommandSweepGap();
         battle.slotTargets.fill(-1);
         battle.sweptUnits = 1;
         battle.slotDamage.fill(0);
 
-        if (unit.ActFlag13() == 1)
+        if (unit.CommandRipples() == 1)
         {
             battle.rippleHits = 1;
             battle.ripple =
@@ -2036,7 +2036,8 @@ int Game::EnemySpellAction(int enemy, BattleEnemy& unit, int target)
 
 // Command 0xF of EnemyActionFrame (inline in the original): the first frame (bit kCallStarted clear) places the
 // called enemies after the others (at kCallX, kCallY and kSecondCallY for the second, mirrored with the sides),
-// loads their act record and sets them up hidden by BattleUnit::UnkMark400; the call is over kCallFrames frames later.
+// loads their act record and sets them up hidden by BattleUnit::FadingInMark; the call is over kCallFrames frames
+// later.
 int Game::CallEnemies(BattleEnemy& unit)
 {
     BattleState& battle = this->battleState;
@@ -2044,9 +2045,9 @@ int Game::CallEnemies(BattleEnemy& unit)
     if ((battle.pushFrames & kCallStarted) == 0)
     {
         battle.pushFrames = kCallStarted | kCallFrames;
-        unit.CommandValues(battle.unk577210, battle.unk577212);
+        unit.SummonValues(battle.calledAct, battle.calledCount);
 
-        for (u16 called = 0; called < battle.unk577212; ++called)
+        for (u16 called = 0; called < battle.calledCount; ++called)
         {
             // The original sets up enemies past the last one with the field full.
             if (battle.enemyCount >= this->battleEnemies.size())
@@ -2070,7 +2071,7 @@ int Game::CallEnemies(BattleEnemy& unit)
             battle.enemyTargetPicked[battle.enemyCount] = 0;
             battle.unk537D68 = ObjectRecord{};
             UnitPlacement& place = battle.enemyPlaces[battle.enemyCount];
-            place.actId = battle.unk577210;
+            place.actId = battle.calledAct;
             place.x = kCallX;
             place.y = called == 1 ? kSecondCallY : kCallY;
             place.kind = 0;
@@ -2081,10 +2082,10 @@ int Game::CallEnemies(BattleEnemy& unit)
                 place.x = static_cast<i16>(Display::Width - place.x);
             }
 
-            this->database.LoadObject(battle.unk537D68, battle.unk577210);
+            this->database.LoadObject(battle.unk537D68, battle.calledAct);
             this->database.FreeDescription(battle.unk537D68);
-            enemy.Setup(place, battle.unk577210, this->database, this->acts);
-            enemy.SetStatus(BattleUnit::UnkMark400);
+            enemy.Setup(place, battle.calledAct, this->database, this->acts);
+            enemy.SetStatus(BattleUnit::FadingInMark);
             ++battle.enemyCount;
             this->MeasureUnits();
             battle.SortDrawOrder();
@@ -2101,7 +2102,7 @@ int Game::CallEnemies(BattleEnemy& unit)
 
     battle.darkenUnit = -1;
     battle.pushFrames = 0;
-    battle.unk577212 = 0;
+    battle.calledCount = 0;
     return 1;
 }
 

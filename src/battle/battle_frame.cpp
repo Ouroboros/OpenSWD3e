@@ -179,7 +179,7 @@ int Game::BattleFrame()
         battle.actingUnit = acting.unit;
         battle.sweepTotal = acting.targetCount;
         battle.actingKind = acting.kind;
-        battle.slideBackPicture = static_cast<i16>(acting.unk0A);
+        battle.slideBackPicture = static_cast<i16>(acting.actSpeed);
         battle.atParty = acting.atParty;
         battle.atEnemies = acting.atEnemies;
         battle.targetsAll = acting.targetsAll;
@@ -514,8 +514,8 @@ void Game::EndBattle()
     battle.ghostOrdersOpen = 0;
     battle.refineOptionsOpen = 0;
     battle.elementsOpen = 0;
-    battle.unk577210 = 0;
-    battle.unk577212 = 0;
+    battle.calledAct = 0;
+    battle.calledCount = 0;
     battle.quakeStepFrames = 0;
     battle.unk577A50 = 0;
     battle.chargingRole = -1;

@@ -244,7 +244,7 @@ void Game::StartBattle(u16 number)
         record.atParty = 0;
         record.atEnemies = 0;
         record.targetsAll = 0;
-        record.unk0A = 0;
+        record.actSpeed = 0;
     }
 
     battle.roleListRows.fill(1);

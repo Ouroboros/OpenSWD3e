@@ -201,12 +201,12 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
         )
     );
     CHECK_EQ(unit.colorPair, BattleUnit::DefaultColorPair);
-    CHECK_EQ(unit.SetCommand(BattleUnit::UnkCommandE), 1);
-    CHECK_EQ(unit.commandB, BattleUnit::UnkCommandE);
+    CHECK_EQ(unit.SetCommand(BattleUnit::CatchCommand), 1);
+    CHECK_EQ(unit.commandB, BattleUnit::CatchCommand);
     CHECK_EQ(unit.commandFlags, BattleUnit::UnkCommandFlag4000);
     unit.SetCommand(kOtherCommand);
     CHECK_EQ(unit.commandA, kOtherCommand);
-    unit.SetCommand(BattleUnit::UnkCommand6);
+    unit.SetCommand(BattleUnit::AbsorbCommand);
     CHECK_EQ(unit.commandA, 0);
     CHECK_EQ(unit.commandFlags, BattleUnit::UnkCommandFlag4000 | BattleUnit::UnkCommandFlag800);
     unit.gauge = static_cast<swd3e::u16>(all.state.gaugeFull / kHalf);
@@ -215,7 +215,7 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     unit.flashFall = BattleUnit::FlashPeak;
     unit.command.flags = kResetClearsGuard;
     unit.guarding = 1;
-    unit.slotActs[BattleUnit::UnkSlot9].id = kSlotAct;
+    unit.slotActs[BattleUnit::BeamRiseSlot].id = kSlotAct;
     unit.slotActs[kTurnSlot].id = kSlotAct;
     unit.kind = BattleUnit::PartyRole;
     all.random.Seed(kSeed);
@@ -224,7 +224,7 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     CHECK_EQ(unit.flashFall, BattleUnit::FlashPeak);
     CHECK_EQ(unit.guarding, 0);
     CHECK_EQ(unit.slotActs[kTurnSlot].id, 0);
-    CHECK_EQ(unit.slotActs[BattleUnit::UnkSlot9].id, kSlotAct);
+    CHECK_EQ(unit.slotActs[BattleUnit::BeamRiseSlot].id, kSlotAct);
     CHECK_EQ(unit.command.flags, 0);
     unit.CountCaught();
     CHECK_EQ(unit.unk3020, 1);
@@ -265,7 +265,7 @@ TEST_CASE("battle unit: evasion, vitals and scaling")
     all.state.evadeStreak = kSureEvadeStreak;
     CHECK_EQ(unit.RollEvade(all.services, 0), 1);
     CHECK_EQ(all.state.evadeStreak, 0);
-    CHECK_EQ(unit.marks & BattleUnit::UnkMark1, BattleUnit::UnkMark1);
+    CHECK_EQ(unit.marks & BattleUnit::EvadedMark, BattleUnit::EvadedMark);
     CHECK_EQ(unit.RollEvade(all.services, 0), 0);
     CHECK_EQ(all.state.evadeJustSucceeded, 0);
     all.state.criticalAttack = 1;
@@ -417,7 +417,7 @@ TEST_CASE("battle unit: role and enemy blocks, reset")
     CHECK(enemy.data != nullptr);
     role.kind = BattleUnit::PartyRole;
     role.gauge = kGauge;
-    role.slotActs[BattleUnit::UnkSlot9].id = kSlotAct;
+    role.slotActs[BattleUnit::BeamRiseSlot].id = kSlotAct;
     role.slotActs[kTurnSlot].id = kSlotAct;
     role.targets[1] = kTarget;
     role.effects.next = std::make_unique<swd3e::EffectNode>();
@@ -425,7 +425,7 @@ TEST_CASE("battle unit: role and enemy blocks, reset")
     CHECK_EQ(role.gauge, 0);
     CHECK_EQ(role.kind, 0);
     CHECK_EQ(role.slotActs[kTurnSlot].id, 0);
-    CHECK_EQ(role.slotActs[BattleUnit::UnkSlot9].id, kSlotAct);
+    CHECK_EQ(role.slotActs[BattleUnit::BeamRiseSlot].id, kSlotAct);
     CHECK_EQ(role.targets[1], BattleUnit::NoTarget);
     CHECK_EQ(role.fadeLevel, BattleUnit::Opaque);
     CHECK(role.effects.next == nullptr);
@@ -762,7 +762,7 @@ TEST_CASE("battle state: the slot records are wiped with 0xFF bytes")
         CHECK_EQ(record.unit, -1);
         CHECK_EQ(record.targetCount, -1);
         CHECK_EQ(record.kind, 0xFFFF);
-        CHECK_EQ(record.unk0A, 0xFFFF);
+        CHECK_EQ(record.actSpeed, 0xFFFF);
         CHECK_EQ(record.allAtOnce, -1);
     }
 }

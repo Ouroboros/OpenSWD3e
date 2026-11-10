@@ -55,9 +55,9 @@ constexpr int kRoleGaugeBase = 0x32;             // a party role starts a turn a
 constexpr u32 kRoleGaugeSpread = 0x8C;
 
 constexpr i16 kSpeedMask = 0x7FFF;  // the speed of a command with bit 15 set
-constexpr i32 kUnkBlock30 = 0x30;
-constexpr u16 kUnk2EB2Accessory = 0x27;  // the accessory kind whose proficiency bounds unk2EB2 (swd3e)
-constexpr u16 kUnk2EB2Share = 10;        // unk2EB2 is held below a tenth of it
+constexpr i32 kFuryFull = 0x30;
+constexpr u16 kGatherAccessory = 0x27;  // the accessory kind whose proficiency bounds gatheredCharge (swd3e)
+constexpr u16 kGatherShare = 10;        // gatheredCharge is held below a tenth of it
 constexpr int kTens = 10;
 constexpr i8 kHitCancelMissed = -1;  // hitCancelWindow: the space key came too late
 constexpr i8 kHitCancelTaken = -2;   // hitCancelWindow: the hit number was taken back
@@ -106,19 +106,19 @@ constexpr u32 kSupportBuffs = SkillScript::Invisible | SkillScript::AttackUp | S
 constexpr u8 kSupportKind = 4;                 // ObjectData::kind bit 2
 constexpr u32 kCommandStatusBit = 0x10000000;  // command +0x08 bit 28
 constexpr u16 kAccessoryValueMask = 0x3FFF;
-constexpr u16 kUnkAccessory28 = 0x28;    // the accessory kind UnkEquipment100 takes the value of (swd3e)
-constexpr u32 kHealRoll = 0xA;           // ChooseHeal: a roll of 0..4 picks the first way, 5..9 the second
-constexpr u8 kDefeatPoses = 10;          // a defeated unit takes a pose of 1..kDefeatPoses
-constexpr u8 kFallbackDefeatPose = 6;    // or this one when none was taken
-constexpr u16 kWhiteFrame = 0xFFFF;      // Damage (swd3e): a transferred hit whitens the frame (0xFF bytes)
-constexpr u32 kMeterArmed = 0x100;       // equipmentFlags: Unk28 armed, the hits go to the meter
-constexpr int kMeterHealShare = -80;     // a heal takes the proficiency percent of -80 percent of unk2EB4
-constexpr int kMeterBaseShare = 20;      // a hit gives a fifth
-constexpr int kMeterHitShare = 80;       // and the proficiency percent of four fifths
-constexpr int kMeterLimitScale = 0x5F;   // the meter's top: 95 times the proficiency
-constexpr int kMeterLimitBase = 0x1F4;   // plus 500
-constexpr int kResetClearsGuard = 8;     // ResetTurn: the command flag that ends the guard
-constexpr u32 kFlag2BC0Bit18 = 0x40000;  // cleared by ResetTurn
+constexpr u16 kStrikeBackAccessory = 0x28;  // the accessory kind UnkEquipment100 takes the value of (swd3e)
+constexpr u32 kHealRoll = 0xA;              // ChooseHeal: a roll of 0..4 picks the first way, 5..9 the second
+constexpr u8 kDefeatPoses = 10;             // a defeated unit takes a pose of 1..kDefeatPoses
+constexpr u8 kFallbackDefeatPose = 6;       // or this one when none was taken
+constexpr u16 kWhiteFrame = 0xFFFF;         // Damage (swd3e): a transferred hit whitens the frame (0xFF bytes)
+constexpr u32 kMeterArmed = 0x100;          // equipmentFlags: Unk28 armed, the hits go to the meter
+constexpr int kMeterHealShare = -80;        // a heal takes the proficiency percent of -80 percent of unk2EB4
+constexpr int kMeterBaseShare = 20;         // a hit gives a fifth
+constexpr int kMeterHitShare = 80;          // and the proficiency percent of four fifths
+constexpr int kMeterLimitScale = 0x5F;      // the meter's top: 95 times the proficiency
+constexpr int kMeterLimitBase = 0x1F4;      // plus 500
+constexpr int kResetClearsGuard = 8;        // ResetTurn: the command flag that ends the guard
+constexpr u32 kFlag2BC0Bit18 = 0x40000;     // cleared by ResetTurn
 
 constexpr u32 kEvadeRoll = 10;       // evade chances are in tenths
 constexpr u16 kInvisibleEvades = 9;  // an invisible unit evades 9 times in kEvadeRoll
@@ -245,8 +245,8 @@ void BattleUnit::GetOffset(u16& x, u16& y) const
 
     if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
     {
-        x = this->slotActs[BattleUnit::UnkSlot8].anchorX;
-        y = this->slotActs[BattleUnit::UnkSlot8].anchorY;
+        x = this->slotActs[BattleUnit::MagicSlot].anchorX;
+        y = this->slotActs[BattleUnit::MagicSlot].anchorY;
     }
 
     if (this->facing == 1)
@@ -260,7 +260,7 @@ void BattleUnit::GetOffset(u16& x, u16& y) const
         }
     }
 
-    if (this->kind == 0 && this->commandA == BattleUnit::UnkCommand4)
+    if (this->kind == 0 && this->commandA == BattleUnit::MagicAttackCommand)
     {
         x = this->standAct.anchorX;
         y = this->standAct.anchorY;
@@ -276,7 +276,7 @@ void BattleUnit::GetOrigin(u16& x, u16& y) const
 
     if ((this->commandFlags & BattleUnit::UnkCommandFlag200) != 0)
     {
-        const ActState& slot = this->slotActs[BattleUnit::UnkSlot8];
+        const ActState& slot = this->slotActs[BattleUnit::MagicSlot];
 
         if (this->HasFixedOrigin() == 1)
         {
@@ -442,17 +442,17 @@ int BattleUnit::ClearIdleAction()
 // UnkCommandFlag800, 14 and 15 UnkCommandFlag4000), any other to commandA
 int BattleUnit::SetCommand(int command)
 {
-    if (command == BattleUnit::UnkCommandE || command == BattleUnit::UnkCommandF)
+    if (command == BattleUnit::CatchCommand || command == BattleUnit::SummonCommand)
     {
         this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag4000);
     }
-    else if (command == BattleUnit::UnkCommand6 || command == BattleUnit::UnkCommand50)
+    else if (command == BattleUnit::AbsorbCommand || command == BattleUnit::SealCommand)
     {
         this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag800);
     }
     else if (
-        command != BattleUnit::SkillCommand && command != BattleUnit::UnkCommandD &&
-        command != BattleUnit::UnkCommand3 && command != BattleUnit::UnkCommand29
+        command != BattleUnit::SkillCommand && command != BattleUnit::ThrowTalismanCommand &&
+        command != BattleUnit::ItemCommand && command != BattleUnit::FuseCommand
     )
     {
         this->commandA = static_cast<u16>(command);
@@ -681,9 +681,9 @@ bool BattleUnit::IsAE4Clear() const
 }
 
 // swd3e.exe 0x00490380
-u16 BattleUnit::CommandUnk16() const
+u16 BattleUnit::CommandSweepGap() const
 {
-    return this->command.unk16;
+    return this->command.sweepGap;
 }
 
 // swd3e.exe 0x00490390: unless flag 2 of +0x2FB1 is set
@@ -769,7 +769,7 @@ int BattleUnit::RollEvade(BattleServices& services, u16 chance)
     auto success = [&]
     {
         state.evadeJustSucceeded = 1;
-        this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark1);
+        this->marks = static_cast<u16>(this->marks | BattleUnit::EvadedMark);
         this->stateFlags |= kFlag2BC0Blocked;
         return 1;
     };
@@ -790,7 +790,7 @@ int BattleUnit::RollEvade(BattleServices& services, u16 chance)
         {
             state.evadeStreak = 0;
             state.evadeJustSucceeded = 1;
-            this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark1);
+            this->marks = static_cast<u16>(this->marks | BattleUnit::EvadedMark);
             return 1;
         }
 
@@ -1039,7 +1039,7 @@ int BattleUnit::ResetAfterGuard()
 // swd3e.exe 0x00491BB0
 int BattleUnit::GetGuard() const
 {
-    if ((this->marks & (BattleUnit::UnkMark2 | BattleUnit::Held)) != 0)
+    if ((this->marks & (BattleUnit::FrozenMark | BattleUnit::Held)) != 0)
     {
         return 0;
     }
@@ -1093,15 +1093,15 @@ int BattleUnit::AllAtOnce() const
 }
 
 // swd3e.exe 0x00491C60
-int BattleUnit::ActFlag11() const
+int BattleUnit::CommandRetreats() const
 {
-    return (this->command.actionFlags & UnitCommand::UnkAction800) != 0 ? 1 : 0;
+    return (this->command.actionFlags & UnitCommand::Retreats) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00491C70: the speed of the command when its bit 15 is set
 i16 BattleUnit::ActSpeed() const
 {
-    const i16 speed = this->command.unk20;
+    const i16 speed = this->command.actSpeed;
     return speed >= 0 ? i16{0} : static_cast<i16>(speed & kSpeedMask);
 }
 
@@ -1112,15 +1112,15 @@ int BattleUnit::TargetsAll() const
 }
 
 // swd3e.exe 0x00491CA0
-int BattleUnit::ActFlag13() const
+int BattleUnit::CommandRipples() const
 {
-    return (this->command.actionFlags & UnitCommand::UnkAction2000) != 0 ? 1 : 0;
+    return (this->command.actionFlags & UnitCommand::Ripples) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00491CB0
-int BattleUnit::ActFlag14() const
+int BattleUnit::CommandShowsResistances() const
 {
-    return (this->command.actionFlags & UnitCommand::UnkAction4000) != 0 ? 1 : 0;
+    return (this->command.actionFlags & UnitCommand::ShowsResistances) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00491D10: also restarts the main act, unless the cast countdown runs down (then `value` is returned)
@@ -1394,7 +1394,7 @@ constexpr i32 kGuardAction4 = 0x37;
 constexpr i16 kGuardPose1 = 1;
 constexpr i16 kGuardPose2 = 2;
 constexpr i16 kGuardPose4 = 4;
-constexpr i32 kStillAct = 0xFA;  // the act of a unit under MarkBit4
+constexpr i32 kStillAct = 0xFA;  // the act of a unit under Regressed
 constexpr i16 kForcedPlaceX = 0x140;
 constexpr i16 kForcedPlaceY = 0x136;
 constexpr u32 kFlag2BC0Bit30 = 0x40000000;  // keeps the stand pose (IdleFrame)
@@ -1537,7 +1537,8 @@ constexpr int kInvisibleSlowdown = 4;
 // FadeMainOut and Defense.
 
 constexpr int kBarrierPercent = 70;
-constexpr int kUnk2EB2Tenths = 10;  // Defense: a positive unk2EB2 scales the defence by unk2EB2 * 10 percent (swd3e)
+constexpr int kGatherDefenseTenths =
+    10;  // Defense: a positive gatheredCharge scales the defence by gatheredCharge * 10 percent (swd3e)
 constexpr int kSignBit16 = 0x8000;  // Defense: a role's defence negative in 16 bits
 
 // DefeatFrame: the defeat poses (defeatPose) and their timing.
@@ -1608,7 +1609,7 @@ void BattleUnit::DrawGuardText(BattleServices& services)
 // "$1%s$0抵抗所有攻擊解除" (stacked).
 void BattleUnit::SetDamageDigits(BattleServices& services, int amount)
 {
-    if ((this->marks & BattleUnit::UnkMark8000) != 0)
+    if ((this->marks & BattleUnit::NoDamageMark) != 0)
     {
         return;
     }
@@ -1719,7 +1720,7 @@ void BattleUnit::DrawEffectIcons(BattleServices& services, int x, int y)
 }
 
 // swd3e.exe 0x00495330: applies hit point damage and spirit and stamina changes; 1 when the unit falls (none for a
-// positive hit under UnkMark8000 or ResistAll, nor for a defeated unit). An enemy loses its override first, else its
+// positive hit under NoDamageMark or ResistAll, nor for a defeated unit). An enemy loses its override first, else its
 // (32-bit) hit points, checking enrage cause 0 while it stands. A party role under DamageTransfer takes a positive hit
 // only with enrage counter 0x2FD6 or damage pending, else the frame whitens and nothing happens; with Unk28 armed the
 // meter (topped at 95 times the proficiency plus 500) takes a share of the hit (a fifth plus the proficiency percent of
@@ -1729,7 +1730,7 @@ void BattleUnit::DrawEffectIcons(BattleServices& services, int x, int y)
 int BattleUnit::Damage(BattleServices& services, int hitPoints, i16 spirit, i16 stamina)
 {
     if ((hitPoints > 0 &&
-         ((this->marks & BattleUnit::UnkMark8000) != 0 || (this->status & BattleUnit::ResistAll) != 0)) ||
+         ((this->marks & BattleUnit::NoDamageMark) != 0 || (this->status & BattleUnit::ResistAll) != 0)) ||
         this->defeated == 1)
     {
         return 0;
@@ -2197,13 +2198,13 @@ SkillScript BattleUnit::CommandSkill() const
     skill.flagsAndValue = MakeWords(static_cast<u16>(this->command.value), this->command.flags);
     skill.resistanceAndFollowAct = MakeWords(this->command.followAct, this->command.resistance);
     skill.castAct = this->command.castAct;
-    skill.unk16 = this->command.unk16;
+    skill.sweepGap = this->command.sweepGap;
     skill.castSpeed = this->command.castSpeed;
     skill.ailment = this->command.ailment;
     skill.element = this->command.element;
     skill.pose = this->command.pose;
-    skill.unk20 = static_cast<u16>(this->command.unk20);
-    skill.unk22 = this->command.unk22;
+    skill.actSpeed = static_cast<u16>(this->command.actSpeed);
+    skill.calledAct = this->command.calledAct;
     skill.stealChance = this->command.stealChance;
     skill.target = this->command.target;
     skill.unk28 = this->command.unk28;
@@ -2225,13 +2226,13 @@ void BattleUnit::LoadCommand(Database& database, u16 id)
     this->command.resistance = LowWord(skill.resistanceAndFollowAct);
     this->command.followAct = HighWord(skill.resistanceAndFollowAct);
     this->command.castAct = skill.castAct;
-    this->command.unk16 = skill.unk16;
+    this->command.sweepGap = skill.sweepGap;
     this->command.castSpeed = skill.castSpeed;
     this->command.ailment = skill.ailment;
     this->command.element = skill.element;
     this->command.pose = skill.pose;
-    this->command.unk20 = static_cast<i16>(skill.unk20);
-    this->command.unk22 = skill.unk22;
+    this->command.actSpeed = static_cast<i16>(skill.actSpeed);
+    this->command.calledAct = skill.calledAct;
     this->command.stealChance = skill.stealChance;
     this->command.target = skill.target;
     this->command.unk28 = skill.unk28;
@@ -2289,24 +2290,24 @@ int BattleUnit::Confused() const
 }
 
 // swd3e.exe 0x00498CD0
-int BattleUnit::MarkBit4() const
+int BattleUnit::Regressed() const
 {
-    return (this->marks & BattleUnit::UnkMark10) != 0 ? 1 : 0;
+    return (this->marks & BattleUnit::RegressedMark) != 0 ? 1 : 0;
 }
 
-// swd3e.exe 0x0049C2C0: unk2EB2 plus one in the low word (the high word is left over); its only caller (0x00478FA0)
-// sign-extends the word
-i32 BattleUnit::Unk2EB2Shown() const
+// swd3e.exe 0x0049C2C0: gatheredCharge plus one in the low word (the high word is left over); its only caller
+// (0x00478FA0) sign-extends the word
+i32 BattleUnit::GatheredChargeShown() const
 {
-    return static_cast<i16>(this->unk2EB2 + 1);
+    return static_cast<i16>(this->gatheredCharge + 1);
 }
 
-// swd3e.exe 0x0049C2D0: the proficiency of accessory kind kUnk2EB2Accessory taken, whether unk2EB2 is below a tenth of
-// it
-bool BattleUnit::Unk2EB2BelowProficiency(CounterList& proficiency)
+// swd3e.exe 0x0049C2D0: the proficiency of accessory kind kGatherAccessory taken, whether gatheredCharge is below a
+// tenth of it
+bool BattleUnit::ChargeBelowProficiency(CounterList& proficiency)
 {
-    this->AccessoryProficiency(kUnk2EB2Accessory, proficiency);
-    return this->unk2EB2 < static_cast<i32>(this->proficiency / kUnk2EB2Share);
+    this->AccessoryProficiency(kGatherAccessory, proficiency);
+    return this->gatheredCharge < static_cast<i32>(this->proficiency / kGatherShare);
 }
 
 // swd3e.exe 0x0049B160
@@ -2370,9 +2371,9 @@ bool BattleUnit::MarkBit8Clear() const
 }
 
 // swd3e.exe 0x00499EB0: the role's battle block starts with 0x30
-bool BattleUnit::HasBlock30() const
+bool BattleUnit::FuryFull() const
 {
-    return *this->roleBlock == kUnkBlock30;
+    return *this->roleBlock == kFuryFull;
 }
 
 // swd3e.exe 0x00482350
@@ -2416,13 +2417,13 @@ int BattleUnit::CommandStatusBit() const
         return 1;
     }
 
-    return (this->command.actionFlags & UnitCommand::UnkAction1000) != 0 ? 1 : 0;
+    return (this->command.actionFlags & UnitCommand::Summons) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00489300
-void BattleUnit::CommandValues(u16& value, u16& turns) const
+void BattleUnit::SummonValues(u16& value, u16& turns) const
 {
-    value = this->command.unk22;
+    value = this->command.calledAct;
     turns = this->command.turns;
 }
 
@@ -2464,7 +2465,7 @@ u16 BattleUnit::AccessoryValue(u16 kind) const
     {
         if (static_cast<i32>(static_cast<i16>(accessory.data.actionKind)) == static_cast<i32>(kind))
         {
-            if (accessory.data.actionKind == kUnkAccessory28 &&
+            if (accessory.data.actionKind == kStrikeBackAccessory &&
                 (this->equipmentFlags & BattleUnit::UnkEquipment100) != 0)
             {
                 return 0;
@@ -2675,14 +2676,14 @@ bool RollChance(Random& random, int percent)
 
 // swd3e.exe 0x00497900: the damage of this unit's hit on `target` (negative: healing; -1 shows no number), with the
 // spirit and stamina changes it makes. A stone target takes no hit that does not restore; a buff that lands with no
-// restore and an UnkAction4000 command show no number. A party target rolls the command's ailment against its chance;
-// an enemy's defence is Defense, and its ailment (its value first taken through the elements unless the command is a
-// spell) lands on a roll against its object's chance raised by the wisdom over its own (a twentieth; a Boss enemy
+// restore and a ShowsResistances command show no number. A party target rolls the command's ailment against its
+// chance; an enemy's defence is Defense, and its ailment (its value first taken through the elements unless the command
+// is a spell) lands on a roll against its object's chance raised by the wisdom over its own (a twentieth; a Boss enemy
 // only for ailments without bits 0x24 and 0x200, a resisted one never; ailment bit 15 fells it outright), after which
 // a command with no value or attack shows no number; its pose and enrage cause 0 follow. A restoring command cures and
 // heals at once. An attack (commands 1, 0x1A, 0x18) takes the attack (the battle record's bonus when enraged, for an
-// auto, guest or ghost unit without a value, 70 percent under GhostGuards), times unk2EB2 + 1, plus a roll on the
-// level, raised and cut by the attack effects, less the defence (at least 1), scaled when enraged, 2.5 times with
+// auto, guest or ghost unit without a value, 70 percent under GhostGuards), times gatheredCharge + 1, plus a roll on
+// the level, raised and cut by the attack effects, less the defence (at least 1), scaled when enraged, 2.5 times with
 // BladeReturn and by the elements; under 強攻擊 the act of a party member adds its effect (falling, draining,
 // 85 percent, 200 percent); doubled against status bit 1. Command 0x28 takes the meter's sum, 0x1B scales by the
 // strength, 0x1F returns at once; spells (2, 0x16, 3, UnkCommandFlag200) take their value and a roll (a ghost's by its
@@ -2714,7 +2715,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         return -1;
     }
 
-    if ((this->command.actionFlags & UnitCommand::UnkAction4000) != 0)
+    if ((this->command.actionFlags & UnitCommand::ShowsResistances) != 0)
     {
         return -1;
     }
@@ -2753,8 +2754,8 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
             const u16 kind = this->commandA;
 
             if (value != 0 && kind != BattleUnit::SkillCommand &&
-                (this->commandFlags & BattleUnit::UnkCommandFlag200) == 0 && kind != BattleUnit::UnkCommand16 &&
-                kind != BattleUnit::UnkCommand3 && elemental && target.Unk2BC0Bit23() == 0 && elementScale(value) == 1)
+                (this->commandFlags & BattleUnit::UnkCommandFlag200) == 0 && kind != BattleUnit::ThunderCommand &&
+                kind != BattleUnit::ItemCommand && elemental && target.Unk2BC0Bit23() == 0 && elementScale(value) == 1)
             {
                 resisted = true;
             }
@@ -2908,7 +2909,8 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
 
     const u16 kind = this->commandA;
 
-    if (kind == BattleUnit::AttackCommand || kind == BattleUnit::UnkCommand1A || kind == BattleUnit::UnkCommand18)
+    if (kind == BattleUnit::AttackCommand || kind == BattleUnit::SureHitCommand ||
+        kind == BattleUnit::GroupAttackCommand)
     {
         target.CountEnrageEvent(0);
 
@@ -2930,10 +2932,10 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
             }
         }
 
-        if (this->unk2EB2 > 0)
+        if (this->gatheredCharge > 0)
         {
-            const i32 times = this->unk2EB2 + 1;
-            this->unk2EB2 = 0;
+            const i32 times = this->gatheredCharge + 1;
+            this->gatheredCharge = 0;
             attack *= times;
         }
 
@@ -3061,14 +3063,14 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         }
     }
 
-    if (kind == BattleUnit::UnkCommand28)
+    if (kind == BattleUnit::StrikeBackCommand)
     {
         attack = this->unk2EB4;
         this->unk2EB4 = 0;
         services.hud.AddToMeter(kMeterEmpties);
     }
 
-    if (kind == BattleUnit::UnkCommand1B)
+    if (kind == BattleUnit::ThrowCommand)
     {
         // A signed division (idiv): a proficiency of 300 and above makes the divisor zero or negative.
         const int divisor = kChargeScaleTop - this->proficiency / kChargeScaleShare;
@@ -3081,13 +3083,13 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         attack *= static_cast<int>(static_cast<u16>(this->battleRecord->strength)) / divisor;
     }
 
-    if (kind == BattleUnit::UnkCommand1F)
+    if (kind == BattleUnit::MouseHammerCommand)
     {
-        return (target.marks & BattleUnit::UnkMark8000) != 0 ? i16{0} : static_cast<i16>(attack);
+        return (target.marks & BattleUnit::NoDamageMark) != 0 ? i16{0} : static_cast<i16>(attack);
     }
 
-    const bool spell = kind == BattleUnit::SkillCommand || kind == BattleUnit::UnkCommand16 ||
-                       kind == BattleUnit::UnkCommand3 || (this->commandFlags & BattleUnit::UnkCommandFlag200) != 0;
+    const bool spell = kind == BattleUnit::SkillCommand || kind == BattleUnit::ThunderCommand ||
+                       kind == BattleUnit::ItemCommand || (this->commandFlags & BattleUnit::UnkCommandFlag200) != 0;
 
     if (spell)
     {
@@ -3156,13 +3158,13 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         }
     }
 
-    if (static_cast<u16>(healHitPoints) != 0 || kind == BattleUnit::UnkCommand22)
+    if (static_cast<u16>(healHitPoints) != 0 || kind == BattleUnit::FocusCommand)
     {
         target.PushTarget(BattleUnit::HealTarget);
         attack = -healHitPoints;
     }
 
-    if (kind == BattleUnit::UnkCommand23)
+    if (kind == BattleUnit::RecoverSpiritCommand)
     {
         spiritDamage = static_cast<i16>(healSpirit);
         target.PushTarget(BattleUnit::SpiritGainTarget);
@@ -3173,7 +3175,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         }
     }
 
-    if (kind == BattleUnit::UnkCommand24)
+    if (kind == BattleUnit::MeditateCommand)
     {
         staminaDamage = static_cast<i16>(healStamina);
         target.PushTarget(BattleUnit::StaminaGainTarget);
@@ -3216,7 +3218,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         }
     }
 
-    return (target.marks & BattleUnit::UnkMark8000) != 0 ? i16{0} : static_cast<i16>(attack);
+    return (target.marks & BattleUnit::NoDamageMark) != 0 ? i16{0} : static_cast<i16>(attack);
 }
 
 // swd3e.exe 0x00495C20: one frame of `act` (`id`) flying from (fromX, fromY) to the target's draw position (from the
@@ -3492,8 +3494,8 @@ void BattleUnit::DrawActionAt(BattleServices& services, i16 x, i16 y, ActState& 
 
 // swd3e.exe 0x00499760: one frame of the unit walking back from the target to its place (the attack act, or `id` /
 // `action` when given; the stand pose in the recoil act gives its x); 1 when there is no walk (a party role without
-// kWalksHome or StepsIn / UnkFlag20, an enemy without UnkFlag10, a forced unit, one standing aside under Confused
-// or under MarkBit4) or it arrived (the unit back at its saved place, the acts and the line cleared, kWalksHome
+// kWalksHome or StepsIn / WaitsToWalk, an enemy without WalksHome, a forced unit, one standing aside under Confused
+// or under Regressed) or it arrived (the unit back at its saved place, the acts and the line cleared, kWalksHome
 // cleared). Once the act follows up the walk takes 0x1C (a ghost 0x18) line steps a frame more each frame, from the
 // target (or the fixed origin) to the saved place (a ghost's own place), the unit's place following it (not a
 // ghost's). Drawn over its shadow (an invisible unit smears) with the act's overlay. The rebuild's continuous motion
@@ -3532,7 +3534,7 @@ int BattleUnit::LoadEnemyCommand(Database& database, int choice, u32& act)
 
 // swd3e.exe 0x00495A00: one frame of the unit fading out to invisible (mode 0) or back in (mode 1) at its place, over
 // the shadow picture's shadow, glowLevel counting up to kInvisibleFadeFrames; 0 when done: mode 0 makes the unit
-// Invisible, both clear InvisibleMark and UnkMark400 (mode 1 also glowLevel)
+// Invisible, both clear InvisibleMark and FadingInMark (mode 1 also glowLevel)
 int BattleUnit::FadeInvisible(BattleServices& services, int mode)
 {
     smooth::Scene scene;
@@ -3724,9 +3726,9 @@ void BattleUnit::DrawMainFaded(BattleServices& services, int tint)
 }
 
 // swd3e.exe 0x00497790: the unit's defence: a party role's from its battle record, with defenseShift percent of it
-// added (DefenseUp) and taken (DefenseDown, in 16 bits) and 70 percent added with Barrier; a positive unk2EB2 then
-// scales it (from its 16 bits) by unk2EB2 tenths, and one negative in 16 bits is 0. An enemy's from its object, with
-// the same shifts.
+// added (DefenseUp) and taken (DefenseDown, in 16 bits) and 70 percent added with Barrier; a positive gatheredCharge
+// then scales it (from its 16 bits) by gatheredCharge tenths, and one negative in 16 bits is 0. An enemy's from its
+// object, with the same shifts.
 int BattleUnit::Defense() const
 {
     const u32 status = this->status;
@@ -3758,9 +3760,9 @@ int BattleUnit::Defense() const
 
     int defense = static_cast<u16>(base - down) + barrier + up;
 
-    if (this->unk2EB2 > 0)
+    if (this->gatheredCharge > 0)
     {
-        defense = static_cast<i16>(defense) * this->unk2EB2 * kUnk2EB2Tenths / kPercent;
+        defense = static_cast<i16>(defense) * this->gatheredCharge * kGatherDefenseTenths / kPercent;
     }
 
     return (defense & kSignBit16) != 0 ? 0 : defense;
@@ -3768,9 +3770,9 @@ int BattleUnit::Defense() const
 
 // swd3e.exe 0x0048CA10: one frame of the unit's defeat while `dying` (none for the talisman ghost); 1 once it is over
 // (the cast act cleared, the turn reset, the unit defeated). A party role or a unit with standingAside (not forced)
-// ends at once: a role is marked Defeated in its record, flags 2BC0 and unk2EB2 are cleared and its effects expire.
-// Others play the defeat pose (the fixed pose, or kParticlePose for an Boss object; pose 0 ends at once) on the picture
-// of the cast act's action kDefeatAction (0x28 under flag 2BC0 bit 16), glowLevel counting the frames.
+// ends at once: a role is marked Defeated in its record, flags 2BC0 and gatheredCharge are cleared and its effects
+// expire. Others play the defeat pose (the fixed pose, or kParticlePose for an Boss object; pose 0 ends at once) on the
+// picture of the cast act's action kDefeatAction (0x28 under flag 2BC0 bit 16), glowLevel counting the frames.
 int BattleUnit::DefeatFrame(BattleServices& services)
 {
     if (this->dying == 0 || this->ghost == 1)
@@ -3809,7 +3811,7 @@ int BattleUnit::DefeatFrame(BattleServices& services)
         this->dying = 0;
         this->defeated = 1;
         this->stateFlags = 0;
-        this->unk2EB2 = 0;
+        this->gatheredCharge = 0;
         this->ExpireEffects(services, 1);
         return 1;
     }
@@ -4381,8 +4383,8 @@ void BattleUnit::DrawWobble(BattleServices& services, const Picture& picture, sm
 
 // swd3e.exe 0x00499060: one frame of the unit walking from its saved place (a ghost: its place) to the target (or the
 // fixed origin), the attack act's walk action (0x39 under stateFlags bit 25), the stand pose in the recoil act giving
-// its x: 0x18 (a ghost 0x10) line steps a frame more each frame; with UnkFlag20 none until the act follows up, then a
-// sixteenth of the distance a frame more; the unit's place follows the walk (not a ghost's). Under MarkBit4, or a
+// its x: 0x18 (a ghost 0x10) line steps a frame more each frame; with WaitsToWalk none until the act follows up, then a
+// sixteenth of the distance a frame more; the unit's place follows the walk (not a ghost's). Under Regressed, or a
 // forced fading command (FadesIn), command B is taken at once (1); an invisible unit first fades out (1); stateFlags
 // bit 31 stops it (0). At the target the acts and the line are cleared and command A becomes command B (1), a unit of
 // act 1 setting stateFlags bit 25 instead, which then shows the act at the target until it ends. Drawn over its shadow
@@ -4600,9 +4602,9 @@ int BattleUnit::CatchRoll(BattleServices& services, u8 level)
 // swd3e.exe 0x0048F390: one frame of the unit staggering from a hit (hurtStep one on each frame not held); 1 once over
 // (from step 13 when its act waits or for a unit of unk3070: hurtStep back to 1, the attack act and the targets
 // cleared, `charging` set) or when its act cannot run or the unit guards. A party member takes the hurt pose (the
-// guard pose when GetGuard or hitCancelled, not held nor with damage pending; under MarkBit4 act 0xFA), others the hurt
-// pose (0x3A for unk3070); a unit nudged in place stands. The picture shakes back from the hit by StaggerShake
-// (towards the side of an enemy or a unit acting by itself or under MarkBit4; slides back by StaggerSlide while
+// guard pose when GetGuard or hitCancelled, not held nor with damage pending; under Regressed act 0xFA), others the
+// hurt pose (0x3A for unk3070); a unit nudged in place stands. The picture shakes back from the hit by StaggerShake
+// (towards the side of an enemy or a unit acting by itself or under Regressed; slides back by StaggerSlide while
 // nudged; lifts by StaggerLift when nudged in place, which lasts to step 22), over its shadow; a unit of unk3070
 // leaves a red flash shaking by StaggerFlash. The stone (Stone) copies the main act and stays. Its effects,
 // overlay and the recoil effect of its act follow.
@@ -4613,7 +4615,7 @@ int BattleUnit::HurtFrame(BattleServices& services)
 
     if (this->partyMember == 1)
     {
-        if (this->MarkBit4() != 0)
+        if (this->Regressed() != 0)
         {
             act.id = kStillAct;
             act.action = kShadowAction;
@@ -4699,7 +4701,7 @@ int BattleUnit::HurtFrame(BattleServices& services)
         y = this->placement.y - StaggerValue(BattleUnit::StaggerLift, step) - act.y;
     }
 
-    const bool turned = this->kind == 0 || this->autoControl == 1 || this->MarkBit4() == 1;
+    const bool turned = this->kind == 0 || this->autoControl == 1 || this->Regressed() == 1;
 
     if (turned)
     {
@@ -4983,7 +4985,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         act.action = kWeakAction;
     }
 
-    if (this->MarkBit4() == 1)
+    if (this->Regressed() == 1)
     {
         act.id = kStillAct;
         act.action = kShadowAction;
@@ -5005,7 +5007,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
     const RoleRecord* record = this->roleRecord;
 
     if (this->kind == 1 && this->partyMember == 1 && record->hitPoints <= record->maxHitPoints / kWeakShare &&
-        this->MarkBit4() == 0)
+        this->Regressed() == 0)
     {
         act.action = kWeakAction;
     }
@@ -5087,7 +5089,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
             this->unk3014 = 0;
             act.action = kGuardAction1;
 
-            if (this->MarkBit4() == 1)
+            if (this->Regressed() == 1)
             {
                 this->ExpireEffects(services, 1);
                 act.id = this->actId;
@@ -5241,7 +5243,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
         return;
     }
 
-    if (this->commandA == 0 || this->commandA == BattleUnit::UnkCommand1C)
+    if (this->commandA == 0 || this->commandA == BattleUnit::InvisibilityCommand)
     {
         if ((marks & BattleUnit::InvisibleMark) != 0)
         {
@@ -5249,7 +5251,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
             return;
         }
 
-        if ((marks & BattleUnit::UnkMark400) != 0)
+        if ((marks & BattleUnit::FadingInMark) != 0)
         {
             this->FadeInvisible(services, 1);
             return;
@@ -5396,7 +5398,7 @@ void BattleUnit::IdleFrameBody(BattleServices& services, smooth::Scene& scene)
     this->DrawEffects(services, x, y, scene);
     smooth::PictureSteps steps;
 
-    if (this->commandA == BattleUnit::UnkCommand6 || this->commandA == BattleUnit::UnkCommand50)
+    if (this->commandA == BattleUnit::AbsorbCommand || this->commandA == BattleUnit::SealCommand)
     {
         ActState& spark = this->recoilAct;
         spark.action = 0;
@@ -5590,7 +5592,7 @@ void BattleUnit::DrawShadowTinted(smooth::ScenePainter& painter)
 }
 
 // swd3e.exe 0x00496650: an enemy chooses its command for the turn; `act` takes the act of an object or a cast; 1 when
-// the command is chosen with its act (UnkCommandFlag8000 and command 2, or 0xF for UnkAction1000), 0 for an attack
+// the command is chosen with its act (UnkCommandFlag8000 and command 2, or 0xF for Summons), 0 for an attack
 // or a skill of command 1, 1 at once while UnkCommandFlag8000 is set. A heal (healChoice) comes first; an enraged
 // enemy chooses by its enrage effect (skills below 1001, objects from 6001, else a coin); otherwise unk2FDD or the
 // turns of choicePhase. Confused makes it attack; waiting objects or skills with no idle turn yet take a skill. A
@@ -5683,7 +5685,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
 
     // The command may be used: its buffs (unk08) not held by the unit already, not those of all party members
     // (items only), nor of party members while none is buffed; not a forced unit's kNoForcedStatus or support command,
-    // nor an UnkAction1000 one while unk577210 is set.
+    // nor a Summons one while calledAct is set.
     auto usable = [this, &services, &data](bool item)
     {
         const auto buffs = static_cast<u32>(this->command.statusBits);
@@ -5721,7 +5723,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
             return false;
         }
 
-        return (this->command.actionFlags & UnitCommand::UnkAction1000) == 0 || services.state.unk577210 == 0;
+        return (this->command.actionFlags & UnitCommand::Summons) == 0 || services.state.calledAct == 0;
     };
 
     if (choice == kHealChoice)
@@ -5812,10 +5814,10 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
         this->commandAttack = static_cast<u16>(this->command.value);
         --count;
 
-        if ((this->command.actionFlags & UnitCommand::UnkAction1000) != 0)
+        if ((this->command.actionFlags & UnitCommand::Summons) != 0)
         {
             this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
-            this->SetCommand(BattleUnit::UnkCommandF);
+            this->SetCommand(BattleUnit::SummonCommand);
             return 1;
         }
 
@@ -5922,7 +5924,7 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
         this->LoadCommand(database, this->object.data.skillScript);
 
         if ((this->autoControl != 1 || (static_cast<u32>(this->command.statusBits) & kNoForcedStatus) == 0) &&
-            ((this->command.actionFlags & UnitCommand::UnkAction1000) == 0 || services.state.unk577210 == 0))
+            ((this->command.actionFlags & UnitCommand::Summons) == 0 || services.state.calledAct == 0))
         {
             chosen = true;
             act = this->object.data.act;
@@ -5951,8 +5953,8 @@ int BattleUnit::ChooseCommand(BattleServices& services, Database& database, u32&
             static_cast<u16>(this->command.castSpeed + this->command.castSpeed * (data.wisdom - kWiseEnemy) / kPercent);
     }
 
-    const bool special = (this->command.actionFlags & UnitCommand::UnkAction1000) != 0;
-    this->SetCommand(special ? BattleUnit::UnkCommandF : BattleUnit::SkillCommand);
+    const bool special = (this->command.actionFlags & UnitCommand::Summons) != 0;
+    this->SetCommand(special ? BattleUnit::SummonCommand : BattleUnit::SkillCommand);
     this->unk2FD9 = 1;
     this->idleTurns = 0;
     ++this->itemWait;
@@ -5992,11 +5994,11 @@ int BattleUnit::ChooseAttack(Database& database)
     return 0;
 }
 
-// The end of a command-1 choice (inline in the original): a command with UnkFlag10 chosen as command 1 becomes command
+// The end of a command-1 choice (inline in the original): a command with WalksHome chosen as command 1 becomes command
 // 0xC8 with command B 1.
 void BattleUnit::MarkDelayedAttack()
 {
-    if ((this->command.flags & UnitCommand::UnkFlag10) != 0 && this->commandA == BattleUnit::AttackCommand)
+    if ((this->command.flags & UnitCommand::WalksHome) != 0 && this->commandA == BattleUnit::AttackCommand)
     {
         this->commandB = BattleUnit::AttackCommand;
         this->commandA = kDelayedCommand;
@@ -6564,7 +6566,7 @@ i32 BattleUnit::HitPointShare(int scale) const
 // or once spent; 1 while it holds.
 int BattleUnit::CancelHitNumber(BattleServices& services)
 {
-    if ((services.state.panelFlags & BattleState::UnkPanel800) != 0 || this->hitCancelWindow < 0)
+    if ((services.state.panelFlags & BattleState::NoHitCancelPanel) != 0 || this->hitCancelWindow < 0)
     {
         return 0;
     }
@@ -6694,7 +6696,7 @@ void BattleUnit::StartRipple(BattleServices& services)
 // The ripple of StartRipple runs over the unit for 30 frames, then ends. With an effect and the unit not guarding nor
 // invisible: the first effect with an act (the head node itself when it has one) is animated above the unit (the
 // turns of a status 0x400 effect passed on the way kept for its number); then by the status: the act of slot 10
-// (status 0x200: at its end the unit is marked UnkMark10 and turned), the stone overlay (bit 2, wiping in from the
+// (status 0x200: at its end the unit is marked RegressedMark and turned), the stone overlay (bit 2, wiping in from the
 // bottom while overlayWipe has bit 15; nothing follows it), the acts of status 0x100 and of Slowed, the poison tint
 // (a lasting poison greener), the freeze tint (bit 1, wiping in likewise, greener and bluer while more turns are
 // left) and the darkening of status 0x400 with its turns.
@@ -6820,7 +6822,7 @@ void BattleUnit::DrawEffects(BattleServices& services, int x, int y, smooth::Sce
 
         if (slot.waiting == 1)
         {
-            this->marks = static_cast<u16>(this->marks | BattleUnit::UnkMark10);
+            this->marks = static_cast<u16>(this->marks | BattleUnit::RegressedMark);
             this->facing = 1;
             this->unk3070 = 1;
             slot = ActState{};
@@ -7096,7 +7098,7 @@ int BattleUnit::CommandSupports() const
 {
     const u32 buffs = static_cast<u32>(this->command.statusBits);
 
-    if ((buffs & kSupportBuffs) != 0 || (this->command.actionFlags & UnitCommand::UnkAction1000) != 0)
+    if ((buffs & kSupportBuffs) != 0 || (this->command.actionFlags & UnitCommand::Summons) != 0)
     {
         return 1;
     }
@@ -7188,15 +7190,15 @@ u16 BattleUnit::FollowAct() const
 }
 
 // swd3e.exe 0x00491CC0
-int BattleUnit::ActFlag15() const
+int BattleUnit::CommandDefeatsAll() const
 {
-    return (this->command.actionFlags & UnitCommand::UnkAction8000) != 0 ? 1 : 0;
+    return (this->command.actionFlags & UnitCommand::DefeatsAll) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00491CD0
-int BattleUnit::ActFlag17() const
+int BattleUnit::CommandTransfersDamage() const
 {
-    return (this->command.actionFlags & UnitCommand::UnkAction20000) != 0 ? 1 : 0;
+    return (this->command.actionFlags & UnitCommand::TransfersDamage) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x00491CF0
@@ -7421,7 +7423,7 @@ bool BattleUnit::IsWeakEnemy() const
 }
 
 // swd3e.exe 0x004902E0: a frame of the cast countdown running down by the command's castSpeed (not while held or marked
-// UnkMark2; then actionStarted is cleared): 1 once it is empty or without castSpeed. Nothing with a target; a fallen
+// FrozenMark; then actionStarted is cleared): 1 once it is empty or without castSpeed. Nothing with a target; a fallen
 // unit other than the talisman ghost loses its gauge (0).
 int BattleUnit::StepCastCountdown()
 {
@@ -7444,7 +7446,7 @@ int BattleUnit::StepCastCountdown()
         return 1;
     }
 
-    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::UnkMark2) != 0)
+    if ((this->marks & BattleUnit::Held) != 0 || (this->marks & BattleUnit::FrozenMark) != 0)
     {
         return 0;
     }

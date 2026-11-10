@@ -161,31 +161,31 @@ struct SkillScript
     // The bits of `flags`, each set by an opcode of the skill script.
     enum Flag : u32
     {
-        TargetsAll = 1,    // opcode 3: every unit of the side
-        AllAtOnce = 2,     // opcode 9: all hit at once
-        UnkFlag4 = 4,      // opcode 0xB
-        ElementBuff = 8,   // opcode 0xE: the buff raises the resistance to `element`
-        UnkFlag10 = 0x10,  // opcodes 0xF..0x15 set 0x10..0x800 in turn (0x80 excepted)
-        UnkFlag20 = 0x20,
+        TargetsAll = 1,      // opcode 3: every unit of the side
+        AllAtOnce = 2,       // opcode 9: all hit at once
+        DelaysFadeIn = 4,    // opcode 0xB
+        ElementBuff = 8,     // opcode 0xE: the buff raises the resistance to `element`
+        StaysAcross = 0x10,  // opcodes 0xF..0x15 set 0x10..0x800 in turn (0x80 excepted)
+        StaysDown = 0x20,
         UnkFlag40 = 0x40,
         NoAilmentFlag = 0x80,  // opcode 6: the skill brings no ailment
-        UnkFlag100 = 0x100,
-        UnkFlag200 = 0x200,
-        UnkFlag400 = 0x400,
-        UnkFlag800 = 0x800,
-        UnkFlag1000 = 0x1000,      // opcode 0x16, with unk22 and turns
-        UnkFlag2000 = 0x2000,      // opcode 0x18
-        UnkFlag4000 = 0x4000,      // opcode 0x19
-        UnkFlag8000 = 0x8000,      // opcode 0x1B
-        UnkFlag10000 = 0x10000,    // opcode 0x1C
-        UnkFlag20000 = 0x20000,    // opcode 0xC when statusBits has the bit
-        UnkFlag40000 = 0x40000,    // opcode 0x1D
-        UnkFlag80000 = 0x80000,    // opcode 0x1E
-        UnkFlag100000 = 0x100000,  // opcode 0x1F, with unk24
+        DrainsLife = 0x100,
+        DrainsSpirit = 0x200,
+        DrainsStamina = 0x400,
+        Retreats = 0x800,
+        Summons = 0x1000,           // opcode 0x16, with calledAct and turns
+        Ripples = 0x2000,           // opcode 0x18
+        ShowsResistances = 0x4000,  // opcode 0x19
+        DefeatsAll = 0x8000,        // opcode 0x1B
+        ShrinksInFlight = 0x10000,  // opcode 0x1C
+        TransfersDamage = 0x20000,  // opcode 0xC when statusBits has the bit
+        FixedOrigin = 0x40000,      // opcode 0x1D
+        StealsGold = 0x80000,       // opcode 0x1E
+        StealsItem = 0x100000,      // opcode 0x1F, with stealChance
     };
 
-    static constexpr u16 Unk20Mark = 0x8000;        // set in unk20 by opcode 0xA
-    static constexpr u32 StatusUnk20000 = 0x20000;  // in statusBits: opcode 0xC also sets UnkFlag20000
+    static constexpr u16 ActSpeedMark = 0x8000;     // set in unk20 by opcode 0xA
+    static constexpr u32 TransferStatus = 0x20000;  // in statusBits: opcode 0xC also sets TransfersDamage
 
     // The values of `element` (names from the battle messages of each resistance).
     enum Element : u16
@@ -226,13 +226,13 @@ struct SkillScript
     u32 resistanceAndFollowAct = 0;  // +0x10 opcode 0: the element (low word: the resistance it hits, the element
                                      // picture of the skill pages) and the follow-up act (high word)
     u16 castAct = 0;                 // +0x14 opcode 8
-    u16 unk16 = 0;                   // +0x16 opcode 4
+    u16 sweepGap = 0;                // +0x16 opcode 4
     u16 castSpeed = 0;               // +0x18 opcode 0x1A (new in swd3e)
     u16 ailment = 0;                 // +0x1A opcodes 6, 7 (bit 13: none, bit 15: refresh only)
     u16 element = 0;                 // +0x1C opcode 0xE: the element of a resistance buff
     u16 pose = 0;                    // +0x1E opcode 0xD the pose of a defeat (its low byte)
-    u16 unk20 = 0;                   // +0x20 opcode 0xA (bit 15 set with it)
-    u16 unk22 = 0;                   // +0x22 opcode 0x16
+    u16 actSpeed = 0;                // +0x20 opcode 0xA (bit 15 set with it)
+    u16 calledAct = 0;               // +0x22 opcode 0x16
     u16 stealChance = 0;             // +0x24 opcode 0x1F (new in swd3e)
     u16 target = 0;  // +0x26 opcode 0x17, first value (new in swd3e): the first value of BattleUnit::CommandTarget
     u16 unk28 = 0;   // +0x28 opcode 0x17, second value
@@ -247,33 +247,33 @@ enum class SkillOpcode : u16
     Values = 0,  // flagsAndValue and resistanceAndFollowAct
     Turns = 2,
     SetUnkFlag1 = 3,
-    Unk16 = 4,
+    SweepGap = 4,
     End = 5,
     NoAilment = 6,
     Ailment = 7,
     CastAct = 8,
     SetUnkFlag2 = 9,
-    Unk20 = 0xA,
-    SetUnkFlag4 = 0xB,
+    ActSpeed = 0xA,
+    SetDelaysFadeIn = 0xB,
     StatusBits = 0xC,
     Pose = 0xD,
     Element = 0xE,
-    SetUnkFlag10 = 0xF,
-    SetUnkFlag20 = 0x10,
+    SetStaysAcross = 0xF,
+    SetStaysDown = 0x10,
     SetUnkFlag40 = 0x11,
-    SetUnkFlag100 = 0x12,
-    SetUnkFlag200 = 0x13,
-    SetUnkFlag400 = 0x14,
-    SetUnkFlag800 = 0x15,
-    Unk22 = 0x16,
+    SetDrainsLife = 0x12,
+    SetDrainsSpirit = 0x13,
+    SetDrainsStamina = 0x14,
+    SetRetreats = 0x15,
+    CalledAct = 0x16,
     Target = 0x17,
-    SetUnkFlag2000 = 0x18,
-    SetUnkFlag4000 = 0x19,
+    SetRipples = 0x18,
+    SetShowsResistances = 0x19,
     CastSpeed = 0x1A,
-    SetUnkFlag8000 = 0x1B,
-    SetUnkFlag10000 = 0x1C,
-    SetUnkFlag40000 = 0x1D,
-    SetUnkFlag80000 = 0x1E,
+    SetDefeatsAll = 0x1B,
+    SetShrinksInFlight = 0x1C,
+    SetFixedOrigin = 0x1D,
+    SetStealsGold = 0x1E,
     StealChance = 0x1F,
 };
 

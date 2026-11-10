@@ -32,7 +32,7 @@ enum class AccessoryKind : u16
     RecoverSpirit = 0x23,   // 回氣: 夜叉肩帶
     Meditate = 0x24,        // 運功: no item has it
     Roulette = 0x25,        // 龍颿: swd3e: 藍格怪衣, command 0x25 alone (龍颿: the roulette)
-    Gather = 0x27,          // 蓄勁: swd3e: 奇魄古玉, unk2EB2 counts up (蓄勁)
+    Gather = 0x27,          // 蓄勁: swd3e: 奇魄古玉, gatheredCharge counts up (蓄勁)
     StrikeBack =
         0x28,     // 逆攻: swd3e: 歸靈指套, armed by a first use (equipmentFlags 0x100), taken by the next (逆攻 / 釋放)
     Fuse = 0x29,  // 融合: swd3e: 三清符筆, the proficiency steps only (融合)

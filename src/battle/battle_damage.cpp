@@ -147,7 +147,7 @@ void Game::TryRetreat(int role)
 {
     BattleState& battle = this->battleState;
 
-    if (this->battleRoles[static_cast<std::size_t>(role)].ActFlag11() != 1)
+    if (this->battleRoles[static_cast<std::size_t>(role)].CommandRetreats() != 1)
     {
         return;
     }

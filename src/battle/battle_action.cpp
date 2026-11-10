@@ -61,7 +61,7 @@ constexpr int kSealCategory = 6;           // the item category command 0x50 use
 constexpr i16 kAbsorbFailedCause = 0xF;    // the enrage cause of a failed taking
 constexpr i32 kMusicFloor = 5;             // the lowest level the battle music sinks to while a role casts
 constexpr int kSpellEnrageEvent = 2;       // CountEnrageEvent of a spell on an enemy
-constexpr u8 kCastDefeatPose = 0x10;       // the defeat pose of a cast with ActFlag15
+constexpr u8 kCastDefeatPose = 0x10;       // the defeat pose of a cast with CommandDefeatsAll
 constexpr i32 kRetreatedStatus = 0x2000;   // a role that retreated
 constexpr i32 kGhostAloneStatus = 0x5008;  // the talisman ghost when role 0 retreated
 constexpr u16 kRouletteSound = 0xBA;
@@ -870,18 +870,18 @@ void Game::StartRoleCast(BattleRole& unit)
 {
     BattleState& battle = this->battleState;
     battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast);
-    battle.sweepGap = unit.CommandUnk16();
+    battle.sweepGap = unit.CommandSweepGap();
     battle.slotTargets.fill(-1);
     battle.sweptUnits = 1;
     battle.slotDamage.fill(0);
 }
 
-// Every enemy standing defeated by a cast with ActFlag15 (inline in 0x0045BEA0): pose 0x10, unk5772F8 set.
+// Every enemy standing defeated by a cast with CommandDefeatsAll (inline in 0x0045BEA0): pose 0x10, unk5772F8 set.
 void Game::DefeatAllByCast(BattleRole& unit)
 {
     BattleState& battle = this->battleState;
 
-    if (unit.ActFlag15() != 1)
+    if (unit.CommandDefeatsAll() != 1)
     {
         return;
     }
@@ -902,11 +902,11 @@ void Game::DefeatAllByCast(BattleRole& unit)
 }
 
 // Command 2 of RoleActionFrame (inline in the original): the spell. Its first frame slides the units to an enemy
-// target, sets up the cast (StartRoleCast; with ActFlag13 the ripple battle) and the targets: on the roles a whole
+// target, sets up the cast (StartRoleCast; with CommandRipples the ripple battle) and the targets: on the roles a whole
 // side counts at most the roles, a single defeated role is retargeted unless the command only refreshes; on the
 // enemies the target (or with a whole side every enemy standing, counted for the sweep) counts enrage event 2 and
-// takes the command's turns; ActFlag15 defeats the enemies. The music sinks while the spell runs; once it is over
-// the music comes back, the units slide back, the turns and damage are cleared and, unless the resistance panel
+// takes the command's turns; CommandDefeatsAll defeats the enemies. The music sinks while the spell runs; once it is
+// over the music comes back, the units slide back, the turns and damage are cleared and, unless the resistance panel
 // shows, the ripple goes and the role goes on with 0x12C (retreating if it asked to).
 int Game::RoleSpellFrame(BattleRole& unit, int role, int target)
 {
@@ -922,7 +922,7 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, int target)
 
         this->StartRoleCast(unit);
 
-        if (unit.ActFlag13() == 1)
+        if (unit.CommandRipples() == 1)
         {
             battle.rippleHits = 1;
             battle.ripple =
@@ -1011,9 +1011,9 @@ int Game::RoleSpellFrame(BattleRole& unit, int role, int target)
 }
 
 // Command 3 of RoleActionFrame (inline in the original): the item. Its first frame sets up the cast (StartRoleCast;
-// on the enemies the units slide to the target) with sweepTotal at most the units of the target side, and ActFlag15
-// defeats the enemies. The music sinks every frame; once the item is over the music comes back, the item is used up
-// (usedUpItem), and the role goes on with 0x12C (retreating if it asked to).
+// on the enemies the units slide to the target) with sweepTotal at most the units of the target side, and
+// CommandDefeatsAll defeats the enemies. The music sinks every frame; once the item is over the music comes back, the
+// item is used up (usedUpItem), and the role goes on with 0x12C (retreating if it asked to).
 int Game::RoleItemFrame(BattleRole& unit, int role, int target)
 {
     BattleState& battle = this->battleState;
@@ -2536,7 +2536,7 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     battle.targetsAll = order.targetsAll;
     battle.atParty = order.atParty;
     battle.allAtOnce = order.allAtOnce;
-    battle.slideBackPicture = static_cast<i16>(order.unk0C);
+    battle.slideBackPicture = static_cast<i16>(order.actSpeed);
     battle.sweepTotal = order.targetCount;
     order = PendingOrder{};
 }

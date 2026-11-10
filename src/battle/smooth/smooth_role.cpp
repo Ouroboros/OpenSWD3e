@@ -37,7 +37,7 @@ constexpr i16 kForcedX = 0x140;             // a unit with guestControl attacks 
 constexpr i16 kForcedY = 0x136;
 constexpr u16 kSecondForcedAttack = 2;
 constexpr u32 kTurnsBeforeFadeIn = 0x10000000;  // stateFlags bit 28: the role turns before it fades in (swd3e)
-constexpr i32 kMarkedAttackAct = 0xFA;          // swd3e: the attack act of a role under MarkBit4
+constexpr i32 kMarkedAttackAct = 0xFA;          // swd3e: the attack act of a role under Regressed
 constexpr std::u8string_view kAttackActTitle = u8"Attack Act";   // 0x004BFA50
 constexpr std::u8string_view kActError = u8"[%s]QQ:%d號錯誤!!";  // 0x004BFA5C
 constexpr u32 kBoomerangBackHome = 2;
@@ -159,9 +159,9 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
     attack.id = role.actId;
     attack.action = kAttackAction;
 
-    // A critical attack (the role's or one under way) of a party member unless MarkBit4; the weapon's act follows it
+    // A critical attack (the role's or one under way) of a party member unless Regressed; the weapon's act follows it
     // up when the role is not forced. The critical action is taken back by a forced role (as in the original).
-    if ((role.critical == 1 || battle.criticalAttack == 1) && role.MarkBit4() == 0)
+    if ((role.critical == 1 || battle.criticalAttack == 1) && role.Regressed() == 0)
     {
         if (role.PartyMember() == 1)
         {
@@ -180,7 +180,7 @@ int RoleFrame::AttackAdvance(BattleServices& services, BattleUnit& target, int s
     }
     else
     {
-        if (role.MarkBit4() == 1)
+        if (role.Regressed() == 1)
         {
             attack.id = kMarkedAttackAct;
         }
@@ -1505,7 +1505,7 @@ int RoleFrame::MagicFrameAdvance(BattleServices& services, BattleUnit& target, S
     const Scene::Owner owner(scene, &this->role);
     BattleRole& role = this->role;
     BattleState& battle = services.state;
-    ActState& act = role.slotActs[BattleUnit::UnkSlot8];
+    ActState& act = role.slotActs[BattleUnit::MagicSlot];
     act.action = role.magicAction;
     role.inAction = 1;
     act.id = role.actId;
@@ -1586,7 +1586,7 @@ int RoleFrame::ChargeAttackFrameAdvance(BattleServices& services, BattleUnit& ta
     }
 
     role.inAction = 1;
-    ActState& magic = role.slotActs[BattleUnit::UnkSlot8 + static_cast<std::size_t>(slot)];
+    ActState& magic = role.slotActs[BattleUnit::MagicSlot + static_cast<std::size_t>(slot)];
     ActState& charge = role.attackAct;
     magic.id = role.actId;
     magic.action = role.magicAction;
@@ -1909,7 +1909,7 @@ int RoleFrame::SwarmSpellFrameAdvance(BattleServices& services, BattleUnit& targ
 {
     const Scene::Owner owner(scene, &this->role);
     BattleRole& role = this->role;
-    ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
+    ActState& magic = role.slotActs[BattleUnit::MagicSlot];
     u16 targetX = 0;
     u16 targetY = 0;
     magic.action = role.magicAction;
@@ -2020,8 +2020,8 @@ int RoleFrame::BeamSpellFrameAdvance(BattleServices& services, BattleUnit& targe
     BattleRole& role = this->role;
     BattleState& battle = services.state;
     ScenePainter painter(services, scene);
-    ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
-    ActState& rise = role.slotActs[BattleUnit::UnkSlot9];
+    ActState& magic = role.slotActs[BattleUnit::MagicSlot];
+    ActState& rise = role.slotActs[BattleUnit::BeamRiseSlot];
     role.inAction = 1;
     magic.id = role.actId;
     magic.action = role.magicAction;
@@ -2250,7 +2250,7 @@ int RoleFrame::LeapSpellFrameAdvance(BattleServices& services, BattleUnit& targe
     const Scene::Owner owner(scene, &this->role);
     BattleRole& role = this->role;
     BattleState& battle = services.state;
-    ActState& magic = role.slotActs[BattleUnit::UnkSlot8];
+    ActState& magic = role.slotActs[BattleUnit::MagicSlot];
     magic.id = role.actId;
     role.inAction = 1;
     magic.action = role.magicAction;

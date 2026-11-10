@@ -1833,7 +1833,7 @@ int TurnFrame::DrawChargePanelAdvance(int x, int y, int cursor, Scene& scene)
         HudFrame(game.battleHud).DrawRoleIconAdvance(*partyRole, x + kChargeIconOffset, y + kChargeIconOffset, scene);
     }
 
-    const std::string count = WinFormat(kChargeCount, {role.Unk2EB2Shown()});
+    const std::string count = WinFormat(kChargeCount, {role.GatheredChargeShown()});
     font.DrawText(
         game.drawSurface,
         x + kChargeCountX,
@@ -1858,8 +1858,8 @@ int TurnFrame::DrawChargePanelAdvance(int x, int y, int cursor, Scene& scene)
             TextFont::BoldShadow
         );
 
-        // The first choice (繼續) is dark once unk2EB2 reaches its share of the proficiency.
-        if (choice == 0 && !role.Unk2EB2BelowProficiency(proficiency))
+        // The first choice (繼續) is dark once gatheredCharge reaches its share of the proficiency.
+        if (choice == 0 && !role.ChargeBelowProficiency(proficiency))
         {
             font.DrawText(
                 game.drawSurface,
@@ -1883,7 +1883,7 @@ int TurnFrame::DrawChargePanelAdvance(int x, int y, int cursor, Scene& scene)
                 TextFont::BoldShadow
             );
 
-            if (choice == 0 && !role.Unk2EB2BelowProficiency(proficiency))
+            if (choice == 0 && !role.ChargeBelowProficiency(proficiency))
             {
                 font.DrawText(
                     game.drawSurface,

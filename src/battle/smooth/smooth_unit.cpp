@@ -56,7 +56,7 @@ constexpr i32 kVanishAction = 0x39;
 constexpr u16 kVanishingAct = 1;  // a unit of act 1 sets kVanishWalk when it arrives
 constexpr int kWalkSteps = 0x18;  // WalkToTarget: line steps per frame walked
 constexpr int kGhostWalkSteps = 0x10;
-constexpr int kWalkShare = 16;         // with UnkFlag20 a sixteenth of the distance once the act follows up
+constexpr int kWalkShare = 16;         // with WaitsToWalk a sixteenth of the distance once the act follows up
 constexpr u16 kArrivedMark = 6;        // unk2EDC when the walk arrives
 constexpr u16 kNudgesTarget = 0x1000;  // DrawAction (swd3e): ActState::target bit nudging the target once
 constexpr u16 kActNudge = 0x28;
@@ -231,18 +231,18 @@ int UnitFrame::HomeAdvance(BattleServices& services, const BattleUnit& target, i
     if (unit.kind != 0)
     {
         if ((unit.accessoryCommands & kWalksHome) == 0 &&
-            (unit.command.flags & (UnitCommand::StepsIn | UnitCommand::UnkFlag20)) == 0)
+            (unit.command.flags & (UnitCommand::StepsIn | UnitCommand::WaitsToWalk)) == 0)
         {
             return 1;
         }
     }
-    else if ((unit.command.flags & UnitCommand::UnkFlag10) == 0)
+    else if ((unit.command.flags & UnitCommand::WalksHome) == 0)
     {
         return 1;
     }
 
     if (unit.autoControl == 1 || unit.guestControl == 1 ||
-        (unit.Confused() == 1 && (unit.stateFlags & kStandsAside) != 0) || unit.MarkBit4() == 1)
+        (unit.Confused() == 1 && (unit.stateFlags & kStandsAside) != 0) || unit.Regressed() == 1)
     {
         return 1;
     }
@@ -443,7 +443,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
         return 0;
     }
 
-    if (unit.MarkBit4() == 1 || (unit.autoControl == 1 && (unit.command.flags & UnitCommand::FadesIn) != 0))
+    if (unit.Regressed() == 1 || (unit.autoControl == 1 && (unit.command.flags & UnitCommand::FadesIn) != 0))
     {
         unit.commandA = unit.commandB;
         return 1;
@@ -581,7 +581,7 @@ int UnitFrame::WalkAdvance(BattleServices& services, const BattleUnit& target, W
     line.toY = toY + static_cast<i16>(act.anchorY) - act.y;
     int stepsPerFrame = unit.ghost == 1 ? kGhostWalkSteps : kWalkSteps;
 
-    if ((unit.command.flags & UnitCommand::UnkFlag20) != 0)
+    if ((unit.command.flags & UnitCommand::WaitsToWalk) != 0)
     {
         stepsPerFrame = 0;
 
@@ -953,7 +953,7 @@ void UnitFrame::GuardAdvance(GuardView& view)
             phases = {};
             unit.guardRise = 0;
             view.clearMode = true;
-            unit.marks = static_cast<u16>(unit.marks & ~BattleUnit::UnkMark1);
+            unit.marks = static_cast<u16>(unit.marks & ~BattleUnit::EvadedMark);
             unit.action = 0;
             unit.unk2BB0 = 0;
             unit.unk2BB4 = 0;
@@ -2564,7 +2564,7 @@ int UnitFrame::FadeInvisibleAdvance(BattleServices& services, int mode, Scene& s
 
         if (mode == 1)
         {
-            unit.marks = static_cast<u16>(unit.marks & ~(BattleUnit::InvisibleMark | BattleUnit::UnkMark400));
+            unit.marks = static_cast<u16>(unit.marks & ~(BattleUnit::InvisibleMark | BattleUnit::FadingInMark));
             unit.glowLevel = 0;
             return 0;
         }
@@ -2574,7 +2574,7 @@ int UnitFrame::FadeInvisibleAdvance(BattleServices& services, int mode, Scene& s
             unit.status |= BattleUnit::Invisible;
         }
 
-        unit.marks = static_cast<u16>(unit.marks & ~(BattleUnit::InvisibleMark | BattleUnit::UnkMark400));
+        unit.marks = static_cast<u16>(unit.marks & ~(BattleUnit::InvisibleMark | BattleUnit::FadingInMark));
         return 0;
     }
 

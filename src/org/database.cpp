@@ -213,8 +213,8 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 skill.flags |= SkillScript::TargetsAll;
                 break;
 
-            case SkillOpcode::Unk16:
-                skill.unk16 = code.WordAt(at);
+            case SkillOpcode::SweepGap:
+                skill.sweepGap = code.WordAt(at);
                 code.position += sizeof(u16);
                 break;
 
@@ -238,23 +238,23 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 skill.flags |= SkillScript::AllAtOnce;
                 break;
 
-            case SkillOpcode::Unk20:
-                skill.unk20 = code.WordAt(at);
+            case SkillOpcode::ActSpeed:
+                skill.actSpeed = code.WordAt(at);
                 code.position += sizeof(u16);
-                skill.unk20 |= SkillScript::Unk20Mark;
+                skill.actSpeed |= SkillScript::ActSpeedMark;
                 break;
 
-            case SkillOpcode::SetUnkFlag4:
-                skill.flags |= SkillScript::UnkFlag4;
+            case SkillOpcode::SetDelaysFadeIn:
+                skill.flags |= SkillScript::DelaysFadeIn;
                 break;
 
             case SkillOpcode::StatusBits:
                 skill.statusBits = code.DwordAt(at);
                 code.position += sizeof(u32);
 
-                if ((skill.statusBits & SkillScript::StatusUnk20000) != 0)
+                if ((skill.statusBits & SkillScript::TransferStatus) != 0)
                 {
-                    skill.flags |= SkillScript::UnkFlag20000;
+                    skill.flags |= SkillScript::TransfersDamage;
                 }
 
                 break;
@@ -270,37 +270,37 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 code.position += sizeof(u16);
                 break;
 
-            case SkillOpcode::SetUnkFlag10:
-                skill.flags |= SkillScript::UnkFlag10;
+            case SkillOpcode::SetStaysAcross:
+                skill.flags |= SkillScript::StaysAcross;
                 break;
 
-            case SkillOpcode::SetUnkFlag20:
-                skill.flags |= SkillScript::UnkFlag20;
+            case SkillOpcode::SetStaysDown:
+                skill.flags |= SkillScript::StaysDown;
                 break;
 
             case SkillOpcode::SetUnkFlag40:
                 skill.flags |= SkillScript::UnkFlag40;
                 break;
 
-            case SkillOpcode::SetUnkFlag100:
-                skill.flags |= SkillScript::UnkFlag100;
+            case SkillOpcode::SetDrainsLife:
+                skill.flags |= SkillScript::DrainsLife;
                 break;
 
-            case SkillOpcode::SetUnkFlag200:
-                skill.flags |= SkillScript::UnkFlag200;
+            case SkillOpcode::SetDrainsSpirit:
+                skill.flags |= SkillScript::DrainsSpirit;
                 break;
 
-            case SkillOpcode::SetUnkFlag400:
-                skill.flags |= SkillScript::UnkFlag400;
+            case SkillOpcode::SetDrainsStamina:
+                skill.flags |= SkillScript::DrainsStamina;
                 break;
 
-            case SkillOpcode::SetUnkFlag800:
-                skill.flags |= SkillScript::UnkFlag800;
+            case SkillOpcode::SetRetreats:
+                skill.flags |= SkillScript::Retreats;
                 break;
 
-            case SkillOpcode::Unk22:
-                skill.flags |= SkillScript::UnkFlag1000;
-                skill.unk22 = code.WordAt(at);
+            case SkillOpcode::CalledAct:
+                skill.flags |= SkillScript::Summons;
+                skill.calledAct = code.WordAt(at);
                 skill.turns = code.ByteAt(at + sizeof(u16));
                 code.position += sizeof(u32);
                 break;
@@ -311,12 +311,12 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 code.position += sizeof(u32);
                 break;
 
-            case SkillOpcode::SetUnkFlag2000:
-                skill.flags |= SkillScript::UnkFlag2000;
+            case SkillOpcode::SetRipples:
+                skill.flags |= SkillScript::Ripples;
                 break;
 
-            case SkillOpcode::SetUnkFlag4000:
-                skill.flags |= SkillScript::UnkFlag4000;
+            case SkillOpcode::SetShowsResistances:
+                skill.flags |= SkillScript::ShowsResistances;
                 break;
 
             case SkillOpcode::CastSpeed:
@@ -324,24 +324,24 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 code.position += sizeof(u16);
                 break;
 
-            case SkillOpcode::SetUnkFlag8000:
-                skill.flags |= SkillScript::UnkFlag8000;
+            case SkillOpcode::SetDefeatsAll:
+                skill.flags |= SkillScript::DefeatsAll;
                 break;
 
-            case SkillOpcode::SetUnkFlag10000:
-                skill.flags |= SkillScript::UnkFlag10000;
+            case SkillOpcode::SetShrinksInFlight:
+                skill.flags |= SkillScript::ShrinksInFlight;
                 break;
 
-            case SkillOpcode::SetUnkFlag40000:
-                skill.flags |= SkillScript::UnkFlag40000;
+            case SkillOpcode::SetFixedOrigin:
+                skill.flags |= SkillScript::FixedOrigin;
                 break;
 
-            case SkillOpcode::SetUnkFlag80000:
-                skill.flags |= SkillScript::UnkFlag80000;
+            case SkillOpcode::SetStealsGold:
+                skill.flags |= SkillScript::StealsGold;
                 break;
 
             case SkillOpcode::StealChance:
-                skill.flags |= SkillScript::UnkFlag100000;
+                skill.flags |= SkillScript::StealsItem;
                 skill.stealChance = code.WordAt(at);
                 code.position += sizeof(u16);
                 break;

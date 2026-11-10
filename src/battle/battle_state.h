@@ -34,7 +34,7 @@ struct BattleSlotRecord
     i32 unit = -1;        // +0x00 -1: a free record
     i32 targetCount = 0;  // +0x04 the units its order hits (BattleState::sweepTotal)
     u16 kind = 0;         // +0x08
-    u16 unk0A = 0;        // +0x0A
+    u16 actSpeed = 0;     // +0x0A the acting unit's speed (ActSpeed)
     i32 atParty = 0;      // +0x0C 1: its order is at the party (PendingOrder::atParty)
     i32 atEnemies = 0;    // +0x10 an enemy's order aims at the enemies (PendingOrder::atParty of an enemy; to
                           // BattleState::atEnemies when it acts)
@@ -48,7 +48,7 @@ struct PendingOrder
     i32 atParty = 0;     // +0x00 1: at the party (the role aimed at, or every role with targetsAll), else the enemies
     i32 targetsAll = 0;  // +0x04 1: every unit of the side (BattleUnit::TargetsAll)
     i32 allAtOnce = 0;   // +0x08 1: hit at once, not one after another (BattleUnit::AllAtOnce)
-    u16 unk0C = 0;       // +0x0C to unk0A
+    u16 actSpeed = 0;    // +0x0C to BattleSlotRecord::actSpeed
     u16 unk0E = 0;
     i32 targetCount = 0;  // +0x10 the units it hits, counted as they are gathered (to targetCount)
 };
@@ -152,14 +152,14 @@ public:
     // BattleState::panelFlags bits.
     enum PanelFlag : i32
     {
-        UnkPanel2 = 2,        // set when game flag 0xC9 is on at the battle start
-        UnkPanel4 = 4,        // an escort was sent back (ConfirmEscort)
-        UnkPanel8 = 8,        // the battle ends with frameResult 0 even when lost (CheckBattleEnd)
-        UnkPanel100 = 0x100,  // the screen quakes all the time (QuakeFrame)
+        UnkPanel2 = 2,            // set when game flag 0xC9 is on at the battle start
+        EscortReturnedPanel = 4,  // an escort was sent back (ConfirmEscort)
+        QuietLossPanel = 8,       // the battle ends with frameResult 0 even when lost (CheckBattleEnd)
+        QuakingPanel = 0x100,     // the screen quakes all the time (QuakeFrame)
         ResistancePanel = 0x20,
-        NoRetreat = 0x200,    // the party cannot retreat
-        UnkPanel800 = 0x800,  // swd3e: no hit number is taken back (CancelHitNumber)
-        MusicGiven = 0x400,   // swd3e: a battle talk set the battle music (BattleIntro keeps it, then clears this)
+        NoRetreat = 0x200,         // the party cannot retreat
+        NoHitCancelPanel = 0x800,  // swd3e: no hit number is taken back (CancelHitNumber)
+        MusicGiven = 0x400,        // swd3e: a battle talk set the battle music (BattleIntro keeps it, then clears this)
     };
 
     // Bits of spellStage.
@@ -347,9 +347,9 @@ public:
     std::array<PendingOrder, Enemies> enemyPendingOrders = {};  // 0x00536EE0
     i32 unk57727C = 0;     // cleared when a party unit's order is taken (InsertSlotRecord)
     i32 gathersParty = 0;  // 0x005772D0 1: a sweep order chosen at the party (cleared by any queued order or action)
-    // 0x0057735C (swd3e) 1: the skill chosen (ActFlag17) is turned on the role itself once its enemy is aimed at, the
-    // enemy kept in the role's transferTarget (MenuConfirm states 2 and 3)
-    i32 unk57735C = 0;
+    // 0x0057735C (swd3e) 1: the skill chosen (CommandTransfersDamage) is turned on the role itself once its enemy is
+    // aimed at, the enemy kept in the role's transferTarget (MenuConfirm states 2 and 3)
+    i32 transfersDamage = 0;
     // 0x0057722A (swd3e) the role whose start pose (Pose36Frame) plays at the battle start, StartPoseDone once over
     // (StartBattle, RoleFrame); the auto battle key waits for it
     u8 startPoseRole = 0;
@@ -357,7 +357,7 @@ public:
     i32 ghostAimStepped = 0;  // the rebuild (deviations.md): 1 once MenuUp / MenuDown stepped the 鎖定目標 aim
     i16 unk57723C = 0;        // 0x0057723C only ever cleared (HurtFrame 0x0048FAAB and three others), never read
     i16 unk57723E = 0;        // 0x0057723E likewise
-    u16 unk577210 = 0;        // non-zero: an enemy does not choose a command with UnkAction1000 (ChooseCommand)
+    u16 calledAct = 0;        // non-zero: an enemy does not choose a command with Summons (ChooseCommand)
     std::array<i32, Units> unk50EBFC = {};  // 0x0050EBFC (swd3e: 30 slots, 0x78 bytes)
     i32 unk502944 = 0;
     i32 unk502948 = 0;
@@ -412,7 +412,7 @@ public:
     i32 menuSlide = 0;        // 0x00577A4C (swd3e) the menu panels slide in by it, halved each frame
     i32 enraging = 0;         // 0x00577310 (swd3e) 1 while an enemy enrages (Enrage sets it, 0x0049C0D0 clears it)
     i32 enrageDamage = 0;     // 0x005770C4 (swd3e) the damage of enrage 0x3F4 (1.4 times the maximum hit points)
-    // 0x00536880 the ripple over the battle (a spell with ActFlag13 in rippleHits, the unit effect of 0x0049B9D0)
+    // 0x00536880 the ripple over the battle (a spell with CommandRipples in rippleHits, the unit effect of 0x0049B9D0)
     std::unique_ptr<ScriptObject> ripple;
     // 0x005761C8 (swd3e) per role (the first three): 1 + the enemy whose hit holds ailment 0x400 on it (0x0045EE20);
     // cured when that enemy falls (CureHeldBy), all cleared when the ailment ends and by StartBattle
@@ -586,7 +586,7 @@ public:
     i32 thumbDragOffset = 0;             // 0x00577040 the thumb drawn off its place by this (always 0)
     i32 thumbDragged = 0;                // 0x005772FC 1: the thumb is dragged (never set, as in the original)
     i32 hoverUnit = 0;                   // 0x00577988 the unit aimed at under the pointer
-    u16 unk577212 = 0;
+    u16 calledCount = 0;
     // The confirm key of the menu (Game::MenuConfirm).
     i32 timingPress = 0;  // 0x00577080 the press of the timing bar (bit 0: Space down, bit 15: taken)
     i32 unk576F9C = 0;

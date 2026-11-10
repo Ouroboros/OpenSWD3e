@@ -190,7 +190,7 @@ constexpr u32 kAccessoryBit1B = 0x40;
 constexpr u32 kAccessoryBit1D = 0x100;
 constexpr u32 kAccessoryBit1E = 0x200;
 constexpr u32 kAccessoryBit28 = 0x400;   // swd3e: Unk28 taken
-constexpr u32 kUnk28Armed = 0x100;       // swd3e: in equipmentFlags, Unk28 armed
+constexpr u32 kStrikeBackArmed = 0x100;  // swd3e: in equipmentFlags, Unk28 armed
 constexpr u16 kAccessoryStep = 5;        // the proficiency steps of an accessory command
 constexpr u16 kDrainStep = 0xC;          // the proficiency the life-drain accessory gains from a drain
 constexpr u32 kCountedKind = 0x8000000;  // ObjectData::kind bit of the objects CountUsableObjects counts
@@ -242,7 +242,7 @@ constexpr u16 kFullPercent = 100;  // StepWornCounters: a counter with no top is
 constexpr std::size_t kClearedNameBytes = 0x10;
 constexpr u32 kSeparateKind = 0x800;     // ObjectData::kind: the object plays its own act (UnkCommandFlag1000)
 constexpr u32 kReusableKind = 0x80;      // an object not taken when used
-constexpr int kUnk1FScale = 0xB;         // Unk1F: commandAttack is 11 percent of the proficiency and 1 (swd3e)
+constexpr int kMouseHammerScale = 0xB;   // Unk1F: commandAttack is 11 percent of the proficiency and 1 (swd3e)
 constexpr int kAccessoryBaseShare = 10;  // the heals add a tenth of their base
 constexpr int kTenthShare = 10;          // Unk22 / Unk24: the proficiency is halved, less a tenth of it (swd3e)
 constexpr int kSpiritShare = 5;          // Unk23: a fifth of the proficiency
@@ -253,7 +253,7 @@ constexpr u32 kCriticalRoll = 10;
 constexpr u16 kCriticalChance = 5;           // a roll above it is critical
 constexpr u16 kWalkCommand = 0xC8;           // command A of a walking attack (its command in command B)
 constexpr u16 kTwoCommand = 2;               // PrepareCommand (swd3e): the skill name is kept for command B 2
-constexpr u16 kStillSkill = 0xA6;            // the skill a MarkBit4 role takes in place of its weapon's
+constexpr u16 kStillSkill = 0xA6;            // the skill a Regressed role takes in place of its weapon's
 constexpr u32 kStandAsideFlag = 0x10000000;  // stateFlags: under Confused the role stands aside
 constexpr i16 kStandAsideX = 0x154;
 constexpr i16 kStandAsideY = 0x140;
@@ -293,7 +293,7 @@ constexpr u32 kAttackRingPercent = 10;  // an attack ring adds 10% of the attack
 u8 ResistanceByte(const ObjectData& stats, std::size_t at)
 {
     constexpr std::size_t kAltarByte = 5;
-    constexpr std::size_t kUnkA2Byte = 6;
+    constexpr std::size_t kYangByte = 6;
     constexpr std::size_t kUnkA3Byte = 7;
 
     if (at < stats.resistances.size())
@@ -306,7 +306,7 @@ u8 ResistanceByte(const ObjectData& stats, std::size_t at)
         case kAltarByte:
             return stats.altar;
 
-        case kUnkA2Byte:
+        case kYangByte:
             return stats.yang;
 
         case kUnkA3Byte:
@@ -319,14 +319,14 @@ u8 ResistanceByte(const ObjectData& stats, std::size_t at)
 
 }  // namespace
 
-// swd3e.exe 0x0047E930: the battle extras cleared: the words past the unit, unk2EB2, partyMember, the five extra acts,
-// slot acts 8 and 9 and the record at +0x3074
+// swd3e.exe 0x0047E930: the battle extras cleared: the words past the unit, gatheredCharge, partyMember, the five extra
+// acts, slot acts 8 and 9 and the record at +0x3074
 void BattleRole::ClearExtras()
 {
     this->bonusA = 0;
     this->bonusB = 0;
     this->bonusC = 0;
-    this->unk2EB2 = 0;
+    this->gatheredCharge = 0;
     this->unk349C = 0;
     this->unk34A0 = 0;
     this->staminaCost = 0;
@@ -340,8 +340,8 @@ void BattleRole::ClearExtras()
     // The rebuild (deviations.md): a critical rolled in the battle before but not attacked with is not kept.
     this->critical = 0;
     this->extraActs.fill(ActState{});
-    this->slotActs[BattleUnit::UnkSlot8] = ActState{};
-    this->slotActs[BattleUnit::UnkSlot9] = ActState{};
+    this->slotActs[BattleUnit::MagicSlot] = ActState{};
+    this->slotActs[BattleUnit::BeamRiseSlot] = ActState{};
     this->unk3074 = ObjectRecord{};
 }
 
@@ -789,8 +789,8 @@ void BattleRole::TakeCommand34A8()
         this->commandA = this->unk34A8;
     }
 
-    this->slotActs[BattleUnit::UnkSlot8] = ActState{};
-    this->slotActs[BattleUnit::UnkSlot9] = ActState{};
+    this->slotActs[BattleUnit::MagicSlot] = ActState{};
+    this->slotActs[BattleUnit::BeamRiseSlot] = ActState{};
 }
 
 // swd3e.exe 0x00485F30: a strike of the role on `target`: the weapon's proficiency takes a step unless the talisman
@@ -854,7 +854,7 @@ void BattleRole::Strike(BattleServices& services, BattleUnit& target, int evadab
 // swd3e.exe 0x0047FFD0: one frame of the role's attack on `target`; 1 once it is over. A unit with autoControl or
 // Confused and an AtTarget command fades in first (turning first under stateFlags bit 28); one with guestControl
 // attacks from the middle of the field. The attack act (the critical one of a party member, with the weapon's act,
-// unless MarkBit4; act 0xFA under MarkBit4) is drawn, an error box (returning 1) when it cannot run; its target bits
+// unless Regressed; act 0xFA under Regressed) is drawn, an error box (returning 1) when it cannot run; its target bits
 // play the effect in the recoil act, quake the screen, slide the units, start the follow-up in slotActs[slot] (fading
 // the field by the act's lights), or strike. The follow-up (the command's cast act) flies to the target (TargetsUnit)
 // or is placed on it, may add a hit picture and strike again; once it waits it darkens by 4 a frame. When the attack
@@ -1530,8 +1530,8 @@ void BattleRole::Regenerate(BattleServices& services)
 // the kind sets its accessoryCommands bit and becomes command A (some take command B with UnkCommandFlag400, command A
 // 0) and most read the accessory's proficiency into proficiency; Unk1F scales commandAttack, Unk22 / Unk23 / Unk24 a
 // heal of the hit points / spirit / stamina of the battle record; swd3e adds Unk25 (command A only, no step), Unk27
-// (unk2EB2 up), Unk28 (armed by one use, taken as command A by the next) and Unk29. The proficiencies then step by
-// kAccessoryStep.
+// (gatheredCharge up), Unk28 (armed by one use, taken as command A by the next) and Unk29. The proficiencies then step
+// by kAccessoryStep.
 void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 {
     CounterList& proficiency = services.party.fame.lists[Fame::ProficiencyList];
@@ -1615,7 +1615,7 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             this->commandB = kind;
             this->AccessoryProficiency(kind, proficiency);
             this->commandAttack =
-                static_cast<u16>(kUnk1FScale * this->proficiency / kPercent + 1);  // 0x0047F77B: 32 bits
+                static_cast<u16>(kMouseHammerScale * this->proficiency / kPercent + 1);  // 0x0047F77B: 32 bits
             break;
 
         case AccessoryKind::Shield:
@@ -1647,20 +1647,20 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
             return;
 
         case AccessoryKind::Gather:
-            ++this->unk2EB2;
+            ++this->gatheredCharge;
             break;
 
         case AccessoryKind::StrikeBack:
-            if ((this->equipmentFlags & kUnk28Armed) != 0)
+            if ((this->equipmentFlags & kStrikeBackArmed) != 0)
             {
-                this->equipmentFlags &= ~kUnk28Armed;
+                this->equipmentFlags &= ~kStrikeBackArmed;
                 this->commandA = kind;
                 this->accessoryCommands |= kAccessoryBit28;
             }
             else
             {
                 this->AccessoryProficiency(kind, proficiency);
-                this->equipmentFlags |= kUnk28Armed;
+                this->equipmentFlags |= kStrikeBackArmed;
             }
 
             break;
@@ -1676,15 +1676,15 @@ void BattleRole::UseAccessorySkill(BattleServices& services, u16 kind)
 }
 
 // swd3e.exe 0x004807B0: whether the role's next attack is critical (it sets `critical`): never for a forced unit, with
-// an accessory command, while unk2EB2 is positive or mark bit 4 is set, or for the role that had the last one; always
-// with the Unk32 equipment or status bit 18 (the count kept); after roleCount + 8 attacks since the last one; after 8,
-// on a 0..9 roll above 5. A rolled one restarts the count for this role.
+// an accessory command, while gatheredCharge is positive or mark bit 4 is set, or for the role that had the last one;
+// always with the Unk32 equipment or status bit 18 (the count kept); after roleCount + 8 attacks since the last one;
+// after 8, on a 0..9 roll above 5. A rolled one restarts the count for this role.
 int BattleRole::RollCritical(BattleServices& services)
 {
     BattleState& battle = services.state;
 
-    if (this->autoControl == 1 || this->guestControl == 1 || this->accessoryCommands != 0 || this->unk2EB2 > 0 ||
-        this->MarkBit4() == 1 || battle.lastCriticalRole == this->placement.actId)
+    if (this->autoControl == 1 || this->guestControl == 1 || this->accessoryCommands != 0 || this->gatheredCharge > 0 ||
+        this->Regressed() == 1 || battle.lastCriticalRole == this->placement.actId)
     {
         return 0;
     }
@@ -1711,10 +1711,10 @@ int BattleRole::RollCritical(BattleServices& services)
 
 // swd3e.exe 0x004808D0: the role's chosen command prepared (the start of the skill name cleared unless command B is 2;
 // 1 at once without a command). A UnkCommandFlag200 command takes command unk34A8; a walking one (StepsIn /
-// UnkFlag20) goes to command B with command A kWalkCommand (1), otherwise 0. Else the attack is set from the battle
+// WaitsToWalk) goes to command B with command A kWalkCommand (1), otherwise 0. Else the attack is set from the battle
 // record (not for Unk1B), the accessory command applied, the critical rolled and the command loaded from skill 0 (a
 // LifeDrain equipment drains life); without a weapon skill a walking attack (command 1, Steal or Unk1A of a party
-// member) walks and it is 0. With one the command is loaded anew from the weapon's skill (0xA6 under MarkBit4): under
+// member) walks and it is 0. With one the command is loaded anew from the weapon's skill (0xA6 under Regressed): under
 // Confused a walking attack of command 1 walks (1), or with stateFlags bit 28 and UnkFlag4 the role turns and stands at
 // (0x154, 0x140) (1); otherwise a walking attack, or Steal, walks as without a skill. 1.
 int BattleRole::PrepareCommand(BattleServices& services, Database& database)
@@ -1729,7 +1729,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
         return 1;
     }
 
-    const u16 walking = UnitCommand::StepsIn | UnitCommand::UnkFlag20;
+    const u16 walking = UnitCommand::StepsIn | UnitCommand::WaitsToWalk;
 
     auto walk = [this]
     {
@@ -1793,7 +1793,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
     }
 
     this->command = UnitCommand{};
-    this->LoadCommand(database, this->MarkBit4() == 1 ? kStillSkill : skill);
+    this->LoadCommand(database, this->Regressed() == 1 ? kStillSkill : skill);
 
     if ((this->equipmentFlags & BattleUnit::LifeDrain) != 0)
     {
@@ -1809,7 +1809,7 @@ int BattleRole::PrepareCommand(BattleServices& services, Database& database)
 
         if ((this->stateFlags & kStandAsideFlag) != 0)
         {
-            if ((this->command.flags & UnitCommand::UnkFlag4) != 0)
+            if ((this->command.flags & UnitCommand::StandsAside) != 0)
             {
                 this->SetFacing(1);
                 this->placement.x = kStandAsideX;

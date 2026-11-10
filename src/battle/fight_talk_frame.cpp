@@ -1306,7 +1306,7 @@ int Game::FightTalkSkill()
                 actor.LoadItemAction(this->database, static_cast<u16>(talk.unk5782A0), act);
                 battle.unk50D88C[role] = static_cast<i32>(act);
                 actor.StartCastCountdown();
-                battle.pendingOrders[role].unk0C = static_cast<u16>(actor.ActSpeed());
+                battle.pendingOrders[role].actSpeed = static_cast<u16>(actor.ActSpeed());
                 battle.pendingOrders[role].unk0E = 0;
 
                 if (actor.AllAtOnce() == 1)
@@ -2829,7 +2829,7 @@ int Game::FightTalkMisc(u16 command)
 
         case kTalkPanel8:
             talk.cursor += sizeof(u16);
-            battle.panelFlags |= BattleState::UnkPanel8;
+            battle.panelFlags |= BattleState::QuietLossPanel;
             return 1;
 
         case kTalkLevel:
@@ -2960,11 +2960,11 @@ int Game::FightTalkMisc(u16 command)
 
             if (talk.UnsignedWord(1) == 1)
             {
-                battle.panelFlags |= BattleState::UnkPanel100;
+                battle.panelFlags |= BattleState::QuakingPanel;
             }
             else
             {
-                battle.panelFlags &= ~BattleState::UnkPanel100;
+                battle.panelFlags &= ~BattleState::QuakingPanel;
                 battle.quakeStepFrames = 0;
             }
 
@@ -3023,7 +3023,7 @@ int Game::FightTalkMisc(u16 command)
         }
 
         case kTalkNoHitTakeBack:
-            battle.panelFlags |= BattleState::UnkPanel800;
+            battle.panelFlags |= BattleState::NoHitCancelPanel;
             talk.cursor += sizeof(u16);
             return 1;
 

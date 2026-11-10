@@ -170,12 +170,13 @@ struct UnitCommand
         DrainsLife = 0x100,
         DrainsSpirit = 0x200,
         DrainsStamina = 0x400,
-        UnkAction800 = 0x800,
-        UnkAction1000 = 0x1000,
-        UnkAction2000 = 0x2000,
-        UnkAction4000 = 0x4000,
-        UnkAction8000 = 0x8000,     // swd3e (ActFlag15)
-        UnkAction20000 = 0x20000,   // swd3e (ActFlag17)
+        Retreats = 0x800,           // the retreat (TryRetreat tries only with it)
+        Summons = 0x1000,           // a summon: an enemy takes SummonCommand (ChooseCommand), counted as support
+        Ripples = 0x2000,           // a ripple over the field while it hits
+        ShowsResistances = 0x4000,  // shows the target's resistances (ResistancePanel) and does no damage
+        DefeatsAll = 0x8000,        // swd3e: every enemy standing is defeated (DefeatAllByCast)
+        TransfersDamage =
+            0x20000,  // swd3e: the role turns on itself, the enemy it aimed at kept (ConfirmTarget, transferTarget)
         ShrinksInFlight = 0x10000,  // swd3e: FlyAct draws the act shrinking
         FixedOrigin = 0x40000,      // GetOrigin places slot act 8 from (0xF0, 0x12C) (0x00491CE0)
     };
@@ -185,13 +186,13 @@ struct UnitCommand
     {
         TargetsUnit = 1,  // a target command (ClearMoveAxes)
         UnkFlag2 = 2,
-        UnkFlag4 = 4,  // swd3e: under Confused with stateFlags bit 28 the role stands aside (PrepareCommand)
-        StepsIn = 8,   // the unit goes to the target to act (an enemy fades in there; with UnkFlag20 a party role walks
-                       // home after it acts, ReturnHome)
-        UnkFlag10 = 0x10,  // an enemy walks home after it acts
-        UnkFlag20 = 0x20,  // the walks wait for the act to follow up, then cover 1/16 (there) or 1/12 (home) a frame
-        AtTarget = 0x38,   // any of bits 3..5: DrawAction places the act on the target (inferred from DrawAction)
-        FadesIn = 0x18,    // bits 3 and 4: a unit with autoControl fades in before it attacks (AttackFrame)
+        StandsAside = 4,   // swd3e: under Confused with stateFlags bit 28 the role stands aside (PrepareCommand)
+        StepsIn = 8,       // the unit goes to the target to act (an enemy fades in there; with WaitsToWalk a party role
+                           // walks home after it acts, ReturnHome)
+        WalksHome = 0x10,  // an enemy walks home after it acts
+        WaitsToWalk = 0x20,  // the walks wait for the act to follow up, then cover 1/16 (there) or 1/12 (home) a frame
+        AtTarget = 0x38,     // any of bits 3..5: DrawAction places the act on the target (inferred from DrawAction)
+        FadesIn = 0x18,      // bits 3 and 4: a unit with autoControl fades in before it attacks (AttackFrame)
     };
 
     i32 unk00 = 0;        // +0x00 (unit +0x1004)
@@ -202,13 +203,13 @@ struct UnitCommand
     u16 resistance = 0;   // +0x10 the element 1..9 whose resistance scales the damage
     u16 followAct = 0;    // +0x12 the follow-up action's act
     u16 castAct = 0;      // +0x14
-    u16 unk16 = 0;        // +0x16
+    u16 sweepGap = 0;     // +0x16
     u16 castSpeed = 0;    // +0x18 (swd3e) raised by the wisdom over 50 (SelectSkill)
     u16 ailment = 0;      // +0x1A
     u16 element = 0;      // +0x1C
     u16 pose = 0;         // +0x1E the pose of a defeat (its low byte)
-    i16 unk20 = 0;        // +0x20
-    u16 unk22 = 0;        // +0x22
+    i16 actSpeed = 0;     // +0x20
+    u16 calledAct = 0;    // +0x22
     u16 stealChance = 0;  // +0x24 (swd3e) a steal (action flag 0x100000) succeeds on a 0..9 roll under it
     u16 target = 0;       // +0x26 the first value of CommandTarget
     u16 unk28 = 0;        // +0x28 (swd3e) the second value of CommandTarget
@@ -241,23 +242,23 @@ public:
     // BattleUnit::marks bits.
     enum Mark : u16
     {
-        UnkMark1 = 1,  // cleared when the guard text has risen
-        UnkMark2 = 2,
-        UnkMark4 = 4,       // the unit is drawn over a grey copy (IdleFrame)
-        UnkMark8 = 8,       // cleared by ResetTurn
-        UnkMark10 = 0x10,   // swd3e: no critical attack while set (MarkBit4)
-        MissedMark = 0x20,  // the ailment missed (SkillScript::MissedAilment)
+        EvadedMark = 1,  // cleared when the guard text has risen
+        FrozenMark = 2,
+        UnkMark4 = 4,          // the unit is drawn over a grey copy (IdleFrame)
+        UnkMark8 = 8,          // cleared by ResetTurn
+        RegressedMark = 0x10,  // swd3e: no critical attack while set (Regressed)
+        MissedMark = 0x20,     // the ailment missed (SkillScript::MissedAilment)
         Held = 0x40,
         InvisibleMark = 0x80,
-        SealedMark = 0x100,  // set with ailment 封魔 (StartAilment)
-        UnkMark200 = 0x200,  // set by ResetTurn
-        UnkMark400 = 0x400,  // set when invisibility ends
+        SealedMark = 0x100,    // set with ailment 封魔 (StartAilment)
+        UnkMark200 = 0x200,    // set by ResetTurn
+        FadingInMark = 0x400,  // set when invisibility ends
         NoFlee = 0x800,  // the enemy never flees (CatchRoll); on the first role the party cannot retreat (TryRetreat)
         GuardingMark = 0x1000,
         DefeatedMark = 0x2000,
         GaugeStopped = 0x4000,  // the gauge stops (AdvanceGauge, StepGauge); the battle talk sets it with DefeatedMark
                                 // (0x7800: the enemies it hides and brings back)
-        UnkMark8000 = 0x8000,   // the damage of the unit is not raised
+        NoDamageMark = 0x8000,  // the damage of the unit is not raised
     };
 
     // BattleUnit::unk2BDA bits (swd3e): the weak stand pose and the state of the talisman ghost's orders
@@ -320,29 +321,31 @@ public:
     static constexpr int SlotActs = 11;
     static constexpr i32 PartyRole = 1;
 
-    // BattleUnit::commandA / commandB values (most meanings not yet known).
+    // BattleUnit::commandA / commandB values: the commands RoleActionFrame and EnemyActionFrame dispatch on.
     enum Command : u16
     {
-        AttackCommand = 1,  // the attack (ChooseAttack; fades in with action 0x28)
-        SkillCommand = 2,   // a skill or a spell (LoadSkillAction, ChooseCommand)
-        UnkCommand3 = 3,
-        UnkCommand4 = 4,  // swd3e: an enemy takes the anchor of its stand act (GetOffset)
-        UnkCommand6 = 6,
-        UnkCommandD = 0xD,
-        UnkCommandE = 0xE,
-        UnkCommandF = 0xF,
-        UnkCommand29 = 0x29,  // swd3e: goes to commandB (SetCommand)
-        UnkCommand16 = 0x16,
-        UnkCommand18 = 0x18,
-        UnkCommand1A = 0x1A,
-        UnkCommand1B = 0x1B,
-        UnkCommand1C = 0x1C,
-        UnkCommand50 = 0x50,  // swd3e: drawn with the spark act like UnkCommand6 (IdleFrame)
-        UnkCommand1F = 0x1F,
-        UnkCommand22 = 0x22,
-        UnkCommand23 = 0x23,
-        UnkCommand24 = 0x24,
-        UnkCommand28 = 0x28,  // swd3e: the hit is the meter's sum (HitDamage)
+        AttackCommand = 1,       // the attack (ChooseAttack; fades in with action 0x28)
+        SkillCommand = 2,        // a skill or a spell (LoadSkillAction, ChooseCommand)
+        ItemCommand = 3,         // an item (RoleItemFrame)
+        MagicAttackCommand = 4,  // a role's magic attack (MagicAttackFrame); an enemy's skill act (EnemySkillFrame),
+                                 // which takes the anchor of its stand act (GetOffset)
+        AbsorbCommand = 6,       // 收化 (AbsorbFrame); an enemy's drain; drawn with the spark act
+        ThrowTalismanCommand = 0xD,  // a talisman thrown (ThrowTalismanFrame)
+        CatchCommand = 0xE,          // a catch (CatchAct)
+        SummonCommand = 0xF,         // an escort summoned (SummonEscortFrame); an enemy's call (CallEnemies)
+        FuseCommand = 0x29,          // 融合 (ZoomEntranceFrame); goes to commandB (SetCommand)
+        ThunderCommand = 0x16,       // 天雷 (CoinTossFrame), hits as a spell
+        GroupAttackCommand = 0x18,   // 群攻 (PoseSweepFrame)
+        SureHitCommand = 0x1A,       // 命中 (TimingAttackFrame)
+        ThrowCommand = 0x1B,         // 投擲 (an item thrown at the enemy, DirectAttack)
+        InvisibilityCommand = 0x1C,  // 隱形 (AccessoryBuffFrame)
+        SealCommand = 0x50,  // an absorb that uses up a category 6 item (AbsorbFrame); drawn with the spark act like
+                             // AbsorbCommand
+        MouseHammerCommand = 0x1F,    // 鼠槌 (TimerAttackFrame)
+        FocusCommand = 0x22,          // 氣合: the role's own hit points (SelfHitFrame)
+        RecoverSpiritCommand = 0x23,  // 回氣: its spirit
+        MeditateCommand = 0x24,       // 運功: its stamina
+        StrikeBackCommand = 0x28,     // 逆攻: the hit is the meter's sum (MeterAttackFrame, HitDamage)
     };
 
     // BattleUnit::stage bits: the stages of an attack (AttackFrame).
@@ -357,7 +360,7 @@ public:
     // BattleUnit::commandFlags bits.
     enum CommandFlag : u16
     {
-        UnkCommandFlag200 = 0x200,  // GetOffset uses slot act UnkSlot8
+        UnkCommandFlag200 = 0x200,  // GetOffset uses slot act MagicSlot
         UnkCommandFlag400 = 0x400,  // set by the accessory commands that take command B
         UnkCommandFlag800 = 0x800,  // set by command 6
         UnkCommandFlag1000 = 0x1000,
@@ -420,8 +423,8 @@ public:
 
     // DefeatHop: the heights of the hop by frame (0x004BFB68).
     static constexpr std::array<i32, 15> HopHeights = {0, 4, 12, 24, 32, 24, 16, 8, 4, 0, -4, -12, -16, -20, -32};
-    static constexpr int UnkSlot8 = 8;
-    static constexpr int UnkSlot9 = 9;
+    static constexpr int MagicSlot = 8;
+    static constexpr int BeamRiseSlot = 9;
     static constexpr u32 NoTarget = 0xFFFFFFFF;
     static constexpr u16 NoAim = 0xFFFF;
     static constexpr u16 MaxTargets = 0x23;      // pushedTargets entries
@@ -475,8 +478,8 @@ public:
     int ResetTurn(BattleServices& services);
     int Retarget(i16 target);
     u16 FollowAct() const;
-    int ActFlag15() const;
-    int ActFlag17() const;
+    int CommandDefeatsAll() const;
+    int CommandTransfersDamage() const;
     bool HasActionFlags(u32 flags) const;
     int SetStandingAside(int value);
     void RaiseFlag2BC0Bit17();
@@ -499,7 +502,7 @@ public:
     int Sweeping() const;
     int SetOutline(int value);
     bool IsAE4Clear() const;
-    u16 CommandUnk16() const;
+    u16 CommandSweepGap() const;
     void MarkActionStarted();
     int DrawFadeOut(BattleServices& services);
     int DrawFadeIn(BattleServices& services, const BattleUnit& anchor);
@@ -525,11 +528,11 @@ public:
     i16 SetFadeStep(i16 value);
     int SetGuarding(int value);
     int AllAtOnce() const;
-    int ActFlag11() const;
+    int CommandRetreats() const;
     i16 ActSpeed() const;
     int TargetsAll() const;
-    int ActFlag13() const;
-    int ActFlag14() const;
+    int CommandRipples() const;
+    int CommandShowsResistances() const;
     int SetAction(i16 value);
     bool IsGuarding() const;
     void SetVitals(i16 hitPoints, i16 spirit, i16 stamina);
@@ -707,21 +710,21 @@ public:
     u16 ActId() const;
     u16 DrainKind() const;
     int Confused() const;
-    int MarkBit4() const;
-    i32 Unk2EB2Shown() const;
-    bool Unk2EB2BelowProficiency(CounterList& proficiency);
+    int Regressed() const;
+    i32 GatheredChargeShown() const;
+    bool ChargeBelowProficiency(CounterList& proficiency);
     int SetInAction(int value);
     int SetFacingIfAble(int value);
     void SetNudge(u16 nudge, u16 saved);
     bool CommandTarget(u16& target, u16& second) const;
     int MarkBit1() const;
     bool MarkBit8Clear() const;
-    bool HasBlock30() const;
+    bool FuryFull() const;
     int Word2FB0Bit13() const;
     int Word2FB0Bit12() const;
     bool RestartMainAct(i16 value, int force);
     int CommandStatusBit() const;
-    void CommandValues(u16& value, u16& turns) const;
+    void SummonValues(u16& value, u16& turns) const;
     bool IsSmallMachine() const;
     void Rewards(u16& first, u16& second) const;
     u16 AccessoryValue(u16 kind) const;
@@ -844,7 +847,7 @@ public:
     // +0x2EB2 (swd3e) a count kept by HitDamage (0x00497900), cleared by ClearExtras; while positive the role has no
     // critical attack; shown as "X%2d" plus one by the panel of 0x00478FA0 against a tenth of the proficiency of
     // accessory kind 0x27
-    i16 unk2EB2 = 0;
+    i16 gatheredCharge = 0;
     // swd3e: the strength of the attack, defence and speed effects (AddBuff sets them, TickEffects moves them).
     i16 attackShift = 0;   // +0x2ED6
     i16 defenseShift = 0;  // +0x2ED8

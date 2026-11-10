@@ -123,7 +123,7 @@ void BattleState::AddSlotRecord(int kind, i32 unit)
             record.targetsAll = order.targetsAll;
             record.atEnemies = order.atParty;
             record.allAtOnce = order.allAtOnce;
-            record.unk0A = order.unk0C;
+            record.actSpeed = order.actSpeed;
             record.targetCount = order.targetCount;
             order = PendingOrder{};
         }
@@ -284,7 +284,7 @@ void BattleState::InsertSlotRecord(int kind, i32 unit, int at)
         record.targetsAll = order.targetsAll;
         record.atParty = order.atParty;
         record.allAtOnce = order.allAtOnce;
-        record.unk0A = order.unk0C;
+        record.actSpeed = order.actSpeed;
         record.targetCount = order.targetCount;
         order = PendingOrder{};
     }

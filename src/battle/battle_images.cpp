@@ -147,7 +147,7 @@ int BattleUnit::KnockBackFrame(BattleServices& services)
     act.id = this->actId;
     act.action = kKnockBackAction;
 
-    if (this->MarkBit4() == 1)
+    if (this->Regressed() == 1)
     {
         act.id = kStillAct;
         act.action = kStandAction;
@@ -231,7 +231,7 @@ int BattleUnit::KnockBackFrame(BattleServices& services)
         scene.Show(services);
     }
 
-    if ((this->marks & BattleUnit::UnkMark1) != 0 || !this->images.Empty())
+    if ((this->marks & BattleUnit::EvadedMark) != 0 || !this->images.Empty())
     {
         return 0;
     }
