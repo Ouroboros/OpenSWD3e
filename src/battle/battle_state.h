@@ -152,7 +152,7 @@ public:
     // BattleState::panelFlags bits.
     enum PanelFlag : i32
     {
-        AbsolutePactPanel = 2,    // 絕對靈契 (sureAbsorb): game flag 0xC9 at the battle start, the debug key F2
+        AbsolutePactPanel = 2,    // 絕對靈契: toggled with sureAbsorb by the debug key Ctrl+F2; never read
         EscortReturnedPanel = 4,  // an escort was sent back (ConfirmEscort)
         QuietLossPanel = 8,       // the battle ends with frameResult 0 even when lost (CheckBattleEnd)
         QuakingPanel = 0x100,     // the screen quakes all the time (QuakeFrame)
