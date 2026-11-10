@@ -252,7 +252,7 @@ enum class SkillOpcode : u16
     NoAilment = 6,
     Ailment = 7,
     CastAct = 8,
-    SetUnkFlag2 = 9,
+    SetAllAtOnce = 9,
     ActSpeed = 0xA,
     SetDelaysFadeIn = 0xB,
     StatusBits = 0xC,

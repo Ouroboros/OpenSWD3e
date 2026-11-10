@@ -969,7 +969,7 @@ void Game::StrikeAllHit(BattleUnit& target, BattleUnit& attacker, int index, int
 
 // swd3e.exe 0x004665A0: the hits of the acting unit actingUnit once its spell took effect (SpellCast, not SpellOver);
 // 1 once they are over (the hit acts and, after a sweep, the slot totals cleared). The target is the attacker's
-// word 2EAE. The coin toss (UnkSpell400) runs YinYangAttack instead. A defeated target (Damage 1) flashes the frame
+// word 2EAE. The coin toss (YinYangSpell) runs YinYangAttack instead. A defeated target (Damage 1) flashes the frame
 // white and is recorded. See RoleHitFrame and EnemyHitFrame.
 int Game::HitFrame()
 {
@@ -983,7 +983,7 @@ int Game::HitFrame()
     const bool enemy = battle.actingUnit < BattleState::FirstRoleUnit;
     const int unit = enemy ? battle.actingUnit : battle.actingUnit - BattleState::FirstRoleUnit;
 
-    if ((battle.spellStage & BattleState::UnkSpell400) != 0)
+    if ((battle.spellStage & BattleState::YinYangSpell) != 0)
     {
         return this->YinYangAttack(unit) == 1 ? 1 : 0;
     }

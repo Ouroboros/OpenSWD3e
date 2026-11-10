@@ -1968,7 +1968,7 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
                     if (line.fromX + line.x == line.toX && line.fromY + line.y == line.toY)
                     {
                         outcome = -1;
-                        node->flags = static_cast<u8>(node->flags | QueuedAction::UnkFlag2);
+                        node->flags = static_cast<u8>(node->flags | QueuedAction::Arrived);
                         break;
                     }
 
@@ -2009,7 +2009,7 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
             }
         }
 
-        if ((node->flags & QueuedAction::UnkFlag2) == 0)
+        if ((node->flags & QueuedAction::Arrived) == 0)
         {
             steps.push_back(
                 PictureStep{
@@ -2076,7 +2076,7 @@ int UnitFrame::QueuedAdvance(BattleServices& services, BattleUnit& target, i32 a
         ++unit.landedActions;
         line = LineWalker{};
 
-        if ((node->flags & QueuedAction::UnkFlag4) != 0)
+        if ((node->flags & QueuedAction::NoHit) != 0)
         {
             node = node->next.get();
             continue;
@@ -2515,7 +2515,7 @@ int UnitFrame::FadeMainInAdvance(BattleServices& services, Scene& scene)
         return 0;
     }
 
-    unit.marks = static_cast<u16>(unit.marks & ~BattleUnit::UnkMark200);
+    unit.marks = static_cast<u16>(unit.marks & ~BattleUnit::MainFadeInMark);
     unit.brightLevel = 1;
     return 1;
 }

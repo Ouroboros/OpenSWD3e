@@ -1851,7 +1851,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
                 kBoomerangOut,
                 0,
                 kNoImpact,
-                QueuedAction::UnkFlag4
+                QueuedAction::NoHit
             );
             role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
             role.unk349C = 1;
@@ -1879,7 +1879,7 @@ int RoleFrame::BoomerangFrameAdvance(BattleServices& services, BattleUnit& targe
                 kBoomerangBack,
                 kBoomerangShake,
                 kNoImpact,
-                QueuedAction::UnkFlag4
+                QueuedAction::NoHit
             );
             role.TrailLastQueuedAction(0, 0, kTrailBlueTint);
             role.unk349C = 1;

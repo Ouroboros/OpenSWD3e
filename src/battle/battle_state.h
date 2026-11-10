@@ -152,7 +152,7 @@ public:
     // BattleState::panelFlags bits.
     enum PanelFlag : i32
     {
-        UnkPanel2 = 2,            // set when game flag 0xC9 is on at the battle start
+        AbsolutePactPanel = 2,    // 絕對靈契 (sureAbsorb): game flag 0xC9 at the battle start, the debug key F2
         EscortReturnedPanel = 4,  // an escort was sent back (ConfirmEscort)
         QuietLossPanel = 8,       // the battle ends with frameResult 0 even when lost (CheckBattleEnd)
         QuakingPanel = 0x100,     // the screen quakes all the time (QuakeFrame)
@@ -165,9 +165,10 @@ public:
     // Bits of spellStage.
     enum SpellStage : u16
     {
-        SpellOver = 0x1,      // the spell is over (MagicFrame ends)
-        UnkSpell400 = 0x400,  // swd3e: set with SpellCast once the coin toss of command 0x16 closes the grey band
-        SpellCast = 0x8000,   // the magic act followed up: the spell takes effect
+        SpellOver = 0x1,  // the spell is over (MagicFrame ends)
+        YinYangSpell =
+            0x400,  // swd3e: 天雷: with SpellCast once the coin toss closes the grey band; the hit is YinYangAttack
+        SpellCast = 0x8000,  // the magic act followed up: the spell takes effect
     };
 
     BattleState();
@@ -722,13 +723,14 @@ public:
     u16 talkRole = 0xFFFF;                 // 0x004BF1D2 the role with a battle talk (0xFFFF: none)
     i32 orderedSkill = 0;                  // 0x00577014 the skill a controlled enemy is ordered to use
     i32 controlChoice = 0;                 // 0x00577018 the row chosen on the 控制 menu (1-based; 0: none)
-    i32 unk577330 = 0;                     // 0x00577330 1 while the catch of talk command 0x4E runs
-    i32 unk577284 = 0;                     // 0x00577284
-    i32 unk5772F0 = 0;                     // 0x005772F0
-    i32 listReturnCommand = 0;             // 0x00576FB0 the menu command a list returns to
-    i32 specialRow = 1;                    // 0x004BF0F0 the row of the 絕招 list (1-based)
-    i32 controlRows = 2;                   // 0x004BF0FC the rows of the 控制 menu
-    i32 controlCursor = 1;                 // 0x004BF100 its row under the cursor (1-based)
+    i32 sureAbsorb =
+        0;  // 0x00577330 1: the absorb succeeds (a known enemy, CanAbsorb, 絕對靈契, the catch of talk command 0x4E)
+    i32 unk577284 = 0;          // 0x00577284
+    i32 unk5772F0 = 0;          // 0x005772F0
+    i32 listReturnCommand = 0;  // 0x00576FB0 the menu command a list returns to
+    i32 specialRow = 1;         // 0x004BF0F0 the row of the 絕招 list (1-based)
+    i32 controlRows = 2;        // 0x004BF0FC the rows of the 控制 menu
+    i32 controlCursor = 1;      // 0x004BF100 its row under the cursor (1-based)
     // The proficiency filled in the battle (AnnounceMastery).
     ObjectRecord lastObject;   // 0x00576D40 the object read last (stolen, or its proficiency filled)
     LearnedSkill lastLearned;  // 0x0057747C the name of the accessory or of the skill learned, for the messages

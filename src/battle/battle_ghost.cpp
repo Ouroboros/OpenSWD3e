@@ -443,7 +443,7 @@ void BattleRole::TakeGhostOrder(BattleServices& services, Database& database)
 
 // swd3e.exe 0x00486C40: the ghost's command of the turn: after a rest (GhostSpent, taken back) none (0); when it acts
 // with the spirit for its chosen fed skill, the skill's script and act (`act`), its name, the skill command 2 with
-// UnkCommandFlag8000 and the heals as SelectSkill; `kind` 1 for a skill of kind 0x1000 or 4 (1). Otherwise its attack
+// PaysCost and the heals as SelectSkill; `kind` 1 for a skill of kind 0x1000 or 4 (1). Otherwise its attack
 // (GhostAttackCommand, 0).
 int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
 {
@@ -477,7 +477,7 @@ int BattleRole::GhostSkillCommand(Database& database, u32& act, u16& kind)
     this->skillName[length] = '\0';
     this->commandAttack = static_cast<u16>(this->commandAttack + this->command.value);
     this->SetCommand(kSkillCommand);
-    this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
+    this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::PaysCost);
     kind = 0;
 
     if ((data.kind & (kSkillKind | kHealKind)) != 0)
@@ -527,7 +527,7 @@ void BattleRole::GhostAttackCommand(Database& database)
 
 // swd3e.exe 0x00486E90: the ghost spends `percent` of `base` less `less` of its spirit as the command's restore; with
 // less than its whole but at least 40 percent of it, all it has; below that nothing (0). Command 2 with
-// UnkCommandFlag8000 and GhostSpent follow (1).
+// PaysCost and GhostSpent follow (1).
 int BattleRole::SpendGhostSpirit(int less, int base, int percent)
 {
     const int cost = percent * base / kPercent - less;
@@ -548,7 +548,7 @@ int BattleRole::SpendGhostSpirit(int less, int base, int percent)
 
     record.spirit = static_cast<i16>(record.spirit - static_cast<i16>(this->restoreHitPoints));
     this->SetCommand(kSkillCommand);
-    this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::UnkCommandFlag8000);
+    this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::PaysCost);
     this->unk2BDA = static_cast<u16>((this->unk2BDA & ~BattleUnit::WeakStand) | BattleUnit::GhostSpent);
     return 1;
 }

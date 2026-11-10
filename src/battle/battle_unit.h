@@ -109,8 +109,8 @@ struct QueuedAction
     // QueuedAction::flags bits (swd3e).
     enum Flag : u8
     {
-        UnkFlag2 = 2,  // set by RunQueuedActions (0x00495FF0)
-        UnkFlag4 = 4,  // given by BoomerangFrame (0x00486110), read by RunQueuedActions
+        Arrived = 2,  // the line reached its end (RunQueuedActions, 0x00495FF0): no picture step more
+        NoHit = 4,    // the boomerang going out (BoomerangFrame, 0x00486110): it lands no hit
     };
 
     std::unique_ptr<QueuedAction> next;  // +0x0
@@ -184,8 +184,8 @@ struct UnitCommand
     // The bits of `flags`.
     enum Flag : u16
     {
-        TargetsUnit = 1,  // a target command (ClearMoveAxes)
-        UnkFlag2 = 2,
+        TargetsUnit = 1,   // a target command (ClearMoveAxes)
+        CastsSkill = 2,    // skill script data: an enemy casts it as a skill command with its castAct
         StandsAside = 4,   // swd3e: under Confused with stateFlags bit 28 the role stands aside (PrepareCommand)
         StepsIn = 8,       // the unit goes to the target to act (an enemy fades in there; with WaitsToWalk a party role
                            // walks home after it acts, ReturnHome)
@@ -244,15 +244,15 @@ public:
     {
         EvadedMark = 1,  // cleared when the guard text has risen
         FrozenMark = 2,
-        UnkMark4 = 4,          // the unit is drawn over a grey copy (IdleFrame)
-        UnkMark8 = 8,          // cleared by ResetTurn
+        ComboMark = 4,         // set on the other units while a combo runs: drawn over a grey copy (IdleFrame)
+        MainFadeOutMark = 8,   // a DelaysFadeIn act: the unit fades out (FadeMainOut); cleared by ResetTurn
         RegressedMark = 0x10,  // swd3e: no critical attack while set (Regressed)
         MissedMark = 0x20,     // the ailment missed (SkillScript::MissedAilment)
         Held = 0x40,
         InvisibleMark = 0x80,
-        SealedMark = 0x100,    // set with ailment 封魔 (StartAilment)
-        UnkMark200 = 0x200,    // set by ResetTurn
-        FadingInMark = 0x400,  // set when invisibility ends
+        SealedMark = 0x100,      // set with ailment 封魔 (StartAilment)
+        MainFadeInMark = 0x200,  // set by ResetTurn: the unit fades back in (FadeMainIn), darkened (SetStatus)
+        FadingInMark = 0x400,    // set when invisibility ends
         NoFlee = 0x800,  // the enemy never flees (CatchRoll); on the first role the party cannot retreat (TryRetreat)
         GuardingMark = 0x1000,
         DefeatedMark = 0x2000,
@@ -285,7 +285,7 @@ public:
         LifeDrain = 0x20,
         SpiritFan = 0x40,
         SpecialActEquipment = 0x80,  // swd3e: accessory kind 0x3A (BattleRole::StartSpecialAct)
-        UnkEquipment100 = 0x100,     // swd3e: accessory kind 0x28 has no value (AccessoryValue)
+        StrikeBackArmed = 0x100,     // swd3e: accessory kind 0x28 has no value (AccessoryValue)
     };
 
     // A unit in battle (0x2B28 bytes in the original; the base of BattleRole and BattleEnemy). Offsets of the original
@@ -360,13 +360,17 @@ public:
     // BattleUnit::commandFlags bits.
     enum CommandFlag : u16
     {
-        UnkCommandFlag200 = 0x200,  // GetOffset uses slot act MagicSlot
-        UnkCommandFlag400 = 0x400,  // set by the accessory commands that take command B
-        UnkCommandFlag800 = 0x800,  // set by command 6
-        UnkCommandFlag1000 = 0x1000,
-        UnkCommandFlag2000 = 0x2000,
-        UnkCommandFlag4000 = 0x4000,  // set by commands 0xE and 0xF
-        UnkCommandFlag8000 = 0x8000,  // set when the skill action is loaded
+        CastsMagic = 0x200,     // a type 1 skill chosen (SelectSkill, TakeCommand34A8): its act kept (magicAction),
+                                // GetOffset and GetOrigin take slot act MagicSlot
+        UsesAccessory = 0x400,  // an accessory command that takes command B (UseAccessorySkill): the item ready pose
+        AbsorbPose = 0x800,     // an absorb, a seal or a drain (SetCommand, StartAbsorb, StartDrainEffect): the absorb
+                                // ready pose
+        CallsEscort = 0x1000,   // an object of kind 0x800 chosen (SelectObject): the order calls it as an escort
+                                // (CommandCallsEscort)
+        Throws = 0x2000,  // never set in swd3e (no write of 0x20 to +0x2FB1); read as a throw order (CommandThrows) and
+                          // the item ready pose
+        UsesObject = 0x4000,  // an object chosen, a catch or a summon (SelectObject, SetCommand): the item ready pose
+        PaysCost = 0x8000,  // the skill or item action loaded: FinishCommand uses the item up or takes the spirit owed
     };
 
     // BattleUnit::DrainKind values.
@@ -720,8 +724,8 @@ public:
     int MarkBit1() const;
     bool MarkBit8Clear() const;
     bool FuryFull() const;
-    int Word2FB0Bit13() const;
-    int Word2FB0Bit12() const;
+    int CommandThrows() const;
+    int CommandCallsEscort() const;
     bool RestartMainAct(i16 value, int force);
     int CommandStatusBit() const;
     void SummonValues(u16& value, u16& turns) const;
@@ -824,7 +828,8 @@ public:
     u32 colorPair = DefaultColorPair;  // +0x2BC4
     u32 status = 0;                    // +0x2BC8 status bits (2: stone, 12: frozen, ...)
     u32 equipmentFlags = 0;            // +0x2BD0 bits 0, 2..6 from the equipment
-    // +0x2BD4 the accessory commands of the turn: bit (kind - 0x15) of AccessoryKind for 0x15..0x1E, 0x400 for Unk28
+    // +0x2BD4 the accessory commands of the turn: bit (kind - 0x15) of AccessoryKind for 0x15..0x1E, 0x400 for
+    // StrikeBack
     u32 accessoryCommands = 0;
     u16 marks = 0;      // +0x2BD8 (bit 1, 0x20, 0x40: held, 0x100, bit 13)
     u16 unk2BDA = 0;    // +0x2BDA (swd3e) bit 0: the weak stand pose (IdleFrame); bit 2 (0x00486540)

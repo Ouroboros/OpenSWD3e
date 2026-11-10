@@ -234,7 +234,7 @@ bool Database::LoadSkill(SkillScript& skill, u16 id)
                 code.position += sizeof(u16);
                 break;
 
-            case SkillOpcode::SetUnkFlag2:
+            case SkillOpcode::SetAllAtOnce:
                 skill.flags |= SkillScript::AllAtOnce;
                 break;
 

@@ -203,12 +203,12 @@ TEST_CASE("battle unit: construction, commands, turns and hits")
     CHECK_EQ(unit.colorPair, BattleUnit::DefaultColorPair);
     CHECK_EQ(unit.SetCommand(BattleUnit::CatchCommand), 1);
     CHECK_EQ(unit.commandB, BattleUnit::CatchCommand);
-    CHECK_EQ(unit.commandFlags, BattleUnit::UnkCommandFlag4000);
+    CHECK_EQ(unit.commandFlags, BattleUnit::UsesObject);
     unit.SetCommand(kOtherCommand);
     CHECK_EQ(unit.commandA, kOtherCommand);
     unit.SetCommand(BattleUnit::AbsorbCommand);
     CHECK_EQ(unit.commandA, 0);
-    CHECK_EQ(unit.commandFlags, BattleUnit::UnkCommandFlag4000 | BattleUnit::UnkCommandFlag800);
+    CHECK_EQ(unit.commandFlags, BattleUnit::UsesObject | BattleUnit::AbsorbPose);
     unit.gauge = static_cast<swd3e::u16>(all.state.gaugeFull / kHalf);
     CHECK_EQ(unit.GaugeLength(all.services), kGaugePixels / kHalf);
     CHECK_EQ(unit.ResetGauge(all.services), all.state.gaugeFull);
@@ -652,7 +652,7 @@ TEST_CASE("battle unit: an enemy with nothing to use attacks")
     BattleUnit enemy;
     enemy.data = &object;
     swd3e::u32 act = 0;
-    enemy.commandFlags = BattleUnit::UnkCommandFlag8000;
+    enemy.commandFlags = BattleUnit::PaysCost;
     CHECK_EQ(enemy.ChooseCommand(all.services, database, act), 1);
     CHECK_EQ(enemy.commandA, 0);
     enemy.commandFlags = 0;
@@ -1531,7 +1531,7 @@ TEST_CASE("battle role: choosing a skill and paying for it")
     CHECK_EQ(role.SelectSkill(database, 0, 0, 1, act), 1);
     CHECK_EQ(act, kAct);
     CHECK_EQ(role.restoreHitPoints, kHeal);
-    CHECK_EQ(role.commandFlags & swd3e::BattleUnit::UnkCommandFlag8000, swd3e::BattleUnit::UnkCommandFlag8000);
+    CHECK_EQ(role.commandFlags & swd3e::BattleUnit::PaysCost, swd3e::BattleUnit::PaysCost);
 
     CHECK_EQ(role.CanPaySkill(all.services, 0, 1), 0);
     CHECK(all.messages.messages != nullptr);
@@ -1601,7 +1601,7 @@ TEST_CASE("battle role: choosing an object in battle")
     CHECK_EQ(role.SelectObject(database, all.state, 0, 1, act, kind), 0);
     CHECK_EQ(role.SelectObject(database, all.state, kThrowCategory, 1, act, kind), 1);
     CHECK_EQ(kind, 0);  // swd3e: the throwing category is no longer told apart
-    CHECK_EQ(role.commandFlags & swd3e::BattleUnit::UnkCommandFlag2000, 0);
+    CHECK_EQ(role.commandFlags & swd3e::BattleUnit::Throws, 0);
 }
 
 TEST_CASE("battle state: the menu kinds around the listed commands")

@@ -1097,7 +1097,7 @@ int Game::AbsorbFrame(BattleRole& unit, int target, bool sealed)
 
         this->EndCommandDarkening();
         battle.lastFelled = kNoUnit;
-        battle.unk577330 = 0;
+        battle.sureAbsorb = 0;
 
         if (battle.effectHolds == 0)
         {
@@ -1123,14 +1123,14 @@ int Game::AbsorbFrame(BattleRole& unit, int target, bool sealed)
             static_cast<u16>(FindCounterValue(this->party.fame.lists[Fame::FameList], enemy.ActId())) >= kKnownAbsorbs
         )
         {
-            battle.unk577330 = 1;
+            battle.sureAbsorb = 1;
         }
 
         if (unit.CanAbsorb(services, enemy) == 1)
         {
-            battle.unk577330 = 1;
+            battle.sureAbsorb = 1;
         }
-        else if (battle.unk577330 != 1)
+        else if (battle.sureAbsorb != 1)
         {
             battle.absorbSucceeded = 0;
             battle.pushFrames = kAbsorbWait;
@@ -1425,7 +1425,7 @@ int Game::CoinTossFrame(int role)
     }
     else if (battle.grayBandState == kComboRunning)
     {
-        battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast | BattleState::UnkSpell400);
+        battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellCast | BattleState::YinYangSpell);
     }
 
     if ((battle.spellStage & BattleState::SpellOver) == 0)
@@ -2757,7 +2757,7 @@ void Game::RoleTakeOrder(BattleRole& unit, int role)
 
 // The acting role of RoleFrame (inline in the original); nothing while the battle waits (hitsAllRoles) before it
 // acts. Once its target stands (unkAAC clear) the role starts acting: a sweep needs an enemy standing; a single hit at
-// a defeated enemy passes to the first enemy standing (unless a taking holds it, unk577330); the skill name shows and
+// a defeated enemy passes to the first enemy standing (unless a taking holds it, sureAbsorb); the skill name shows and
 // the cost is paid. While acting it runs RoleActionFrame; once that is over the action ends (RoleAfterAction).
 void Game::RoleActFrame(BattleRole& unit, int role)
 {
@@ -2814,7 +2814,7 @@ void Game::RoleActFrame(BattleRole& unit, int role)
             }
         }
     }
-    else if (battle.atParty == 0 && battle.pendingAction == 0 && aimed.IsDefeated() && battle.unk577330 == 0)
+    else if (battle.atParty == 0 && battle.pendingAction == 0 && aimed.IsDefeated() && battle.sureAbsorb == 0)
     {
         u32 first = 0;
 

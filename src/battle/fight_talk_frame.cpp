@@ -2451,7 +2451,7 @@ int Game::FightTalkSlideTo()
 
 // Command 0x4E of FightTalkFrame (inline in the original): the role of the second word (healed fully and cured of
 // bit 0x8000 when defeated) catches the enemy of the third (command 6, at once: the queues and records cleared, the
-// role acting); the talk waits until the catch is over (unk577330).
+// role acting); the talk waits until the catch is over (sureAbsorb).
 int Game::FightTalkCatch()
 {
     BattleState& battle = this->battleState;
@@ -2499,14 +2499,14 @@ int Game::FightTalkCatch()
                                  ? static_cast<BattleUnit&>(this->battleEnemies[enemyIndex])
                                  : static_cast<BattleUnit&>(this->talkStrayUnit);
         caught.CountCaught();
-        battle.unk577330 = 1;
+        battle.sureAbsorb = 1;
         talk.unk578450 = 1;
     }
 
     talk.battleRuns = 1;
     this->BattleFrame();
 
-    if (battle.unk577330 != 0)
+    if (battle.sureAbsorb != 0)
     {
         return 1;
     }

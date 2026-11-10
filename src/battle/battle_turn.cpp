@@ -1141,7 +1141,7 @@ void Game::SpreadPoison(int enemies)
 }
 
 // swd3e.exe 0x0046A000: one frame of the 陰陽 command of role `role`: its damage 0x960 percent of the proficiency of
-// kind Unk16 plus 100 (hitDamage, lastDamage) while the cast pose of act 0x1775 plays; once it is done (1) the grey
+// kind Thunder plus 100 (hitDamage, lastDamage) while the cast pose of act 0x1775 plays; once it is done (1) the grey
 // band closes (2) and every standing enemy takes it: by the side of the coin (coinState) an enemy of the other kind
 // (ObjectYang, 1 on 陽, 0 on 陰) is healed (minus the damage, HealTarget), the others are hit (flag 2BC0 raised),
 // the number shown (at most 9999) after the hit picture 0x2389; one defeated becomes lastFelled (its felledUnits entry
@@ -2514,7 +2514,7 @@ void Game::MenuCancel()
             }
 
             battle.turnPointer = 1;
-            battle.unk577330 = 0;
+            battle.sureAbsorb = 0;
             cancelCommand();
 
             for (u32 enemy = 0; enemy < battle.enemyCount; ++enemy)
@@ -3889,17 +3889,17 @@ int Game::BattleDebugKeys()
             {
                 pause();
 
-                if (battle.unk577330 == 1)
+                if (battle.sureAbsorb == 1)
                 {
-                    battle.panelFlags &= ~BattleState::UnkPanel2;
-                    battle.unk577330 = 0;
+                    battle.panelFlags &= ~BattleState::AbsolutePactPanel;
+                    battle.sureAbsorb = 0;
                     this->battleMessages
                         .Add(kDebugMessageX, kDebugMessageY, kDebugMessageFrames, kNormalPact, BattleMessage::Centered);
                 }
                 else
                 {
-                    battle.panelFlags |= BattleState::UnkPanel2;
-                    battle.unk577330 = 1;
+                    battle.panelFlags |= BattleState::AbsolutePactPanel;
+                    battle.sureAbsorb = 1;
                     this->battleMessages.Add(
                         kDebugMessageX,
                         kDebugMessageY,
@@ -5449,7 +5449,7 @@ void Game::ConfirmTarget()
             role->UseSelectedItem(battle.listRole);
         }
 
-        if (role != nullptr && role->Word2FB0Bit13() == 1)
+        if (role != nullptr && role->CommandThrows() == 1)
         {
             battle.turnCommand = kThrowOrder;
             battle.unk577320 = 1;
@@ -5573,7 +5573,7 @@ void Game::ConfirmItem()
         return;
     }
 
-    if (role.Word2FB0Bit12() == 1)
+    if (role.CommandCallsEscort() == 1)
     {
         this->CallEscort(role);
         return;
