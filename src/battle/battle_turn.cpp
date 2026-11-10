@@ -3926,7 +3926,7 @@ int Game::BattleDebugKeys()
                     }
                 }
 
-                battle.unk577064 = static_cast<i32>(battle.enemyCount);
+                battle.felledCount = static_cast<i32>(battle.enemyCount);
                 battle.roleOrder = {};
                 std::fill_n(battle.turnTaken.begin() + kClearedTurnFirst, kClearedTurnUnits, 0);
                 battle.slotRecords.fill(BattleSlotRecord{});

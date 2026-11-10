@@ -268,7 +268,7 @@ enum EnrageEffect : u16
     DefenseDoubledAgilityHalved = 0x3EF,
     AgilityDoubledAttackHalved = 0x3F0,
     AgilityDoubledDefenseHalved = 0x3F1,
-    Unk3F2 = 0x3F2,           // stateFlags bit 23
+    MagicWard = 0x3F2,        // stateFlags bit 23: the unit takes no element scaling, spells halved
     InvisibleEnrage = 0x3F3,  // the unit turns invisible once the enrage act ends (EnrageFrame)
     BurstDamage = 0x3F4,      // enrageDamage, stateFlags bit 16
     FirstElement = 0x3F5,     // 0x3F5..0x3FA: enrageElement 1..6
@@ -278,7 +278,7 @@ enum EnrageEffect : u16
 };
 
 constexpr u16 kEnrageRise = 70;
-constexpr u32 kEnrage3F2 = 0x800000;  // stateFlags
+constexpr u32 kMagicWard = 0x800000;  // stateFlags
 constexpr u32 kEnrage3F4 = 0x10000;   // stateFlags
 constexpr double kBurstScale = 1.4;
 constexpr u16 kEnrageSkillCount = 10000;  // the uses of the skill an enrage gives
@@ -1803,8 +1803,8 @@ int BattleUnit::Enrage(BattleServices& services)
             halve(data.defense);
             break;
 
-        case Unk3F2:
-            this->stateFlags |= kEnrage3F2;
+        case MagicWard:
+            this->stateFlags |= kMagicWard;
             break;
 
         case BurstDamage:

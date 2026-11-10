@@ -1399,7 +1399,6 @@ constexpr i16 kForcedPlaceX = 0x140;
 constexpr i16 kForcedPlaceY = 0x136;
 constexpr u32 kFlag2BC0Bit30 = 0x40000000;  // keeps the stand pose (IdleFrame)
 constexpr u32 kFlag2BC0Pulse = 0x200000;    // a red pulse over the unit (DrawPulse)
-constexpr u32 kFlag2BC0Tinted = kFlag2BC0Bit19;
 constexpr u32 kPictureBits = Painter::RleSource | Painter::Mirror | Painter::Flip;
 constexpr u32 kWhiteColorPair = 0xFFFFFFFF;
 constexpr int kAutoTint = -10;     // a unit acting by itself is drawn with this tint
@@ -2755,7 +2754,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
 
             if (value != 0 && kind != BattleUnit::SkillCommand && (this->commandFlags & BattleUnit::CastsMagic) == 0 &&
                 kind != BattleUnit::ThunderCommand && kind != BattleUnit::ItemCommand && elemental &&
-                target.Unk2BC0Bit23() == 0 && elementScale(value) == 1)
+                target.MagicWarded() == 0 && elementScale(value) == 1)
             {
                 resisted = true;
             }
@@ -3038,13 +3037,13 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         {
             if (value != 0)
             {
-                if (this->autoControl == 0 && target.Unk2BC0Bit23() == 0)
+                if (this->autoControl == 0 && target.MagicWarded() == 0)
                 {
                     elementScale(value);
                     attack += value;
                 }
             }
-            else if (target.Unk2BC0Bit23() == 0)
+            else if (target.MagicWarded() == 0)
             {
                 auto scaled = static_cast<i16>(attack);
 
@@ -3130,7 +3129,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
                 );
                 roll = static_cast<i32>(services.random.Below(spread)) + 1;
 
-                if (target.Unk2BC0Bit23() == 1)
+                if (target.MagicWarded() == 1)
                 {
                     attack = static_cast<i16>(attack) / kHalf;
                 }
@@ -3145,7 +3144,7 @@ i16 BattleUnit::HitDamage(BattleServices& services, BattleUnit& target, i16& spi
         spiritDamage = static_cast<i16>(healSpirit);
         staminaDamage = static_cast<i16>(healStamina);
 
-        if (elemental && target.Unk2BC0Bit23() == 0)
+        if (elemental && target.MagicWarded() == 0)
         {
             auto scaled = static_cast<i16>(attack);
 
@@ -7053,22 +7052,22 @@ u8 BattleUnit::CommandTurns() const
 }
 
 // swd3e.exe 0x0049C310
-void BattleUnit::SetUnk2BC0Bit19(int on)
+void BattleUnit::SetTinted(int on)
 {
     if (on == 1)
     {
-        this->stateFlags |= kFlag2BC0Bit19;
+        this->stateFlags |= kFlag2BC0Tinted;
     }
     else
     {
-        this->stateFlags &= ~kFlag2BC0Bit19;
+        this->stateFlags &= ~kFlag2BC0Tinted;
     }
 }
 
 // swd3e.exe 0x0049C340: set by enrage 0x3F2
-int BattleUnit::Unk2BC0Bit23() const
+int BattleUnit::MagicWarded() const
 {
-    return (this->stateFlags & kFlag2BC0Bit23) != 0 ? 1 : 0;
+    return (this->stateFlags & kFlag2BC0MagicWard) != 0 ? 1 : 0;
 }
 
 // swd3e.exe 0x0049C350

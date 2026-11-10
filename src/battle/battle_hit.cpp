@@ -1095,7 +1095,7 @@ int Game::RoleHitFrame(int role)
                                                      ) == 1)
                     {
                         battle.flashing = 1;
-                        ++battle.unk577064;
+                        ++battle.felledCount;
                         battle.lastFelled = 0;
                         battle.felledUnits[index] = static_cast<i32>(index);
                         this->FlashFrameWhite();
@@ -1244,7 +1244,7 @@ bool Game::SweepFromRole(BattleRole& attacker, i16 target, u32 act)
                                              static_cast<i16>(battle.lastStaminaDamage[slot])
                                          ) == 1)
         {
-            ++battle.unk577064;
+            ++battle.felledCount;
 
             if (enemy)
             {
@@ -1518,7 +1518,7 @@ bool Game::SweepFromEnemy(BattleEnemy& attacker, i16 target, u32 act)
                     1)
             {
                 battle.flashing = 1;
-                ++battle.unk577064;
+                ++battle.felledCount;
                 this->FlashFrameWhite();
             }
 

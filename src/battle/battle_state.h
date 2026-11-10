@@ -562,7 +562,7 @@ public:
     u8 unk5774E9 = 0;        // 0x005774E9 (swd3e) 0 or 1, set by FightTalkFrame (0x0047DF22, 0x0047DF46); debug overlay
     i32 enemiesUnhurt = 0;   // 0x00576084 the debug keys F1 / X: the attacks leave the enemies' hit points
     i32 hitsAllRoles = 0;    // 0x00577264 1: the hit falls on all roles at once
-    i32 unk577064 = 0;
+    i32 felledCount = 0;
     i32 sweepStep = 0;          // 0x00577050 the sweep hits so far (sweepTotal)
     i32 snapNext = 0;           // 0x005772E8 1: the next frame is saved as a screenshot
     std::u8string battleMusic;  // 0x005774EC the path of the battle music

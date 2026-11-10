@@ -575,8 +575,8 @@ public:
     int CountEnrageEvent(int event);
     u8 EnrageElement() const;
     u8 CommandTurns() const;
-    void SetUnk2BC0Bit19(int on);
-    int Unk2BC0Bit23() const;
+    void SetTinted(int on);
+    int MagicWarded() const;
     i32 RaiseStateFlags(i32 bits);
     i32 ClearStateFlags(i32 bits);
     int DamageTransferred() const;

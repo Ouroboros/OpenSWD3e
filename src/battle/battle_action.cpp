@@ -1396,7 +1396,7 @@ int Game::RetreatCommandFrame(BattleRole& unit, int role)
 }
 
 // Command 0x16 of RoleActionFrame (inline in the original): the coin toss. Its first frame holds every enemy standing
-// (SetUnk2BC0Bit19), darkens the field by role `role` and starts the coin (coinTossing; BattleFrame draws it and closes
+// (SetTinted), darkens the field by role `role` and starts the coin (coinTossing; BattleFrame draws it and closes
 // the grey band, grayBandState 2, once it lands, which marks the spell cast); the music sinks meanwhile. Once the
 // spell is over the music comes back, the enemies are let go and the command is over.
 int Game::CoinTossFrame(int role)
@@ -1410,7 +1410,7 @@ int Game::CoinTossFrame(int role)
         {
             if (!this->battleEnemies[index].IsDefeated())
             {
-                this->battleEnemies[index].SetUnk2BC0Bit19(on);
+                this->battleEnemies[index].SetTinted(on);
             }
         }
     };

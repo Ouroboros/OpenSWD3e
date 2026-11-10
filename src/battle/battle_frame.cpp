@@ -462,7 +462,7 @@ void Game::EndBattle()
     battle.sweepTargets = 0;
     battle.sweepStep = 0;
     battle.sweepDefeated = 0;
-    battle.unk577064 = 0;
+    battle.felledCount = 0;
     battle.fadeActLevels.fill(0);
     battle.lootIds = {};
     battle.unk536AF8 = 0;
