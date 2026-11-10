@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include "core/format.h"
+#include "core/log.h"
 #include "platform/display.h"
 
 namespace swd3e
@@ -2484,9 +2485,29 @@ void Game::RoleTakeTurn(BattleRole& unit, int role)
     const int self = role + BattleState::FirstRoleUnit;
 
     // The rebuild (deviations.md): with the active time battle a role with its order is slotted as swd32's RoleFrame
-    // slots it, whatever the menu shows and whoever acts (not while every role is hit or a role acts).
-    const bool waits = battle.activeTime ? battle.hitsAllRoles != 0 || battle.roleActing != 0
+    // slots it, whatever the menu shows and whoever acts (not while every role is hit or a role acts). roleActing
+    // counts only with a unit acting: a role felled in its own action leaves it set (RemoveDefeated, as the original),
+    // which the original's roles never wait on; the next role's action clears it (RoleAfterAction) and the enemies,
+    // which wait on it, act again.
+    const bool roleActs = battle.roleActing != 0 && battle.actingUnit != -1;
+    const bool waits = battle.activeTime ? battle.hitsAllRoles != 0 || roleActs
                                          : battle.actingUnit != -1 || battle.result != 0 || battle.currentUnit != 0;
+
+    // Diagnostics (role acting left): the state that held every turn, met by a role ready to act.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        if (battle.activeTime && battle.roleActing != 0 && battle.actingUnit == -1 && unit.IsAimed() == 1 &&
+            !this->diagnostics.roleActingLeftSeen)
+        {
+            this->diagnostics.roleActingLeftSeen = true;
+            LogDiagnostic(u8"role acting left: role %d acts with roleActing set and no unit acting", role);
+        }
+
+        if (battle.roleActing == 0 || battle.actingUnit != -1)
+        {
+            this->diagnostics.roleActingLeftSeen = false;
+        }
+    }
 
     if (battle.unk5376B8[at] != 0 || unit.IsHeld() != 0 || unit.IsAimed() != 1 || waits ||
         this->fightTalk.battleRuns != 1 || unit.StepCastCountdown() != 1)

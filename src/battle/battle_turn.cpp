@@ -766,6 +766,12 @@ int Game::RemoveDefeated(int index, int role)
 
     if (battle.actingUnit == unitId)
     {
+        // Diagnostics (role acting left): the role felled in its own action, roleActing left set as in the original.
+        if constexpr (BuildOptions::Diagnostics)
+        {
+            LogDiagnostic(u8"role acting left: role %d felled while acting, roleActing %d", index, battle.roleActing);
+        }
+
         battle.actingUnit = -1;
         battle.turnPlaying = 0;
     }

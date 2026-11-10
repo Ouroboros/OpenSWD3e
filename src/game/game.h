@@ -779,6 +779,8 @@ private:
         u32 heldSince = 0;  // battleFramesRun as the hold began (0: none)
         i32 heldSinceMs = 0;
         bool holdReported = false;
+        // Diagnostics (role acting left): roleActing met set with no unit acting, logged once until it clears.
+        bool roleActingLeftSeen = false;
     };
 
     DiagnosticData diagnostics;
