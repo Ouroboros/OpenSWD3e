@@ -27,7 +27,10 @@ constexpr u16 kSound = 0x4125;  // "%A" number "." (made "%a" once its sound pla
 constexpr u16 kSoundSeen = 0x6125;
 constexpr u16 kKey = 0x4B25;  // "%K"
 constexpr u16 kKeySeen = 0x6B25;
-constexpr u16 kItemName = 0x5425;           // "%T" number ".": the name of an object of mon.dat
+constexpr u16 kItemName = 0x5425;  // "%T" number ".": the name of an object of mon.dat
+// The rebuild (deviations.md): "% " shows nothing (the Steam data writes it over a doubled character, Talk1.dat
+// event 457); the original draws its two characters.
+constexpr u16 kBlankCode = 0x2025;
 constexpr std::size_t kCodeBytes = 2;       // a control code
 constexpr std::size_t kCodeDigitBytes = 3;  // a control code and its digit
 

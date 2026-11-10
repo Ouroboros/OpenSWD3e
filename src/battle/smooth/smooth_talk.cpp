@@ -731,6 +731,12 @@ void TalkFrame::DrawWindowAdvance(TalkWindow& window, Surface& surface, u16* pix
                 break;
             }
 
+            // The rebuild (deviations.md): "% " shows nothing.
+            case kBlankCode:
+                cursor += kCodeBytes;
+                consumed += kCodeBytes;
+                break;
+
             case kKey:
             case kKeySeen:
                 window.speed = 0;

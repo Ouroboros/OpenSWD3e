@@ -270,6 +270,11 @@ u32 Talk::ExpandText(std::string& text)
                 cursor += kCodeBytes;
                 break;
 
+            // The rebuild (deviations.md): "% " is no character.
+            case kBlankCode:
+                cursor += kCodeBytes;
+                break;
+
             default:
                 ++cursor;
                 ++characters;
