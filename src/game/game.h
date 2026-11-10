@@ -566,6 +566,8 @@ private:
     void RoleRetreatFrame(BattleRole& unit, int role);
     void UpdateUnits();
     int BattleFrame();
+    void WatchBattleState(std::u8string_view step, i32 unit = -1);
+    void WatchGaugeHold();
     void EndBattle();
     void DrawIntroField();
     std::vector<u8> PackSurface(Surface& surface);
@@ -761,6 +763,21 @@ private:
         std::vector<u32> laid;
         std::vector<u32> painted;
         bool laidShown = false;
+
+        // Diagnostics (gauge hold): the battle state that holds every gauge, watched across the steps of BattleFrame
+        // (WatchBattleState), its last changes kept, and a hold of the active time battle reported once it lasts
+        // (WatchGaugeHold).
+        struct GaugeChange
+        {
+            u32 frame = 0;
+            std::string text;
+        };
+
+        std::array<i32, 7> watched = {};
+        std::vector<GaugeChange> gaugeChanges;
+        u32 heldSince = 0;  // battleFramesRun as the hold began (0: none)
+        i32 heldSinceMs = 0;
+        bool holdReported = false;
     };
 
     DiagnosticData diagnostics;

@@ -8,6 +8,7 @@
 #include "battle/smooth/smooth_draw.h"
 #include "battle/smooth/smooth_messages.h"
 #include "core/format.h"
+#include "core/log.h"
 #include "crt/msvc.h"
 #include "game/screenshot.h"
 #include "platform/display.h"
@@ -81,6 +82,156 @@ constexpr int kBattleMusicId = 1;                                     // the id 
 
 // swd3e.exe 0x00465AB0: one frame of every unit in the draw order: a role (units 20 and up, below the role count)
 // runs RoleFrame, an enemy below the enemy count EnemyFrame.
+// Diagnostics (gauge hold): the state that holds every gauge (battleBusy, turnPending, the talk's battleRuns) and what
+// leads to it, compared after step `step` (of unit `unit`) of BattleFrame: each change kept with the step that made
+// it, the last kGaugeChangesKept of them.
+void Game::WatchBattleState(std::u8string_view step, i32 unit)
+{
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        constexpr std::size_t kGaugeChangesKept = 48;
+        constexpr std::array<std::u8string_view, 7> kNames = {
+            u8"turnPending",
+            u8"battleBusy",
+            u8"actingUnit",
+            u8"currentUnit",
+            u8"result",
+            u8"battleRuns",
+            u8"turnPlaying",
+        };
+
+        const BattleState& battle = this->battleState;
+        DiagnosticData& data = this->diagnostics;
+        const std::array<i32, 7> now = {
+            battle.turnPending,
+            battle.battleBusy,
+            battle.actingUnit,
+            battle.currentUnit,
+            battle.result,
+            this->fightTalk.battleRuns,
+            battle.turnPlaying,
+        };
+
+        for (std::size_t at = 0; at < now.size(); ++at)
+        {
+            if (now[at] == data.watched[at])
+            {
+                continue;
+            }
+
+            data.gaugeChanges.push_back(
+                DiagnosticData::GaugeChange{
+                    this->battleFramesRun,
+                    WinFormat(
+                        u8"frame %u %s %d: %s %d -> %d",
+                        {this->battleFramesRun, step, unit, kNames[at], data.watched[at], now[at]}
+                    ),
+                }
+            );
+        }
+
+        if (data.gaugeChanges.size() > kGaugeChangesKept)
+        {
+            data.gaugeChanges.erase(
+                data.gaugeChanges.begin(),
+                data.gaugeChanges.end() - static_cast<std::ptrdiff_t>(kGaugeChangesKept)
+            );
+        }
+
+        data.watched = now;
+    }
+}
+
+// Diagnostics (gauge hold): at the end of a battle frame of the active time battle, a hold of every gauge that lasts
+// kHeldFrames is logged with the state and the changes since a little before it began, and its end once it ends.
+void Game::WatchGaugeHold()
+{
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        constexpr u32 kHeldFrames = 100;
+        constexpr u32 kChangesBefore = 2;
+        const BattleState& battle = this->battleState;
+        DiagnosticData& data = this->diagnostics;
+        const bool held =
+            battle.activeTime && (this->fightTalk.battleRuns != 1 || battle.battleBusy != 0 || battle.turnPending != 0);
+
+        auto state = [this, &battle]
+        {
+            return WinFormat(
+                u8"busy %d pending %d runs %d acting %d playing %d holds %d current %d result %d menu %d "
+                u8"waiting %d choice %d order %d %d %d %d slot %d startPose %d roleActing %d allRoles %d "
+                u8"retreat %d auto %d",
+                {battle.battleBusy,
+                 battle.turnPending,
+                 this->fightTalk.battleRuns,
+                 battle.actingUnit,
+                 battle.turnPlaying,
+                 battle.effectHolds,
+                 battle.currentUnit,
+                 battle.result,
+                 battle.menuCommand,
+                 battle.panelWaiting,
+                 battle.choiceReady,
+                 battle.roleOrder[0],
+                 battle.roleOrder[1],
+                 battle.roleOrder[2],
+                 battle.roleOrder[3],
+                 battle.slotRecords[0].unit,
+                 static_cast<i32>(battle.startPoseRole),
+                 battle.roleActing,
+                 battle.hitsAllRoles,
+                 static_cast<i32>(battle.retreat),
+                 battle.autoBattle}
+            );
+        };
+
+        if (!held)
+        {
+            if (data.holdReported)
+            {
+                LogDiagnostic(
+                    u8"gauge hold: over after %u frames (%d ms): %s",
+                    this->battleFramesRun - data.heldSince,
+                    battle.frameNow - data.heldSinceMs,
+                    state().c_str()
+                );
+            }
+
+            data.heldSince = 0;
+            data.holdReported = false;
+            return;
+        }
+
+        if (data.heldSince == 0)
+        {
+            data.heldSince = this->battleFramesRun;
+            data.heldSinceMs = battle.frameNow;
+        }
+
+        if (data.holdReported || this->battleFramesRun - data.heldSince < kHeldFrames)
+        {
+            return;
+        }
+
+        data.holdReported = true;
+        LogDiagnostic(
+            u8"gauge hold: battle %d, every gauge held %u frames (%d ms): %s",
+            static_cast<i32>(battle.battle),
+            this->battleFramesRun - data.heldSince,
+            battle.frameNow - data.heldSinceMs,
+            state().c_str()
+        );
+
+        for (const DiagnosticData::GaugeChange& change : data.gaugeChanges)
+        {
+            if (change.frame + kChangesBefore >= data.heldSince)
+            {
+                LogDiagnostic(u8"gauge hold:   %s", change.text.c_str());
+            }
+        }
+    }
+}
+
 void Game::UpdateUnits()
 {
     BattleState& battle = this->battleState;
@@ -95,11 +246,17 @@ void Game::UpdateUnits()
             if (unit - BattleState::FirstRoleUnit < static_cast<i32>(battle.roleCount))
             {
                 this->RoleFrame(unit - BattleState::FirstRoleUnit);
+
+                // Diagnostics (gauge hold): the role's frame.
+                this->WatchBattleState(u8"RoleFrame", unit - BattleState::FirstRoleUnit);
             }
         }
         else if (unit < static_cast<i32>(battle.enemyCount))
         {
             this->EnemyFrame(unit);
+
+            // Diagnostics (gauge hold): the enemy's frame.
+            this->WatchBattleState(u8"EnemyFrame", unit);
         }
     }
 }
@@ -136,9 +293,14 @@ int Game::BattleFrame()
         battle.keysUnit = battle.currentUnit;
     }
 
+    // Diagnostics (gauge hold): what changed between the frames (the talk, the menus), then each step.
+    this->WatchBattleState(u8"before the frame");
     this->MouseHover();
+    this->WatchBattleState(u8"MouseHover");
     this->BattleKeys();
+    this->WatchBattleState(u8"BattleKeys");
     this->AutoBattleTurn();
+    this->WatchBattleState(u8"AutoBattleTurn");
     this->MeasureUnits();
     battle.SortDrawOrder();
 
@@ -193,6 +355,8 @@ int Game::BattleFrame()
         }
     }
 
+    // Diagnostics (gauge hold): the busy field freed and the next slot record taken.
+    this->WatchBattleState(u8"TakeSlotRecord");
     battle.enemyGaugeBoost = battle.actingUnit == -1 && battle.currentUnit == 0 ? 1 : 0;
     smooth::Scene frameScene;
     this->battleServices.frame = this->smoothMotion || this->battleDeferred ? &frameScene : nullptr;
@@ -215,6 +379,9 @@ int Game::BattleFrame()
     this->CheckStoneSides();
     this->ApplyHits();
 
+    // Diagnostics (gauge hold): the hits applied.
+    this->WatchBattleState(u8"ApplyHits");
+
     if (this->HitFrame() == 1)
     {
         battle.spellStage = static_cast<u16>(battle.spellStage | BattleState::SpellOver);
@@ -234,9 +401,13 @@ int Game::BattleFrame()
     }
 
     this->DrawRolePanels();
+    this->WatchBattleState(u8"HitFrame");  // Diagnostics (gauge hold)
     this->DrawBattleMenu();
+    this->WatchBattleState(u8"DrawBattleMenu");  // Diagnostics (gauge hold)
 
     this->BattleEndFrame();
+
+    this->WatchBattleState(u8"BattleEndFrame");  // Diagnostics (gauge hold)
     {
         smooth::Scene scene;
         smooth::MessagesFrame(this->battleMessages).Frame(scene);
@@ -278,6 +449,10 @@ int Game::BattleFrame()
     }
 
     this->CheckBattleEnd();
+
+    // Diagnostics (gauge hold): the end checked; a lasting hold of every gauge reported.
+    this->WatchBattleState(u8"CheckBattleEnd");
+    this->WatchGaugeHold();
     this->DrawBattlePrompt();
 
     if (battle.fadingField == 1 && battle.fieldFade.frames <= 0)

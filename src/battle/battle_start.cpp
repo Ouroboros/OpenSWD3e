@@ -160,6 +160,15 @@ void Game::MeasureUnits()
 void Game::StartBattle(u16 number)
 {
     LogInfo(u8"battle %d on map %d", static_cast<i32>(number), this->currentMap);
+
+    // Diagnostics (gauge hold): a hold of the battle before is not this one's.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        this->diagnostics.heldSince = 0;
+        this->diagnostics.holdReported = false;
+        this->diagnostics.gaugeChanges.clear();
+    }
+
     BattleState& battle = this->battleState;
     BattleServices& services = this->battleServices;
     GameState& state = this->state;
