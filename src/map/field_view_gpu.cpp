@@ -205,6 +205,13 @@ void FieldView::RecordTarget()
     // still layers after a sprite (a sprite is clipped by the GPU, where it glides).
     const bool spotlit = !state.GameFlag(GameState::PlainScreen) && state.GameFlag(GameState::Spotlight);
 
+    // The rebuild's map filling the window (deviations.md): a still layer (the screen's place) kept on the map, as
+    // PaintWorld keeps it.
+    if (layer.role >= GameState::Roles)
+    {
+        this->ClipToMap();
+    }
+
     if (layer.role >= GameState::Roles &&
         ((view.screenFlags & Scene::SpotlightClip) != 0 || (spotlit && this->recordLayer > 0)))
     {
@@ -1409,6 +1416,9 @@ void FieldView::RecordEffects()
     owner.drawSurface = this->effectScratch.Pixels();
     painter.SetTarget(owner.drawSurface);
     painter.SetClipClamped(0, 0, field.viewWidth, field.viewHeight);
+
+    // The rebuild's map filling the window (deviations.md): the effects kept on the map, as PaintWorld keeps them.
+    this->ClipToMap();
     const bool spotlit = !state.GameFlag(GameState::PlainScreen) && state.GameFlag(GameState::Spotlight);
 
     if ((view.screenFlags & Scene::SpotlightClip) != 0 || spotlit)
@@ -2150,6 +2160,17 @@ bool FieldView::LayBetween(int scale)
 
     this->LayEffects(this->gpuOverlays, 0, this->gpuOverlays.size());
 
+    // The rebuild's map filling the window (deviations.md): every layer kept on the map, as the original's screen
+    // never lies past it (a moving role's sprite carries what its act draws round it, the sparkles of 仙界傳送點
+    // past the edge of a map narrower than the window); x, y, right, bottom on the canvas.
+    const bool mapClipped = this->FillsWindow();
+    const std::array<int, 4> mapArea = {
+        static_cast<int>(std::ceil(-cameraX)),
+        static_cast<int>(std::ceil(-cameraY)),
+        static_cast<int>(std::floor(static_cast<float>(MapHeader::TileSize * owner.state.map.width) - cameraX)),
+        static_cast<int>(std::floor(static_cast<float>(MapHeader::TileSize * owner.state.map.height) - cameraY)),
+    };
+
     for (const GpuLayer& layer : this->gpuLayers)
     {
         if (!layer.drawn)
@@ -2212,21 +2233,31 @@ bool FieldView::LayBetween(int scale)
         y += static_cast<float>(layer.top) * unit;
         const float shownWidth = static_cast<float>(layer.width) * unit;
         const float shownHeight = static_cast<float>(layer.height) * unit;
-        const bool clipped = spotlightClipped && layer.role < GameState::Roles;
+        const bool lit = spotlightClipped && layer.role < GameState::Roles;
+        const bool clipped = lit || mapClipped;
 
-        // A moving role is clipped to the spotlight where the light is now.
+        // A moving role is clipped to the spotlight where the light is now; with the map filling the window every
+        // layer to the map too.
         if (clipped)
         {
-            const i32 lightX =
-                (this->gpuSpotlightMoving ? this->gpuSpotlight[0] : view.spotlightX) + this->originalShift.x;
-            const i32 lightY =
-                (this->gpuSpotlightMoving ? this->gpuSpotlight[1] : view.spotlightY) + this->originalShift.y;
-            display.ClipLayers(
-                lightX - Scene::SpotlightRadius,
-                lightY - Scene::SpotlightRadius,
-                2 * Scene::SpotlightRadius,
-                2 * Scene::SpotlightRadius
-            );
+            std::array<int, 4> area =
+                mapClipped ? mapArea : std::array<int, 4>{0, 0, field.viewWidth, field.viewHeight};
+
+            if (lit)
+            {
+                const i32 lightX =
+                    (this->gpuSpotlightMoving ? this->gpuSpotlight[0] : view.spotlightX) + this->originalShift.x;
+                const i32 lightY =
+                    (this->gpuSpotlightMoving ? this->gpuSpotlight[1] : view.spotlightY) + this->originalShift.y;
+                area = {
+                    std::max(area[0], lightX - Scene::SpotlightRadius),
+                    std::max(area[1], lightY - Scene::SpotlightRadius),
+                    std::min(area[2], lightX + Scene::SpotlightRadius),
+                    std::min(area[3], lightY + Scene::SpotlightRadius),
+                };
+            }
+
+            display.ClipLayers(area[0], area[1], std::max(area[2] - area[0], 0), std::max(area[3] - area[1], 0));
         }
 
         if (layer.shaded)

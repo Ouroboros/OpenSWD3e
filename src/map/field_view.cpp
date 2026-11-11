@@ -450,6 +450,26 @@ void FieldView::ClearRowStarts()
     }
 }
 
+// The rebuild's map filling the window (deviations.md): the clip kept to where the map lies on the canvas, as the
+// original's screen never lies past the map: what is drawn past its edge (an effect beside a map narrower than the
+// window, 仙界傳送點) is left out, as the original's screen edge cuts it, and the map's cleared first columns
+// (ClearRowStarts) lie at the edge instead of down the middle of it.
+void FieldView::ClipToMap()
+{
+    if (!this->FillsWindow())
+    {
+        return;
+    }
+
+    const Field& field = this->game.field;
+    const MapHeader& map = this->game.state.map;
+    const int left = std::max(0, -field.cameraLeft);
+    const int top = std::max(0, -field.cameraTop);
+    const int right = std::min(field.viewWidth, MapHeader::TileSize * map.width - field.cameraLeft);
+    const int bottom = std::min(field.viewHeight, MapHeader::TileSize * map.height - field.cameraTop);
+    this->game.painter.SetClipClamped(left, top, std::max(left, right), std::max(top, bottom));
+}
+
 // The spotlight's square of the screen as the clip (part of 0x00412F60).
 void FieldView::ClipToSpotlight()
 {
@@ -507,6 +527,9 @@ void FieldView::PaintWorld()
         {
             this->DrawOverlays();
         }
+
+        // The rebuild's map filling the window (deviations.md): the world kept on the map.
+        this->ClipToMap();
 
         if (!state.GameFlag(GameState::PlainScreen) && state.GameFlag(GameState::Spotlight))
         {
@@ -581,6 +604,7 @@ void FieldView::PaintWorld()
 
     if (later && this->recordPass == RecordPass::None)
     {
+        this->ClipToMap();
         this->DrawAnimations(view.animationsB);
     }
 }

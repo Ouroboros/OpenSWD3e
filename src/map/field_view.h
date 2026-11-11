@@ -155,6 +155,7 @@ public:
     void DrawGold();
     void DrawFinalAgain();
     void ClearRowStarts();
+    void ClipToMap();
     void DrawOverlays();
     void DrawWeather();
     void DrawLeaves();
