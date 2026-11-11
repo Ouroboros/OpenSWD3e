@@ -245,6 +245,7 @@ private:
     void SaveScreenKeys();
     void FlagViewKeys();
     void LeaveSaveScreen();
+    void PutMenuBackgroundBack();
     void FreeSavePreviews();
     void ReloadSavePage();
     void DrawSaveScreen();
@@ -713,13 +714,17 @@ private:
     i32 flagCursor = 0;                   // 0x004C27A8 the flag chosen in the flag view
     u32 saveFrames = 0;                   // 0x004C27B0 frames since the save screen opened
     u16 slotsPageFrames = 0;              // 0x004C27B6 counted 0..13 by DrawSlotsPage (0x00408CC0); no code reads it
-    u8 downArrowPress = 0;                // 0x004C2650 frames the lit down arrow of the slots stays pressed down
-    u8 upArrowPress = 0;                  // 0x004C2651 and the up arrow up
-    i32 slotPrompt = 0;                   // 0x004C27A4 browsing, the overwrite answer or the slot chosen
-    i32 slotMouseBlock = 0;               // 0x004C1610 frames a key or click keeps the pointer from choosing a slot
-    u32 systemFlags = 0;                  // 0x004D1404 SystemFlag bits
-    i32 counterAlpha = 0;                 // 0x004E582C the alpha the counters (gold, digits) draw with
-    i32 unk4C2B58 = 0;                    // 0x004C2B58 only cleared by the system page (no reader)
+    // The rebuild (deviations.md): the menu's background as DrawSlotsPage found it (the slots page is drawn with it),
+    // put back once the save screen is left (PutMenuBackgroundBack).
+    ActState menuBackgroundKept;
+    bool menuBackgroundTaken = false;
+    u8 downArrowPress = 0;   // 0x004C2650 frames the lit down arrow of the slots stays pressed down
+    u8 upArrowPress = 0;     // 0x004C2651 and the up arrow up
+    i32 slotPrompt = 0;      // 0x004C27A4 browsing, the overwrite answer or the slot chosen
+    i32 slotMouseBlock = 0;  // 0x004C1610 frames a key or click keeps the pointer from choosing a slot
+    u32 systemFlags = 0;     // 0x004D1404 SystemFlag bits
+    i32 counterAlpha = 0;    // 0x004E582C the alpha the counters (gold, digits) draw with
+    i32 unk4C2B58 = 0;       // 0x004C2B58 only cleared by the system page (no reader)
     static constexpr u32 ScriptedBattle = 0x80000000;  // in `battleRequest`: started by a talk command
     i32 battleRequest = 0;                             // 0x004C2B84 a battle to start (its number in the low word)
     i32 musicBeforeBattle = 0;   // 0x004C15D0 the music queue's mode when a map battle starts (0x0040A7B0 restores it)

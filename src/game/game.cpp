@@ -1865,6 +1865,8 @@ void Game::ResetSaveSlots()
     this->upArrowPress = 1;
     this->slotPrompt = 0;
     this->slotMouseBlock = 0;
+    // The rebuild (deviations.md): the menu's background taken afresh by this opening of the save screen.
+    this->menuBackgroundTaken = false;
     ResetPlayback(this->saveScreenAct);
     this->saveSlots.LoadPage(this->config.SaveDirectory(), this->painter);
 }

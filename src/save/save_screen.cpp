@@ -11,6 +11,7 @@
 #include "core/debug_log.h"
 #include "core/error_box.h"
 #include "core/format.h"
+#include "core/log.h"
 #include "core/words.h"
 #include "crt/msvc.h"
 #include "draw/painter.h"
@@ -404,6 +405,31 @@ void Game::LeaveSaveScreen()
     }
 
     this->FreeSavePreviews();
+    this->PutMenuBackgroundBack();
+}
+
+// The rebuild (deviations.md): the menu's background put back once the save screen is left. The original leaves the
+// slots page's there (DrawSlotsPage, 0x00408CC0, draws it with the menu's act): back on the menu's page, drawn at the
+// menu background's place, it left the screen's left columns undrawn, and the pointer's trail stayed on them.
+void Game::PutMenuBackgroundBack()
+{
+    if (!this->menuBackgroundTaken)
+    {
+        return;
+    }
+
+    this->menu.background = this->menuBackgroundKept;
+    this->menuBackgroundTaken = false;
+
+    // Diagnostics (menu background): the menu's background put back after the save screen.
+    if constexpr (BuildOptions::Diagnostics)
+    {
+        LogDiagnostic(
+            u8"menu background put back: act %d action %d",
+            this->menu.background.id,
+            this->menu.background.action
+        );
+    }
 }
 
 // swd3e.exe 0x00406C20: the three previews freed (0x00409840 three times)
@@ -876,6 +902,7 @@ void Game::SaveGame()
 
     this->menuMode = Menu::NoSlotsMode;
     this->FreeSavePreviews();
+    this->PutMenuBackgroundBack();
 }
 
 // The save written to the open slot file (inline in 0x004070A0).
@@ -1469,6 +1496,14 @@ void Game::DrawSlotsPage()
     }
 
     const auto color = static_cast<Pixel>(this->painter.MakeColor(kTextRed, kTextGreen, kTextBlue));
+
+    // The rebuild (deviations.md): the menu's background kept before the slots page takes it (PutMenuBackgroundBack).
+    if (!this->menuBackgroundTaken)
+    {
+        this->menuBackgroundKept = this->menu.background;
+        this->menuBackgroundTaken = true;
+    }
+
     this->menu.background.id = kSlotsAct;
 
     if (this->slotsLoad == 0)
