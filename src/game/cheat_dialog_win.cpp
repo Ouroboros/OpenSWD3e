@@ -44,41 +44,9 @@ constexpr int kCountField = 0x3F5;
 constexpr int kSetButton = 0x3F6;
 constexpr int kList = 0x3F9;
 constexpr std::array<int, 4> kEntryButtons = {kValueField, kTopUpButton, kDeleteButton, kAddButton};
-constexpr int kIdLimit = 4;
-constexpr int kCountLimit = 8;
-constexpr int kValueLimit = 4;
 constexpr int kFieldBytes = 0xA;  // GetDlgItemTextA reads at most nine bytes
-constexpr i16 kFullStock = 0x5A;  // the top up and the counts set fill to 90
-constexpr i16 kDeleteAll = -0x400;
-constexpr u16 kFirstSkill = 0x1771;  // the skill tabs take ids 0x1771..0x1963 (swd3e)
-constexpr u16 kSkillsEnd = 0x1964;
-constexpr int kLastVariable = 0x3F;
-constexpr int kLastAttribute = 0x10;
-// The rebuild (deviations.md): a row of the role's affection after the attributes, the low byte of its RoleVariables
-// word as the menu's role page shows it (CheatDialog::Affection); set keeps the low byte.
-constexpr int kAffectionRow = kLastAttribute + 1;
-constexpr std::u8string_view kAffectionLabel = u8"好感";
-// An id field that is not a number leaves the id in the slot of the message argument (0x00435AE0 writes nothing):
-// WM_COMMAND. The count keeps stack garbage and the value the button's window (lParam); 0 here (deviations.md).
-constexpr int kUnparsedId = WM_COMMAND;
-
-// The columns of the list: the name, the count, the id, the value (three on the attributes and variables).
-constexpr std::array<std::u8string_view, 4> kColumns =
-    {u8"物品", u8"數量", u8"號碼", u8"附加值"};  // 0x004B1238, 0x004B128C, 0x004B1284, 0x004B127C
 constexpr std::array<int, 4> kColumnWidths = {0x78, 0x40, 0x40, 0x60};
 constexpr int kColumnTextSize = 4;
-constexpr std::u8string_view kItemsTab = u8"物品";          // 0x004B1238
-constexpr std::u8string_view kAttributesSuffix = u8"屬性";  // the end of "%s屬性" (0x004B1228)
-constexpr std::u8string_view kSkillsSuffix = u8"法術";      // the end of "%s法術" (0x004B1230)
-constexpr std::u8string_view kVariablesTab = u8"變數";      // 0x004B1220
-constexpr std::u8string_view kMoneyLabel = u8"錢";          // the first variable (0x004B12BC)
-constexpr std::u8string_view kGhostLabel = u8"符鬼";        // swd3e: variable 2 (0x004B12B4)
-constexpr std::string_view kCompanyA = "Cmpy1";             // variables 11 and 12 (0x004B12AC, 0x004B12A4)
-constexpr std::string_view kCompanyB = "Cmpy2";
-constexpr std::size_t kCompanyAVariable = 11;
-constexpr std::size_t kCompanyBVariable = 12;
-constexpr std::u8string_view kInsertFailed = u8"物品插入發生錯誤";  // 0x004B1240
-constexpr std::u8string_view kDeleteFailed = u8"物品刪除發生錯誤";  // 0x004B1268
 
 // The name dialog.
 
@@ -109,17 +77,14 @@ bool FieldText(HWND dialog, int control, int bytes, std::string& text)
     return !text.empty();
 }
 
-int ParsedNumber(const std::string& text, int fallback)
+// The three fields of the dialog (FieldText each; empty when empty).
+CheatDialog::Fields DialogFields(HWND dialog)
 {
-    int value = fallback;
-    Talk::ParseNumber(text, value);
-    return value;
-}
-
-std::string_view NodeName(const ItemNode& node)
-{
-    const std::array<char, 0x20>& name = node.record.data.name;
-    return std::string_view(name.data(), strnlen(name.data(), name.size()));
+    CheatDialog::Fields fields;
+    FieldText(dialog, kIdField, kFieldBytes, fields.id);
+    FieldText(dialog, kCountField, kFieldBytes, fields.count);
+    FieldText(dialog, kValueField, kFieldBytes, fields.value);
+    return fields;
 }
 
 void SetItemText(HWND list, int row, int column, const std::string& big5)
@@ -187,11 +152,11 @@ namespace
 // swd3e.exe 0x00410710: the columns of the list (the value column only on the lists of objects)
 void AddColumns(const CheatDialog& cheat, HWND list)
 {
-    const int columns = cheat.tab >= CheatDialog::FirstAttributesTab ? 3 : 4;
+    const int columns = cheat.ColumnCount();
 
     for (int column = 0; column < columns; ++column)
     {
-        std::wstring text = Wide(kColumns[static_cast<std::size_t>(column)]);
+        std::wstring text = Wide(CheatDialog::ColumnLabels[static_cast<std::size_t>(column)]);
         // mask, format, width, text, text size, sub item
         LVCOLUMNW entry{
             LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM,
@@ -227,79 +192,16 @@ void InsertRow(HWND list, int row, std::string_view name, int count, int id, i32
 }
 
 // swd3e.exe 0x00410A80: the list of the tab: the objects (with their counters on the items tab) or skills, the
-// seventeen attributes of the role, or the 64 variables
+// seventeen attributes of the role, or the 64 variables (the rows of CheatDialog::Rows)
 void Fill(CheatDialog& cheat, HWND list)
 {
     SendMessageW(list, LVM_DELETEALLITEMS, 0, 0);
+    int index = 0;
 
-    if (cheat.tab == CheatDialog::VariablesTab)
+    for (const CheatDialog::Row& row : cheat.Rows())
     {
-        for (std::size_t variable = 0; variable < cheat.party.variables.size(); ++variable)
-        {
-            std::string label;
-
-            if (variable == 0)
-            {
-                label = Big5(kMoneyLabel);
-            }
-            else if (variable == Party::GhostVariable)
-            {
-                label = Big5(kGhostLabel);
-            }
-            else if (variable == kCompanyAVariable)
-            {
-                label = std::string(kCompanyA);
-            }
-            else if (variable == kCompanyBVariable)
-            {
-                label = std::string(kCompanyB);
-            }
-
-            const auto index = static_cast<int>(variable);
-            InsertRow(list, index, label, cheat.party.variables[variable], index, -1, 0);
-        }
-
-        return;
-    }
-
-    if (cheat.tab >= CheatDialog::FirstAttributesTab)
-    {
-        const int role = cheat.tab - CheatDialog::FirstAttributesTab;
-
-        for (std::size_t field = 0; field < CheatDialog::AttributeNames.size(); ++field)
-        {
-            const auto index = static_cast<int>(field);
-            InsertRow(
-                list,
-                index,
-                Big5(CheatDialog::AttributeNames[field]),
-                cheat.party.RoleStat(index, role),
-                index,
-                0,
-                0
-            );
-        }
-
-        // The rebuild (deviations.md): the affection row.
-        InsertRow(list, kAffectionRow, Big5(kAffectionLabel), cheat.Affection(role), kAffectionRow, 0, 0);
-        return;
-    }
-
-    ItemLink* link = cheat.TabList();
-    int row = 0;
-
-    for (const ItemNode* node = link != nullptr ? link->get() : nullptr; node != nullptr;
-         node = node->next.get(), ++row)
-    {
-        i32 value = -1;
-        i32 maximum = -1;
-
-        if (cheat.tab == CheatDialog::ItemsTab)
-        {
-            cheat.ObjectCounter(*node, value, maximum);
-        }
-
-        InsertRow(list, row, NodeName(*node), node->count + node->pending, node->id, value, maximum);
+        InsertRow(list, index, row.name, row.count, row.id, row.value, row.maximum);
+        ++index;
     }
 }
 
@@ -355,7 +257,7 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
 
             for (const int button : kEntryButtons)
             {
-                EnableWindow(GetDlgItem(dialog, button), cheat->tab < CheatDialog::FirstAttributesTab ? TRUE : FALSE);
+                EnableWindow(GetDlgItem(dialog, button), cheat->EntriesEnabled() ? TRUE : FALSE);
             }
 
             return FALSE;
@@ -364,34 +266,22 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
         case WM_INITDIALOG:
         {
             HWND tabs = GetDlgItem(dialog, kTabControl);
-            std::array<std::string, CheatDialog::Tabs> labels;
-            labels[CheatDialog::ItemsTab] = Big5(kItemsTab);
 
-            for (int role = 0; role < Party::Roles; ++role)
+            for (int index = 0; index < CheatDialog::Tabs; ++index)
             {
-                const std::string text = cheat->party.names[static_cast<std::size_t>(role)].FullName();
-                labels[static_cast<std::size_t>(CheatDialog::FirstSkillsTab + role)] = text + Big5(kSkillsSuffix);
-                labels[static_cast<std::size_t>(CheatDialog::FirstAttributesTab + role)] =
-                    text + Big5(kAttributesSuffix);
-            }
-
-            labels[CheatDialog::VariablesTab] = Big5(kVariablesTab);
-
-            for (std::size_t index = 0; index < labels.size(); ++index)
-            {
-                std::wstring text = Wide(labels[index]);
+                std::wstring text = Wide(cheat->TabLabel(index));
                 // mask, state, state mask, text
                 TCITEMW item{TCIF_TEXT, 0, 0, text.data()};
-                SendMessageW(tabs, TCM_INSERTITEMW, index, reinterpret_cast<LPARAM>(&item));
+                SendMessageW(tabs, TCM_INSERTITEMW, static_cast<WPARAM>(index), reinterpret_cast<LPARAM>(&item));
             }
 
             cheat->tab = CheatDialog::ItemsTab;
             AddColumns(*cheat, list);
             SendMessageW(list, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
             Fill(*cheat, list);
-            SendMessageW(GetDlgItem(dialog, kIdField), EM_LIMITTEXT, kIdLimit, 0);
-            SendMessageW(GetDlgItem(dialog, kCountField), EM_LIMITTEXT, kCountLimit, 0);
-            SendMessageW(GetDlgItem(dialog, kValueField), EM_LIMITTEXT, kValueLimit, 0);
+            SendMessageW(GetDlgItem(dialog, kIdField), EM_LIMITTEXT, CheatDialog::IdLimit, 0);
+            SendMessageW(GetDlgItem(dialog, kCountField), EM_LIMITTEXT, CheatDialog::CountLimit, 0);
+            SendMessageW(GetDlgItem(dialog, kValueField), EM_LIMITTEXT, CheatDialog::ValueLimit, 0);
             return TRUE;
         }
 
@@ -401,8 +291,6 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
         default:
             return FALSE;
     }
-
-    std::string text;
 
     switch (LOWORD(word))
     {
@@ -414,79 +302,29 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
 
         case kTopUpButton:
         {
-            if (cheat->tab >= CheatDialog::FirstAttributesTab)
-            {
-                return FALSE;
-            }
-
             const auto row = static_cast<int>(SendMessageW(list, LVM_GETSELECTIONMARK, 0, 0));
+            CheatDialog::Row shown;
 
-            if (row < 0 || cheat->tab != CheatDialog::ItemsTab)
+            if (cheat->TopUp(row, shown) == CheatDialog::EditResult::Applied)
             {
-                return FALSE;
+                SetRow(list, row, shown.name, shown.count, shown.id, shown.value, shown.maximum);
             }
 
-            ItemNode* node = nullptr;
-            SkipItems(row, cheat->party.inventory, node);
-
-            if (node == nullptr)
-            {
-                return FALSE;
-            }
-
-            if (node->pending + node->count < kFullStock)
-            {
-                node->pending = kFullStock;
-
-                if (node->pending + node->count > kFullStock)
-                {
-                    node->count = static_cast<i16>(kFullStock - node->pending);
-                }
-            }
-
-            SetRow(list, row, NodeName(*node), node->count + node->pending, node->id, 0, 0);
             return FALSE;
         }
 
         case kAddButton:
         {
-            if (cheat->tab >= CheatDialog::FirstAttributesTab || !FieldText(dialog, kIdField, kFieldBytes, text))
+            const CheatDialog::EditResult result = cheat->Add(DialogFields(dialog));
+
+            if (result == CheatDialog::EditResult::Ignored)
             {
                 return FALSE;
             }
 
-            const int id = ParsedNumber(text, kUnparsedId);
-            ItemLink* link = cheat->TabList();
-            const bool skill = cheat->tab != CheatDialog::ItemsTab;
-
-            if (link == nullptr || (skill && (id < kFirstSkill || id >= kSkillsEnd)))
+            if (result == CheatDialog::EditResult::InsertFailed)
             {
-                return FALSE;
-            }
-
-            if (!FieldText(dialog, kCountField, kFieldBytes, text) || skill)
-            {
-                text = "1";
-            }
-
-            const int count = ParsedNumber(text, 0);
-
-            if (!FieldText(dialog, kValueField, kFieldBytes, text) || skill)
-            {
-                text = "0";
-            }
-
-            const int value = ParsedNumber(text, 0);
-            const ItemNode* node =
-                AddItem(*link, static_cast<u16>(id), static_cast<i16>(count), ItemCountMode::Pending, cheat->database);
-
-            if (node == nullptr)
-            {
-                ErrorBox(cheat->errors, u8"CheatDialog", kInsertFailed);
-            }
-            else if (!skill)
-            {
-                cheat->SetObjectCounter(*node, static_cast<u16>(id), value);
+                ErrorBox(cheat->errors, u8"CheatDialog", CheatDialog::InsertFailedText);
             }
 
             Fill(*cheat, list);
@@ -496,26 +334,17 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
 
         case kDeleteButton:
         {
-            if (cheat->tab >= CheatDialog::FirstAttributesTab)
-            {
-                return FALSE;
-            }
-
             const auto row = static_cast<int>(SendMessageW(list, LVM_GETSELECTIONMARK, 0, 0));
-            ItemLink* link = cheat->TabList();
+            const CheatDialog::EditResult result = cheat->Delete(row);
 
-            if (row < 0 || link == nullptr)
+            if (result == CheatDialog::EditResult::Ignored)
             {
                 return FALSE;
             }
 
-            ItemNode* node = nullptr;
-            SkipItems(row, *link, node);
-
-            if (node != nullptr &&
-                AddItem(*link, node->id, kDeleteAll, ItemCountMode::Pending, cheat->database) != nullptr)
+            if (result == CheatDialog::EditResult::DeleteFailed)
             {
-                ErrorBox(cheat->errors, u8"CheatDialog", kDeleteFailed);
+                ErrorBox(cheat->errors, u8"CheatDialog", CheatDialog::DeleteFailedText);
             }
 
             Fill(*cheat, list);
@@ -524,79 +353,9 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
 
         case kSetButton:
         {
-            if (!FieldText(dialog, kIdField, kFieldBytes, text))
+            if (cheat->Set(DialogFields(dialog)) == CheatDialog::EditResult::Ignored)
             {
                 return FALSE;
-            }
-
-            const int id = ParsedNumber(text, kUnparsedId);
-            // The original keeps stack garbage for a count or value field left empty; 0 here.
-            int count = 0;
-            int value = 0;
-
-            if (cheat->tab == CheatDialog::VariablesTab)
-            {
-                if (id < 0 || id > kLastVariable)
-                {
-                    return FALSE;
-                }
-
-                if (FieldText(dialog, kCountField, kFieldBytes, text))
-                {
-                    count = ParsedNumber(text, 0);
-                }
-
-                cheat->party.variables[static_cast<std::size_t>(id)] = count;
-            }
-            else if (cheat->tab < CheatDialog::FirstAttributesTab)
-            {
-                ItemNode* node = FindItemOfKind(cheat->party.inventory, static_cast<i16>(id));
-
-                if (node == nullptr)
-                {
-                    return FALSE;
-                }
-
-                if (FieldText(dialog, kCountField, kFieldBytes, text))
-                {
-                    count = ParsedNumber(text, 0);
-                    node->count = 0;
-                    node->pending = static_cast<i16>(std::min<int>(count, kFullStock));
-                }
-
-                if (FieldText(dialog, kValueField, kFieldBytes, text))
-                {
-                    value = ParsedNumber(text, 0);
-                }
-
-                if (cheat->tab == CheatDialog::ItemsTab)
-                {
-                    cheat->SetObjectCounter(*node, static_cast<u16>(id), value);
-                }
-            }
-            else
-            {
-                if (id > kAffectionRow)
-                {
-                    return FALSE;
-                }
-
-                if (FieldText(dialog, kCountField, kFieldBytes, text))
-                {
-                    count = ParsedNumber(text, 0);
-                }
-
-                const int role = cheat->tab - CheatDialog::FirstAttributesTab;
-
-                // The rebuild (deviations.md): the affection row sets the role variable (its low byte).
-                if (id == kAffectionRow)
-                {
-                    cheat->SetAffection(role, count);
-                }
-                else
-                {
-                    cheat->party.SetRoleStat(id, count, role, cheat->database);
-                }
             }
 
             Fill(*cheat, list);
