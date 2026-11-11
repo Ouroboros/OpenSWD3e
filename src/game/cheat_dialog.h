@@ -67,6 +67,9 @@ public:
     void ObjectCounter(const ItemNode& node, i32& value, i32& maximum) const;
     // The counters of an inventory object set from the value field (part of 0x0040FBE0).
     void SetObjectCounter(const ItemNode& node, u16 id, i32 value);
+    // The rebuild (deviations.md): the affection of a party role (the row after the attributes), read and set.
+    i32 Affection(int role) const;
+    void SetAffection(int role, i32 value);
     // The list of the tab (the inventory or a role's skills after its "無" head); nullptr for the other tabs.
     ItemLink* TabList() const;
     SDL_Window* Window() const;

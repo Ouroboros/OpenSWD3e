@@ -54,6 +54,10 @@ constexpr u16 kFirstSkill = 0x1771;  // the skill tabs take ids 0x1771..0x1963 (
 constexpr u16 kSkillsEnd = 0x1964;
 constexpr int kLastVariable = 0x3F;
 constexpr int kLastAttribute = 0x10;
+// The rebuild (deviations.md): a row of the role's affection after the attributes, the low byte of its RoleVariables
+// word as the menu's role page shows it (CheatDialog::Affection); set keeps the low byte.
+constexpr int kAffectionRow = kLastAttribute + 1;
+constexpr std::u8string_view kAffectionLabel = u8"好感";
 // An id field that is not a number leaves the id in the slot of the message argument (0x00435AE0 writes nothing):
 // WM_COMMAND. The count keeps stack garbage and the value the button's window (lParam); 0 here (deviations.md).
 constexpr int kUnparsedId = WM_COMMAND;
@@ -276,6 +280,8 @@ void Fill(CheatDialog& cheat, HWND list)
             );
         }
 
+        // The rebuild (deviations.md): the affection row.
+        InsertRow(list, kAffectionRow, Big5(kAffectionLabel), cheat.Affection(role), kAffectionRow, 0, 0);
         return;
     }
 
@@ -570,7 +576,7 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
             }
             else
             {
-                if (id > kLastAttribute)
+                if (id > kAffectionRow)
                 {
                     return FALSE;
                 }
@@ -580,7 +586,17 @@ INT_PTR CALLBACK CheatProcedure(HWND dialog, UINT message, WPARAM word, LPARAM d
                     count = ParsedNumber(text, 0);
                 }
 
-                cheat->party.SetRoleStat(id, count, cheat->tab - CheatDialog::FirstAttributesTab, cheat->database);
+                const int role = cheat->tab - CheatDialog::FirstAttributesTab;
+
+                // The rebuild (deviations.md): the affection row sets the role variable (its low byte).
+                if (id == kAffectionRow)
+                {
+                    cheat->SetAffection(role, count);
+                }
+                else
+                {
+                    cheat->party.SetRoleStat(id, count, role, cheat->database);
+                }
             }
 
             Fill(*cheat, list);

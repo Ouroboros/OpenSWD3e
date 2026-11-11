@@ -4,6 +4,7 @@
 #include "game/game.h"
 #include "org/fame.h"
 #include "party/party.h"
+#include "talk/talk.h"
 
 namespace swd3e
 {
@@ -17,6 +18,9 @@ constexpr std::size_t kMagicSlot = 7;      // with a proficiency
 constexpr std::size_t kCountedSlot = 9;    // with a capped counter
 constexpr u16 kLastCountedObject = 0x1F4;  // objects 1..0x1F4 also have a capped counter
 constexpr i32 kNoValue = -1;
+// The affection (as the menu's role page reads it): variable 1 (the low byte) of role id place + 1.
+constexpr int kFirstRoleId = 1;
+constexpr int kAffectionVariable = 1;
 
 // Whether `kind` holds all of `slot`'s kind bits (bit 15 aside).
 bool HasKind(u32 kind, u32 slot)
@@ -34,6 +38,21 @@ CheatDialog::CheatDialog(Game& game)
       running(game.running),
       resources(game.resources)
 {
+}
+
+// The rebuild (deviations.md): the affection of the role at place `role`.
+i32 CheatDialog::Affection(int role) const
+{
+    i32 affection = 0;
+    this->game.talk
+        .RoleVariable(static_cast<u32>(role + kFirstRoleId), kAffectionVariable, affection, Talk::ReadVariable);
+    return affection;
+}
+
+// The rebuild (deviations.md): the affection of the role at place `role` set (its low byte kept).
+void CheatDialog::SetAffection(int role, i32 value)
+{
+    this->game.talk.RoleVariable(static_cast<u32>(role + kFirstRoleId), kAffectionVariable, value, Talk::WriteVariable);
 }
 
 ItemLink* CheatDialog::TabList() const
