@@ -189,6 +189,7 @@ void Input::SetRange(int left, int top, int right, int bottom)
     this->rangeTop = top;
     this->rangeRight = right;
     this->rangeBottom = bottom;
+    this->device.SetRange(left, top, right, bottom);
 }
 
 // swd3e.exe 0x0043BEF0: (x, y) clamped to the screen becomes the position. The original moves the origin so that the

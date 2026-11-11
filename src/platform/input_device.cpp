@@ -1,5 +1,7 @@
 #include "platform/input_device.h"
 
+#include <algorithm>
+
 #include <SDL3/SDL.h>
 
 #include "platform/display.h"
@@ -105,9 +107,20 @@ void WindowInputDevice::HandleEvent(const SDL_Event& event)
 
         case SDL_EVENT_MOUSE_MOTION:
         {
-            const LogicalPoint point = this->display.WindowToLogical(event.motion.x, event.motion.y);
-            this->mouse.x = point.x;
-            this->mouse.y = point.y;
+            // The rebuild (deviations.md): the pointer where the system pointer is, kept in the range; the system
+            // pointer past the range is put back on it, so that it never runs on where the pointer cannot follow
+            // (near the window's edge it is let go, to leave the window).
+            constexpr float kLeaveMargin = 16.0f;
+            const LogicalPoint point = this->display.WindowToLogical(event.motion.x, event.motion.y, false);
+            this->mouse.x = std::clamp(point.x, this->range[0], this->range[2]);
+            this->mouse.y = std::clamp(point.y, this->range[1], this->range[3]);
+
+            if ((this->mouse.x != point.x || this->mouse.y != point.y) &&
+                !this->display.NearWindowEdge(event.motion.x, event.motion.y, kLeaveMargin))
+            {
+                this->display.WarpPointer(this->mouse.x, this->mouse.y);
+            }
+
             break;
         }
 
@@ -156,6 +169,14 @@ void WindowInputDevice::MoveMouse(int x, int y)
     this->display.WarpPointer(x, y);
     this->mouse.x = x;
     this->mouse.y = y;
+}
+
+// The rebuild (deviations.md): the range the pointer is kept in, the pointer moved into it.
+void WindowInputDevice::SetRange(int left, int top, int right, int bottom)
+{
+    this->range = {left, top, right, bottom};
+    this->mouse.x = std::clamp(this->mouse.x, left, right);
+    this->mouse.y = std::clamp(this->mouse.y, top, bottom);
 }
 
 }  // namespace swd3e

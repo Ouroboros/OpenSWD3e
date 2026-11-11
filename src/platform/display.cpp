@@ -71,7 +71,7 @@ Viewport FitViewport(int outputWidth, int outputHeight, const ScreenLayout& layo
     };
 }
 
-LogicalPoint ToLogical(const Viewport& viewport, float outputX, float outputY, const ScreenLayout& layout)
+LogicalPoint ToLogical(const Viewport& viewport, float outputX, float outputY, const ScreenLayout& layout, bool clamped)
 {
     if (viewport.width <= 0 || viewport.height <= 0)
     {
@@ -80,8 +80,18 @@ LogicalPoint ToLogical(const Viewport& viewport, float outputX, float outputY, c
 
     const int logicalWidth = layout.width > 0 ? layout.width : Display::Width;
     const int logicalHeight = layout.height > 0 ? layout.height : Display::Height;
-    const auto x = static_cast<int>((outputX - viewport.x) * static_cast<float>(logicalWidth) / viewport.width);
-    const auto y = static_cast<int>((outputY - viewport.y) * static_cast<float>(logicalHeight) / viewport.height);
+    const auto x = static_cast<int>(
+        std::floor((outputX - viewport.x) * static_cast<float>(logicalWidth) / static_cast<float>(viewport.width))
+    );
+    const auto y = static_cast<int>(
+        std::floor((outputY - viewport.y) * static_cast<float>(logicalHeight) / static_cast<float>(viewport.height))
+    );
+
+    if (!clamped)
+    {
+        return {x - layout.screenX, y - layout.screenY};
+    }
+
     return {
         std::clamp(x, 0, logicalWidth - 1) - layout.screenX,
         std::clamp(y, 0, logicalHeight - 1) - layout.screenY,
@@ -1429,7 +1439,7 @@ void Display::ToggleFullscreen()
     SDL_SetWindowFullscreen(this->window, !fullscreen);
 }
 
-LogicalPoint Display::WindowToLogical(float windowX, float windowY) const
+LogicalPoint Display::WindowToLogical(float windowX, float windowY, bool clamped) const
 {
     if (!this->IsOpen())
     {
@@ -1444,7 +1454,22 @@ LogicalPoint Display::WindowToLogical(float windowX, float windowY) const
     SDL_GetRenderOutputSize(this->renderer, &outputWidth, &outputHeight);
     const float scaleX = windowWidth > 0 ? static_cast<float>(outputWidth) / windowWidth : 1.0f;
     const float scaleY = windowHeight > 0 ? static_cast<float>(outputHeight) / windowHeight : 1.0f;
-    return ToLogical(this->CurrentViewport(), windowX * scaleX, windowY * scaleY, this->layout);
+    return ToLogical(this->CurrentViewport(), windowX * scaleX, windowY * scaleY, this->layout, clamped);
+}
+
+// Whether window point (windowX, windowY) lies within `margin` window pixels of the window's edge.
+bool Display::NearWindowEdge(float windowX, float windowY, float margin) const
+{
+    int windowWidth = 0;
+    int windowHeight = 0;
+
+    if (!this->IsOpen() || !SDL_GetWindowSize(this->window, &windowWidth, &windowHeight))
+    {
+        return true;
+    }
+
+    return windowX < margin || windowY < margin || windowX >= static_cast<float>(windowWidth) - margin ||
+           windowY >= static_cast<float>(windowHeight) - margin;
 }
 
 // SetCursorPos(x, y): the system pointer moved to logical point (x, y) of the window (the original runs full screen,
@@ -1456,10 +1481,14 @@ void Display::WarpPointer(int x, int y)
         return;
     }
 
-    float windowX = 0;
-    float windowY = 0;
-    this->LogicalToWindow(x, y, windowX, windowY);
-    SDL_WarpMouseInWindow(this->window, windowX, windowY);
+    // The middle of the logical pixel, which reads back as it whatever the rounding.
+    float left = 0;
+    float top = 0;
+    float right = 0;
+    float bottom = 0;
+    this->LogicalToWindow(x, y, left, top);
+    this->LogicalToWindow(x + 1, y + 1, right, bottom);
+    SDL_WarpMouseInWindow(this->window, (left + right) / 2.0f, (top + bottom) / 2.0f);
 }
 
 void Display::LogicalToWindow(int x, int y, float& windowX, float& windowY) const

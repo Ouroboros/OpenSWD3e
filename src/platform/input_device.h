@@ -3,6 +3,7 @@
 #include <array>
 
 #include "core/types.h"
+#include "platform/display.h"
 
 union SDL_Event;
 
@@ -33,6 +34,11 @@ public:
     virtual MouseState Mouse() = 0;
     // The pointer moved to logical point (x, y).
     virtual void MoveMouse(int x, int y) = 0;
+
+    // Where the pointer may lie, from (left, top) to (right, bottom) inclusive (none kept by default).
+    virtual void SetRange(int, int, int, int)
+    {
+    }
 };
 
 // Keyboard and mouse of the game window. The mouse axes are the pointer position on the logical screen, and moving
@@ -46,11 +52,15 @@ public:
     void KeyboardState(KeyState& keys) override;
     MouseState Mouse() override;
     void MoveMouse(int x, int y) override;
+    void SetRange(int left, int top, int right, int bottom) override;
 
 private:
     Display& display;
     KeyState keys{};
     MouseState mouse;
+    // The rebuild (deviations.md): where the pointer may lie (left, top, right, bottom inclusive); the system pointer
+    // past it is put back on it.
+    std::array<int, 4> range = {0, 0, Display::Width - 1, Display::Height - 1};
     // The rebuild (deviations.md): the keypad Enter also holds the Enter key down; each one's own state.
     bool enterDown = false;
     bool keypadEnterDown = false;

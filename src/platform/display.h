@@ -53,7 +53,13 @@ Viewport FitViewport(int outputWidth, int outputHeight, const ScreenLayout& layo
 
 // An output position mapped to the coordinates of the game's screen on `layout`; positions off the canvas clamp to
 // its edge.
-LogicalPoint ToLogical(const Viewport& viewport, float outputX, float outputY, const ScreenLayout& layout = {});
+LogicalPoint ToLogical(
+    const Viewport& viewport,
+    float outputX,
+    float outputY,
+    const ScreenLayout& layout = {},
+    bool clamped = true
+);
 
 // The game window. The original ran full screen at 640x480; here the logical screen keeps that size while the
 // window can be resized freely: the screen is scaled with nearest sampling at any ratio that keeps its aspect, with
@@ -106,7 +112,8 @@ public:
     bool HandleEvent(const SDL_Event& event);
     void ToggleFullscreen();
     // A window position (as reported by mouse events) in logical screen coordinates.
-    LogicalPoint WindowToLogical(float windowX, float windowY) const;
+    LogicalPoint WindowToLogical(float windowX, float windowY, bool clamped = true) const;
+    bool NearWindowEdge(float windowX, float windowY, float margin) const;
     void WarpPointer(int x, int y);
     // Where a text being typed lies on the logical screen, so that an input method shows its candidates beside it.
     void SetTextInputArea(int x, int y, int width, int height);
