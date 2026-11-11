@@ -22,6 +22,7 @@
 #include "draw/painter.h"
 #include "draw/weave.h"
 #include "font/text_font.h"
+#include "game/cheat_screen.h"
 #include "game/databases.h"
 #include "game/game_state.h"
 #include "game/map_overview.h"
@@ -97,6 +98,7 @@ class Game
     friend class smooth::BattleFrame;
     friend class smooth::TalkFrame;
     friend class MapOverview;
+    friend class CheatScreen;
 
 public:
     static constexpr std::u8string_view WindowTitle = u8"軒轅劍參 外傳";                   // swd3e 0x004B0BAC
@@ -671,6 +673,7 @@ private:
     Field field;
     FieldView fieldView;
     MapOverview mapOverview{*this};  // the rebuild's map overview (Tab)
+    CheatScreen cheatScreen{*this};  // the rebuild's cheat screen (Ctrl+F4 with the debug keys)
     Talk talk;
     RoleControl roleControl;
     RolePath rolePath;

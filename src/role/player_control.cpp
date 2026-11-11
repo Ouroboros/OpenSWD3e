@@ -262,6 +262,16 @@ void RoleControl::ControlPlayer()
             }
         }
 
+        // The rebuild (deviations.md): Ctrl+F4 shows the cheat screen in the game's own look; F4 alone the original's
+        // dialog.
+        const bool control = input.IsKeyDown(Input::LeftControl) || input.IsKeyDown(Input::RightControl);
+
+        if (input.IsKeyDown(Input::F4) && control)
+        {
+            owner.cheatScreen.Open();
+            return;
+        }
+
         if (input.IsKeyDown(Input::F4))
         {
             owner.running = 0;

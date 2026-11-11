@@ -492,7 +492,13 @@ void Game::LoopFrame()
         this->display.SetTextInputArea(x, y, box != nullptr ? box->width : 0, box != nullptr ? box->height : 0);
     }
 
-    if (this->running != 0 && (this->systemFlags & Game::VideoPlaying) != 0)
+    // The rebuild's cheat screen stops the game frames as the cheat dialog does (running 0) without the pause
+    // banner; the sound goes on.
+    if (this->cheatScreen.IsOpen())
+    {
+        this->AudioPump();
+    }
+    else if (this->running != 0 && (this->systemFlags & Game::VideoPlaying) != 0)
     {
         this->VideoFrame();
     }
@@ -1617,7 +1623,7 @@ void Game::ShowMenuFrame()
 
 void Game::AdvanceMotion()
 {
-    if (this->mapOverview.IsOpen())
+    if (this->mapOverview.IsOpen() || this->cheatScreen.IsOpen())
     {
         return;
     }
@@ -1669,8 +1675,8 @@ void Game::StoreDisplay() const
 
 bool Game::PresentBetween()
 {
-    // The rebuild's map overview is drawn at every refresh in place of the game's screen.
-    if (this->mapOverview.IsOpen() && this->active != 0 && !this->quit)
+    // The rebuild's map overview and cheat screen are drawn at every refresh in place of the game's screen.
+    if ((this->mapOverview.IsOpen() || this->cheatScreen.IsOpen()) && this->active != 0 && !this->quit)
     {
         const u64 now = SDL_GetTicksNS();
 
@@ -1684,7 +1690,15 @@ bool Game::PresentBetween()
             this->nextDrawNs = std::max(this->nextDrawNs + this->frameRatePeriodNs, now);
         }
 
-        this->mapOverview.Present();
+        if (this->cheatScreen.IsOpen())
+        {
+            this->cheatScreen.Present();
+        }
+        else
+        {
+            this->mapOverview.Present();
+        }
+
         return true;
     }
 
@@ -2572,10 +2586,10 @@ void Game::HandleEvent(const SDL_Event& event)
         return;
     }
 
-    // The rebuild's map overview takes every event while shown; Tab on the map shows it (deviations.md). The keys and
-    // buttons let go meanwhile, the focus lost and the pointer's moves still reach the game's input, so that nothing
-    // held when it opened stays down after.
-    if (this->mapOverview.IsOpen())
+    // The rebuild's map overview and cheat screen take every event while shown; Tab on the map shows the overview
+    // (deviations.md). The keys and buttons let go meanwhile, the focus lost and the pointer's moves still reach the
+    // game's input, so that nothing held when it opened stays down after.
+    if (this->mapOverview.IsOpen() || this->cheatScreen.IsOpen())
     {
         if (event.type == SDL_EVENT_KEY_UP || event.type == SDL_EVENT_MOUSE_BUTTON_UP ||
             event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_WINDOW_FOCUS_LOST)
@@ -2583,7 +2597,15 @@ void Game::HandleEvent(const SDL_Event& event)
             this->inputDevice.HandleEvent(event);
         }
 
-        this->mapOverview.HandleEvent(event);
+        if (this->cheatScreen.IsOpen())
+        {
+            this->cheatScreen.HandleEvent(event);
+        }
+        else
+        {
+            this->mapOverview.HandleEvent(event);
+        }
+
         return;
     }
 
