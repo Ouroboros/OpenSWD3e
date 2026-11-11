@@ -295,8 +295,16 @@ void FieldView::Paint()
     // The pointer may lie beside the 640x480 screen when the map fills the window: it is drawn on the whole canvas.
     const bool beside = field.screenX != 0 || field.screenY != 0;
 
-    auto drawPointer = [&owner, &field, beside](int x, int y)
+    auto drawPointer = [this, &owner, &field, beside](int x, int y)
     {
+        // The rebuild's map filling the window (deviations.md): the pointer left for the end of the frame.
+        if (this->pointerLast)
+        {
+            this->pendingPointer = {x, y};
+            this->pointerPending = true;
+            return;
+        }
+
         if (!beside)
         {
             owner.DrawPointer(x, y);
@@ -309,9 +317,15 @@ void FieldView::Paint()
         owner.DrawOnMapScreen();
     };
 
-    if (pointer && !capture && !beside)
+    if (pointer && !capture && !beside && !this->pointerLast)
     {
         owner.RefreshCursor();
+    }
+    else if (pointer && !capture && !beside)
+    {
+        // RefreshCursor's step, the drawing left for the end of the frame.
+        owner.StepPointer();
+        drawPointer(state.pointerX, state.pointerY);
     }
     else if (pointer && !capture)
     {
@@ -382,6 +396,25 @@ void FieldView::DrawGold()
     {
         painter.SetClipClamped(0, 0, Display::Width, Display::Height);
     }
+}
+
+// The rebuild's map filling the window (deviations.md): the pointer Paint left for last, drawn over the frame once
+// the map's first columns are cleared (ClearRowStarts): cleared after it, it was cut down the middle of the window
+// where the map's left edge lies.
+void FieldView::DrawPointerLast()
+{
+    if (!this->pointerPending)
+    {
+        return;
+    }
+
+    this->pointerPending = false;
+    Game& owner = this->game;
+    const Field& field = owner.field;
+    owner.painter.SetTarget(owner.mapCanvas->Pixels());
+    owner.painter.SetClipClamped(0, 0, field.viewWidth, field.viewHeight);
+    owner.DrawPointer(this->pendingPointer[0] + field.screenX, this->pendingPointer[1] + field.screenY);
+    owner.DrawOnMapScreen();
 }
 
 // The rebuild's smooth motion: what the map's last game frame drew after its pointer (the notices, the timer, the
@@ -935,7 +968,10 @@ void FieldView::Render()
     owner.BeginMapCanvas();
     this->CapturePlaces();
     this->movieFrame = this->movie.active != 0;
+    // The rebuild's map filling the window (deviations.md): the pointer drawn last (DrawPointerLast).
+    this->pointerLast = this->FillsWindow();
     this->Paint();
+    this->pointerLast = false;
     this->DrawTimer(kTimerX, kTimerY, 0);
     // swd3e: the talisman ghost drifts towards a point beside the controlled role and is drawn over the frame; then the
     // first two pixels of every row are cleared.
@@ -956,6 +992,7 @@ void FieldView::Render()
         this->CaptureLayer(this->finalLayer);
     }
 
+    this->DrawPointerLast();
     owner.EndMapCanvas();
     owner.ShowMapFrame();
 

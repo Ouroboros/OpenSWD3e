@@ -154,6 +154,7 @@ public:
     void BlendLines(std::span<Pixel> screen) const;
     void DrawGold();
     void DrawFinalAgain();
+    void DrawPointerLast();
     void ClearRowStarts();
     void ClipToMap();
     void DrawOverlays();
@@ -473,7 +474,12 @@ private:
     EventScan eventScan;                  // DrawItemHints: the events that give items
     bool pointerShown = false;            // the frame drew the pointer
     std::array<i32, 2> pointerSway = {};  // the offset of the pointer's picture last drawn to (EffectKind::Pointer)
-    std::vector<Surface> parts;           // the logical screens of a render scale above 1 (PaintBetween)
+    // The rebuild's map filling the window (deviations.md): Paint leaves the pointer for the end of the frame
+    // (pointerLast), kept in pendingPointer (screen place) until DrawPointerLast draws it.
+    bool pointerLast = false;
+    bool pointerPending = false;
+    std::array<int, 2> pendingPointer = {};
+    std::vector<Surface> parts;  // the logical screens of a render scale above 1 (PaintBetween)
 
     // LayBetween (field_view_gpu.cpp): the layers of the game frame recorded last, in drawing order: still layers and
     // the sprites of the moving roles between them. A layer's pixels are in halves of a pixel (the zoomed pictures

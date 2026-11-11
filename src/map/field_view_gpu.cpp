@@ -1248,8 +1248,13 @@ bool FieldView::LayInterface(int mouseX, int mouseY)
 
         kept.PutBack();
 
-        if (this->pointerShown)
+        auto drawPointer = [&]()
         {
+            if (!this->pointerShown)
+            {
+                return;
+            }
+
             const u64 key = EffectKey(EffectKind::Pointer, u64{0});
             const ActState& act = view.pointerRole.act;
             const std::array<i32, 2> sway = this->EffectAt(key, this->pointerSway[0], this->pointerSway[1], true);
@@ -1257,11 +1262,26 @@ bool FieldView::LayInterface(int mouseX, int mouseY)
             painter.SetClipClamped(0, 0, width, height);
             owner.DrawPointer(mouseX + field.screenX + sway[0] + act.x, mouseY + field.screenY + sway[1] + act.y);
             kept.PutBack();
+        };
+
+        // The rebuild's map filling the window (deviations.md): the pointer drawn last, over the cleared first
+        // columns of the map's rows (DrawPointerLast).
+        const bool pointerLast = this->FillsWindow();
+
+        if (!pointerLast)
+        {
+            drawPointer();
         }
 
         onScreen();
         this->DrawFinalAgain();
         kept.PutBack();
+
+        if (pointerLast)
+        {
+            drawPointer();
+        }
+
         this->replaying = false;
         this->paintScale = paintScale;
         owner.SetDrawSize(Display::Width, Display::Height);

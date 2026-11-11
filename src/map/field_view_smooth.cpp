@@ -504,8 +504,13 @@ void FieldView::PaintBetween(Surface& out)
 
             putBack();
 
-            if (this->pointerShown)
+            auto drawPointer = [&]()
             {
+                if (!this->pointerShown)
+                {
+                    return;
+                }
+
                 const ActState& act = view.pointerRole.act;
                 const std::array<i32, 2> sway = this->EffectAt(
                     EffectKey(EffectKind::Pointer, u64{0}),
@@ -517,11 +522,25 @@ void FieldView::PaintBetween(Surface& out)
                 painter.SetClipClamped(0, 0, width, height);
                 owner.DrawPointer(mouseX + field.screenX + sway[0] + act.x, mouseY + field.screenY + sway[1] + act.y);
                 putBack();
+            };
+
+            // The rebuild's map filling the window (deviations.md): the pointer drawn last, over the cleared first
+            // columns of the map's rows (DrawPointerLast).
+            const bool pointerLast = this->FillsWindow();
+
+            if (!pointerLast)
+            {
+                drawPointer();
             }
 
             onScreen();
             this->DrawFinalAgain();
             putBack();
+
+            if (pointerLast)
+            {
+                drawPointer();
+            }
         }
     }
 
