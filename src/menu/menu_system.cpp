@@ -76,6 +76,9 @@ constexpr u32 kRowHeight = 0x20;
 constexpr u32 kBarsLeft = 0xA8;  // a click between these x sets a bar
 constexpr u32 kBarsRight = 0x1C0;
 constexpr int kStepsLeft = 0x100;  // the steps of a bar, kStepWidth wide
+// The rebuild's battle setup (deviations.md): its choices a character further right, past its five-character label
+// (強化煉妖壺) in the large font.
+constexpr int kBattleChoicesShift = 24;
 constexpr int kStepWidth = 0x10;
 constexpr int kStepShift = 4;
 constexpr int kStepsRight = 0x1B0;
@@ -160,6 +163,12 @@ bool InRow(u32 y, i32 row)
 int RowY(i32 row)
 {
     return static_cast<int>(kRowsTop + kRowHeight * static_cast<u32>(row));
+}
+
+// Where the choices of the rows of `setup` start on the title page.
+constexpr int SystemChoicesLeft(Setup setup)
+{
+    return setup == Setup::Battle ? kStepsLeft + kBattleChoicesShift : kStepsLeft;
 }
 
 }  // namespace
@@ -1186,7 +1195,7 @@ void Menu::DrawSettings()
     // The rebuild's rows (deviations.md): the launcher switch with its choices (the one in use bright), the display
     // and battle setups.
     large.DrawText(pixels, kLabelX, RowY(kLauncherRow), kLauncherSetup, color, kTextStyle);
-    this->DrawSystemChoices(kLauncherRow, Menu::OnOffChoices(), owner.config.showLauncher ? 0 : 1, true);
+    this->DrawSystemChoices(kLauncherRow, Menu::OnOffChoices(), owner.config.showLauncher ? 0 : 1, true, kStepsLeft);
     large.DrawText(pixels, kLabelX, RowY(kDisplayRow), kDisplaySetup, color, kTextStyle);
     large.DrawText(pixels, kLabelX, RowY(kBattleRow), kBattleSetup, color, kTextStyle);
     large.DrawText(pixels, kVolumeLabelX, RowY(kSoundRow), menu_text::kSoundVolume, color, kTextStyle);
@@ -1330,7 +1339,13 @@ void Menu::DrawSetupSettings()
         {
             i32 chosen = -1;
             const std::vector<std::string> choices = this->SetupChoices(setup, row, chosen);
-            this->DrawSystemChoices(row, choices, chosen, SetupRowCounts(setup, row, owner.smoothMotion));
+            this->DrawSystemChoices(
+                row,
+                choices,
+                chosen,
+                SetupRowCounts(setup, row, owner.smoothMotion),
+                SystemChoicesLeft(setup)
+            );
         }
     }
 
@@ -1347,16 +1362,16 @@ void Menu::DrawSetupSettings()
     );
 }
 
-// The choices of a rebuild's row of the title page from the steps' left: `chosen` bright (unless the row has no
-// effect, `counts` false), the others dim.
-void Menu::DrawSystemChoices(i32 row, const std::vector<std::string>& choices, i32 chosen, bool counts)
+// The choices of a rebuild's row of the title page from `left`: `chosen` bright (unless the row has no effect, `counts`
+// false), the others dim.
+void Menu::DrawSystemChoices(i32 row, const std::vector<std::string>& choices, i32 chosen, bool counts, int left)
 {
     Game& owner = this->game;
     Painter& painter = owner.painter;
     const auto color = static_cast<Pixel>(painter.MakeColor(kLabelRed, kLabelGreen, kLabelBlue));
     Pixel unchosen = color;
     painter.TintPixels(std::span<u16>(&unchosen, 1), kUnchosenTint, kUnchosenTint, kUnchosenTint);
-    const std::vector<int> lefts = Menu::ChoiceLefts(choices, owner.largeFont, kStepsLeft);
+    const std::vector<int> lefts = Menu::ChoiceLefts(choices, owner.largeFont, left);
 
     for (std::size_t at = 0; at < choices.size(); ++at)
     {
@@ -1405,7 +1420,7 @@ void Menu::SetupSettingsMouse()
 
         i32 chosen = -1;
         const std::vector<std::string> choices = this->SetupChoices(setup, row, chosen);
-        const std::vector<int> lefts = Menu::ChoiceLefts(choices, owner.largeFont, kStepsLeft);
+        const std::vector<int> lefts = Menu::ChoiceLefts(choices, owner.largeFont, SystemChoicesLeft(setup));
 
         for (std::size_t at = 0; at + 1 < lefts.size(); ++at)
         {

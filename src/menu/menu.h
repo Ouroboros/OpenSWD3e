@@ -662,6 +662,7 @@ public:
     void OptionsSetStartPose(bool shown);
     void OptionsSetNoFleeing(bool on);
     void OptionsSetCastCountdown(bool shown);
+    void OptionsSetFreeCreatures(bool on);
     std::vector<std::string> SetupChoices(Setup setup, i32 row, i32& chosen) const;
     void SetupChoose(Setup setup, i32 row, i32 choice);
     void SetupStep(Setup setup, i32 row, bool up, bool wrap);
@@ -713,7 +714,7 @@ public:
     void DrawSettings();
     // The rebuild's setups on the title page (deviations.md).
     void DrawSetupSettings();
-    void DrawSystemChoices(i32 row, const std::vector<std::string>& choices, i32 chosen, bool counts);
+    void DrawSystemChoices(i32 row, const std::vector<std::string>& choices, i32 chosen, bool counts, int left);
     void SetupSettingsMouse();
     void SettingsMoveSound();
 

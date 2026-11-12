@@ -4665,15 +4665,16 @@ int Game::HoverTarget()
             }
 
             battle.turnPointer = 1;
+            // The rebuild (deviations.md): with [game] free_creatures every enemy may be aimed at to be taken.
+            const bool takeable = this->config.freeCreatures || enemy.IsAbsorbable();
 
-            auto aim = [&battle, &enemy, index]
+            auto aim = [&battle, &enemy, index, takeable]
             {
                 battle.aimTarget = index + 1;
                 battle.hoverUnit = index;
                 enemy.SetOutline(1);
 
-                if ((battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50) &&
-                    !enemy.IsAbsorbable())
+                if ((battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50) && !takeable)
                 {
                     battle.turnPointer = 0;
                 }
@@ -7296,7 +7297,8 @@ void Game::DrawAimPointers()
 
             if (battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50)
             {
-                battle.turnPointer = enemy.IsAbsorbable() ? 1 : 0;
+                // The rebuild (deviations.md): with [game] free_creatures every enemy may be taken.
+                battle.turnPointer = this->config.freeCreatures || enemy.IsAbsorbable() ? 1 : 0;
             }
         }
 

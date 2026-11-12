@@ -235,6 +235,9 @@ constexpr int kVersionY = 0x159;
 constexpr i32 kStepOff = 0x22;
 constexpr i32 kStepOn = 0x23;
 constexpr int kBarStepsLeft = 0x13C;
+// The rebuild's battle setup (deviations.md): its choices a character further right, past its five-character label
+// (強化煉妖壺) in the large font.
+constexpr int kBattleChoicesShift = 24;
 constexpr int kBarStepsRight = 0x1EC;
 constexpr int kTextStepsRight = 0x17C;
 constexpr int kLineX = 0x1A4;
@@ -311,6 +314,12 @@ std::u8string_view KeyName(i32 code)
     }
 
     return menu_text::kKeyNames[static_cast<std::size_t>(code)];
+}
+
+// Where the choices of the rows of `setup` start.
+constexpr int SetupChoicesLeft(Setup setup)
+{
+    return setup == Setup::Battle ? kBarStepsLeft + kBattleChoicesShift : kBarStepsLeft;
 }
 
 }  // namespace
@@ -425,6 +434,21 @@ void Menu::OptionsSetCastCountdown(bool shown)
     owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
 }
 
+// The rebuild's every enemy taken and every taken creature called (deviations.md): on, or off, written at once.
+void Menu::OptionsSetFreeCreatures(bool on)
+{
+    Game& owner = this->game;
+
+    if (owner.config.freeCreatures == on)
+    {
+        return;
+    }
+
+    owner.config.freeCreatures = on;
+    owner.config.StoreFreeCreatures(on);
+    owner.audio.PlaySound(kMoveSound, owner.config.soundVolume);
+}
+
 // The choices of row `row` of `setup` (Big5), and the one in use in `chosen` (-1 for none).
 std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) const
 {
@@ -441,14 +465,15 @@ std::vector<std::string> Menu::SetupChoices(Setup setup, i32 row, i32& chosen) c
     if (setup == Setup::Battle)
     {
         if (row == kAutoComboRow || row == kActiveTimeRow || row == kStartPoseRow || row == kNoFleeingRow ||
-            row == kCastCountdownRow)
+            row == kCastCountdownRow || row == kFreeCreaturesRow)
         {
             choices = OnOffChoices();
-            const bool on = row == kAutoComboRow    ? owner.config.autoCombo
-                            : row == kActiveTimeRow ? owner.config.activeTime
-                            : row == kStartPoseRow  ? owner.config.startPose
-                            : row == kNoFleeingRow  ? owner.config.noFleeing
-                                                    : owner.config.castCountdown;
+            const bool on = row == kAutoComboRow       ? owner.config.autoCombo
+                            : row == kActiveTimeRow    ? owner.config.activeTime
+                            : row == kStartPoseRow     ? owner.config.startPose
+                            : row == kNoFleeingRow     ? owner.config.noFleeing
+                            : row == kCastCountdownRow ? owner.config.castCountdown
+                                                       : owner.config.freeCreatures;
             chosen = on ? 0 : 1;
         }
 
@@ -529,6 +554,10 @@ void Menu::SetupChoose(Setup setup, i32 row, i32 choice)
         else if (row == kCastCountdownRow)
         {
             this->OptionsSetCastCountdown(choice == 0);
+        }
+        else if (row == kFreeCreaturesRow)
+        {
+            this->OptionsSetFreeCreatures(choice == 0);
         }
 
         return;
@@ -793,7 +822,7 @@ void Menu::OptionsFrame()
                 // A click on a choice takes it.
                 i32 chosen = -1;
                 const std::vector<std::string> choices = this->SetupChoices(page.setup, row, chosen);
-                const std::vector<int> lefts = ChoiceLefts(choices, owner.largeFont, kBarStepsLeft);
+                const std::vector<int> lefts = ChoiceLefts(choices, owner.largeFont, SetupChoicesLeft(page.setup));
 
                 for (std::size_t at = 0; at < choices.size(); ++at)
                 {
@@ -1968,7 +1997,7 @@ void Menu::OptionsDrawSetup(Pixel color)
         const bool counts = SetupRowCounts(setup, row, owner.smoothMotion);
         i32 chosen = -1;
         const std::vector<std::string> choices = this->SetupChoices(setup, row, chosen);
-        const std::vector<int> lefts = ChoiceLefts(choices, large, kBarStepsLeft);
+        const std::vector<int> lefts = ChoiceLefts(choices, large, SetupChoicesLeft(setup));
 
         for (std::size_t at = 0; at < choices.size(); ++at)
         {

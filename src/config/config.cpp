@@ -275,6 +275,16 @@ void Config::StoreCastCountdown(bool shown) const
     );
 }
 
+void Config::StoreFreeCreatures(bool on) const
+{
+    this->Store(
+        [on](GameSettings& game)
+        {
+            game.freeCreatures = on;
+        }
+    );
+}
+
 // [game] of the program's settings file changed by `change` (a failure is logged).
 void Config::Store(const std::function<void(GameSettings&)>& change) const
 {
@@ -331,6 +341,7 @@ void Config::Apply(const GameSettings& game, i32& unknown14, u8& effectsOff)
     this->startPose = game.startPose.value_or(true);
     this->noFleeing = game.noFleeing.value_or(false);
     this->castCountdown = game.castCountdown.value_or(false);
+    this->freeCreatures = game.freeCreatures.value_or(false);
 
     if (game.debug.has_value())
     {

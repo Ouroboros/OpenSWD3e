@@ -461,6 +461,12 @@ void Game::StartBattle(u16 number)
         battle.panelFlags |= BattleState::NoRetreat;
     }
 
+    // The rebuild (deviations.md): with every creature freed the roles list and call any taken enemy as a 活物.
+    for (BattleRole& role : this->battleRoles)
+    {
+        role.freeCreatures = this->config.freeCreatures;
+    }
+
     battle.ghostCount = 0;
 
     if (state.GameFlag(GameState::TalismanGhost))

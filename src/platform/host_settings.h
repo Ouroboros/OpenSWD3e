@@ -197,6 +197,7 @@ struct GameSettings
     std::optional<bool> startPose;      // start_pose: a role strikes its pose as the battle starts (missing: shown)
     std::optional<bool> noFleeing;      // no_fleeing: neither the party nor the enemies flee a battle (missing: off)
     std::optional<bool> castCountdown;  // cast_countdown: the party's cast countdowns shown in battle (missing: off)
+    std::optional<bool> freeCreatures;  // free_creatures: every enemy taken, every taken one called (missing: off)
     std::optional<bool> debug;          // debug: the debug hot keys
     std::optional<i64> unk14;           // unk14: the dword Env.dat kept at 0x14 (the settings write 100)
     std::optional<i64> redMask;    // red_mask, green_mask, blue_mask: the display's channel masks the map cache was
@@ -224,6 +225,7 @@ struct GameSettings
             Flag{"start_pose", &GameSettings::startPose},
             Flag{"no_fleeing", &GameSettings::noFleeing},
             Flag{"cast_countdown", &GameSettings::castCountdown},
+            Flag{"free_creatures", &GameSettings::freeCreatures},
             Flag{"debug", &GameSettings::debug},
             Number{"unk14", &GameSettings::unk14},
             Number{"red_mask", &GameSettings::redMask},

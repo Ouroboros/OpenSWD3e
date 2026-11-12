@@ -240,7 +240,12 @@ constexpr i16 kTreasureLevelFrames = 0x28;
 constexpr std::u8string_view kTreasureLevelUp = u8"龍颿法寶升級";  // 0x004BF388
 constexpr u16 kFullPercent = 100;  // StepWornCounters: a counter with no top is done at once
 constexpr std::size_t kClearedNameBytes = 0x10;
-constexpr u32 kSeparateKind = 0x800;     // ObjectData::kind: the object plays its own act (CallsEscort)
+constexpr u32 kSeparateKind = 0x800;  // ObjectData::kind: the object plays its own act (CallsEscort)
+// The rebuild (deviations.md): the objects a taken enemy leaves (mon.dat's creatures, the bestiary's range 1..500)
+// and the users of a 活物 (usableBy bit 0, as theirs 0xF001), which [game] free_creatures gives them all.
+constexpr u16 kFirstCreature = 1;
+constexpr u16 kLastCreature = 500;
+constexpr u16 kCreatureUsers = 1;
 constexpr u32 kReusableKind = 0x80;      // an object not taken when used
 constexpr int kMouseHammerScale = 0xB;   // MouseHammer: commandAttack is 11 percent of the proficiency and 1 (swd3e)
 constexpr int kAccessoryBaseShare = 10;  // the heals add a tenth of their base
@@ -1071,11 +1076,12 @@ u16 BattleRole::AttackPose(BattleServices& services)
     return result;
 }
 
-// swd3e.exe 0x004832C0: whether the role absorbs the target: only an Absorbable monster (not Boss). One of the
+// swd3e.exe 0x004832C0: whether the role absorbs the target: only an Absorbable monster (not Boss); the rebuild's
+// [game] free_creatures (deviations.md) lets any enemy be taken by the rules below, of any class. One of the
 // category of the item used (absorbCategory) on a 0..9 roll below absorbChance; else one of class up to
-// ObjectData::LastAbsorbableCategory, at most 11 levels above the role. Ten levels or more below it always; 7..11 above it at a quarter
-// of its hit points or less; otherwise at a third or less, or by a 0..99 roll: up to 80 for 5..9 levels below, 20 less
-// 5 per level above, 20 plus 10 per level below.
+// ObjectData::LastAbsorbableCategory, at most 11 levels above the role. Ten levels or more below it always; 7..11 above
+// it at a quarter of its hit points or less; otherwise at a third or less, or by a 0..99 roll: up to 80 for 5..9 levels
+// below, 20 less 5 per level above, 20 plus 10 per level below.
 int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) const
 {
     const ObjectData& data = target.Data()->data;
@@ -1083,7 +1089,9 @@ int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) co
     i32 maximum = 0;
     target.GetHitPoints(hitPoints, maximum);
 
-    if ((data.kind & ObjectData::Boss) != 0 || (data.kind & ObjectData::Absorbable) == 0)
+    const bool free = services.config.freeCreatures;
+
+    if (!free && ((data.kind & ObjectData::Boss) != 0 || (data.kind & ObjectData::Absorbable) == 0))
     {
         return 0;
     }
@@ -1093,7 +1101,7 @@ int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) co
         return services.random.Below(kAbsorbChanceRoll) < this->absorbChance ? 1 : 0;
     }
 
-    if (data.category > ObjectData::LastAbsorbableCategory)
+    if (!free && data.category > ObjectData::LastAbsorbableCategory)
     {
         return 0;
     }
@@ -2023,6 +2031,22 @@ u32 BattleRole::CategoryKinds(int category, int categories)
     return static_cast<u32>(category);
 }
 
+// The rebuild (deviations.md): with [game] free_creatures a taken enemy's object (mon.dat's creatures, the
+// bestiary's range) is of the 活物's kind bit, which lists it among them and calls it as an escort (SelectObject).
+u32 BattleRole::ListedKind(const ItemNode& node) const
+{
+    const u32 kind = node.record.data.kind;
+    return this->freeCreatures && node.id >= kFirstCreature && node.id <= kLastCreature ? kind | kSeparateKind : kind;
+}
+
+// The rebuild (deviations.md): with [game] free_creatures a taken enemy's object is usable by the roles, as a 活物.
+u16 BattleRole::ListedUsers(const ItemNode& node) const
+{
+    const u16 users = node.record.data.usableBy;
+    return this->freeCreatures && node.id >= kFirstCreature && node.id <= kLastCreature ? users | kCreatureUsers
+                                                                                        : users;
+}
+
 // The step of the shown skill list to its next skill (inline in the original); nullptr at the end.
 ItemNode* BattleRole::StepSkill()
 {
@@ -2271,8 +2295,9 @@ void BattleRole::CountObjects(int category, u16& count)
     while (ItemNode* const node = this->StepItem())
     {
         const ObjectData& data = node->record.data;
+        const u32 kind = this->ListedKind(*node);
 
-        if ((kinds & data.kind) != 0 && kinds == kCategory6)
+        if ((kinds & kind) != 0 && kinds == kCategory6)
         {
             if (ObjectsLeft(*node) > 0)
             {
@@ -2282,7 +2307,7 @@ void BattleRole::CountObjects(int category, u16& count)
             continue;
         }
 
-        if ((kinds & data.kind) != 0 && (LowByte(data.usableBy) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
+        if ((kinds & kind) != 0 && (LowByte(this->ListedUsers(*node)) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
         {
             ++count;
         }
@@ -2323,9 +2348,7 @@ int BattleRole::ListObject(
             return 0;
         }
 
-        const ObjectData& data = node->record.data;
-
-        if ((kinds & data.kind) == 0)
+        if ((kinds & this->ListedKind(*node)) == 0)
         {
             continue;
         }
@@ -2340,7 +2363,7 @@ int BattleRole::ListObject(
             continue;
         }
 
-        if ((LowByte(data.usableBy) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
+        if ((LowByte(this->ListedUsers(*node)) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
         {
             ++listed;
         }
@@ -2349,7 +2372,7 @@ int BattleRole::ListObject(
     this->selectedItem = node;
     const ObjectData& data = node->record.data;
 
-    if ((kinds & data.kind) != 0)
+    if ((kinds & this->ListedKind(*node)) != 0)
     {
         name = ObjectName(node->record);
         count = static_cast<u16>(ObjectsLeft(*node));
@@ -2853,7 +2876,7 @@ int BattleRole::SelectObject(
 
         const ObjectData& data = node->record.data;
 
-        if ((kinds & data.kind) != 0)
+        if ((kinds & this->ListedKind(*node)) != 0)
         {
             if (kinds == kCategory6)
             {
@@ -2865,7 +2888,7 @@ int BattleRole::SelectObject(
                 continue;
             }
 
-            if ((LowByte(data.usableBy) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
+            if ((LowByte(this->ListedUsers(*node)) & kCountedUsers) != 0 && ObjectsLeft(*node) > 0)
             {
                 ++listed;
             }
@@ -2966,7 +2989,7 @@ int BattleRole::SelectObject(
 
     act = this->command.castAct;
 
-    if ((data.kind & kSeparateKind) != 0)
+    if ((this->ListedKind(*node) & kSeparateKind) != 0)
     {
         this->commandFlags = static_cast<u16>(this->commandFlags | BattleUnit::CallsEscort);
         this->usedItem = data.act;

@@ -124,6 +124,10 @@ public:
     u16 SelectSkill(Database& database, int category, int type, int index, u32& act);
     int CanPaySkill(BattleServices& services, int category, int index);
     int SelectObject(Database& database, const BattleState& battle, int category, int index, u32& act, u16& kind);
+    // The rebuild (deviations.md): the kind bits and the users `node`'s object is listed and used by: with
+    // freeCreatures a taken enemy's object (a creature of mon.dat) as a 活物's, called as an escort.
+    u32 ListedKind(const ItemNode& node) const;
+    u16 ListedUsers(const ItemNode& node) const;
     void Regenerate(BattleServices& services);
     void UseAccessorySkill(BattleServices& services, u16 kind);
     int RollCritical(BattleServices& services);
@@ -208,6 +212,8 @@ public:
     u8 critical = 0;         // +0x34CA 1: the next attack is critical (set by 0x0046FF00)
     i32 ghostActs = 0;       // +0x34CC (swd3e) 1: the ghost acts this turn (a half roll of its order)
     i32 specialActRunning = 0;  // +0x34D0 (swd3e) 1 while the special act runs
+    // The rebuild (deviations.md): [game] free_creatures as the battle started (Game::StartBattle).
+    bool freeCreatures = false;
 };
 
 }  // namespace swd3e
