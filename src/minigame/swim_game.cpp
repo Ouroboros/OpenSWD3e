@@ -1,4 +1,4 @@
-#include "minigame/ascent_game.h"
+#include "minigame/swim_game.h"
 
 #include <cmath>
 #include <span>
@@ -95,18 +95,18 @@ constexpr std::array<GaugeBand, 2> kStaminaEdges = {{
 
 }  // namespace
 
-AscentGame::AscentGame(Game& game)
+SwimGame::SwimGame(Game& game)
     : game(game)
 {
 }
 
-AscentGame::~AscentGame() = default;
+SwimGame::~SwimGame() = default;
 
-// swd3e.exe 0x0049EFF0: a new ascent (the one running is stopped first): the background act, the player's act at the
+// swd3e.exe 0x0049EFF0: a new swim (the one running is stopped first): the background act, the player's act at the
 // bottom of the course, the leader's act at the top (and a copy nobody draws), the partner beside the leader, eight
 // parked obstacles, the stamina; the wind -1..1 and the current 0..7, the buttons cleared and the camera on the player
 // (`unk00` is kept unread).
-bool AscentGame::Start(
+bool SwimGame::Start(
     i32 unk00,
     i32 backgroundAct,
     i32 backgroundAction,
@@ -123,16 +123,16 @@ bool AscentGame::Start(
     }
 
     Random& random = this->game.random;
-    this->courseHeight = AscentGame::CourseHeight;
-    this->state = std::make_unique<AscentState>();
-    AscentState& ascent = *this->state;
-    ascent.unk00 = unk00;
-    ascent.unk04 = 0;
-    ascent.wind = static_cast<i32>(random.Below(kStartWinds)) - 1;
-    ascent.current = static_cast<i32>(random.Below(kStartCurrents));
-    ascent.scrollX = 0;
-    ascent.scrollY = 0;
-    ascent.flags = AscentState::Running;
+    this->courseHeight = SwimGame::CourseHeight;
+    this->state = std::make_unique<SwimState>();
+    SwimState& swim = *this->state;
+    swim.unk00 = unk00;
+    swim.unk04 = 0;
+    swim.wind = static_cast<i32>(random.Below(kStartWinds)) - 1;
+    swim.current = static_cast<i32>(random.Below(kStartCurrents));
+    swim.scrollX = 0;
+    swim.scrollY = 0;
+    swim.flags = SwimState::Running;
 
     auto newAct = [](i32 act, i32 action)
     {
@@ -146,7 +146,7 @@ bool AscentGame::Start(
 
     auto newSprite = [&newAct](i32 x, i32 y, i32 act, i32 action)
     {
-        auto sprite = std::make_unique<AscentSprite>();
+        auto sprite = std::make_unique<SwimSprite>();
         sprite->x = x;
         sprite->y = y;
         sprite->velocityX = 0;
@@ -157,32 +157,32 @@ bool AscentGame::Start(
 
     this->background = newAct(backgroundAct, backgroundAction);
     this->leaderCopy = newAct(leaderAct, leaderAction);
-    ascent.player = newSprite(kStartX, this->courseHeight - kPlayerFromBottom, playerAct, playerAction);
-    ascent.leader = newSprite(kStartX, kLeaderY, leaderAct, leaderAction);
-    ascent.partner = newSprite(kStartX, kPartnerY, kPartnerAct, kPartnerAction);
+    swim.player = newSprite(kStartX, this->courseHeight - kPlayerFromBottom, playerAct, playerAction);
+    swim.leader = newSprite(kStartX, kLeaderY, leaderAct, leaderAction);
+    swim.partner = newSprite(kStartX, kPartnerY, kPartnerAct, kPartnerAction);
 
-    for (std::size_t kind = 0; kind < AscentState::Obstacles; ++kind)
+    for (std::size_t kind = 0; kind < SwimState::Obstacles; ++kind)
     {
-        auto obstacle = std::make_unique<AscentSprite>();
-        obstacle->x = AscentSprite::Parked;
-        obstacle->y = AscentSprite::Parked;
+        auto obstacle = std::make_unique<SwimSprite>();
+        obstacle->x = SwimSprite::Parked;
+        obstacle->y = SwimSprite::Parked;
         obstacle->act = std::make_unique<ActState>();
         ResetPlayback(*obstacle->act);
-        ascent.obstacles[kind] = std::move(obstacle);
-        ascent.obstacleActs[kind] = {};
+        swim.obstacles[kind] = std::move(obstacle);
+        swim.obstacleActs[kind] = {};
     }
 
-    ascent.stamina = stamina;
+    swim.stamina = stamina;
     this->game.controls.buttons = {};
-    this->cameraTop = ascent.player->y - kCameraOffset;
+    this->cameraTop = swim.player->y - kCameraOffset;
     this->FollowPlayer();
     return true;
 }
 
-// swd3e.exe 0x0049F4D0: obstacles of `kind` (0..7) take this act; false without an ascent
-bool AscentGame::SetObstacleAct(u32 kind, i32 act, i32 action)
+// swd3e.exe 0x0049F4D0: obstacles of `kind` (0..7) take this act; false without a swim
+bool SwimGame::SetObstacleAct(u32 kind, i32 act, i32 action)
 {
-    if (this->state == nullptr || kind >= AscentState::ObstacleKinds)
+    if (this->state == nullptr || kind >= SwimState::ObstacleKinds)
     {
         return false;
     }
@@ -192,15 +192,15 @@ bool AscentGame::SetObstacleAct(u32 kind, i32 act, i32 action)
 }
 
 // swd3e.exe 0x0049F3D0: the sprites and the state freed (the background act and the copy stay until the next start)
-bool AscentGame::Stop()
+bool SwimGame::Stop()
 {
     this->state.reset();
     return true;
 }
 
-// swd3e.exe 0x0049F510: a frame of the ascent: the buttons, the moves and the screen; true once it has ended (the
+// swd3e.exe 0x0049F510: a frame of the swim: the buttons, the moves and the screen; true once it has ended (the
 // fade over), or when none runs
-bool AscentGame::Frame()
+bool SwimGame::Frame()
 {
     if (this->state == nullptr)
     {
@@ -213,7 +213,7 @@ bool AscentGame::Frame()
     this->Update(moveX, moveY);
     this->Draw();
 
-    if ((this->state->flags & AscentState::Done) != 0)
+    if ((this->state->flags & SwimState::Done) != 0)
     {
         this->Stop();
     }
@@ -223,7 +223,7 @@ bool AscentGame::Frame()
 
 // swd3e.exe 0x0049F580: Up strokes up (above 5 stamina) or, held three frames, rests; Down at its first frame backs
 // off (with stamina left), overriding Up; Left and Right move across; Escape at its first frame starts the fade
-void AscentGame::ReadControls(int& moveX, int& moveY) const
+void SwimGame::ReadControls(int& moveX, int& moveY) const
 {
     if (this->state == nullptr)
     {
@@ -267,7 +267,7 @@ void AscentGame::ReadControls(int& moveX, int& moveY) const
 
     if (escape.heldFrames == 1 && (static_cast<u8>(escape.press) & kPressMask) == 1)
     {
-        this->state->flags |= AscentState::Ending;
+        this->state->flags |= SwimState::Ending;
         this->state->fadeFrames = kFadeFrames;
     }
 }
@@ -276,49 +276,49 @@ void AscentGame::ReadControls(int& moveX, int& moveY) const
 // buttons, the roles at the top step towards the player's column, each obstacle drifts and pushes the player away or
 // is parked once below the screen, a parked slot may take a new obstacle above the screen (one rand() a slot, then
 // its kind and column), and the top reached starts the fade
-void AscentGame::Update(int moveX, int moveY)
+void SwimGame::Update(int moveX, int moveY)
 {
-    if (this->state == nullptr || (this->state->flags & AscentState::Ending) != 0)
+    if (this->state == nullptr || (this->state->flags & SwimState::Ending) != 0)
     {
         return;
     }
 
-    AscentState& ascent = *this->state;
+    SwimState& swim = *this->state;
     Random& random = this->game.random;
-    ascent.wind += static_cast<i32>(random.Below(kWindSteps)) - 1;
+    swim.wind += static_cast<i32>(random.Below(kWindSteps)) - 1;
 
-    if (ascent.wind >= kDriftLimit)
+    if (swim.wind >= kDriftLimit)
     {
-        ascent.wind = kDriftLimit;
+        swim.wind = kDriftLimit;
     }
 
-    if (ascent.wind <= -kDriftLimit)
+    if (swim.wind <= -kDriftLimit)
     {
-        ascent.wind = -kDriftLimit;
+        swim.wind = -kDriftLimit;
     }
 
-    ascent.current += static_cast<i32>(random.Below(kCurrentSteps)) - 1;
+    swim.current += static_cast<i32>(random.Below(kCurrentSteps)) - 1;
 
-    if (ascent.current <= 0)
+    if (swim.current <= 0)
     {
-        ascent.current = 0;
+        swim.current = 0;
     }
 
-    if (ascent.current >= kDriftLimit)
+    if (swim.current >= kDriftLimit)
     {
-        ascent.current = kDriftLimit;
+        swim.current = kDriftLimit;
     }
 
-    ascent.scrollX += ascent.wind / kDriftShift;
-    ascent.scrollY += ascent.current / kDriftShift;
-    AscentSprite& player = *ascent.player;
-    this->Steer(player, ascent.wind / kDriftShift, ascent.current / kDriftShift, false);
+    swim.scrollX += swim.wind / kDriftShift;
+    swim.scrollY += swim.current / kDriftShift;
+    SwimSprite& player = *swim.player;
+    this->Steer(player, swim.wind / kDriftShift, swim.current / kDriftShift, false);
     this->Steer(player, moveX, moveY, true);
     player.x += player.velocityX;
     player.y += player.velocityY;
     this->FollowPlayer();
-    AscentSprite& leader = *ascent.leader;
-    AscentSprite& partner = *ascent.partner;
+    SwimSprite& leader = *swim.leader;
+    SwimSprite& partner = *swim.partner;
 
     if (player.x > leader.x)
     {
@@ -331,48 +331,48 @@ void AscentGame::Update(int moveX, int moveY)
         --partner.x;
     }
 
-    for (std::size_t slot = 0; slot < AscentState::Obstacles; ++slot)
+    for (std::size_t slot = 0; slot < SwimState::Obstacles; ++slot)
     {
-        AscentSprite& obstacle = *ascent.obstacles[slot];
+        SwimSprite& obstacle = *swim.obstacles[slot];
 
-        if (obstacle.y <= AscentSprite::Parked)
+        if (obstacle.y <= SwimSprite::Parked)
         {
             if (this->game.crtRandom.Next() % kSpawnChance == kSpawnRoll && this->cameraTop >= kSpawnMargin)
             {
-                const auto kind = static_cast<std::size_t>(random.Below(AscentState::ObstacleKinds));
+                const auto kind = static_cast<std::size_t>(random.Below(SwimState::ObstacleKinds));
                 obstacle.x = static_cast<i32>(random.Below(kSpawnColumns)) + kSpawnMargin;
                 obstacle.y = this->cameraTop - kSpawnMargin;
                 obstacle.velocityX = 0;
                 obstacle.velocityY = 0;
-                obstacle.act->id = ascent.obstacleActs[kind].act;
-                obstacle.act->action = ascent.obstacleActs[kind].action;
+                obstacle.act->id = swim.obstacleActs[kind].act;
+                obstacle.act->action = swim.obstacleActs[kind].action;
             }
 
             continue;
         }
 
-        this->Steer(obstacle, ascent.wind / kDriftShift, ascent.current / kDriftShift, false);
+        this->Steer(obstacle, swim.wind / kDriftShift, swim.current / kDriftShift, false);
         obstacle.x += obstacle.velocityX;
         obstacle.y += obstacle.velocityY;
-        AscentGame::PushAway(player, obstacle);
+        SwimGame::PushAway(player, obstacle);
 
         if (obstacle.y > this->cameraTop + kObstacleDepth)
         {
-            obstacle.x = AscentSprite::Parked;
-            obstacle.y = AscentSprite::Parked;
+            obstacle.x = SwimSprite::Parked;
+            obstacle.y = SwimSprite::Parked;
         }
     }
 
     if (player.y <= 0)
     {
-        ascent.flags |= AscentState::Ending;
-        ascent.fadeFrames = kFadeFrames;
+        swim.flags |= SwimState::Ending;
+        swim.fadeFrames = kFadeFrames;
     }
 }
 
 // swd3e.exe 0x0049F920: the course drawn on the frame (or, fading, the frame darkened a step; the last step marks the
-// ascent done) and the frame shown
-void AscentGame::Draw()
+// swim done) and the frame shown
+void SwimGame::Draw()
 {
     if (this->state == nullptr)
     {
@@ -383,23 +383,23 @@ void AscentGame::Draw()
     owner.drawSurface = owner.painter.LockSurface(*owner.offscreen);
     owner.painter.SetTarget(owner.drawSurface);
     owner.painter.UnlockSurface(*owner.offscreen);
-    AscentState& ascent = *this->state;
+    SwimState& swim = *this->state;
 
-    if ((ascent.flags & AscentState::Ending) != 0)
+    if ((swim.flags & SwimState::Ending) != 0)
     {
         const std::size_t pixels = static_cast<std::size_t>(Display::Width) * Display::Height;
         owner.painter.TintPixels(std::span<u16>(owner.drawSurface, pixels), kFadeStep, kFadeStep, kFadeStep);
 
-        if (--ascent.fadeFrames == 0)
+        if (--swim.fadeFrames == 0)
         {
-            ascent.flags |= AscentState::Done;
+            swim.flags |= SwimState::Done;
         }
     }
     else
     {
         this->DrawBackground(
-            ascent.scrollX % kTileSize - kTileSize,
-            (ascent.scrollY - ascent.player->y) % kTileSize - kTileSize
+            swim.scrollX % kTileSize - kTileSize,
+            (swim.scrollY - swim.player->y) % kTileSize - kTileSize
         );
         this->DrawSprites();
         this->DrawGauges();
@@ -409,7 +409,7 @@ void AscentGame::Draw()
 }
 
 // swd3e.exe 0x0049FA20: the background act's picture tiled over the screen from (left, top)
-void AscentGame::DrawBackground(int left, int top)
+void SwimGame::DrawBackground(int left, int top)
 {
     Game& owner = this->game;
     owner.acts.Run(*this->background);
@@ -431,26 +431,26 @@ void AscentGame::DrawBackground(int left, int top)
 }
 
 // swd3e.exe 0x0049FAB0: the obstacles in use, the leader, the partner, then the player
-void AscentGame::DrawSprites()
+void SwimGame::DrawSprites()
 {
-    AscentState& ascent = *this->state;
+    SwimState& swim = *this->state;
 
-    for (const std::unique_ptr<AscentSprite>& obstacle : ascent.obstacles)
+    for (const std::unique_ptr<SwimSprite>& obstacle : swim.obstacles)
     {
-        if (obstacle->y > AscentSprite::Parked)
+        if (obstacle->y > SwimSprite::Parked)
         {
             this->DrawSprite(*obstacle);
         }
     }
 
-    this->DrawSprite(*ascent.leader);
-    this->DrawSprite(*ascent.partner);
-    this->DrawSprite(*ascent.player);
+    this->DrawSprite(*swim.leader);
+    this->DrawSprite(*swim.partner);
+    this->DrawSprite(*swim.player);
 }
 
 // Part of 0x0049FAB0: a sprite's act stepped and its picture drawn at its place less the act's anchor, the camera's
 // line at the top of the screen.
-void AscentGame::DrawSprite(const AscentSprite& sprite)
+void SwimGame::DrawSprite(const SwimSprite& sprite)
 {
     Game& owner = this->game;
     ActState& act = *sprite.act;
@@ -468,7 +468,7 @@ void AscentGame::DrawSprite(const AscentSprite& sprite)
 
 // swd3e.exe 0x0049FCA0: the course gauge (tinted bands, a cap above and below, the player's marker at its height on
 // the course) and the stamina gauge (the spent part from the top in one band, the rest in three)
-void AscentGame::DrawGauges()
+void SwimGame::DrawGauges()
 {
     Game& owner = this->game;
     const Painter& painter = owner.painter;
@@ -531,7 +531,7 @@ void AscentGame::DrawGauges()
 // swd3e.exe 0x0049FE60: the sprite's speeds ease a step towards 0, then take `moveX` and `moveY` up to their size
 // (kRest stops it vertically). For the player (`player`): no vertical move or a rest gains a point of stamina (to
 // 100), a stroke costs 4 (to 0). Always true.
-bool AscentGame::Steer(AscentSprite& sprite, int moveX, int moveY, bool player)
+bool SwimGame::Steer(SwimSprite& sprite, int moveX, int moveY, bool player)
 {
     if (sprite.velocityX != 0)
     {
@@ -596,7 +596,7 @@ bool AscentGame::Steer(AscentSprite& sprite, int moveX, int moveY, bool player)
 
 // swd3e.exe 0x0049FF60: an obstacle within 60 pixels pushes the sprite a pixel across (away from it, rightwards when
 // level) and up or down by the distance short of 60 (the distance kept as a float there, truncated)
-void AscentGame::PushAway(AscentSprite& sprite, const AscentSprite& obstacle)
+void SwimGame::PushAway(SwimSprite& sprite, const SwimSprite& obstacle)
 {
     const auto offsetX = static_cast<double>(sprite.x - obstacle.x);
     const auto offsetY = static_cast<double>(sprite.y - obstacle.y);
@@ -621,7 +621,7 @@ void AscentGame::PushAway(AscentSprite& sprite, const AscentSprite& obstacle)
 }
 
 // swd3e.exe 0x004A0010: the camera kept on the player
-const AscentState* AscentGame::FollowPlayer()
+const SwimState* SwimGame::FollowPlayer()
 {
     this->cameraTop = this->state->player->y - kCameraOffset;
     return this->state.get();

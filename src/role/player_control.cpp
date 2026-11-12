@@ -27,7 +27,7 @@ constexpr i32 kRepeatMask = 7;       // a held arrow moves the choice every 8 fr
 constexpr int kDebugKeyPause = 500;  // milliseconds slept after a debug key
 constexpr int kSkipKeyPause = 350;
 constexpr int kToggleKeyPause = 300;
-constexpr int kAscentKeyPause = 250;
+constexpr int kSwimKeyPause = 250;
 constexpr int kToggleStates = 2;
 constexpr i32 kMaxMapSpeed = 0x40;
 constexpr int kForceEncounter = 1;     // RollEncounter: a battle whatever the steps
@@ -120,7 +120,7 @@ void RoleControl::Approach(Role& player, Role& other, u32 index, bool walking)
 // swd3e.exe 0x00402AA0: the keys of the map. The debug keys (story flag 0x52, turned on in debug mode with Ctrl,
 // right Shift, Home and End): F12 or Ctrl+S / Ctrl+L the save and load screens, Ctrl+F a battle at once (with
 // encounters on), Ctrl+F9 skipping texts, Ctrl+Q quitting, Ctrl+F1..F3 the debug lines, cells and flag 0x14, Tab with
-// keypad + / - the map's speed, F4 the cheat dialog, F7 the ascent game, F6 ten of every item. Key slot 16 toggles
+// keypad + / - the map's speed, F4 the cheat dialog, F7 the swim game, F6 ten of every item. Key slot 16 toggles
 // running. Then, unless system flag 0x40 is set, when the controlled role stands still and no menu is open: Space and
 // Enter move the talk windows on (or close the choices); Space talks to the role in front (unless it is
 // Role::Untalkable), Enter opens the menu; the arrows move the role (or the choice): a step slides along walls, runs
@@ -289,22 +289,22 @@ void RoleControl::ControlPlayer()
 
         if (input.IsKeyDown(Input::F7))
         {
-            owner.systemFlags |= Game::AscentRunning;
-            SleepMilliseconds(kAscentKeyPause);
-            owner.ascentGame.Start(
-                AscentGame::SceneUnk00,
-                AscentGame::SceneAct,
-                AscentGame::BackgroundAction,
-                AscentGame::SceneAct,
-                AscentGame::PlayerAction,
-                AscentGame::SceneAct,
-                AscentGame::LeaderAction,
-                AscentGame::FullStamina
+            owner.systemFlags |= Game::SwimRunning;
+            SleepMilliseconds(kSwimKeyPause);
+            owner.swimGame.Start(
+                SwimGame::SceneUnk00,
+                SwimGame::SceneAct,
+                SwimGame::BackgroundAction,
+                SwimGame::SceneAct,
+                SwimGame::PlayerAction,
+                SwimGame::SceneAct,
+                SwimGame::LeaderAction,
+                SwimGame::FullStamina
             );
 
-            for (u32 kind = 0; kind < AscentGame::ObstacleActions.size(); ++kind)
+            for (u32 kind = 0; kind < SwimGame::ObstacleActions.size(); ++kind)
             {
-                owner.ascentGame.SetObstacleAct(kind, AscentGame::SceneAct, AscentGame::ObstacleActions[kind]);
+                owner.swimGame.SetObstacleAct(kind, SwimGame::SceneAct, SwimGame::ObstacleActions[kind]);
             }
         }
 

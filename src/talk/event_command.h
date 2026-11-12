@@ -222,7 +222,7 @@ enum class EventCommand : u16
     JumpIfAnyFollower = 0xCF,
     WaitSprite = 0xD0,  // no sprite of the first list with the act and action given
     NameBox = 0xD1,     // the three name boxes of a role (Game::NameBoxFrame)
-    StartAscentGame = 0xD2,
+    StartSwimGame = 0xD2,
     ShowFollowers = 0xD3,               // Role::Hidden of the followers cleared
     HideFollowers = 0xD4,               // and set
     JumpIfRoleVariableNotBelow = 0xD5,  // the first role variable not below the second
@@ -462,7 +462,7 @@ constexpr std::array<CommandLength, 0xD7> kCommandBytes = {
     CommandLength{EventCommand::JumpIfAnyFollower, 6},            // 0xCF
     CommandLength{EventCommand::WaitSprite, 6},                   // 0xD0
     CommandLength{EventCommand::NameBox, 4},                      // 0xD1
-    CommandLength{EventCommand::StartAscentGame, 2},              // 0xD2
+    CommandLength{EventCommand::StartSwimGame, 2},                // 0xD2
     CommandLength{EventCommand::ShowFollowers, 2},                // 0xD3
     CommandLength{EventCommand::HideFollowers, 2},                // 0xD4
     CommandLength{EventCommand::JumpIfRoleVariableNotBelow, 14},  // 0xD5

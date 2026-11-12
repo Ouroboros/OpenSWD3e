@@ -294,7 +294,7 @@ Game::Game(std::u8string installDirectory)
       talk(*this),
       roleControl(*this),
       rolePath(*this),
-      ascentGame(*this),
+      swimGame(*this),
       database(this->config.installDirectory),
       battleHud(this->painter, this->archive, this->acts, this->random, this->audio),
       battleMessages(
@@ -2246,11 +2246,11 @@ void Game::MainFrame()
     this->controls.Poll(this->input, this->config, this->state, static_cast<i32>(this->frameStart));
     this->scene.pointerRole.act.action = Scene::ChoicePointer;
 
-    if ((this->systemFlags & Game::AscentRunning) != 0)
+    if ((this->systemFlags & Game::SwimRunning) != 0)
     {
-        if (this->ascentGame.Frame())
+        if (this->swimGame.Frame())
         {
-            this->systemFlags &= ~Game::AscentRunning;
+            this->systemFlags &= ~Game::SwimRunning;
         }
 
         this->EndMainFrame();

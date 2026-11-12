@@ -38,7 +38,7 @@
 #include "map/field_view.h"
 #include "map/map_cache.h"
 #include "menu/menu.h"
-#include "minigame/ascent_game.h"
+#include "minigame/swim_game.h"
 #include "role/role_control.h"
 #include "role/role_path.h"
 #include "talk/talk.h"
@@ -90,7 +90,7 @@ class Game
     friend class FieldView;
     friend class Talk;
     friend class RoleControl;
-    friend class AscentGame;
+    friend class SwimGame;
     friend class RolePath;
     friend class smooth::HitFrame;
     friend class smooth::TurnFrame;
@@ -144,7 +144,7 @@ public:
         // swd3e: the name boxes of talk command 209 are open (set by it in 0x0042BAF0, cleared by 0x004172A0 when the
         // name is taken or given up); the controlled role is not driven (0x00402AA0)
         NameBoxesOpen = 0x40,
-        AscentRunning = 0x80,  // swd3e: the ascent game runs instead of the frame (0x0040A7B0)
+        SwimRunning = 0x80,  // swd3e: the swim game runs instead of the frame (0x0040A7B0)
     };
 
     // The name boxes (swd3e): the surname, the given name and the nickname of a RoleName.
@@ -677,7 +677,7 @@ private:
     Talk talk;
     RoleControl roleControl;
     RolePath rolePath;
-    AscentGame ascentGame;
+    SwimGame swimGame;
     GhostFollower ghostFollower;
     TalismanGhost talismanGhost;  // 0x004D0C10 the talisman ghost carried
 

@@ -1928,22 +1928,22 @@ bool Talk::RunSystemCommand(EventRun& run)
         case EventCommand::NameBox:
             return this->OpenNameBoxes(run);
 
-        case EventCommand::StartAscentGame:
-            owner.systemFlags |= Game::AscentRunning;
-            owner.ascentGame.Start(
-                AscentGame::SceneUnk00,
-                AscentGame::SceneAct,
-                AscentGame::BackgroundAction,
-                AscentGame::SceneAct,
-                AscentGame::PlayerAction,
-                AscentGame::SceneAct,
-                AscentGame::LeaderAction,
-                AscentGame::FullStamina
+        case EventCommand::StartSwimGame:
+            owner.systemFlags |= Game::SwimRunning;
+            owner.swimGame.Start(
+                SwimGame::SceneUnk00,
+                SwimGame::SceneAct,
+                SwimGame::BackgroundAction,
+                SwimGame::SceneAct,
+                SwimGame::PlayerAction,
+                SwimGame::SceneAct,
+                SwimGame::LeaderAction,
+                SwimGame::FullStamina
             );
 
-            for (u32 kind = 0; kind < AscentGame::ObstacleActions.size(); ++kind)
+            for (u32 kind = 0; kind < SwimGame::ObstacleActions.size(); ++kind)
             {
-                owner.ascentGame.SetObstacleAct(kind, AscentGame::SceneAct, AscentGame::ObstacleActions[kind]);
+                owner.swimGame.SetObstacleAct(kind, SwimGame::SceneAct, SwimGame::ObstacleActions[kind]);
             }
 
             this->Next(run);
