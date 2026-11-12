@@ -7,8 +7,8 @@ formations.jsonl: scripts/bestiary/dump formations (the enemies of each battle).
 
 Each event: its number, where it is set off (a role of maps.dat on a map, a region of a map, or another event that
 opens it or gives it to a role), the maps it changes to, its battles with their enemies, the items and gold it gives
-or takes, the events it opens or gives to roles, and its dialogs. The events are in four tabs, one per Talk file, a
-page of them at a time; the search finds a number, a map, a name or a line among them all. An event of nothing but
+or takes, the events it opens or gives to roles, and its dialogs. The events are in four tabs, one per Talk file, each
+listed whole; the search finds a number, a map, a name or a line among them all. An event of nothing but
 the interpreter's switches is left out unless a role, a region or another event sets it off.
 """
 import html
@@ -344,20 +344,6 @@ h1 {
   padding-bottom: 4px;
 }
 
-.pager { display: flex; align-items: center; gap: 8px; font-family: var(--ming); font-size: 16px; color: var(--dim); }
-
-.pager button {
-  font-family: var(--kai);
-  font-size: 17px;
-  color: #f0e0a8;
-  background: rgba(168, 144, 72, 0.2);
-  border: 1px solid var(--gold);
-  padding: 1px 12px;
-  cursor: pointer;
-}
-
-.pager button:disabled { color: var(--dim); border-color: var(--gold-dark); cursor: default; }
-
 .page .body {
   flex: 1;
   min-height: 0;
@@ -404,22 +390,20 @@ h1 {
   <div class="layout">
     <div class="tabs" id="tabs"><!--TABS--></div>
     <div class="frame page">
-      <div class="title"><span id="heading"></span><span class="pager"><button id="previous">上一頁</button><span id="pages"></span><button id="next">下一頁</button></span></div>
+      <div class="title"><span id="heading"></span></div>
       <div class="body" id="body"></div>
     </div>
   </div>
-  <div class="hint">編號可填入作弊畫面（調試模式 Ctrl+F4）的號碼欄，按「劇情」直接執行　←→ 翻頁　↑↓ PgUp / PgDn 捲動</div>
+  <div class="hint">編號可填入作弊畫面（調試模式 Ctrl+F4）的號碼欄，按「劇情」直接執行　←→ 分頁　↑↓ PgUp / PgDn 捲動　Home / End 首尾</div>
 </div>
 <script>
 const DATA = /*DATA*/null;
-const PAGE_SIZE = 40;
 const $ = id => document.getElementById(id);
 const byId = new Map(DATA.events.map(event => [event.id, event]));
 const tabs = [...document.querySelectorAll('.tab')];
 const FILE_EVENTS = 2000;
 
 let shownTab = 0;
-let shownPage = 0;
 let list = [];
 let marked = 0;
 
@@ -485,13 +469,7 @@ function found(text) {
 }
 
 function render(scrollTo) {
-  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-  shownPage = Math.min(shownPage, pages - 1);
-  const shown = list.slice(shownPage * PAGE_SIZE, (shownPage + 1) * PAGE_SIZE);
-  $('body').innerHTML = shown.length ? shown.map(eventHtml).join('') : '<div class="empty">沒有符合的事件</div>';
-  $('pages').textContent = `${shownPage + 1} / ${pages}`;
-  $('previous').disabled = shownPage === 0;
-  $('next').disabled = shownPage === pages - 1;
+  $('body').innerHTML = list.length ? list.map(eventHtml).join('') : '<div class="empty">沒有符合的事件</div>';
   const query = $('search').value.trim();
   $('heading').textContent = query
     ? `搜尋「${query}」：${list.length} 個事件`
@@ -504,7 +482,6 @@ function showTab(at) {
   shownTab = at;
   tabs.forEach((tab, index) => tab.classList.toggle('chosen', index === at && !$('search').value.trim()));
   list = DATA.events.filter(event => fileOf(event.id) === at);
-  shownPage = 0;
   render();
 }
 
@@ -516,8 +493,9 @@ function showEvent(id) {
 
   $('search').value = '';
   marked = id;
-  showTab(fileOf(id));
-  shownPage = Math.floor(list.findIndex(event => event.id === id) / PAGE_SIZE);
+  shownTab = fileOf(id);
+  tabs.forEach((tab, index) => tab.classList.toggle('chosen', index === shownTab));
+  list = DATA.events.filter(event => fileOf(event.id) === shownTab);
   render(id);
   keepPlace(String(id));
 }
@@ -532,7 +510,6 @@ function search() {
   }
 
   list = found(query);
-  shownPage = 0;
   render();
 }
 
@@ -553,24 +530,26 @@ function addressed() {
   }
 }
 
+// The address names an event (events.html#5300) or a tab (#第三卷); the first tab otherwise.
 function showAddressed() {
-  const id = Number(addressed());
+  const text = addressed();
+  const id = Number(text);
 
-  if (byId.has(id)) {
+  if (text && byId.has(id)) {
     showEvent(id);
-  } else {
-    showTab(0);
+    return;
   }
+
+  marked = 0;
+  showTab(Math.max(DATA.tabs.findIndex(tab => tab.label === text), 0));
 }
 
-function turnPage(step) {
-  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-  const next = Math.min(Math.max(shownPage + step, 0), pages - 1);
-
-  if (next !== shownPage) {
-    shownPage = next;
-    render();
-  }
+// ←→ step through the tabs, wrapping round as the other pages' do; the search cleared.
+function turn(step) {
+  $('search').value = '';
+  marked = 0;
+  showTab((shownTab + step + tabs.length) % tabs.length);
+  keepPlace(DATA.tabs[shownTab].label);
 }
 
 // The book keeps its size: scaled whole to fit the window, centred.
@@ -601,8 +580,6 @@ $('body').addEventListener('click', event => {
   }
 });
 
-$('previous').addEventListener('click', () => turnPage(-1));
-$('next').addEventListener('click', () => turnPage(1));
 $('search').addEventListener('input', search);
 
 document.addEventListener('keydown', event => {
@@ -617,8 +594,10 @@ document.addEventListener('keydown', event => {
     ArrowDown: () => { body.scrollTop += 40; },
     PageUp: () => { body.scrollTop -= page; },
     PageDown: () => { body.scrollTop += page; },
-    ArrowLeft: () => turnPage(-1),
-    ArrowRight: () => turnPage(1),
+    Home: () => { body.scrollTop = 0; },
+    End: () => { body.scrollTop = body.scrollHeight; },
+    ArrowLeft: () => turn(-1),
+    ArrowRight: () => turn(1),
   };
 
   if (keys[event.key]) {
