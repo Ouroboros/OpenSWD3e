@@ -269,7 +269,6 @@ constexpr int kSureBelow = 13;
 // StepBack.
 
 // CanAbsorb.
-constexpr u16 kMaxAbsorbClass = 0xA;    // ObjectData::category
 constexpr u32 kAbsorbChanceRoll = 10;   // an item's absorbChance is against a 0..9 roll (swd3e)
 constexpr int kAbsorbLevelsAbove = 12;  // a target this many levels above the role is never absorbed
 constexpr int kSureAbsorbBelow = 10;
@@ -1074,7 +1073,7 @@ u16 BattleRole::AttackPose(BattleServices& services)
 
 // swd3e.exe 0x004832C0: whether the role absorbs the target: only an Absorbable monster (not Boss). One of the
 // category of the item used (absorbCategory) on a 0..9 roll below absorbChance; else one of class up to
-// kMaxAbsorbClass, at most 11 levels above the role. Ten levels or more below it always; 7..11 above it at a quarter
+// ObjectData::LastAbsorbableCategory, at most 11 levels above the role. Ten levels or more below it always; 7..11 above it at a quarter
 // of its hit points or less; otherwise at a third or less, or by a 0..99 roll: up to 80 for 5..9 levels below, 20 less
 // 5 per level above, 20 plus 10 per level below.
 int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) const
@@ -1094,7 +1093,7 @@ int BattleRole::CanAbsorb(BattleServices& services, const BattleUnit& target) co
         return services.random.Below(kAbsorbChanceRoll) < this->absorbChance ? 1 : 0;
     }
 
-    if (data.category > kMaxAbsorbClass)
+    if (data.category > ObjectData::LastAbsorbableCategory)
     {
         return 0;
     }

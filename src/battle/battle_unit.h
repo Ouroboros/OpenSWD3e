@@ -729,7 +729,7 @@ public:
     bool RestartMainAct(i16 value, int force);
     int CommandStatusBit() const;
     void SummonValues(u16& value, u16& turns) const;
-    bool IsSmallMachine() const;
+    bool IsAbsorbable() const;
     void Rewards(u16& first, u16& second) const;
     u16 AccessoryValue(u16 kind) const;
     i16 AccessoryProficiency(u16 kind, CounterList& proficiency);

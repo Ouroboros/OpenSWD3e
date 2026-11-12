@@ -4673,7 +4673,7 @@ int Game::HoverTarget()
                 enemy.SetOutline(1);
 
                 if ((battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50) &&
-                    !enemy.IsSmallMachine())
+                    !enemy.IsAbsorbable())
                 {
                     battle.turnPointer = 0;
                 }
@@ -7296,7 +7296,7 @@ void Game::DrawAimPointers()
 
             if (battle.menuCommand == kRefineMenuCommand || battle.menuCommand == kWaitState50)
             {
-                battle.turnPointer = enemy.IsSmallMachine() ? 1 : 0;
+                battle.turnPointer = enemy.IsAbsorbable() ? 1 : 0;
             }
         }
 

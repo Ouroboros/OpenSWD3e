@@ -2426,19 +2426,21 @@ void BattleUnit::SummonValues(u16& value, u16& turns) const
     turns = this->command.turns;
 }
 
-// swd3e.exe 0x004892D0: a machine enemy (kind 0x800, like 蟹精魔機) of a type up to 0xA, never a named one
-bool BattleUnit::IsSmallMachine() const
+// swd3e.exe 0x004892D0: whether the enemy may be taken, the aim of 收化 and 誘餌 (crossed out otherwise): not a boss,
+// of the absorbable kind and of a category up to ObjectData::LastAbsorbableCategory (the first checks of
+// BattleRole::CanAbsorb)
+bool BattleUnit::IsAbsorbable() const
 {
     const u32 kind = this->data->data.kind;
 
-    if ((kind & BattleEnemy::NamedKind) != 0)
+    if ((kind & ObjectData::Boss) != 0)
     {
         return false;
     }
 
-    if ((kind & BattleEnemy::MachineKind) != 0)
+    if ((kind & ObjectData::Absorbable) != 0)
     {
-        return this->data->data.category <= BattleEnemy::SmallMachineTypes;
+        return this->data->data.category <= ObjectData::LastAbsorbableCategory;
     }
 
     return false;

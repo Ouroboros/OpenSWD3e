@@ -12,11 +12,6 @@ class ActArchive;
 class BattleEnemy : public BattleUnit
 {
 public:
-    // ObjectData::kind bit of the named characters and bosses (all with their own act).
-    static constexpr u32 NamedKind = 0x20;
-    // ObjectData::kind bit of the machines (蟹精魔機, 羯忍幻機, ...).
-    static constexpr u32 MachineKind = 0x800;
-    static constexpr u16 SmallMachineTypes = 0xA;
     // emptyChoices: the enemy has no object counts, or no skill counts.
     static constexpr u8 NoObjects = 1;
     static constexpr u8 NoSkills = 2;

@@ -21,6 +21,8 @@ struct ObjectData
     static constexpr u32 Boss =
         0x20;  // in `kind`: a boss (its reward, Named); scripted acts and absorbs do not affect it
     static constexpr u32 Absorbable = 0x800;  // in `kind`: an ordinary monster (蟹精魔機, 黏怪, 吸血殭屍, ...)
+    // In `category`: the last that may be taken (收化, 誘餌): BattleRole::CanAbsorb, BattleUnit::IsAbsorbable.
+    static constexpr u16 LastAbsorbableCategory = 0xA;
 
     std::array<char, 0x20> name = {};  // +0x00 tag 0x3E8 (a longer name runs into the next fields)
     u32 kind = 0;                      // +0x20 tag 0x19
