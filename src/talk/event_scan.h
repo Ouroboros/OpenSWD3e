@@ -29,14 +29,18 @@ public:
     // The map overview: the maps the script changes to (command 0x1B), each once, in the order read.
     const std::vector<u16>& EnteredMaps(const std::u8string& directory, u32 event);
 
-private:
-    static constexpr std::size_t Files = 4;  // Talk1.dat..Talk4.dat
-    static constexpr int OpenDepth = 3;      // scripts opened from scripts that are read
+    static constexpr int OpenDepth = 3;  // scripts opened from scripts that are read
 
     // Each command read, with its bytes from its opcode on; reading stops once `found` returns true (true then).
     using Found = std::function<bool(EventCommand code, std::span<const u8> command)>;
 
+    // The commands of event `event`'s script, with those of the scripts it opens while `depth` is below OpenDepth
+    // (the event page's tool, scripts/events, reads a script alone from OpenDepth).
     bool Scan(const std::u8string& directory, u32 event, int depth, const Found& found);
+
+private:
+    static constexpr std::size_t Files = 4;  // Talk1.dat..Talk4.dat
+
     const std::vector<u8>& Script(const std::u8string& directory, std::size_t file);
 
     std::array<std::vector<u8>, Files> files;
