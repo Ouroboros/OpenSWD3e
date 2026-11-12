@@ -10,6 +10,7 @@
 #include "core/log.h"
 #include "font/text_font.h"
 #include "game/game.h"
+#include "talk/talk.h"
 #include "text/big5.h"
 #include "ui/ui_draw.h"
 
@@ -72,8 +73,10 @@ constexpr int kArrowLeft = 2;
 constexpr int kArrowWidth = 16;
 
 // The buttons down the box at the right, the last at its bottom.
-constexpr std::array<std::u8string_view, 5> kButtonLabels = {u8"加入", u8"修改", u8"全滿", u8"刪除", u8"結束"};
-constexpr std::array<int, 5> kButtonTop = {96, 136, 176, 216, 352};
+// The rebuild's 劇情 runs the event of the id field (RunEvent).
+constexpr std::array<std::u8string_view, 6> kButtonLabels =
+    {u8"加入", u8"修改", u8"全滿", u8"刪除", u8"劇情", u8"結束"};
+constexpr std::array<int, 6> kButtonTop = {96, 136, 176, 216, 256, 352};
 constexpr int kButtonLeft = 544;
 constexpr int kButtonWidth = 72;
 constexpr int kButtonHeight = 24;
@@ -102,6 +105,7 @@ constexpr int kHintTop = 464;
 constexpr std::u8string_view kHint = u8"左右鍵換頁　上下鍵選擇　Tab 換欄　Enter 修改　Esc 結束";
 constexpr std::u8string_view kDone = u8"已完成";
 constexpr std::u8string_view kUnchanged = u8"沒有改動（號碼不符或沒有選擇）";
+constexpr std::u8string_view kNoEvent = u8"無法執行劇情（號碼不符或劇情進行中）";
 
 // The menus' colours (five bits a channel; Menu::ItemsDraw): the text, the grey of what cannot be used, the red.
 constexpr std::array<u32, 3> kTextColor = {0x19, 0x17, 0x11};
@@ -109,7 +113,8 @@ constexpr std::array<u32, 3> kGrayColor = {0xD, 0xD, 9};
 constexpr std::array<u32, 3> kRedColor = {0x18, 0xA, 0xB};
 
 constexpr int kNoChoice = -1;
-constexpr i32 kNoValue = -1;  // a row without a value (CheatDialog::ObjectCounter)
+constexpr int kLastEvent = 0xFFFE;  // the events a role's u16 event takes (0xFFFF none)
+constexpr i32 kNoValue = -1;        // a row without a value (CheatDialog::ObjectCounter)
 constexpr int kBlinkMilliseconds = 500;
 constexpr std::string_view kCaret = "_";
 constexpr char kMinus = '-';
@@ -429,6 +434,10 @@ void CheatScreen::Press(Button button)
             result = cheat.Delete(this->selected);
             break;
 
+        case Button::Event:
+            this->RunEvent();
+            return;
+
         case Button::Close:
             this->Close();
             return;
@@ -463,6 +472,36 @@ void CheatScreen::Press(Button button)
     }
 
     this->Refresh();
+}
+
+// The event of the id field started as a map region starts its event (RoleControl::ControlPlayer): the story's leader
+// given it beside the controlled role, run from the next game frame on once the screen closes; refused while an event
+// runs.
+void CheatScreen::RunEvent()
+{
+    Game& owner = this->game;
+    GameState& state = owner.state;
+    int event = 0;
+
+    if (!Talk::ParseNumber(this->fields[static_cast<std::size_t>(Field::Id)], event) || event <= 0 ||
+        event > kLastEvent || state.leader.id != Role::NoId)
+    {
+        this->status = Status::Failed;
+        this->statusText = kNoEvent;
+        return;
+    }
+
+    const Role& player = state.roles[static_cast<std::size_t>(state.playerRole)];
+    Role& leader = state.leader;
+    leader.eventOffset = 0;
+    leader.eventCursor = 0;
+    leader.event = static_cast<u16>(event);
+    leader.id = TalkWindow::NoRole;
+    leader.flags = 0;
+    leader.x = player.x;
+    leader.y = player.y;
+    LogInfo(u8"cheat screen: event %d run", event);
+    this->Close();
 }
 
 void CheatScreen::Type(char character)
@@ -519,7 +558,8 @@ bool CheatScreen::FieldEnabled(Field field) const
 // As the dialog: the value field, top up, delete and add only on the lists of objects.
 bool CheatScreen::ButtonEnabled(Button button) const
 {
-    return button == Button::Set || button == Button::Close || this->dialog->EntriesEnabled();
+    return button == Button::Set || button == Button::Event || button == Button::Close ||
+           this->dialog->EntriesEnabled();
 }
 
 int CheatScreen::TabAt(LogicalPoint at) const

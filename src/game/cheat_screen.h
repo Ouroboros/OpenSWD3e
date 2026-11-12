@@ -23,7 +23,8 @@ class Game;
 // fields and buttons on the game's screen, in the menus' frames and fonts, the game paused as the dialog pauses it;
 // CheatDialog does the work of the buttons. The pointer chooses the tabs, rows, fields and buttons and the wheel
 // scrolls; the keys: Left and Right the tabs, Up, Down, Page Up, Page Down, Home and End the rows, Tab the fields,
-// the digits and the minus type, Backspace erases, Enter sets, Escape closes. A row chosen fills the fields with its
+// the digits and the minus type, Backspace erases, Enter sets, Escape closes. 劇情 (the rebuild's) runs the event
+// numbered in the id field once it closes. A row chosen fills the fields with its
 // id, count and value. It is drawn on a 640x480 screen of its own in the items page's look: its background, the
 // menus' boxes, fonts, colours, gold bar and scroll bar.
 class CheatScreen
@@ -58,11 +59,12 @@ private:
         Set,
         TopUp,
         Delete,
+        Event,
         Close,
     };
 
     static constexpr int FieldCount = 3;
-    static constexpr int ButtonCount = 5;
+    static constexpr int ButtonCount = 6;
 
     // What the status line shows: a button's outcome, its colour.
     enum class Status
@@ -79,6 +81,7 @@ private:
     void ScrollTo(int row);
     void Scroll(int rows);
     void Press(Button button);
+    void RunEvent();
     void Type(char character);
     void Erase();
     void Click(LogicalPoint at);
