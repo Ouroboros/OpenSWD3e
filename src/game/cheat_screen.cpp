@@ -57,7 +57,7 @@ constexpr int kDim = -8;
 // The list: a header, then the rows in the items page's fonts (the name large, the numbers medium) with its gold bar
 // on the chosen one, the menus' scroll bar to the right of the box.
 constexpr int kHeaderTop = 88;
-constexpr std::array<int, 4> kColumnX = {28, 286, 376, 430};
+constexpr std::array<int, 4> kColumnX = {28, 200, 290, 360};
 constexpr int kRowsTop = 112;
 constexpr int kRowStep = 24;
 constexpr int kVisibleRows = 11;
