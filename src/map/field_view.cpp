@@ -264,6 +264,12 @@ void FieldView::Paint()
     const bool capture = owner.smoothMotion;
     owner.DrawOnMapScreen();
 
+    // The rebuild's map filling the window (deviations.md): the map's edge inside the canvas cleared before the fade.
+    if (owner.mapCanvas != nullptr)
+    {
+        this->ClearMapEdge(this->Canvas(), owner.mapCanvas->Width());
+    }
+
     // swd3e fades the map alone, before the lines and the interface (swd32 faded the whole frame at its end).
     if (capture)
     {
@@ -439,48 +445,72 @@ void FieldView::DrawFinalAgain()
 
 // swd3e: the first two pixels of every row of the screen cleared at the end of the map frame (part of 0x00412F60);
 // with the camera at the map's left edge they hide the stray pixels of the map's first two columns of tiles. The
-// rebuild's map filling the window (deviations.md) clears the map's first two columns where they lie on the canvas:
-// at the window's left edge while the camera is there (else the map's columns there are others, the two black ones a
-// line down the window's edge), and where the map ends inside the window (the screen lies inside the canvas: clearing
-// its first pixels made a black line down the map).
+// rebuild's map filling the window (deviations.md) clears them at the window's left edge only while the camera is
+// there (else the map's columns there are others, the two black ones a line down the window's edge); where the map's
+// left edge lies inside the canvas ClearMapEdge clears its first columns before the fade.
 void FieldView::ClearRowStarts()
 {
-    constexpr int kClearedColumns = 2;
     Pixel* screen = this->game.painter.Target();
     const int pitch = this->game.painter.ScreenPitch();
     int rows = Display::Height;
-    int mapEdge = -1;
-    bool windowEdge = true;
 
     if (this->FillsWindow())
     {
         const Field& field = this->game.field;
+
+        if (field.cameraLeft >= FieldView::StrayColumns)
+        {
+            return;
+        }
+
         screen -= this->ScreenAt();
         rows = field.viewHeight;
-        windowEdge = field.cameraLeft < kClearedColumns;
-
-        if (field.cameraLeft < 0 && -field.cameraLeft < field.viewWidth - 1)
-        {
-            mapEdge = -field.cameraLeft;
-        }
     }
 
     for (int row = 0; row < rows; ++row)
     {
-        Pixel* line = screen + static_cast<std::ptrdiff_t>(pitch) * row;
-
-        if (windowEdge)
-        {
-            line[0] = 0;
-            line[1] = 0;
-        }
-
-        if (mapEdge > 0)
-        {
-            line[mapEdge] = 0;
-            line[mapEdge + 1] = 0;
-        }
+        std::fill_n(screen + static_cast<std::ptrdiff_t>(pitch) * row, FieldView::StrayColumns, Pixel{0});
     }
+}
+
+// The rebuild's map filling the window (deviations.md): where the map's left edge lies inside the canvas its first
+// two columns are cleared as the end of the original's map frame clears the screen's (ClearRowStarts), but right after
+// the world: cleared at the end of the frame they were a black line down the middle of the window over the fade (the
+// ending's yellow), the talk windows and the pointer.
+void FieldView::ClearMapEdge(std::span<Pixel> canvas, int pitch) const
+{
+    const Field& field = this->game.field;
+    const int edge = this->MapEdgeAt(field.cameraLeft);
+
+    if (edge < 0)
+    {
+        return;
+    }
+
+    for (int row = 0; row < field.viewHeight; ++row)
+    {
+        const std::size_t at =
+            static_cast<std::size_t>(row) * static_cast<std::size_t>(pitch) + static_cast<std::size_t>(edge);
+
+        if (at + FieldView::StrayColumns > canvas.size())
+        {
+            break;
+        }
+
+        std::fill_n(canvas.begin() + static_cast<std::ptrdiff_t>(at), FieldView::StrayColumns, Pixel{0});
+    }
+}
+
+int FieldView::MapEdgeAt(double cameraLeft) const
+{
+    const Field& field = this->game.field;
+
+    if (!this->FillsWindow() || cameraLeft >= 0.0 || -cameraLeft >= field.viewWidth - FieldView::StrayColumns + 1)
+    {
+        return -1;
+    }
+
+    return static_cast<int>(std::ceil(-cameraLeft));
 }
 
 // The rebuild's map filling the window (deviations.md): the clip kept to where the map lies on the canvas, as the

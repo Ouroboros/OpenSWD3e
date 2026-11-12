@@ -2342,6 +2342,22 @@ bool FieldView::LayBetween(int scale)
         ++gpuCounts[3];
     }
 
+    // The rebuild's map filling the window (deviations.md): the map's edge inside the canvas cleared (lowered to black)
+    // before the fade, where the map lies now (ClearMapEdge).
+    if (const int edge = this->MapEdgeAt(cameraX); edge >= 0)
+    {
+        constexpr int kToBlack = -31;  // every channel lowered all the way (TintArea saturates)
+        display.TintArea(
+            -cameraX,
+            0.0f,
+            static_cast<float>(FieldView::StrayColumns),
+            static_cast<float>(field.viewHeight),
+            kToBlack,
+            kToBlack,
+            kToBlack
+        );
+    }
+
     // The fade of the last game frame over its map (PaintBetween tints the map alone, under the interface).
     if (this->fadeTinted)
     {

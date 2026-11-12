@@ -470,6 +470,7 @@ void FieldView::PaintBetween(Surface& out)
             // the gold, the name boxes, the system button, the pointer, then what it drew after the pointer. It lies
             // on the 640x480 screen in the canvas.
             const std::span<Pixel> screen(part.Pixels(), canvasPixels);
+            this->ClearMapEdge(screen, width);
 
             if (this->fadeTinted)
             {

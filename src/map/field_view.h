@@ -156,6 +156,14 @@ public:
     void DrawFinalAgain();
     void DrawPointerLast();
     void ClearRowStarts();
+    // The rebuild's map filling the window (deviations.md): the map's first columns cleared where its left edge lies
+    // inside `canvas` (rows `pitch` pixels apart), after the world and before the fade.
+    void ClearMapEdge(std::span<Pixel> canvas, int pitch) const;
+    // Where the map's left edge lies inside the canvas at camera `cameraLeft` (canvas pixels); -1 for elsewhere.
+    int MapEdgeAt(double cameraLeft) const;
+    // swd3e: the map's first columns of tiles drawn with stray pixels, which the end of the map frame clears (part of
+    // 0x00412F60).
+    static constexpr int StrayColumns = 2;
     void ClipToMap();
     void DrawOverlays();
     void DrawWeather();
