@@ -7,7 +7,7 @@ formations.jsonl: scripts/bestiary/dump formations (the enemies of each battle).
 
 Each event: its number, where it is set off (a role of maps.dat on a map, a region of a map, or another event that
 opens it or gives it to a role), the maps it changes to, its battles with their enemies, the items and gold it gives
-or takes, the events it opens or gives to roles, and its dialogs. The events are in four tabs, one per Talk file, each
+or takes, the events it opens or gives to roles, and its first line of dialog (to tell which scene it is). The events are in four tabs, one per Talk file, each
 listed whole; the search finds a number, a map, a name or a line among them all. An event of nothing but
 the interpreter's switches is left out unless a role, a region or another event sets it off.
 """
@@ -150,7 +150,7 @@ def main():
             facts=facts,
             opens=opens,
             gives=gives,
-            lines=[line for line in (clean(text) for text in event['texts']) if line],
+            line=next((line for line in (clean(text) for text in event['texts']) if line), ''),
         ))
 
     for row in rows:
@@ -371,7 +371,6 @@ h1 {
 .event .lines p { margin: 0 0 4px; white-space: pre-line; overflow-wrap: anywhere; }
 .event .lines p::before { content: "「"; color: var(--dim); }
 .event .lines p::after { content: "」"; color: var(--dim); }
-.event details summary { cursor: pointer; color: var(--gold); font-size: 15px; }
 
 .event a { color: var(--gold-light); text-decoration: none; cursor: pointer; }
 .event a:hover { text-decoration: underline; }
@@ -419,7 +418,7 @@ function eventLinks(ids) {
   return ids.map(id => `<a data-event="${id}">${id}</a>`).join('、');
 }
 
-// An event as a block: its number and where it is set off, its facts, the events it opens or hands on, its lines.
+// An event as a block: its number and where it is set off, its facts, the events it opens or hands on, its first line.
 function eventHtml(event) {
   const where = event.where.length
     ? `<span class="where">${event.where.map(escaped).join('；')}</span>`
@@ -442,19 +441,14 @@ function eventHtml(event) {
     facts.push(['交給角色', eventLinks(event.gives)]);
   }
 
-  const lines = event.lines.map(line => `<p>${escaped(line)}</p>`);
-  const shown = lines.slice(0, 3).join('');
-  const rest = lines.length > 3
-    ? `<details><summary>其餘 ${lines.length - 3} 句台詞</summary>${lines.slice(3).join('')}</details>`
-    : '';
   return `<div class="event${event.id === marked ? ' marked' : ''}" id="event${event.id}">`
     + `<div class="head"><span class="number">${event.id}</span>${where}</div>`
     + (facts.length ? `<dl>${facts.map(([label, text]) => `<dt>${label}</dt><dd>${text}</dd>`).join('')}</dl>` : '')
-    + (lines.length ? `<div class="lines">${shown}${rest}</div>` : '')
+    + (event.line ? `<div class="lines"><p>${escaped(event.line)}</p></div>` : '')
     + '</div>';
 }
 
-// What the search finds: the event of a number, else every event whose places, facts or lines hold the words.
+// What the search finds: the event of a number, else every event whose places, facts or first line hold the words.
 function found(text) {
   const words = text.trim().split(/\s+/).filter(Boolean);
 
@@ -463,7 +457,7 @@ function found(text) {
   }
 
   return DATA.events.filter(event => {
-    const all = [event.id, ...event.where, ...event.facts.flat(), ...event.lines].join('\n');
+    const all = [event.id, ...event.where, ...event.facts.flat(), event.line].join('\n');
     return words.every(word => all.includes(word));
   });
 }
