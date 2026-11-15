@@ -284,7 +284,7 @@ h1 {
 .page th, .page td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid rgba(168, 144, 72, 0.35); }
 .page th { font-family: var(--kai); font-size: 19px; font-weight: normal; color: var(--gold-light); background: rgba(168, 144, 72, 0.18); white-space: nowrap; }
 .page td:first-child { white-space: nowrap; color: #f0e0a8; }
-.page td:first-child:nth-last-child(2) { width: 1%; }  /* two columns: the first as narrow as its text, the tables line up */
+.page td:first-child:nth-last-child(2) { width: 8em; }  /* two columns: the same first column, the tables line up */
 .page table.wide { font-size: 15px; line-height: 22px; }
 .page table.wide th, .page table.wide td { padding: 4px 3px; text-align: center; white-space: nowrap; }
 .page table.wide th { font-size: 15px; }
