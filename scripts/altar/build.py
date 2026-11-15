@@ -647,12 +647,20 @@ let category = 0;
 let chosen = 0;
 let shown = [];
 // The rules closed of each result (their places in its list), kept while the page stays open: every rule is open at
-// first; a click closes or opens one, the buttons all of the result's.
+// first, unless the result has more material pairs than FOLDED_PAIRS (大眼蛙: the page would stall drawing them);
+// a click closes or opens one, the buttons all of the result's.
 const closedRules = new Map();
+const FOLDED_PAIRS = 10000;
 
-function closedOf(item) {
+function closedOf(item, kept = []) {
   if (!closedRules.has(item.id)) {
-    closedRules.set(item.id, new Set());
+    const closed = new Set();
+
+    if (kept.reduce((sum, rule) => sum + rule.pairs.length, 0) > FOLDED_PAIRS) {
+      kept.forEach((rule, at) => closed.add(at));
+    }
+
+    closedRules.set(item.id, closed);
   }
 
   return closedRules.get(item.id);
@@ -719,7 +727,7 @@ function drawRules(item, kept) {
     '<span class="fold"><button type="button" data-fold="open">全部展開</button>' +
     '<button type="button" data-fold="close">全部摺疊</button></span>';
   ruleCount = kept.length;
-  const closed = closedOf(item);
+  const closed = closedOf(item, kept);
   $('rules').innerHTML = kept.map((rule, at) => {
     const range = rule.fixed ? '<span class="fixed">固定配方</span>' :
       '平均 ' + ranges(rule, item.id).map(([from, to]) => from === to ? `${from}` : `${from}～${to}`).join('、') + ' 級';
