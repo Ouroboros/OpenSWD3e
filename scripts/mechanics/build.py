@@ -73,7 +73,9 @@ def blocks(rows):
             if not open_kind:
                 out.append('<table class="wide">' if len(content) > WIDE_COLUMNS else '<table>')
                 open_kind = 'tr'
-                out.append('<tr>' + ''.join(f'<th>{cell}</th>' for cell in content) + '</tr>')
+                # A wide table's header: a name's number ("天神 0") on a line of its own under it.
+                heads = [cell.replace(' ', '<br>', 1) if len(content) > WIDE_COLUMNS else cell for cell in content]
+                out.append('<tr>' + ''.join(f'<th>{cell}</th>' for cell in heads) + '</tr>')
             else:
                 out.append('<tr>' + ''.join(f'<td>{cell}</td>' for cell in content) + '</tr>')
         else:
