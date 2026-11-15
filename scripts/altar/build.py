@@ -384,6 +384,24 @@ h1 {
 .rules .head { flex: none; font-size: 15px; line-height: 22px; color: var(--dim); padding-bottom: 6px;
   border-bottom: 1px solid var(--gold-dark); margin-right: 10px; }
 .rules .head b { font-family: var(--kai); font-size: 20px; color: var(--text); font-weight: normal; }
+/* The head: the notes, and at their right the buttons opening or closing every rule. */
+.rules .head { display: flex; align-items: flex-start; gap: 12px; }
+.rules .head .notes { flex: 1; min-width: 0; }
+.fold { flex: none; display: flex; gap: 6px; }
+.fold button {
+  height: 28px;
+  padding: 0 10px;
+  font-family: var(--kai);
+  font-size: 16px;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fold button:hover { border-color: var(--gold-light); }
 .rules .body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding-top: 4px;
   scrollbar-color: var(--gold) #000; }
 
@@ -411,6 +429,7 @@ h1 {
   border-bottom: 1px solid rgba(168, 144, 72, 0.5); padding: 0 6px; }
 .pairs td { padding: 0 6px; border-bottom: 1px dashed rgba(168, 144, 72, 0.25); overflow-wrap: anywhere; }
 .pairs .number { text-align: right; white-space: nowrap; }
+.pairs .level { text-align: left; white-space: nowrap; }
 .pairs .plus { color: var(--dim); text-align: center; padding: 0; }
 .more { color: var(--dim); margin: 0 8px 10px 12px; }
 
@@ -627,7 +646,18 @@ made.forEach(item => { item.text = [item.name, tabOf(item), `${item.level}級`].
 let category = 0;
 let chosen = 0;
 let shown = [];
-let opened = null;
+// The rules closed of each result (their places in its list), kept while the page stays open: every rule is open at
+// first; a click closes or opens one, the buttons all of the result's.
+const closedRules = new Map();
+
+function closedOf(item) {
+  if (!closedRules.has(item.id)) {
+    closedRules.set(item.id, new Set());
+  }
+
+  return closedRules.get(item.id);
+}
+let ruleCount = 0;
 
 const $ = id => document.getElementById(id);
 
@@ -652,7 +682,6 @@ function list() {
   $('list').innerHTML = shown.length ? shown.map((item, at) =>
     `<div class="row${at === chosen ? ' chosen' : ''}" data-at="${at}"><span>${escape(item.name)}</span>` +
     `<span class="level">${item.level}級</span></div>`).join('') : '<div class="empty">找不到</div>';
-  opened = null;
   show();
 }
 
@@ -679,27 +708,31 @@ function drawCard(item, kept) {
 
 // A pair of materials as a row: each name and level, and their average level (the sum halved, rounded down).
 function pairRow(first, second) {
-  return `<tr><td>${escape(first.name)}</td><td class="number">${first.level}</td><td class="plus">＋</td>` +
-    `<td>${escape(second.name)}</td><td class="number">${second.level}</td>` +
+  return `<tr><td>${escape(first.name)}</td><td class="level">${first.level}</td><td class="plus">＋</td>` +
+    `<td>${escape(second.name)}</td><td class="level">${second.level}</td>` +
     `<td class="number">${Math.floor((first.level + second.level) / 2)}</td></tr>`;
 }
 
 function drawRules(item, kept) {
-  $('head').innerHTML = `<b>配方</b>　第一欄、第二欄不可對調（固定配方除外）；平均＝兩樣材料等級相加除以二（捨去小數）；` +
-    `祭壇須劇情開放`;
+  $('head').innerHTML = '<span class="notes"><b>配方</b>　第一欄、第二欄不可對調（固定配方除外）；' +
+    '平均＝兩樣材料等級相加除以二（捨去小數）；祭壇須劇情開放</span>' +
+    '<span class="fold"><button type="button" data-fold="open">全部展開</button>' +
+    '<button type="button" data-fold="close">全部摺疊</button></span>';
+  ruleCount = kept.length;
+  const closed = closedOf(item);
   $('rules').innerHTML = kept.map((rule, at) => {
     const range = rule.fixed ? '<span class="fixed">固定配方</span>' :
       '平均 ' + ranges(rule, item.id).map(([from, to]) => from === to ? `${from}` : `${from}～${to}`).join('、') + ' 級';
     const first = rule.fixed ? escape(rule.pairs[0][0].name) : escape(categoryName(rule.first));
     const second = rule.fixed ? escape(rule.pairs[0][1].name) : escape(categoryName(rule.second));
     const note = rule.fallback ? '<div class="fallback">（找不到對應結果時）</div>' : '';
-    const head = `<div class="rule${opened === at ? ' open' : ''}" data-at="${at}">` +
+    const head = `<div class="rule${closed.has(at) ? '' : ' open'}" data-at="${at}">` +
       `<span class="slot"><small>第一欄</small><b>${first}</b></span><span class="plus">＋</span>` +
       `<span class="slot"><small>第二欄</small><b>${second}</b></span>` +
       `<span class="range">${range}</span>` +
       `<span class="count">${rule.pairs.length} 組</span></div>`;
 
-    if (opened !== at) {
+    if (closed.has(at)) {
       return head;
     }
 
@@ -707,8 +740,8 @@ function drawRules(item, kept) {
     const more = pairs.length > PAIRS_SHOWN ? `<div class="more">另有 ${pairs.length - PAIRS_SHOWN} 組未列出</div>` : '';
     return head + note + '<table class="pairs"><colgroup><col class="name"><col class="level"><col class="plus">' +
       '<col class="name"><col class="level"><col></colgroup>' +
-      '<tr><th>第一欄</th><th class="number">等級</th><th class="plus"></th>' +
-      '<th>第二欄</th><th class="number">等級</th><th class="number">平均</th></tr>' +
+      '<tr><th>第一欄</th><th class="level">等級</th><th class="plus"></th>' +
+      '<th>第二欄</th><th class="level">等級</th><th class="number">平均</th></tr>' +
       `${pairs.slice(0, PAIRS_SHOWN).map(([a, b]) => pairRow(a, b)).join('')}</table>${more}`;
   }).join('');
 }
@@ -766,8 +799,6 @@ function move(by) {
   if (chosen !== before) {
     beep();
   }
-
-  opened = null;
   show();
   $('rules').scrollTop = 0;
 }
@@ -803,7 +834,6 @@ $('list').addEventListener('click', event => {
     }
 
     chosen = Number(row.dataset.at);
-    opened = null;
     show();
     $('rules').scrollTop = 0;
   }
@@ -837,11 +867,38 @@ $('rules').addEventListener('click', event => {
 
   if (rule) {
     const at = Number(rule.dataset.at);
-    opened = opened === at ? null : at;
+    const closed = closedOf(shown[chosen]);
+
+    if (!closed.delete(at)) {
+      closed.add(at);
+    }
+
     const top = rule.offsetTop;
     show();
     $('rules').scrollTop = top - $('rules').offsetTop;
   }
+});
+
+// 全部展開 opens every rule of the result shown, 全部摺疊 closes them (kept for the result); the list goes back to
+// its top.
+$('head').addEventListener('click', event => {
+  const button = event.target.closest('button[data-fold]');
+
+  if (!button) {
+    return;
+  }
+
+  const closed = closedOf(shown[chosen]);
+  closed.clear();
+
+  if (button.dataset.fold === 'close') {
+    for (let at = 0; at < ruleCount; ++at) {
+      closed.add(at);
+    }
+  }
+
+  show();
+  $('rules').scrollTop = 0;
 });
 
 document.addEventListener('keydown', event => {
@@ -911,7 +968,6 @@ function chooseNamed(text = addressed()) {
   drawTabs();
   list();
   chosen = shown.indexOf(item);
-  opened = null;
   show();
 }
 
