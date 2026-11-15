@@ -1,7 +1,8 @@
 """scripts/mechanics/build.py <mechanics.md> <out.html>: the game mechanics page (docs/mechanics.html), silent.
 
 mechanics.md: "## 標題 {#id}" starts a section (its link name), "### " a heading, "- " a list item, "| … |" table rows
-(the first row the header, the "|---|" row skipped); other lines are paragraphs. `code` spans are kept.
+(the first row the header, the "|---|" row skipped); other lines are paragraphs. `code` spans are kept;
+[text](view) links to another page of the home page (altar, items, ...).
 """
 import html
 import re
@@ -9,8 +10,9 @@ import sys
 
 
 def inline(text):
-    """A line as HTML: escaped, `code` spans kept."""
-    return re.sub(r'`([^`]+)`', r'<code>\1</code>', html.escape(text))
+    """A line as HTML: escaped, `code` spans kept, [text](view) a link to the view."""
+    text = re.sub(r'`([^`]+)`', r'<code>\1</code>', html.escape(text))
+    return re.sub(r'\[([^\]]+)\]\(([a-z]+)\)', r'<a class="view" href="\2.html" data-view="\2">\1</a>', text)
 
 
 def cells(line):
@@ -286,6 +288,7 @@ h1 {
 .page th, .page td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid rgba(168, 144, 72, 0.35); }
 .page th { font-family: var(--kai); font-size: 19px; font-weight: normal; color: var(--gold-light); background: rgba(168, 144, 72, 0.18); white-space: nowrap; }
 .page td:first-child { white-space: nowrap; color: #f0e0a8; }
+.page a.view { color: #f0d060; }
 .page td:first-child:nth-last-child(2) { width: 8em; }  /* two columns: the same first column, the tables line up */
 .page table.wide { font-size: 15px; line-height: 22px; }
 .page table.wide th, .page table.wide td { padding: 4px 3px; text-align: center; white-space: nowrap; }
@@ -395,6 +398,25 @@ $('tabs').addEventListener('click', event => {
   if (tab) {
     choose(tabs.indexOf(tab));
   }
+});
+
+// A link to another page: the home page shows it beside its menu (a new address: going back returns here); alone, the
+// page itself.
+document.addEventListener('click', event => {
+  const link = event.target.closest('a.view');
+
+  if (!link) {
+    return;
+  }
+
+  event.preventDefault();
+
+  if (window.parent !== window) {
+    window.parent.postMessage({ open: link.dataset.view, detail: '' }, '*');
+    return;
+  }
+
+  location.href = `${link.dataset.view}.html${location.search}`;
 });
 
 addEventListener('resize', fit);
