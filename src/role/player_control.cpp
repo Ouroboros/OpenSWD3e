@@ -117,16 +117,16 @@ void RoleControl::Approach(Role& player, Role& other, u32 index, bool walking)
     );
 }
 
-// swd3e.exe 0x00402AA0: the keys of the map. The debug keys (story flag 0x52, turned on in debug mode with Ctrl,
-// right Shift, Home and End): F12 or Ctrl+S / Ctrl+L the save and load screens, Ctrl+F a battle at once (with
-// encounters on), Ctrl+F9 skipping texts, Ctrl+Q quitting, Ctrl+F1..F3 the debug lines, cells and flag 0x14, Tab with
-// keypad + / - the map's speed, F4 the cheat dialog, F7 the swim game, F6 ten of every item. Key slot 16 toggles
-// running. Then, unless system flag 0x40 is set, when the controlled role stands still and no menu is open: Space and
-// Enter move the talk windows on (or close the choices); Space talks to the role in front (unless it is
-// Role::Untalkable), Enter opens the menu; the arrows move the role (or the choice): a step slides along walls, runs
-// into map regions and roles with events (with flag 0x18 the event of the cell under the role), scrolls the camera or
-// moves the role alone, and may meet enemies. Standing still keeps action 0: past 0x80 frames swd3e sets 0 again
-// where swd32 set the idle pose, so the idle pose never shows.
+// swd3e.exe 0x00402AA0: the keys of the map. The debug keys (the rebuild: in debug mode, [game] debug; the original
+// turned on story flag 0x52 in debug mode with right Ctrl, right Shift, Home and End and needed it): F12 or Ctrl+S /
+// Ctrl+L the save and load screens, Ctrl+F a battle at once (with encounters on), Ctrl+F9 skipping texts, Ctrl+Q
+// quitting, Ctrl+F1..F3 the debug lines, cells and flag 0x14, Tab with keypad + / - the map's speed, F4 the cheat
+// dialog, F7 the swim game, F6 ten of every item. Key slot 16 toggles running. Then, unless system flag 0x40 is set,
+// when the controlled role stands still and no menu is open: Space and Enter move the talk windows on (or close the
+// choices); Space talks to the role in front (unless it is Role::Untalkable), Enter opens the menu; the arrows move the
+// role (or the choice): a step slides along walls, runs into map regions and roles with events (with flag 0x18 the
+// event of the cell under the role), scrolls the camera or moves the role alone, and may meet enemies. Standing still
+// keeps action 0: past 0x80 frames swd3e sets 0 again where swd32 set the idle pose, so the idle pose never shows.
 void RoleControl::ControlPlayer()
 {
     Game& owner = this->game;
@@ -141,13 +141,17 @@ void RoleControl::ControlPlayer()
     int stepX = 0;
     int stepY = 0;
 
-    if (owner.config.debugMode == 1 && input.IsKeyDown(Input::RightControl) && input.IsKeyDown(Input::RightShift) &&
-        input.IsKeyDown(Input::Home) && input.IsKeyDown(Input::End))
-    {
-        state.SetGameFlag(GameState::DebugKeys);
-    }
+    // The rebuild (deviations.md): the debug keys work whenever debug mode is on ([game] debug); the original's story
+    // flag 0x52, turned on by right Ctrl, right Shift, Home and End, is no longer needed:
+    // if (owner.config.debugMode == 1 && input.IsKeyDown(Input::RightControl) && input.IsKeyDown(Input::RightShift) &&
+    //     input.IsKeyDown(Input::Home) && input.IsKeyDown(Input::End))
+    // {
+    //     state.SetGameFlag(GameState::DebugKeys);
+    // }
+    //
+    // if (state.GameFlag(GameState::DebugKeys))
 
-    if (state.GameFlag(GameState::DebugKeys))
+    if (owner.config.debugMode == 1)
     {
         const bool idle = leader.id == Role::NoId && view.talkWindows == nullptr;
 

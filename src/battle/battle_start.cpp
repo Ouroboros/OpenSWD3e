@@ -151,8 +151,9 @@ void Game::MeasureUnits()
     }
 }
 
-// swd3e.exe 0x00459BD0: a battle starts: the debug mode follows game flag 0x52, the battle state is cleared, the party
-// (story flags 0x1E..) takes its places by its make-up (a party of three also orders RoleCycle), the formation of
+// swd3e.exe 0x00459BD0: a battle starts: the debug mode follows game flag 0x52 (not in the rebuild, deviations.md),
+// the battle state is cleared, the party (story flags 0x1E..) takes its places by its make-up (a party of three also
+// orders RoleCycle), the formation of
 // battle.ffd brings the enemies and the background, the role panels get their gauges, the role of the start pose is
 // picked, the talisman ghost joins with game flag 0x5A, the units are put in drawing order and the gauges get a head
 // start (one in ten times three in ten: the enemies' run 0..9 steps; otherwise the roles of the enemies' places are
@@ -173,7 +174,9 @@ void Game::StartBattle(u16 number)
     BattleServices& services = this->battleServices;
     GameState& state = this->state;
     battle.battle = number;
-    this->config.debugMode = state.GameFlag(GameState::DebugKeys) ? 1 : 0;
+    // The rebuild (deviations.md): debug mode stays as [game] debug set it; the original took it from story flag 0x52
+    // at every battle:
+    // this->config.debugMode = state.GameFlag(GameState::DebugKeys) ? 1 : 0;
     battle.musicBeforeBattle = this->audio.Queue().Mode();
     this->acts.SetZoomEnabled(1);
     this->battleMessages.Clear();
