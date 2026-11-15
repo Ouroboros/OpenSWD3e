@@ -53,6 +53,9 @@ def main():
     print(f'{len(sections)} sections, {sum(len(s["blocks"]) for s in sections)} lines, {len(page)} bytes')
 
 
+WIDE_COLUMNS = 8  # a table of more columns is drawn smaller and tighter (the altar's category table)
+
+
 def blocks(rows):
     """The lines as HTML: the items of a run in one list, the rows of a run in one table (the first its header)."""
     out = []
@@ -68,7 +71,7 @@ def blocks(rows):
             out.append(f'<li>{content}</li>')
         elif kind == 'tr':
             if not open_kind:
-                out.append('<table>')
+                out.append('<table class="wide">' if len(content) > WIDE_COLUMNS else '<table>')
                 open_kind = 'tr'
                 out.append('<tr>' + ''.join(f'<th>{cell}</th>' for cell in content) + '</tr>')
             else:
@@ -281,6 +284,10 @@ h1 {
 .page th, .page td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid rgba(168, 144, 72, 0.35); }
 .page th { font-family: var(--kai); font-size: 19px; font-weight: normal; color: var(--gold-light); background: rgba(168, 144, 72, 0.18); white-space: nowrap; }
 .page td:first-child { white-space: nowrap; color: #f0e0a8; }
+.page table.wide { font-size: 15px; line-height: 22px; }
+.page table.wide th, .page table.wide td { padding: 4px 3px; text-align: center; white-space: nowrap; }
+.page table.wide th { font-size: 15px; }
+.page table.wide td:first-child, .page table.wide th:first-child { text-align: left; padding-left: 6px; }
 
 .hint { flex: none; margin-top: 6px; font-size: 13px; color: #3a2008; text-align: right; }
 </style>
