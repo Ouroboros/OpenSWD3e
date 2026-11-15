@@ -401,13 +401,17 @@ h1 {
 .fallback { color: var(--dim); font-size: 13px; padding-left: 8px; }
 
 /* The material pairs of an opened rule: a table, a pair a row, the levels and the average in their columns. */
-.pairs { width: calc(100% - 20px); margin: 4px 8px 10px 12px; border-collapse: collapse; font-size: 16px;
-  line-height: 26px; }
+/* Fixed widths keep each level beside its material's name, apart from the next one; the average takes what is left. */
+.pairs { width: calc(100% - 20px); margin: 4px 8px 10px 12px; border-collapse: collapse; table-layout: fixed;
+  font-size: 16px; line-height: 26px; }
+.pairs col.name { width: 150px; }
+.pairs col.level { width: 40px; }
+.pairs col.plus { width: 64px; }
 .pairs th { font-family: var(--kai); font-weight: normal; font-size: 15px; color: var(--dim); text-align: left;
-  border-bottom: 1px solid rgba(168, 144, 72, 0.5); padding: 0 8px; }
-.pairs td { padding: 0 8px; border-bottom: 1px dashed rgba(168, 144, 72, 0.25); overflow-wrap: anywhere; }
-.pairs .number { text-align: right; width: 56px; white-space: nowrap; }
-.pairs .plus { color: var(--dim); text-align: center; width: 24px; padding: 0; }
+  border-bottom: 1px solid rgba(168, 144, 72, 0.5); padding: 0 6px; }
+.pairs td { padding: 0 6px; border-bottom: 1px dashed rgba(168, 144, 72, 0.25); overflow-wrap: anywhere; }
+.pairs .number { text-align: right; white-space: nowrap; }
+.pairs .plus { color: var(--dim); text-align: center; padding: 0; }
 .more { color: var(--dim); margin: 0 8px 10px 12px; }
 
 .hint { flex: none; margin-top: 6px; font-size: 13px; color: #3a2008; text-align: right; }
@@ -701,7 +705,9 @@ function drawRules(item, kept) {
 
     const pairs = [...rule.pairs].sort((a, b) => (a[0].level + a[1].level) - (b[0].level + b[1].level));
     const more = pairs.length > PAIRS_SHOWN ? `<div class="more">另有 ${pairs.length - PAIRS_SHOWN} 組未列出</div>` : '';
-    return head + note + '<table class="pairs"><tr><th>第一欄</th><th class="number">等級</th><th class="plus"></th>' +
+    return head + note + '<table class="pairs"><colgroup><col class="name"><col class="level"><col class="plus">' +
+      '<col class="name"><col class="level"><col></colgroup>' +
+      '<tr><th>第一欄</th><th class="number">等級</th><th class="plus"></th>' +
       '<th>第二欄</th><th class="number">等級</th><th class="number">平均</th></tr>' +
       `${pairs.slice(0, PAIRS_SHOWN).map(([a, b]) => pairRow(a, b)).join('')}</table>${more}`;
   }).join('');
