@@ -400,12 +400,15 @@ h1 {
 .rule .fixed { color: var(--gold-light); }
 .fallback { color: var(--dim); font-size: 13px; padding-left: 8px; }
 
-.pairs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; padding: 4px 8px 10px 12px;
-  font-size: 16px; line-height: 26px; border-bottom: 1px dashed rgba(168, 144, 72, 0.4); }
-.pairs div { overflow-wrap: anywhere; }
-.pairs .plus { color: var(--dim); margin: 0 4px; }
-.pairs .level { font-size: 13px; color: var(--dim); margin-left: 2px; }
-.pairs .more { grid-column: 1 / -1; color: var(--dim); }
+/* The material pairs of an opened rule: a table, a pair a row, the levels and the average in their columns. */
+.pairs { width: calc(100% - 20px); margin: 4px 8px 10px 12px; border-collapse: collapse; font-size: 16px;
+  line-height: 26px; }
+.pairs th { font-family: var(--kai); font-weight: normal; font-size: 15px; color: var(--dim); text-align: left;
+  border-bottom: 1px solid rgba(168, 144, 72, 0.5); padding: 0 8px; }
+.pairs td { padding: 0 8px; border-bottom: 1px dashed rgba(168, 144, 72, 0.25); overflow-wrap: anywhere; }
+.pairs .number { text-align: right; width: 56px; white-space: nowrap; }
+.pairs .plus { color: var(--dim); text-align: center; width: 24px; padding: 0; }
+.more { color: var(--dim); margin: 0 8px 10px 12px; }
 
 .hint { flex: none; margin-top: 6px; font-size: 13px; color: #3a2008; text-align: right; }
 </style>
@@ -670,9 +673,11 @@ function drawCard(item, kept) {
     `<div class="label">材料組合</div><div>${pairs} 組</div></div>`;
 }
 
-function pairText(first, second) {
-  return `${escape(first.name)}<span class="level">${first.level}</span><span class="plus">＋</span>` +
-    `${escape(second.name)}<span class="level">${second.level}</span>`;
+// A pair of materials as a row: each name and level, and their average level (the sum halved, rounded down).
+function pairRow(first, second) {
+  return `<tr><td>${escape(first.name)}</td><td class="number">${first.level}</td><td class="plus">＋</td>` +
+    `<td>${escape(second.name)}</td><td class="number">${second.level}</td>` +
+    `<td class="number">${Math.floor((first.level + second.level) / 2)}</td></tr>`;
 }
 
 function drawRules(item, kept) {
@@ -695,9 +700,10 @@ function drawRules(item, kept) {
     }
 
     const pairs = [...rule.pairs].sort((a, b) => (a[0].level + a[1].level) - (b[0].level + b[1].level));
-    const more = pairs.length > PAIRS_SHOWN ? `<div class="more">……還有 ${pairs.length - PAIRS_SHOWN} 組</div>` : '';
-    return head + note + `<div class="pairs">${pairs.slice(0, PAIRS_SHOWN).map(([a, b]) =>
-      `<div>${pairText(a, b)}</div>`).join('')}${more}</div>`;
+    const more = pairs.length > PAIRS_SHOWN ? `<div class="more">另有 ${pairs.length - PAIRS_SHOWN} 組未列出</div>` : '';
+    return head + note + '<table class="pairs"><tr><th>第一欄</th><th class="number">等級</th><th class="plus"></th>' +
+      '<th>第二欄</th><th class="number">等級</th><th class="number">平均</th></tr>' +
+      `${pairs.slice(0, PAIRS_SHOWN).map(([a, b]) => pairRow(a, b)).join('')}</table>${more}`;
   }).join('');
 }
 
