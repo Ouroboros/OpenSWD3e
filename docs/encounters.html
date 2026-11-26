@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地圖遇敵</title>
+<style>
+:root {
+  --gold: #a89048;
+  --gold-dark: #6a5420;
+  --gold-light: #f0e848;
+  --text: #c8b888;
+  --dim: #988a62;
+  --panel: #100f08;
+  --panel-list: #181010;
+  --ink: #3a2008;
+  --link: #f0d060;
+  --kai: "BiauKai", "DFKai-SB", "標楷體", "KaiTi", "STKaiti", "Kaiti TC", serif;
+  --ming: "PMingLiU", "MingLiU", "新細明體", "Songti TC", "Noto Serif TC", "Noto Serif CJK TC", serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--ming);
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(255, 220, 150, 0.45), transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(110, 50, 10, 0.4), transparent 55%),
+    radial-gradient(ellipse at 50% 55%, rgba(150, 80, 20, 0.25), transparent 45%),
+    radial-gradient(ellipse at 5% 90%, rgba(90, 40, 10, 0.35), transparent 40%),
+    repeating-linear-gradient(90deg, rgba(90, 40, 10, 0.12) 0 1px, transparent 1px 80px),
+    linear-gradient(160deg, #e0b070 0%, #cc9450 45%, #b07834 100%);
+}
+
+.book {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1180px;
+  height: 870px;
+  padding: 12px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  transform-origin: 0 0;
+}
+
+.top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-top: 2px solid rgba(255, 230, 180, 0.5);
+  background: repeating-linear-gradient(90deg, rgba(255, 230, 180, 0.3) 0 1px, transparent 1px 80px);
+  height: 64px;
+  flex: none;
+  padding: 0 12px 4px 6px;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--kai);
+  font-size: 44px;
+  letter-spacing: 6px;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 rgba(255, 230, 180, 0.45), 0 0 8px rgba(255, 230, 180, 0.35);
+  font-weight: bold;
+}
+
+.tools { display: flex; align-items: center; gap: 10px; padding-bottom: 6px; }
+
+.search {
+  font-family: var(--ming);
+  font-size: 18px;
+  width: 300px;
+  padding: 4px 8px;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
+  outline: none;
+}
+
+.search::placeholder { color: var(--dim); }
+.search:focus { border-color: var(--gold-light); }
+
+.sound {
+  font-family: var(--kai);
+  font-size: 18px;
+  padding: 3px 10px;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sound:hover { border-color: var(--gold-light); }
+.sound.off { color: var(--dim); }
+
+.layout {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 10px 14px;
+  margin-top: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.frame {
+  --corner: linear-gradient(var(--gold-light), var(--gold-light));
+  --fill: var(--panel);
+  background:
+    var(--corner) left top / 9px 3px no-repeat,
+    var(--corner) left top / 3px 9px no-repeat,
+    var(--corner) right top / 9px 3px no-repeat,
+    var(--corner) right top / 3px 9px no-repeat,
+    var(--corner) left bottom / 9px 3px no-repeat,
+    var(--corner) left bottom / 3px 9px no-repeat,
+    var(--corner) right bottom / 9px 3px no-repeat,
+    var(--corner) right bottom / 3px 9px no-repeat,
+    var(--fill);
+  background-origin: padding-box;
+  border: 2px solid var(--gold);
+  box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000;
+  position: relative;
+}
+
+.list {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
+  padding: 12px 0;
+  --fill: var(--panel-list);
+  scrollbar-color: var(--gold) #000;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--kai);
+  font-size: 22px;
+  line-height: 36px;
+  padding: 0 8px 0 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 #302018;
+}
+
+.row span:first-child { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.row .count { font-family: var(--ming); font-size: 14px; color: var(--dim); flex: none; margin-left: 8px; }
+
+.row.chosen {
+  color: #fff0b0;
+  background: linear-gradient(180deg, rgba(160, 104, 0, 0), rgba(200, 130, 10, 0.95) 50%, rgba(160, 104, 0, 0));
+}
+
+.row.chosen .count { color: #fff0c0; }
+.empty { font-family: var(--kai); font-size: 20px; color: var(--dim); padding: 8px 10px; }
+
+.overview {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 14px 22px 16px;
+  max-height: 250px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--gold) #000;
+}
+
+.place-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(168, 144, 72, 0.4);
+}
+
+.place-title {
+  font-family: var(--kai);
+  font-size: 30px;
+  line-height: 36px;
+  color: #f0e0a8;
+}
+
+.place-meta {
+  font-size: 15px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+a.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 10px;
+  color: var(--link);
+  text-decoration: none;
+  background: rgba(168, 144, 72, 0.1);
+  border: 1px solid rgba(168, 144, 72, 0.45);
+  font-size: 17px;
+  line-height: 24px;
+}
+
+a.chip:hover {
+  color: var(--gold-light);
+  border-color: var(--gold-light);
+  background: rgba(240, 232, 72, 0.12);
+}
+
+a.chip .lv { font-size: 14px; color: var(--dim); }
+
+.boss {
+  display: inline-block;
+  padding: 0 4px;
+  font-family: var(--ming);
+  font-size: 12px;
+  line-height: 17px;
+  color: #ffd0b0;
+  background: #5a1c10;
+  border: 1px solid #a84830;
+  vertical-align: middle;
+}
+
+.detail {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 0;
+  padding: 14px 22px 16px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--gold) #000;
+}
+
+.group { margin-bottom: 18px; }
+.group:last-child { margin-bottom: 0; }
+
+.group-head {
+  font-family: var(--kai);
+  font-size: 21px;
+  line-height: 30px;
+  color: #f0e0a8;
+  padding-left: 10px;
+  border-left: 3px solid var(--gold);
+  margin-bottom: 8px;
+}
+
+.group-head .sub {
+  font-family: var(--ming);
+  font-size: 15px;
+  color: var(--dim);
+  margin-left: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 17px;
+  line-height: 28px;
+}
+
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(168, 144, 72, 0.3);
+}
+
+th {
+  font-family: var(--kai);
+  font-size: 18px;
+  font-weight: normal;
+  color: var(--dim);
+  border-bottom-color: rgba(168, 144, 72, 0.55);
+}
+
+td.battle { width: 88px; white-space: nowrap; color: var(--dim); }
+td.rate { width: 112px; white-space: nowrap; color: #f0e0a8; }
+td.event { width: 176px; white-space: nowrap; color: var(--dim); }
+td.enemies { overflow-wrap: anywhere; }
+
+a.mlink {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a.mlink:hover {
+  color: var(--gold-light);
+  text-decoration: underline;
+}
+
+.lv-inline { font-size: 14px; color: var(--dim); margin-left: 2px; }
+.times { color: #f0e0a8; margin-left: 3px; }
+.plus { color: var(--dim); margin: 0 7px; }
+
+.hit {
+  background: rgba(240, 210, 72, 0.24) !important;
+  border-color: var(--gold-light) !important;
+  color: var(--gold-light) !important;
+}
+
+a.mlink.hit {
+  padding: 1px 4px;
+  border: 1px solid var(--gold-light);
+}
+
+.hint { flex: none; margin-top: 6px; font-size: 13px; color: #3a2008; text-align: right; }
+</style>
+</head>
+<body>
+<div class="book">
+  <div class="top">
+    <div class="tools">
+      <input class="search" id="search" type="search" placeholder="搜尋地圖、怪物名稱" autocomplete="off">
+      <button class="sound" id="sound" type="button"></button>
+    </div>
+    <h1>地圖遇敵</h1>
+  </div>
+  <div class="layout">
+    <div class="frame list" id="list"></div>
+    <div class="frame overview" id="overview"></div>
+    <div class="frame detail" id="detail"></div>
+  </div>
+  <div class="hint">↑↓ 選擇　Home / End 首尾　PgUp / PgDn 翻頁　點怪物名稱開啟神魔異事錄　搜尋可空格分隔關鍵字，Esc 清除</div>
+</div>
+<script>
+const DATA = {"monsters":{"6":["魔化師父",60,1],"7":["宇文拓",40,1],"10":["獨孤寧珂",44,1],"13":["程咬金",20,1],"14":["秦叔寶",23,1],"15":["斛律安",35,1],"16":["韓騰",38,1],"17":["楊碩",23,1],"18":["上官震遠",30,1],"19":["單小小",42,1],"20":["尉遲嫣紅",40,1],"24":["丁格",28,1],"29":["刑天",40,1],"43":["怒意鮫精",15,1],"44":["惡虎魔魅",18,1],"45":["隋軍隊長",12,0],"46":["隋軍槍兵",9,0],"47":["隋軍步兵",10,0],"48":["鵁精",25,1],"49":["氐人族戰士",26,1],"51":["黑龍王龍形",35,1],"52":["盤古",35,1],"56":["饕餮",50,1],"57":["渾沌",52,1],"58":["魚兵",24,1],"59":["蝦兵",23,1],"60":["蟹將",30,1],"104":["風伯",48,0],"105":["雨師",50,0],"107":["女夷",43,0],"108":["伏魔石人",45,0],"109":["天將",40,0],"110":["天宮仙女",37,0],"112":["孫悟空",55,0],"114":["白澤",48,0],"115":["延維",44,0],"116":["亞格瑞斯",41,0],"117":["狉狼",39,0],"118":["席娜",32,0],"119":["白無常",37,0],"120":["黑無常",35,0],"121":["瓶女",30,0],"122":["冥府獄卒",18,0],"123":["娥皇",52,0],"124":["女英",49,0],"125":["嫦娥",46,0],"126":["天仙",43,0],"127":["蠶女",40,0],"128":["劍仙",38,0],"129":["地仙",35,0],"130":["雪女",32,0],"131":["茶仙",29,0],"132":["樂仙女",26,0],"133":["水仙",23,0],"136":["獬豸",53,0],"137":["神龍",47,0],"138":["英招",50,0],"139":["龍王",44,0],"140":["陸吾",38,0],"141":["黑龍",35,0],"142":["雲生獸",32,0],"143":["半人馬",41,0],"145":["相柳",53,0],"146":["肥遺",50,0],"147":["兕",47,0],"148":["化蛇",26,0],"149":["尼梅亞獅",44,0],"150":["當扈",41,0],"151":["牛頭魚",35,0],"152":["窮奇",30,0],"153":["美杜莎",38,0],"154":["石骨飛魚",13,0],"155":["九尾狐妖",49,0],"156":["尸解仙",46,0],"157":["魔劍客",43,0],"158":["蝶仙",39,0],"159":["妖陀螺鬼",36,0],"160":["布妖",33,0],"161":["酒妖",30,0],"162":["花妖",27,0],"163":["竹妖",24,0],"164":["夜叉",20,0],"165":["妖燈鬼",15,0],"166":["青牛",46,0],"167":["解廌",43,0],"168":["鼎精",40,0],"169":["長右",37,0],"170":["旋龜",34,0],"171":["蜃氣精",31,0],"172":["火光獸",28,0],"173":["石獅精",25,0],"174":["雪球怪",30,0],"175":["蝠精妖",22,0],"176":["樹精",6,0],"177":["夜遊神",40,0],"178":["魍魎",37,0],"179":["山鬼",33,0],"180":["食屍鬼",29,0],"181":["瘟鬼",26,0],"182":["餓死鬼",22,0],"183":["吊死鬼",18,0],"184":["惡靈",14,0],"185":["冤魂",10,0],"186":["幽靈",8,0],"187":["吸血巨人",43,0],"188":["蠱魔",40,0],"189":["獨目鬼",37,0],"190":["瘧鬼",35,0],"191":["山鬼王",33,0],"192":["戰死屍鬼",30,0],"193":["刀勞鬼",19,0],"194":["乾麑子",27,0],"195":["貓鬼屍",23,0],"196":["飛僵",7,0],"197":["飛頭蠻",8,0],"198":["劍俠",40,0],"199":["邪劍客",38,0],"200":["陰陽師",34,0],"201":["土匪",30,0],"202":["逃犯",25,0],"203":["飛賊王",28,0],"204":["虎",20,0],"205":["鱷魚",9,0],"206":["山狼",24,0],"207":["大鬣蜥",35,0],"208":["狼",15,0],"209":["鷹",26,0],"210":["蛇",17,0],"211":["吸血蝙蝠",13,0],"212":["黑蜈蚣",19,0],"213":["蜈蚣",16,0],"214":["毒蜘蛛",11,0],"215":["毒蛾",10,0],"216":["黏怪",12,0],"217":["野猴",18,0],"218":["紅蝙蝠",22,0],"219":["黑豹",28,0],"220":["五彩蠑螈",30,0],"221":["食人花",32,0],"222":["邪僧屍",39,0],"223":["青瘧鬼",5,0],"224":["森林乾麑子",7,0],"225":["邪屍骷髏",15,1],"226":["火蝠魚精",23,1],"227":["北斗星君",57,1],"250":["鬼蛙",6,1],"298":["大眼蛙",1,0]},"formations":{"1":[224],"2":[197],"3":[196,176],"4":[224,196],"5":[186,224],"6":[196,186],"7":[205],"8":[197,205],"9":[186,185],"11":[43],"12":[184,184],"13":[185,184,185],"14":[225],"15":[46,46],"16":[47,47],"17":[46],"18":[47,47,47],"19":[46,45,46],"20":[47,45,47],"21":[45,45],"22":[225,44],"25":[46,46],"26":[46,47,46],"27":[47,46,45,47,46],"28":[45,45,45],"29":[45,45,45],"30":[45,45,45,45],"31":[46,46],"32":[46,47,46],"33":[47,46,45,47,46],"34":[45,45,45],"35":[47,45,47],"36":[46,45,47],"37":[45,45],"38":[46,46,46],"39":[225,45,225],"40":[46,47,47,46],"41":[46,45,47],"42":[45,45,45],"43":[47,47,46,47,47],"44":[214,214,214],"45":[215,215,215],"46":[47,154,47,154],"47":[215,154,165,214],"48":[165,165],"49":[204],"50":[208,208,208],"51":[216,215,216],"53":[216,216,216,216,216,216],"54":[211,211,211],"55":[213,213,213,213],"56":[211,210,211],"57":[210,210],"58":[13],"59":[45,45,45,45,45,45],"60":[17],"61":[45],"62":[226,226,226],"63":[217,217],"64":[217,217,217],"65":[133],"66":[122,164,122],"67":[122,164,122,164,122],"68":[165,165,165],"69":[48],"70":[13,14],"71":[133,133],"72":[148],"73":[164,164,164],"74":[193,193],"75":[49,298,49],"76":[148,148],"77":[195,195,195,195,195],"78":[193,193],"79":[193,148,193],"80":[58,60,59],"81":[51],"82":[59,58],"83":[60,59],"84":[132,132],"85":[142],"86":[152],"87":[163,163,163],"88":[163,162,163],"89":[142,142],"90":[162,162],"91":[132,110],"92":[152,142],"93":[175,175],"94":[175,162,163],"95":[110,110],"96":[29],"97":[175,175,175],"98":[194,194],"99":[175,194,175],"100":[173,173],"101":[223],"102":[224],"103":[176],"104":[172,172,172],"105":[173,131,173],"106":[131,110,131],"107":[110,130],"108":[132,130,110],"109":[52],"110":[172,24,185,172],"111":[182,183,182],"112":[202,202],"113":[130,173],"114":[192,181],"115":[212,212,212],"116":[218,218,218],"117":[219,219],"118":[206,206,206],"119":[218,218,218],"120":[45,45,45],"121":[15],"122":[18],"123":[183,121,183],"124":[180,194,191,180],"125":[181,121,161],"126":[121,57],"127":[209,209],"128":[7],"129":[209,209,209],"130":[220,220,220],"131":[221,221],"132":[201,201],"133":[179,161,179],"134":[190,171,190],"135":[160,160],"136":[190,129,190],"137":[45],"139":[160,171,161],"140":[150,131,172,190],"141":[130,129],"142":[221,189,221],"143":[161,189,161],"144":[203,118],"146":[130,129],"147":[189,160],"148":[220,209,220],"149":[201,202],"150":[207,207],"151":[16],"152":[45,45],"153":[45],"154":[45,45,45],"155":[45,203,45],"156":[218,218],"157":[221,220],"158":[202,201,202],"159":[207,207,207],"160":[178,178],"161":[179,178,179],"162":[159,178],"163":[129,170],"164":[159,159],"165":[178,170,179],"166":[141],"167":[128],"168":[117],"169":[169,170],"170":[163,163],"171":[174,153,174],"172":[198],"173":[199,200],"174":[199,199],"175":[159,169],"176":[117,169],"177":[188],"178":[158,158],"179":[119,120],"180":[169,168,170],"181":[203,140],"182":[16],"183":[7],"184":[7],"185":[188,159],"186":[153,151],"187":[191,150],"188":[174,202,174,174],"189":[177,177],"190":[158,168],"191":[189,151],"192":[168,177,151],"193":[20],"194":[151,153,151],"195":[143,143],"196":[190,190,190],"197":[127,140],"198":[222,222],"199":[203,187],"200":[19],"201":[199,199,199],"202":[199,187,199],"203":[187,187],"204":[199,187,199],"205":[149],"206":[157,149],"207":[167],"208":[167,157],"209":[157,157],"210":[149,149],"211":[156,157],"212":[116,149],"213":[167,156],"214":[116],"215":[10],"216":[126,127],"217":[127,128],"218":[141,126],"219":[126,128],"220":[119,120],"221":[177,177,177],"222":[177,167,177],"223":[115],"224":[110,109,110],"225":[139,109],"226":[166],"227":[110,139,109],"228":[56,203],"229":[227],"230":[139],"231":[107,107],"232":[107,108],"233":[107,125],"234":[109,108,109],"235":[114,115],"236":[166,115],"237":[114,155],"238":[147,147],"239":[137,126],"240":[138,126],"241":[146,114],"242":[146,146],"244":[147,145],"245":[114,136],"246":[146,145],"247":[112],"248":[104,105],"249":[107,124,107],"250":[123,124],"251":[10],"252":[6],"253":[24],"254":[250,250]},"places":[{"name":"伏魔山內","maps":[3],"monsters":[173,181,192,130],"random":[{"label":"地圖 3","total":4,"rows":[[113,2],[114,2]]}],"story":[]},{"name":"伏魔山頂階梯","maps":[10],"monsters":[223,224],"random":[],"story":[[108,10,101],[109,10,102],[110,10,101]]},{"name":"江北地區","maps":[15],"monsters":[176,250,185,215,216,184,43,208,217,204],"random":[{"label":"區域 (6,33)–(25,40)","total":2,"rows":[[103,2]]},{"label":"區域 (12,7)–(38,33)","total":2,"rows":[[12,2]]},{"label":"區域 (39,8)–(50,40)","total":2,"rows":[[13,2]]},{"label":"區域 (52,22)–(89,48)","total":3,"rows":[[49,1],[50,1],[51,1]]},{"label":"區域 (24,42)–(50,59)","total":2,"rows":[[63,1],[64,1]]},{"label":"區域 (76,19)–(79,19)","total":1,"rows":[[254,1]]}],"story":[[4029,15,11]]},{"name":"月河河洞1","maps":[26],"monsters":[197,205],"random":[{"label":"地圖 26","total":4,"rows":[[7,2],[8,2]]}],"story":[]},{"name":"月河河洞2","maps":[27],"monsters":[197,205],"random":[{"label":"地圖 27","total":4,"rows":[[7,2],[8,2]]}],"story":[]},{"name":"月河河洞3","maps":[28],"monsters":[197,205],"random":[{"label":"地圖 28","total":4,"rows":[[7,2],[8,2]]}],"story":[]},{"name":"月河河洞4","maps":[29],"monsters":[186,185],"random":[{"label":"地圖 29","total":2,"rows":[[9,2]]}],"story":[]},{"name":"月河河洞5","maps":[30],"monsters":[186,185],"random":[{"label":"地圖 30","total":2,"rows":[[9,2]]}],"story":[]},{"name":"黑山鎮","maps":[34],"monsters":[225],"random":[],"story":[[2004,34,14]]},{"name":"黑山鎮客棧一樓","maps":[35],"monsters":[48],"random":[],"story":[[3063,35,69]]},{"name":"森林軍營","maps":[41,309,310],"monsters":[46,47,45],"random":[{"label":"地圖 41、309","total":2,"rows":[[16,1],[17,1]]},{"label":"地圖 310","total":3,"rows":[[18,1],[19,1],[20,1]]}],"story":[[4052,41,15]]},{"name":"森林軍營營地","maps":[42],"monsters":[46,47,45,225,44],"random":[{"label":"地圖 42","total":3,"rows":[[18,1],[19,1],[20,1]]}],"story":[[2022,42,21],[2035,42,22]]},{"name":"運輸船甲板","maps":[52,335],"monsters":[46,47,45],"random":[{"label":"地圖 335","total":3,"rows":[[27,1],[26,1],[28,1]]}],"story":[[2077,52,29],[2077,52,30]]},{"name":"運輸船通道","maps":[53],"monsters":[46,47,45],"random":[{"label":"地圖 53","total":2,"rows":[[27,1],[26,1]]}],"story":[]},{"name":"運輸船底艙通道","maps":[54],"monsters":[46,45],"random":[{"label":"地圖 54","total":2,"rows":[[25,1],[28,1]]}],"story":[]},{"name":"運輸船艙房","maps":[55,505,506],"monsters":[46,47,45],"random":[{"label":"地圖 55","total":2,"rows":[[27,1],[26,1]]},{"label":"地圖 505、506","total":2,"rows":[[25,1],[28,1]]}],"story":[]},{"name":"龍舟後甲板","maps":[56,600],"monsters":[47,45],"random":[{"label":"地圖 56、600","total":2,"rows":[[34,1],[35,1]]}],"story":[]},{"name":"龍舟偏船右側","maps":[58,602],"monsters":[46,47,45],"random":[{"label":"地圖 58、602","total":4,"rows":[[31,1],[32,1],[33,1],[36,1]]}],"story":[]},{"name":"龍舟偏船左側","maps":[59,603],"monsters":[46,47,45],"random":[{"label":"地圖 59、603","total":4,"rows":[[31,1],[32,1],[33,1],[36,1]]}],"story":[]},{"name":"龍舟偏船船頭","maps":[60,342],"monsters":[47,45],"random":[{"label":"地圖 60、342","total":2,"rows":[[34,1],[35,1]]}],"story":[]},{"name":"龍舟偏船通道","maps":[62],"monsters":[46,47,45],"random":[{"label":"地圖 62","total":4,"rows":[[31,1],[32,1],[33,1],[36,1]]}],"story":[]},{"name":"龍舟偏船內通道","maps":[63],"monsters":[46,47,45],"random":[{"label":"地圖 63","total":4,"rows":[[31,1],[32,1],[33,1],[36,1]]}],"story":[]},{"name":"龍舟偏船通道03","maps":[64],"monsters":[46,47,45],"random":[{"label":"地圖 64","total":4,"rows":[[31,1],[32,1],[33,1],[36,1]]}],"story":[]},{"name":"龍舟屋樑","maps":[80,81,82,83,84],"monsters":[47,215,214,154,165],"random":[{"label":"地圖 80、81","total":2,"rows":[[44,1],[45,1]]},{"label":"地圖 82–84","total":3,"rows":[[46,1],[47,1],[48,1]]}],"story":[]},{"name":"魔王砦","maps":[94],"monsters":[13,14],"random":[],"story":[[2132,94,70]]},{"name":"魔王砦通道","maps":[95,96,97,305,306,307,308],"monsters":[216,211,213,210,24],"random":[{"label":"地圖 95–97","total":4,"rows":[[53,2],[54,2]]},{"label":"地圖 305–308","total":3,"rows":[[55,1],[56,1],[57,1]]}],"story":[[6197,308,253]]},{"name":"魔王砦寶物房","maps":[100],"monsters":[13],"random":[],"story":[[2101,100,58]]},{"name":"泰山入口","maps":[104],"monsters":[45],"random":[],"story":[[2108,104,59]]},{"name":"泰山山頂","maps":[107],"monsters":[17],"random":[],"story":[[2113,107,60]]},{"name":"採藥洞窟","maps":[109,110],"monsters":[165,122,164,133],"random":[{"label":"地圖 109","total":3,"rows":[[65,2],[68,1]]},{"label":"地圖 110","total":3,"rows":[[67,2],[66,1]]}],"story":[]},{"name":"魚肚內","maps":[114,115,116,117,118,119],"monsters":[298,193,164,133,49,148],"random":[{"label":"地圖 114、117、118","total":4,"rows":[[71,2],[72,2]]},{"label":"地圖 115、116、119","total":4,"rows":[[73,2],[74,2]]}],"story":[[2147,119,75]]},{"name":"貝殼海","maps":[129,130,131,132,133,134,527,528,529,530,531],"monsters":[193,195,148],"random":[{"label":"地圖 129–134","total":4,"rows":[[76,2],[77,2]]},{"label":"地圖 527–531","total":4,"rows":[[78,2],[79,2]]}],"story":[]},{"name":"仙山島","maps":[140,142,143,145,147,361,362],"monsters":[163,132,162,152,142],"random":[{"label":"地圖 140、142、143","total":3,"rows":[[84,1],[85,1],[87,1]]},{"label":"地圖 145、147","total":2,"rows":[[86,1],[87,1]]},{"label":"地圖 361、362","total":2,"rows":[[88,1],[89,1]]}],"story":[]},{"name":"西母峰頂","maps":[164],"monsters":[29],"random":[],"story":[[2250,164,96]]},{"name":"盤古頂","maps":[166],"monsters":[52],"random":[],"story":[[226,166,109]]},{"name":"江南地區","maps":[177],"monsters":[185,183,182,218,206,202,24,172,219],"random":[{"label":"區域 (81,26)–(94,42)、(68,3)–(93,25)、(28,9)–(67,27)、(44,28)–(58,32)、(68,26)–(78,55)、(79,43)–(91,60)、(31,34)–(67,58)","total":6,"rows":[[111,2],[110,2],[112,2]]},{"label":"區域 (5,27)–(30,60)、(8,11)–(24,26)","total":6,"rows":[[117,2],[118,2],[119,2]]}],"story":[]},{"name":"寒音剎內","maps":[187],"monsters":[121,57],"random":[{"label":"地圖 187","total":1,"rows":[[126,1]]}],"story":[]},{"name":"大禹水路","maps":[190,191,263,264],"monsters":[212,218],"random":[{"label":"地圖 190、191、263、264","total":4,"rows":[[115,2],[116,2]]}],"story":[]},{"name":"長沙郡隋營","maps":[199,256,257],"monsters":[223,45,18,15,7],"random":[],"story":[[174,199,121],[175,199,122],[314,199,128],[311,256,101],[4212,256,120],[4212,257,120]]},{"name":"河西地區","maps":[207],"monsters":[218,206,202,209,219,201,220,221,170,207,169,178,117],"random":[{"label":"區域 (35,48)–(59,80)","total":6,"rows":[[117,2],[118,2],[127,2]]},{"label":"區域 (19,50)–(29,60)、(36,86)–(58,114)","total":4,"rows":[[129,2],[130,2]]},{"label":"區域 (6,61)–(35,114)、(49,81)–(60,87)","total":4,"rows":[[131,2],[132,2]]},{"label":"區域 (6,3)–(32,48)、(33,22)–(41,40)","total":6,"rows":[[149,2],[148,2],[150,2]]},{"label":"區域 (39,33)–(64,47)、(54,17)–(64,32)、(66,6)–(80,35)","total":4,"rows":[[156,2],[157,2]]},{"label":"區域 (33,2)–(65,17)、(38,18)–(53,21)","total":4,"rows":[[159,2],[160,2]]},{"label":"區域 (68,45)–(96,71)","total":4,"rows":[[168,2],[169,2]]}],"story":[]},{"name":"巴蜀古王墓入口","maps":[221],"monsters":[45],"random":[],"story":[[337,221,137]]},{"name":"巴蜀古王墓","maps":[222,223,224,225,226],"monsters":[172,131,161,171,160,179,129,190,150],"random":[{"label":"地圖 222–224","total":4,"rows":[[133,2],[134,2]]},{"label":"地圖 225、226","total":4,"rows":[[135,2],[136,1],[139,1]]}],"story":[[4354,223,140]]},{"name":"皇家寶庫通道","maps":[231,232,266,267,268,381,382],"monsters":[203,161,118,130,221,160,129,189],"random":[{"label":"地圖 231","total":4,"rows":[[141,2],[142,2]]},{"label":"地圖 232、267、268、381、382","total":4,"rows":[[143,2],[144,2]]},{"label":"地圖 266","total":4,"rows":[[146,2],[147,2]]}],"story":[]},{"name":"太師府外","maps":[245,246,247,248,249,250,251],"monsters":[45,203],"random":[{"label":"地圖 245–251","total":4,"rows":[[152,1],[153,1],[154,1],[155,1]]}],"story":[]},{"name":"太師府內","maps":[252,253,254,255],"monsters":[45,203],"random":[{"label":"地圖 252–255","total":4,"rows":[[152,1],[153,1],[154,1],[155,1]]}],"story":[]},{"name":"河道斷崖","maps":[258],"monsters":[202,201],"random":[],"story":[[444,258,158]]},{"name":"通天塔內","maps":[282,396,397,399,400,401,402,403,404,405,406,407,563,564,565,568,569,570,571,572,573,574,575,579,581,582,583,584],"monsters":[203,170,200,120,159,119,169,140,199,117,158,168,188,198,116,157,167,187,10,149,156],"random":[{"label":"地圖 396、563、565、579、581","total":2,"rows":[[209,1],[210,1]]},{"label":"地圖 397","total":1,"rows":[[204,1]]},{"label":"地圖 399、400","total":6,"rows":[[173,2],[172,2],[174,2]]},{"label":"地圖 401–403、406、407","total":6,"rows":[[176,2],[175,2],[177,2]]},{"label":"地圖 404、405、582","total":6,"rows":[[179,2],[178,2],[180,2]]},{"label":"地圖 564","total":1,"rows":[[214,1]]},{"label":"地圖 568、569","total":3,"rows":[[201,1],[202,1],[203,1]]},{"label":"地圖 570–572、575","total":4,"rows":[[205,1],[206,1],[207,1],[208,1]]},{"label":"地圖 573、574、583","total":3,"rows":[[211,1],[212,1],[213,1]]}],"story":[[6335,282,181],[5410,584,215]]},{"name":"通天塔頂","maps":[283],"monsters":[7],"random":[],"story":[[5350,283,183],[5350,283,184]]},{"name":"魔界中原","maps":[290],"monsters":[202,174,191,151,159,153,188,150],"random":[{"label":"地圖 290","total":4,"rows":[[185,1],[186,1],[187,1],[188,1]]}],"story":[]},{"name":"螫魂塔","maps":[291,292,293,294],"monsters":[203,151,190,140,153,222,127,143,19,187],"random":[{"label":"地圖 291、292","total":3,"rows":[[196,1],[195,1],[194,1]]},{"label":"地圖 293","total":4,"rows":[[198,2],[197,2]]}],"story":[[6364,293,199],[5385,294,200]]},{"name":"次元交錯空間","maps":[296,385,387,388,389,390,391],"monsters":[203,120,141,110,119,128,109,127,177,126,167,115,139,166,56,227],"random":[{"label":"地圖 296、385、387–389","total":4,"rows":[[216,1],[217,1],[218,1],[219,1]]},{"label":"地圖 390","total":4,"rows":[[220,1],[221,1],[222,1],[223,1]]},{"label":"地圖 391 區域 (21,8)–(181,59)、(109,60)–(178,185)、(6,60)–(66,183)、(67,149)–(108,182)","total":4,"rows":[[224,1],[225,1],[226,1],[227,1]]}],"story":[[6400,390,228],[6405,391,229],[6406,391,230]]},{"name":"赤貫星內","maps":[298,299,300,301,302,303,304,408,409,410,411],"monsters":[109,107,126,115,108,125,166,137,147,104,114,124,155,105,138,146,123,136,145,112],"random":[{"label":"地圖 298、299","total":4,"rows":[[231,1],[232,1],[233,1],[234,1]]},{"label":"地圖 300、301","total":4,"rows":[[235,1],[236,1],[237,1],[238,1]]},{"label":"地圖 302–304","total":4,"rows":[[239,1],[240,1],[241,1],[242,1]]},{"label":"地圖 408、409","total":4,"rows":[[244,1],[245,1],[246,1],[247,1]]},{"label":"地圖 410、411","total":3,"rows":[[248,1],[249,1],[250,1]]}],"story":[]},{"name":"雲崗石窟山腰","maps":[320],"monsters":[141,128],"random":[{"label":"地圖 320","total":4,"rows":[[166,2],[167,2]]}],"story":[]},{"name":"雲崗石窟山道","maps":[321,322,323,324,325,327,328],"monsters":[179,170,129,159,178],"random":[{"label":"地圖 321–324","total":4,"rows":[[161,2],[162,2]]},{"label":"地圖 325、327、328","total":6,"rows":[[164,2],[163,2],[165,2]]}],"story":[]},{"name":"河邊空地","maps":[336],"monsters":[45],"random":[],"story":[[2118,336,61]]},{"name":"龍舟船艙","maps":[345,346,347],"monsters":[46,47,45,225],"random":[{"label":"地圖 345","total":2,"rows":[[37,1],[38,1]]},{"label":"地圖 346","total":3,"rows":[[39,1],[40,1],[41,1]]},{"label":"地圖 347","total":2,"rows":[[42,1],[43,1]]}],"story":[]},{"name":"靈武郡駐軍","maps":[355],"monsters":[16],"random":[],"story":[[413,355,151]]},{"name":"龍宮大殿","maps":[358],"monsters":[51],"random":[],"story":[[2156,358,81]]},{"name":"龍宮走道","maps":[359],"monsters":[59,58,60],"random":[],"story":[[2154,359,80]]},{"name":"月河樹林秘道","maps":[363,364,365,366,367,368,369,370,371],"monsters":[176,196,224,186,197],"random":[{"label":"地圖 363 區域 (17,21)–(45,41)；地圖 364、365","total":4,"rows":[[1,2],[2,2]]},{"label":"地圖 363 區域 (59,20)–(86,40)；地圖 367–369","total":4,"rows":[[3,2],[4,2]]},{"label":"地圖 366、370、371","total":4,"rows":[[5,2],[6,2]]}],"story":[]},{"name":"西母峰山麓","maps":[372,373,374,375,376,377,378,379],"monsters":[175,163,132,162,152,142,110],"random":[{"label":"地圖 372–374、379","total":3,"rows":[[90,1],[91,1],[92,1]]},{"label":"地圖 375–378","total":3,"rows":[[93,1],[94,1],[95,1]]}],"story":[]},{"name":"赤貫星中央之柱","maps":[412],"monsters":[6],"random":[],"story":[[507,412,252],[539,412,252]]},{"name":"殤魂塔","maps":[415,416,417,418],"monsters":[151,189,158,20,168,177],"random":[{"label":"地圖 415–417","total":4,"rows":[[189,1],[190,1],[191,1],[192,1]]}],"story":[[5387,418,193]]},{"name":"通天塔大廳","maps":[420],"monsters":[16],"random":[],"story":[[5349,420,182]]},{"name":"海中建木","maps":[432,433,434,435,436,437,438,439,440,441,442],"monsters":[175,173,132,194,172,131,130,110,10],"random":[{"label":"地圖 433–435","total":6,"rows":[[98,2],[97,2],[100,2]]},{"label":"地圖 436–439","total":6,"rows":[[104,2],[99,2],[105,2]]},{"label":"地圖 440–442","total":6,"rows":[[107,2],[106,2],[108,2]]}],"story":[[502,432,251]]},{"name":"寒音剎祕密水道","maps":[492],"monsters":[183,181,194,180,121,161,191],"random":[{"label":"地圖 492","total":6,"rows":[[124,2],[123,2],[125,2]]}],"story":[]},{"name":"獨孤家道觀","maps":[493,494,495,496,497],"monsters":[163,174,153],"random":[],"story":[[4600,493,170],[4600,494,170],[4600,495,170],[4600,496,170],[4593,497,171],[4600,497,170]]},{"name":"船艙通道","maps":[507],"monsters":[226],"random":[],"story":[[2119,507,62]]},{"name":"龍宮密道","maps":[541,548,549],"monsters":[59,58,60],"random":[{"label":"地圖 541、548、549","total":2,"rows":[[82,1],[83,1]]}],"story":[]},{"name":"龍宮通道","maps":[547],"monsters":[59,58,60],"random":[{"label":"地圖 547","total":2,"rows":[[82,1],[83,1]]}],"story":[]}]};
+const MOVE_SOUND = "data:audio/wav;base64,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";
+
+const SOUND_PARAMETER = 'sound';
+const SOUND_OFF = 'off';
+let soundOn = new URLSearchParams(location.search).get(SOUND_PARAMETER) !== SOUND_OFF;
+
+function beep() {
+  if (MOVE_SOUND && soundOn) {
+    const sound = new Audio(MOVE_SOUND);
+    sound.volume = 0.6;
+    sound.play().catch(() => {});
+  }
+}
+
+const $ = id => document.getElementById(id);
+
+function escape(text) {
+  return String(text).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+}
+
+function gcd(a, b) {
+  while (b) {
+    [a, b] = [b, a % b];
+  }
+  return a;
+}
+
+function formatRate(count, total) {
+  if (count >= total) {
+    return '100%';
+  }
+
+  const g = gcd(count, total);
+  const pct = Math.round((count * 100) / total);
+  return `${count / g}/${total / g} (${pct}%)`;
+}
+
+function monsterOf(id) {
+  const [name, level, boss] = DATA.monsters[String(id)];
+  return { id, name, level, boss };
+}
+
+function monsterHref(m) {
+  return `bestiary.html${location.search}#${encodeURIComponent(`${m.name}@${m.id}`)}`;
+}
+
+// Search matches both place name, map numbers, and every monster name encountered there.
+DATA.places.forEach(place => {
+  const names = place.monsters.map(id => DATA.monsters[String(id)][0]);
+  const mapTags = place.maps.map(m => `地圖${m} 地圖 ${m}`);
+  place.text = [place.name, ...names, ...mapTags].join('\n').toLowerCase();
+});
+
+let shown = [];
+let chosen = 0;
+
+function query() {
+  return $('search').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+function monsterHit(m, words) {
+  if (!words.length) {
+    return false;
+  }
+
+  const lower = m.name.toLowerCase();
+  return words.some(word => lower.includes(word));
+}
+
+function keepInView(row) {
+  const box = $('list');
+
+  if (chosen === 0) {
+    box.scrollTop = 0;
+  } else if (chosen === shown.length - 1) {
+    box.scrollTop = box.scrollHeight;
+  } else {
+    row.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function renderEnemies(battle, words) {
+  const ids = DATA.formations[String(battle)] || [];
+  const counts = new Map();
+  const order = [];
+
+  for (const id of ids) {
+    if (!counts.has(id)) {
+      counts.set(id, 0);
+      order.push(id);
+    }
+
+    counts.set(id, counts.get(id) + 1);
+  }
+
+  return order.map(id => {
+    const m = monsterOf(id);
+    const n = counts.get(id);
+    const hit = monsterHit(m, words) ? ' hit' : '';
+    const boss = m.boss ? ' <span class="boss">BOSS</span>' : '';
+    const times = n > 1 ? `<span class="times">×${n}</span>` : '';
+    return `<a class="mlink${hit}" href="${monsterHref(m)}" data-id="${m.id}">${escape(m.name)}</a>` +
+      `<span class="lv-inline">(${m.level}級)</span>${boss}${times}`;
+  }).join('<span class="plus">＋</span>');
+}
+
+function show() {
+  document.querySelectorAll('.row').forEach((row, at) => row.classList.toggle('chosen', at === chosen));
+  const row = document.querySelector('.row.chosen');
+
+  if (row) {
+    keepInView(row);
+  }
+
+  const place = shown[chosen];
+
+  if (!place) {
+    $('overview').innerHTML = '';
+    $('detail').innerHTML = '';
+    return;
+  }
+
+  keepPlace(place.name);
+  const words = query();
+  const kinds = [];
+
+  if (place.random.length) {
+    kinds.push('隨機遇敵');
+  }
+
+  if (place.story.length) {
+    kinds.push('劇情戰鬥');
+  }
+
+  const chips = place.monsters.map(id => {
+    const m = monsterOf(id);
+    const hit = monsterHit(m, words) ? ' hit' : '';
+    const boss = m.boss ? '<span class="boss">BOSS</span>' : '';
+    return `<a class="chip${hit}" href="${monsterHref(m)}" data-id="${m.id}">` +
+      `<span>${escape(m.name)}</span><span class="lv">${m.level}級</span>${boss}</a>`;
+  }).join('');
+
+  $('overview').innerHTML =
+    `<div class="place-head"><div class="place-title">${escape(place.name)}</div>` +
+    `<div class="place-meta">共 ${place.monsters.length} 種怪物 · ${kinds.join('、')}</div></div>` +
+    `<div class="chips">${chips}</div>`;
+
+  const blocks = [];
+
+  for (const group of place.random) {
+    const trs = group.rows.map(([battle, count]) =>
+      `<tr><td class="battle">第 ${battle} 場</td>` +
+      `<td class="rate">${formatRate(count, group.total)}</td>` +
+      `<td class="enemies">${renderEnemies(battle, words)}</td></tr>`).join('');
+    blocks.push(
+      `<div class="group"><div class="group-head">隨機遇敵<span class="sub">${escape(group.label)}</span></div>` +
+      `<table><tr><th>戰鬥</th><th>機率</th><th>敵人</th></tr>${trs}</table></div>`
+    );
+  }
+
+  if (place.story.length) {
+    const multiMap = place.maps.length > 1;
+    const trs = place.story.map(([ev, mapId, battle]) =>
+      `<tr><td class="event">事件 ${ev}${multiMap ? `（地圖 ${mapId}）` : ''}</td>` +
+      `<td class="battle">第 ${battle} 場</td>` +
+      `<td class="enemies">${renderEnemies(battle, words)}</td></tr>`).join('');
+    blocks.push(
+      `<div class="group"><div class="group-head">劇情戰鬥</div>` +
+      `<table><tr><th>觸發</th><th>戰鬥</th><th>敵人</th></tr>${trs}</table></div>`
+    );
+  }
+
+  $('detail').innerHTML = blocks.join('');
+  const firstHit = $('detail').querySelector('.hit');
+
+  if (firstHit) {
+    const group = firstHit.closest('.group');
+
+    if (group) {
+      group.scrollIntoView({ block: 'nearest' });
+    }
+  }
+}
+
+function list() {
+  const words = query();
+  shown = words.length
+    ? DATA.places.filter(place => words.every(word => place.text.includes(word)))
+    : DATA.places;
+  chosen = Math.min(chosen, Math.max(shown.length - 1, 0));
+  $('list').innerHTML = shown.length
+    ? shown.map((place, at) =>
+        `<div class="row${at === chosen ? ' chosen' : ''}" data-at="${at}">` +
+        `<span>${escape(place.name)}</span><span class="count">${place.monsters.length} 種</span></div>`).join('')
+    : '<div class="empty">找不到</div>';
+  show();
+}
+
+function move(by) {
+  if (!shown.length) {
+    return;
+  }
+
+  const before = chosen;
+  chosen = Math.max(0, Math.min(shown.length - 1, chosen + by));
+
+  if (chosen !== before) {
+    beep();
+    $('detail').scrollTop = 0;
+  }
+
+  show();
+}
+
+function openMonster(id) {
+  const m = monsterOf(id);
+  const detail = `${m.name}@${m.id}`;
+
+  if (window.parent !== window) {
+    window.parent.postMessage({ open: 'bestiary', detail }, '*');
+    return;
+  }
+
+  location.href = `bestiary.html${location.search}#${encodeURIComponent(detail)}`;
+}
+
+document.addEventListener('click', event => {
+  const link = event.target.closest('a.chip, a.mlink');
+
+  if (!link) {
+    return;
+  }
+
+  event.preventDefault();
+  openMonster(Number(link.dataset.id));
+});
+
+$('list').addEventListener('click', event => {
+  const row = event.target.closest('.row');
+
+  if (row) {
+    const at = Number(row.dataset.at);
+
+    if (at !== chosen) {
+      beep();
+      $('detail').scrollTop = 0;
+    }
+
+    chosen = at;
+    show();
+  }
+});
+
+$('search').addEventListener('input', () => {
+  chosen = 0;
+  $('detail').scrollTop = 0;
+  list();
+});
+
+document.addEventListener('keydown', event => {
+  const typing = event.target === $('search');
+
+  if (typing && event.key === 'Escape') {
+    $('search').value = '';
+    $('search').dispatchEvent(new Event('input'));
+    return;
+  }
+
+  if (typing && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+    return;
+  }
+
+  const keys = {
+    ArrowUp: () => move(-1),
+    ArrowDown: () => move(1),
+    PageUp: () => move(-15),
+    PageDown: () => move(15),
+    Home: () => move(-shown.length),
+    End: () => move(shown.length),
+  };
+
+  if (keys[event.key]) {
+    keys[event.key]();
+    event.preventDefault();
+  }
+});
+
+function fit() {
+  const book = document.querySelector('.book');
+  const scale = Math.min(innerWidth / book.offsetWidth, innerHeight / book.offsetHeight);
+  const left = (innerWidth - book.offsetWidth * scale) / 2;
+  const top = (innerHeight - book.offsetHeight * scale) / 2;
+  book.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
+}
+
+function keepPlace(detail) {
+  history.replaceState(null, '', `${location.search}#${encodeURIComponent(detail)}`);
+
+  if (window.parent !== window) {
+    window.parent.postMessage({ shown: 'encounters', detail }, '*');
+  }
+}
+
+function addressed() {
+  try {
+    return decodeURIComponent(location.hash.slice(1));
+  } catch {
+    return '';
+  }
+}
+
+function chooseNamed(text = addressed()) {
+  if (!text) {
+    return;
+  }
+
+  const at = DATA.places.findIndex(place => place.name === text);
+
+  if (at < 0) {
+    return;
+  }
+
+  $('search').value = '';
+  list();
+  chosen = at;
+  $('detail').scrollTop = 0;
+  show();
+}
+
+function drawSound() {
+  const button = $('sound');
+  button.textContent = soundOn ? '音效 開' : '音效 關';
+  button.classList.toggle('off', !soundOn);
+}
+
+function setSound(on, fromHome = false) {
+  soundOn = on;
+  const query = new URLSearchParams(location.search);
+
+  if (soundOn) {
+    query.delete(SOUND_PARAMETER);
+  } else {
+    query.set(SOUND_PARAMETER, SOUND_OFF);
+  }
+
+  const text = query.toString();
+  history.replaceState(null, '', `${location.pathname}${text ? `?${text}` : ''}${location.hash}`);
+  drawSound();
+
+  if (!fromHome && window.parent !== window) {
+    window.parent.postMessage({ sound: soundOn }, '*');
+  }
+}
+
+$('sound').addEventListener('click', event => {
+  setSound(!soundOn);
+  beep();
+  event.currentTarget.blur();
+});
+
+addEventListener('message', event => {
+  const { sound } = event.data || {};
+
+  if (typeof sound === 'boolean' && event.source === window.parent) {
+    setSound(sound, true);
+  }
+});
+
+drawSound();
+addEventListener('resize', fit);
+addEventListener('hashchange', () => chooseNamed());
+const place = addressed();
+fit();
+list();
+chooseNamed(place);
+</script>
+</body>
+</html>
