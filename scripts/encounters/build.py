@@ -28,6 +28,109 @@ START_BATTLE = 0x58
 OPEN_SCRIPT = 0xA1
 BOSS_KIND = 0x20
 
+# Split Babel Tower into 1st visit (before Yuwen Tuo on the roof; unreachable afterwards) and 2nd visit (demon-realm
+# tower), merging their hall and roof maps so each visit is one clear entry.
+BABEL_FIRST_MAPS = {282, 283, 399, 400, 401, 402, 403, 404, 405, 406, 407, 420, 582}
+BABEL_SECOND_MAPS = {396, 397, 563, 564, 565, 568, 569, 570, 571, 572, 573, 574, 575, 579, 581, 583, 584}
+
+PLACE_NOTES = {
+    '通天塔（第一次）': '打倒塔頂宇文拓後無法再進入',
+    '通天塔（第二次）': '魔界通天塔（古月聖滅掉妖火後進入）',
+}
+
+# Human-readable labels for multi-group places, verified against events.jsonl map transitions, mapitems.txt chests,
+# and walkthrough.txt. Keyed by (place_name, tuple(sorted(set(maps)))) or (place_name, first_area_coords) for
+# single-map multi-area zones.
+GROUP_LABELS_BY_MAPS = {
+    ('通天塔（第一次）', (399, 400)): ('二～三樓', 1),
+    ('通天塔（第一次）', (401, 402, 403, 406, 407)): ('四～五樓、七樓', 2),
+    ('通天塔（第一次）', (404, 405, 582)): ('八～九樓', 3),
+    ('通天塔（第二次）', (568, 569)): ('二～三樓', 1),
+    ('通天塔（第二次）', (397,)): ('三樓支室', 2),
+    ('通天塔（第二次）', (570, 571, 572, 575)): ('四～五樓、七樓', 3),
+    ('通天塔（第二次）', (396, 563, 565, 579, 581)): ('四～五樓、七樓支室', 4),
+    ('通天塔（第二次）', (573, 574, 583)): ('八～九樓', 5),
+    ('通天塔（第二次）', (564,)): ('九樓支室', 6),
+    ('赤貫星內', (298, 299)): ('水晶迷宮第一區', 1),
+    ('赤貫星內', (408, 409)): ('水晶迷宮第二區', 2),
+    ('赤貫星內', (300, 301)): ('水晶迷宮第三區', 3),
+    ('赤貫星內', (302, 303, 304)): ('水晶迷宮第四區', 4),
+    ('赤貫星內', (410, 411)): ('水晶迷宮第五區', 5),
+    ('森林軍營', (41, 309)): ('外圍', 1),
+    ('森林軍營', (310,)): ('深處、近營地', 2),
+    ('運輸船艙房', (55,)): ('上層艙房', 1),
+    ('運輸船艙房', (505, 506)): ('底層艙房', 2),
+    ('龍舟屋樑', (80, 81)): ('入口段', 1),
+    ('龍舟屋樑', (82, 83, 84)): ('支路與通往大殿', 2),
+    ('龍舟船艙', (345,)): ('近觀景臺', 1),
+    ('龍舟船艙', (346,)): ('近偏船', 2),
+    ('龍舟船艙', (347,)): ('通往屋樑', 3),
+    ('魔王砦通道', (95, 96, 97)): ('前段', 1),
+    ('魔王砦通道', (305, 306, 307, 308)): ('後段、近大廳', 2),
+    ('採藥洞窟', (109,)): ('前段', 1),
+    ('採藥洞窟', (110,)): ('深處', 2),
+    ('魚肚內', (114, 117, 118)): ('前段', 1),
+    ('魚肚內', (115, 116, 119)): ('後段、近氐人國', 2),
+    ('貝殼海', (129, 130, 131, 132, 133, 134)): ('外段', 1),
+    ('貝殼海', (527, 528, 529, 530, 531)): ('內段', 2),
+    ('仙山島', (140, 142, 143)): ('桃源仙境至營地前', 1),
+    ('仙山島', (145, 147)): ('營地附近', 2),
+    ('仙山島', (361, 362)): ('百草澗前', 3),
+    ('巴蜀古王墓', (222, 223, 224)): ('前段', 1),
+    ('巴蜀古王墓', (225, 226)): ('深處', 2),
+    ('皇家寶庫通道', (231,)): ('入口段', 1),
+    ('皇家寶庫通道', (266,)): ('中段', 2),
+    ('皇家寶庫通道', (232, 267, 268, 381, 382)): ('主廳與支室', 3),
+    ('螫魂塔', (291, 292)): ('一～二樓', 1),
+    ('螫魂塔', (293,)): ('三樓', 2),
+    ('次元交錯空間', (296, 385, 387, 388, 389)): ('冰幻迷宮', 1),
+    ('次元交錯空間', (390,)): ('中段', 2),
+    ('次元交錯空間', (391,)): ('後段、近伏羲宮殿', 3),
+    ('雲崗石窟山道', (321, 322, 323, 324)): ('山腳至山腰', 1),
+    ('雲崗石窟山道', (325, 327, 328)): ('山腰以上', 2),
+    ('月河樹林秘道', (363, 364, 365)): ('入口左半與前段', 1),
+    ('月河樹林秘道', (363, 367, 368, 369)): ('入口右半與中段', 2),
+    ('月河樹林秘道', (366, 370, 371)): ('深處、近月河河畔', 3),
+    ('西母峰山麓', (372, 373, 374, 379)): ('外段山路', 1),
+    ('西母峰山麓', (375, 376, 377, 378)): ('內段、近峰頂', 2),
+    ('海中建木', (433, 434, 435)): ('下段', 1),
+    ('海中建木', (436, 437, 438, 439)): ('中段', 2),
+    ('海中建木', (440, 441, 442)): ('上段、近盤古頂', 3),
+}
+
+# World-map encounter zone labels, derived from CHANGE_MAP exit coordinates on maps 15, 177, 207.
+WORLD_AREA_LABELS = {
+    (15, (6, 33, 25, 40)): ('伏魔山、月河村附近', 1),
+    (15, (12, 7, 38, 33)): ('雷夏澤、黑山鎮一帶', 2),
+    (15, (39, 8, 50, 40)): ('蘆家渡、森林軍營一帶', 3),
+    (15, (24, 42, 50, 59)): ('大梁城、採藥洞窟一帶', 4),
+    (15, (52, 22, 89, 48)): ('豆子坑、泰山、東萊一帶', 5),
+    (15, (76, 19, 79, 19)): ('東萊北方海邊（隱藏點）', 6),
+    (177, (81, 26, 94, 42)): ('江都、杏山、大禹水路、長沙郡一帶', 1),
+    (177, (5, 27, 30, 60)): ('長沙郡隋營、武關、寒音剎一帶', 2),
+    (207, (35, 48, 59, 80)): ('長壽關、大興城一帶', 1),
+    (207, (19, 50, 29, 60)): ('萌霞關附近、長壽關南方', 2),
+    (207, (6, 61, 35, 114)): ('巴蜀古王墓一帶', 3),
+    (207, (6, 3, 32, 48)): ('靈武郡、迷津沙一帶', 4),
+    (207, (39, 33, 64, 47)): ('玄武門、河道斷崖、太原城門一帶', 5),
+    (207, (33, 2, 65, 17)): ('雲崗石窟山腳一帶', 6),
+    (207, (68, 45, 96, 71)): ('洛陽、通天塔一帶', 7),
+}
+
+# Story-battle sub-location labels (label, sort_order) where a place spans multiple floors/rooms.
+STORY_MAP_LABELS = {
+    282: ('三樓支室', 1),
+    420: ('六樓大廳', 2),
+    283: ('塔頂', 3),
+    584: ('六樓', 1),
+    293: ('三樓', 1),
+    294: ('塔頂', 2),
+    418: ('塔頂', 1),
+    390: ('中段', 1),
+    391: ('後段', 2),
+    223: ('前段', 1),
+}
+
 
 def sound_url(path):
     """The cursor sound (scripts/sound/extract.py all.snd 0x2E) as a data address; none without one."""
@@ -47,10 +150,10 @@ def format_map_ids(ids):
         if num == prev + 1:
             prev = num
             continue
-        parts.append(f'{start}–{prev}' if prev - start >= 2 else ('、'.join(str(x) for x in range(start, prev + 1))))
+        parts.append(f'{start}–{prev}' if prev - start >= 2 else '、'.join(str(x) for x in range(start, prev + 1)))
         start = prev = num
 
-    parts.append(f'{start}–{prev}' if prev - start >= 2 else ('、'.join(str(x) for x in range(start, prev + 1))))
+    parts.append(f'{start}–{prev}' if prev - start >= 2 else '、'.join(str(x) for x in range(start, prev + 1)))
     return '、'.join(parts)
 
 
@@ -77,6 +180,14 @@ def normalized_sig(rows, total):
         items.append((battle, count // g, total // g))
 
     return tuple(sorted(items))
+
+
+def place_name_of(map_id, map_names):
+    if map_id in BABEL_FIRST_MAPS:
+        return '通天塔（第一次）'
+    if map_id in BABEL_SECOND_MAPS:
+        return '通天塔（第二次）'
+    return map_names.get(map_id, f'地圖 {map_id}')
 
 
 def main():
@@ -180,14 +291,22 @@ def main():
 
     by_name = defaultdict(list)
     for map_id in sorted(set(enc_by_map) | set(story_by_map)):
-        by_name[map_names.get(map_id, f'地圖 {map_id}')].append(map_id)
+        by_name[place_name_of(map_id, map_names)].append(map_id)
 
     used_monsters = set()
     used_formations = set()
     places = []
 
-    for place_name, map_ids in sorted(by_name.items(), key=lambda kv: min(kv[1])):
-        # Group identical random encounter tables within this place.
+    def place_sort_key(kv):
+        name, ms = kv
+        # Keep 1st and 2nd Babel Tower next to each other.
+        if name == '通天塔（第一次）':
+            return (282, 0)
+        if name == '通天塔（第二次）':
+            return (282, 1)
+        return (min(ms), 0)
+
+    for place_name, map_ids in sorted(by_name.items(), key=place_sort_key):
         grouped = {}
         group_order = []
         multi_area_maps = {m for m in map_ids if len(enc_by_map.get(m, ())) > 1}
@@ -207,7 +326,7 @@ def main():
         random_groups = []
         place_monsters = set()
 
-        for sig in group_order:
+        for index, sig in enumerate(group_order):
             entry = grouped[sig]
             rows = entry['rows']
             for battle, _ in rows:
@@ -216,8 +335,33 @@ def main():
                     used_monsters.add(enemy)
                     place_monsters.add(enemy)
 
-            if entry['areas']:
-                # Keep coordinates for multi-area maps (e.g. world maps) so zones stay distinguishable.
+            maps_key = tuple(sorted(set(entry['maps'])))
+            map_tag = f'地圖 {format_map_ids(entry["maps"])}'
+            order = 100 + index
+            title = ''
+            detail = map_tag
+
+            # Prefer explicit human-readable zone/floor names.
+            world_match = None
+            if entry['areas'] and len(maps_key) == 1:
+                for m_id, area in entry['areas']:
+                    if (m_id, area) in WORLD_AREA_LABELS:
+                        world_match = WORLD_AREA_LABELS[(m_id, area)]
+                        break
+
+            if world_match is not None:
+                title, order = world_match
+                coords = '、'.join(f'({l},{t})–({r},{b})' for _, (l, t, r, b) in entry['areas'])
+                detail = f'區域 {coords}'
+            elif (place_name, maps_key) in GROUP_LABELS_BY_MAPS:
+                title, order = GROUP_LABELS_BY_MAPS[(place_name, maps_key)]
+                if entry['areas'] and place_name == '月河樹林秘道':
+                    side = '左' if entry['areas'][0][1][0] < 50 else '右'
+                    others = [m for m in maps_key if m != 363]
+                    detail = f'地圖 363 {side}半、{format_map_ids(others)}'
+                else:
+                    detail = map_tag
+            elif entry['areas']:
                 area_by_map = defaultdict(list)
                 for m_id, (l, t, r, b) in entry['areas']:
                     area_by_map[m_id].append(f'({l},{t})–({r},{b})')
@@ -225,19 +369,20 @@ def main():
                 for m_id, coords in area_by_map.items():
                     prefix = f'地圖 {m_id} ' if len(map_ids) > 1 else ''
                     parts.append(f'{prefix}區域 ' + '、'.join(coords))
-                # Any whole-map entries sharing the exact same encounter table.
                 other_maps = [m for m in entry['maps'] if m not in area_by_map]
                 if other_maps:
                     parts.append(f'地圖 {format_map_ids(other_maps)}')
-                label = '；'.join(parts)
-            else:
-                label = f'地圖 {format_map_ids(entry["maps"])}'
+                detail = '；'.join(parts)
 
-            random_groups.append({
-                'label': label,
+            random_groups.append((order, {
+                'title': title,
+                'detail': detail,
                 'total': entry['total'],
                 'rows': [[battle, count] for battle, count in rows],
-            })
+            }))
+
+        random_groups.sort(key=lambda item: item[0])
+        random_list = [item[1] for item in random_groups]
 
         story_rows = []
         for map_id in sorted(map_ids):
@@ -246,7 +391,11 @@ def main():
                 for enemy in formations[battle]:
                     used_monsters.add(enemy)
                     place_monsters.add(enemy)
-                story_rows.append([ev_id, map_id, battle])
+                sub, s_order = STORY_MAP_LABELS.get(map_id, ('', 100 + map_id))
+                story_rows.append((s_order, map_id, ev_id, [ev_id, map_id, battle, sub]))
+
+        story_rows.sort(key=lambda item: (item[0], item[1], item[2]))
+        story_list = [item[3] for item in story_rows]
 
         ordered_monsters = sorted(
             place_monsters,
@@ -255,10 +404,11 @@ def main():
 
         places.append({
             'name': place_name,
+            'note': PLACE_NOTES.get(place_name, ''),
             'maps': sorted(set(map_ids)),
             'monsters': ordered_monsters,
-            'random': random_groups,
-            'story': story_rows,
+            'random': random_list,
+            'story': story_list,
         })
 
     monsters_data = {
@@ -476,7 +626,7 @@ h1 {
   justify-content: space-between;
   gap: 12px;
   padding-bottom: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   border-bottom: 1px solid rgba(168, 144, 72, 0.4);
 }
 
@@ -491,6 +641,12 @@ h1 {
   font-size: 15px;
   color: var(--dim);
   white-space: nowrap;
+}
+
+.place-note {
+  font-size: 15px;
+  color: #e8c070;
+  margin-bottom: 10px;
 }
 
 .chips {
@@ -587,7 +743,7 @@ th {
 
 td.battle { width: 88px; white-space: nowrap; color: var(--dim); }
 td.rate { width: 112px; white-space: nowrap; color: #f0e0a8; }
-td.event { width: 176px; white-space: nowrap; color: var(--dim); }
+td.event { width: 210px; white-space: nowrap; color: var(--dim); }
 td.enemies { overflow-wrap: anywhere; }
 
 a.mlink {
@@ -622,7 +778,7 @@ a.mlink.hit {
 <div class="book">
   <div class="top">
     <div class="tools">
-      <input class="search" id="search" type="search" placeholder="搜尋地圖、怪物名稱" autocomplete="off">
+      <input class="search" id="search" type="search" placeholder="搜尋地圖、地標、怪物名稱" autocomplete="off">
       <button class="sound" id="sound" type="button"></button>
     </div>
     <h1>地圖遇敵</h1>
@@ -682,11 +838,13 @@ function monsterHref(m) {
   return `bestiary.html${location.search}#${encodeURIComponent(`${m.name}@${m.id}`)}`;
 }
 
-// Search matches both place name, map numbers, and every monster name encountered there.
+// Search matches place name, notes, sub-area titles, map numbers, and every monster name encountered there.
 DATA.places.forEach(place => {
   const names = place.monsters.map(id => DATA.monsters[String(id)][0]);
   const mapTags = place.maps.map(m => `地圖${m} 地圖 ${m}`);
-  place.text = [place.name, ...names, ...mapTags].join('\n').toLowerCase();
+  const groupTags = place.random.map(g => `${g.title} ${g.detail}`);
+  const storyTags = place.story.map(s => s[3]);
+  place.text = [place.name, place.note, ...names, ...mapTags, ...groupTags, ...storyTags].join('\n').toLowerCase();
 });
 
 let shown = [];
@@ -778,30 +936,37 @@ function show() {
       `<span>${escape(m.name)}</span><span class="lv">${m.level}級</span>${boss}</a>`;
   }).join('');
 
+  const note = place.note ? `<div class="place-note">${escape(place.note)}</div>` : '';
+
   $('overview').innerHTML =
     `<div class="place-head"><div class="place-title">${escape(place.name)}</div>` +
     `<div class="place-meta">共 ${place.monsters.length} 種怪物 · ${kinds.join('、')}</div></div>` +
-    `<div class="chips">${chips}</div>`;
+    `${note}<div class="chips">${chips}</div>`;
 
   const blocks = [];
 
   for (const group of place.random) {
+    const head = group.title
+      ? `${escape(group.title)}<span class="sub">${escape(group.detail)}</span>`
+      : `隨機遇敵<span class="sub">${escape(group.detail)}</span>`;
     const trs = group.rows.map(([battle, count]) =>
       `<tr><td class="battle">第 ${battle} 場</td>` +
       `<td class="rate">${formatRate(count, group.total)}</td>` +
       `<td class="enemies">${renderEnemies(battle, words)}</td></tr>`).join('');
     blocks.push(
-      `<div class="group"><div class="group-head">隨機遇敵<span class="sub">${escape(group.label)}</span></div>` +
+      `<div class="group"><div class="group-head">${head}</div>` +
       `<table><tr><th>戰鬥</th><th>機率</th><th>敵人</th></tr>${trs}</table></div>`
     );
   }
 
   if (place.story.length) {
     const multiMap = place.maps.length > 1;
-    const trs = place.story.map(([ev, mapId, battle]) =>
-      `<tr><td class="event">事件 ${ev}${multiMap ? `（地圖 ${mapId}）` : ''}</td>` +
-      `<td class="battle">第 ${battle} 場</td>` +
-      `<td class="enemies">${renderEnemies(battle, words)}</td></tr>`).join('');
+    const trs = place.story.map(([ev, mapId, battle, sub]) => {
+      const where = sub ? `${sub} · 事件 ${ev}` : `事件 ${ev}${multiMap ? `（地圖 ${mapId}）` : ''}`;
+      return `<tr><td class="event">${escape(where)}</td>` +
+        `<td class="battle">第 ${battle} 場</td>` +
+        `<td class="enemies">${renderEnemies(battle, words)}</td></tr>`;
+    }).join('');
     blocks.push(
       `<div class="group"><div class="group-head">劇情戰鬥</div>` +
       `<table><tr><th>觸發</th><th>戰鬥</th><th>敵人</th></tr>${trs}</table></div>`
