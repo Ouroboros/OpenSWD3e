@@ -541,12 +541,18 @@ function show() {
   }
 }
 
-function list() {
+function list(keepCurrent = false) {
+  const current = keepCurrent ? shown[chosen] : null;
   const words = query();
   shown = words.length
     ? DATA.places.filter(place => words.every(word => place.text.includes(word)))
     : DATA.places;
-  chosen = Math.min(chosen, Math.max(shown.length - 1, 0));
+  const kept = current ? shown.indexOf(current) : -1;
+  chosen = kept >= 0 ? kept : Math.min(chosen, Math.max(shown.length - 1, 0));
+  if (kept < 0 && keepCurrent) {
+    chosen = 0;
+    $('detail').scrollTop = 0;
+  }
   $('list').innerHTML = shown.length
     ? shown.map((place, at) =>
         `<div class="row${at === chosen ? ' chosen' : ''}" data-at="${at}">` +
@@ -611,9 +617,7 @@ $('list').addEventListener('click', event => {
 });
 
 $('search').addEventListener('input', () => {
-  chosen = 0;
-  $('detail').scrollTop = 0;
-  list();
+  list(true);
 });
 
 document.addEventListener('keydown', event => {
